@@ -359,7 +359,7 @@ export default function HospitalForm() {
           ) : (
             <Grid container spacing={2}>
               {branches.map(branch => (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={branch.branchId}>
+                <Grid size={{ xs: 12 }} key={branch.branchId}>
                   <Box sx={{ p: 2, bgcolor: "rgba(15, 23, 42, 0.4)", borderRadius: 3, border: "1px solid rgba(255, 255, 255, 0.05)" }}>
                     <Typography variant="subtitle2" sx={{ color: "#f8fafc", fontWeight: 700 }}>
                       {branch.branchName}

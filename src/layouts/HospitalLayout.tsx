@@ -30,6 +30,15 @@ import {
   CalendarTodayRounded,
   ScienceRounded,
   SettingsRounded,
+  DomainRounded,
+  BadgeRounded,
+  ShieldRounded,
+  RuleRounded,
+  WidgetsRounded,
+  MedicalServicesRounded,
+  DatasetRounded,
+  DynamicFormRounded,
+  SecurityRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 
@@ -45,9 +54,18 @@ export default function HospitalLayout() {
   // Placeholder navigation items for future phases
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/hospital/dashboard" },
+    { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments" },
+    { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users" },
+    { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors" },
+    { text: "Role Management", icon: <ShieldRounded />, path: "/hospital/roles" },
+    { text: "Permission Matrix", icon: <RuleRounded />, path: "/hospital/permissions-matrix" },
     { text: "Patients", icon: <PeopleRounded />, path: "/hospital/patients" },
     { text: "Appointments", icon: <CalendarTodayRounded />, path: "/hospital/appointments" },
     { text: "Laboratory", icon: <ScienceRounded />, path: "/hospital/lab" },
+    { text: "Master Data", icon: <DatasetRounded />, path: "/hospital/lookups" },
+    { text: "Form Builder", icon: <DynamicFormRounded />, path: "/hospital/form-builder" },
+    { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access" },
+    { text: "Audit Logs", icon: <SecurityRounded />, path: "/hospital/audit-logs" },
     { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings" },
   ];
 

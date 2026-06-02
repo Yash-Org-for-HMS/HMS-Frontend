@@ -13,7 +13,15 @@ export const axiosInstance = axios.create({
 // Interceptor to attach access token
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("accessToken");
+    let token = null;
+    
+    // Determine which token to use based on the API route
+    if (config.url?.startsWith("/hospital")) {
+      token = localStorage.getItem("hospitalAccessToken");
+    } else {
+      token = localStorage.getItem("accessToken");
+    }
+
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }

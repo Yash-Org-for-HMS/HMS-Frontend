@@ -217,7 +217,7 @@ export default function HospitalSettings() {
           {/* Appointment Settings Tab */}
           <CustomTabPanel value={tabValue} index={0}>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   type="number"
@@ -228,7 +228,7 @@ export default function HospitalSettings() {
                   required
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   type="number"
@@ -245,7 +245,7 @@ export default function HospitalSettings() {
           {/* Localization Tab */}
           <CustomTabPanel value={tabValue} index={1}>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   select
@@ -260,7 +260,7 @@ export default function HospitalSettings() {
                   <MenuItem value="fr">French</MenuItem>
                 </TextField>
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   label="Timezone"
@@ -270,7 +270,7 @@ export default function HospitalSettings() {
                   placeholder="e.g. Asia/Kolkata"
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   select
@@ -290,31 +290,31 @@ export default function HospitalSettings() {
           {/* System Settings Tab */}
           <CustomTabPanel value={tabValue} index={2}>
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <FormControlLabel
                   control={<Switch checked={formData.queueEnabled} onChange={handleChange} name="queueEnabled" color="primary" />}
                   label="Enable Patient Queue System"
                   sx={{ color: "#f8fafc" }}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle2" sx={{ color: "#94a3b8", mb: 2 }}>Notification Preferences</Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <FormControlLabel
                       control={<Switch checked={formData.smsEnabled} onChange={handleChange} name="smsEnabled" color="primary" />}
                       label="SMS Notifications"
                       sx={{ color: "#f8fafc" }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <FormControlLabel
                       control={<Switch checked={formData.emailEnabled} onChange={handleChange} name="emailEnabled" color="primary" />}
                       label="Email Notifications"
                       sx={{ color: "#f8fafc" }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <FormControlLabel
                       control={<Switch checked={formData.whatsappEnabled} onChange={handleChange} name="whatsappEnabled" color="primary" />}
                       label="WhatsApp Notifications"
@@ -329,7 +329,7 @@ export default function HospitalSettings() {
           {/* Billing Defaults Tab */}
           <CustomTabPanel value={tabValue} index={3}>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   label="Currency Code"
@@ -339,7 +339,7 @@ export default function HospitalSettings() {
                   placeholder="e.g. USD, INR"
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   type="number"
@@ -349,7 +349,7 @@ export default function HospitalSettings() {
                   onChange={handleChange}
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   label="Invoice Prefix"

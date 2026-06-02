@@ -256,7 +256,7 @@ export default function RoleForm() {
               </Typography>
               <Grid container spacing={3}>
                 {Object.entries(permissionsByModule).map(([moduleName, perms]: [string, any]) => (
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={moduleName}>
+                  <Grid size={{ xs: 12 }} key={moduleName}>
                     <Box sx={{ p: 2, bgcolor: "rgba(15, 23, 42, 0.4)", borderRadius: 3, border: "1px solid rgba(255, 255, 255, 0.05)", height: "100%" }}>
                       <Typography variant="subtitle2" sx={{ color: "#14b8a6", mb: 2, fontWeight: 700, textTransform: "uppercase" }}>
                         {moduleName}

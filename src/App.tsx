@@ -30,6 +30,22 @@ import HospitalChangePassword from "./pages/hospitalAuth/HospitalChangePassword"
 import HospitalDashboard from "./pages/hospitalAuth/HospitalDashboard";
 import HospitalProfile from "./pages/hospitalAuth/HospitalProfile";
 import HospitalSettings from "./pages/hospitalAuth/HospitalSettings";
+import DepartmentsList from "./pages/hospitalAuth/departments/DepartmentsList";
+import DepartmentForm from "./pages/hospitalAuth/departments/DepartmentForm";
+import HospitalUsersList from "./pages/hospitalAuth/users/UsersList";
+import HospitalUserForm from "./pages/hospitalAuth/users/UserForm";
+import HospitalRolesList from "./pages/hospitalAuth/roles/RolesList";
+import HospitalRoleForm from "./pages/hospitalAuth/roles/RoleForm";
+import PermissionMatrix from "./pages/hospitalAuth/roles/PermissionMatrix";
+import ModuleAccess from "./pages/hospitalAuth/settings/ModuleAccess";
+import DoctorsList from "./pages/hospitalAuth/doctors/DoctorsList";
+import DoctorForm from "./pages/hospitalAuth/doctors/DoctorForm";
+import DoctorSchedule from "./pages/hospitalAuth/doctors/DoctorSchedule";
+import DoctorLeaves from "./pages/hospitalAuth/doctors/DoctorLeaves";
+import LookupManager from "./pages/hospitalAuth/settings/LookupManager";
+import FormTemplatesList from "./pages/hospitalAuth/formBuilder/FormTemplatesList";
+import FormBuilder from "./pages/hospitalAuth/formBuilder/FormBuilder";
+import AuditLogs from "./pages/hospitalAuth/settings/AuditLogs";
 import { HospitalAuthProvider } from "./contexts/HospitalAuthContext";
 import { HospitalProtectedRoute } from "./components/HospitalProtectedRoute";
 import HospitalLayout from "./layouts/HospitalLayout";
@@ -86,6 +102,27 @@ function App() {
             <Route path="/hospital/dashboard" element={<HospitalDashboard />} />
             <Route path="/hospital/profile" element={<HospitalProfile />} />
             <Route path="/hospital/settings" element={<HospitalSettings />} />
+            <Route path="/hospital/departments" element={<DepartmentsList />} />
+            <Route path="/hospital/departments/new" element={<DepartmentForm />} />
+            <Route path="/hospital/departments/:id/edit" element={<DepartmentForm />} />
+            <Route path="/hospital/users" element={<HospitalUsersList />} />
+            <Route path="/hospital/users/new" element={<HospitalUserForm />} />
+            <Route path="/hospital/users/:id/edit" element={<HospitalUserForm />} />
+            <Route path="/hospital/roles" element={<HospitalRolesList />} />
+            <Route path="/hospital/roles/new" element={<HospitalRoleForm />} />
+            <Route path="/hospital/roles/:id/edit" element={<HospitalRoleForm />} />
+            <Route path="/hospital/permissions-matrix" element={<PermissionMatrix />} />
+            <Route path="/hospital/module-access" element={<ModuleAccess />} />
+            <Route path="/hospital/doctors" element={<DoctorsList />} />
+            <Route path="/hospital/doctors/new" element={<DoctorForm />} />
+            <Route path="/hospital/doctors/:id/edit" element={<DoctorForm />} />
+            <Route path="/hospital/doctors/:id/schedule" element={<DoctorSchedule />} />
+            <Route path="/hospital/doctors/:id/leaves" element={<DoctorLeaves />} />
+            <Route path="/hospital/lookups" element={<LookupManager />} />
+            <Route path="/hospital/form-builder" element={<FormTemplatesList />} />
+            <Route path="/hospital/form-builder/new" element={<FormBuilder />} />
+            <Route path="/hospital/form-builder/:id/edit" element={<FormBuilder />} />
+            <Route path="/hospital/audit-logs" element={<AuditLogs />} />
             {/* Add more hospital routes here as they are built */}
           </Route>
         </Route>

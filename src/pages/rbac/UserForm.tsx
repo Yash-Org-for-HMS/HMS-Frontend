@@ -31,6 +31,7 @@ interface Role {
   roleId: string;
   roleName: string;
   hospitalId: string | null;
+  isSystemRole?: boolean;
 }
 
 export default function UserForm() {
@@ -85,7 +86,7 @@ export default function UserForm() {
   useEffect(() => {
     if (formData.hospitalId && roles.length > 0) {
       setFilteredRoles(
-        roles.filter(r => r.hospitalId === formData.hospitalId || r.hospitalId === null) // Include system roles
+        roles.filter(r => r.hospitalId === formData.hospitalId || r.isSystemRole) // Include system roles
       );
     } else {
       setFilteredRoles([]);
@@ -206,7 +207,7 @@ export default function UserForm() {
             User Details
           </Typography>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="First Name"
@@ -225,7 +226,7 @@ export default function UserForm() {
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="Last Name"
@@ -244,7 +245,7 @@ export default function UserForm() {
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="Email"
@@ -265,7 +266,7 @@ export default function UserForm() {
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="Phone (Optional)"
@@ -283,7 +284,7 @@ export default function UserForm() {
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="Employee Code (Optional)"
@@ -302,13 +303,13 @@ export default function UserForm() {
               />
             </Grid>
             
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Typography variant="h6" sx={{ color: "#f8fafc", mb: 2, mt: 2 }}>
                 Access & Security
               </Typography>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 select
@@ -335,7 +336,7 @@ export default function UserForm() {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 select
@@ -365,7 +366,7 @@ export default function UserForm() {
             </Grid>
             
             {!isEdit && (
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   label="Password"
@@ -374,7 +375,7 @@ export default function UserForm() {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Leave empty to auto-generate"
-                  InputLabelProps={{ style: { color: "#94a3b8", shrink: true } }}
+                  InputLabelProps={{ shrink: true, style: { color: "#94a3b8" } }}
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       color: "#f1f5f9",
@@ -400,7 +401,7 @@ export default function UserForm() {
             )}
 
             {isEdit && (
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   select
@@ -425,7 +426,7 @@ export default function UserForm() {
               </Grid>
             )}
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
                 <Button
                   variant="outlined"

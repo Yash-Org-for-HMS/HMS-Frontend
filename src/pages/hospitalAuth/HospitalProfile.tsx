@@ -209,7 +209,7 @@ export default function HospitalProfile() {
           {/* General Information Tab */}
           <CustomTabPanel value={tabValue} index={0}>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   label="Hospital Name"
@@ -219,7 +219,7 @@ export default function HospitalProfile() {
                   required
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   select
@@ -237,12 +237,12 @@ export default function HospitalProfile() {
                 </TextField>
               </Grid>
               
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Divider sx={{ my: 1, borderColor: "rgba(255,255,255,0.05)" }} />
                 <Typography variant="subtitle2" sx={{ color: "#94a3b8", mb: 2 }}>Contact Details</Typography>
               </Grid>
 
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   label="Official Email"
@@ -252,7 +252,7 @@ export default function HospitalProfile() {
                   onChange={handleChange}
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   label="Official Phone"
@@ -261,7 +261,7 @@ export default function HospitalProfile() {
                   onChange={handleChange}
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   label="Website URL"
@@ -271,12 +271,12 @@ export default function HospitalProfile() {
                 />
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Divider sx={{ my: 1, borderColor: "rgba(255,255,255,0.05)" }} />
                 <Typography variant="subtitle2" sx={{ color: "#94a3b8", mb: 2 }}>Address Information</Typography>
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   label="Address Line 1"
@@ -285,7 +285,7 @@ export default function HospitalProfile() {
                   onChange={handleChange}
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   label="City (ID for now)"
@@ -294,7 +294,7 @@ export default function HospitalProfile() {
                   onChange={handleChange}
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   label="State (ID for now)"
@@ -303,7 +303,7 @@ export default function HospitalProfile() {
                   onChange={handleChange}
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   label="Postal Code"
@@ -318,7 +318,7 @@ export default function HospitalProfile() {
           {/* Branding Tab */}
           <CustomTabPanel value={tabValue} index={1}>
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   label="Logo URL"
@@ -328,7 +328,7 @@ export default function HospitalProfile() {
                   helperText="Provide an absolute URL to your hospital's logo image."
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   label="Primary Color Hex"
@@ -358,7 +358,7 @@ export default function HospitalProfile() {
           {/* Compliance Tab */}
           <CustomTabPanel value={tabValue} index={2}>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   label="Registration Number"
@@ -367,7 +367,7 @@ export default function HospitalProfile() {
                   onChange={handleChange}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   label="GST Number"
@@ -376,7 +376,7 @@ export default function HospitalProfile() {
                   onChange={handleChange}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   label="License Expiry Date"
@@ -387,7 +387,7 @@ export default function HospitalProfile() {
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   label="Accreditation Type"
