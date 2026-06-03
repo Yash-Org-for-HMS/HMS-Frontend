@@ -49,6 +49,16 @@ import AuditLogs from "./pages/hospitalAuth/settings/AuditLogs";
 import { HospitalAuthProvider } from "./contexts/HospitalAuthContext";
 import { HospitalProtectedRoute } from "./components/HospitalProtectedRoute";
 import HospitalLayout from "./layouts/HospitalLayout";
+import ReceptionLayout from "./layouts/ReceptionLayout";
+import ReceptionDashboard from "./pages/reception/ReceptionDashboard";
+import PatientsList from "./pages/reception/PatientsList";
+import PatientForm from "./pages/reception/PatientForm";
+import PatientProfile from "./pages/reception/PatientProfile";
+import AppointmentsList from "./pages/reception/AppointmentsList";
+import AppointmentForm from "./pages/reception/AppointmentForm";
+import QueueDashboard from "./pages/reception/QueueDashboard";
+import BillingDashboard from "./pages/reception/BillingDashboard";
+import NotificationsLog from "./pages/reception/NotificationsLog";
 
 function App() {
   return (
@@ -114,7 +124,7 @@ function App() {
             <Route path="/hospital/permissions-matrix" element={<PermissionMatrix />} />
             <Route path="/hospital/module-access" element={<ModuleAccess />} />
             <Route path="/hospital/doctors" element={<DoctorsList />} />
-            <Route path="/hospital/doctors/new" element={<DoctorForm />} />
+
             <Route path="/hospital/doctors/:id/edit" element={<DoctorForm />} />
             <Route path="/hospital/doctors/:id/schedule" element={<DoctorSchedule />} />
             <Route path="/hospital/doctors/:id/leaves" element={<DoctorLeaves />} />
@@ -124,6 +134,28 @@ function App() {
             <Route path="/hospital/form-builder/:id/edit" element={<FormBuilder />} />
             <Route path="/hospital/audit-logs" element={<AuditLogs />} />
             {/* Add more hospital routes here as they are built */}
+          </Route>
+        </Route>
+
+        {/* ── Reception Panel Routes ─────────────────────── */}
+        <Route element={<HospitalProtectedRoute />}>
+          <Route element={<ReceptionLayout />}>
+            <Route path="/reception/dashboard" element={<ReceptionDashboard />} />
+            {/* ── Module 2: Patient Registration ── */}
+            <Route path="/reception/patients" element={<PatientsList />} />
+            <Route path="/reception/patients/new" element={<PatientForm />} />
+            <Route path="/reception/patients/:id" element={<PatientProfile />} />
+            <Route path="/reception/patients/:id/edit" element={<PatientForm />} />
+            
+            <Route path="/reception/appointments" element={<AppointmentsList />} />
+            <Route path="/reception/appointments/new" element={<AppointmentForm />} />
+            <Route path="/reception/appointments/:id/edit" element={<AppointmentForm />} />
+            
+            <Route path="/reception/queue" element={<QueueDashboard />} />
+            <Route path="/reception/queue/new" element={<QueueDashboard />} />
+            
+            <Route path="/reception/billing" element={<BillingDashboard />} />
+            <Route path="/reception/notifications" element={<NotificationsLog />} />
           </Route>
         </Route>
       </Routes>

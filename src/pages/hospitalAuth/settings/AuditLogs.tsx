@@ -119,7 +119,7 @@ export default function AuditLogs() {
       {/* Filters */}
       <Paper component="form" onSubmit={handleSearch} sx={{ p: 3, mb: 4, bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}>
         <Grid container spacing={2} alignItems="flex-end">
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               select
               label="Module"
@@ -135,7 +135,7 @@ export default function AuditLogs() {
               <MenuItem value="Settings">Settings</MenuItem>
             </TextField>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               select
               label="Action Type"
@@ -150,29 +150,27 @@ export default function AuditLogs() {
               <MenuItem value="DELETE">Delete</MenuItem>
             </TextField>
           </Grid>
-          <Grid item xs={6} md={2}>
+          <Grid size={{ xs: 6, md: 2 }}>
             <TextField
               type="date"
               label="Start Date"
               name="startDate"
               value={filters.startDate}
               onChange={handleFilterChange}
-              InputLabelProps={{ shrink: true, style: { color: "#94a3b8" } }}
               {...textFieldProps}
             />
           </Grid>
-          <Grid item xs={6} md={2}>
+          <Grid size={{ xs: 6, md: 2 }}>
             <TextField
               type="date"
               label="End Date"
               name="endDate"
               value={filters.endDate}
               onChange={handleFilterChange}
-              InputLabelProps={{ shrink: true, style: { color: "#94a3b8" } }}
               {...textFieldProps}
             />
           </Grid>
-          <Grid item xs={12} md={2}>
+          <Grid size={{ xs: 12, md: 2 }}>
             <Button
               type="submit"
               variant="contained"
@@ -280,7 +278,7 @@ export default function AuditLogs() {
           </Box>
           
           <Grid container sx={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-            <Grid item xs={12} md={6} sx={{ p: 3, borderRight: { md: "1px solid rgba(255,255,255,0.05)" }, borderBottom: { xs: "1px solid rgba(255,255,255,0.05)", md: "none" } }}>
+            <Grid size={{ xs: 12, md: 6 }} sx={{ p: 3, borderRight: { md: "1px solid rgba(255,255,255,0.05)" }, borderBottom: { xs: "1px solid rgba(255,255,255,0.05)", md: "none" } }}>
               <Typography variant="subtitle2" sx={{ color: "#f87171", mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#f87171" }} /> Old Value
               </Typography>
@@ -288,7 +286,7 @@ export default function AuditLogs() {
                 {JSON.stringify(selectedLog?.oldValueJson, null, 2)}
               </Box>
             </Grid>
-            <Grid item xs={12} md={6} sx={{ p: 3 }}>
+            <Grid size={{ xs: 12, md: 6 }} sx={{ p: 3 }}>
               <Typography variant="subtitle2" sx={{ color: "#34d399", mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#34d399" }} /> New Value
               </Typography>

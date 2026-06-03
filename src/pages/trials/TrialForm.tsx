@@ -33,13 +33,38 @@ export default function TrialForm() {
     notes: "",
   });
 
+  const [duration, setDuration] = useState<number | "custom">(14);
+
+  useEffect(() => {
+    if (duration !== "custom" && formData.startDate) {
+      const start = new Date(formData.startDate);
+      if (!isNaN(start.getTime())) {
+        const end = new Date(start.getTime());
+        end.setDate(end.getDate() + duration);
+        setFormData(prev => ({ ...prev, endDate: end.toISOString().split("T")[0] }));
+      }
+    }
+  }, [duration, formData.startDate]);
+
+  const calculateDaysRemaining = () => {
+    if (!formData.endDate) return 0;
+    const end = new Date(formData.endDate);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const endNormalized = new Date(end.getTime());
+    endNormalized.setHours(0, 0, 0, 0);
+    const diffTime = endNormalized.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
   useEffect(() => {
     // Fetch non-converted leads for the dropdown
     const fetchLeads = async () => {
       try {
         const response = await axiosInstance.get("/leads", { params: { limit: 1000 } });
-        // Filter out leads that are already converted
-        setLeads(response.data.data.filter((l: any) => l.leadStatus !== "converted"));
+        // Only include converted leads
+        setLeads(response.data.data.filter((l: any) => l.leadStatus === "converted"));
       } catch (err) {
         console.error(err);
         setError("Failed to load leads");
@@ -50,7 +75,7 @@ export default function TrialForm() {
     fetchLeads();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: any) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -159,7 +184,7 @@ export default function TrialForm() {
                 ))}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 type="date"
@@ -172,18 +197,69 @@ export default function TrialForm() {
                 sx={textFieldSx}
               />
             </Grid>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                select
+                fullWidth
+                label="Duration"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value as any)}
+                sx={textFieldSx}
+                SelectProps={{
+                  MenuProps: {
+                    PaperProps: {
+                      sx: {
+                        bgcolor: "#1e293b",
+                        color: "#f8fafc",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        "& .MuiMenuItem-root": {
+                          py: 1.5,
+                          px: 2,
+                          "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" },
+                          "&.Mui-selected": { bgcolor: "rgba(236, 72, 153, 0.2)", color: "#f472b6" }
+                        }
+                      }
+                    }
+                  }
+                }}
+              >
+                <MenuItem value={7}>7 Days</MenuItem>
+                <MenuItem value={14}>14 Days</MenuItem>
+                <MenuItem value={30}>30 Days</MenuItem>
+                <MenuItem value="custom">Custom Date</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 type="date"
                 label={t("trials.endDate")}
                 name="endDate"
                 value={formData.endDate}
-                onChange={handleChange}
+                onChange={(e) => {
+                  setDuration("custom");
+                  handleChange(e);
+                }}
+                disabled={duration !== "custom"}
                 required
                 InputLabelProps={{ shrink: true }}
-                sx={textFieldSx}
+                sx={{
+                  ...textFieldSx,
+                  "& .Mui-disabled": {
+                    WebkitTextFillColor: "#94a3b8 !important",
+                  }
+                }}
               />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Box sx={{ height: "100%", display: "flex", alignItems: "center", p: 2, bgcolor: "rgba(15, 23, 42, 0.4)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                  <Typography sx={{ color: "#94a3b8" }}>Days Remaining:</Typography>
+                  <Typography sx={{ color: "#ec4899", fontWeight: 800, fontSize: "1.2rem" }}>
+                    {calculateDaysRemaining()} Days
+                  </Typography>
+                </Box>
+              </Box>
             </Grid>
             
             <Grid size={{ xs: 12 }}>

@@ -13,8 +13,28 @@ import {
   Chip,
   IconButton,
   Tooltip,
+  Dialog,
+  DialogContent,
+  TextField,
+  InputAdornment,
+  Alert,
+  CircularProgress,
+  Avatar,
+  Divider,
 } from "@mui/material";
-import { AddRounded, EditRounded, BlockRounded, CheckCircleRounded, KeyRounded } from "@mui/icons-material";
+import {
+  AddRounded,
+  EditRounded,
+  BlockRounded,
+  CheckCircleRounded,
+  KeyRounded,
+  Visibility,
+  VisibilityOff,
+  ContentCopyRounded,
+  LockResetRounded,
+  PersonRounded,
+  InfoOutlined,
+} from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 
@@ -25,14 +45,378 @@ interface User {
   email: string;
   employeeCode: string;
   isActive: boolean;
+  mustChangePassword?: boolean;
   role?: { roleName: string };
   department?: { departmentName: string };
   branch?: { branchName: string };
 }
 
+// ── Reset Password Dialog ───────────────────────────────────────────────────
+interface ResetPasswordDialogProps {
+  open: boolean;
+  user: User | null;
+  onClose: () => void;
+  onSuccess: (newPassword: string) => void;
+}
+
+function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDialogProps) {
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [useDefault, setUseDefault] = useState(false);
+
+  const handleClose = () => {
+    setNewPassword("");
+    setConfirmPassword("");
+    setError(null);
+    setUseDefault(false);
+    onClose();
+  };
+
+  const handleReset = async () => {
+    if (!useDefault) {
+      if (!newPassword || newPassword.length < 6) {
+        setError("Password must be at least 6 characters.");
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setError("Passwords do not match.");
+        return;
+      }
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await axiosInstance.post(`/hospital/users/${user?.userId}/reset-password`, {
+        newPassword: useDefault ? undefined : newPassword,
+      });
+      const finalPassword = res.data.temporaryPassword;
+      onSuccess(finalPassword);
+      handleClose();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to reset password");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          bgcolor: "#0f172a",
+          border: "1px solid rgba(234, 179, 8, 0.2)",
+          borderRadius: 3,
+          backgroundImage: "none",
+          overflow: "hidden",
+        },
+      }}
+    >
+      <Box sx={{ height: 4, background: "linear-gradient(90deg, #f59e0b, #eab308)" }} />
+      <DialogContent sx={{ p: 4 }}>
+        {/* Header */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: "50%",
+              bgcolor: "rgba(234, 179, 8, 0.1)",
+              border: "2px solid rgba(234, 179, 8, 0.3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <LockResetRounded sx={{ color: "#fbbf24", fontSize: 24 }} />
+          </Box>
+          <Box>
+            <Typography variant="h6" sx={{ color: "#f1f5f9", fontWeight: 700 }}>
+              Reset Password
+            </Typography>
+            <Typography variant="caption" sx={{ color: "#64748b" }}>
+              For:{" "}
+              <Box component="span" sx={{ color: "#94a3b8", fontWeight: 600 }}>
+                {user?.firstName} {user?.lastName}
+              </Box>
+              {" · "}
+              <Box component="span" sx={{ color: "#64748b" }}>
+                {user?.email}
+              </Box>
+            </Typography>
+          </Box>
+        </Box>
+
+        {error && (
+          <Alert
+            severity="error"
+            sx={{ mb: 2, bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.2)" }}
+          >
+            {error}
+          </Alert>
+        )}
+
+        {/* Default password option */}
+        <Box
+          onClick={() => setUseDefault(!useDefault)}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            p: 2,
+            mb: 3,
+            borderRadius: 2,
+            bgcolor: useDefault ? "rgba(234,179,8,0.08)" : "rgba(255,255,255,0.02)",
+            border: `1px solid ${useDefault ? "rgba(234,179,8,0.3)" : "rgba(255,255,255,0.08)"}`,
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            "&:hover": { bgcolor: "rgba(234,179,8,0.05)" },
+          }}
+        >
+          <Box
+            sx={{
+              width: 18,
+              height: 18,
+              borderRadius: "50%",
+              border: `2px solid ${useDefault ? "#fbbf24" : "#334155"}`,
+              bgcolor: useDefault ? "#fbbf24" : "transparent",
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {useDefault && <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#0f172a" }} />}
+          </Box>
+          <Box>
+            <Typography variant="body2" sx={{ color: "#e2e8f0", fontWeight: 600 }}>
+              Use default password
+            </Typography>
+            <Typography variant="caption" sx={{ color: "#64748b" }}>
+              Resets to{" "}
+              <Chip
+                label="Password@123"
+                size="small"
+                sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#fbbf24", fontFamily: "monospace", fontWeight: 700, fontSize: "0.72rem", height: 18 }}
+              />
+            </Typography>
+          </Box>
+        </Box>
+
+        {!useDefault && (
+          <>
+            <Divider sx={{ borderColor: "rgba(255,255,255,0.06)", mb: 3 }}>
+              <Typography variant="caption" sx={{ color: "#334155", px: 1 }}>
+                or set custom password
+              </Typography>
+            </Divider>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 3 }}>
+              <TextField
+                fullWidth
+                label="New Password"
+                type={showNew ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => { setNewPassword(e.target.value); setError(null); }}
+                placeholder="Min 6 characters"
+                InputLabelProps={{ style: { color: "#94a3b8" } }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowNew(!showNew)} edge="end" sx={{ color: "#64748b" }}>
+                        {showNew ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    color: "#f1f5f9",
+                    "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
+                    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+                    "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
+                  },
+                }}
+              />
+              <TextField
+                fullWidth
+                label="Confirm New Password"
+                type={showConfirm ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => { setConfirmPassword(e.target.value); setError(null); }}
+                InputLabelProps={{ style: { color: "#94a3b8" } }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowConfirm(!showConfirm)} edge="end" sx={{ color: "#64748b" }}>
+                        {showConfirm ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    color: "#f1f5f9",
+                    "& fieldset": {
+                      borderColor:
+                        confirmPassword && confirmPassword !== newPassword
+                          ? "rgba(239,68,68,0.5)"
+                          : "rgba(255,255,255,0.1)",
+                    },
+                    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+                    "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
+                  },
+                }}
+              />
+              {confirmPassword && confirmPassword !== newPassword && (
+                <Typography variant="caption" sx={{ color: "#f87171" }}>
+                  Passwords do not match
+                </Typography>
+              )}
+            </Box>
+          </>
+        )}
+
+        {/* Info banner */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 1,
+            p: 1.5,
+            borderRadius: 1.5,
+            bgcolor: "rgba(6,182,212,0.04)",
+            border: "1px solid rgba(6,182,212,0.12)",
+            mb: 3,
+          }}
+        >
+          <InfoOutlined sx={{ color: "#06b6d4", fontSize: 16, mt: 0.1, flexShrink: 0 }} />
+          <Typography variant="caption" sx={{ color: "#64748b", lineHeight: 1.6 }}>
+            The staff member will be required to change this password on their next login.
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={handleClose}
+            sx={{ color: "#64748b", borderColor: "rgba(255,255,255,0.12)", textTransform: "none" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={handleReset}
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <LockResetRounded />}
+            sx={{
+              bgcolor: "#d97706",
+              "&:hover": { bgcolor: "#b45309" },
+              textTransform: "none",
+              fontWeight: 600,
+            }}
+          >
+            {loading ? "Resetting..." : "Reset Password"}
+          </Button>
+        </Box>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Credentials Success Dialog (after reset) ────────────────────────────────
+interface CredentialSuccessProps {
+  open: boolean;
+  user: User | null;
+  newPassword: string;
+  onClose: () => void;
+}
+
+function CredentialSuccessDialog({ open, user, newPassword, onClose }: CredentialSuccessProps) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(
+      `Login: ${user?.email}\nPassword: ${newPassword}\n\nNote: You will be asked to change your password on next login.`
+    );
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      PaperProps={{
+        sx: {
+          bgcolor: "#0f172a",
+          border: "1px solid rgba(16,185,129,0.25)",
+          borderRadius: 3,
+          backgroundImage: "none",
+        },
+      }}
+    >
+      <Box sx={{ height: 4, bgcolor: "#10b981" }} />
+      <DialogContent sx={{ p: 3 }}>
+        <Box sx={{ textAlign: "center", mb: 3 }}>
+          <CheckCircleRounded sx={{ color: "#10b981", fontSize: 40, mb: 1 }} />
+          <Typography variant="h6" sx={{ color: "#f1f5f9", fontWeight: 700 }}>
+            Password Reset!
+          </Typography>
+          <Typography variant="caption" sx={{ color: "#64748b" }}>
+            Share these new credentials with {user?.firstName}
+          </Typography>
+        </Box>
+
+        <Box sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", mb: 2 }}>
+          <Typography variant="caption" sx={{ color: "#475569" }}>Email</Typography>
+          <Typography sx={{ color: "#e2e8f0", fontFamily: "monospace", fontSize: "0.85rem", mb: 1 }}>{user?.email}</Typography>
+          <Typography variant="caption" sx={{ color: "#475569" }}>New Password</Typography>
+          <Typography sx={{ color: "#fbbf24", fontFamily: "monospace", fontSize: "0.9rem", fontWeight: 700 }}>{newPassword}</Typography>
+        </Box>
+
+        <Box sx={{ display: "flex", gap: 1.5 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={copied ? <CheckCircleRounded /> : <ContentCopyRounded />}
+            onClick={copy}
+            sx={{ color: copied ? "#10b981" : "#64748b", borderColor: "rgba(255,255,255,0.1)", textTransform: "none" }}
+          >
+            {copied ? "Copied!" : "Copy"}
+          </Button>
+          <Button fullWidth variant="contained" onClick={onClose} sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" }, textTransform: "none" }}>
+            Done
+          </Button>
+        </Box>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Main UsersList ──────────────────────────────────────────────────────────
 export default function UsersList() {
   const [users, setUsers] = useState<User[]>([]);
   const navigate = useNavigate();
+
+  // Reset password dialog
+  const [resetDialog, setResetDialog] = useState<{ open: boolean; user: User | null }>({ open: false, user: null });
+  const [successDialog, setSuccessDialog] = useState<{ open: boolean; user: User | null; password: string }>({
+    open: false,
+    user: null,
+    password: "",
+  });
 
   const fetchUsers = async () => {
     try {
@@ -49,144 +433,182 @@ export default function UsersList() {
 
   const handleToggleStatus = async (user: User) => {
     try {
-      await axiosInstance.put(`/hospital/users/${user.userId}/deactivate`, {
-        isActive: !user.isActive,
-      });
+      await axiosInstance.put(`/hospital/users/${user.userId}/deactivate`, { isActive: !user.isActive });
       fetchUsers();
     } catch (error) {
       console.error("Error toggling user status", error);
     }
   };
 
-  const handleResetPassword = async (user: User) => {
-    if (window.confirm(`Are you sure you want to reset the password for ${user.firstName}?`)) {
-      try {
-        await axiosInstance.post(`/hospital/users/${user.userId}/reset-password`);
-        alert("Password reset to default (Password@123)");
-      } catch (error) {
-        console.error("Error resetting password", error);
-      }
-    }
-  };
-
   return (
-    <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
-            Staff & Users
-          </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
-            Manage your hospital's staff, roles, and assignments.
-          </Typography>
+    <>
+      <Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
+          <Box>
+            <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
+              Staff & Users
+            </Typography>
+            <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+              Manage your hospital's staff, roles, and assignments.
+            </Typography>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/hospital/users/new")}
+            sx={{
+              bgcolor: "#6366f1",
+              "&:hover": { bgcolor: "#4f46e5" },
+              textTransform: "none",
+              fontWeight: 600,
+              px: 3,
+            }}
+          >
+            Add Staff
+          </Button>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/hospital/users/new")}
-          sx={{
-            bgcolor: "#6366f1",
-            "&:hover": { bgcolor: "#4f46e5" },
-            textTransform: "none",
-            fontWeight: 600,
-            px: 3,
-          }}
-        >
-          Add Staff
-        </Button>
-      </Box>
 
-      <TableContainer component={Paper} sx={{ bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Name</TableCell>
-              <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Role</TableCell>
-              <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Department</TableCell>
-              <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Branch</TableCell>
-              <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Status</TableCell>
-              <TableCell align="right" sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.length === 0 ? (
+        <TableContainer
+          component={Paper}
+          sx={{ bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}
+        >
+          <Table>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 4, color: "#94a3b8", borderBottom: "none" }}>
-                  No users found.
-                </TableCell>
+                {["Staff Member", "Role", "Department", "Branch", "Status", "Actions"].map((h, i) => (
+                  <TableCell
+                    key={h}
+                    align={i === 5 ? "right" : "left"}
+                    sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}
+                  >
+                    {h}
+                  </TableCell>
+                ))}
               </TableRow>
-            ) : (
-              users.map((user) => (
-                <TableRow key={user.userId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                  <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    <Typography variant="body2" sx={{ color: "#f8fafc", fontWeight: 500 }}>
-                      {user.firstName} {user.lastName}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "#94a3b8" }}>
-                      {user.email} {user.employeeCode && `| ${user.employeeCode}`}
-                    </Typography>
-                  </TableCell>
-                  <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    {user.role?.roleName || "-"}
-                  </TableCell>
-                  <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    {user.department?.departmentName || "-"}
-                  </TableCell>
-                  <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    {user.branch?.branchName || "-"}
-                  </TableCell>
-                  <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    <Chip
-                      label={user.isActive ? "Active" : "Inactive"}
-                      size="small"
-                      sx={{
-                        bgcolor: user.isActive ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                        color: user.isActive ? "#34d399" : "#f87171",
-                        fontWeight: 600,
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell align="right" sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    <Tooltip title="Reset Password">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleResetPassword(user)}
-                        sx={{ color: "#94a3b8", "&:hover": { color: "#eab308", bgcolor: "rgba(234, 179, 8, 0.1)" } }}
-                      >
-                        <KeyRounded fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Edit Staff">
-                      <IconButton
-                        size="small"
-                        onClick={() => navigate(`/hospital/users/${user.userId}/edit`)}
-                        sx={{ color: "#94a3b8", "&:hover": { color: "#6366f1", bgcolor: "rgba(99, 102, 241, 0.1)" } }}
-                      >
-                        <EditRounded fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title={user.isActive ? "Deactivate User" : "Activate User"}>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleToggleStatus(user)}
-                        sx={{
-                          color: "#94a3b8",
-                          "&:hover": {
-                            color: user.isActive ? "#f87171" : "#34d399",
-                            bgcolor: user.isActive ? "rgba(239, 68, 68, 0.1)" : "rgba(16, 185, 129, 0.1)",
-                          },
-                        }}
-                      >
-                        {user.isActive ? <BlockRounded fontSize="small" /> : <CheckCircleRounded fontSize="small" />}
-                      </IconButton>
-                    </Tooltip>
+            </TableHead>
+            <TableBody>
+              {users.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: "#94a3b8", borderBottom: "none" }}>
+                    No staff members found.
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Box>
+              ) : (
+                users.map((user) => (
+                  <TableRow key={user.userId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
+                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Avatar
+                          sx={{
+                            width: 34,
+                            height: 34,
+                            bgcolor: "#6366f1",
+                            fontSize: "0.85rem",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" sx={{ color: "#f8fafc", fontWeight: 500 }}>
+                            {user.firstName} {user.lastName}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: "#64748b" }}>
+                            {user.email}
+                            {user.employeeCode && ` · ${user.employeeCode}`}
+                          </Typography>
+                          {user.mustChangePassword && (
+                            <Chip
+                              label="Must change password"
+                              size="small"
+                              sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#fbbf24", height: 16, fontSize: "0.65rem", ml: 0.5 }}
+                            />
+                          )}
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      {user.role?.roleName || "—"}
+                    </TableCell>
+                    <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      {user.department?.departmentName || "—"}
+                    </TableCell>
+                    <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      {user.branch?.branchName || "—"}
+                    </TableCell>
+                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      <Chip
+                        label={user.isActive ? "Active" : "Inactive"}
+                        size="small"
+                        sx={{
+                          bgcolor: user.isActive ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
+                          color: user.isActive ? "#34d399" : "#f87171",
+                          fontWeight: 600,
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell align="right" sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      <Tooltip title="Reset Password">
+                        <IconButton
+                          size="small"
+                          onClick={() => setResetDialog({ open: true, user })}
+                          sx={{ color: "#94a3b8", "&:hover": { color: "#fbbf24", bgcolor: "rgba(234,179,8,0.1)" } }}
+                        >
+                          <KeyRounded fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Edit Staff">
+                        <IconButton
+                          size="small"
+                          onClick={() => navigate(`/hospital/users/${user.userId}/edit`)}
+                          sx={{ color: "#94a3b8", "&:hover": { color: "#6366f1", bgcolor: "rgba(99,102,241,0.1)" } }}
+                        >
+                          <EditRounded fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title={user.isActive ? "Deactivate" : "Activate"}>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleToggleStatus(user)}
+                          sx={{
+                            color: "#94a3b8",
+                            "&:hover": {
+                              color: user.isActive ? "#f87171" : "#34d399",
+                              bgcolor: user.isActive ? "rgba(239,68,68,0.1)" : "rgba(16,185,129,0.1)",
+                            },
+                          }}
+                        >
+                          {user.isActive ? <BlockRounded fontSize="small" /> : <CheckCircleRounded fontSize="small" />}
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
+
+      {/* Reset Password Dialog */}
+      <ResetPasswordDialog
+        open={resetDialog.open}
+        user={resetDialog.user}
+        onClose={() => setResetDialog({ open: false, user: null })}
+        onSuccess={(pwd) => {
+          setSuccessDialog({ open: true, user: resetDialog.user, password: pwd });
+          setResetDialog({ open: false, user: null });
+          fetchUsers();
+        }}
+      />
+
+      {/* Success Credential Dialog */}
+      <CredentialSuccessDialog
+        open={successDialog.open}
+        user={successDialog.user}
+        newPassword={successDialog.password}
+        onClose={() => setSuccessDialog({ open: false, user: null, password: "" })}
+      />
+    </>
   );
 }

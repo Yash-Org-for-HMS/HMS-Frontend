@@ -157,7 +157,7 @@ export default function LookupManager() {
 
       <Paper sx={{ p: 3, mb: 4, bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}>
         <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               select
               fullWidth
@@ -179,7 +179,7 @@ export default function LookupManager() {
               ))}
             </TextField>
           </Grid>
-          <Grid item xs={12} md={6} sx={{ textAlign: "right" }}>
+          <Grid size={{ xs: 12, md: 6 }} sx={{ textAlign: "right" }}>
             <Button
               variant="contained"
               startIcon={<AddRounded />}

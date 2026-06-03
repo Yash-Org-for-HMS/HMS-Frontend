@@ -39,6 +39,7 @@ import {
 } from "recharts";
 
 interface DashboardStats {
+  activePlanName: string;
   profileCompletionPercentage: number;
   totalStaff: number;
   activeUsers: number;
@@ -94,11 +95,17 @@ export default function HospitalDashboard() {
             Welcome back, {user?.firstName} {user?.lastName}. Here's what's happening today.
           </Typography>
         </Box>
+        {stats?.activePlanName && (
+          <Chip
+            label={`Active Plan: ${stats.activePlanName}`}
+            sx={{ bgcolor: "rgba(99, 102, 241, 0.1)", color: "#818cf8", fontWeight: 700, px: 1, border: "1px solid rgba(99, 102, 241, 0.3)" }}
+          />
+        )}
       </Box>
 
       {/* Primary Metrics Row */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={3}>
+        <Grid size={{xs: 12, md: 3}}>
           <Card
             elevation={0}
             sx={{
@@ -158,10 +165,10 @@ export default function HospitalDashboard() {
           </Card>
         </Grid>
         
-        <Grid item xs={12} md={9}>
+        <Grid size={{xs: 12, md: 9}}>
           <Grid container spacing={2}>
             {/* Staff Card */}
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{xs: 12, sm: 6, md: 3}}>
               <Paper elevation={0} sx={{ p: 2, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, height: "100%" }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
                   <Box sx={{ p: 1, borderRadius: 1.5, bgcolor: "rgba(99, 102, 241, 0.1)", color: "#818cf8", display: "flex" }}>
@@ -173,7 +180,7 @@ export default function HospitalDashboard() {
               </Paper>
             </Grid>
             {/* Doctors Card */}
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{xs: 12, sm: 6, md: 3}}>
               <Paper elevation={0} sx={{ p: 2, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, height: "100%" }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
                   <Box sx={{ p: 1, borderRadius: 1.5, bgcolor: "rgba(16, 185, 129, 0.1)", color: "#34d399", display: "flex" }}>
@@ -185,7 +192,7 @@ export default function HospitalDashboard() {
               </Paper>
             </Grid>
             {/* Departments Card */}
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{xs: 12, sm: 6, md: 3}}>
               <Paper elevation={0} sx={{ p: 2, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, height: "100%" }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
                   <Box sx={{ p: 1, borderRadius: 1.5, bgcolor: "rgba(245, 158, 11, 0.1)", color: "#fbbf24", display: "flex" }}>
@@ -197,7 +204,7 @@ export default function HospitalDashboard() {
               </Paper>
             </Grid>
             {/* Active Users Card */}
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{xs: 12, sm: 6, md: 3}}>
               <Paper elevation={0} sx={{ p: 2, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, height: "100%" }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
                   <Box sx={{ p: 1, borderRadius: 1.5, bgcolor: "rgba(236, 72, 153, 0.1)", color: "#f472b6", display: "flex" }}>
@@ -214,7 +221,7 @@ export default function HospitalDashboard() {
 
       {/* Analytics Charts Row */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={7}>
+        <Grid size={{xs: 12, md: 7}}>
           <Paper elevation={0} sx={{ p: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, height: 350 }}>
             <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600, mb: 3 }}>Staff Onboarding (Last 6 Months)</Typography>
             <ResponsiveContainer width="100%" height="80%">
@@ -231,7 +238,7 @@ export default function HospitalDashboard() {
             </ResponsiveContainer>
           </Paper>
         </Grid>
-        <Grid item xs={12} md={5}>
+        <Grid size={{xs: 12, md: 5}}>
           <Paper elevation={0} sx={{ p: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, height: 350 }}>
             <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600, mb: 3 }}>Staff Distribution</Typography>
             {stats?.departmentDistribution && stats.departmentDistribution.length > 0 ? (
@@ -271,7 +278,7 @@ export default function HospitalDashboard() {
         Dashboard Actions
       </Typography>
       <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{xs: 12, sm: 6, md: 3}}>
           <Paper
             elevation={0}
             onClick={() => navigate("/hospital/profile")}
@@ -302,7 +309,7 @@ export default function HospitalDashboard() {
             <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 600 }}>Complete Profile</Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{xs: 12, sm: 6, md: 3}}>
           <Paper
             elevation={0}
             onClick={() => navigate("/hospital/departments")}
@@ -333,7 +340,7 @@ export default function HospitalDashboard() {
             <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 600 }}>Manage Departments</Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{xs: 12, sm: 6, md: 3}}>
           <Paper
             elevation={0}
             onClick={() => navigate("/hospital/users")}
@@ -364,7 +371,7 @@ export default function HospitalDashboard() {
             <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 600 }}>Manage Staff</Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{xs: 12, sm: 6, md: 3}}>
           <Paper
             elevation={0}
             onClick={() => navigate("/hospital/settings/modules")}
@@ -400,7 +407,7 @@ export default function HospitalDashboard() {
       {/* Two Column Layout for Lists */}
       <Grid container spacing={3}>
         {/* Left Column */}
-        <Grid item xs={12} md={6} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <Grid size={{xs: 12, md: 6}} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           {/* Pending Tasks */}
           <Paper elevation={0} sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, overflow: "hidden" }}>
             <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -467,7 +474,7 @@ export default function HospitalDashboard() {
         </Grid>
 
         {/* Right Column */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{xs: 12, md: 6}}>
           <Paper elevation={0} sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, overflow: "hidden", height: "100%" }}>
             <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 1.5 }}>
               <NotificationsActiveRounded sx={{ color: "#fbbf24" }} />

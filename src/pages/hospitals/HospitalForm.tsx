@@ -17,6 +17,7 @@ import {
   DialogContent,
   DialogActions,
   Chip,
+  Autocomplete,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
@@ -33,6 +34,7 @@ export default function HospitalForm() {
   const [error, setError] = useState<string | null>(null);
   const [plans, setPlans] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
+  const [convertedTrials, setConvertedTrials] = useState<any[]>([]);
   const [reload, setReload] = useState(0);
 
   // Branch Dialog State
@@ -60,7 +62,20 @@ export default function HospitalForm() {
       }
     };
 
+    const fetchConvertedTrials = async () => {
+      try {
+        // Fetch all trials that haven't been converted to a hospital yet
+        const response = await axiosInstance.get("/trials", { params: { limit: 1000 } });
+        // Filter out trials that are already 'converted' to a hospital
+        const availableTrials = response.data.data.filter((t: any) => t.trialStatus !== 'converted');
+        setConvertedTrials(availableTrials);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     fetchPlans();
+    fetchConvertedTrials();
 
     if (isEdit) {
       const fetchHospital = async () => {
@@ -211,14 +226,40 @@ export default function HospitalForm() {
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label={t("hospitals.name", "Hospital Name")}
-                name="hospitalName"
+              <Autocomplete
+                freeSolo
+                forcePopupIcon={true}
+                options={convertedTrials.map((t) => t.lead?.hospitalName).filter(Boolean)}
                 value={formData.hospitalName}
-                onChange={handleChange}
-                required
-                sx={textFieldSx}
+                onInputChange={(e, newValue) => {
+                  setFormData((prev) => ({ ...prev, hospitalName: newValue || "" }));
+                }}
+                onChange={(e, newValue) => {
+                  if (newValue) {
+                    const trial = convertedTrials.find(t => t.lead?.hospitalName === newValue);
+                    if (trial && trial.lead) {
+                      setFormData(prev => ({
+                        ...prev,
+                        hospitalName: trial.lead.hospitalName,
+                        officialEmail: prev.officialEmail || trial.lead.email || "",
+                        officialPhone: prev.officialPhone || trial.lead.phone || ""
+                      }));
+                    }
+                  }
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={t("hospitals.name", "Hospital Name")}
+                    required
+                    sx={textFieldSx}
+                  />
+                )}
+                PaperComponent={({ children }) => (
+                  <Paper sx={{ bgcolor: "#1e293b", color: "#f8fafc", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
+                    {children}
+                  </Paper>
+                )}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>

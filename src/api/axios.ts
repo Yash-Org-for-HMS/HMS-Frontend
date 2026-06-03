@@ -16,7 +16,7 @@ axiosInstance.interceptors.request.use(
     let token = null;
     
     // Determine which token to use based on the API route
-    if (config.url?.startsWith("/hospital")) {
+    if (config.url?.startsWith("/hospital") || config.url?.startsWith("/reception")) {
       token = localStorage.getItem("hospitalAccessToken");
     } else {
       token = localStorage.getItem("accessToken");

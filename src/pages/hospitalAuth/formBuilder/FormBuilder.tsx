@@ -174,7 +174,7 @@ export default function FormBuilder() {
       <form onSubmit={handleSave}>
         <Grid container spacing={4}>
           {/* Left Panel - Metadata */}
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 3, bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}>
               <Typography variant="h6" sx={{ color: "#f8fafc", mb: 3, fontWeight: 600 }}>Form Details</Typography>
               
@@ -215,7 +215,7 @@ export default function FormBuilder() {
           </Grid>
 
           {/* Right Panel - Fields Builder */}
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Paper sx={{ p: 3, bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2, minHeight: 400 }}>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                 <Typography variant="h6" sx={{ color: "#f8fafc", fontWeight: 600 }}>Form Fields</Typography>
@@ -244,7 +244,7 @@ export default function FormBuilder() {
                       </Box>
                       
                       <Grid container spacing={2} sx={{ flexGrow: 1 }}>
-                        <Grid item xs={12} sm={6}>
+                        <Grid size={{xs: 12, sm: 6}}>
                           <TextField
                             label="Field Label (Question)"
                             value={field.fieldLabel}
@@ -253,7 +253,7 @@ export default function FormBuilder() {
                             {...textFieldProps}
                           />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid size={{xs: 12, sm: 6}}>
                           <TextField
                             select
                             label="Input Type"
@@ -269,7 +269,7 @@ export default function FormBuilder() {
                         </Grid>
                         
                         {field.fieldType === "dropdown" && (
-                          <Grid item xs={12}>
+                          <Grid size={{xs: 12}}>
                             <TextField
                               label="Dropdown Options (Comma separated)"
                               value={field.validationRulesJson?.options?.join(", ") || ""}
@@ -283,7 +283,7 @@ export default function FormBuilder() {
                           </Grid>
                         )}
                         
-                        <Grid item xs={12} sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+                        <Grid size={{xs: 12}} sx={{ display: "flex", alignItems: "center", gap: 3 }}>
                           <FormControlLabel
                             control={
                               <Switch

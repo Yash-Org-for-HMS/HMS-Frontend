@@ -96,8 +96,14 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
     setHospital(hospitalData);
     setBranch(branchData);
     setSessionId(sessId);
-    
-    navigate("/hospital/dashboard");
+
+    // Role-based redirect: receptionists go to /reception/dashboard
+    const receptionRoles = ["RECEPTIONIST", "RECEPTION", "receptionist", "reception"];
+    if (receptionRoles.includes(userData.role)) {
+      navigate("/reception/dashboard");
+    } else {
+      navigate("/hospital/dashboard");
+    }
   };
 
   const logout = async () => {

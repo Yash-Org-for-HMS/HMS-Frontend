@@ -47,23 +47,9 @@ export default function DoctorsList() {
             Doctor Management
           </Typography>
           <Typography variant="body1" sx={{ color: "#94a3b8" }}>
-            Manage doctor profiles, schedules, and leaves.
+            Manage doctor profiles, schedules, and leaves. Doctors are auto-synced from Staff & Users.
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/hospital/doctors/new")}
-          sx={{
-            bgcolor: "#6366f1",
-            "&:hover": { bgcolor: "#4f46e5" },
-            textTransform: "none",
-            fontWeight: 600,
-            px: 3,
-          }}
-        >
-          Add Doctor
-        </Button>
       </Box>
 
       {loading ? (
@@ -108,10 +94,10 @@ export default function DoctorsList() {
                       {doctor.specialization?.specializationName || "General"}
                     </TableCell>
                     <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                      {doctor.licenseNumber}
+                      {doctor.licenseNumber || "-"}
                     </TableCell>
                     <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                      ${doctor.consultationFee}
+                      {doctor.consultationFee ? `$${doctor.consultationFee}` : "-"}
                     </TableCell>
                     <TableCell align="right" sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                       <Tooltip title="Configure Schedule">

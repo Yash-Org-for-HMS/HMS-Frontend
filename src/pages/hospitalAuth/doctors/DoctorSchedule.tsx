@@ -126,7 +126,7 @@ export default function DoctorSchedule() {
           {schedules.map((schedule, idx) => (
             <Box key={idx} sx={{ p: 2, mb: 3, bgcolor: "rgba(255,255,255,0.02)", borderRadius: 1, border: "1px solid rgba(255,255,255,0.05)" }}>
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} md={3}>
+                <Grid size={{ xs: 12, md: 3 }}>
                   <TextField
                     select
                     label="Day of Week"
@@ -140,7 +140,7 @@ export default function DoctorSchedule() {
                     ))}
                   </TextField>
                 </Grid>
-                <Grid item xs={6} md={3}>
+                <Grid size={{ xs: 6, md: 3 }}>
                   <TextField
                     type="time"
                     label="Start Time"
@@ -150,7 +150,7 @@ export default function DoctorSchedule() {
                     InputLabelProps={{ shrink: true, style: { color: "#94a3b8" } }}
                   />
                 </Grid>
-                <Grid item xs={6} md={3}>
+                <Grid size={{ xs: 6, md: 3 }}>
                   <TextField
                     type="time"
                     label="End Time"
@@ -160,7 +160,7 @@ export default function DoctorSchedule() {
                     InputLabelProps={{ shrink: true, style: { color: "#94a3b8" } }}
                   />
                 </Grid>
-                <Grid item xs={10} md={2}>
+                <Grid size={{ xs: 10, md: 2 }}>
                   <TextField
                     type="number"
                     label="Slot (Min)"
@@ -169,7 +169,7 @@ export default function DoctorSchedule() {
                     {...textFieldProps}
                   />
                 </Grid>
-                <Grid item xs={2} md={1} sx={{ textAlign: "right" }}>
+                <Grid size={{ xs: 2, md: 1 }} sx={{ textAlign: "right" }}>
                   <IconButton onClick={() => handleRemoveSchedule(idx)} sx={{ color: "#f43f5e" }}>
                     <DeleteRounded />
                   </IconButton>

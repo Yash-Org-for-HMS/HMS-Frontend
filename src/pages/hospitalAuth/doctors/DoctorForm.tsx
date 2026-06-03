@@ -19,7 +19,6 @@ import { axiosInstance } from "../../../api/axios";
 export default function DoctorForm() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const isEditing = Boolean(id);
 
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
@@ -54,7 +53,7 @@ export default function DoctorForm() {
         setDepartments(deptRes.data.data);
         setSpecializations(specRes.data.data);
 
-        if (isEditing) {
+        if (id) {
           const docRes = await axiosInstance.get(`/hospital/doctors/${id}`);
           const d = docRes.data.data;
           setFormData({
@@ -78,7 +77,7 @@ export default function DoctorForm() {
       }
     };
     loadData();
-  }, [id, isEditing]);
+  }, [id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -92,11 +91,8 @@ export default function DoctorForm() {
     setError(null);
 
     try {
-      if (isEditing) {
-        await axiosInstance.put(`/hospital/doctors/${id}`, formData);
-      } else {
-        await axiosInstance.post("/hospital/doctors", formData);
-      }
+      if (!id) throw new Error("Invalid Doctor ID");
+      await axiosInstance.put(`/hospital/doctors/${id}`, formData);
       navigate("/hospital/doctors");
     } catch (err: any) {
       setError(err.response?.data?.message || "An error occurred");
@@ -131,7 +127,7 @@ export default function DoctorForm() {
       <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Box>
           <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
-            {isEditing ? "Edit Doctor Profile" : "Add New Doctor"}
+            Edit Doctor Profile
           </Typography>
           <Typography variant="body1" sx={{ color: "#94a3b8" }}>
             Configure personal details and medical qualifications.
@@ -170,7 +166,7 @@ export default function DoctorForm() {
         <Box component="form" onSubmit={handleSubmit} sx={{ p: 4 }}>
           {tabIndex === 0 && (
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="First Name"
                   name="firstName"
@@ -180,7 +176,7 @@ export default function DoctorForm() {
                   {...textFieldProps}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="Last Name"
                   name="lastName"
@@ -190,7 +186,7 @@ export default function DoctorForm() {
                   {...textFieldProps}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="Email Address"
                   name="email"
@@ -198,11 +194,11 @@ export default function DoctorForm() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  disabled={isEditing}
+                  disabled={true}
                   {...textFieldProps}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="Phone Number"
                   name="phone"
@@ -211,25 +207,12 @@ export default function DoctorForm() {
                   {...textFieldProps}
                 />
               </Grid>
-              {!isEditing && (
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    label="Temporary Password"
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    {...textFieldProps}
-                  />
-                </Grid>
-              )}
             </Grid>
           )}
 
           {tabIndex === 1 && (
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   select
                   label="Department"
@@ -244,7 +227,7 @@ export default function DoctorForm() {
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   select
                   label="Specialization"
@@ -259,7 +242,7 @@ export default function DoctorForm() {
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="Registration / License Number"
                   name="licenseNumber"
@@ -269,7 +252,7 @@ export default function DoctorForm() {
                   {...textFieldProps}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="Consultation Fee ($)"
                   name="consultationFee"
@@ -280,7 +263,7 @@ export default function DoctorForm() {
                   {...textFieldProps}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="Qualifications (e.g. MBBS, MD)"
                   name="qualification"
@@ -289,7 +272,7 @@ export default function DoctorForm() {
                   {...textFieldProps}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="Experience (Years)"
                   name="experienceYears"

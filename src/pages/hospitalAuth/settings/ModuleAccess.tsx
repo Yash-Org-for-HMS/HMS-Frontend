@@ -21,6 +21,7 @@ interface ModuleAccessData {
   enabledModules: string[];
   disabledModules: string[];
   planId: string;
+  planName?: string;
 }
 
 export default function ModuleAccess() {
@@ -78,7 +79,7 @@ export default function ModuleAccess() {
           Your hospital's access to modules is dynamically determined by a combination of factors:
         </Typography>
         <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
-          <Chip label="Subscription Plan" sx={{ bgcolor: "#6366f1", color: "#fff", fontWeight: 600 }} />
+          <Chip label={`Plan: ${data?.planName || "Basic"}`} sx={{ bgcolor: "#6366f1", color: "#fff", fontWeight: 600 }} />
           <Typography sx={{ color: "#94a3b8", fontWeight: 700 }}>+</Typography>
           <Chip label="Feature Flags" sx={{ bgcolor: "#3b82f6", color: "#fff", fontWeight: 600 }} />
           <Typography sx={{ color: "#94a3b8", fontWeight: 700 }}>+</Typography>
@@ -91,7 +92,7 @@ export default function ModuleAccess() {
 
       <Grid container spacing={4}>
         {/* Enabled Modules */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2, overflow: "hidden", height: "100%" }}>
             <Box sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", p: 2, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
               <Typography variant="h6" sx={{ color: "#34d399", fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
@@ -123,7 +124,7 @@ export default function ModuleAccess() {
         </Grid>
 
         {/* Disabled Modules */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2, overflow: "hidden", height: "100%" }}>
             <Box sx={{ bgcolor: "rgba(239, 68, 68, 0.1)", p: 2, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
               <Typography variant="h6" sx={{ color: "#f87171", fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>

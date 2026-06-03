@@ -1,0 +1,466 @@
+import { useState, useEffect } from "react";
+import {
+  Box,
+  Typography,
+  Paper,
+  TextField,
+  Button,
+  Grid,
+  MenuItem,
+  CircularProgress,
+  Alert,
+  Divider,
+  InputAdornment,
+  Chip,
+} from "@mui/material";
+import {
+  SaveRounded,
+  PersonRounded,
+  LocalHospitalRounded,
+  HomeRounded,
+  ContactPhoneRounded,
+  LockOpenRounded,
+  ArrowBackRounded,
+} from "@mui/icons-material";
+import { useNavigate, useParams } from "react-router-dom";
+import { axiosInstance } from "../../api/axios";
+
+interface Gender {
+  genderId: number;
+  genderLabel: string;
+  genderCode: string;
+}
+interface BloodGroup {
+  bloodGroupId: number;
+  groupLabel: string;
+  groupCode: string;
+}
+
+const SECTIONS = [
+  { id: "personal", label: "Personal Info", icon: <PersonRounded fontSize="small" /> },
+  { id: "medical", label: "Medical", icon: <LocalHospitalRounded fontSize="small" /> },
+  { id: "address", label: "Address", icon: <HomeRounded fontSize="small" /> },
+  { id: "emergency", label: "Emergency Contact", icon: <ContactPhoneRounded fontSize="small" /> },
+];
+
+export default function PatientForm() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditing = Boolean(id);
+
+  const [activeSection, setActiveSection] = useState("personal");
+  const [loading, setLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const [genders, setGenders] = useState<Gender[]>([]);
+  const [bloodGroups, setBloodGroups] = useState<BloodGroup[]>([]);
+
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    dateOfBirth: "",
+    genderId: "",
+    bloodGroupId: "",
+    phone: "",
+    email: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    allergies: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    emergencyContactRelation: "",
+  });
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const ddRes = await axiosInstance.get("/reception/patients/dropdowns");
+        setGenders(ddRes.data.data.genders);
+        setBloodGroups(ddRes.data.data.bloodGroups);
+
+        if (isEditing && id) {
+          const res = await axiosInstance.get(`/reception/patients/${id}`);
+          const p = res.data.data;
+          setFormData({
+            firstName: p.firstName || "",
+            lastName: p.lastName || "",
+            dateOfBirth: p.dateOfBirth ? new Date(p.dateOfBirth).toISOString().split("T")[0] : "",
+            genderId: String(p.genderId || ""),
+            bloodGroupId: String(p.bloodGroupId || ""),
+            phone: p.phone || "",
+            email: p.email || "",
+            addressLine1: p.addressLine1 || "",
+            addressLine2: p.addressLine2 || "",
+            city: p.city || "",
+            state: p.state || "",
+            postalCode: p.postalCode || "",
+            allergies: p.allergies || "",
+            emergencyContactName: p.emergencyContactName || "",
+            emergencyContactPhone: p.emergencyContactPhone || "",
+            emergencyContactRelation: p.emergencyContactRelation || "",
+          });
+        }
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load data");
+      } finally {
+        setInitialLoad(false);
+      }
+    };
+    load();
+  }, [id, isEditing]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setError(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      if (isEditing && id) {
+        await axiosInstance.put(`/reception/patients/${id}`, formData);
+        setSuccess("Patient updated successfully.");
+        setTimeout(() => navigate(`/reception/patients/${id}`), 1200);
+      } else {
+        const res = await axiosInstance.post("/reception/patients", formData);
+        const patientId = res.data.data.patientId;
+        const mrn = res.data.data.uhidNumber;
+        setSuccess(`Patient registered! MRN: ${mrn}`);
+        setTimeout(() => navigate(`/reception/patients/${patientId}`), 1400);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "An error occurred");
+      setLoading(false);
+    }
+  };
+
+  if (initialLoad) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300 }}>
+        <CircularProgress sx={{ color: "#06b6d4" }} />
+      </Box>
+    );
+  }
+
+  const fieldSx = {
+    "& .MuiOutlinedInput-root": {
+      color: "#f1f5f9",
+      bgcolor: "rgba(255,255,255,0.02)",
+      "& fieldset": { borderColor: "rgba(6, 182, 212, 0.15)" },
+      "&:hover fieldset": { borderColor: "rgba(6, 182, 212, 0.3)" },
+      "&.Mui-focused fieldset": { borderColor: "#06b6d4" },
+    },
+    "& .MuiInputLabel-root": { color: "#64748b" },
+    "& .MuiInputLabel-root.Mui-focused": { color: "#06b6d4" },
+    "& .MuiSvgIcon-root": { color: "#64748b" },
+  };
+
+  const sectionContent: Record<string, React.ReactNode> = {
+    personal: (
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextField
+            fullWidth label="First Name" name="firstName" value={formData.firstName}
+            onChange={handleChange} required sx={fieldSx}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextField
+            fullWidth label="Last Name" name="lastName" value={formData.lastName}
+            onChange={handleChange} sx={fieldSx}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextField
+            fullWidth label="Date of Birth" name="dateOfBirth" type="date"
+            value={formData.dateOfBirth} onChange={handleChange} required sx={fieldSx}
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextField
+            select fullWidth label="Gender" name="genderId" value={formData.genderId}
+            onChange={handleChange} required sx={fieldSx}
+          >
+            {genders.map((g) => (
+              <MenuItem key={g.genderId} value={String(g.genderId)}>{g.genderLabel}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextField
+            fullWidth label="Phone Number" name="phone" value={formData.phone}
+            onChange={handleChange} required sx={fieldSx}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><Typography sx={{ color: "#475569", fontSize: "0.9rem" }}>+91</Typography></InputAdornment>,
+            }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextField
+            fullWidth label="Email Address" name="email" type="email" value={formData.email}
+            onChange={handleChange} required disabled={isEditing} sx={fieldSx}
+            helperText={isEditing ? "Email cannot be changed" : undefined}
+            FormHelperTextProps={{ style: { color: "#475569" } }}
+          />
+        </Grid>
+      </Grid>
+    ),
+
+    medical: (
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextField
+            select fullWidth label="Blood Group" name="bloodGroupId" value={formData.bloodGroupId}
+            onChange={handleChange} required sx={fieldSx}
+          >
+            {bloodGroups.map((b) => (
+              <MenuItem key={b.bloodGroupId} value={String(b.bloodGroupId)}>
+                {b.groupLabel} ({b.groupCode})
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <TextField
+            fullWidth multiline rows={3} label="Known Allergies / Medical Notes"
+            name="allergies" value={formData.allergies} onChange={handleChange} sx={fieldSx}
+            placeholder="e.g. Penicillin, Sulfa drugs, Pollen..."
+          />
+        </Grid>
+      </Grid>
+    ),
+
+    address: (
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12 }}>
+          <TextField
+            fullWidth label="Address Line 1" name="addressLine1" value={formData.addressLine1}
+            onChange={handleChange} sx={fieldSx} placeholder="House/Flat No., Building, Street"
+          />
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <TextField
+            fullWidth label="Address Line 2" name="addressLine2" value={formData.addressLine2}
+            onChange={handleChange} sx={fieldSx} placeholder="Area, Landmark (optional)"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField fullWidth label="City" name="city" value={formData.city} onChange={handleChange} required sx={fieldSx} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField fullWidth label="State" name="state" value={formData.state} onChange={handleChange} sx={fieldSx} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField fullWidth label="Postal Code" name="postalCode" value={formData.postalCode} onChange={handleChange} sx={fieldSx} />
+        </Grid>
+      </Grid>
+    ),
+
+    emergency: (
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, p: 1.5, borderRadius: 1.5, bgcolor: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.12)" }}>
+            <ContactPhoneRounded sx={{ color: "#f59e0b", fontSize: 18 }} />
+            <Typography variant="body2" sx={{ color: "#94a3b8" }}>
+              Emergency contact to notify in case of a medical emergency.
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth label="Contact Name" name="emergencyContactName"
+            value={formData.emergencyContactName} onChange={handleChange} sx={fieldSx}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth label="Contact Phone" name="emergencyContactPhone"
+            value={formData.emergencyContactPhone} onChange={handleChange} sx={fieldSx}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            select fullWidth label="Relationship" name="emergencyContactRelation"
+            value={formData.emergencyContactRelation} onChange={handleChange} sx={fieldSx}
+          >
+            {["Spouse", "Parent", "Child", "Sibling", "Friend", "Guardian", "Other"].map((r) => (
+              <MenuItem key={r} value={r}>{r}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      </Grid>
+    ),
+  };
+
+  return (
+    <Box sx={{ maxWidth: 1000, mx: "auto" }}>
+      {/* Header */}
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4 }}>
+        <Box>
+          <Button
+            startIcon={<ArrowBackRounded />}
+            onClick={() => navigate("/reception/patients")}
+            sx={{ color: "#475569", textTransform: "none", mb: 1, pl: 0 }}
+          >
+            Back to Patients
+          </Button>
+          <Typography variant="h4" sx={{ color: "#f1f5f9", fontWeight: 800, mb: 0.5 }}>
+            {isEditing ? "Edit Patient" : "Register Patient"}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#475569" }}>
+            {isEditing
+              ? "Update patient registration details"
+              : "Fill in the patient information to register them in the system"}
+          </Typography>
+        </Box>
+        {!isEditing && (
+          <Chip
+            icon={<LockOpenRounded sx={{ fontSize: "16px !important" }} />}
+            label="MRN will be auto-generated"
+            sx={{
+              bgcolor: "rgba(6, 182, 212, 0.08)",
+              color: "#06b6d4",
+              border: "1px solid rgba(6, 182, 212, 0.2)",
+              fontWeight: 600,
+            }}
+          />
+        )}
+      </Box>
+
+      {error && <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5" }} onClose={() => setError(null)}>{error}</Alert>}
+      {success && <Alert severity="success" sx={{ mb: 3, bgcolor: "rgba(16,185,129,0.08)", color: "#34d399" }}>{success}</Alert>}
+
+      <form onSubmit={handleSubmit}>
+        <Grid container spacing={3}>
+          {/* ── Section Nav (Left) ── */}
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: 3,
+                border: "1px solid rgba(6, 182, 212, 0.1)",
+                background: "linear-gradient(135deg, #0c1a3a 0%, #0f172a 100%)",
+                overflow: "hidden",
+                position: "sticky",
+                top: 90,
+              }}
+            >
+              <Box sx={{ p: 2 }}>
+                <Typography variant="caption" sx={{ color: "#334155", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
+                  Quick Navigation
+                </Typography>
+              </Box>
+              <Divider sx={{ borderColor: "rgba(6,182,212,0.08)" }} />
+              {SECTIONS.map((section) => {
+                return (
+                  <Box
+                    key={section.id}
+                    onClick={() => {
+                      document.getElementById(`section-${section.id}`)?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.5,
+                      px: 2.5,
+                      py: 1.8,
+                      cursor: "pointer",
+                      borderLeft: "3px solid transparent",
+                      transition: "all 0.15s ease",
+                      "&:hover": { bgcolor: "rgba(6, 182, 212, 0.06)", borderLeft: "3px solid #06b6d4" },
+                    }}
+                  >
+                    <Box sx={{ color: "#334155" }}>{section.icon}</Box>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "#475569", fontWeight: 500 }}
+                    >
+                      {section.label}
+                    </Typography>
+                  </Box>
+                );
+              })}
+            </Paper>
+          </Grid>
+
+          {/* ── Form Content (Right) ── */}
+          <Grid size={{ xs: 12, md: 9 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              {SECTIONS.map((section) => (
+                <Paper
+                  key={section.id}
+                  id={`section-${section.id}`}
+                  elevation={0}
+                  sx={{
+                    p: 4,
+                    borderRadius: 3,
+                    border: "1px solid rgba(6, 182, 212, 0.1)",
+                    background: "linear-gradient(135deg, #0c1a3a 0%, #0f172a 100%)",
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
+                    <Box sx={{ color: "#06b6d4" }}>
+                      {section.icon}
+                    </Box>
+                    <Typography variant="h6" sx={{ color: "#e2e8f0", fontWeight: 700 }}>
+                      {section.label}
+                    </Typography>
+                  </Box>
+                  <Divider sx={{ borderColor: "rgba(6, 182, 212, 0.08)", mb: 3 }} />
+                  {sectionContent[section.id]}
+                </Paper>
+              ))}
+            </Box>
+
+            {/* Submit row */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                alignItems: "center",
+                mt: 3,
+                p: 2.5,
+                borderRadius: 2,
+                bgcolor: "rgba(6, 182, 212, 0.03)",
+                border: "1px solid rgba(6, 182, 212, 0.08)",
+              }}
+            >
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={loading}
+                startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <SaveRounded />}
+                sx={{
+                  background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
+                  fontWeight: 700,
+                  px: 4,
+                  py: 1.3,
+                  textTransform: "none",
+                  borderRadius: 2,
+                  boxShadow: "0 4px 14px rgba(6, 182, 212, 0.25)",
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #0e7490 0%, #0891b2 100%)",
+                    boxShadow: "0 6px 20px rgba(6, 182, 212, 0.35)",
+                  },
+                }}
+              >
+                {loading ? "Saving..." : isEditing ? "Save Changes" : "Register Patient"}
+              </Button>
+            </Box>
+          </Grid>
+        </Grid>
+      </form>
+    </Box>
+  );
+}
