@@ -93,14 +93,14 @@ export default function AuditLogs() {
   const textFieldProps = {
     fullWidth: true,
     size: "small" as const,
-    InputLabelProps: { style: { color: "#94a3b8" } },
+    InputLabelProps: { style: { color: "text.secondary" } },
     sx: {
       "& .MuiOutlinedInput-root": {
-        color: "#f1f5f9",
-        "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-        "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+        color: "text.primary",
+        "& fieldset": { borderColor: "divider" },
+        "&:hover fieldset": { borderColor: "divider" },
         "&.Mui-focused fieldset": { borderColor: "#6366f1" },
-        "& .MuiSvgIcon-root": { color: "#94a3b8" }
+        "& .MuiSvgIcon-root": { color: "text.secondary" }
       },
     },
   };
@@ -108,16 +108,16 @@ export default function AuditLogs() {
   return (
     <Box>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
+        <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
           Audit & Activity Logs
         </Typography>
-        <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+        <Typography variant="body1" sx={{ color: "text.secondary" }}>
           Monitor system events, user actions, and security changes.
         </Typography>
       </Box>
 
       {/* Filters */}
-      <Paper component="form" onSubmit={handleSearch} sx={{ p: 3, mb: 4, bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}>
+      <Paper component="form" onSubmit={handleSearch} sx={{ p: 3, mb: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
         <Grid container spacing={2} alignItems="flex-end">
           <Grid size={{ xs: 12, md: 3 }}>
             <TextField
@@ -186,9 +186,9 @@ export default function AuditLogs() {
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-      <Paper sx={{ bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2, overflow: "hidden" }}>
-        <Box sx={{ p: 2, borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "flex-end" }}>
-          <Button startIcon={<RefreshRounded />} onClick={fetchLogs} sx={{ color: "#94a3b8" }}>Refresh</Button>
+      <Paper sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, overflow: "hidden" }}>
+        <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
+          <Button startIcon={<RefreshRounded />} onClick={fetchLogs} sx={{ color: "text.secondary" }}>Refresh</Button>
         </Box>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -199,17 +199,17 @@ export default function AuditLogs() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)", fontWeight: 600 }}>Timestamp</TableCell>
-                  <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)", fontWeight: 600 }}>User</TableCell>
-                  <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)", fontWeight: 600 }}>Module</TableCell>
-                  <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)", fontWeight: 600 }}>Action</TableCell>
-                  <TableCell align="right" sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)", fontWeight: 600 }}>Details</TableCell>
+                  <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Timestamp</TableCell>
+                  <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>User</TableCell>
+                  <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Module</TableCell>
+                  <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Action</TableCell>
+                  <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Details</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {logs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 4, color: "#94a3b8", borderBottom: "none" }}>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
                       No audit logs found matching criteria.
                     </TableCell>
                   </TableRow>
@@ -218,19 +218,19 @@ export default function AuditLogs() {
                     const actionColors = getActionColor(log.actionType);
                     return (
                       <TableRow key={log.auditLogId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                        <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#94a3b8" }}>
+                        <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary" }}>
                           {new Date(log.createdAt).toLocaleString()}
                         </TableCell>
-                        <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#f8fafc", fontWeight: 500 }}>
+                        <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary", fontWeight: 500 }}>
                           {log.user ? `${log.user.firstName} ${log.user.lastName}` : log.userId}
                         </TableCell>
-                        <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#cbd5e1" }}>
+                        <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary" }}>
                           {log.moduleName} ({log.tableName})
                         </TableCell>
-                        <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                        <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                           <Chip label={log.actionType} size="small" sx={{ bgcolor: actionColors.bg, color: actionColors.text, fontWeight: 600 }} />
                         </TableCell>
-                        <TableCell align="right" sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                        <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                           <Tooltip title="View JSON Diff">
                             <IconButton
                               size="small"
@@ -252,37 +252,37 @@ export default function AuditLogs() {
       </Paper>
 
       {/* Details Modal */}
-      <Dialog open={Boolean(selectedLog)} onClose={() => setSelectedLog(null)} maxWidth="md" fullWidth PaperProps={{ sx: { bgcolor: "#0f172a", color: "#f1f5f9" } }}>
-        <DialogTitle sx={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+      <Dialog open={Boolean(selectedLog)} onClose={() => setSelectedLog(null)} maxWidth="md" fullWidth PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary" } }}>
+        <DialogTitle sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
           Audit Log Details
-          <Typography variant="body2" sx={{ color: "#94a3b8" }}>ID: {selectedLog?.auditLogId}</Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>ID: {selectedLog?.auditLogId}</Typography>
         </DialogTitle>
         <DialogContent sx={{ p: 0 }}>
-          <Box sx={{ display: "flex", flexWrap: "wrap", p: 3, gap: 4, bgcolor: "#1e293b" }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", p: 3, gap: 4, bgcolor: "background.paper" }}>
             <Box>
-              <Typography variant="caption" sx={{ color: "#64748b" }}>User ID</Typography>
-              <Typography sx={{ color: "#f1f5f9" }}>{selectedLog?.userId}</Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>User ID</Typography>
+              <Typography sx={{ color: "text.primary" }}>{selectedLog?.userId}</Typography>
             </Box>
             <Box>
-              <Typography variant="caption" sx={{ color: "#64748b" }}>Module</Typography>
-              <Typography sx={{ color: "#f1f5f9" }}>{selectedLog?.moduleName}</Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>Module</Typography>
+              <Typography sx={{ color: "text.primary" }}>{selectedLog?.moduleName}</Typography>
             </Box>
             <Box>
-              <Typography variant="caption" sx={{ color: "#64748b" }}>Action</Typography>
-              <Typography sx={{ color: "#f1f5f9" }}>{selectedLog?.actionType}</Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>Action</Typography>
+              <Typography sx={{ color: "text.primary" }}>{selectedLog?.actionType}</Typography>
             </Box>
             <Box>
-              <Typography variant="caption" sx={{ color: "#64748b" }}>Timestamp</Typography>
-              <Typography sx={{ color: "#f1f5f9" }}>{selectedLog?.createdAt ? new Date(selectedLog.createdAt).toLocaleString() : ""}</Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>Timestamp</Typography>
+              <Typography sx={{ color: "text.primary" }}>{selectedLog?.createdAt ? new Date(selectedLog.createdAt).toLocaleString() : ""}</Typography>
             </Box>
           </Box>
           
-          <Grid container sx={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+          <Grid container sx={{ borderTop: "1px solid", borderColor: "divider" }}>
             <Grid size={{ xs: 12, md: 6 }} sx={{ p: 3, borderRight: { md: "1px solid rgba(255,255,255,0.05)" }, borderBottom: { xs: "1px solid rgba(255,255,255,0.05)", md: "none" } }}>
               <Typography variant="subtitle2" sx={{ color: "#f87171", mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#f87171" }} /> Old Value
               </Typography>
-              <Box component="pre" sx={{ m: 0, p: 2, bgcolor: "#0f172a", borderRadius: 1, overflowX: "auto", fontSize: "0.85rem", color: "#cbd5e1" }}>
+              <Box component="pre" sx={{ m: 0, p: 2, bgcolor: "background.paper", borderRadius: 1, overflowX: "auto", fontSize: "0.85rem", color: "text.primary" }}>
                 {JSON.stringify(selectedLog?.oldValueJson, null, 2)}
               </Box>
             </Grid>
@@ -290,14 +290,14 @@ export default function AuditLogs() {
               <Typography variant="subtitle2" sx={{ color: "#34d399", mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#34d399" }} /> New Value
               </Typography>
-              <Box component="pre" sx={{ m: 0, p: 2, bgcolor: "#0f172a", borderRadius: 1, overflowX: "auto", fontSize: "0.85rem", color: "#cbd5e1" }}>
+              <Box component="pre" sx={{ m: 0, p: 2, bgcolor: "background.paper", borderRadius: 1, overflowX: "auto", fontSize: "0.85rem", color: "text.primary" }}>
                 {JSON.stringify(selectedLog?.newValueJson, null, 2)}
               </Box>
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ p: 2, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-          <Button onClick={() => setSelectedLog(null)} sx={{ color: "#94a3b8" }}>Close</Button>
+        <DialogActions sx={{ p: 2, borderTop: "1px solid", borderColor: "divider" }}>
+          <Button onClick={() => setSelectedLog(null)} sx={{ color: "text.secondary" }}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>

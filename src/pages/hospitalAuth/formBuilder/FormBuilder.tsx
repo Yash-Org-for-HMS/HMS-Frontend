@@ -137,15 +137,15 @@ export default function FormBuilder() {
 
   const textFieldProps = {
     fullWidth: true,
-    InputLabelProps: { style: { color: "#94a3b8" } },
+    InputLabelProps: { style: { color: "text.secondary" } },
     sx: {
       "& .MuiOutlinedInput-root": {
-        color: "#f1f5f9",
-        "& fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
-        "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.3)" },
+        color: "text.primary",
+        "& fieldset": { borderColor: "divider" },
+        "&:hover fieldset": { borderColor: "divider" },
         "&.Mui-focused fieldset": { borderColor: "#6366f1" },
       },
-      "& .MuiInputLabel-root": { color: "#94a3b8" }
+      "& .MuiInputLabel-root": { color: "text.secondary" }
     },
   };
 
@@ -153,17 +153,17 @@ export default function FormBuilder() {
     <Box sx={{ maxWidth: 1200, mx: "auto" }}>
       <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Box>
-          <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
+          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
             {isEditing ? "Edit Form Template" : "Form Builder"}
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             Design your form by adding and configuring fields dynamically.
           </Typography>
         </Box>
         <Button
           variant="outlined"
           onClick={() => navigate("/hospital/form-builder")}
-          sx={{ color: "#94a3b8", borderColor: "rgba(255,255,255,0.2)" }}
+          sx={{ color: "text.secondary", borderColor: "divider" }}
         >
           Cancel
         </Button>
@@ -175,8 +175,8 @@ export default function FormBuilder() {
         <Grid container spacing={4}>
           {/* Left Panel - Metadata */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 3, bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}>
-              <Typography variant="h6" sx={{ color: "#f8fafc", mb: 3, fontWeight: 600 }}>Form Details</Typography>
+            <Paper sx={{ p: 3, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
+              <Typography variant="h6" sx={{ color: "text.primary", mb: 3, fontWeight: 600 }}>Form Details</Typography>
               
               <TextField
                 label="Form Name"
@@ -216,9 +216,9 @@ export default function FormBuilder() {
 
           {/* Right Panel - Fields Builder */}
           <Grid size={{ xs: 12, md: 8 }}>
-            <Paper sx={{ p: 3, bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2, minHeight: 400 }}>
+            <Paper sx={{ p: 3, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, minHeight: 400 }}>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-                <Typography variant="h6" sx={{ color: "#f8fafc", fontWeight: 600 }}>Form Fields</Typography>
+                <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600 }}>Form Fields</Typography>
                 <Button
                   startIcon={<AddCircleOutlineRounded />}
                   onClick={handleAddDataField}
@@ -230,7 +230,7 @@ export default function FormBuilder() {
 
               {fields.length === 0 ? (
                 <Box sx={{ py: 8, textAlign: "center", border: "2px dashed rgba(255,255,255,0.1)", borderRadius: 2 }}>
-                  <Typography sx={{ color: "#94a3b8", mb: 2 }}>No fields added yet.</Typography>
+                  <Typography sx={{ color: "text.secondary", mb: 2 }}>No fields added yet.</Typography>
                   <Button variant="outlined" onClick={handleAddDataField} sx={{ color: "#38bdf8", borderColor: "rgba(56, 189, 248, 0.5)" }}>
                     Add First Field
                   </Button>
@@ -238,8 +238,8 @@ export default function FormBuilder() {
               ) : (
                 <Box>
                   {fields.map((field, idx) => (
-                    <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 2, mb: 3, p: 2, bgcolor: "rgba(255,255,255,0.02)", borderRadius: 1, border: "1px solid rgba(255,255,255,0.05)" }}>
-                      <Box sx={{ pt: 2, color: "#64748b" }}>
+                    <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 2, mb: 3, p: 2, bgcolor: "action.hover", borderRadius: 1, border: "1px solid", borderColor: "divider" }}>
+                      <Box sx={{ pt: 2, color: "text.secondary" }}>
                         <DragIndicatorRounded />
                       </Box>
                       
@@ -292,9 +292,9 @@ export default function FormBuilder() {
                                 color="primary"
                               />
                             }
-                            label={<Typography sx={{ color: "#94a3b8" }}>Required Field</Typography>}
+                            label={<Typography sx={{ color: "text.secondary" }}>Required Field</Typography>}
                           />
-                          <Typography variant="caption" sx={{ color: "#64748b" }}>
+                          <Typography variant="caption" sx={{ color: "text.secondary" }}>
                             Auto-generated name: <code>{field.fieldName || "..."}</code>
                           </Typography>
                         </Grid>

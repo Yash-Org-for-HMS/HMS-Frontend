@@ -146,16 +146,16 @@ export default function LookupManager() {
     <Box sx={{ maxWidth: 1000, mx: "auto" }}>
       <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <Box>
-          <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
+          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
             Master Data Management
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             Configure system dropdowns and settings without code changes.
           </Typography>
         </Box>
       </Box>
 
-      <Paper sx={{ p: 3, mb: 4, bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}>
+      <Paper sx={{ p: 3, mb: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
         <Grid container spacing={3} alignItems="center">
           <Grid size={{ xs: 12, md: 6 }}>
             <TextField
@@ -164,12 +164,12 @@ export default function LookupManager() {
               label="Select Lookup Table"
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              InputLabelProps={{ style: { color: "#94a3b8" } }}
+              InputLabelProps={{ style: { color: "text.secondary" } }}
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  color: "#f1f5f9",
-                  "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                  "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+                  color: "text.primary",
+                  "& fieldset": { borderColor: "divider" },
+                  "&:hover fieldset": { borderColor: "divider" },
                   "&.Mui-focused fieldset": { borderColor: "#6366f1" }
                 },
               }}
@@ -199,19 +199,19 @@ export default function LookupManager() {
           <CircularProgress sx={{ color: "#6366f1" }} />
         </Box>
       ) : (
-        <TableContainer component={Paper} sx={{ bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}>
+        <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
           <Table>
             <TableHead>
               <TableRow>
                 {config.columns.map((col: any) => (
-                  <TableCell key={col.field} sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)", fontWeight: 600 }}>
+                  <TableCell key={col.field} sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>
                     {col.label}
                   </TableCell>
                 ))}
-                <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)", fontWeight: 600 }}>
+                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>
                   Status
                 </TableCell>
-                <TableCell align="right" sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)", fontWeight: 600 }}>
+                <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>
                   Actions
                 </TableCell>
               </TableRow>
@@ -219,7 +219,7 @@ export default function LookupManager() {
             <TableBody>
               {data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={config.columns.length + 2} align="center" sx={{ py: 4, color: "#94a3b8", borderBottom: "none" }}>
+                  <TableCell colSpan={config.columns.length + 2} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
                     No records found for {config.label}.
                   </TableCell>
                 </TableRow>
@@ -227,11 +227,11 @@ export default function LookupManager() {
                 data.map((item) => (
                   <TableRow key={item[config.idField]} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                     {config.columns.map((col: any) => (
-                      <TableCell key={col.field} sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      <TableCell key={col.field} sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                         {item[col.field]}
                       </TableCell>
                     ))}
-                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Chip
                         label={item.isActive ? "Active" : "Inactive"}
                         size="small"
@@ -242,7 +242,7 @@ export default function LookupManager() {
                         }}
                       />
                     </TableCell>
-                    <TableCell align="right" sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Tooltip title="Edit Record">
                         <IconButton
                           size="small"
@@ -274,8 +274,8 @@ export default function LookupManager() {
       )}
 
       {/* Dynamic Modal */}
-      <Dialog open={modalOpen} onClose={handleClose} PaperProps={{ sx: { bgcolor: "#1e293b", color: "#f1f5f9", width: "400px" } }}>
-        <DialogTitle sx={{ borderBottom: "1px solid rgba(255,255,255,0.1)", mb: 2 }}>
+      <Dialog open={modalOpen} onClose={handleClose} PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", width: "400px" } }}>
+        <DialogTitle sx={{ borderBottom: "1px solid", borderColor: "divider", mb: 2 }}>
           {isEditing ? `Edit ${config.label.slice(0, -1)}` : `Add ${config.label.slice(0, -1)}`}
         </DialogTitle>
         <DialogContent>
@@ -291,19 +291,19 @@ export default function LookupManager() {
                 sx={{
                   mb: 3,
                   "& .MuiOutlinedInput-root": {
-                    color: "#f1f5f9",
-                    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
-                    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.3)" },
+                    color: "text.primary",
+                    "& fieldset": { borderColor: "divider" },
+                    "&:hover fieldset": { borderColor: "divider" },
                     "&.Mui-focused fieldset": { borderColor: "#6366f1" },
                   },
-                  "& .MuiInputLabel-root": { color: "#94a3b8" }
+                  "& .MuiInputLabel-root": { color: "text.secondary" }
                 }}
               />
             ))}
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 0 }}>
-          <Button onClick={handleClose} sx={{ color: "#94a3b8" }}>Cancel</Button>
+          <Button onClick={handleClose} sx={{ color: "text.secondary" }}>Cancel</Button>
           <Button onClick={handleSubmit} variant="contained" sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" } }}>
             Save
           </Button>

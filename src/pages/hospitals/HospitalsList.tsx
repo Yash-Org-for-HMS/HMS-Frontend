@@ -19,11 +19,22 @@ import {
   TextField,
   InputAdornment,
   Pagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Tabs,
+  Tab,
+  Tooltip,
 } from "@mui/material";
 import {
   AddRounded,
   EditRounded,
   SearchRounded,
+  DeleteOutlineRounded,
+  RestoreRounded,
+  VisibilityRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 
@@ -36,12 +47,25 @@ export default function HospitalsList() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState(0); // 0 = Active, 1 = Deleted
+
+  // Delete confirmation dialog
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; hospital: any | null }>({
+    open: false,
+    hospital: null,
+  });
+  const [actionLoading, setActionLoading] = useState(false);
 
   const fetchHospitals = async () => {
     setLoading(true);
     try {
       const response = await axiosInstance.get("/hospitals", {
-        params: { page, limit: 10, search }
+        params: {
+          page,
+          limit: 10,
+          search,
+          ...(activeTab === 1 ? { showDeleted: "true" } : {}),
+        },
       });
       setHospitals(response.data.data);
       setTotalPages(response.data.pagination.totalPages);
@@ -53,17 +77,47 @@ export default function HospitalsList() {
   };
 
   useEffect(() => {
+    setPage(1);
+  }, [activeTab]);
+
+  useEffect(() => {
     fetchHospitals();
-  }, [page, search]);
+  }, [page, search, activeTab]);
+
+  const handleDelete = async () => {
+    if (!deleteDialog.hospital) return;
+    setActionLoading(true);
+    try {
+      await axiosInstance.delete(`/hospitals/${deleteDialog.hospital.hospitalId}`);
+      setDeleteDialog({ open: false, hospital: null });
+      fetchHospitals();
+    } catch (error) {
+      console.error("Failed to delete hospital", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRestore = async (hospitalId: string) => {
+    setActionLoading(true);
+    try {
+      await axiosInstance.put(`/hospitals/${hospitalId}/restore`);
+      fetchHospitals();
+    } catch (error) {
+      console.error("Failed to restore hospital", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
         <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "#f8fafc", mb: 1 }}>
+          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
             {t("hospitals.title", "Hospitals Directory")}
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             {t("hospitals.subtitle", "Manage all hospital tenants and their subscriptions")}
           </Typography>
         </Box>
@@ -81,6 +135,21 @@ export default function HospitalsList() {
         </Button>
       </Box>
 
+      {/* Tabs: Active / Deleted */}
+      <Box sx={{ mb: 3 }}>
+        <Tabs
+          value={activeTab}
+          onChange={(_, v) => setActiveTab(v)}
+          sx={{
+            "& .MuiTab-root": { textTransform: "none", fontWeight: 600, color: "text.secondary" },
+            "& .Mui-selected": { color: "primary.main" },
+          }}
+        >
+          <Tab label="Active Hospitals" />
+          <Tab label="Deleted Hospitals" />
+        </Tabs>
+      </Box>
+
       {/* Filters */}
       <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
         <TextField
@@ -88,11 +157,11 @@ export default function HospitalsList() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"
-          sx={textFieldSx}
+          
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchRounded sx={{ color: "#64748b" }} />
+                <SearchRounded sx={{ color: "text.secondary" }} />
               </InputAdornment>
             ),
           }}
@@ -100,11 +169,11 @@ export default function HospitalsList() {
       </Box>
 
       <Paper
-        elevation={0}
+        elevation={2}
         sx={{
-          bgcolor: "rgba(30, 41, 59, 0.7)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 3,
           overflow: "hidden",
         }}
@@ -112,13 +181,13 @@ export default function HospitalsList() {
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: "rgba(15, 23, 42, 0.6)" }}>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("hospitals.code", "Code")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("hospitals.name", "Hospital Name")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("hospitals.plan", "Plan")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("hospitals.branches", "Branches")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("hospitals.status", "Status")}</TableCell>
-                <TableCell align="right" sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
+              <TableRow sx={{ bgcolor: "background.paper" }}>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("hospitals.code", "Code")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("hospitals.name", "Hospital Name")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("hospitals.plan", "Plan")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("hospitals.branches", "Branches")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("hospitals.status", "Status")}</TableCell>
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -130,20 +199,20 @@ export default function HospitalsList() {
                 </TableRow>
               ) : hospitals.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8, color: "#94a3b8" }}>
-                    {t("common.noData")}
+                  <TableCell colSpan={6} align="center" sx={{ py: 8, color: "text.secondary" }}>
+                    {activeTab === 1 ? "No deleted hospitals found" : t("common.noData")}
                   </TableCell>
                 </TableRow>
               ) : (
                 hospitals.map((hospital) => (
-                  <TableRow key={hospital.hospitalId} hover sx={{ "&:hover": { bgcolor: "rgba(255, 255, 255, 0.02)" } }}>
-                    <TableCell sx={{ color: "#cbd5e1", fontFamily: "monospace", fontWeight: 600 }}>
+                  <TableRow key={hospital.hospitalId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
+                    <TableCell sx={{ color: "text.primary", fontFamily: "monospace", fontWeight: 600 }}>
                       {hospital.hospitalCode}
                     </TableCell>
-                    <TableCell sx={{ color: "#f8fafc", fontWeight: 500 }}>
+                    <TableCell sx={{ color: "text.primary", fontWeight: 500 }}>
                       <Box>
                         {hospital.hospitalName}
-                        <Typography variant="caption" sx={{ display: "block", color: "#94a3b8" }}>
+                        <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
                           {hospital.officialEmail}
                         </Typography>
                       </Box>
@@ -153,7 +222,7 @@ export default function HospitalsList() {
                         <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                           {hospital.branches.map((b: any) => (
                             <Box key={b.branchId} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                              <Typography variant="caption" sx={{ color: "#cbd5e1", fontWeight: 600 }}>
+                              <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600 }}>
                                 {b.branchName}:
                               </Typography>
                               <Chip
@@ -170,30 +239,82 @@ export default function HospitalsList() {
                           ))}
                         </Box>
                       ) : (
-                        <Typography variant="caption" sx={{ color: "#64748b" }}>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
                           No Branches / Plans
                         </Typography>
                       )}
                     </TableCell>
                     <TableCell>
-                      <Typography sx={{ color: "#cbd5e1" }}>{hospital._count?.branches || 0}</Typography>
+                      <Typography sx={{ color: "text.primary" }}>{hospital._count?.branches || 0}</Typography>
                     </TableCell>
                     <TableCell>
                       <Chip 
-                        label={hospital.status} 
+                        label={hospital.isDeleted ? "Deleted" : hospital.status} 
                         size="small" 
                         sx={{ 
-                          bgcolor: hospital.status === "active" ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)", 
-                          color: hospital.status === "active" ? "#34d399" : "#f87171",
+                          bgcolor: hospital.isDeleted
+                            ? "rgba(239, 68, 68, 0.1)"
+                            : hospital.status === "active"
+                              ? "rgba(16, 185, 129, 0.1)"
+                              : "rgba(245, 158, 11, 0.1)",
+                          color: hospital.isDeleted
+                            ? "#f87171"
+                            : hospital.status === "active"
+                              ? "#34d399"
+                              : "#fbbf24",
                           textTransform: "capitalize",
                           fontWeight: 600 
                         }} 
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton onClick={() => navigate(`/hospitals/${hospital.hospitalId}/edit`)} sx={{ color: "#94a3b8" }}>
-                        <EditRounded />
-                      </IconButton>
+                      {activeTab === 0 ? (
+                        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
+                          <Tooltip title="View Overview">
+                            <IconButton
+                              onClick={() => navigate(`/hospitals/${hospital.hospitalId}/overview`)}
+                              sx={{ color: "#3b82f6" }}
+                            >
+                              <VisibilityRounded />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Edit">
+                            <IconButton
+                              onClick={() => navigate(`/hospitals/${hospital.hospitalId}/edit`)}
+                              sx={{ color: "text.secondary" }}
+                            >
+                              <EditRounded />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete">
+                            <IconButton
+                              onClick={() => setDeleteDialog({ open: true, hospital })}
+                              sx={{ color: "#ef4444", "&:hover": { bgcolor: "rgba(239, 68, 68, 0.08)" } }}
+                            >
+                              <DeleteOutlineRounded />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      ) : (
+                        <Tooltip title="Restore Hospital">
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<RestoreRounded />}
+                            onClick={() => handleRestore(hospital.hospitalId)}
+                            disabled={actionLoading}
+                            sx={{
+                              color: "#10b981",
+                              borderColor: "rgba(16, 185, 129, 0.4)",
+                              textTransform: "none",
+                              fontWeight: 600,
+                              "&:hover": { borderColor: "#10b981", bgcolor: "rgba(16, 185, 129, 0.08)" },
+                            }}
+                          >
+                            Restore
+                          </Button>
+                        </Tooltip>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
@@ -203,31 +324,71 @@ export default function HospitalsList() {
         </TableContainer>
 
         {totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid", borderColor: "divider" }}>
             <Pagination 
               count={totalPages} 
               page={page} 
               onChange={(_, value) => setPage(value)} 
               color="primary"
               sx={{
-                "& .MuiPaginationItem-root": { color: "#cbd5e1" },
+                "& .MuiPaginationItem-root": { color: "text.primary" },
                 "& .Mui-selected": { bgcolor: "rgba(59, 130, 246, 0.2) !important", color: "#60a5fa" }
               }}
             />
           </Box>
         )}
       </Paper>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialog.open}
+        onClose={() => setDeleteDialog({ open: false, hospital: null })}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            bgcolor: "background.paper",
+            border: "1px solid",
+            borderColor: "divider",
+            minWidth: 420,
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: "text.primary", pb: 1 }}>
+          Delete Hospital
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: "text.secondary" }}>
+            Are you sure you want to delete{" "}
+            <strong style={{ color: "#ef4444" }}>
+              {deleteDialog.hospital?.hospitalName}
+            </strong>
+            ? The hospital will be marked as inactive and hidden from the active list. You can restore it later from the "Deleted Hospitals" tab.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
+          <Button
+            onClick={() => setDeleteDialog({ open: false, hospital: null })}
+            disabled={actionLoading}
+            sx={{ color: "text.secondary", textTransform: "none", fontWeight: 600 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDelete}
+            disabled={actionLoading}
+            variant="contained"
+            startIcon={actionLoading ? <CircularProgress size={16} color="inherit" /> : <DeleteOutlineRounded />}
+            sx={{
+              bgcolor: "#ef4444",
+              textTransform: "none",
+              fontWeight: 600,
+              "&:hover": { bgcolor: "#dc2626" },
+            }}
+          >
+            {actionLoading ? "Deleting..." : "Delete Hospital"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
-
-const textFieldSx = {
-  "& .MuiOutlinedInput-root": {
-    color: "#f1f5f9",
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
-    "&.Mui-focused fieldset": { borderColor: "#3b82f6" },
-  },
-  "& .MuiInputLabel-root": { color: "#94a3b8" },
-};

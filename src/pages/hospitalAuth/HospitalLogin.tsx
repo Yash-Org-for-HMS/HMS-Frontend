@@ -74,30 +74,18 @@ export default function HospitalLogin() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: `linear-gradient(135deg, #0f172a 0%, #064e3b 100%)`, // Emerald dark gradient for hospitals
-        position: "relative",
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.15) 0%, transparent 60%)",
-          zIndex: 0,
-        },
+        bgcolor: "background.default",
       }}
     >
       <Container maxWidth="xs" sx={{ position: "relative", zIndex: 1 }}>
         <Paper
-          elevation={24}
+          elevation={0}
           sx={{
             p: { xs: 4, md: 5 },
-            borderRadius: 3,
-            background: "rgba(30, 41, 59, 0.7)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+            borderRadius: 4,
+            bgcolor: "background.paper",
+            boxShadow: "0 10px 40px -10px rgba(0,0,0,0.08)",
+            border: "1px solid rgba(15, 23, 42, 0.05)",
           }}
         >
           <Box sx={{ mb: 4, textAlign: "center" }}>
@@ -120,14 +108,14 @@ export default function HospitalLogin() {
               variant="h4"
               sx={{
                 fontWeight: 700,
-                color: "#f8fafc",
+                color: "text.primary",
                 mb: 1,
                 letterSpacing: "-0.5px",
               }}
             >
               Staff Portal
             </Typography>
-            <Typography variant="body2" sx={{ color: "#94a3b8" }}>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
               Sign in to Hospital Administration
             </Typography>
           </Box>
@@ -157,22 +145,10 @@ export default function HospitalLogin() {
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
               required
-              sx={{
-                mb: 2.5,
-                "& .MuiOutlinedInput-root": {
-                  color: "#f1f5f9",
-                  backgroundColor: "rgba(15, 23, 42, 0.6)",
-                  "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                  "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
-                  "&.Mui-focused fieldset": { borderColor: "#10b981" },
-                },
-                "& .MuiInputLabel-root": { color: "#94a3b8" },
-                "& .MuiInputLabel-root.Mui-focused": { color: "#10b981" },
-              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <EmailOutlined sx={{ color: "#64748b" }} />
+                    <EmailOutlined />
                   </InputAdornment>
                 ),
               }}
@@ -187,22 +163,10 @@ export default function HospitalLogin() {
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
               required
-              sx={{
-                mb: 4,
-                "& .MuiOutlinedInput-root": {
-                  color: "#f1f5f9",
-                  backgroundColor: "rgba(15, 23, 42, 0.6)",
-                  "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                  "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
-                  "&.Mui-focused fieldset": { borderColor: "#10b981" },
-                },
-                "& .MuiInputLabel-root": { color: "#94a3b8" },
-                "& .MuiInputLabel-root.Mui-focused": { color: "#10b981" },
-              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockOutlined sx={{ color: "#64748b" }} />
+                    <LockOutlined />
                   </InputAdornment>
                 ),
                 endAdornment: (
@@ -210,7 +174,6 @@ export default function HospitalLogin() {
                     <IconButton
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
-                      sx={{ color: "#64748b" }}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -226,15 +189,17 @@ export default function HospitalLogin() {
               disabled={isLoading}
               sx={{
                 py: 1.5,
-                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                mt: 2,
+                bgcolor: "primary.main",
+                color: "#FFFFFF",
                 fontWeight: 600,
                 fontSize: "1rem",
                 textTransform: "none",
                 borderRadius: 2,
-                boxShadow: "0 4px 14px 0 rgba(16, 185, 129, 0.39)",
+                boxShadow: "none",
                 "&:hover": {
-                  background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
-                  boxShadow: "0 6px 20px rgba(16, 185, 129, 0.4)",
+                  bgcolor: "primary.dark",
+                  boxShadow: "0 4px 12px rgba(16, 185, 129, 0.2)",
                   transform: "translateY(-1px)",
                 },
                 transition: "all 0.2s ease-in-out",

@@ -108,10 +108,10 @@ export default function OnboardingList() {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
         <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "#f8fafc", mb: 1 }}>
+          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
             {t("onboarding.title", "Hospital Onboarding Tracker")}
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             {t("onboarding.subtitle", "Track setup and provisioning progress for new tenants")}
           </Typography>
         </Box>
@@ -124,11 +124,11 @@ export default function OnboardingList() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"
-          sx={textFieldSx}
+          
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchRounded sx={{ color: "#64748b" }} />
+                <SearchRounded sx={{ color: "text.secondary" }} />
               </InputAdornment>
             ),
           }}
@@ -136,11 +136,11 @@ export default function OnboardingList() {
       </Box>
 
       <Paper
-        elevation={0}
+        elevation={2}
         sx={{
-          bgcolor: "rgba(30, 41, 59, 0.7)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 3,
           overflow: "hidden",
         }}
@@ -148,12 +148,12 @@ export default function OnboardingList() {
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: "rgba(15, 23, 42, 0.6)" }}>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("onboarding.hospital", "Hospital")}</TableCell>
-                <TableCell align="center" sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("onboarding.tenantSetup", "Tenant Setup")}</TableCell>
-                <TableCell align="center" sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("onboarding.rolesSeeded", "Roles Seeded")}</TableCell>
-                <TableCell align="center" sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("onboarding.paymentVerified", "Payment Verified")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("onboarding.status", "Overall Status")}</TableCell>
+              <TableRow sx={{ bgcolor: "background.paper" }}>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("onboarding.hospital", "Hospital")}</TableCell>
+                <TableCell align="center" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("onboarding.tenantSetup", "Tenant Setup")}</TableCell>
+                <TableCell align="center" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("onboarding.rolesSeeded", "Roles Seeded")}</TableCell>
+                <TableCell align="center" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("onboarding.paymentVerified", "Payment Verified")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("onboarding.status", "Overall Status")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -165,16 +165,16 @@ export default function OnboardingList() {
                 </TableRow>
               ) : onboardings.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 8, color: "#94a3b8" }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 8, color: "text.secondary" }}>
                     {t("common.noData")}
                   </TableCell>
                 </TableRow>
               ) : (
                 onboardings.map((record) => (
-                  <TableRow key={record.hospitalOnboardingId} hover sx={{ "&:hover": { bgcolor: "rgba(255, 255, 255, 0.02)" } }}>
-                    <TableCell sx={{ color: "#f8fafc", fontWeight: 500 }}>
+                  <TableRow key={record.hospitalOnboardingId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
+                    <TableCell sx={{ color: "text.primary", fontWeight: 500 }}>
                       {record.hospital?.hospitalName}
-                      <Typography variant="caption" sx={{ display: "block", color: "#94a3b8", fontFamily: "monospace" }}>
+                      <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontFamily: "monospace" }}>
                         {record.hospital?.hospitalCode}
                       </Typography>
                     </TableCell>
@@ -217,8 +217,8 @@ export default function OnboardingList() {
                             fontWeight: 600,
                             fontSize: "0.8rem",
                             "& fieldset": { borderColor: "transparent" },
-                            "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                            "&.Mui-focused fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+                            "&:hover fieldset": { borderColor: "divider" },
+                            "&.Mui-focused fieldset": { borderColor: "divider" },
                           },
                           "& .MuiSvgIcon-root": { color: getStatusTextColor(record.onboardingStatus) }
                         }}
@@ -226,9 +226,9 @@ export default function OnboardingList() {
                           MenuProps: {
                             sx: {
                               "& .MuiPaper-root": {
-                                bgcolor: "#1e293b",
-                                color: "#f8fafc",
-                                border: "1px solid rgba(255, 255, 255, 0.1)"
+                                bgcolor: "background.paper",
+                                color: "text.primary",
+                                border: "1px solid", borderColor: "divider"
                               }
                             }
                           }
@@ -248,14 +248,14 @@ export default function OnboardingList() {
         </TableContainer>
 
         {totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid", borderColor: "divider" }}>
             <Pagination 
               count={totalPages} 
               page={page} 
               onChange={(_, value) => setPage(value)} 
               color="primary"
               sx={{
-                "& .MuiPaginationItem-root": { color: "#cbd5e1" },
+                "& .MuiPaginationItem-root": { color: "text.primary" },
                 "& .Mui-selected": { bgcolor: "rgba(16, 185, 129, 0.2) !important", color: "#10b981" }
               }}
             />
@@ -268,11 +268,11 @@ export default function OnboardingList() {
 
 const textFieldSx = {
   "& .MuiOutlinedInput-root": {
-    color: "#f1f5f9",
+    color: "text.primary",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+    "& fieldset": { borderColor: "divider" },
+    "&:hover fieldset": { borderColor: "divider" },
     "&.Mui-focused fieldset": { borderColor: "#10b981" },
   },
-  "& .MuiInputLabel-root": { color: "#94a3b8" },
+  "& .MuiInputLabel-root": { color: "text.secondary" },
 };

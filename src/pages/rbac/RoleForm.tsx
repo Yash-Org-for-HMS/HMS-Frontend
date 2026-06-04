@@ -127,16 +127,16 @@ export default function RoleForm() {
         <IconButton
           onClick={() => navigate("/rbac/roles")}
           sx={{
-            bgcolor: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "#f8fafc",
+            bgcolor: "action.hover",
+            border: "1px solid", borderColor: "divider",
+            color: "text.primary",
             "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
           }}
         >
           <ArrowBackRounded />
         </IconButton>
         <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "#f8fafc", letterSpacing: "-0.5px" }}>
+          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
             {isEdit ? t("rbac.editRole", "Edit Role") : t("rbac.addRole", "Add Role")}
           </Typography>
         </Box>
@@ -145,12 +145,12 @@ export default function RoleForm() {
       {error && <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>{error}</Alert>}
 
       <Paper
-        elevation={0}
+        elevation={2}
         sx={{
           p: { xs: 3, md: 5 },
-          bgcolor: "rgba(30, 41, 59, 0.7)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 4,
         }}
       >
@@ -165,18 +165,18 @@ export default function RoleForm() {
                 value={formData.hospitalId}
                 onChange={handleChange}
                 required
-                sx={textFieldSx}
+                
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
                       sx: {
-                        bgcolor: "#1e293b",
-                        color: "#f8fafc",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        bgcolor: "background.paper",
+                        color: "text.primary",
+                        border: "1px solid", borderColor: "divider",
                         "& .MuiMenuItem-root": {
                           py: 1.8,
                           px: 2,
-                          "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" }
+                          "&:hover": { bgcolor: "action.hover" }
                         }
                       }
                     }
@@ -194,7 +194,7 @@ export default function RoleForm() {
               <Box sx={{ display: "flex", alignItems: "center", height: "100%", pl: 2 }}>
                 <FormControlLabel
                   control={<Switch checked={formData.isSystemRole} onChange={handleChange} name="isSystemRole" color="primary" />}
-                  label={<Typography sx={{ color: "#f8fafc" }}>Is System Role Template</Typography>}
+                  label={<Typography sx={{ color: "text.primary" }}>Is System Role Template</Typography>}
                 />
               </Box>
             </Grid>
@@ -206,7 +206,7 @@ export default function RoleForm() {
                 value={formData.roleName}
                 onChange={handleChange}
                 required
-                sx={textFieldSx}
+                
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -218,7 +218,7 @@ export default function RoleForm() {
                 onChange={handleChange}
                 required
                 inputProps={{ style: { textTransform: "uppercase" } }}
-                sx={textFieldSx}
+                
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -230,14 +230,14 @@ export default function RoleForm() {
                 value={formData.status}
                 onChange={handleChange}
                 required
-                sx={textFieldSx}
+                
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
                       sx: {
-                        bgcolor: "#1e293b",
-                        color: "#f8fafc",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        bgcolor: "background.paper",
+                        color: "text.primary",
+                        border: "1px solid", borderColor: "divider",
                         "& .MuiMenuItem-root": { py: 1.8, px: 2 }
                       }
                     }
@@ -251,13 +251,13 @@ export default function RoleForm() {
 
             {/* Permissions Grid */}
             <Grid size={{ xs: 12 }}>
-              <Typography variant="h6" sx={{ color: "#f8fafc", mt: 2, mb: 3 }}>
+              <Typography variant="h6" sx={{ color: "text.primary", mt: 2, mb: 3 }}>
                 Assign Permissions
               </Typography>
               <Grid container spacing={3}>
                 {Object.entries(permissionsByModule).map(([moduleName, perms]: [string, any]) => (
                   <Grid size={{ xs: 12 }} key={moduleName}>
-                    <Box sx={{ p: 2, bgcolor: "rgba(15, 23, 42, 0.4)", borderRadius: 3, border: "1px solid rgba(255, 255, 255, 0.05)", height: "100%" }}>
+                    <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
                       <Typography variant="subtitle2" sx={{ color: "#14b8a6", mb: 2, fontWeight: 700, textTransform: "uppercase" }}>
                         {moduleName}
                       </Typography>
@@ -273,7 +273,7 @@ export default function RoleForm() {
                                 sx={{ color: "rgba(255,255,255,0.3)", "&.Mui-checked": { color: "#14b8a6" } }}
                               />
                             }
-                            label={<Typography variant="body2" sx={{ color: "#cbd5e1" }}>{perm.actionName}</Typography>}
+                            label={<Typography variant="body2" sx={{ color: "text.primary" }}>{perm.actionName}</Typography>}
                           />
                         ))}
                       </FormGroup>
@@ -289,7 +289,7 @@ export default function RoleForm() {
                   variant="outlined" 
                   onClick={() => navigate("/rbac/roles")} 
                   disabled={loading} 
-                  sx={{ borderColor: "rgba(255,255,255,0.2)", color: "#cbd5e1" }}
+                  sx={{ borderColor: "divider", color: "text.primary" }}
                 >
                   {t("common.cancel", "Cancel")}
                 </Button>
@@ -313,11 +313,11 @@ export default function RoleForm() {
 
 const textFieldSx = {
   "& .MuiOutlinedInput-root": {
-    color: "#f1f5f9",
+    color: "text.primary",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
+    "& fieldset": { borderColor: "divider" },
     "&.Mui-focused fieldset": { borderColor: "#14b8a6" },
   },
-  "& .MuiInputLabel-root": { color: "#94a3b8" },
+  "& .MuiInputLabel-root": { color: "text.secondary" },
   "& .MuiInputLabel-root.Mui-focused": { color: "#14b8a6" },
 };

@@ -39,16 +39,17 @@ export default function LeadForm() {
   const [admins, setAdmins] = useState<any[]>([]);
 
   useEffect(() => {
+    const fetchAdmins = async () => {
+      try {
+        const response = await axiosInstance.get("/super-admins", { params: { limit: 100 } });
+        setAdmins(response.data.data);
+      } catch (err) {
+        console.error("Failed to fetch super admins", err);
+      }
+    };
+    fetchAdmins();
+
     if (isEdit) {
-      const fetchAdmins = async () => {
-        try {
-          const response = await axiosInstance.get("/super-admins", { params: { limit: 100 } });
-          setAdmins(response.data.data);
-        } catch (err) {
-          console.error("Failed to fetch super admins", err);
-        }
-      };
-      fetchAdmins();
       const fetchLead = async () => {
         try {
           const response = await axiosInstance.get(`/leads/${id}`);
@@ -90,7 +91,11 @@ export default function LeadForm() {
           await axiosInstance.patch(`/leads/${id}/assign`, { assignedToUserId: formData.assignedSalesAdminId });
         }
       } else {
-        await axiosInstance.post("/leads", formData);
+        const response = await axiosInstance.post("/leads", formData);
+        const newLeadId = response.data.data?.hospitalLeadId;
+        if (formData.assignedSalesAdminId && newLeadId) {
+          await axiosInstance.patch(`/leads/${newLeadId}/assign`, { assignedToUserId: formData.assignedSalesAdminId });
+        }
       }
       navigate("/leads");
     } catch (err: any) {
@@ -114,16 +119,16 @@ export default function LeadForm() {
         <IconButton
           onClick={() => navigate("/leads")}
           sx={{
-            bgcolor: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "#f8fafc",
+            bgcolor: "action.hover",
+            border: "1px solid", borderColor: "divider",
+            color: "text.primary",
             "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
           }}
         >
           <ArrowBackRounded />
         </IconButton>
         <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "#f8fafc", letterSpacing: "-0.5px" }}>
+          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
             {isEdit ? t("leads.editLead") : t("leads.addLead")}
           </Typography>
         </Box>
@@ -132,12 +137,12 @@ export default function LeadForm() {
       {error && <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>{error}</Alert>}
 
       <Paper
-        elevation={0}
+        elevation={2}
         sx={{
           p: { xs: 3, md: 5 },
-          bgcolor: "rgba(30, 41, 59, 0.7)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 4,
           animation: "fadeInUp 0.6s ease-out both",
         }}
@@ -152,7 +157,7 @@ export default function LeadForm() {
                 value={formData.hospitalName}
                 onChange={handleChange}
                 required
-                sx={textFieldSx}
+                
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -163,7 +168,7 @@ export default function LeadForm() {
                 value={formData.contactPersonName}
                 onChange={handleChange}
                 required
-                sx={textFieldSx}
+                
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -175,7 +180,7 @@ export default function LeadForm() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                sx={textFieldSx}
+                
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -186,7 +191,7 @@ export default function LeadForm() {
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                sx={textFieldSx}
+                
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -197,7 +202,7 @@ export default function LeadForm() {
                 name="leadStatus"
                 value={formData.leadStatus}
                 onChange={handleChange}
-                sx={textFieldSx}
+                
               >
                 <MenuItem value="new">{t("leads.statusNew")}</MenuItem>
                 <MenuItem value="contacted">{t("leads.statusContacted")}</MenuItem>
@@ -206,27 +211,25 @@ export default function LeadForm() {
                 <MenuItem value="converted">{t("leads.statusConverted")}</MenuItem>
               </TextField>
             </Grid>
-            {isEdit && (
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  select
-                  fullWidth
-                  label="Assign To (Super Admin)"
-                  name="assignedSalesAdminId"
-                  value={formData.assignedSalesAdminId}
-                  onChange={handleChange}
-                  sx={textFieldSx}
-                  SelectProps={{ MenuProps: { sx: { "& .MuiPaper-root": { bgcolor: "#1e293b", color: "#f8fafc", border: "1px solid rgba(255, 255, 255, 0.1)" } } } }}
-                >
-                  <MenuItem value="">Unassigned</MenuItem>
-                  {admins.map((admin) => (
-                    <MenuItem key={admin.superAdminId} value={admin.superAdminId}>
-                      {admin.firstName} {admin.lastName} ({admin.email})
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-            )}
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                select
+                fullWidth
+                label="Assign To (Super Admin)"
+                name="assignedSalesAdminId"
+                value={formData.assignedSalesAdminId}
+                onChange={handleChange}
+                
+                SelectProps={{ MenuProps: { sx: { "& .MuiPaper-root": { bgcolor: "background.paper", color: "text.primary", border: "1px solid", borderColor: "divider" } } } }}
+              >
+                <MenuItem value="">Unassigned</MenuItem>
+                {admins.map((admin) => (
+                  <MenuItem key={admin.superAdminId} value={admin.superAdminId}>
+                    {admin.firstName} {admin.lastName} ({admin.email})
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
 
             <Grid size={{ xs: 12 }}>
               <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>
@@ -235,9 +238,9 @@ export default function LeadForm() {
                   onClick={() => navigate("/leads")} 
                   disabled={loading} 
                   sx={{ 
-                    borderColor: "rgba(255,255,255,0.2)", 
-                    color: "#cbd5e1",
-                    "&:hover": { borderColor: "rgba(255,255,255,0.4)" }
+                    borderColor: "divider", 
+                    color: "text.primary",
+                    "&:hover": { borderColor: "divider" }
                   }}
                 >
                   {t("common.cancel")}
@@ -265,12 +268,12 @@ export default function LeadForm() {
 
 const textFieldSx = {
   "& .MuiOutlinedInput-root": {
-    color: "#f1f5f9",
+    color: "text.primary",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)", borderRadius: "12px" },
-    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+    "& fieldset": { borderColor: "divider", borderRadius: "12px" },
+    "&:hover fieldset": { borderColor: "divider" },
     "&.Mui-focused fieldset": { borderColor: "#6366f1" },
   },
-  "& .MuiInputLabel-root": { color: "#94a3b8" },
+  "& .MuiInputLabel-root": { color: "text.secondary" },
   "& .MuiInputLabel-root.Mui-focused": { color: "#6366f1" },
 };

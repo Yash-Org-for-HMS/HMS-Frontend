@@ -1,13 +1,20 @@
 import { useState, useEffect } from "react";
 import {
   Box, Typography, Button, Paper, TextField, MenuItem,
-  CircularProgress, Alert, Grid, IconButton
+  CircularProgress, Alert, Grid, IconButton, FormControlLabel, Switch
 } from "@mui/material";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 
-export default function AppointmentForm() {
+export interface AppointmentFormProps {
+  isEmbedded?: boolean;
+  prefilledPatientId?: string;
+  onSuccess?: (apptId?: string, patientName?: string, apptDate?: string) => void;
+  onCancel?: () => void;
+}
+
+export default function AppointmentForm({ isEmbedded = false, prefilledPatientId, onSuccess, onCancel }: AppointmentFormProps = {}) {
   const navigate = useNavigate();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
@@ -16,13 +23,14 @@ export default function AppointmentForm() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [checkInImmediately, setCheckInImmediately] = useState(true);
 
   const [dropdowns, setDropdowns] = useState<any>({
     departments: [], doctors: [], patients: [], statuses: [], doctorSchedules: []
   });
 
   const [formData, setFormData] = useState({
-    patientId: initialPatientId,
+    patientId: prefilledPatientId || initialPatientId,
     departmentId: "",
     doctorId: "",
     appointmentDate: new Date().toISOString().split('T')[0],
@@ -31,6 +39,12 @@ export default function AppointmentForm() {
   });
 
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (prefilledPatientId) {
+      setFormData(prev => ({ ...prev, patientId: prefilledPatientId }));
+    }
+  }, [prefilledPatientId]);
 
   useEffect(() => {
     const init = async () => {
@@ -99,6 +113,16 @@ export default function AppointmentForm() {
     }
   }, [formData.doctorId, formData.appointmentDate, dropdowns]);
 
+  useEffect(() => {
+    // Default checkInImmediately to true only if appointment is for today
+    const today = new Date().toISOString().split('T')[0];
+    if (formData.appointmentDate === today && !id) {
+      setCheckInImmediately(true);
+    } else {
+      setCheckInImmediately(false);
+    }
+  }, [formData.appointmentDate, id]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -119,12 +143,25 @@ export default function AppointmentForm() {
         reason: formData.reason
       };
 
+      let apptId = id;
       if (id) {
         await axiosInstance.put(`/reception/appointments/${id}`, payload);
       } else {
-        await axiosInstance.post("/reception/appointments", payload);
+        const res = await axiosInstance.post("/reception/appointments", payload);
+        apptId = res.data?.data?.appointmentId;
       }
-      navigate("/reception/appointments");
+      
+      if (checkInImmediately && apptId) {
+        await axiosInstance.put(`/reception/appointments/${apptId}/checkin`);
+      }
+      
+      if (isEmbedded && onSuccess) {
+        const selectedPatient = dropdowns.patients?.find((p: any) => p.patientId === formData.patientId);
+        const pName = selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : "Patient";
+        onSuccess(apptId, pName, payload.appointmentDate);
+      } else {
+        navigate("/reception/appointments");
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to save appointment");
       setSaving(false);
@@ -136,21 +173,23 @@ export default function AppointmentForm() {
   const filteredDoctors = (dropdowns?.doctors || []).filter((d: any) => !formData.departmentId || d.departmentId === formData.departmentId);
 
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto", pb: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
-        <IconButton onClick={() => navigate(-1)} sx={{ color: "#94a3b8", "&:hover": { color: "#f1f5f9", bgcolor: "rgba(255,255,255,0.05)" } }}>
-          <ArrowBackRounded />
-        </IconButton>
-        <Box>
-          <Typography variant="h4" sx={{ color: "#f1f5f9", fontWeight: 800 }}>
-            {id ? "Reschedule Appointment" : "Book New Appointment"}
-          </Typography>
+    <Box sx={{ maxWidth: isEmbedded ? "100%" : 800, mx: "auto", pb: isEmbedded ? 0 : 4 }}>
+      {!isEmbedded && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
+          <IconButton onClick={() => navigate(-1)} sx={{ color: "text.secondary", "&:hover": { color: "text.primary", bgcolor: "action.hover" } }}>
+            <ArrowBackRounded />
+          </IconButton>
+          <Box>
+            <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800 }}>
+              {id ? "Reschedule Appointment" : "Book New Appointment"}
+            </Typography>
+          </Box>
         </Box>
-      </Box>
+      )}
 
       {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>{error}</Alert>}
 
-      <Paper component="form" onSubmit={handleSubmit} elevation={0} sx={{ p: 4, borderRadius: 3, background: "linear-gradient(135deg, #0c1a3a 0%, #0f172a 100%)", border: "1px solid rgba(6,182,212,0.15)" }}>
+      <Paper component="form" onSubmit={handleSubmit} elevation={0} sx={{ p: 4, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider" }}>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12 }}>
             <TextField
@@ -158,7 +197,7 @@ export default function AppointmentForm() {
               label="Select Patient" name="patientId"
               value={formData.patientId || ""} onChange={handleChange}
               disabled={!!id} // Disable changing patient if editing
-              sx={{ "& .MuiInputBase-root": { color: "#f1f5f9" }, "& .MuiInputLabel-root": { color: "#94a3b8" } }}
+              sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
             >
               <MenuItem value="" disabled>Select a Patient</MenuItem>
               {(dropdowns?.patients || []).map((p: any) => (
@@ -173,7 +212,7 @@ export default function AppointmentForm() {
               select fullWidth
               label="Department (Optional Filter)" name="departmentId"
               value={formData.departmentId || ""} onChange={handleChange}
-              sx={{ "& .MuiInputBase-root": { color: "#f1f5f9" }, "& .MuiInputLabel-root": { color: "#94a3b8" } }}
+              sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
             >
               <MenuItem value="">All Departments</MenuItem>
               {(dropdowns?.departments || []).map((d: any) => (
@@ -186,7 +225,7 @@ export default function AppointmentForm() {
               select fullWidth required
               label="Doctor" name="doctorId"
               value={formData.doctorId || ""} onChange={handleChange}
-              sx={{ "& .MuiInputBase-root": { color: "#f1f5f9" }, "& .MuiInputLabel-root": { color: "#94a3b8" } }}
+              sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
             >
               <MenuItem value="" disabled>Select a Doctor</MenuItem>
               {filteredDoctors.map((d: any) => (
@@ -202,7 +241,7 @@ export default function AppointmentForm() {
               label="Appointment Date" name="appointmentDate"
               InputLabelProps={{ shrink: true }}
               value={formData.appointmentDate} onChange={handleChange}
-              sx={{ "& .MuiInputBase-root": { color: "#f1f5f9" }, "& .MuiInputLabel-root": { color: "#94a3b8" } }}
+              sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
@@ -211,7 +250,7 @@ export default function AppointmentForm() {
               label="Time Slot" name="timeSlot"
               value={formData.timeSlot || ""} onChange={handleChange}
               disabled={!formData.appointmentDate || !formData.doctorId}
-              sx={{ "& .MuiInputBase-root": { color: "#f1f5f9" }, "& .MuiInputLabel-root": { color: "#94a3b8" } }}
+              sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
             >
               <MenuItem value="" disabled>Select a Time Slot</MenuItem>
               {availableSlots.map(slot => (
@@ -225,16 +264,31 @@ export default function AppointmentForm() {
               label="Reason for Visit" name="reason"
               value={formData.reason} onChange={handleChange}
               placeholder="E.g., Follow-up, Routine checkup..."
-              sx={{ "& .MuiInputBase-root": { color: "#f1f5f9" }, "& .MuiInputLabel-root": { color: "#94a3b8" } }}
+              sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
             />
           </Grid>
-          <Grid size={{ xs: 12 }} sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-            <Button variant="outlined" onClick={() => navigate(-1)} sx={{ color: "#94a3b8", borderColor: "rgba(255,255,255,0.1)", textTransform: "none" }}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="contained" disabled={saving} startIcon={saving ? <CircularProgress size={20} /> : <SaveRounded />} sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" }, textTransform: "none", fontWeight: 600 }}>
-              {id ? "Update Appointment" : "Confirm Booking"}
-            </Button>
+          <Grid size={{ xs: 12 }} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 2 }}>
+            <FormControlLabel
+              control={
+                <Switch 
+                  checked={checkInImmediately} 
+                  onChange={(e) => setCheckInImmediately(e.target.checked)} 
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#06b6d4" },
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: "#06b6d4" }
+                  }}
+                />
+              }
+              label={<Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>Check-In Immediately (Live Queue)</Typography>}
+            />
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Button variant="outlined" onClick={() => { if (isEmbedded && onCancel) onCancel(); else navigate(-1); }} sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none" }}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="contained" disabled={saving || !formData.patientId} startIcon={saving ? <CircularProgress size={20} /> : <SaveRounded />} sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" }, textTransform: "none", fontWeight: 600 }}>
+                {id ? "Update Appointment" : "Confirm Booking"}
+              </Button>
+            </Box>
           </Grid>
         </Grid>
       </Paper>

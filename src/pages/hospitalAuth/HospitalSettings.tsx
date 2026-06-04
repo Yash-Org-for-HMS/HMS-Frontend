@@ -152,10 +152,10 @@ export default function HospitalSettings() {
 
   return (
     <Box sx={{ maxWidth: 1000, mx: "auto" }}>
-      <Typography variant="h4" fontWeight="700" sx={{ mb: 1, color: "#f8fafc" }}>
+      <Typography variant="h4" fontWeight="700" sx={{ mb: 1, color: "text.primary" }}>
         Hospital Settings
       </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: "#94a3b8" }}>
+      <Typography variant="body1" sx={{ mb: 4, color: "text.secondary" }}>
         Configure appointments, localization, notifications, and billing defaults.
       </Typography>
 
@@ -175,12 +175,12 @@ export default function HospitalSettings() {
         component="form"
         onSubmit={handleSubmit}
         sx={{
-          bgcolor: "#1e293b",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
+          bgcolor: "background.paper",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 3,
         }}
       >
-        <Box sx={{ borderBottom: 1, borderColor: "rgba(255, 255, 255, 0.08)" }}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs
             value={tabValue}
             onChange={handleTabChange}
@@ -189,7 +189,7 @@ export default function HospitalSettings() {
             sx={{
               px: 2,
               "& .MuiTab-root": {
-                color: "#94a3b8",
+                color: "text.secondary",
                 textTransform: "none",
                 fontWeight: 600,
                 fontSize: "0.95rem",
@@ -294,31 +294,31 @@ export default function HospitalSettings() {
                 <FormControlLabel
                   control={<Switch checked={formData.queueEnabled} onChange={handleChange} name="queueEnabled" color="primary" />}
                   label="Enable Patient Queue System"
-                  sx={{ color: "#f8fafc" }}
+                  sx={{ color: "text.primary" }}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
-                <Typography variant="subtitle2" sx={{ color: "#94a3b8", mb: 2 }}>Notification Preferences</Typography>
+                <Typography variant="subtitle2" sx={{ color: "text.secondary", mb: 2 }}>Notification Preferences</Typography>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, md: 4 }}>
                     <FormControlLabel
                       control={<Switch checked={formData.smsEnabled} onChange={handleChange} name="smsEnabled" color="primary" />}
                       label="SMS Notifications"
-                      sx={{ color: "#f8fafc" }}
+                      sx={{ color: "text.primary" }}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, md: 4 }}>
                     <FormControlLabel
                       control={<Switch checked={formData.emailEnabled} onChange={handleChange} name="emailEnabled" color="primary" />}
                       label="Email Notifications"
-                      sx={{ color: "#f8fafc" }}
+                      sx={{ color: "text.primary" }}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, md: 4 }}>
                     <FormControlLabel
                       control={<Switch checked={formData.whatsappEnabled} onChange={handleChange} name="whatsappEnabled" color="primary" />}
                       label="WhatsApp Notifications"
-                      sx={{ color: "#f8fafc" }}
+                      sx={{ color: "text.primary" }}
                     />
                   </Grid>
                 </Grid>
@@ -363,7 +363,7 @@ export default function HospitalSettings() {
           </CustomTabPanel>
         </Box>
 
-        <Box sx={{ p: 3, borderTop: "1px solid rgba(255, 255, 255, 0.08)", display: "flex", justifyContent: "flex-end" }}>
+        <Box sx={{ p: 3, borderTop: "1px solid", borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
           <Button
             type="submit"
             variant="contained"

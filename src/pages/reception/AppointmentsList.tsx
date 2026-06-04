@@ -86,10 +86,10 @@ export default function AppointmentsList() {
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4, flexWrap: "wrap", gap: 2 }}>
         <Box>
-          <Typography variant="h4" sx={{ color: "#f1f5f9", fontWeight: 800, mb: 0.5 }}>
+          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
             Appointments
           </Typography>
-          <Typography variant="body2" sx={{ color: "#475569" }}>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
             Manage patient appointments and check-ins
           </Typography>
         </Box>
@@ -117,14 +117,14 @@ export default function AppointmentsList() {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchRounded sx={{ color: "#475569" }} />
+                <SearchRounded sx={{ color: "text.secondary" }} />
               </InputAdornment>
             ),
           }}
           sx={{
             maxWidth: 400,
             "& .MuiOutlinedInput-root": {
-              color: "#f1f5f9", bgcolor: "rgba(6, 182, 212, 0.04)", borderRadius: 2,
+              color: "text.primary", bgcolor: "background.default", borderRadius: 2,
               "& fieldset": { borderColor: "rgba(6, 182, 212, 0.15)" },
               "&:hover fieldset": { borderColor: "rgba(6, 182, 212, 0.3)" },
               "&.Mui-focused fieldset": { borderColor: "#06b6d4" },
@@ -136,13 +136,13 @@ export default function AppointmentsList() {
       {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>{error}</Alert>}
       {successMsg && <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMsg(null)}>{successMsg}</Alert>}
 
-      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid rgba(6, 182, 212, 0.1)", background: "linear-gradient(135deg, #0c1a3a 0%, #0f172a 100%)", overflow: "hidden" }}>
+      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", overflow: "hidden" }}>
         <TableContainer>
           <Table>
             <TableHead>
               <TableRow>
                 {["Date & Time", "Token", "Patient", "Doctor", "Status", "Actions"].map((h, i) => (
-                  <TableCell key={h} align={i === 5 ? "right" : "left"} sx={{ color: "#475569", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "rgba(6, 182, 212, 0.03)", borderBottom: "1px solid rgba(6, 182, 212, 0.08)" }}>
+                  <TableCell key={h} align={i === 5 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}>
                     {h}
                   </TableCell>
                 ))}
@@ -152,32 +152,32 @@ export default function AppointmentsList() {
               {loading ? (
                 <TableRow><TableCell colSpan={6} align="center" sx={{ py: 4 }}><CircularProgress size={30} sx={{ color: "#06b6d4" }}/></TableCell></TableRow>
               ) : filteredAppointments.length === 0 ? (
-                <TableRow><TableCell colSpan={6} align="center" sx={{ py: 6, color: "#64748b" }}>No appointments found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} align="center" sx={{ py: 6, color: "text.secondary" }}>No appointments found</TableCell></TableRow>
               ) : (
                 filteredAppointments.map(appt => (
-                  <TableRow key={appt.appointmentId} sx={{ "&:hover": { bgcolor: "rgba(6, 182, 212, 0.03)" } }}>
-                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                      <Typography variant="body2" sx={{ color: "#e2e8f0", fontWeight: 600 }}>
+                  <TableRow key={appt.appointmentId} sx={{ "&:hover": { bgcolor: "background.default" } }}>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
+                      <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
                         {new Date(appt.appointmentDate).toLocaleDateString("en-IN")}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: "#94a3b8" }}>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         {new Date(appt.appointmentDate).toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' })}
                       </Typography>
                     </TableCell>
-                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Chip label={`T-${appt.tokenNumber}`} size="small" sx={{ bgcolor: "rgba(6,182,212,0.1)", color: "#06b6d4", fontWeight: 700 }} />
                     </TableCell>
-                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                      <Typography variant="body2" sx={{ color: "#e2e8f0", fontWeight: 500 }}>{appt.patientName}</Typography>
-                      <Typography variant="caption" sx={{ color: "#64748b" }}>{appt.uhid}</Typography>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
+                      <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>{appt.patientName}</Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>{appt.uhid}</Typography>
                     </TableCell>
-                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.04)", color: "#94a3b8", fontSize: "0.85rem" }}>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.85rem" }}>
                       {appt.doctorName}
                     </TableCell>
-                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Chip label={appt.statusLabel} size="small" sx={{ bgcolor: `${appt.statusColor}22`, color: appt.statusColor, border: `1px solid ${appt.statusColor}55`, fontWeight: 600, fontSize: "0.7rem" }} />
                     </TableCell>
-                    <TableCell align="right" sx={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       {appt.statusLabel === 'Scheduled' && (
                         <>
                           <Tooltip title="Check In">
@@ -224,21 +224,21 @@ export default function AppointmentsList() {
       </Paper>
 
       {/* Action Dialog */}
-      <Dialog open={actionDialog.open} onClose={() => setActionDialog({ open: false, type: null, appt: null })} PaperProps={{ sx: { bgcolor: "#0f172a", border: "1px solid rgba(6,182,212,0.2)", borderRadius: 3 } }}>
+      <Dialog open={actionDialog.open} onClose={() => setActionDialog({ open: false, type: null, appt: null })} PaperProps={{ sx: { bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3 } }}>
         <DialogContent sx={{ p: 4, textAlign: "center" }}>
           {actionDialog.type === 'cancel' ? (
             <WarningAmberRounded sx={{ fontSize: 48, color: "#ef4444", mb: 2 }} />
           ) : (
             <CheckCircleRounded sx={{ fontSize: 48, color: "#10b981", mb: 2 }} />
           )}
-          <Typography variant="h6" sx={{ color: "#f1f5f9", fontWeight: 700, mb: 1 }}>
+          <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
             {actionDialog.type === 'cancel' ? 'Cancel Appointment?' : 'Check In Patient?'}
           </Typography>
-          <Typography variant="body2" sx={{ color: "#94a3b8", mb: 3 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
             Are you sure you want to {actionDialog.type === 'cancel' ? 'cancel' : 'check in'} the appointment for {actionDialog.appt?.patientName}?
           </Typography>
           <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
-            <Button variant="outlined" onClick={() => setActionDialog({ open: false, type: null, appt: null })} sx={{ color: "#94a3b8", borderColor: "rgba(255,255,255,0.1)", textTransform: "none" }}>
+            <Button variant="outlined" onClick={() => setActionDialog({ open: false, type: null, appt: null })} sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none" }}>
               Go Back
             </Button>
             <Button variant="contained" onClick={handleAction} disabled={processing} sx={{ bgcolor: actionDialog.type === 'cancel' ? '#ef4444' : '#10b981', "&:hover": { bgcolor: actionDialog.type === 'cancel' ? '#dc2626' : '#059669' }, textTransform: "none" }}>

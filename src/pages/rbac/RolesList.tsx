@@ -19,6 +19,7 @@ import {
   TextField,
   InputAdornment,
   Pagination,
+  Alert,
 } from "@mui/material";
 import {
   AddRounded,
@@ -60,11 +61,11 @@ export default function RolesList() {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
         <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "#f8fafc", mb: 1 }}>
-            {t("rbac.title", "Roles & Permissions")}
+          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
+            {t("rbac.title", "Hospital Roles")}
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
-            {t("rbac.subtitle", "Manage tenant roles and system-wide templates")}
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
+            {t("rbac.subtitle", "Global Support Mode: Manage hospital-level roles across any tenant")}
           </Typography>
         </Box>
         <Button
@@ -80,6 +81,10 @@ export default function RolesList() {
           {t("rbac.addRole", "Add Role")}
         </Button>
       </Box>
+      
+      <Alert severity="info" sx={{ mb: 4, borderRadius: 2 }}>
+        <strong>Global Support Mode:</strong> You are viewing roles for all hospitals on the platform. When creating or editing a role, you will be modifying the permissions for that specific hospital's staff.
+      </Alert>
 
       {/* Filters */}
       <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
@@ -88,11 +93,11 @@ export default function RolesList() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"
-          sx={textFieldSx}
+          
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchRounded sx={{ color: "#64748b" }} />
+                <SearchRounded sx={{ color: "text.secondary" }} />
               </InputAdornment>
             ),
           }}
@@ -100,11 +105,11 @@ export default function RolesList() {
       </Box>
 
       <Paper
-        elevation={0}
+        elevation={2}
         sx={{
-          bgcolor: "rgba(30, 41, 59, 0.7)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 3,
           overflow: "hidden",
         }}
@@ -112,13 +117,13 @@ export default function RolesList() {
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: "rgba(15, 23, 42, 0.6)" }}>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("rbac.roleCode", "Code")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("rbac.roleName", "Role Name")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("rbac.hospital", "Hospital")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("rbac.type", "Type")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("rbac.usersCount", "Users")}</TableCell>
-                <TableCell align="right" sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
+              <TableRow sx={{ bgcolor: "background.paper" }}>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("rbac.roleCode", "Code")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("rbac.roleName", "Role Name")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("rbac.hospital", "Hospital")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("rbac.type", "Type")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("rbac.usersCount", "Users")}</TableCell>
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -130,20 +135,20 @@ export default function RolesList() {
                 </TableRow>
               ) : roles.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8, color: "#94a3b8" }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 8, color: "text.secondary" }}>
                     {t("common.noData")}
                   </TableCell>
                 </TableRow>
               ) : (
                 roles.map((role) => (
-                  <TableRow key={role.roleId} hover sx={{ "&:hover": { bgcolor: "rgba(255, 255, 255, 0.02)" } }}>
-                    <TableCell sx={{ color: "#cbd5e1", fontFamily: "monospace", fontWeight: 600 }}>
+                  <TableRow key={role.roleId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
+                    <TableCell sx={{ color: "text.primary", fontFamily: "monospace", fontWeight: 600 }}>
                       {role.roleCode}
                     </TableCell>
-                    <TableCell sx={{ color: "#f8fafc", fontWeight: 500 }}>
+                    <TableCell sx={{ color: "text.primary", fontWeight: 500 }}>
                       {role.roleName}
                     </TableCell>
-                    <TableCell sx={{ color: "#94a3b8" }}>
+                    <TableCell sx={{ color: "text.secondary" }}>
                       {role.hospital?.hospitalName || "Unknown"}
                     </TableCell>
                     <TableCell>
@@ -154,10 +159,10 @@ export default function RolesList() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Typography sx={{ color: "#cbd5e1" }}>{role._count?.users || 0}</Typography>
+                      <Typography sx={{ color: "text.primary" }}>{role._count?.users || 0}</Typography>
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton onClick={() => navigate(`/rbac/roles/${role.roleId}/edit`)} sx={{ color: "#94a3b8" }}>
+                      <IconButton onClick={() => navigate(`/rbac/roles/${role.roleId}/edit`)} sx={{ color: "text.secondary" }}>
                         <EditRounded />
                       </IconButton>
                     </TableCell>
@@ -169,14 +174,14 @@ export default function RolesList() {
         </TableContainer>
 
         {totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid", borderColor: "divider" }}>
             <Pagination 
               count={totalPages} 
               page={page} 
               onChange={(_, value) => setPage(value)} 
               color="primary"
               sx={{
-                "& .MuiPaginationItem-root": { color: "#cbd5e1" },
+                "& .MuiPaginationItem-root": { color: "text.primary" },
                 "& .Mui-selected": { bgcolor: "rgba(20, 184, 166, 0.2) !important", color: "#2dd4bf" }
               }}
             />
@@ -189,11 +194,11 @@ export default function RolesList() {
 
 const textFieldSx = {
   "& .MuiOutlinedInput-root": {
-    color: "#f1f5f9",
+    color: "text.primary",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+    "& fieldset": { borderColor: "divider" },
+    "&:hover fieldset": { borderColor: "divider" },
     "&.Mui-focused fieldset": { borderColor: "#14b8a6" },
   },
-  "& .MuiInputLabel-root": { color: "#94a3b8" },
+  "& .MuiInputLabel-root": { color: "text.secondary" },
 };

@@ -43,10 +43,10 @@ export default function DoctorsList() {
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
         <Box>
-          <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
+          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
             Doctor Management
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             Manage doctor profiles, schedules, and leaves. Doctors are auto-synced from Staff & Users.
           </Typography>
         </Box>
@@ -57,49 +57,49 @@ export default function DoctorsList() {
           <CircularProgress sx={{ color: "#6366f1" }} />
         </Box>
       ) : (
-        <TableContainer component={Paper} sx={{ bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}>
+        <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Name</TableCell>
-                <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Department</TableCell>
-                <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Specialization</TableCell>
-                <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>License No.</TableCell>
-                <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Fee</TableCell>
-                <TableCell align="right" sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Actions</TableCell>
+                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Name</TableCell>
+                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Department</TableCell>
+                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Specialization</TableCell>
+                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>License No.</TableCell>
+                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Fee</TableCell>
+                <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {doctors.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: "#94a3b8", borderBottom: "none" }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
                     No doctors found.
                   </TableCell>
                 </TableRow>
               ) : (
                 doctors.map((doctor) => (
                   <TableRow key={doctor.doctorId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#f8fafc", fontWeight: 500 }}>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary", fontWeight: 500 }}>
                       Dr. {doctor.user?.firstName} {doctor.user?.lastName}
-                      <Typography variant="caption" display="block" sx={{ color: "#94a3b8" }}>
+                      <Typography variant="caption" display="block" sx={{ color: "text.secondary" }}>
                         {doctor.user?.email}
                       </Typography>
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {doctor.department ? (
                          <Chip label={doctor.department.departmentName} size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: "#34d399" }} />
                       ) : "N/A"}
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {doctor.specialization?.specializationName || "General"}
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {doctor.licenseNumber || "-"}
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {doctor.consultationFee ? `$${doctor.consultationFee}` : "-"}
                     </TableCell>
-                    <TableCell align="right" sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Tooltip title="Configure Schedule">
                         <IconButton
                           size="small"

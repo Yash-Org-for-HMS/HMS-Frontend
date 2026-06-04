@@ -141,12 +141,12 @@ export default function RoleForm() {
 
   const textFieldProps = {
     fullWidth: true,
-    InputLabelProps: { style: { color: "#94a3b8" } },
+    InputLabelProps: { style: { color: "text.secondary" } },
     sx: {
       "& .MuiOutlinedInput-root": {
-        color: "#f1f5f9",
-        "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-        "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+        color: "text.primary",
+        "& fieldset": { borderColor: "divider" },
+        "&:hover fieldset": { borderColor: "divider" },
         "&.Mui-focused fieldset": { borderColor: "#6366f1" },
       },
     },
@@ -156,17 +156,17 @@ export default function RoleForm() {
     <Box sx={{ maxWidth: 1000, mx: "auto" }}>
       <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Box>
-          <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
+          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
             {isEditing ? "Edit Role" : isCloning ? "Clone Role" : "Create New Role"}
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             Configure role details and module permissions.
           </Typography>
         </Box>
         <Button
           variant="outlined"
           onClick={() => navigate("/hospital/roles")}
-          sx={{ color: "#94a3b8", borderColor: "rgba(255,255,255,0.2)" }}
+          sx={{ color: "text.secondary", borderColor: "divider" }}
         >
           Cancel
         </Button>
@@ -179,8 +179,8 @@ export default function RoleForm() {
       )}
 
       <form onSubmit={handleSubmit}>
-        <Paper sx={{ p: 4, bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2, mb: 4 }}>
-          <Typography variant="h6" sx={{ color: "#f8fafc", mb: 3 }}>Role Details</Typography>
+        <Paper sx={{ p: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, mb: 4 }}>
+          <Typography variant="h6" sx={{ color: "text.primary", mb: 3 }}>Role Details</Typography>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
@@ -207,7 +207,7 @@ export default function RoleForm() {
           </Grid>
         </Paper>
 
-        <Typography variant="h6" sx={{ color: "#f8fafc", mb: 2 }}>Module Permissions</Typography>
+        <Typography variant="h6" sx={{ color: "text.primary", mb: 2 }}>Module Permissions</Typography>
         <Grid container spacing={3}>
           {Object.entries(groupedPermissions).map(([moduleName, perms]) => {
             const allModulePermsSelected = perms.every(p => selectedPermissions.includes(p.permissionId));
@@ -216,13 +216,13 @@ export default function RoleForm() {
 
             return (
               <Grid size={{ xs: 12, md: 6 }} key={moduleName}>
-                <Paper sx={{ p: 3, bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2, height: "100%" }}>
+                <Paper sx={{ p: 3, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, height: "100%" }}>
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                    <Typography variant="subtitle1" sx={{ color: "#f8fafc", fontWeight: 600 }}>
+                    <Typography variant="subtitle1" sx={{ color: "text.primary", fontWeight: 600 }}>
                       {moduleName}
                     </Typography>
                     <FormControlLabel
-                      label={<Typography variant="body2" sx={{ color: "#94a3b8" }}>Select All</Typography>}
+                      label={<Typography variant="body2" sx={{ color: "text.secondary" }}>Select All</Typography>}
                       control={
                         <Checkbox
                           size="small"
@@ -234,7 +234,7 @@ export default function RoleForm() {
                       }
                     />
                   </Box>
-                  <Divider sx={{ mb: 2, borderColor: "rgba(255,255,255,0.1)" }} />
+                  <Divider sx={{ mb: 2, borderColor: "divider" }} />
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                     {perms.map((perm) => (
                       <FormControlLabel
@@ -247,7 +247,7 @@ export default function RoleForm() {
                             sx={{ color: "rgba(255,255,255,0.2)", "&.Mui-checked": { color: "#6366f1" } }}
                           />
                         }
-                        label={<Typography variant="body2" sx={{ color: "#cbd5e1" }}>{perm.actionName}</Typography>}
+                        label={<Typography variant="body2" sx={{ color: "text.primary" }}>{perm.actionName}</Typography>}
                       />
                     ))}
                   </Box>

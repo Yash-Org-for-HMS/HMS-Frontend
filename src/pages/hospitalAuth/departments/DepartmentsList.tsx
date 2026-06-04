@@ -60,10 +60,10 @@ export default function DepartmentsList() {
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
         <Box>
-          <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
+          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
             Departments
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             Manage your hospital's departments and clinical units.
           </Typography>
         </Box>
@@ -83,41 +83,41 @@ export default function DepartmentsList() {
         </Button>
       </Box>
 
-      <TableContainer component={Paper} sx={{ bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}>
+      <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Name</TableCell>
-              <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Code</TableCell>
-              <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Type</TableCell>
-              <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Head of Department</TableCell>
-              <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Status</TableCell>
-              <TableCell align="right" sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Actions</TableCell>
+              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Name</TableCell>
+              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Code</TableCell>
+              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Type</TableCell>
+              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Head of Department</TableCell>
+              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Status</TableCell>
+              <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {departments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 4, color: "#94a3b8", borderBottom: "none" }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
                   No departments found. Create one to get started.
                 </TableCell>
               </TableRow>
             ) : (
               departments.map((dept) => (
                 <TableRow key={dept.departmentId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                  <TableCell sx={{ color: "#f8fafc", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                     {dept.departmentName}
                   </TableCell>
-                  <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                     {dept.departmentCode}
                   </TableCell>
-                  <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                     {dept.departmentType?.typeName || "-"}
                   </TableCell>
-                  <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                     {dept.headOfDepartment ? `${dept.headOfDepartment.firstName} ${dept.headOfDepartment.lastName}` : "-"}
                   </TableCell>
-                  <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                     <Chip
                       label={dept.status === "active" ? "Active" : "Inactive"}
                       size="small"
@@ -128,12 +128,12 @@ export default function DepartmentsList() {
                       }}
                     />
                   </TableCell>
-                  <TableCell align="right" sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                     <Tooltip title="Edit Department">
                       <IconButton
                         size="small"
                         onClick={() => navigate(`/hospital/departments/${dept.departmentId}/edit`)}
-                        sx={{ color: "#94a3b8", "&:hover": { color: "#6366f1", bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                        sx={{ color: "text.secondary", "&:hover": { color: "#6366f1", bgcolor: "rgba(99, 102, 241, 0.1)" } }}
                       >
                         <EditRounded fontSize="small" />
                       </IconButton>
@@ -143,7 +143,7 @@ export default function DepartmentsList() {
                         size="small"
                         onClick={() => handleToggleStatus(dept)}
                         sx={{
-                          color: "#94a3b8",
+                          color: "text.secondary",
                           "&:hover": {
                             color: dept.status === "active" ? "#f87171" : "#34d399",
                             bgcolor: dept.status === "active" ? "rgba(239, 68, 68, 0.1)" : "rgba(16, 185, 129, 0.1)",

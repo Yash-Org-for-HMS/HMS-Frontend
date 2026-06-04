@@ -8,21 +8,21 @@ export default function BillingDashboard() {
   return (
     <Box sx={{ p: 3, maxWidth: 1200, mx: "auto" }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1, display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1, display: "flex", alignItems: "center", gap: 1.5 }}>
           <ReceiptLongRounded sx={{ color: "#06b6d4", fontSize: 32 }} />
           Reception Billing
         </Typography>
-        <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+        <Typography variant="body1" sx={{ color: "text.secondary" }}>
           Manage patient invoices and collect payments.
         </Typography>
       </Box>
 
-      <Paper sx={{ p: 5, bgcolor: "#1e293b", borderRadius: 3, textAlign: "center", border: "1px solid rgba(6, 182, 212, 0.15)" }}>
+      <Paper sx={{ p: 5, bgcolor: "background.paper", borderRadius: 3, textAlign: "center", border: "1px solid", borderColor: "divider" }}>
         <ReceiptLongRounded sx={{ fontSize: 64, color: "rgba(6, 182, 212, 0.5)", mb: 2 }} />
-        <Typography variant="h5" sx={{ color: "#f1f5f9", fontWeight: 600, mb: 2 }}>
+        <Typography variant="h5" sx={{ color: "text.primary", fontWeight: 600, mb: 2 }}>
           Basic Billing is Active
         </Typography>
-        <Typography variant="body1" sx={{ color: "#94a3b8", mb: 4, maxWidth: 600, mx: "auto" }}>
+        <Typography variant="body1" sx={{ color: "text.secondary", mb: 4, maxWidth: 600, mx: "auto" }}>
           In the Basic Reception module, billing and receipt generation are linked directly to patient appointments. 
           To generate an invoice or record a consultation payment, please select a patient from the Appointments List or the Patient Queue.
         </Typography>
@@ -38,7 +38,7 @@ export default function BillingDashboard() {
                 py: 2,
                 bgcolor: "rgba(6, 182, 212, 0.1)",
                 color: "#06b6d4",
-                border: "1px solid rgba(6, 182, 212, 0.3)",
+                border: "1px solid", borderColor: "divider",
                 "&:hover": { bgcolor: "rgba(6, 182, 212, 0.2)" }
               }}
             >

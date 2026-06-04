@@ -43,7 +43,13 @@ const SECTIONS = [
   { id: "emergency", label: "Emergency Contact", icon: <ContactPhoneRounded fontSize="small" /> },
 ];
 
-export default function PatientForm() {
+export interface PatientFormProps {
+  isModal?: boolean;
+  onSuccess?: (patientId: string, mrn: string) => void;
+  onCancel?: () => void;
+}
+
+export default function PatientForm({ isModal = false, onSuccess, onCancel }: PatientFormProps = {}) {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = Boolean(id);
@@ -130,13 +136,21 @@ export default function PatientForm() {
       if (isEditing && id) {
         await axiosInstance.put(`/reception/patients/${id}`, formData);
         setSuccess("Patient updated successfully.");
-        setTimeout(() => navigate(`/reception/patients/${id}`), 1200);
+        if (isModal && onSuccess) {
+          setTimeout(() => onSuccess(id, ""), 1000);
+        } else {
+          setTimeout(() => navigate(`/reception/patients/${id}`), 1200);
+        }
       } else {
         const res = await axiosInstance.post("/reception/patients", formData);
         const patientId = res.data.data.patientId;
         const mrn = res.data.data.uhidNumber;
         setSuccess(`Patient registered! MRN: ${mrn}`);
-        setTimeout(() => navigate(`/reception/patients/${patientId}`), 1400);
+        if (isModal && onSuccess) {
+          setTimeout(() => onSuccess(patientId, mrn), 1000);
+        } else {
+          setTimeout(() => navigate(`/reception/patients/${patientId}`), 1400);
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.message || "An error occurred");
@@ -154,15 +168,15 @@ export default function PatientForm() {
 
   const fieldSx = {
     "& .MuiOutlinedInput-root": {
-      color: "#f1f5f9",
-      bgcolor: "rgba(255,255,255,0.02)",
+      color: "text.primary",
+      bgcolor: "action.hover",
       "& fieldset": { borderColor: "rgba(6, 182, 212, 0.15)" },
       "&:hover fieldset": { borderColor: "rgba(6, 182, 212, 0.3)" },
       "&.Mui-focused fieldset": { borderColor: "#06b6d4" },
     },
-    "& .MuiInputLabel-root": { color: "#64748b" },
+    "& .MuiInputLabel-root": { color: "text.secondary" },
     "& .MuiInputLabel-root.Mui-focused": { color: "#06b6d4" },
-    "& .MuiSvgIcon-root": { color: "#64748b" },
+    "& .MuiSvgIcon-root": { color: "text.secondary" },
   };
 
   const sectionContent: Record<string, React.ReactNode> = {
@@ -202,16 +216,16 @@ export default function PatientForm() {
             fullWidth label="Phone Number" name="phone" value={formData.phone}
             onChange={handleChange} required sx={fieldSx}
             InputProps={{
-              startAdornment: <InputAdornment position="start"><Typography sx={{ color: "#475569", fontSize: "0.9rem" }}>+91</Typography></InputAdornment>,
+              startAdornment: <InputAdornment position="start"><Typography sx={{ color: "text.secondary", fontSize: "0.9rem" }}>+91</Typography></InputAdornment>,
             }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <TextField
-            fullWidth label="Email Address" name="email" type="email" value={formData.email}
-            onChange={handleChange} required disabled={isEditing} sx={fieldSx}
+            fullWidth label="Email Address (Optional)" name="email" type="email" value={formData.email}
+            onChange={handleChange} disabled={isEditing} sx={fieldSx}
             helperText={isEditing ? "Email cannot be changed" : undefined}
-            FormHelperTextProps={{ style: { color: "#475569" } }}
+            FormHelperTextProps={{ style: { color: "text.secondary" } }}
           />
         </Grid>
       </Grid>
@@ -272,7 +286,7 @@ export default function PatientForm() {
         <Grid size={{ xs: 12 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, p: 1.5, borderRadius: 1.5, bgcolor: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.12)" }}>
             <ContactPhoneRounded sx={{ color: "#f59e0b", fontSize: 18 }} />
-            <Typography variant="body2" sx={{ color: "#94a3b8" }}>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
               Emergency contact to notify in case of a medical emergency.
             </Typography>
           </Box>
@@ -308,17 +322,19 @@ export default function PatientForm() {
       {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4 }}>
         <Box>
-          <Button
-            startIcon={<ArrowBackRounded />}
-            onClick={() => navigate("/reception/patients")}
-            sx={{ color: "#475569", textTransform: "none", mb: 1, pl: 0 }}
-          >
-            Back to Patients
-          </Button>
-          <Typography variant="h4" sx={{ color: "#f1f5f9", fontWeight: 800, mb: 0.5 }}>
+          {!isModal && (
+            <Button
+              startIcon={<ArrowBackRounded />}
+              onClick={() => navigate("/reception/patients")}
+              sx={{ color: "text.secondary", textTransform: "none", mb: 1, pl: 0 }}
+            >
+              Back to Patients
+            </Button>
+          )}
+          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
             {isEditing ? "Edit Patient" : "Register Patient"}
           </Typography>
-          <Typography variant="body2" sx={{ color: "#475569" }}>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
             {isEditing
               ? "Update patient registration details"
               : "Fill in the patient information to register them in the system"}
@@ -331,7 +347,7 @@ export default function PatientForm() {
             sx={{
               bgcolor: "rgba(6, 182, 212, 0.08)",
               color: "#06b6d4",
-              border: "1px solid rgba(6, 182, 212, 0.2)",
+              border: "1px solid", borderColor: "divider",
               fontWeight: 600,
             }}
           />
@@ -344,58 +360,60 @@ export default function PatientForm() {
       <form onSubmit={handleSubmit}>
         <Grid container spacing={3}>
           {/* ── Section Nav (Left) ── */}
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                border: "1px solid rgba(6, 182, 212, 0.1)",
-                background: "linear-gradient(135deg, #0c1a3a 0%, #0f172a 100%)",
-                overflow: "hidden",
-                position: "sticky",
-                top: 90,
-              }}
-            >
-              <Box sx={{ p: 2 }}>
-                <Typography variant="caption" sx={{ color: "#334155", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
-                  Quick Navigation
-                </Typography>
-              </Box>
-              <Divider sx={{ borderColor: "rgba(6,182,212,0.08)" }} />
-              {SECTIONS.map((section) => {
-                return (
-                  <Box
-                    key={section.id}
-                    onClick={() => {
-                      document.getElementById(`section-${section.id}`)?.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1.5,
-                      px: 2.5,
-                      py: 1.8,
-                      cursor: "pointer",
-                      borderLeft: "3px solid transparent",
-                      transition: "all 0.15s ease",
-                      "&:hover": { bgcolor: "rgba(6, 182, 212, 0.06)", borderLeft: "3px solid #06b6d4" },
-                    }}
-                  >
-                    <Box sx={{ color: "#334155" }}>{section.icon}</Box>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "#475569", fontWeight: 500 }}
+          {!isModal && (
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  borderRadius: 3,
+                  border: "1px solid", borderColor: "divider",
+                  bgcolor: "background.paper",
+                  overflow: "hidden",
+                  position: "sticky",
+                  top: 90,
+                }}
+              >
+                <Box sx={{ p: 2 }}>
+                  <Typography variant="caption" sx={{ color: "#334155", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
+                    Quick Navigation
+                  </Typography>
+                </Box>
+                <Divider sx={{ borderColor: "rgba(6,182,212,0.08)" }} />
+                {SECTIONS.map((section) => {
+                  return (
+                    <Box
+                      key={section.id}
+                      onClick={() => {
+                        document.getElementById(`section-${section.id}`)?.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1.5,
+                        px: 2.5,
+                        py: 1.8,
+                        cursor: "pointer",
+                        borderLeft: "3px solid transparent",
+                        transition: "all 0.15s ease",
+                        "&:hover": { bgcolor: "rgba(6, 182, 212, 0.06)", borderLeft: "3px solid #06b6d4" },
+                      }}
                     >
-                      {section.label}
-                    </Typography>
-                  </Box>
-                );
-              })}
-            </Paper>
-          </Grid>
+                      <Box sx={{ color: "#334155" }}>{section.icon}</Box>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "text.secondary", fontWeight: 500 }}
+                      >
+                        {section.label}
+                      </Typography>
+                    </Box>
+                  );
+                })}
+              </Paper>
+            </Grid>
+          )}
 
           {/* ── Form Content (Right) ── */}
-          <Grid size={{ xs: 12, md: 9 }}>
+          <Grid size={{ xs: 12, md: isModal ? 12 : 9 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               {SECTIONS.map((section) => (
                 <Paper
@@ -405,15 +423,15 @@ export default function PatientForm() {
                   sx={{
                     p: 4,
                     borderRadius: 3,
-                    border: "1px solid rgba(6, 182, 212, 0.1)",
-                    background: "linear-gradient(135deg, #0c1a3a 0%, #0f172a 100%)",
+                    border: "1px solid", borderColor: "divider",
+                    bgcolor: "background.paper",
                   }}
                 >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
                     <Box sx={{ color: "#06b6d4" }}>
                       {section.icon}
                     </Box>
-                    <Typography variant="h6" sx={{ color: "#e2e8f0", fontWeight: 700 }}>
+                    <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>
                       {section.label}
                     </Typography>
                   </Box>
@@ -432,10 +450,20 @@ export default function PatientForm() {
                 mt: 3,
                 p: 2.5,
                 borderRadius: 2,
-                bgcolor: "rgba(6, 182, 212, 0.03)",
-                border: "1px solid rgba(6, 182, 212, 0.08)",
+                bgcolor: "background.default",
+                border: "1px solid", borderColor: "divider",
+                gap: 2,
               }}
             >
+              {isModal && onCancel && (
+                <Button
+                  variant="outlined"
+                  onClick={onCancel}
+                  sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none", px: 3, py: 1.1 }}
+                >
+                  Cancel
+                </Button>
+              )}
               <Button
                 type="submit"
                 variant="contained"

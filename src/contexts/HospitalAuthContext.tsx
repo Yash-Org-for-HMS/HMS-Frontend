@@ -40,6 +40,7 @@ interface HospitalAuthContextType {
     branchData: BranchInfo | null,
     sessionId: string,
   ) => void;
+  updateHospital: (hospitalData: Partial<HospitalInfo>) => void;
   logout: () => void;
 }
 
@@ -106,6 +107,15 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateHospital = (hospitalData: Partial<HospitalInfo>) => {
+    setHospital((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...hospitalData };
+      localStorage.setItem("hospitalInfo", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const logout = async () => {
     try {
       if (sessionId) {
@@ -148,6 +158,7 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
         loading,
         sessionId,
         login,
+        updateHospital,
         logout,
       }}
     >

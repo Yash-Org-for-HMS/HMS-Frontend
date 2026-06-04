@@ -61,10 +61,10 @@ export default function SuperAdminsList() {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
         <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "#f8fafc", mb: 1 }}>
+          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
             {t("superAdmins.title", "Super Admins")}
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             {t("superAdmins.subtitle", "Manage global system administrators")}
           </Typography>
         </Box>
@@ -89,11 +89,11 @@ export default function SuperAdminsList() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"
-          sx={textFieldSx}
+          
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchRounded sx={{ color: "#64748b" }} />
+                <SearchRounded sx={{ color: "text.secondary" }} />
               </InputAdornment>
             ),
           }}
@@ -101,11 +101,11 @@ export default function SuperAdminsList() {
       </Box>
 
       <Paper
-        elevation={0}
+        elevation={2}
         sx={{
-          bgcolor: "rgba(30, 41, 59, 0.7)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 3,
           overflow: "hidden",
         }}
@@ -113,11 +113,11 @@ export default function SuperAdminsList() {
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: "rgba(15, 23, 42, 0.6)" }}>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("superAdmins.name", "Admin")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("superAdmins.phone", "Phone")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("superAdmins.status", "Status")}</TableCell>
-                <TableCell align="right" sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
+              <TableRow sx={{ bgcolor: "background.paper" }}>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("superAdmins.name", "Admin")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("superAdmins.phone", "Phone")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("superAdmins.status", "Status")}</TableCell>
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -129,27 +129,27 @@ export default function SuperAdminsList() {
                 </TableRow>
               ) : admins.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 8, color: "#94a3b8" }}>
+                  <TableCell colSpan={4} align="center" sx={{ py: 8, color: "text.secondary" }}>
                     {t("common.noData")}
                   </TableCell>
                 </TableRow>
               ) : (
                 admins.map((admin) => (
-                  <TableRow key={admin.superAdminId} hover sx={{ "&:hover": { bgcolor: "rgba(255, 255, 255, 0.02)" } }}>
-                    <TableCell sx={{ color: "#f8fafc", fontWeight: 500 }}>
+                  <TableRow key={admin.superAdminId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
+                    <TableCell sx={{ color: "text.primary", fontWeight: 500 }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                         <Avatar sx={{ bgcolor: "rgba(139, 92, 246, 0.2)", color: "#c4b5fd" }}>
                           {admin.firstName[0]}{admin.lastName[0]}
                         </Avatar>
                         <Box>
                           {admin.firstName} {admin.lastName}
-                          <Typography variant="caption" sx={{ display: "block", color: "#94a3b8" }}>
+                          <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
                             {admin.email}
                           </Typography>
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1" }}>
+                    <TableCell sx={{ color: "text.primary" }}>
                       {admin.phone || "—"}
                     </TableCell>
                     <TableCell>
@@ -165,7 +165,7 @@ export default function SuperAdminsList() {
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton onClick={() => navigate(`/super-admins/${admin.superAdminId}/edit`)} sx={{ color: "#94a3b8" }}>
+                      <IconButton onClick={() => navigate(`/super-admins/${admin.superAdminId}/edit`)} sx={{ color: "text.secondary" }}>
                         <EditRounded />
                       </IconButton>
                     </TableCell>
@@ -177,14 +177,14 @@ export default function SuperAdminsList() {
         </TableContainer>
 
         {totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid", borderColor: "divider" }}>
             <Pagination 
               count={totalPages} 
               page={page} 
               onChange={(_, value) => setPage(value)} 
               color="primary"
               sx={{
-                "& .MuiPaginationItem-root": { color: "#cbd5e1" },
+                "& .MuiPaginationItem-root": { color: "text.primary" },
                 "& .Mui-selected": { bgcolor: "rgba(139, 92, 246, 0.2) !important", color: "#c4b5fd" }
               }}
             />
@@ -197,11 +197,11 @@ export default function SuperAdminsList() {
 
 const textFieldSx = {
   "& .MuiOutlinedInput-root": {
-    color: "#f1f5f9",
+    color: "text.primary",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+    "& fieldset": { borderColor: "divider" },
+    "&:hover fieldset": { borderColor: "divider" },
     "&.Mui-focused fieldset": { borderColor: "#8b5cf6" },
   },
-  "& .MuiInputLabel-root": { color: "#94a3b8" },
+  "& .MuiInputLabel-root": { color: "text.secondary" },
 };

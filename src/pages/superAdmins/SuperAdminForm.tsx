@@ -102,16 +102,16 @@ export default function SuperAdminForm() {
         <IconButton
           onClick={() => navigate("/super-admins")}
           sx={{
-            bgcolor: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "#f8fafc",
+            bgcolor: "action.hover",
+            border: "1px solid", borderColor: "divider",
+            color: "text.primary",
             "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
           }}
         >
           <ArrowBackRounded />
         </IconButton>
         <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "#f8fafc", letterSpacing: "-0.5px" }}>
+          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
             {isEdit ? t("superAdmins.editAdmin", "Edit Super Admin") : t("superAdmins.addAdmin", "Add Super Admin")}
           </Typography>
         </Box>
@@ -120,12 +120,12 @@ export default function SuperAdminForm() {
       {error && <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>{error}</Alert>}
 
       <Paper
-        elevation={0}
+        elevation={2}
         sx={{
           p: { xs: 3, md: 5 },
-          bgcolor: "rgba(30, 41, 59, 0.7)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 4,
           animation: "fadeInUp 0.6s ease-out both",
         }}
@@ -140,7 +140,7 @@ export default function SuperAdminForm() {
                 value={formData.firstName}
                 onChange={handleChange}
                 required
-                sx={textFieldSx}
+                
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -151,7 +151,7 @@ export default function SuperAdminForm() {
                 value={formData.lastName}
                 onChange={handleChange}
                 required
-                sx={textFieldSx}
+                
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -163,7 +163,7 @@ export default function SuperAdminForm() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                sx={textFieldSx}
+                
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -173,7 +173,7 @@ export default function SuperAdminForm() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                sx={textFieldSx}
+                
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -185,9 +185,9 @@ export default function SuperAdminForm() {
                 value={formData.password}
                 onChange={handleChange}
                 required={!isEdit}
-                sx={textFieldSx}
+                
                 helperText={isEdit ? "Leave blank to keep current password" : "At least 8 characters"}
-                FormHelperTextProps={{ sx: { color: "#94a3b8" } }}
+                FormHelperTextProps={{ sx: { color: "text.secondary" } }}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -199,14 +199,14 @@ export default function SuperAdminForm() {
                 value={formData.status}
                 onChange={handleChange}
                 required
-                sx={textFieldSx}
+                
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
                       sx: {
-                        bgcolor: "#1e293b",
-                        color: "#f8fafc",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        bgcolor: "background.paper",
+                        color: "text.primary",
+                        border: "1px solid", borderColor: "divider",
                         "& .MuiMenuItem-root": { py: 1.8, px: 2 }
                       }
                     }
@@ -226,9 +226,9 @@ export default function SuperAdminForm() {
                   onClick={() => navigate("/super-admins")} 
                   disabled={loading} 
                   sx={{ 
-                    borderColor: "rgba(255,255,255,0.2)", 
-                    color: "#cbd5e1",
-                    "&:hover": { borderColor: "rgba(255,255,255,0.4)" }
+                    borderColor: "divider", 
+                    color: "text.primary",
+                    "&:hover": { borderColor: "divider" }
                   }}
                 >
                   {t("common.cancel", "Cancel")}
@@ -256,12 +256,12 @@ export default function SuperAdminForm() {
 
 const textFieldSx = {
   "& .MuiOutlinedInput-root": {
-    color: "#f1f5f9",
+    color: "text.primary",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)", borderRadius: "12px" },
-    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+    "& fieldset": { borderColor: "divider", borderRadius: "12px" },
+    "&:hover fieldset": { borderColor: "divider" },
     "&.Mui-focused fieldset": { borderColor: "#8b5cf6" },
   },
-  "& .MuiInputLabel-root": { color: "#94a3b8" },
+  "& .MuiInputLabel-root": { color: "text.secondary" },
   "& .MuiInputLabel-root.Mui-focused": { color: "#8b5cf6" },
 };

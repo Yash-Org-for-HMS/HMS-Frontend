@@ -79,10 +79,10 @@ export default function PlansList() {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
         <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "#f8fafc", mb: 1 }}>
+          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
             {t("plans.title", "Subscription Plans")}
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             {t("plans.subtitle", "Manage hospital subscription tiers and features")}
           </Typography>
         </Box>
@@ -101,11 +101,11 @@ export default function PlansList() {
       </Box>
 
       <Paper
-        elevation={0}
+        elevation={2}
         sx={{
-          bgcolor: "rgba(30, 41, 59, 0.7)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 3,
           overflow: "hidden",
         }}
@@ -113,13 +113,13 @@ export default function PlansList() {
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: "rgba(15, 23, 42, 0.6)" }}>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("plans.planName", "Plan Name")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("plans.price", "Price (Mo/Yr)")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("plans.limits", "Limits (Doc/Br/GB)")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("plans.features", "Features")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("plans.activeHospitals", "Active Hospitals")}</TableCell>
-                <TableCell align="right" sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
+              <TableRow sx={{ bgcolor: "background.paper" }}>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("plans.planName", "Plan Name")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("plans.price", "Price (Mo/Yr)")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("plans.limits", "Limits (Doc/Br/GB)")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("plans.features", "Features")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("plans.activeHospitals", "Active Hospitals")}</TableCell>
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -131,24 +131,24 @@ export default function PlansList() {
                 </TableRow>
               ) : plans.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8, color: "#94a3b8" }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 8, color: "text.secondary" }}>
                     {t("common.noData")}
                   </TableCell>
                 </TableRow>
               ) : (
                 plans.map((plan) => (
-                  <TableRow key={plan.planId} hover sx={{ "&:hover": { bgcolor: "rgba(255, 255, 255, 0.02)" } }}>
-                    <TableCell sx={{ color: "#f8fafc", fontWeight: 600 }}>
+                  <TableRow key={plan.planId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
+                    <TableCell sx={{ color: "text.primary", fontWeight: 600 }}>
                       {plan.planName}
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1" }}>
+                    <TableCell sx={{ color: "text.primary" }}>
                       <Typography variant="body2">₹{plan.monthlyPrice} / mo</Typography>
-                      <Typography variant="caption" sx={{ color: "#94a3b8" }}>₹{plan.annualPrice} / yr</Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>₹{plan.annualPrice} / yr</Typography>
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1" }}>
+                    <TableCell sx={{ color: "text.primary" }}>
                       <Typography variant="body2">Docs: {plan.maxDoctors}</Typography>
-                      <Typography variant="caption" sx={{ color: "#94a3b8", display: "block" }}>Branches: {plan.maxBranches}</Typography>
-                      <Typography variant="caption" sx={{ color: "#94a3b8" }}>Storage: {plan.maxStorageGb}GB</Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Branches: {plan.maxBranches}</Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>Storage: {plan.maxStorageGb}GB</Typography>
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", maxWidth: 200 }}>
@@ -158,15 +158,15 @@ export default function PlansList() {
                           ))
                         ) : null}
                         {Array.isArray(plan.featuresJson) && plan.featuresJson.length > 3 && (
-                          <Chip label={`+${plan.featuresJson.length - 3}`} size="small" sx={{ bgcolor: "rgba(255, 255, 255, 0.1)", color: "#cbd5e1", height: 20, fontSize: "0.7rem" }} />
+                          <Chip label={`+${plan.featuresJson.length - 3}`} size="small" sx={{ bgcolor: "rgba(255, 255, 255, 0.1)", color: "text.primary", height: 20, fontSize: "0.7rem" }} />
                         )}
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Chip label={plan._count?.hospitals || 0} size="small" color="primary" />
+                      <Chip label={plan._count?.branches || 0} size="small" color="primary" />
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton onClick={(e) => openActionMenu(e, plan.planId)} sx={{ color: "#94a3b8" }}>
+                      <IconButton onClick={(e) => openActionMenu(e, plan.planId)} sx={{ color: "text.secondary" }}>
                         <MoreVertRounded />
                       </IconButton>
                     </TableCell>
@@ -183,10 +183,10 @@ export default function PlansList() {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={() => setAnchorEl(null)}
-        PaperProps={{ sx: { bgcolor: "#1e293b", border: "1px solid rgba(255, 255, 255, 0.1)", color: "#f8fafc" } }}
+        PaperProps={{ sx: { bgcolor: "background.paper", border: "1px solid", borderColor: "divider", color: "text.primary" } }}
       >
         <MenuItem onClick={() => { navigate(`/plans/${selectedPlanId}/edit`); setAnchorEl(null); }}>
-          <EditRounded sx={{ mr: 1.5, fontSize: 20, color: "#94a3b8" }} /> {t("common.edit", "Edit")}
+          <EditRounded sx={{ mr: 1.5, fontSize: 20, color: "text.secondary" }} /> {t("common.edit", "Edit")}
         </MenuItem>
         <MenuItem onClick={() => { setDeleteId(selectedPlanId); setAnchorEl(null); }}>
           <DeleteRounded sx={{ mr: 1.5, fontSize: 20, color: "#ef4444" }} /> {t("common.delete", "Delete")}
@@ -194,13 +194,13 @@ export default function PlansList() {
       </Menu>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={Boolean(deleteId)} onClose={() => setDeleteId(null)} PaperProps={{ sx: { bgcolor: "#1e293b", color: "#f8fafc", borderRadius: 3 } }}>
+      <Dialog open={Boolean(deleteId)} onClose={() => setDeleteId(null)} PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>
         <DialogTitle>{t("plans.deletePlan", "Delete Plan")}</DialogTitle>
-        <DialogContent sx={{ color: "#cbd5e1" }}>
+        <DialogContent sx={{ color: "text.primary" }}>
           {t("plans.deleteConfirm", "Are you sure you want to delete this subscription plan? You cannot delete a plan that is in use by active hospitals.")}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setDeleteId(null)} sx={{ color: "#94a3b8" }}>{t("common.cancel", "Cancel")}</Button>
+          <Button onClick={() => setDeleteId(null)} sx={{ color: "text.secondary" }}>{t("common.cancel", "Cancel")}</Button>
           <Button onClick={handleDelete} color="error" variant="contained">{t("common.delete", "Delete")}</Button>
         </DialogActions>
       </Dialog>

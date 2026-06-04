@@ -146,10 +146,10 @@ export default function PatientsList() {
         {/* ── Header ── */}
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4, flexWrap: "wrap", gap: 2 }}>
           <Box>
-            <Typography variant="h4" sx={{ color: "#f1f5f9", fontWeight: 800, mb: 0.5 }}>
+            <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
               Patient Search & Registry
             </Typography>
-            <Typography variant="body2" sx={{ color: "#475569" }}>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
               {meta.total} patient{meta.total !== 1 ? "s" : ""} registered
             </Typography>
           </Box>
@@ -187,7 +187,7 @@ export default function PatientsList() {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchRounded sx={{ color: "#475569" }} />
+                  <SearchRounded sx={{ color: "text.secondary" }} />
                 </InputAdornment>
               ),
               endAdornment: loading ? (
@@ -199,8 +199,8 @@ export default function PatientsList() {
             sx={{
               maxWidth: 520,
               "& .MuiOutlinedInput-root": {
-                color: "#f1f5f9",
-                bgcolor: "rgba(6, 182, 212, 0.04)",
+                color: "text.primary",
+                bgcolor: "background.default",
                 borderRadius: 2,
                 "& fieldset": { borderColor: "rgba(6, 182, 212, 0.15)" },
                 "&:hover fieldset": { borderColor: "rgba(6, 182, 212, 0.3)" },
@@ -222,8 +222,8 @@ export default function PatientsList() {
           elevation={0}
           sx={{
             borderRadius: 3,
-            border: "1px solid rgba(6, 182, 212, 0.1)",
-            background: "linear-gradient(135deg, #0c1a3a 0%, #0f172a 100%)",
+            border: "1px solid", borderColor: "divider",
+            bgcolor: "background.paper",
             overflow: "hidden",
           }}
         >
@@ -236,14 +236,14 @@ export default function PatientsList() {
                       key={h}
                       align={i === 6 ? "right" : "left"}
                       sx={{
-                        color: "#475569",
+                        color: "text.secondary",
                         fontWeight: 700,
                         fontSize: "0.72rem",
                         textTransform: "uppercase",
                         letterSpacing: 0.5,
-                        borderBottom: "1px solid rgba(6, 182, 212, 0.08)",
+                        borderBottom: "1px solid", borderColor: "divider",
                         py: 2,
-                        bgcolor: "rgba(6, 182, 212, 0.03)",
+                        bgcolor: "background.default",
                       }}
                     >
                       {h}
@@ -256,7 +256,7 @@ export default function PatientsList() {
                   Array.from({ length: 6 }).map((_, i) => (
                     <TableRow key={i}>
                       {Array.from({ length: 7 }).map((_, j) => (
-                        <TableCell key={j} sx={{ borderBottom: "1px solid rgba(255,255,255,0.04)", py: 2 }}>
+                        <TableCell key={j} sx={{ borderBottom: "1px solid", borderColor: "divider", py: 2 }}>
                           <Box sx={{ height: 20, borderRadius: 1, bgcolor: "rgba(255,255,255,0.04)" }} />
                         </TableCell>
                       ))}
@@ -286,14 +286,14 @@ export default function PatientsList() {
                     <TableRow
                       key={patient.patientId}
                       sx={{
-                        "&:hover": { bgcolor: "rgba(6, 182, 212, 0.03)" },
+                        "&:hover": { bgcolor: "background.default" },
                         transition: "background 0.15s ease",
                         cursor: "pointer",
                       }}
                       onClick={() => navigate(`/reception/patients/${patient.patientId}`)}
                     >
                       {/* Patient name + email */}
-                      <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.04)", py: 1.5 }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                           <Avatar
                             sx={{
@@ -307,17 +307,17 @@ export default function PatientsList() {
                             {getInitials(patient)}
                           </Avatar>
                           <Box>
-                            <Typography variant="body2" sx={{ color: "#e2e8f0", fontWeight: 600 }}>
+                            <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
                               {patient.firstName} {patient.lastName}
                             </Typography>
-                            <Typography variant="caption" sx={{ color: "#475569" }}>
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
                               {patient.email}
                             </Typography>
                           </Box>
                         </Box>
                       </TableCell>
                       {/* MRN */}
-                      <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.04)", py: 1.5 }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
                         <Chip
                           icon={<BadgeRounded sx={{ fontSize: "14px !important" }} />}
                           label={patient.uhidNumber}
@@ -325,7 +325,7 @@ export default function PatientsList() {
                           sx={{
                             bgcolor: "rgba(6, 182, 212, 0.08)",
                             color: "#06b6d4",
-                            border: "1px solid rgba(6, 182, 212, 0.2)",
+                            border: "1px solid", borderColor: "divider",
                             fontWeight: 700,
                             fontFamily: "monospace",
                             fontSize: "0.78rem",
@@ -333,9 +333,9 @@ export default function PatientsList() {
                         />
                       </TableCell>
                       {/* Age / DOB */}
-                      <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.04)", py: 1.5 }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
                         <Box>
-                          <Typography variant="body2" sx={{ color: "#94a3b8", fontWeight: 600 }}>
+                          <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600 }}>
                             {patient.age !== null ? `${patient.age} yrs` : "—"}
                           </Typography>
                           <Typography variant="caption" sx={{ color: "#334155" }}>
@@ -344,11 +344,11 @@ export default function PatientsList() {
                         </Box>
                       </TableCell>
                       {/* Gender */}
-                      <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.04)", py: 1.5, color: "#64748b", fontSize: "0.85rem" }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, color: "text.secondary", fontSize: "0.85rem" }}>
                         {patient.genderLabel}
                       </TableCell>
                       {/* Blood Group */}
-                      <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.04)", py: 1.5 }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
                         <Chip
                           label={patient.bloodGroupLabel}
                           size="small"
@@ -362,16 +362,16 @@ export default function PatientsList() {
                         />
                       </TableCell>
                       {/* Phone */}
-                      <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.04)", py: 1.5, color: "#64748b", fontSize: "0.85rem" }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, color: "text.secondary", fontSize: "0.85rem" }}>
                         {patient.phone}
                       </TableCell>
                       {/* Actions */}
-                      <TableCell align="right" sx={{ borderBottom: "1px solid rgba(255,255,255,0.04)", py: 1.5 }} onClick={(e) => e.stopPropagation()}>
+                      <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }} onClick={(e) => e.stopPropagation()}>
                         <Tooltip title="View Profile">
                           <IconButton
                             size="small"
                             onClick={() => navigate(`/reception/patients/${patient.patientId}`)}
-                            sx={{ color: "#475569", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6,182,212,0.08)" } }}
+                            sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6,182,212,0.08)" } }}
                           >
                             <VisibilityRounded fontSize="small" />
                           </IconButton>
@@ -383,7 +383,7 @@ export default function PatientsList() {
                               e.stopPropagation();
                               navigate(`/reception/appointments/new?patientId=${patient.patientId}`);
                             }}
-                            sx={{ color: "#475569", "&:hover": { color: "#3b82f6", bgcolor: "rgba(59,130,246,0.08)" } }}
+                            sx={{ color: "text.secondary", "&:hover": { color: "#3b82f6", bgcolor: "rgba(59,130,246,0.08)" } }}
                           >
                             <CalendarMonthRounded fontSize="small" />
                           </IconButton>
@@ -395,7 +395,7 @@ export default function PatientsList() {
                               e.stopPropagation();
                               navigate(`/reception/queue/new?patientId=${patient.patientId}`);
                             }}
-                            sx={{ color: "#475569", "&:hover": { color: "#10b981", bgcolor: "rgba(16,185,129,0.08)" } }}
+                            sx={{ color: "text.secondary", "&:hover": { color: "#10b981", bgcolor: "rgba(16,185,129,0.08)" } }}
                           >
                             <QueuePlayNextRounded fontSize="small" />
                           </IconButton>
@@ -404,7 +404,7 @@ export default function PatientsList() {
                           <IconButton
                             size="small"
                             onClick={() => navigate(`/reception/patients/${patient.patientId}/edit`)}
-                            sx={{ color: "#475569", "&:hover": { color: "#a78bfa", bgcolor: "rgba(139,92,246,0.08)" } }}
+                            sx={{ color: "text.secondary", "&:hover": { color: "#a78bfa", bgcolor: "rgba(139,92,246,0.08)" } }}
                           >
                             <EditRounded fontSize="small" />
                           </IconButton>
@@ -413,7 +413,7 @@ export default function PatientsList() {
                           <IconButton
                             size="small"
                             onClick={() => setDeleteDialog({ open: true, patient })}
-                            sx={{ color: "#475569", "&:hover": { color: "#f87171", bgcolor: "rgba(239,68,68,0.08)" } }}
+                            sx={{ color: "text.secondary", "&:hover": { color: "#f87171", bgcolor: "rgba(239,68,68,0.08)" } }}
                           >
                             <DeleteRounded fontSize="small" />
                           </IconButton>
@@ -434,7 +434,7 @@ export default function PatientsList() {
                 page={page}
                 onChange={(_, p) => setPage(p)}
                 sx={{
-                  "& .MuiPaginationItem-root": { color: "#475569" },
+                  "& .MuiPaginationItem-root": { color: "text.secondary" },
                   "& .Mui-selected": { bgcolor: "rgba(6,182,212,0.15) !important", color: "#06b6d4", fontWeight: 700 },
                 }}
               />
@@ -450,25 +450,25 @@ export default function PatientsList() {
         maxWidth="xs"
         fullWidth
         PaperProps={{
-          sx: { bgcolor: "#0f172a", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 3, backgroundImage: "none" },
+          sx: { bgcolor: "background.paper", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 3, backgroundImage: "none" },
         }}
       >
         <Box sx={{ height: 4, bgcolor: "#ef4444" }} />
         <DialogContent sx={{ p: 3, textAlign: "center" }}>
           <WarningAmberRounded sx={{ fontSize: 48, color: "#f87171", mb: 2 }} />
-          <Typography variant="h6" sx={{ color: "#f1f5f9", fontWeight: 700, mb: 1 }}>
+          <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
             Delete Patient?
           </Typography>
-          <Typography variant="body2" sx={{ color: "#64748b" }}>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
             This will permanently remove{" "}
-            <Box component="span" sx={{ color: "#94a3b8", fontWeight: 600 }}>
+            <Box component="span" sx={{ color: "text.secondary", fontWeight: 600 }}>
               {deleteDialog.patient?.firstName} {deleteDialog.patient?.lastName}
             </Box>{" "}
             ({deleteDialog.patient?.uhidNumber}) from the system.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, gap: 1.5 }}>
-          <Button fullWidth variant="outlined" onClick={() => setDeleteDialog({ open: false, patient: null })} sx={{ color: "#64748b", borderColor: "rgba(255,255,255,0.1)", textTransform: "none" }}>
+          <Button fullWidth variant="outlined" onClick={() => setDeleteDialog({ open: false, patient: null })} sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none" }}>
             Cancel
           </Button>
           <Button fullWidth variant="contained" onClick={handleDelete} disabled={deleting} sx={{ bgcolor: "#ef4444", "&:hover": { bgcolor: "#dc2626" }, textTransform: "none", fontWeight: 600 }}>

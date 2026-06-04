@@ -23,6 +23,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Alert,
 } from "@mui/material";
 import {
   AddRounded,
@@ -104,11 +105,11 @@ export default function UsersList() {
     <Box sx={{ maxWidth: 1200, mx: "auto" }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: "#f8fafc", mb: 1 }}>
-            User Management
+          <Typography variant="h4" sx={{ fontWeight: 700, color: "text.primary", mb: 1 }}>
+            Hospital Staff Management
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
-            Manage hospital administrators and staff members
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
+            Global Support Mode: Manage hospital administrators and staff members across any tenant
           </Typography>
         </Box>
         <Button
@@ -129,16 +130,20 @@ export default function UsersList() {
         </Button>
       </Box>
 
+      <Alert severity="info" sx={{ mb: 4, borderRadius: 2 }}>
+        <strong>Global Support Mode:</strong> You are viewing staff user accounts for all hospitals on the platform. When adding a user, you will assign them to a specific hospital tenant.
+      </Alert>
+
       <Card
         sx={{
-          bgcolor: "#1e293b",
+          bgcolor: "background.paper",
           backgroundImage: "none",
           borderRadius: 3,
-          border: "1px solid rgba(255, 255, 255, 0.05)",
+          border: "1px solid", borderColor: "divider",
           overflow: "hidden",
         }}
       >
-        <Box sx={{ p: 2, display: "flex", gap: 2, borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
+        <Box sx={{ p: 2, display: "flex", gap: 2, borderBottom: "1px solid", borderColor: "divider" }}>
           <TextField
             placeholder="Search by name, email, or employee code..."
             size="small"
@@ -147,17 +152,17 @@ export default function UsersList() {
             sx={{
               width: 350,
               "& .MuiOutlinedInput-root": {
-                color: "#f1f5f9",
-                bgcolor: "rgba(15, 23, 42, 0.5)",
-                "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+                color: "text.primary",
+                bgcolor: "background.paper",
+                "& fieldset": { borderColor: "divider" },
+                "&:hover fieldset": { borderColor: "divider" },
                 "&.Mui-focused fieldset": { borderColor: "#6366f1" },
               },
             }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchRounded sx={{ color: "#64748b" }} />
+                  <SearchRounded sx={{ color: "text.secondary" }} />
                 </InputAdornment>
               ),
             }}
@@ -167,13 +172,13 @@ export default function UsersList() {
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: "rgba(15, 23, 42, 0.5)" }}>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>Name</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>Hospital</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>Role</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>Contact</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>Status</TableCell>
-                <TableCell align="right" sx={{ color: "#94a3b8", fontWeight: 600, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>Actions</TableCell>
+              <TableRow sx={{ bgcolor: "background.paper" }}>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Name</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Hospital</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Role</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Contact</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Status</TableCell>
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -185,7 +190,7 @@ export default function UsersList() {
                 </TableRow>
               ) : users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8, color: "#64748b", borderBottom: "none" }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 8, color: "text.secondary", borderBottom: "none" }}>
                     No users found
                   </TableCell>
                 </TableRow>
@@ -194,23 +199,23 @@ export default function UsersList() {
                   <TableRow
                     key={user.userId}
                     sx={{
-                      "&:hover": { bgcolor: "rgba(255, 255, 255, 0.02)" },
+                      "&:hover": { bgcolor: "action.hover" },
                     }}
                   >
-                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#f1f5f9" }}>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary" }}>
                       <Typography variant="body2" fontWeight={600}>
                         {user.firstName} {user.lastName}
                       </Typography>
                       {user.employeeCode && (
-                        <Typography variant="caption" sx={{ color: "#64748b" }}>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
                           ID: {user.employeeCode}
                         </Typography>
                       )}
                     </TableCell>
-                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#cbd5e1" }}>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary" }}>
                       {user.hospital?.hospitalName}
                     </TableCell>
-                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Chip
                         label={user.role?.roleName}
                         size="small"
@@ -222,11 +227,11 @@ export default function UsersList() {
                         }}
                       />
                     </TableCell>
-                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#94a3b8" }}>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary" }}>
                       <Typography variant="body2">{user.email}</Typography>
                       {user.phone && <Typography variant="caption">{user.phone}</Typography>}
                     </TableCell>
-                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Chip
                         label={user.status}
                         size="small"
@@ -238,11 +243,11 @@ export default function UsersList() {
                         }}
                       />
                     </TableCell>
-                    <TableCell align="right" sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Tooltip title="Edit">
                         <IconButton
                           onClick={() => navigate(`/rbac/users/edit/${user.userId}`)}
-                          sx={{ color: "#94a3b8", "&:hover": { color: "#6366f1", bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                          sx={{ color: "text.secondary", "&:hover": { color: "#6366f1", bgcolor: "rgba(99, 102, 241, 0.1)" } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>
@@ -250,7 +255,7 @@ export default function UsersList() {
                       <Tooltip title="Delete">
                         <IconButton
                           onClick={() => setDeleteId(user.userId)}
-                          sx={{ color: "#94a3b8", "&:hover": { color: "#ef4444", bgcolor: "rgba(239, 68, 68, 0.1)" } }}
+                          sx={{ color: "text.secondary", "&:hover": { color: "#ef4444", bgcolor: "rgba(239, 68, 68, 0.1)" } }}
                         >
                           <DeleteRounded fontSize="small" />
                         </IconButton>
@@ -273,9 +278,9 @@ export default function UsersList() {
             setPage(0);
           }}
           sx={{
-            color: "#94a3b8",
-            borderTop: "1px solid rgba(255, 255, 255, 0.05)",
-            "& .MuiTablePagination-selectIcon": { color: "#94a3b8" },
+            color: "text.secondary",
+            borderTop: "1px solid", borderColor: "divider",
+            "& .MuiTablePagination-selectIcon": { color: "text.secondary" },
           }}
         />
       </Card>
@@ -286,16 +291,16 @@ export default function UsersList() {
         onClose={() => !deleteLoading && setDeleteId(null)}
         PaperProps={{
           sx: {
-            bgcolor: "#1e293b",
-            color: "#f1f5f9",
+            bgcolor: "background.paper",
+            color: "text.primary",
             borderRadius: 3,
-            border: "1px solid rgba(255,255,255,0.1)",
+            border: "1px solid", borderColor: "divider",
           }
         }}
       >
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ color: "#94a3b8" }}>
+          <DialogContentText sx={{ color: "text.secondary" }}>
             Are you sure you want to delete this user? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
@@ -303,7 +308,7 @@ export default function UsersList() {
           <Button 
             onClick={() => setDeleteId(null)} 
             disabled={deleteLoading}
-            sx={{ color: "#94a3b8" }}
+            sx={{ color: "text.secondary" }}
           >
             Cancel
           </Button>

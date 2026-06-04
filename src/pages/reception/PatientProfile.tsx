@@ -82,14 +82,14 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
       sx={{
         p: 3,
         borderRadius: 3,
-        border: "1px solid rgba(6, 182, 212, 0.1)",
-        background: "linear-gradient(135deg, #0c1a3a 0%, #0f172a 100%)",
+        border: "1px solid", borderColor: "divider",
+        bgcolor: "background.paper",
         height: "100%",
       }}
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
         <Box sx={{ color: "#06b6d4" }}>{icon}</Box>
-        <Typography variant="subtitle1" sx={{ color: "#e2e8f0", fontWeight: 700 }}>
+        <Typography variant="subtitle1" sx={{ color: "text.primary", fontWeight: 700 }}>
           {title}
         </Typography>
       </Box>
@@ -150,13 +150,13 @@ export default function PatientProfile() {
   if (loading) {
     return (
       <Box sx={{ maxWidth: 1100, mx: "auto" }}>
-        <Skeleton height={40} width={200} sx={{ bgcolor: "rgba(255,255,255,0.05)", mb: 3 }} />
-        <Paper elevation={0} sx={{ p: 4, borderRadius: 3, border: "1px solid rgba(6,182,212,0.1)", bgcolor: "#0c1a3a" }}>
+        <Skeleton height={40} width={200} sx={{ bgcolor: "action.hover", mb: 3 }} />
+        <Paper elevation={0} sx={{ p: 4, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
           <Box sx={{ display: "flex", gap: 3, alignItems: "center" }}>
-            <Skeleton variant="circular" width={80} height={80} sx={{ bgcolor: "rgba(255,255,255,0.05)" }} />
+            <Skeleton variant="circular" width={80} height={80} sx={{ bgcolor: "action.hover" }} />
             <Box sx={{ flex: 1 }}>
-              <Skeleton width="50%" height={32} sx={{ bgcolor: "rgba(255,255,255,0.05)", mb: 1 }} />
-              <Skeleton width="30%" height={24} sx={{ bgcolor: "rgba(255,255,255,0.05)" }} />
+              <Skeleton width="50%" height={32} sx={{ bgcolor: "action.hover", mb: 1 }} />
+              <Skeleton width="30%" height={24} sx={{ bgcolor: "action.hover" }} />
             </Box>
           </Box>
         </Paper>
@@ -184,7 +184,7 @@ export default function PatientProfile() {
         <Button
           startIcon={<ArrowBackRounded />}
           onClick={() => navigate("/reception/patients")}
-          sx={{ color: "#475569", textTransform: "none" }}
+          sx={{ color: "text.secondary", textTransform: "none" }}
         >
           Back to Patients
         </Button>
@@ -231,8 +231,8 @@ export default function PatientProfile() {
           p: 3.5,
           mb: 3,
           borderRadius: 3,
-          border: "1px solid rgba(6, 182, 212, 0.15)",
-          background: "linear-gradient(135deg, #0c1a3a 0%, #071428 100%)",
+          border: "1px solid", borderColor: "divider",
+          bgcolor: "background.paper",
           position: "relative",
           overflow: "hidden",
           "&::before": {
@@ -261,7 +261,7 @@ export default function PatientProfile() {
           </Avatar>
 
           <Box sx={{ flex: 1, minWidth: 200 }}>
-            <Typography variant="h5" sx={{ color: "#f1f5f9", fontWeight: 800, mb: 0.5 }}>
+            <Typography variant="h5" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
               {patient.firstName} {patient.lastName}
             </Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
@@ -272,7 +272,7 @@ export default function PatientProfile() {
                 sx={{
                   bgcolor: "rgba(6, 182, 212, 0.1)",
                   color: "#06b6d4",
-                  border: "1px solid rgba(6, 182, 212, 0.25)",
+                  border: "1px solid", borderColor: "divider",
                   fontWeight: 700,
                   fontFamily: "monospace",
                 }}
@@ -302,7 +302,7 @@ export default function PatientProfile() {
             <Typography variant="caption" sx={{ color: "#334155" }}>
               Registered on
             </Typography>
-            <Typography variant="body2" sx={{ color: "#64748b" }}>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
               {new Date(patient.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
             </Typography>
           </Box>
@@ -315,9 +315,9 @@ export default function PatientProfile() {
         <Grid size={{ xs: 12, md: 6 }}>
           <SectionCard title="Personal Information" icon={<PersonRounded fontSize="small" />}>
             <InfoRow icon={<CakeRounded sx={{ fontSize: 16 }} />} label="Date of Birth" value={new Date(patient.dateOfBirth).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })} />
-            <Divider sx={{ borderColor: "rgba(255,255,255,0.04)" }} />
+            <Divider sx={{ borderColor: "divider" }} />
             <InfoRow icon={<WcRounded sx={{ fontSize: 16 }} />} label="Gender" value={patient.genderLabel} />
-            <Divider sx={{ borderColor: "rgba(255,255,255,0.04)" }} />
+            <Divider sx={{ borderColor: "divider" }} />
             <InfoRow icon={<BloodtypeRounded sx={{ fontSize: 16 }} />} label="Blood Group" value={`${patient.bloodGroupLabel}`} />
           </SectionCard>
         </Grid>
@@ -326,9 +326,9 @@ export default function PatientProfile() {
         <Grid size={{ xs: 12, md: 6 }}>
           <SectionCard title="Contact Details" icon={<LocalPhoneRounded fontSize="small" />}>
             <InfoRow icon={<LocalPhoneRounded sx={{ fontSize: 16 }} />} label="Phone" value={patient.phone} />
-            <Divider sx={{ borderColor: "rgba(255,255,255,0.04)" }} />
+            <Divider sx={{ borderColor: "divider" }} />
             <InfoRow icon={<EmailRounded sx={{ fontSize: 16 }} />} label="Email" value={patient.email} />
-            <Divider sx={{ borderColor: "rgba(255,255,255,0.04)" }} />
+            <Divider sx={{ borderColor: "divider" }} />
             <InfoRow icon={<LocationOnRounded sx={{ fontSize: 16 }} />} label="Address" value={formatAddress(patient)} />
           </SectionCard>
         </Grid>
@@ -339,9 +339,9 @@ export default function PatientProfile() {
             {patient.emergencyContactName ? (
               <>
                 <InfoRow icon={<PersonRounded sx={{ fontSize: 16 }} />} label="Name" value={patient.emergencyContactName} />
-                <Divider sx={{ borderColor: "rgba(255,255,255,0.04)" }} />
+                <Divider sx={{ borderColor: "divider" }} />
                 <InfoRow icon={<LocalPhoneRounded sx={{ fontSize: 16 }} />} label="Phone" value={patient.emergencyContactPhone} />
-                <Divider sx={{ borderColor: "rgba(255,255,255,0.04)" }} />
+                <Divider sx={{ borderColor: "divider" }} />
                 <InfoRow icon={<WcRounded sx={{ fontSize: 16 }} />} label="Relationship" value={patient.emergencyContactRelation} />
               </>
             ) : (

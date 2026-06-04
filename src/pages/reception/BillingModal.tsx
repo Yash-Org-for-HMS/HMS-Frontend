@@ -170,17 +170,17 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       maxWidth="md" 
       fullWidth
       PaperProps={{
-        sx: { bgcolor: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 3 }
+        sx: { bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3 }
       }}
     >
-      <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.05)", pb: 2 }}>
+      <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid", borderColor: "divider", pb: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <ReceiptRounded sx={{ color: "#06b6d4" }} />
-          <Typography variant="h6" sx={{ color: "#f1f5f9", fontWeight: 700 }}>
+          <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>
             Billing & Receipt
           </Typography>
         </Box>
-        <Button onClick={onClose} sx={{ minWidth: 0, p: 1, color: "#64748b" }}>
+        <Button onClick={onClose} sx={{ minWidth: 0, p: 1, color: "text.secondary" }}>
           <CloseRounded />
         </Button>
       </DialogTitle>
@@ -287,13 +287,13 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
 
             {/* RIGHT: Payment Entry Form */}
             <Grid size={{ xs: 12, md: 5 }}>
-              <Box sx={{ p: 3, bgcolor: "rgba(255,255,255,0.03)", borderRadius: 3, border: "1px solid rgba(255,255,255,0.05)", height: "100%" }}>
-                <Typography variant="subtitle1" sx={{ color: "#f1f5f9", fontWeight: 600, mb: 3 }}>
+              <Box sx={{ p: 3, bgcolor: "rgba(255,255,255,0.03)", borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
+                <Typography variant="subtitle1" sx={{ color: "text.primary", fontWeight: 600, mb: 3 }}>
                   Payment Entry
                 </Typography>
 
                 <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                  <Typography variant="body2" sx={{ color: "#94a3b8" }}>Invoice Status:</Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>Invoice Status:</Typography>
                   <Chip 
                     label={invoice.paymentStatus?.statusLabel || "UNKNOWN"} 
                     size="small"
@@ -305,7 +305,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                   />
                 </Box>
                 
-                <Divider sx={{ borderColor: "rgba(255,255,255,0.05)", my: 2 }} />
+                <Divider sx={{ borderColor: "divider", my: 2 }} />
 
                 {!isFullyPaid ? (
                   <>
@@ -315,7 +315,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                       type="number"
                       value={paymentAmount}
                       onChange={(e) => setPaymentAmount(e.target.value)}
-                      sx={{ mb: 3, "& .MuiInputBase-root": { color: "#f1f5f9" }, "& .MuiInputLabel-root": { color: "#94a3b8" } }}
+                      sx={{ mb: 3, "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
                     />
                     <TextField
                       select
@@ -323,7 +323,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                       label="Payment Method"
                       value={paymentMethodId}
                       onChange={(e) => setPaymentMethodId(e.target.value)}
-                      sx={{ mb: 3, "& .MuiInputBase-root": { color: "#f1f5f9" }, "& .MuiInputLabel-root": { color: "#94a3b8" } }}
+                      sx={{ mb: 3, "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
                     >
                       {paymentMethods.map(m => (
                         <MenuItem key={m.paymentMethodId} value={m.paymentMethodId}>{m.methodName}</MenuItem>
@@ -334,7 +334,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                       label="Transaction Ref (Optional)"
                       value={transactionRef}
                       onChange={(e) => setTransactionRef(e.target.value)}
-                      sx={{ mb: 4, "& .MuiInputBase-root": { color: "#f1f5f9" }, "& .MuiInputLabel-root": { color: "#94a3b8" } }}
+                      sx={{ mb: 4, "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
                     />
                     <Button
                       fullWidth
@@ -356,8 +356,8 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                 ) : (
                   <Box sx={{ textAlign: "center", py: 5 }}>
                     <CheckCircleRounded sx={{ fontSize: 60, color: "#10b981", mb: 2 }} />
-                    <Typography variant="h6" sx={{ color: "#f1f5f9", fontWeight: 700 }}>Fully Paid</Typography>
-                    <Typography variant="body2" sx={{ color: "#94a3b8", mt: 1 }}>
+                    <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>Fully Paid</Typography>
+                    <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
                       No further payments required for this invoice.
                     </Typography>
                   </Box>
@@ -368,8 +368,8 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         ) : null}
       </DialogContent>
 
-      <DialogActions sx={{ p: 3, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        <Button onClick={onClose} sx={{ color: "#94a3b8" }}>Close</Button>
+      <DialogActions sx={{ p: 3, borderTop: "1px solid", borderColor: "divider" }}>
+        <Button onClick={onClose} sx={{ color: "text.secondary" }}>Close</Button>
         <Button 
           variant="contained" 
           startIcon={<PrintRounded />}

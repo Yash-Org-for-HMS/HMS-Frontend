@@ -136,10 +136,10 @@ export default function PermissionMatrix() {
     <Box>
       <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Box>
-          <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
+          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
             Permission Matrix
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             Comprehensive view of all roles and their assigned permissions.
           </Typography>
         </Box>
@@ -166,15 +166,15 @@ export default function PermissionMatrix() {
         </Alert>
       )}
 
-      <TableContainer component={Paper} sx={{ bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2, maxHeight: "70vh" }}>
+      <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "70vh" }}>
         <Table stickyHeader>
           <TableHead>
             <TableRow>
               <TableCell 
                 sx={{ 
-                  bgcolor: "#0f172a", 
-                  color: "#94a3b8", 
-                  borderBottom: "1px solid rgba(255,255,255,0.1)",
+                  bgcolor: "background.paper", 
+                  color: "text.secondary", 
+                  borderBottom: "1px solid", borderColor: "divider",
                   minWidth: 250,
                   zIndex: 3
                 }}
@@ -186,12 +186,12 @@ export default function PermissionMatrix() {
                   key={role.roleId} 
                   align="center"
                   sx={{ 
-                    bgcolor: "#0f172a", 
-                    color: "#f8fafc", 
-                    borderBottom: "1px solid rgba(255,255,255,0.1)",
+                    bgcolor: "background.paper", 
+                    color: "text.primary", 
+                    borderBottom: "1px solid", borderColor: "divider",
                     minWidth: 120,
                     fontWeight: 600,
-                    borderLeft: "1px solid rgba(255,255,255,0.05)"
+                    borderLeft: "1px solid"
                   }}
                 >
                   {role.roleName}
@@ -212,10 +212,10 @@ export default function PermissionMatrix() {
                   <TableCell 
                     colSpan={roles.length + 1} 
                     sx={{ 
-                      bgcolor: "rgba(255,255,255,0.02)", 
-                      color: "#cbd5e1", 
+                      bgcolor: "action.hover", 
+                      color: "text.primary", 
                       fontWeight: 700,
-                      borderBottom: "1px solid rgba(255,255,255,0.05)"
+                      borderBottom: "1px solid", borderColor: "divider"
                     }}
                   >
                     {moduleName} Module
@@ -225,7 +225,7 @@ export default function PermissionMatrix() {
                 {/* Permission Rows */}
                 {perms.map(perm => (
                   <TableRow key={perm.permissionId} hover sx={{ "&:last-child td": { borderBottom: 0 } }}>
-                    <TableCell sx={{ color: "#94a3b8", pl: 4, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell sx={{ color: "text.secondary", pl: 4, borderBottom: "1px solid", borderColor: "divider" }}>
                       {perm.actionName}
                     </TableCell>
                     
@@ -236,8 +236,8 @@ export default function PermissionMatrix() {
                           key={role.roleId} 
                           align="center" 
                           sx={{ 
-                            borderBottom: "1px solid rgba(255,255,255,0.05)",
-                            borderLeft: "1px solid rgba(255,255,255,0.05)",
+                            borderBottom: "1px solid",
+                            borderLeft: "1px solid", borderColor: "divider",
                             bgcolor: isChecked ? "rgba(99, 102, 241, 0.05)" : "transparent"
                           }}
                         >

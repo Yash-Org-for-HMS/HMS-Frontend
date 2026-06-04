@@ -53,10 +53,10 @@ export default function FormTemplatesList() {
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
         <Box>
-          <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
+          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
             Form Builder
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             Design and manage custom forms for Patient Registration, Consent, and more.
           </Typography>
         </Box>
@@ -81,50 +81,50 @@ export default function FormTemplatesList() {
           <CircularProgress sx={{ color: "#6366f1" }} />
         </Box>
       ) : (
-        <TableContainer component={Paper} sx={{ bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}>
+        <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)", fontWeight: 600 }}>Form Name</TableCell>
-                <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)", fontWeight: 600 }}>Category</TableCell>
-                <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)", fontWeight: 600 }}>Total Fields</TableCell>
-                <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)", fontWeight: 600 }}>Status</TableCell>
-                <TableCell align="right" sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)", fontWeight: 600 }}>Actions</TableCell>
+                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Form Name</TableCell>
+                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Category</TableCell>
+                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Total Fields</TableCell>
+                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Status</TableCell>
+                <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {templates.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4, color: "#94a3b8", borderBottom: "none" }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
                     No custom forms found. Click "Create Form" to begin.
                   </TableCell>
                 </TableRow>
               ) : (
                 templates.map((t) => (
                   <TableRow key={t.formTemplateId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#f8fafc", fontWeight: 500 }}>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary", fontWeight: 500 }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <DynamicFormRounded sx={{ color: "#818cf8", fontSize: 20 }} />
                         {t.formName}
                       </Box>
-                      <Typography variant="caption" display="block" sx={{ color: "#94a3b8", mt: 0.5, ml: 3.5 }}>
+                      <Typography variant="caption" display="block" sx={{ color: "text.secondary", mt: 0.5, ml: 3.5 }}>
                         {t.description}
                       </Typography>
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                      <Chip label={t.formType} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "#cbd5e1" }} />
+                    <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
+                      <Chip label={t.formType} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.primary" }} />
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       <Chip label={`${t.fieldsCount} Fields`} size="small" sx={{ bgcolor: "rgba(56, 189, 248, 0.1)", color: "#38bdf8" }} />
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {t.isActive ? (
                         <Chip label="Active" size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: "#34d399" }} />
                       ) : (
                         <Chip label="Inactive" size="small" sx={{ bgcolor: "rgba(239, 68, 68, 0.1)", color: "#f87171" }} />
                       )}
                     </TableCell>
-                    <TableCell align="right" sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Tooltip title="Edit Form">
                         <IconButton
                           size="small"

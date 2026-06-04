@@ -102,13 +102,13 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
   };
 
   const getFileIcon = (_mimeType: string) => {
-    return <InsertDriveFileRounded sx={{ fontSize: 40, color: "#94a3b8" }} />;
+    return <InsertDriveFileRounded sx={{ fontSize: 40, color: "text.secondary" }} />;
   };
 
   return (
     <Box sx={{ mt: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Typography variant="h6" sx={{ color: "#f1f5f9", fontWeight: 700 }}>
+        <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>
           Patient Documents
         </Typography>
         <Button 
@@ -128,10 +128,10 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
           <CircularProgress sx={{ color: "#06b6d4" }} />
         </Box>
       ) : documents.length === 0 ? (
-        <Paper elevation={0} sx={{ p: 5, textAlign: "center", bgcolor: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 3 }}>
+        <Paper elevation={0} sx={{ p: 5, textAlign: "center", bgcolor: "action.hover", border: "1px dashed", borderColor: "divider", borderRadius: 3 }}>
           <InsertDriveFileRounded sx={{ fontSize: 60, color: "#334155", mb: 2 }} />
-          <Typography variant="h6" sx={{ color: "#94a3b8" }}>No documents found</Typography>
-          <Typography variant="body2" sx={{ color: "#64748b", mt: 1 }}>
+          <Typography variant="h6" sx={{ color: "text.secondary" }}>No documents found</Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
             Upload Aadhaar, Insurance Cards, or Referral Letters here.
           </Typography>
         </Paper>
@@ -139,13 +139,13 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
         <Grid container spacing={3}>
           {documents.map((doc) => (
             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={doc.patientDocumentId}>
-              <Card sx={{ bgcolor: "rgba(15,23,42,0.6)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 3 }}>
+              <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
                 <CardContent sx={{ textAlign: "center", pb: 1 }}>
                   {getFileIcon(doc.mimeType)}
-                  <Typography variant="subtitle2" sx={{ color: "#e2e8f0", mt: 2, fontWeight: 600 }} noWrap>
+                  <Typography variant="subtitle2" sx={{ color: "text.primary", mt: 2, fontWeight: 600 }} noWrap>
                     {doc.documentType}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: "#64748b", display: "block", mt: 0.5 }}>
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
                     {doc.fileSizeKb} KB • {new Date(doc.createdAt).toLocaleDateString()}
                   </Typography>
                   <Chip 
@@ -154,21 +154,21 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
                     sx={{ mt: 1.5, bgcolor: "rgba(6,182,212,0.1)", color: "#06b6d4", fontSize: "0.65rem", fontWeight: 700 }}
                   />
                 </CardContent>
-                <CardActions sx={{ justifyContent: "center", borderTop: "1px solid rgba(255,255,255,0.05)", pt: 1, pb: 1.5 }}>
+                <CardActions sx={{ justifyContent: "center", borderTop: "1px solid", borderColor: "divider", pt: 1, pb: 1.5 }}>
                   <IconButton 
                     size="small" 
                     component="a" 
                     href={doc.fileUrl} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    sx={{ color: "#94a3b8", "&:hover": { color: "#06b6d4" } }}
+                    sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4" } }}
                   >
                     <VisibilityRounded fontSize="small" />
                   </IconButton>
                   <IconButton 
                     size="small" 
                     onClick={() => handleDelete(doc.patientDocumentId)}
-                    sx={{ color: "#94a3b8", "&:hover": { color: "#ef4444" } }}
+                    sx={{ color: "text.secondary", "&:hover": { color: "#ef4444" } }}
                   >
                     <DeleteRounded fontSize="small" />
                   </IconButton>
@@ -183,9 +183,9 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
       <Dialog 
         open={uploadOpen} 
         onClose={() => !uploading && setUploadOpen(false)}
-        PaperProps={{ sx: { bgcolor: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 3, minWidth: 400 } }}
+        PaperProps={{ sx: { bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, minWidth: 400 } }}
       >
-        <DialogTitle sx={{ color: "#f1f5f9", fontWeight: 700, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <DialogTitle sx={{ color: "text.primary", fontWeight: 700, borderBottom: "1px solid", borderColor: "divider" }}>
           Upload Document
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
@@ -194,7 +194,7 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
             label="Document Type"
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            sx={{ mb: 3, "& .MuiInputBase-root": { color: "#f1f5f9" }, "& .MuiInputLabel-root": { color: "#94a3b8" } }}
+            sx={{ mb: 3, "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
           >
             {documentTypes.map(type => (
               <MenuItem key={type.documentTypeId} value={type.documentTypeId}>
@@ -220,8 +220,8 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
             <input type="file" hidden onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" />
           </Button>
         </DialogContent>
-        <DialogActions sx={{ p: 2, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-          <Button onClick={() => setUploadOpen(false)} sx={{ color: "#94a3b8" }} disabled={uploading}>
+        <DialogActions sx={{ p: 2, borderTop: "1px solid", borderColor: "divider" }}>
+          <Button onClick={() => setUploadOpen(false)} sx={{ color: "text.secondary" }} disabled={uploading}>
             Cancel
           </Button>
           <Button 

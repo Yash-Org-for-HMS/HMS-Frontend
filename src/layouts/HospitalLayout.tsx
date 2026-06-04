@@ -95,8 +95,8 @@ export default function HospitalLayout() {
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        bgcolor: "#0f172a",
-        color: "#f8fafc",
+        bgcolor: "background.paper",
+        color: "text.primary",
       }}
     >
       <Toolbar
@@ -105,21 +105,26 @@ export default function HospitalLayout() {
           display: "flex",
           alignItems: "center",
           gap: 1.5,
-          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+          borderBottom: "1px solid", borderColor: "divider",
         }}
       >
         <Box
           sx={{
-            width: 32,
-            height: 32,
+            width: 40,
+            height: 40,
             borderRadius: 1.5,
-            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+            bgcolor: hospital?.logoUrl ? "transparent" : "primary.main",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            overflow: "hidden"
           }}
         >
-          <LocalHospitalRounded fontSize="small" />
+          {hospital?.logoUrl ? (
+            <img src={`http://localhost:5000${hospital.logoUrl}`} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : (
+            <LocalHospitalRounded fontSize="medium" sx={{ color: "#fff" }} />
+          )}
         </Box>
         <Box>
           <Typography variant="subtitle1" fontWeight="700" noWrap sx={{ maxWidth: 180 }}>
@@ -140,16 +145,16 @@ export default function HospitalLayout() {
                 }}
                 sx={{
                   borderRadius: 2,
-                  bgcolor: isActive ? "rgba(16, 185, 129, 0.15)" : "transparent",
+                  bgcolor: isActive ? "rgba(16, 185, 129, 0.08)" : "transparent",
                   "&:hover": {
-                    bgcolor: "rgba(16, 185, 129, 0.08)",
+                    bgcolor: "action.hover",
                   },
                 }}
               >
                 <ListItemIcon
                   sx={{
                     minWidth: 40,
-                    color: isActive ? "#34d399" : "#94a3b8",
+                    color: isActive ? "#10B981" : "#64748B",
                   }}
                 >
                   {item.icon}
@@ -159,7 +164,7 @@ export default function HospitalLayout() {
                   primaryTypographyProps={{
                     fontSize: "0.95rem",
                     fontWeight: isActive ? 600 : 500,
-                    color: isActive ? "#fff" : "#cbd5e1",
+                    color: isActive ? "#10B981" : "#64748B",
                   }}
                 />
               </ListItemButton>
@@ -168,10 +173,96 @@ export default function HospitalLayout() {
         })}
       </List>
       
-      <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)" }} />
+      <Box sx={{ height: 16 }} />
       
+      
+      <Box sx={{ p: 2, borderTop: "1px solid", borderColor: "divider" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={handleMenuOpen}
+            sx={{
+              borderRadius: 2,
+              "&:hover": { bgcolor: "action.hover" },
+              px: 1,
+            }}
+          >
+            <Avatar
+              sx={{
+                bgcolor: "primary.main",
+                width: 32,
+                height: 32,
+                fontSize: "0.9rem",
+                mr: 1.5,
+              }}
+            >
+              {user?.firstName?.charAt(0) || "U"}
+            </Avatar>
+            <ListItemText 
+              primary={user?.firstName ? `${user.firstName} ${user.lastName || ''}` : "Admin"} 
+              primaryTypographyProps={{ fontWeight: 600, fontSize: "0.9rem" }}
+            />
+          </ListItemButton>
+        </ListItem>
+    
+            
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+              transformOrigin={{ horizontal: "right", vertical: "top" }}
+              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+              PaperProps={{
+                elevation: 0,
+                sx: {
+                  mt: 1.5,
+                  bgcolor: "background.paper",
+                  color: "text.primary",
+                  border: "1px solid", borderColor: "divider",
+                  overflow: "visible",
+                  "&:before": {
+                    content: '""',
+                    display: "block",
+                    position: "absolute",
+                    top: 0,
+                    right: 14,
+                    width: 10,
+                    height: 10,
+                    bgcolor: "background.paper",
+                    transform: "translateY(-50%) rotate(45deg)",
+                    zIndex: 0,
+                    borderLeft: "1px solid",
+                    borderTop: "1px solid", borderColor: "divider",
+                  },
+                }
+              }}
+            >
+              <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider", mb: 1 }}>
+                <Typography variant="subtitle2" fontWeight="600">
+                  {user?.firstName} {user?.lastName}
+                </Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  {user?.email}
+                </Typography>
+                <Typography variant="caption" sx={{ color: "#10b981", mt: 0.5, display: "block", fontWeight: 600 }}>
+                  {user?.roleName}
+                </Typography>
+              </Box>
+              <MenuItem onClick={() => { handleMenuClose(); navigate("/hospital/profile"); }} sx={{ gap: 1.5, py: 1 }}>
+                <AccountCircleRounded fontSize="small" sx={{ color: "text.secondary" }} />
+                Profile Settings
+              </MenuItem>
+              <MenuItem onClick={handleLogout} sx={{ gap: 1.5, py: 1, color: "#f87171" }}>
+                <LogoutRounded fontSize="small" />
+                Logout
+              </MenuItem>
+            </Menu>
+          </Box>
+      </Box>
+    
       <Box sx={{ p: 2 }}>
-        <Typography variant="caption" sx={{ color: "#64748b" }}>
+        <Typography variant="caption" sx={{ color: "text.secondary" }}>
           © {new Date().getFullYear()} HMS SaaS
         </Typography>
       </Box>
@@ -179,17 +270,18 @@ export default function HospitalLayout() {
   );
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#0f172a" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       {/* ── Topbar ──────────────────────────────────────── */}
       <AppBar
         position="fixed"
         elevation={0}
         sx={{
+          display: { xs: "block", md: "none" },
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
-          bgcolor: "rgba(15, 23, 42, 0.8)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+          borderBottom: "1px solid", borderColor: "divider",
         }}
       >
         <Toolbar sx={{ justifyContent: "space-between" }}>
@@ -204,81 +296,7 @@ export default function HospitalLayout() {
             </IconButton>
           </Box>
           
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Tooltip title="Account settings">
-              <IconButton
-                onClick={handleMenuOpen}
-                sx={{
-                  p: 0.5,
-                  border: "2px solid rgba(16, 185, 129, 0.5)",
-                  "&:hover": { borderColor: "#34d399" },
-                }}
-              >
-                <Avatar
-                  sx={{
-                    bgcolor: "#10b981",
-                    width: 32,
-                    height: 32,
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  {user?.firstName?.charAt(0) || "U"}
-                </Avatar>
-              </IconButton>
-            </Tooltip>
-            
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-              transformOrigin={{ horizontal: "right", vertical: "top" }}
-              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-              PaperProps={{
-                elevation: 0,
-                sx: {
-                  mt: 1.5,
-                  bgcolor: "#1e293b",
-                  color: "#f8fafc",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  overflow: "visible",
-                  "&:before": {
-                    content: '""',
-                    display: "block",
-                    position: "absolute",
-                    top: 0,
-                    right: 14,
-                    width: 10,
-                    height: 10,
-                    bgcolor: "#1e293b",
-                    transform: "translateY(-50%) rotate(45deg)",
-                    zIndex: 0,
-                    borderLeft: "1px solid rgba(255, 255, 255, 0.1)",
-                    borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-                  },
-                }
-              }}
-            >
-              <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid rgba(255,255,255,0.08)", mb: 1 }}>
-                <Typography variant="subtitle2" fontWeight="600">
-                  {user?.firstName} {user?.lastName}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#94a3b8" }}>
-                  {user?.email}
-                </Typography>
-                <Typography variant="caption" sx={{ color: "#10b981", mt: 0.5, display: "block", fontWeight: 600 }}>
-                  {user?.roleName}
-                </Typography>
-              </Box>
-              <MenuItem onClick={() => { handleMenuClose(); navigate("/hospital/profile"); }} sx={{ gap: 1.5, py: 1 }}>
-                <AccountCircleRounded fontSize="small" sx={{ color: "#94a3b8" }} />
-                Profile Settings
-              </MenuItem>
-              <MenuItem onClick={handleLogout} sx={{ gap: 1.5, py: 1, color: "#f87171" }}>
-                <LogoutRounded fontSize="small" />
-                Logout
-              </MenuItem>
-            </Menu>
-          </Box>
+          
         </Toolbar>
       </AppBar>
 
@@ -310,7 +328,10 @@ export default function HospitalLayout() {
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
-              borderRight: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRight: "none",
+              borderTopRightRadius: 24,
+              borderBottomRightRadius: 24,
+              boxShadow: "4px 0 24px rgba(0,0,0,0.03)",
             },
           }}
           open
@@ -331,7 +352,7 @@ export default function HospitalLayout() {
           flexDirection: "column",
         }}
       >
-        <Toolbar /> {/* Spacer for fixed AppBar */}
+        <Toolbar sx={{ display: { xs: "block", md: "none" } }} /> {/* Spacer for fixed AppBar */}
         <Outlet />
       </Box>
     </Box>

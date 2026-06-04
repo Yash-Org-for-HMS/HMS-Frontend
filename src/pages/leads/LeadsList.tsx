@@ -24,6 +24,8 @@ import {
   DialogContent,
   DialogActions,
   Pagination,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import {
   AddRounded,
@@ -32,8 +34,10 @@ import {
   SearchRounded,
   MoreVertRounded,
   FilterAltRounded,
+  AssignmentIndRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function LeadsList() {
   const { t } = useTranslation();
@@ -46,18 +50,25 @@ export default function LeadsList() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [myLeadsOnly, setMyLeadsOnly] = useState(false);
+  const { user } = useAuth();
 
   // Dialogs & Menus
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [convertId, setConvertId] = useState<any | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [selectedLeadStatus, setSelectedLeadStatus] = useState<string | null>(null);
+  const [selectedLead, setSelectedLead] = useState<any | null>(null);
 
   const fetchLeads = async () => {
     setLoading(true);
     try {
-      const response = await axiosInstance.get("/leads", {
-        params: { page, limit: 10, search, status: statusFilter }
-      });
+      const params: any = { page, limit: 10, search, status: statusFilter };
+      if (myLeadsOnly && user?.id) {
+        params.assignedTo = user.id;
+      }
+      const response = await axiosInstance.get("/leads", { params });
       setLeads(response.data.data);
       setTotalPages(response.data.pagination.totalPages);
     } catch (error) {
@@ -69,7 +80,7 @@ export default function LeadsList() {
 
   useEffect(() => {
     fetchLeads();
-  }, [page, search, statusFilter]);
+  }, [page, search, statusFilter, myLeadsOnly, user]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -82,6 +93,17 @@ export default function LeadsList() {
     }
   };
 
+  const handleConvert = async () => {
+    if (!convertId) return;
+    try {
+      await axiosInstance.post(`/leads/${convertId.hospitalLeadId}/convert`);
+      setConvertId(null);
+      fetchLeads();
+    } catch (error) {
+      console.error("Failed to convert lead", error);
+    }
+  };
+
   const handleStatusChange = async (leadId: string, newStatus: string) => {
     try {
       await axiosInstance.patch(`/leads/${leadId}/status`, { status: newStatus });
@@ -91,10 +113,23 @@ export default function LeadsList() {
     }
   };
 
-  const openActionMenu = (e: React.MouseEvent<HTMLElement>, leadId: string) => {
+  const handleAssignToMe = async () => {
+    if (!selectedLeadId || !user?.id) return;
+    try {
+      await axiosInstance.patch(`/leads/${selectedLeadId}/assign`, { assignedToUserId: user.id });
+      setAnchorEl(null);
+      fetchLeads();
+    } catch (error) {
+      console.error("Failed to assign lead", error);
+    }
+  };
+
+  const openActionMenu = (e: React.MouseEvent<HTMLElement>, lead: any) => {
     e.stopPropagation();
     setAnchorEl(e.currentTarget);
-    setSelectedLeadId(leadId);
+    setSelectedLeadId(lead.hospitalLeadId);
+    setSelectedLeadStatus(lead.leadStatus);
+    setSelectedLead(lead);
   };
 
   const getStatusTextColor = (status: string) => {
@@ -123,10 +158,10 @@ export default function LeadsList() {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
         <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "#f8fafc", mb: 1 }}>
+          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
             {t("leads.title")}
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             {t("leads.subtitle")}
           </Typography>
         </Box>
@@ -151,11 +186,11 @@ export default function LeadsList() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"
-          sx={textFieldSx}
+          
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchRounded sx={{ color: "#64748b" }} />
+                <SearchRounded sx={{ color: "text.secondary" }} />
               </InputAdornment>
             ),
           }}
@@ -165,11 +200,11 @@ export default function LeadsList() {
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           size="small"
-          sx={{ ...textFieldSx, minWidth: 200 }}
+          sx={{ minWidth: 200 }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <FilterAltRounded sx={{ color: "#64748b" }} />
+                <FilterAltRounded sx={{ color: "text.secondary" }} />
               </InputAdornment>
             ),
           }}
@@ -181,14 +216,26 @@ export default function LeadsList() {
           <MenuItem value="demo_done">{t("leads.statusDemoDone")}</MenuItem>
           <MenuItem value="converted">{t("leads.statusConverted")}</MenuItem>
         </TextField>
+        
+        <FormControlLabel
+          control={
+            <Switch 
+              checked={myLeadsOnly} 
+              onChange={(e) => setMyLeadsOnly(e.target.checked)} 
+              color="primary"
+            />
+          }
+          label={<Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>My Leads Only</Typography>}
+          sx={{ ml: 2 }}
+        />
       </Box>
 
       <Paper
-        elevation={0}
+        elevation={2}
         sx={{
-          bgcolor: "rgba(30, 41, 59, 0.7)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 3,
           overflow: "hidden",
         }}
@@ -196,12 +243,12 @@ export default function LeadsList() {
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: "rgba(15, 23, 42, 0.6)" }}>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("leads.hospitalName")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("leads.contactDetails")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("leads.assignedTo")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("leads.status")}</TableCell>
-                <TableCell align="right" sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("common.actions")}</TableCell>
+              <TableRow sx={{ bgcolor: "background.paper" }}>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("leads.hospitalName")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("leads.contactDetails")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("leads.assignedTo")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("leads.status")}</TableCell>
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -213,22 +260,22 @@ export default function LeadsList() {
                 </TableRow>
               ) : leads.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 8, color: "#94a3b8" }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 8, color: "text.secondary" }}>
                     {t("common.noData")}
                   </TableCell>
                 </TableRow>
               ) : (
                 leads.map((lead) => (
-                  <TableRow key={lead.hospitalLeadId} hover sx={{ "&:hover": { bgcolor: "rgba(255, 255, 255, 0.02)" } }}>
-                    <TableCell sx={{ color: "#f8fafc", fontWeight: 500 }}>
+                  <TableRow key={lead.hospitalLeadId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
+                    <TableCell sx={{ color: "text.primary", fontWeight: 500 }}>
                       {lead.hospitalName}
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" sx={{ color: "#e2e8f0" }}>{lead.contactPersonName}</Typography>
-                      <Typography variant="caption" sx={{ color: "#94a3b8", display: "block" }}>{lead.email}</Typography>
-                      <Typography variant="caption" sx={{ color: "#94a3b8" }}>{lead.phone}</Typography>
+                      <Typography variant="body2" sx={{ color: "text.primary" }}>{lead.contactPersonName}</Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{lead.email}</Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>{lead.phone}</Typography>
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1" }}>
+                    <TableCell sx={{ color: "text.primary" }}>
                       {lead.assignedUser ? `${lead.assignedUser.firstName} ${lead.assignedUser.lastName}` : "Unassigned"}
                     </TableCell>
                     <TableCell>
@@ -246,8 +293,8 @@ export default function LeadsList() {
                             fontWeight: 600,
                             fontSize: "0.85rem",
                             "& fieldset": { borderColor: "transparent" },
-                            "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                            "&.Mui-focused fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+                            "&:hover fieldset": { borderColor: "divider" },
+                            "&.Mui-focused fieldset": { borderColor: "divider" },
                           },
                           "& .MuiSvgIcon-root": { color: getStatusTextColor(lead.leadStatus) }
                         }}
@@ -255,9 +302,9 @@ export default function LeadsList() {
                           MenuProps: {
                             sx: {
                               "& .MuiPaper-root": {
-                                bgcolor: "#1e293b",
-                                color: "#f8fafc",
-                                border: "1px solid rgba(255, 255, 255, 0.1)"
+                                bgcolor: "background.paper",
+                                color: "text.primary",
+                                border: "1px solid", borderColor: "divider"
                               }
                             }
                           }
@@ -271,7 +318,7 @@ export default function LeadsList() {
                       </TextField>
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton onClick={(e) => openActionMenu(e, lead.hospitalLeadId)} sx={{ color: "#94a3b8" }}>
+                      <IconButton onClick={(e) => openActionMenu(e, lead)} sx={{ color: "text.secondary" }}>
                         <MoreVertRounded />
                       </IconButton>
                     </TableCell>
@@ -284,14 +331,14 @@ export default function LeadsList() {
         
         {/* Pagination */}
         {totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid", borderColor: "divider" }}>
             <Pagination 
               count={totalPages} 
               page={page} 
               onChange={(_, value) => setPage(value)} 
               color="primary"
               sx={{
-                "& .MuiPaginationItem-root": { color: "#cbd5e1" },
+                "& .MuiPaginationItem-root": { color: "text.primary" },
                 "& .Mui-selected": { bgcolor: "rgba(99, 102, 241, 0.2) !important", color: "#818cf8" }
               }}
             />
@@ -304,26 +351,47 @@ export default function LeadsList() {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={() => setAnchorEl(null)}
-        PaperProps={{ sx: { bgcolor: "#1e293b", border: "1px solid rgba(255, 255, 255, 0.1)", color: "#f8fafc" } }}
+        PaperProps={{ sx: { bgcolor: "background.paper", border: "1px solid", borderColor: "divider", color: "text.primary" } }}
       >
+        {selectedLeadStatus !== "converted" && (
+          <MenuItem onClick={() => { setConvertId(selectedLead); setAnchorEl(null); }}>
+            <AddRounded sx={{ mr: 1.5, fontSize: 20, color: "#10b981" }} /> Convert to Hospital
+          </MenuItem>
+        )}
+        {selectedLead && selectedLead.assignedSalesAdminId !== user?.id && (
+          <MenuItem onClick={handleAssignToMe}>
+            <AssignmentIndRounded sx={{ mr: 1.5, fontSize: 20, color: "#6366f1" }} /> Assign to Me
+          </MenuItem>
+        )}
         <MenuItem onClick={() => { navigate(`/leads/${selectedLeadId}/edit`); setAnchorEl(null); }}>
-          <EditRounded sx={{ mr: 1.5, fontSize: 20, color: "#94a3b8" }} /> {t("common.edit")}
+          <EditRounded sx={{ mr: 1.5, fontSize: 20, color: "text.secondary" }} /> {t("common.edit")}
         </MenuItem>
         <MenuItem onClick={() => { setDeleteId(selectedLeadId); setAnchorEl(null); }}>
           <DeleteRounded sx={{ mr: 1.5, fontSize: 20, color: "#ef4444" }} /> {t("common.delete")}
         </MenuItem>
       </Menu>
 
-
+      {/* Convert Confirmation Dialog */}
+      <Dialog open={Boolean(convertId)} onClose={() => setConvertId(null)} PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 700 }}>Convert Lead to Hospital</DialogTitle>
+        <DialogContent sx={{ color: "text.secondary" }}>
+          Are you sure you want to convert <strong>{convertId?.hospitalName}</strong> into a live hospital tenant? 
+          This will automatically generate a Hospital record, a Main Branch, and start the Onboarding tracking process.
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setConvertId(null)} sx={{ color: "text.secondary" }}>{t("common.cancel")}</Button>
+          <Button onClick={handleConvert} variant="contained" sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }}>Convert to Hospital</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={Boolean(deleteId)} onClose={() => setDeleteId(null)} PaperProps={{ sx: { bgcolor: "#1e293b", color: "#f8fafc", borderRadius: 3 } }}>
+      <Dialog open={Boolean(deleteId)} onClose={() => setDeleteId(null)} PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>
         <DialogTitle>{t("leads.deleteLead")}</DialogTitle>
-        <DialogContent sx={{ color: "#cbd5e1" }}>
+        <DialogContent sx={{ color: "text.primary" }}>
           {t("leads.deleteConfirm")}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setDeleteId(null)} sx={{ color: "#94a3b8" }}>{t("common.cancel")}</Button>
+          <Button onClick={() => setDeleteId(null)} sx={{ color: "text.secondary" }}>{t("common.cancel")}</Button>
           <Button onClick={handleDelete} color="error" variant="contained">{t("common.delete")}</Button>
         </DialogActions>
       </Dialog>
@@ -333,13 +401,13 @@ export default function LeadsList() {
 
 const textFieldSx = {
   "& .MuiOutlinedInput-root": {
-    color: "#f1f5f9",
+    color: "text.primary",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+    "& fieldset": { borderColor: "divider" },
+    "&:hover fieldset": { borderColor: "divider" },
     "&.Mui-focused fieldset": { borderColor: "#6366f1" },
   },
-  "& .MuiInputLabel-root": { color: "#94a3b8" },
+  "& .MuiInputLabel-root": { color: "text.secondary" },
   "& .MuiInputLabel-root.Mui-focused": { color: "#6366f1" },
-  "& .MuiSvgIcon-root": { color: "#64748b" },
+  "& .MuiSvgIcon-root": { color: "text.secondary" },
 };

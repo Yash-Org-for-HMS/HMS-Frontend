@@ -91,10 +91,10 @@ export default function FeatureFlagsList() {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
         <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "#f8fafc", mb: 1 }}>
+          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
             {t("flags.title", "Feature Flags")}
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             {t("flags.subtitle", "Manage hospital-specific feature toggles and overrides")}
           </Typography>
         </Box>
@@ -119,11 +119,11 @@ export default function FeatureFlagsList() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"
-          sx={textFieldSx}
+          
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchRounded sx={{ color: "#64748b" }} />
+                <SearchRounded sx={{ color: "text.secondary" }} />
               </InputAdornment>
             ),
           }}
@@ -131,11 +131,11 @@ export default function FeatureFlagsList() {
       </Box>
 
       <Paper
-        elevation={0}
+        elevation={2}
         sx={{
-          bgcolor: "rgba(30, 41, 59, 0.7)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 3,
           overflow: "hidden",
         }}
@@ -143,13 +143,13 @@ export default function FeatureFlagsList() {
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: "rgba(15, 23, 42, 0.6)" }}>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("flags.hospitalName", "Hospital")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("flags.featureName", "Feature")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("flags.featureKey", "Key")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("flags.scope", "Scope")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("flags.status", "Status")}</TableCell>
-                <TableCell align="right" sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
+              <TableRow sx={{ bgcolor: "background.paper" }}>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("flags.hospitalName", "Hospital")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("flags.featureName", "Feature")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("flags.featureKey", "Key")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("flags.scope", "Scope")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("flags.status", "Status")}</TableCell>
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -161,20 +161,20 @@ export default function FeatureFlagsList() {
                 </TableRow>
               ) : flags.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8, color: "#94a3b8" }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 8, color: "text.secondary" }}>
                     {t("common.noData")}
                   </TableCell>
                 </TableRow>
               ) : (
                 flags.map((flag) => (
-                  <TableRow key={flag.featureFlagId} hover sx={{ "&:hover": { bgcolor: "rgba(255, 255, 255, 0.02)" } }}>
-                    <TableCell sx={{ color: "#f8fafc", fontWeight: 500 }}>
+                  <TableRow key={flag.featureFlagId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
+                    <TableCell sx={{ color: "text.primary", fontWeight: 500 }}>
                       {flag.isGlobal ? <span style={{color: "#60a5fa"}}>Global / All Hospitals</span> : flag.hospital?.hospitalName}
                     </TableCell>
-                    <TableCell sx={{ color: "#f8fafc" }}>
+                    <TableCell sx={{ color: "text.primary" }}>
                       {flag.featureName}
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1", fontFamily: "monospace" }}>
+                    <TableCell sx={{ color: "text.primary", fontFamily: "monospace" }}>
                       {flag.featureKey}
                     </TableCell>
                     <TableCell>
@@ -184,7 +184,7 @@ export default function FeatureFlagsList() {
                       <Chip label={flag.isEnabled ? "Enabled" : "Disabled"} size="small" sx={{ bgcolor: flag.isEnabled ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)", color: flag.isEnabled ? "#34d399" : "#f87171", fontWeight: 600 }} />
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton onClick={(e) => openActionMenu(e, flag.featureFlagId)} sx={{ color: "#94a3b8" }}>
+                      <IconButton onClick={(e) => openActionMenu(e, flag.featureFlagId)} sx={{ color: "text.secondary" }}>
                         <MoreVertRounded />
                       </IconButton>
                     </TableCell>
@@ -197,14 +197,14 @@ export default function FeatureFlagsList() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid", borderColor: "divider" }}>
             <Pagination 
               count={totalPages} 
               page={page} 
               onChange={(_, value) => setPage(value)} 
               color="primary"
               sx={{
-                "& .MuiPaginationItem-root": { color: "#cbd5e1" },
+                "& .MuiPaginationItem-root": { color: "text.primary" },
                 "& .Mui-selected": { bgcolor: "rgba(245, 158, 11, 0.2) !important", color: "#fbbf24" }
               }}
             />
@@ -217,10 +217,10 @@ export default function FeatureFlagsList() {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={() => setAnchorEl(null)}
-        PaperProps={{ sx: { bgcolor: "#1e293b", border: "1px solid rgba(255, 255, 255, 0.1)", color: "#f8fafc" } }}
+        PaperProps={{ sx: { bgcolor: "background.paper", border: "1px solid", borderColor: "divider", color: "text.primary" } }}
       >
         <MenuItem onClick={() => { navigate(`/feature-flags/${selectedFlagId}/edit`); setAnchorEl(null); }}>
-          <EditRounded sx={{ mr: 1.5, fontSize: 20, color: "#94a3b8" }} /> {t("common.edit", "Edit")}
+          <EditRounded sx={{ mr: 1.5, fontSize: 20, color: "text.secondary" }} /> {t("common.edit", "Edit")}
         </MenuItem>
         <MenuItem onClick={() => { setDeleteId(selectedFlagId); setAnchorEl(null); }}>
           <DeleteRounded sx={{ mr: 1.5, fontSize: 20, color: "#ef4444" }} /> {t("common.delete", "Delete")}
@@ -228,13 +228,13 @@ export default function FeatureFlagsList() {
       </Menu>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={Boolean(deleteId)} onClose={() => setDeleteId(null)} PaperProps={{ sx: { bgcolor: "#1e293b", color: "#f8fafc", borderRadius: 3 } }}>
+      <Dialog open={Boolean(deleteId)} onClose={() => setDeleteId(null)} PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>
         <DialogTitle>{t("flags.deleteFlag", "Delete Flag")}</DialogTitle>
-        <DialogContent sx={{ color: "#cbd5e1" }}>
+        <DialogContent sx={{ color: "text.primary" }}>
           {t("flags.deleteConfirm", "Are you sure you want to delete this feature flag? This will revert the hospital's access to this feature to the default specified by their plan.")}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setDeleteId(null)} sx={{ color: "#94a3b8" }}>{t("common.cancel", "Cancel")}</Button>
+          <Button onClick={() => setDeleteId(null)} sx={{ color: "text.secondary" }}>{t("common.cancel", "Cancel")}</Button>
           <Button onClick={handleDelete} color="error" variant="contained">{t("common.delete", "Delete")}</Button>
         </DialogActions>
       </Dialog>
@@ -244,13 +244,13 @@ export default function FeatureFlagsList() {
 
 const textFieldSx = {
   "& .MuiOutlinedInput-root": {
-    color: "#f1f5f9",
+    color: "text.primary",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+    "& fieldset": { borderColor: "divider" },
+    "&:hover fieldset": { borderColor: "divider" },
     "&.Mui-focused fieldset": { borderColor: "#f59e0b" },
   },
-  "& .MuiInputLabel-root": { color: "#94a3b8" },
+  "& .MuiInputLabel-root": { color: "text.secondary" },
   "& .MuiInputLabel-root.Mui-focused": { color: "#f59e0b" },
-  "& .MuiSvgIcon-root": { color: "#64748b" },
+  "& .MuiSvgIcon-root": { color: "text.secondary" },
 };

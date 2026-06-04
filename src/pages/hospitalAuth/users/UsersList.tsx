@@ -112,7 +112,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
       fullWidth
       PaperProps={{
         sx: {
-          bgcolor: "#0f172a",
+          bgcolor: "background.paper",
           border: "1px solid rgba(234, 179, 8, 0.2)",
           borderRadius: 3,
           backgroundImage: "none",
@@ -139,16 +139,16 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
             <LockResetRounded sx={{ color: "#fbbf24", fontSize: 24 }} />
           </Box>
           <Box>
-            <Typography variant="h6" sx={{ color: "#f1f5f9", fontWeight: 700 }}>
+            <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>
               Reset Password
             </Typography>
-            <Typography variant="caption" sx={{ color: "#64748b" }}>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
               For:{" "}
-              <Box component="span" sx={{ color: "#94a3b8", fontWeight: 600 }}>
+              <Box component="span" sx={{ color: "text.secondary", fontWeight: 600 }}>
                 {user?.firstName} {user?.lastName}
               </Box>
               {" · "}
-              <Box component="span" sx={{ color: "#64748b" }}>
+              <Box component="span" sx={{ color: "text.secondary" }}>
                 {user?.email}
               </Box>
             </Typography>
@@ -194,13 +194,13 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
               justifyContent: "center",
             }}
           >
-            {useDefault && <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#0f172a" }} />}
+            {useDefault && <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "background.paper" }} />}
           </Box>
           <Box>
-            <Typography variant="body2" sx={{ color: "#e2e8f0", fontWeight: 600 }}>
+            <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
               Use default password
             </Typography>
-            <Typography variant="caption" sx={{ color: "#64748b" }}>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
               Resets to{" "}
               <Chip
                 label="Password@123"
@@ -213,7 +213,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
 
         {!useDefault && (
           <>
-            <Divider sx={{ borderColor: "rgba(255,255,255,0.06)", mb: 3 }}>
+            <Divider sx={{ borderColor: "divider", mb: 3 }}>
               <Typography variant="caption" sx={{ color: "#334155", px: 1 }}>
                 or set custom password
               </Typography>
@@ -226,11 +226,11 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
                 value={newPassword}
                 onChange={(e) => { setNewPassword(e.target.value); setError(null); }}
                 placeholder="Min 6 characters"
-                InputLabelProps={{ style: { color: "#94a3b8" } }}
+                InputLabelProps={{ style: { color: "text.secondary" } }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton onClick={() => setShowNew(!showNew)} edge="end" sx={{ color: "#64748b" }}>
+                      <IconButton onClick={() => setShowNew(!showNew)} edge="end" sx={{ color: "text.secondary" }}>
                         {showNew ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
@@ -238,9 +238,9 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    color: "#f1f5f9",
-                    "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
-                    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+                    color: "text.primary",
+                    "& fieldset": { borderColor: "divider" },
+                    "&:hover fieldset": { borderColor: "divider" },
                     "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
                   },
                 }}
@@ -251,11 +251,11 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
                 type={showConfirm ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => { setConfirmPassword(e.target.value); setError(null); }}
-                InputLabelProps={{ style: { color: "#94a3b8" } }}
+                InputLabelProps={{ style: { color: "text.secondary" } }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton onClick={() => setShowConfirm(!showConfirm)} edge="end" sx={{ color: "#64748b" }}>
+                      <IconButton onClick={() => setShowConfirm(!showConfirm)} edge="end" sx={{ color: "text.secondary" }}>
                         {showConfirm ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
@@ -263,14 +263,14 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    color: "#f1f5f9",
+                    color: "text.primary",
                     "& fieldset": {
                       borderColor:
                         confirmPassword && confirmPassword !== newPassword
                           ? "rgba(239,68,68,0.5)"
                           : "rgba(255,255,255,0.1)",
                     },
-                    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+                    "&:hover fieldset": { borderColor: "divider" },
                     "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
                   },
                 }}
@@ -298,7 +298,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
           }}
         >
           <InfoOutlined sx={{ color: "#06b6d4", fontSize: 16, mt: 0.1, flexShrink: 0 }} />
-          <Typography variant="caption" sx={{ color: "#64748b", lineHeight: 1.6 }}>
+          <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.6 }}>
             The staff member will be required to change this password on their next login.
           </Typography>
         </Box>
@@ -308,7 +308,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
             fullWidth
             variant="outlined"
             onClick={handleClose}
-            sx={{ color: "#64748b", borderColor: "rgba(255,255,255,0.12)", textTransform: "none" }}
+            sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none" }}
           >
             Cancel
           </Button>
@@ -360,7 +360,7 @@ function CredentialSuccessDialog({ open, user, newPassword, onClose }: Credentia
       fullWidth
       PaperProps={{
         sx: {
-          bgcolor: "#0f172a",
+          bgcolor: "background.paper",
           border: "1px solid rgba(16,185,129,0.25)",
           borderRadius: 3,
           backgroundImage: "none",
@@ -371,17 +371,17 @@ function CredentialSuccessDialog({ open, user, newPassword, onClose }: Credentia
       <DialogContent sx={{ p: 3 }}>
         <Box sx={{ textAlign: "center", mb: 3 }}>
           <CheckCircleRounded sx={{ color: "#10b981", fontSize: 40, mb: 1 }} />
-          <Typography variant="h6" sx={{ color: "#f1f5f9", fontWeight: 700 }}>
+          <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>
             Password Reset!
           </Typography>
-          <Typography variant="caption" sx={{ color: "#64748b" }}>
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
             Share these new credentials with {user?.firstName}
           </Typography>
         </Box>
 
-        <Box sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", mb: 2 }}>
+        <Box sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(255,255,255,0.03)", border: "1px solid", borderColor: "divider", mb: 2 }}>
           <Typography variant="caption" sx={{ color: "#475569" }}>Email</Typography>
-          <Typography sx={{ color: "#e2e8f0", fontFamily: "monospace", fontSize: "0.85rem", mb: 1 }}>{user?.email}</Typography>
+          <Typography sx={{ color: "text.primary", fontFamily: "monospace", fontSize: "0.85rem", mb: 1 }}>{user?.email}</Typography>
           <Typography variant="caption" sx={{ color: "#475569" }}>New Password</Typography>
           <Typography sx={{ color: "#fbbf24", fontFamily: "monospace", fontSize: "0.9rem", fontWeight: 700 }}>{newPassword}</Typography>
         </Box>
@@ -392,7 +392,7 @@ function CredentialSuccessDialog({ open, user, newPassword, onClose }: Credentia
             variant="outlined"
             startIcon={copied ? <CheckCircleRounded /> : <ContentCopyRounded />}
             onClick={copy}
-            sx={{ color: copied ? "#10b981" : "#64748b", borderColor: "rgba(255,255,255,0.1)", textTransform: "none" }}
+            sx={{ color: copied ? "#10b981" : "#64748b", borderColor: "divider", textTransform: "none" }}
           >
             {copied ? "Copied!" : "Copy"}
           </Button>
@@ -445,10 +445,10 @@ export default function UsersList() {
       <Box>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
           <Box>
-            <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
+            <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
               Staff & Users
             </Typography>
-            <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+            <Typography variant="body1" sx={{ color: "text.secondary" }}>
               Manage your hospital's staff, roles, and assignments.
             </Typography>
           </Box>
@@ -470,7 +470,7 @@ export default function UsersList() {
 
         <TableContainer
           component={Paper}
-          sx={{ bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}
+          sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}
         >
           <Table>
             <TableHead>
@@ -479,7 +479,7 @@ export default function UsersList() {
                   <TableCell
                     key={h}
                     align={i === 5 ? "right" : "left"}
-                    sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}
+                    sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}
                   >
                     {h}
                   </TableCell>
@@ -489,14 +489,14 @@ export default function UsersList() {
             <TableBody>
               {users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: "#94a3b8", borderBottom: "none" }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
                     No staff members found.
                   </TableCell>
                 </TableRow>
               ) : (
                 users.map((user) => (
                   <TableRow key={user.userId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                         <Avatar
                           sx={{
@@ -510,10 +510,10 @@ export default function UsersList() {
                           {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
                         </Avatar>
                         <Box>
-                          <Typography variant="body2" sx={{ color: "#f8fafc", fontWeight: 500 }}>
+                          <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>
                             {user.firstName} {user.lastName}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: "#64748b" }}>
+                          <Typography variant="caption" sx={{ color: "text.secondary" }}>
                             {user.email}
                             {user.employeeCode && ` · ${user.employeeCode}`}
                           </Typography>
@@ -527,16 +527,16 @@ export default function UsersList() {
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {user.role?.roleName || "—"}
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {user.department?.departmentName || "—"}
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {user.branch?.branchName || "—"}
                     </TableCell>
-                    <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Chip
                         label={user.isActive ? "Active" : "Inactive"}
                         size="small"
@@ -547,12 +547,12 @@ export default function UsersList() {
                         }}
                       />
                     </TableCell>
-                    <TableCell align="right" sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Tooltip title="Reset Password">
                         <IconButton
                           size="small"
                           onClick={() => setResetDialog({ open: true, user })}
-                          sx={{ color: "#94a3b8", "&:hover": { color: "#fbbf24", bgcolor: "rgba(234,179,8,0.1)" } }}
+                          sx={{ color: "text.secondary", "&:hover": { color: "#fbbf24", bgcolor: "rgba(234,179,8,0.1)" } }}
                         >
                           <KeyRounded fontSize="small" />
                         </IconButton>
@@ -561,7 +561,7 @@ export default function UsersList() {
                         <IconButton
                           size="small"
                           onClick={() => navigate(`/hospital/users/${user.userId}/edit`)}
-                          sx={{ color: "#94a3b8", "&:hover": { color: "#6366f1", bgcolor: "rgba(99,102,241,0.1)" } }}
+                          sx={{ color: "text.secondary", "&:hover": { color: "#6366f1", bgcolor: "rgba(99,102,241,0.1)" } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>
@@ -571,7 +571,7 @@ export default function UsersList() {
                           size="small"
                           onClick={() => handleToggleStatus(user)}
                           sx={{
-                            color: "#94a3b8",
+                            color: "text.secondary",
                             "&:hover": {
                               color: user.isActive ? "#f87171" : "#34d399",
                               bgcolor: user.isActive ? "rgba(239,68,68,0.1)" : "rgba(16,185,129,0.1)",

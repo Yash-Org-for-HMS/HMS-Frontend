@@ -94,7 +94,7 @@ export default function HospitalChangePassword() {
             borderRadius: 3,
             background: "rgba(30, 41, 59, 0.7)",
             backdropFilter: "blur(12px)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
+            border: "1px solid", borderColor: "divider",
             boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
           }}
         >
@@ -113,10 +113,10 @@ export default function HospitalChangePassword() {
             >
               <LockResetRounded sx={{ color: "#fff", fontSize: 32 }} />
             </Box>
-            <Typography variant="h5" sx={{ fontWeight: 700, color: "#f8fafc", mb: 1 }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary", mb: 1 }}>
               Set New Password
             </Typography>
-            <Typography variant="body2" sx={{ color: "#94a3b8" }}>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
               For security reasons, you must change your password before continuing.
             </Typography>
           </Box>
@@ -141,12 +141,12 @@ export default function HospitalChangePassword() {
               sx={{
                 mb: 2.5,
                 "& .MuiOutlinedInput-root": {
-                  color: "#f1f5f9",
+                  color: "text.primary",
                   backgroundColor: "rgba(15, 23, 42, 0.6)",
-                  "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
+                  "& fieldset": { borderColor: "divider" },
                   "&.Mui-focused fieldset": { borderColor: "#10b981" },
                 },
-                "& .MuiInputLabel-root": { color: "#94a3b8" },
+                "& .MuiInputLabel-root": { color: "text.secondary" },
               }}
             />
             <TextField
@@ -162,17 +162,17 @@ export default function HospitalChangePassword() {
               sx={{
                 mb: 4,
                 "& .MuiOutlinedInput-root": {
-                  color: "#f1f5f9",
+                  color: "text.primary",
                   backgroundColor: "rgba(15, 23, 42, 0.6)",
-                  "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
+                  "& fieldset": { borderColor: "divider" },
                   "&.Mui-focused fieldset": { borderColor: "#10b981" },
                 },
-                "& .MuiInputLabel-root": { color: "#94a3b8" },
+                "& .MuiInputLabel-root": { color: "text.secondary" },
               }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: "#64748b" }}>
+                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: "text.secondary" }}>
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>

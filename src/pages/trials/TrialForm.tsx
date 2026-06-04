@@ -111,16 +111,16 @@ export default function TrialForm() {
         <IconButton
           onClick={() => navigate("/trials")}
           sx={{
-            bgcolor: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "#f8fafc",
+            bgcolor: "action.hover",
+            border: "1px solid", borderColor: "divider",
+            color: "text.primary",
             "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
           }}
         >
           <ArrowBackRounded />
         </IconButton>
         <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "#f8fafc", letterSpacing: "-0.5px" }}>
+          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
             {t("trials.addTrial")}
           </Typography>
         </Box>
@@ -129,12 +129,12 @@ export default function TrialForm() {
       {error && <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>{error}</Alert>}
 
       <Paper
-        elevation={0}
+        elevation={2}
         sx={{
           p: { xs: 3, md: 5 },
-          bgcolor: "rgba(30, 41, 59, 0.7)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 4,
           animation: "fadeInUp 0.6s ease-out both",
         }}
@@ -150,20 +150,18 @@ export default function TrialForm() {
                 value={formData.leadId}
                 onChange={handleChange}
                 required
-                sx={textFieldSx}
+                
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
                       sx: {
-                        bgcolor: "#1e293b",
-                        color: "#f8fafc",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        bgcolor: "background.paper",
+                        color: "text.primary",
+                        border: "1px solid", borderColor: "divider",
                         "& .MuiMenuItem-root": {
                           py: 1.5,
                           px: 2,
-                          "&:hover": {
-                            bgcolor: "rgba(255, 255, 255, 0.05)"
-                          },
+                          "&:hover": { bgcolor: "action.hover" },
                           "&.Mui-selected": {
                             bgcolor: "rgba(236, 72, 153, 0.2)",
                             color: "#f472b6",
@@ -194,7 +192,7 @@ export default function TrialForm() {
                 onChange={handleChange}
                 required
                 InputLabelProps={{ shrink: true }}
-                sx={textFieldSx}
+                
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -204,18 +202,18 @@ export default function TrialForm() {
                 label="Duration"
                 value={duration}
                 onChange={(e) => setDuration(e.target.value as any)}
-                sx={textFieldSx}
+                
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
                       sx: {
-                        bgcolor: "#1e293b",
-                        color: "#f8fafc",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        bgcolor: "background.paper",
+                        color: "text.primary",
+                        border: "1px solid", borderColor: "divider",
                         "& .MuiMenuItem-root": {
                           py: 1.5,
                           px: 2,
-                          "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" },
+                          "&:hover": { bgcolor: "action.hover" },
                           "&.Mui-selected": { bgcolor: "rgba(236, 72, 153, 0.2)", color: "#f472b6" }
                         }
                       }
@@ -244,7 +242,6 @@ export default function TrialForm() {
                 required
                 InputLabelProps={{ shrink: true }}
                 sx={{
-                  ...textFieldSx,
                   "& .Mui-disabled": {
                     WebkitTextFillColor: "#94a3b8 !important",
                   }
@@ -252,9 +249,9 @@ export default function TrialForm() {
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Box sx={{ height: "100%", display: "flex", alignItems: "center", p: 2, bgcolor: "rgba(15, 23, 42, 0.4)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <Box sx={{ height: "100%", display: "flex", alignItems: "center", p: 2, bgcolor: "background.paper", borderRadius: "12px", border: "1px solid", borderColor: "divider" }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                  <Typography sx={{ color: "#94a3b8" }}>Days Remaining:</Typography>
+                  <Typography sx={{ color: "text.secondary" }}>Days Remaining:</Typography>
                   <Typography sx={{ color: "#ec4899", fontWeight: 800, fontSize: "1.2rem" }}>
                     {calculateDaysRemaining()} Days
                   </Typography>
@@ -269,9 +266,9 @@ export default function TrialForm() {
                   onClick={() => navigate("/trials")} 
                   disabled={loading} 
                   sx={{ 
-                    borderColor: "rgba(255,255,255,0.2)", 
-                    color: "#cbd5e1",
-                    "&:hover": { borderColor: "rgba(255,255,255,0.4)" }
+                    borderColor: "divider", 
+                    color: "text.primary",
+                    "&:hover": { borderColor: "divider" }
                   }}
                 >
                   {t("common.cancel")}
@@ -299,12 +296,12 @@ export default function TrialForm() {
 
 const textFieldSx = {
   "& .MuiOutlinedInput-root": {
-    color: "#f1f5f9",
+    color: "text.primary",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)", borderRadius: "12px" },
-    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+    "& fieldset": { borderColor: "divider", borderRadius: "12px" },
+    "&:hover fieldset": { borderColor: "divider" },
     "&.Mui-focused fieldset": { borderColor: "#ec4899" },
   },
-  "& .MuiInputLabel-root": { color: "#94a3b8" },
+  "& .MuiInputLabel-root": { color: "text.secondary" },
   "& .MuiInputLabel-root.Mui-focused": { color: "#ec4899" },
 };

@@ -179,10 +179,10 @@ export default function UserForm() {
   return (
     <Box sx={{ maxWidth: 800, mx: "auto" }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
-        <IconButton onClick={() => navigate("/rbac/users")} sx={{ color: "#94a3b8" }}>
+        <IconButton onClick={() => navigate("/rbac/users")} sx={{ color: "text.secondary" }}>
           <ArrowBackRounded />
         </IconButton>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: "#f8fafc" }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: "text.primary" }}>
           {isEdit ? "Edit User" : "Add New User"}
         </Typography>
       </Box>
@@ -196,14 +196,14 @@ export default function UserForm() {
       <Card
         sx={{
           p: 4,
-          bgcolor: "#1e293b",
+          bgcolor: "background.paper",
           backgroundImage: "none",
           borderRadius: 3,
-          border: "1px solid rgba(255, 255, 255, 0.05)",
+          border: "1px solid", borderColor: "divider",
         }}
       >
         <form onSubmit={handleSubmit}>
-          <Typography variant="h6" sx={{ color: "#f8fafc", mb: 3 }}>
+          <Typography variant="h6" sx={{ color: "text.primary", mb: 3 }}>
             User Details
           </Typography>
           <Grid container spacing={3}>
@@ -215,12 +215,12 @@ export default function UserForm() {
                 value={formData.firstName}
                 onChange={handleChange}
                 required
-                InputLabelProps={{ style: { color: "#94a3b8" } }}
+                InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    color: "#f1f5f9",
-                    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+                    color: "text.primary",
+                    "& fieldset": { borderColor: "divider" },
+                    "&:hover fieldset": { borderColor: "divider" },
                     "&.Mui-focused fieldset": { borderColor: "#6366f1" },
                   },
                 }}
@@ -234,12 +234,12 @@ export default function UserForm() {
                 value={formData.lastName}
                 onChange={handleChange}
                 required
-                InputLabelProps={{ style: { color: "#94a3b8" } }}
+                InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    color: "#f1f5f9",
-                    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+                    color: "text.primary",
+                    "& fieldset": { borderColor: "divider" },
+                    "&:hover fieldset": { borderColor: "divider" },
                     "&.Mui-focused fieldset": { borderColor: "#6366f1" },
                   },
                 }}
@@ -255,12 +255,12 @@ export default function UserForm() {
                 onChange={handleChange}
                 required
                 disabled={isEdit}
-                InputLabelProps={{ style: { color: "#94a3b8" } }}
+                InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    color: "#f1f5f9",
-                    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+                    color: "text.primary",
+                    "& fieldset": { borderColor: "divider" },
+                    "&:hover fieldset": { borderColor: "divider" },
                     "&.Mui-focused fieldset": { borderColor: "#6366f1" },
                   },
                 }}
@@ -273,12 +273,12 @@ export default function UserForm() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                InputLabelProps={{ style: { color: "#94a3b8" } }}
+                InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    color: "#f1f5f9",
-                    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+                    color: "text.primary",
+                    "& fieldset": { borderColor: "divider" },
+                    "&:hover fieldset": { borderColor: "divider" },
                     "&.Mui-focused fieldset": { borderColor: "#6366f1" },
                   },
                 }}
@@ -291,12 +291,12 @@ export default function UserForm() {
                 name="employeeCode"
                 value={formData.employeeCode}
                 onChange={handleChange}
-                InputLabelProps={{ style: { color: "#94a3b8" } }}
+                InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    color: "#f1f5f9",
-                    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+                    color: "text.primary",
+                    "& fieldset": { borderColor: "divider" },
+                    "&:hover fieldset": { borderColor: "divider" },
                     "&.Mui-focused fieldset": { borderColor: "#6366f1" },
                   },
                 }}
@@ -304,7 +304,7 @@ export default function UserForm() {
             </Grid>
             
             <Grid size={{ xs: 12 }}>
-              <Typography variant="h6" sx={{ color: "#f8fafc", mb: 2, mt: 2 }}>
+              <Typography variant="h6" sx={{ color: "text.primary", mb: 2, mt: 2 }}>
                 Access & Security
               </Typography>
             </Grid>
@@ -318,14 +318,14 @@ export default function UserForm() {
                 value={formData.hospitalId}
                 onChange={handleChange}
                 required
-                InputLabelProps={{ style: { color: "#94a3b8" } }}
+                InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    color: "#f1f5f9",
-                    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+                    color: "text.primary",
+                    "& fieldset": { borderColor: "divider" },
+                    "&:hover fieldset": { borderColor: "divider" },
                     "&.Mui-focused fieldset": { borderColor: "#6366f1" },
-                    "& .MuiSvgIcon-root": { color: "#94a3b8" },
+                    "& .MuiSvgIcon-root": { color: "text.secondary" },
                   },
                 }}
               >
@@ -346,14 +346,14 @@ export default function UserForm() {
                 onChange={handleChange}
                 required
                 disabled={!formData.hospitalId}
-                InputLabelProps={{ style: { color: "#94a3b8" } }}
+                InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    color: "#f1f5f9",
-                    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+                    color: "text.primary",
+                    "& fieldset": { borderColor: "divider" },
+                    "&:hover fieldset": { borderColor: "divider" },
                     "&.Mui-focused fieldset": { borderColor: "#6366f1" },
-                    "& .MuiSvgIcon-root": { color: "#94a3b8" },
+                    "& .MuiSvgIcon-root": { color: "text.secondary" },
                   },
                 }}
               >
@@ -375,26 +375,26 @@ export default function UserForm() {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Leave empty to auto-generate"
-                  InputLabelProps={{ shrink: true, style: { color: "#94a3b8" } }}
+                  InputLabelProps={{ shrink: true, style: { color: "text.secondary" } }}
                   sx={{
                     "& .MuiOutlinedInput-root": {
-                      color: "#f1f5f9",
-                      "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                      "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+                      color: "text.primary",
+                      "& fieldset": { borderColor: "divider" },
+                      "&:hover fieldset": { borderColor: "divider" },
                       "&.Mui-focused fieldset": { borderColor: "#6366f1" },
                     },
                   }}
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
-                        <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: "#64748b" }}>
+                        <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: "text.secondary" }}>
                           {showPassword ? <VisibilityOff /> : <Visibility />}
                         </IconButton>
                       </InputAdornment>
                     ),
                   }}
                 />
-                <Typography variant="caption" sx={{ color: "#64748b", mt: 1, display: "block" }}>
+                <Typography variant="caption" sx={{ color: "text.secondary", mt: 1, display: "block" }}>
                   Users will be forced to change their password on first login.
                 </Typography>
               </Grid>
@@ -409,14 +409,14 @@ export default function UserForm() {
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
-                  InputLabelProps={{ style: { color: "#94a3b8" } }}
+                  InputLabelProps={{ style: { color: "text.secondary" } }}
                   sx={{
                     "& .MuiOutlinedInput-root": {
-                      color: "#f1f5f9",
-                      "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                      "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+                      color: "text.primary",
+                      "& fieldset": { borderColor: "divider" },
+                      "&:hover fieldset": { borderColor: "divider" },
                       "&.Mui-focused fieldset": { borderColor: "#6366f1" },
-                      "& .MuiSvgIcon-root": { color: "#94a3b8" },
+                      "& .MuiSvgIcon-root": { color: "text.secondary" },
                     },
                   }}
                 >
@@ -432,9 +432,9 @@ export default function UserForm() {
                   variant="outlined"
                   onClick={() => navigate("/rbac/users")}
                   sx={{
-                    color: "#94a3b8",
-                    borderColor: "rgba(255,255,255,0.1)",
-                    "&:hover": { borderColor: "rgba(255,255,255,0.2)", bgcolor: "rgba(255,255,255,0.05)" },
+                    color: "text.secondary",
+                    borderColor: "divider",
+                    "&:hover": { borderColor: "divider", bgcolor: "action.hover" },
                   }}
                 >
                   Cancel
@@ -466,26 +466,26 @@ export default function UserForm() {
         }}
         PaperProps={{
           sx: {
-            bgcolor: "#1e293b",
-            color: "#f1f5f9",
+            bgcolor: "background.paper",
+            color: "text.primary",
             borderRadius: 3,
-            border: "1px solid rgba(255,255,255,0.1)",
+            border: "1px solid", borderColor: "divider",
           }
         }}
       >
         <DialogTitle sx={{ color: "#10b981", fontWeight: 700 }}>User Created Successfully</DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ color: "#94a3b8", mb: 2 }}>
+          <DialogContentText sx={{ color: "text.secondary", mb: 2 }}>
             A temporary password was automatically generated for this user. Please securely share these credentials with them. They will be forced to change it on their first login.
           </DialogContentText>
           <Box sx={{ 
             p: 2, 
-            bgcolor: "rgba(15, 23, 42, 0.5)", 
+            bgcolor: "background.paper", 
             borderRadius: 2, 
             display: "flex", 
             alignItems: "center", 
             justifyContent: "space-between",
-            border: "1px solid rgba(255,255,255,0.05)"
+            border: "1px solid", borderColor: "divider"
           }}>
             <Typography variant="h6" sx={{ fontFamily: "monospace", letterSpacing: 2 }}>
               {generatedPassword}

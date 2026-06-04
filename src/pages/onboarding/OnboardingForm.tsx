@@ -90,19 +90,19 @@ export default function OnboardingForm() {
         <IconButton
           onClick={() => navigate("/onboarding")}
           sx={{
-            bgcolor: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "#f8fafc",
+            bgcolor: "action.hover",
+            border: "1px solid", borderColor: "divider",
+            color: "text.primary",
             "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
           }}
         >
           <ArrowBackRounded />
         </IconButton>
         <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "#f8fafc", letterSpacing: "-0.5px" }}>
+          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
             {t("onboarding.updateProgress", "Update Onboarding Progress")}
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             {hospitalName}
           </Typography>
         </Box>
@@ -111,30 +111,30 @@ export default function OnboardingForm() {
       {error && <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>{error}</Alert>}
 
       <Paper
-        elevation={0}
+        elevation={2}
         sx={{
           p: { xs: 3, md: 5 },
-          bgcolor: "rgba(30, 41, 59, 0.7)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 4,
         }}
       >
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12 }}>
-              <Box sx={{ p: 2, bgcolor: "rgba(15, 23, 42, 0.4)", borderRadius: 3, border: "1px solid rgba(255, 255, 255, 0.1)", display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", flexDirection: "column", gap: 2 }}>
                 <FormControlLabel
                   control={<Switch checked={formData.tenantSetupCompleted} onChange={handleChange} name="tenantSetupCompleted" color="primary" />}
-                  label={<Typography sx={{ color: "#f8fafc", fontWeight: 500 }}>Tenant Setup Completed</Typography>}
+                  label={<Typography sx={{ color: "text.primary", fontWeight: 500 }}>Tenant Setup Completed</Typography>}
                 />
                 <FormControlLabel
                   control={<Switch checked={formData.defaultRolesSeeded} onChange={handleChange} name="defaultRolesSeeded" color="primary" />}
-                  label={<Typography sx={{ color: "#f8fafc", fontWeight: 500 }}>Default Roles Seeded</Typography>}
+                  label={<Typography sx={{ color: "text.primary", fontWeight: 500 }}>Default Roles Seeded</Typography>}
                 />
                 <FormControlLabel
                   control={<Switch checked={formData.paymentVerified} onChange={handleChange} name="paymentVerified" color="primary" />}
-                  label={<Typography sx={{ color: "#f8fafc", fontWeight: 500 }}>Payment Verified</Typography>}
+                  label={<Typography sx={{ color: "text.primary", fontWeight: 500 }}>Payment Verified</Typography>}
                 />
               </Box>
             </Grid>
@@ -147,14 +147,14 @@ export default function OnboardingForm() {
                 value={formData.onboardingStatus}
                 onChange={handleChange}
                 required
-                sx={textFieldSx}
+                
               >
                 <MenuItem value="pending">Pending</MenuItem>
                 <MenuItem value="in_progress">In Progress</MenuItem>
                 <MenuItem value="completed">Completed</MenuItem>
                 <MenuItem value="stalled">Stalled</MenuItem>
               </TextField>
-              <Typography variant="caption" sx={{ color: "#94a3b8", mt: 1, display: "block" }}>
+              <Typography variant="caption" sx={{ color: "text.secondary", mt: 1, display: "block" }}>
                 Setting status to "Completed" will automatically mark the hospital as "Active" if it isn't already.
               </Typography>
             </Grid>
@@ -165,7 +165,7 @@ export default function OnboardingForm() {
                   variant="outlined" 
                   onClick={() => navigate("/onboarding")} 
                   disabled={loading} 
-                  sx={{ borderColor: "rgba(255,255,255,0.2)", color: "#cbd5e1" }}
+                  sx={{ borderColor: "divider", color: "text.primary" }}
                 >
                   {t("common.cancel", "Cancel")}
                 </Button>
@@ -189,10 +189,10 @@ export default function OnboardingForm() {
 
 const textFieldSx = {
   "& .MuiOutlinedInput-root": {
-    color: "#f1f5f9",
+    color: "text.primary",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
+    "& fieldset": { borderColor: "divider" },
     "&.Mui-focused fieldset": { borderColor: "#10b981" },
   },
-  "& .MuiInputLabel-root": { color: "#94a3b8" },
+  "& .MuiInputLabel-root": { color: "text.secondary" },
 };

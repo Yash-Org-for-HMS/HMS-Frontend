@@ -62,10 +62,10 @@ export default function ModuleAccess() {
   return (
     <Box sx={{ maxWidth: 900, mx: "auto" }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
+        <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
           Module Access Management
         </Typography>
-        <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+        <Typography variant="body1" sx={{ color: "text.secondary" }}>
           View which SaaS modules are available to your hospital.
         </Typography>
       </Box>
@@ -75,17 +75,17 @@ export default function ModuleAccess() {
         <Typography variant="subtitle1" sx={{ color: "#818cf8", fontWeight: 600, mb: 1 }}>
           Access Source Logic
         </Typography>
-        <Typography variant="body2" sx={{ color: "#cbd5e1", mb: 2 }}>
+        <Typography variant="body2" sx={{ color: "text.primary", mb: 2 }}>
           Your hospital's access to modules is dynamically determined by a combination of factors:
         </Typography>
         <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
           <Chip label={`Plan: ${data?.planName || "Basic"}`} sx={{ bgcolor: "#6366f1", color: "#fff", fontWeight: 600 }} />
-          <Typography sx={{ color: "#94a3b8", fontWeight: 700 }}>+</Typography>
+          <Typography sx={{ color: "text.secondary", fontWeight: 700 }}>+</Typography>
           <Chip label="Feature Flags" sx={{ bgcolor: "#3b82f6", color: "#fff", fontWeight: 600 }} />
-          <Typography sx={{ color: "#94a3b8", fontWeight: 700 }}>+</Typography>
+          <Typography sx={{ color: "text.secondary", fontWeight: 700 }}>+</Typography>
           <Chip label="RBAC (Roles)" sx={{ bgcolor: "#10b981", color: "#fff", fontWeight: 600 }} />
         </Box>
-        <Typography variant="caption" display="block" sx={{ mt: 2, color: "#64748b" }}>
+        <Typography variant="caption" display="block" sx={{ mt: 2, color: "text.secondary" }}>
           * Even if a module is enabled here, individual staff members can only access it if they have the correct Role permissions.
         </Typography>
       </Paper>
@@ -93,8 +93,8 @@ export default function ModuleAccess() {
       <Grid container spacing={4}>
         {/* Enabled Modules */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Paper sx={{ bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2, overflow: "hidden", height: "100%" }}>
-            <Box sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", p: 2, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+          <Paper sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, overflow: "hidden", height: "100%" }}>
+            <Box sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", p: 2, borderBottom: "1px solid", borderColor: "divider" }}>
               <Typography variant="h6" sx={{ color: "#34d399", fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
                 <CheckCircleRounded /> Enabled Modules
               </Typography>
@@ -102,7 +102,7 @@ export default function ModuleAccess() {
             <List sx={{ p: 0 }}>
               {data?.enabledModules.length === 0 ? (
                 <ListItem sx={{ py: 3 }}>
-                  <ListItemText primary={<Typography sx={{ color: "#94a3b8", textAlign: "center" }}>No modules enabled.</Typography>} />
+                  <ListItemText primary={<Typography sx={{ color: "text.secondary", textAlign: "center" }}>No modules enabled.</Typography>} />
                 </ListItem>
               ) : (
                 data?.enabledModules.map((module, idx) => (
@@ -112,10 +112,10 @@ export default function ModuleAccess() {
                         <CheckCircleRounded sx={{ color: "#34d399" }} />
                       </ListItemIcon>
                       <ListItemText 
-                        primary={<Typography sx={{ color: "#f8fafc", fontWeight: 500 }}>{module}</Typography>} 
+                        primary={<Typography sx={{ color: "text.primary", fontWeight: 500 }}>{module}</Typography>} 
                       />
                     </ListItem>
-                    {idx < data.enabledModules.length - 1 && <Divider sx={{ borderColor: "rgba(255,255,255,0.05)" }} />}
+                    {idx < data.enabledModules.length - 1 && <Divider sx={{ borderColor: "divider" }} />}
                   </Box>
                 ))
               )}
@@ -125,8 +125,8 @@ export default function ModuleAccess() {
 
         {/* Disabled Modules */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Paper sx={{ bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2, overflow: "hidden", height: "100%" }}>
-            <Box sx={{ bgcolor: "rgba(239, 68, 68, 0.1)", p: 2, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+          <Paper sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, overflow: "hidden", height: "100%" }}>
+            <Box sx={{ bgcolor: "rgba(239, 68, 68, 0.1)", p: 2, borderBottom: "1px solid", borderColor: "divider" }}>
               <Typography variant="h6" sx={{ color: "#f87171", fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
                 <CancelRounded /> Disabled Modules
               </Typography>
@@ -134,7 +134,7 @@ export default function ModuleAccess() {
             <List sx={{ p: 0 }}>
               {data?.disabledModules.length === 0 ? (
                 <ListItem sx={{ py: 3 }}>
-                  <ListItemText primary={<Typography sx={{ color: "#94a3b8", textAlign: "center" }}>No disabled modules.</Typography>} />
+                  <ListItemText primary={<Typography sx={{ color: "text.secondary", textAlign: "center" }}>No disabled modules.</Typography>} />
                 </ListItem>
               ) : (
                 data?.disabledModules.map((module, idx) => (
@@ -145,7 +145,7 @@ export default function ModuleAccess() {
                           <CancelRounded sx={{ color: "#f87171" }} />
                         </ListItemIcon>
                         <ListItemText 
-                          primary={<Typography sx={{ color: "#94a3b8" }}>{module}</Typography>} 
+                          primary={<Typography sx={{ color: "text.secondary" }}>{module}</Typography>} 
                         />
                       </Box>
                       <Button
@@ -161,7 +161,7 @@ export default function ModuleAccess() {
                         Upgrade
                       </Button>
                     </ListItem>
-                    {idx < data.disabledModules.length - 1 && <Divider sx={{ borderColor: "rgba(255,255,255,0.05)" }} />}
+                    {idx < data.disabledModules.length - 1 && <Divider sx={{ borderColor: "divider" }} />}
                   </Box>
                 ))
               )}

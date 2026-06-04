@@ -11,6 +11,7 @@ import TrialsList from "./pages/trials/TrialsList";
 import TrialForm from "./pages/trials/TrialForm";
 import HospitalsList from "./pages/hospitals/HospitalsList";
 import HospitalForm from "./pages/hospitals/HospitalForm";
+import HospitalOverview from "./pages/superAdmins/HospitalOverview";
 import OnboardingList from "./pages/onboarding/OnboardingList";
 import OnboardingForm from "./pages/onboarding/OnboardingForm";
 import SuperAdminsList from "./pages/superAdmins/SuperAdminsList";
@@ -59,6 +60,7 @@ import AppointmentForm from "./pages/reception/AppointmentForm";
 import QueueDashboard from "./pages/reception/QueueDashboard";
 import BillingDashboard from "./pages/reception/BillingDashboard";
 import NotificationsLog from "./pages/reception/NotificationsLog";
+import FrontDeskConsole from "./pages/reception/FrontDeskConsole";
 
 function App() {
   return (
@@ -84,6 +86,7 @@ function App() {
             <Route path="/hospitals" element={<HospitalsList />} />
             <Route path="/hospitals/new" element={<HospitalForm />} />
             <Route path="/hospitals/:id/edit" element={<HospitalForm />} />
+            <Route path="/hospitals/:id/overview" element={<HospitalOverview />} />
             <Route path="/onboarding" element={<OnboardingList />} />
             <Route path="/onboarding/:id/edit" element={<OnboardingForm />} />
             <Route path="/super-admins" element={<SuperAdminsList />} />
@@ -141,6 +144,7 @@ function App() {
         <Route element={<HospitalProtectedRoute />}>
           <Route element={<ReceptionLayout />}>
             <Route path="/reception/dashboard" element={<ReceptionDashboard />} />
+            <Route path="/reception/console" element={<FrontDeskConsole />} />
             {/* ── Module 2: Patient Registration ── */}
             <Route path="/reception/patients" element={<PatientsList />} />
             <Route path="/reception/patients/new" element={<PatientForm />} />

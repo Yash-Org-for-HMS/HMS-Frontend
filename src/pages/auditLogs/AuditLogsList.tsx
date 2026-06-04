@@ -22,10 +22,13 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import { SearchRounded, VisibilityRounded, CloseRounded } from "@mui/icons-material";
 import Grid from "@mui/material/Grid";
 import { axiosInstance } from "../../api/axios";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function AuditLogsList() {
   const { t } = useTranslation();
@@ -36,14 +39,19 @@ export default function AuditLogsList() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
 
+  const { user } = useAuth();
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
+  const [showMyActions, setShowMyActions] = useState(false);
 
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const response = await axiosInstance.get("/audit-logs", {
-        params: { page, limit: 15, search }
-      });
+      const params: any = { page, limit: 15, search };
+      if (showMyActions && user?.id) {
+        params.userId = user.id;
+      }
+      
+      const response = await axiosInstance.get("/audit-logs", { params });
       setLogs(response.data.data);
       setTotalPages(response.data.pagination.totalPages);
     } catch (error) {
@@ -55,7 +63,7 @@ export default function AuditLogsList() {
 
   useEffect(() => {
     fetchLogs();
-  }, [page, search]);
+  }, [page, search, showMyActions, user]);
 
   const getActionColor = (action: string) => {
     switch(action) {
@@ -72,10 +80,10 @@ export default function AuditLogsList() {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
         <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "#f8fafc", mb: 1 }}>
+          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
             {t("auditLogs.title", "System Audit Logs")}
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             {t("auditLogs.subtitle", "Track all sensitive actions across the platform")}
           </Typography>
         </Box>
@@ -88,23 +96,35 @@ export default function AuditLogsList() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"
-          sx={textFieldSx}
+          
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchRounded sx={{ color: "#64748b" }} />
+                <SearchRounded sx={{ color: "text.secondary" }} />
               </InputAdornment>
             ),
           }}
         />
+        
+        <FormControlLabel
+          control={
+            <Switch 
+              checked={showMyActions} 
+              onChange={(e) => setShowMyActions(e.target.checked)} 
+              color="primary"
+            />
+          }
+          label={<Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>My Actions Only</Typography>}
+          sx={{ ml: 2 }}
+        />
       </Box>
 
       <Paper
-        elevation={0}
+        elevation={2}
         sx={{
-          bgcolor: "rgba(30, 41, 59, 0.7)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 3,
           overflow: "hidden",
         }}
@@ -112,14 +132,14 @@ export default function AuditLogsList() {
         <TableContainer>
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: "rgba(15, 23, 42, 0.6)" }}>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("auditLogs.timestamp", "Timestamp")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("auditLogs.hospital", "Hospital")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("auditLogs.user", "User ID")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("auditLogs.action", "Action")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("auditLogs.module", "Module")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("auditLogs.ip", "IP Address")}</TableCell>
-                <TableCell align="right" sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("common.details", "Details")}</TableCell>
+              <TableRow sx={{ bgcolor: "background.paper" }}>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.timestamp", "Timestamp")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.hospital", "Hospital")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.user", "User ID")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.action", "Action")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.module", "Module")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.ip", "IP Address")}</TableCell>
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.details", "Details")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -131,7 +151,7 @@ export default function AuditLogsList() {
                 </TableRow>
               ) : logs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 8, color: "#94a3b8" }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 8, color: "text.secondary" }}>
                     {t("common.noData")}
                   </TableCell>
                 </TableRow>
@@ -139,18 +159,18 @@ export default function AuditLogsList() {
                 logs.map((log) => {
                   const colors = getActionColor(log.actionType);
                   return (
-                    <TableRow key={log.auditLogId} hover sx={{ "&:hover": { bgcolor: "rgba(255, 255, 255, 0.02)" } }}>
-                      <TableCell sx={{ color: "#cbd5e1", whiteSpace: "nowrap" }}>
+                    <TableRow key={log.auditLogId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
+                      <TableCell sx={{ color: "text.primary", whiteSpace: "nowrap" }}>
                         {new Date(log.createdAt).toLocaleString()}
                       </TableCell>
-                      <TableCell sx={{ color: "#f8fafc" }}>
+                      <TableCell sx={{ color: "text.primary" }}>
                         {log.hospitalId === "PLATFORM" ? (
                           <Chip label="Platform" size="small" sx={{ bgcolor: "rgba(139, 92, 246, 0.1)", color: "#c4b5fd" }} />
                         ) : (
                           <Typography variant="body2">{log.hospital?.hospitalName || log.hospitalId}</Typography>
                         )}
                       </TableCell>
-                      <TableCell sx={{ color: "#cbd5e1", fontFamily: "monospace", fontSize: "0.8rem" }}>
+                      <TableCell sx={{ color: "text.primary", fontFamily: "monospace", fontSize: "0.8rem" }}>
                         {log.userId.split("-")[0]}...
                       </TableCell>
                       <TableCell>
@@ -160,15 +180,15 @@ export default function AuditLogsList() {
                           sx={{ bgcolor: colors.bg, color: colors.text, fontWeight: 700, fontSize: "0.7rem" }} 
                         />
                       </TableCell>
-                      <TableCell sx={{ color: "#94a3b8", fontSize: "0.85rem" }}>
+                      <TableCell sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
                         {log.moduleName} <br />
-                        <span style={{ fontFamily: "monospace", fontSize: "0.75rem", color: "#64748b" }}>{log.tableName}</span>
+                        <span style={{ fontFamily: "monospace", fontSize: "0.75rem", color: "text.secondary" }}>{log.tableName}</span>
                       </TableCell>
-                      <TableCell sx={{ color: "#64748b", fontFamily: "monospace", fontSize: "0.8rem" }}>
+                      <TableCell sx={{ color: "text.secondary", fontFamily: "monospace", fontSize: "0.8rem" }}>
                         {log.ipAddress || "—"}
                       </TableCell>
                       <TableCell align="right">
-                        <IconButton onClick={() => setSelectedLog(log)} sx={{ color: "#94a3b8" }} size="small">
+                        <IconButton onClick={() => setSelectedLog(log)} sx={{ color: "text.secondary" }} size="small">
                           <VisibilityRounded fontSize="small" />
                         </IconButton>
                       </TableCell>
@@ -181,14 +201,14 @@ export default function AuditLogsList() {
         </TableContainer>
 
         {totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid", borderColor: "divider" }}>
             <Pagination 
               count={totalPages} 
               page={page} 
               onChange={(_, value) => setPage(value)} 
               color="primary"
               sx={{
-                "& .MuiPaginationItem-root": { color: "#cbd5e1" },
+                "& .MuiPaginationItem-root": { color: "text.primary" },
                 "& .Mui-selected": { bgcolor: "rgba(59, 130, 246, 0.2) !important", color: "#60a5fa" }
               }}
             />
@@ -204,33 +224,33 @@ export default function AuditLogsList() {
         fullWidth
         PaperProps={{
           sx: {
-            bgcolor: "#1e293b",
-            color: "#f8fafc",
+            bgcolor: "background.paper",
+            color: "text.primary",
             borderRadius: 3,
-            border: "1px solid rgba(255,255,255,0.1)"
+            border: "1px solid", borderColor: "divider"
           }
         }}
       >
-        <DialogTitle sx={{ borderBottom: "1px solid rgba(255,255,255,0.1)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <DialogTitle sx={{ borderBottom: "1px solid", borderColor: "divider", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           Audit Log Details
-          <IconButton onClick={() => setSelectedLog(null)} sx={{ color: "#94a3b8" }}><CloseRounded /></IconButton>
+          <IconButton onClick={() => setSelectedLog(null)} sx={{ color: "text.secondary" }}><CloseRounded /></IconButton>
         </DialogTitle>
         <DialogContent sx={{ p: 3, mt: 2 }}>
           {selectedLog && (
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 6 }}>
-                <Typography variant="overline" sx={{ color: "#94a3b8" }}>Module / Table</Typography>
+                <Typography variant="overline" sx={{ color: "text.secondary" }}>Module / Table</Typography>
                 <Typography sx={{ mb: 2 }}>{selectedLog.moduleName} / {selectedLog.tableName}</Typography>
                 
-                <Typography variant="overline" sx={{ color: "#94a3b8" }}>Action Type</Typography>
+                <Typography variant="overline" sx={{ color: "text.secondary" }}>Action Type</Typography>
                 <Typography sx={{ mb: 2 }}>{selectedLog.actionType}</Typography>
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <Typography variant="overline" sx={{ color: "#94a3b8" }}>User ID</Typography>
-                <Typography sx={{ mb: 2, fontFamily: "monospace", color: "#cbd5e1" }}>{selectedLog.userId}</Typography>
+                <Typography variant="overline" sx={{ color: "text.secondary" }}>User ID</Typography>
+                <Typography sx={{ mb: 2, fontFamily: "monospace", color: "text.primary" }}>{selectedLog.userId}</Typography>
                 
-                <Typography variant="overline" sx={{ color: "#94a3b8" }}>Device Info</Typography>
-                <Typography sx={{ mb: 2, fontSize: "0.85rem", color: "#94a3b8" }}>{selectedLog.deviceInfo || "—"}</Typography>
+                <Typography variant="overline" sx={{ color: "text.secondary" }}>Device Info</Typography>
+                <Typography sx={{ mb: 2, fontSize: "0.85rem", color: "text.secondary" }}>{selectedLog.deviceInfo || "—"}</Typography>
               </Grid>
               
               {(selectedLog.oldValueJson || selectedLog.newValueJson) && (
@@ -239,8 +259,8 @@ export default function AuditLogsList() {
                     {selectedLog.oldValueJson && (
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="overline" sx={{ color: "#f87171" }}>Old Value</Typography>
-                        <Box sx={{ p: 2, bgcolor: "rgba(15,23,42,0.5)", borderRadius: 2, border: "1px solid rgba(239,68,68,0.2)", overflowX: "auto" }}>
-                          <pre style={{ margin: 0, color: "#cbd5e1", fontSize: "0.85rem" }}>
+                        <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 2, border: "1px solid rgba(239,68,68,0.2)", overflowX: "auto" }}>
+                          <pre style={{ margin: 0, color: "text.primary", fontSize: "0.85rem" }}>
                             {JSON.stringify(selectedLog.oldValueJson, null, 2)}
                           </pre>
                         </Box>
@@ -249,8 +269,8 @@ export default function AuditLogsList() {
                     {selectedLog.newValueJson && (
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="overline" sx={{ color: "#34d399" }}>New Value</Typography>
-                        <Box sx={{ p: 2, bgcolor: "rgba(15,23,42,0.5)", borderRadius: 2, border: "1px solid rgba(16,185,129,0.2)", overflowX: "auto" }}>
-                          <pre style={{ margin: 0, color: "#cbd5e1", fontSize: "0.85rem" }}>
+                        <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 2, border: "1px solid rgba(16,185,129,0.2)", overflowX: "auto" }}>
+                          <pre style={{ margin: 0, color: "text.primary", fontSize: "0.85rem" }}>
                             {JSON.stringify(selectedLog.newValueJson, null, 2)}
                           </pre>
                         </Box>
@@ -262,8 +282,8 @@ export default function AuditLogsList() {
             </Grid>
           )}
         </DialogContent>
-        <DialogActions sx={{ borderTop: "1px solid rgba(255,255,255,0.1)", p: 2 }}>
-          <Button onClick={() => setSelectedLog(null)} sx={{ color: "#cbd5e1" }}>Close</Button>
+        <DialogActions sx={{ borderTop: "1px solid", borderColor: "divider", p: 2 }}>
+          <Button onClick={() => setSelectedLog(null)} sx={{ color: "text.primary" }}>Close</Button>
         </DialogActions>
       </Dialog>
     </Container>
@@ -272,11 +292,11 @@ export default function AuditLogsList() {
 
 const textFieldSx = {
   "& .MuiOutlinedInput-root": {
-    color: "#f1f5f9",
+    color: "text.primary",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+    "& fieldset": { borderColor: "divider" },
+    "&:hover fieldset": { borderColor: "divider" },
     "&.Mui-focused fieldset": { borderColor: "#3b82f6" },
   },
-  "& .MuiInputLabel-root": { color: "#94a3b8" },
+  "& .MuiInputLabel-root": { color: "text.secondary" },
 };

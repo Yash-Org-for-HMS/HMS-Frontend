@@ -94,7 +94,7 @@ function CredentialDialog({ open, email, password, name, onClose }: CredentialDi
       fullWidth
       PaperProps={{
         sx: {
-          bgcolor: "#0f172a",
+          bgcolor: "background.paper",
           border: "1px solid rgba(99, 102, 241, 0.3)",
           borderRadius: 3,
           backgroundImage: "none",
@@ -124,10 +124,10 @@ function CredentialDialog({ open, email, password, name, onClose }: CredentialDi
           >
             <CheckCircleRounded sx={{ color: "#10b981", fontSize: 32 }} />
           </Box>
-          <Typography variant="h5" sx={{ color: "#f1f5f9", fontWeight: 800, mb: 0.5 }}>
+          <Typography variant="h5" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
             Staff Account Created!
           </Typography>
-          <Typography variant="body2" sx={{ color: "#64748b" }}>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
             Share these login credentials with{" "}
             <Box component="span" sx={{ color: "#a5b4fc", fontWeight: 600 }}>
               {name}
@@ -165,13 +165,13 @@ function CredentialDialog({ open, email, password, name, onClose }: CredentialDi
                 mt: 0.5,
                 p: 1.5,
                 borderRadius: 1.5,
-                bgcolor: "rgba(15, 23, 42, 0.8)",
-                border: "1px solid rgba(255,255,255,0.06)",
+                bgcolor: "background.paper",
+                border: "1px solid", borderColor: "divider",
               }}
             >
               <Typography
                 sx={{
-                  color: "#e2e8f0",
+                  color: "text.primary",
                   fontFamily: "monospace",
                   fontSize: "0.9rem",
                   wordBreak: "break-all",
@@ -204,7 +204,7 @@ function CredentialDialog({ open, email, password, name, onClose }: CredentialDi
                 mt: 0.5,
                 p: 1.5,
                 borderRadius: 1.5,
-                bgcolor: "rgba(15, 23, 42, 0.8)",
+                bgcolor: "background.paper",
                 border: "1px solid rgba(245, 158, 11, 0.2)",
               }}
             >
@@ -246,8 +246,8 @@ function CredentialDialog({ open, email, password, name, onClose }: CredentialDi
           }}
         >
           <InfoOutlined sx={{ color: "#06b6d4", fontSize: 18, mt: 0.1, flexShrink: 0 }} />
-          <Typography variant="caption" sx={{ color: "#94a3b8", lineHeight: 1.6 }}>
-            The staff member will be required to <strong style={{ color: "#e2e8f0" }}>change this password</strong> on first login.
+          <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.6 }}>
+            The staff member will be required to <strong style={{ color: "text.primary" }}>change this password</strong> on first login.
             Make sure to share these credentials securely.
           </Typography>
         </Box>
@@ -442,15 +442,15 @@ export default function UserForm() {
 
   const textFieldProps = {
     fullWidth: true,
-    InputLabelProps: { style: { color: "#94a3b8" } },
+    InputLabelProps: { style: { color: "text.secondary" } },
     sx: {
       "& .MuiOutlinedInput-root": {
-        color: "#f1f5f9",
-        "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-        "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+        color: "text.primary",
+        "& fieldset": { borderColor: "divider" },
+        "&:hover fieldset": { borderColor: "divider" },
         "&.Mui-focused fieldset": { borderColor: "#6366f1" },
       },
-      "& .MuiSvgIcon-root": { color: "#94a3b8" },
+      "& .MuiSvgIcon-root": { color: "text.secondary" },
     },
   };
 
@@ -459,10 +459,10 @@ export default function UserForm() {
       <Box sx={{ maxWidth: 900, mx: "auto" }}>
         <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Box>
-            <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
+            <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
               {isEditing ? "Edit Staff" : "Add New Staff"}
             </Typography>
-            <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+            <Typography variant="body1" sx={{ color: "text.secondary" }}>
               {isEditing
                 ? "Update staff member details."
                 : "Create a new staff member profile and set their login credentials."}
@@ -471,7 +471,7 @@ export default function UserForm() {
           <Button
             variant="outlined"
             onClick={() => navigate("/hospital/users")}
-            sx={{ color: "#94a3b8", borderColor: "rgba(255,255,255,0.2)" }}
+            sx={{ color: "text.secondary", borderColor: "divider" }}
           >
             Cancel
           </Button>
@@ -483,15 +483,15 @@ export default function UserForm() {
           </Alert>
         )}
 
-        <Paper sx={{ p: 4, bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}>
+        <Paper sx={{ p: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
           <form onSubmit={handleSubmit}>
             <Tabs
               value={tabValue}
               onChange={(_e, v) => setTabValue(v)}
               sx={{
                 borderBottom: 1,
-                borderColor: "rgba(255,255,255,0.1)",
-                "& .MuiTab-root": { color: "#94a3b8", textTransform: "none", fontSize: "1rem" },
+                borderColor: "divider",
+                "& .MuiTab-root": { color: "text.secondary", textTransform: "none", fontSize: "1rem" },
                 "& .Mui-selected": { color: "#6366f1" },
                 "& .MuiTabs-indicator": { backgroundColor: "#6366f1" },
               }}
@@ -522,7 +522,7 @@ export default function UserForm() {
                     disabled={isEditing}
                     helperText={!isEditing ? "This will be the login email" : "Email cannot be changed"}
                     {...textFieldProps}
-                    FormHelperTextProps={{ style: { color: "#64748b" } }}
+                    FormHelperTextProps={{ style: { color: "text.secondary" } }}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
@@ -558,7 +558,7 @@ export default function UserForm() {
                   <TextField label="Designation" name="designation" value={formData.designation} onChange={handleChange} {...textFieldProps} />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField label="Date of Joining" name="dateOfJoining" type="date" value={formData.dateOfJoining} onChange={handleChange} {...textFieldProps} slotProps={{ inputLabel: { shrink: true, style: { color: "#94a3b8" } } }} />
+                  <TextField label="Date of Joining" name="dateOfJoining" type="date" value={formData.dateOfJoining} onChange={handleChange} {...textFieldProps} slotProps={{ inputLabel: { shrink: true, style: { color: "text.secondary" } } }} />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField select label="Assign Department" name="departmentId" value={formData.departmentId} onChange={handleChange} {...textFieldProps}>
@@ -577,7 +577,7 @@ export default function UserForm() {
 
             {/* ── Tab 2: Contact & Emergency ── */}
             <TabPanel value={tabValue} index={2}>
-              <Typography variant="h6" sx={{ color: "#f8fafc", mb: 2 }}>Contact Details</Typography>
+              <Typography variant="h6" sx={{ color: "text.primary", mb: 2 }}>Contact Details</Typography>
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12 }}><TextField label="Address Line 1" name="addressLine1" value={formData.addressLine1} onChange={handleChange} {...textFieldProps} /></Grid>
                 <Grid size={{ xs: 12 }}><TextField label="Address Line 2" name="addressLine2" value={formData.addressLine2} onChange={handleChange} {...textFieldProps} /></Grid>
@@ -585,8 +585,8 @@ export default function UserForm() {
                 <Grid size={{ xs: 12, md: 4 }}><TextField label="State/Province" name="state" value={formData.state} onChange={handleChange} {...textFieldProps} /></Grid>
                 <Grid size={{ xs: 12, md: 4 }}><TextField label="Postal Code" name="postalCode" value={formData.postalCode} onChange={handleChange} {...textFieldProps} /></Grid>
               </Grid>
-              <Divider sx={{ my: 4, borderColor: "rgba(255,255,255,0.1)" }} />
-              <Typography variant="h6" sx={{ color: "#f8fafc", mb: 2 }}>Emergency Contact</Typography>
+              <Divider sx={{ my: 4, borderColor: "divider" }} />
+              <Typography variant="h6" sx={{ color: "text.primary", mb: 2 }}>Emergency Contact</Typography>
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12, md: 4 }}><TextField label="Name" name="emergencyContactName" value={formData.emergencyContactName} onChange={handleChange} {...textFieldProps} /></Grid>
                 <Grid size={{ xs: 12, md: 4 }}><TextField label="Phone" name="emergencyContactPhone" value={formData.emergencyContactPhone} onChange={handleChange} {...textFieldProps} /></Grid>
@@ -615,8 +615,8 @@ export default function UserForm() {
                     <Typography variant="subtitle2" sx={{ color: "#a5b4fc", fontWeight: 700, mb: 0.5 }}>
                       Setting Login Password
                     </Typography>
-                    <Typography variant="body2" sx={{ color: "#64748b", lineHeight: 1.7 }}>
-                      Set a temporary password for this staff member. They will be <strong style={{ color: "#94a3b8" }}>required to change it</strong> on their first login.
+                    <Typography variant="body2" sx={{ color: "text.secondary", lineHeight: 1.7 }}>
+                      Set a temporary password for this staff member. They will be <strong style={{ color: "text.secondary" }}>required to change it</strong> on their first login.
                       <br />
                       If you leave this blank, the system will use the default: <Chip label="Password@123" size="small" sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#fbbf24", fontFamily: "monospace", fontWeight: 700, fontSize: "0.78rem", ml: 0.5 }} />
                     </Typography>
@@ -626,9 +626,9 @@ export default function UserForm() {
                 <Grid container spacing={3}>
                   <Grid size={{ xs: 12 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-                      <PersonRounded sx={{ color: "#64748b", fontSize: 18 }} />
-                      <Typography variant="caption" sx={{ color: "#64748b" }}>
-                        Login Email: <strong style={{ color: "#94a3b8" }}>{formData.email || "(set email in Personal tab)"}</strong>
+                      <PersonRounded sx={{ color: "text.secondary", fontSize: 18 }} />
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        Login Email: <strong style={{ color: "text.secondary" }}>{formData.email || "(set email in Personal tab)"}</strong>
                       </Typography>
                     </Box>
                   </Grid>
@@ -641,11 +641,11 @@ export default function UserForm() {
                       value={formData.initialPassword}
                       onChange={handleChange}
                       placeholder="Min 6 characters (or leave blank for default)"
-                      InputLabelProps={{ style: { color: "#94a3b8" } }}
+                      InputLabelProps={{ style: { color: "text.secondary" } }}
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
-                            <IconButton onClick={() => setShowInitialPassword(!showInitialPassword)} edge="end" sx={{ color: "#64748b" }}>
+                            <IconButton onClick={() => setShowInitialPassword(!showInitialPassword)} edge="end" sx={{ color: "text.secondary" }}>
                               {showInitialPassword ? <VisibilityOff /> : <Visibility />}
                             </IconButton>
                           </InputAdornment>
@@ -653,9 +653,9 @@ export default function UserForm() {
                       }}
                       sx={{
                         "& .MuiOutlinedInput-root": {
-                          color: "#f1f5f9",
-                          "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                          "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+                          color: "text.primary",
+                          "& fieldset": { borderColor: "divider" },
+                          "&:hover fieldset": { borderColor: "divider" },
                           "&.Mui-focused fieldset": { borderColor: "#6366f1" },
                         },
                       }}
@@ -670,11 +670,11 @@ export default function UserForm() {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="Repeat the password"
-                      InputLabelProps={{ style: { color: "#94a3b8" } }}
+                      InputLabelProps={{ style: { color: "text.secondary" } }}
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
-                            <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} edge="end" sx={{ color: "#64748b" }}>
+                            <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} edge="end" sx={{ color: "text.secondary" }}>
                               {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                             </IconButton>
                           </InputAdornment>
@@ -682,14 +682,14 @@ export default function UserForm() {
                       }}
                       sx={{
                         "& .MuiOutlinedInput-root": {
-                          color: "#f1f5f9",
+                          color: "text.primary",
                           "& fieldset": {
                             borderColor:
                               formData.confirmPassword && formData.confirmPassword !== formData.initialPassword
                                 ? "rgba(239,68,68,0.5)"
                                 : "rgba(255, 255, 255, 0.1)",
                           },
-                          "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+                          "&:hover fieldset": { borderColor: "divider" },
                           "&.Mui-focused fieldset": { borderColor: "#6366f1" },
                         },
                       }}
@@ -704,7 +704,7 @@ export default function UserForm() {
               </TabPanel>
             )}
 
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4, borderTop: "1px solid rgba(255,255,255,0.1)", pt: 3 }}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4, borderTop: "1px solid", borderColor: "divider", pt: 3 }}>
               <Button
                 type="submit"
                 variant="contained"

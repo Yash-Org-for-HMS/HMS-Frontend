@@ -13,7 +13,7 @@ import {
   Alert,
   Divider,
 } from "@mui/material";
-import { SaveRounded, BusinessRounded, PaletteRounded, GavelRounded } from "@mui/icons-material";
+import { SaveRounded, BusinessRounded, PaletteRounded, GavelRounded, CloudUploadRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 
@@ -47,10 +47,11 @@ function a11yProps(index: number) {
 }
 
 export default function HospitalProfile() {
-  const { hospital } = useHospitalAuth();
+  const { hospital, updateHospital } = useHospitalAuth();
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -113,6 +114,32 @@ export default function HospitalProfile() {
     setTabValue(newValue);
   };
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const formDataUpload = new FormData();
+      formDataUpload.append("logo", file);
+
+      try {
+        setUploadingLogo(true);
+        setError(null);
+        setSuccess(null);
+        const res = await axiosInstance.post("/hospital/profile/logo", formDataUpload, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        setFormData((prev) => ({ ...prev, logoUrl: res.data.data.logoUrl }));
+        updateHospital({ logoUrl: res.data.data.logoUrl });
+        setSuccess("Logo uploaded successfully!");
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to upload logo");
+      } finally {
+        setUploadingLogo(false);
+      }
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -145,10 +172,10 @@ export default function HospitalProfile() {
 
   return (
     <Box sx={{ maxWidth: 1000, mx: "auto" }}>
-      <Typography variant="h4" fontWeight="700" sx={{ mb: 1, color: "#f8fafc" }}>
+      <Typography variant="h4" fontWeight="700" sx={{ mb: 1, color: "text.primary" }}>
         Hospital Profile
       </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: "#94a3b8" }}>
+      <Typography variant="body1" sx={{ mb: 4, color: "text.secondary" }}>
         Manage your hospital's details, branding, and compliance information.
       </Typography>
 
@@ -168,12 +195,12 @@ export default function HospitalProfile() {
         component="form"
         onSubmit={handleSubmit}
         sx={{
-          bgcolor: "#1e293b",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
+          bgcolor: "background.paper",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 3,
         }}
       >
-        <Box sx={{ borderBottom: 1, borderColor: "rgba(255, 255, 255, 0.08)" }}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs
             value={tabValue}
             onChange={handleTabChange}
@@ -182,7 +209,7 @@ export default function HospitalProfile() {
             sx={{
               px: 2,
               "& .MuiTab-root": {
-                color: "#94a3b8",
+                color: "text.secondary",
                 textTransform: "none",
                 fontWeight: 600,
                 fontSize: "0.95rem",
@@ -238,8 +265,8 @@ export default function HospitalProfile() {
               </Grid>
               
               <Grid size={{ xs: 12 }}>
-                <Divider sx={{ my: 1, borderColor: "rgba(255,255,255,0.05)" }} />
-                <Typography variant="subtitle2" sx={{ color: "#94a3b8", mb: 2 }}>Contact Details</Typography>
+                <Divider sx={{ my: 1, borderColor: "divider" }} />
+                <Typography variant="subtitle2" sx={{ color: "text.secondary", mb: 2 }}>Contact Details</Typography>
               </Grid>
 
               <Grid size={{ xs: 12, md: 4 }}>
@@ -272,8 +299,8 @@ export default function HospitalProfile() {
               </Grid>
 
               <Grid size={{ xs: 12 }}>
-                <Divider sx={{ my: 1, borderColor: "rgba(255,255,255,0.05)" }} />
-                <Typography variant="subtitle2" sx={{ color: "#94a3b8", mb: 2 }}>Address Information</Typography>
+                <Divider sx={{ my: 1, borderColor: "divider" }} />
+                <Typography variant="subtitle2" sx={{ color: "text.secondary", mb: 2 }}>Address Information</Typography>
               </Grid>
 
               <Grid size={{ xs: 12 }}>
@@ -319,14 +346,52 @@ export default function HospitalProfile() {
           <CustomTabPanel value={tabValue} index={1}>
             <Grid container spacing={3}>
               <Grid size={{ xs: 12 }}>
-                <TextField
-                  fullWidth
-                  label="Logo URL"
-                  name="logoUrl"
-                  value={formData.logoUrl}
-                  onChange={handleChange}
-                  helperText="Provide an absolute URL to your hospital's logo image."
-                />
+                <Typography variant="subtitle2" sx={{ color: "text.secondary", mb: 2 }}>Hospital Logo</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+                  <Box
+                    sx={{
+                      width: 100,
+                      height: 100,
+                      borderRadius: 2,
+                      border: "1px dashed",
+                      borderColor: "divider",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      bgcolor: "background.default",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {formData.logoUrl ? (
+                      <img 
+                        src={formData.logoUrl.startsWith("http") ? formData.logoUrl : `http://localhost:5000${formData.logoUrl}`} 
+                        alt="Logo" 
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                      />
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">No Logo</Typography>
+                    )}
+                  </Box>
+                  <Box>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      startIcon={uploadingLogo ? <CircularProgress size={20} /> : <CloudUploadRounded />}
+                      disabled={uploadingLogo}
+                    >
+                      {uploadingLogo ? "Uploading..." : "Upload Logo"}
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                      />
+                    </Button>
+                    <Typography variant="caption" display="block" sx={{ mt: 1, color: "text.secondary" }}>
+                      Recommended size: 256x256px. Max 5MB (JPEG, PNG).
+                    </Typography>
+                  </Box>
+                </Box>
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
@@ -344,7 +409,7 @@ export default function HospitalProfile() {
                           height: 24,
                           borderRadius: 1,
                           bgcolor: formData.primaryColorHex || "transparent",
-                          border: "1px solid rgba(255,255,255,0.2)",
+                          border: "1px solid", borderColor: "divider",
                           mr: 1,
                         }}
                       />
@@ -401,7 +466,7 @@ export default function HospitalProfile() {
           </CustomTabPanel>
         </Box>
 
-        <Box sx={{ p: 3, borderTop: "1px solid rgba(255, 255, 255, 0.08)", display: "flex", justifyContent: "flex-end" }}>
+        <Box sx={{ p: 3, borderTop: "1px solid", borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
           <Button
             type="submit"
             variant="contained"

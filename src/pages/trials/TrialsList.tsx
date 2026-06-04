@@ -119,10 +119,10 @@ export default function TrialsList() {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
         <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "#f8fafc", mb: 1 }}>
+          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
             {t("trials.title")}
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             {t("trials.subtitle")}
           </Typography>
         </Box>
@@ -147,11 +147,11 @@ export default function TrialsList() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"
-          sx={textFieldSx}
+          
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchRounded sx={{ color: "#64748b" }} />
+                <SearchRounded sx={{ color: "text.secondary" }} />
               </InputAdornment>
             ),
           }}
@@ -161,11 +161,11 @@ export default function TrialsList() {
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           size="small"
-          sx={{ ...textFieldSx, minWidth: 200 }}
+          sx={{ minWidth: 200 }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <FilterAltRounded sx={{ color: "#64748b" }} />
+                <FilterAltRounded sx={{ color: "text.secondary" }} />
               </InputAdornment>
             ),
           }}
@@ -178,11 +178,11 @@ export default function TrialsList() {
       </Box>
 
       <Paper
-        elevation={0}
+        elevation={2}
         sx={{
-          bgcolor: "rgba(30, 41, 59, 0.7)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 3,
           overflow: "hidden",
         }}
@@ -190,13 +190,13 @@ export default function TrialsList() {
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: "rgba(15, 23, 42, 0.6)" }}>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("trials.hospitalName")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("trials.startDate")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("trials.endDate")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("trials.daysRemaining")}</TableCell>
-                <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("trials.status")}</TableCell>
-                <TableCell align="right" sx={{ color: "#94a3b8", fontWeight: 600 }}>{t("common.actions")}</TableCell>
+              <TableRow sx={{ bgcolor: "background.paper" }}>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("trials.hospitalName")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("trials.startDate")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("trials.endDate")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("trials.daysRemaining")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("trials.status")}</TableCell>
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -208,23 +208,23 @@ export default function TrialsList() {
                 </TableRow>
               ) : trials.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8, color: "#94a3b8" }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 8, color: "text.secondary" }}>
                     {t("common.noData")}
                   </TableCell>
                 </TableRow>
               ) : (
                 trials.map((trial) => (
-                  <TableRow key={trial.hospitalTrialId} hover sx={{ "&:hover": { bgcolor: "rgba(255, 255, 255, 0.02)" } }}>
-                    <TableCell sx={{ color: "#f8fafc", fontWeight: 500 }}>
+                  <TableRow key={trial.hospitalTrialId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
+                    <TableCell sx={{ color: "text.primary", fontWeight: 500 }}>
                       {trial.lead?.hospitalName || "Unknown"}
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1" }}>
+                    <TableCell sx={{ color: "text.primary" }}>
                       {new Date(trial.trialStartDate).toLocaleDateString()}
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1" }}>
+                    <TableCell sx={{ color: "text.primary" }}>
                       {new Date(trial.trialEndDate).toLocaleDateString()}
                     </TableCell>
-                    <TableCell sx={{ color: "#cbd5e1", fontWeight: 600 }}>
+                    <TableCell sx={{ color: "text.primary", fontWeight: 600 }}>
                       {trial.trialStatus === "active" ? calculateDaysRemaining(trial.trialEndDate) : "-"}
                     </TableCell>
                     <TableCell>
@@ -236,7 +236,7 @@ export default function TrialsList() {
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton onClick={(e) => openActionMenu(e, trial.hospitalTrialId)} sx={{ color: "#94a3b8" }}>
+                      <IconButton onClick={(e) => openActionMenu(e, trial.hospitalTrialId)} sx={{ color: "text.secondary" }}>
                         <MoreVertRounded />
                       </IconButton>
                     </TableCell>
@@ -249,14 +249,14 @@ export default function TrialsList() {
         
         {/* Pagination */}
         {totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid", borderColor: "divider" }}>
             <Pagination 
               count={totalPages} 
               page={page} 
               onChange={(_, value) => setPage(value)} 
               color="primary"
               sx={{
-                "& .MuiPaginationItem-root": { color: "#cbd5e1" },
+                "& .MuiPaginationItem-root": { color: "text.primary" },
                 "& .Mui-selected": { bgcolor: "rgba(236, 72, 153, 0.2) !important", color: "#f472b6" }
               }}
             />
@@ -269,7 +269,7 @@ export default function TrialsList() {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={() => setAnchorEl(null)}
-        PaperProps={{ sx: { bgcolor: "#1e293b", border: "1px solid rgba(255, 255, 255, 0.1)", color: "#f8fafc" } }}
+        PaperProps={{ sx: { bgcolor: "background.paper", border: "1px solid", borderColor: "divider", color: "text.primary" } }}
       >
         <MenuItem onClick={handleExtendTrial}>
           <CalendarMonthRounded sx={{ mr: 1.5, fontSize: 20, color: "#60a5fa" }} /> {t("trials.extendTrial")} (14 Days)
@@ -285,13 +285,13 @@ export default function TrialsList() {
 
 const textFieldSx = {
   "& .MuiOutlinedInput-root": {
-    color: "#f1f5f9",
+    color: "text.primary",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+    "& fieldset": { borderColor: "divider" },
+    "&:hover fieldset": { borderColor: "divider" },
     "&.Mui-focused fieldset": { borderColor: "#ec4899" },
   },
-  "& .MuiInputLabel-root": { color: "#94a3b8" },
+  "& .MuiInputLabel-root": { color: "text.secondary" },
   "& .MuiInputLabel-root.Mui-focused": { color: "#ec4899" },
-  "& .MuiSvgIcon-root": { color: "#64748b" },
+  "& .MuiSvgIcon-root": { color: "text.secondary" },
 };

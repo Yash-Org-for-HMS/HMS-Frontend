@@ -195,16 +195,16 @@ export default function HospitalForm() {
         <IconButton
           onClick={() => navigate("/hospitals")}
           sx={{
-            bgcolor: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "#f8fafc",
+            bgcolor: "action.hover",
+            border: "1px solid", borderColor: "divider",
+            color: "text.primary",
             "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
           }}
         >
           <ArrowBackRounded />
         </IconButton>
         <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "#f8fafc", letterSpacing: "-0.5px" }}>
+          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
             {isEdit ? t("hospitals.editHospital", "Edit Hospital") : t("hospitals.addHospital", "Add Hospital")}
           </Typography>
         </Box>
@@ -213,12 +213,12 @@ export default function HospitalForm() {
       {error && <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>{error}</Alert>}
 
       <Paper
-        elevation={0}
+        elevation={2}
         sx={{
           p: { xs: 3, md: 5 },
-          bgcolor: "rgba(30, 41, 59, 0.7)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 4,
           animation: "fadeInUp 0.6s ease-out both",
         }}
@@ -252,11 +252,11 @@ export default function HospitalForm() {
                     {...params}
                     label={t("hospitals.name", "Hospital Name")}
                     required
-                    sx={textFieldSx}
+                    
                   />
                 )}
                 PaperComponent={({ children }) => (
-                  <Paper sx={{ bgcolor: "#1e293b", color: "#f8fafc", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
+                  <Paper sx={{ bgcolor: "background.paper", color: "text.primary", border: "1px solid", borderColor: "divider" }}>
                     {children}
                   </Paper>
                 )}
@@ -273,8 +273,8 @@ export default function HospitalForm() {
                 placeholder={isEdit ? "" : "Auto-generated"}
                 inputProps={{ maxLength: 10, style: { textTransform: "uppercase" } }}
                 helperText={isEdit ? "Unique identifier (e.g. CITY01)" : "Auto-generated if left blank"}
-                sx={textFieldSx}
-                FormHelperTextProps={{ sx: { color: "#94a3b8" } }}
+                
+                FormHelperTextProps={{ sx: { color: "text.secondary" } }}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -284,7 +284,7 @@ export default function HospitalForm() {
                 name="legalBusinessName"
                 value={formData.legalBusinessName}
                 onChange={handleChange}
-                sx={textFieldSx}
+                
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -295,7 +295,7 @@ export default function HospitalForm() {
                 name="officialEmail"
                 value={formData.officialEmail}
                 onChange={handleChange}
-                sx={textFieldSx}
+                
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -305,7 +305,7 @@ export default function HospitalForm() {
                 name="officialPhone"
                 value={formData.officialPhone}
                 onChange={handleChange}
-                sx={textFieldSx}
+                
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -317,14 +317,14 @@ export default function HospitalForm() {
                 value={formData.status}
                 onChange={handleChange}
                 required
-                sx={textFieldSx}
+                
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
                       sx: {
-                        bgcolor: "#1e293b",
-                        color: "#f8fafc",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        bgcolor: "background.paper",
+                        color: "text.primary",
+                        border: "1px solid", borderColor: "divider",
                         "& .MuiMenuItem-root": { py: 1.8, px: 2 }
                       }
                     }
@@ -344,9 +344,9 @@ export default function HospitalForm() {
                   onClick={() => navigate("/hospitals")} 
                   disabled={loading} 
                   sx={{ 
-                    borderColor: "rgba(255,255,255,0.2)", 
-                    color: "#cbd5e1",
-                    "&:hover": { borderColor: "rgba(255,255,255,0.4)" }
+                    borderColor: "divider", 
+                    color: "text.primary",
+                    "&:hover": { borderColor: "divider" }
                   }}
                 >
                   {t("common.cancel", "Cancel")}
@@ -371,19 +371,19 @@ export default function HospitalForm() {
 
       {isEdit && (
         <Paper
-          elevation={0}
+          elevation={2}
           sx={{
             mt: 4,
             p: { xs: 3, md: 5 },
-            bgcolor: "rgba(30, 41, 59, 0.7)",
+            bgcolor: "background.paper",
             backdropFilter: "blur(10px)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
+            border: "1px solid", borderColor: "divider",
             borderRadius: 4,
             animation: "fadeInUp 0.8s ease-out both",
           }}
         >
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-            <Typography variant="h6" fontWeight="700" sx={{ color: "#f8fafc" }}>
+            <Typography variant="h6" fontWeight="700" sx={{ color: "text.primary" }}>
               Hospital Branches
             </Typography>
             <Button
@@ -396,17 +396,17 @@ export default function HospitalForm() {
             </Button>
           </Box>
           {branches.length === 0 ? (
-            <Typography variant="body2" sx={{ color: "#94a3b8" }}>No branches found.</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>No branches found.</Typography>
           ) : (
             <Grid container spacing={2}>
               {branches.map(branch => (
                 <Grid size={{ xs: 12 }} key={branch.branchId}>
-                  <Box sx={{ p: 2, bgcolor: "rgba(15, 23, 42, 0.4)", borderRadius: 3, border: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                    <Typography variant="subtitle2" sx={{ color: "#f8fafc", fontWeight: 700 }}>
+                  <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+                    <Typography variant="subtitle2" sx={{ color: "text.primary", fontWeight: 700 }}>
                       {branch.branchName}
                     </Typography>
                     <Box sx={{ display: "flex", gap: 1, alignItems: "center", mt: 0.5, mb: 1.5, flexWrap: "wrap" }}>
-                      <Typography variant="caption" sx={{ color: "#94a3b8" }}>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         Code: {branch.branchCode}
                       </Typography>
                       <Chip
@@ -439,9 +439,9 @@ export default function HospitalForm() {
       <Dialog 
         open={branchDialogOpen} 
         onClose={() => setBranchDialogOpen(false)}
-        PaperProps={{ sx: { bgcolor: "#1e293b", color: "#f8fafc", borderRadius: 3, minWidth: 400 } }}
+        PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3, minWidth: 400 } }}
       >
-        <DialogTitle sx={{ borderBottom: "1px solid rgba(255,255,255,0.1)", mb: 2 }}>
+        <DialogTitle sx={{ borderBottom: "1px solid", borderColor: "divider", mb: 2 }}>
           {editingBranchId ? "Edit Branch" : "Add New Branch"}
         </DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -450,7 +450,7 @@ export default function HospitalForm() {
             label="Branch Code"
             value={newBranch.code}
             onChange={(e) => setNewBranch({ ...newBranch, code: e.target.value })}
-            sx={{ ...textFieldSx, mt: 1 }}
+            sx={{ mt: 1 }}
             placeholder="e.g. CITY01"
           />
           <TextField
@@ -458,7 +458,7 @@ export default function HospitalForm() {
             label="Branch Name"
             value={newBranch.name}
             onChange={(e) => setNewBranch({ ...newBranch, name: e.target.value })}
-            sx={textFieldSx}
+            
             placeholder="e.g. Main Hospital"
           />
           <TextField
@@ -467,14 +467,14 @@ export default function HospitalForm() {
             label="Subscription Plan"
             value={newBranch.subscriptionPlanId}
             onChange={(e) => setNewBranch({ ...newBranch, subscriptionPlanId: e.target.value })}
-            sx={textFieldSx}
+            
             SelectProps={{
               MenuProps: {
                 PaperProps: {
                   sx: {
-                    bgcolor: "#1e293b",
-                    color: "#f8fafc",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    bgcolor: "background.paper",
+                    color: "text.primary",
+                    border: "1px solid", borderColor: "divider",
                     "& .MuiMenuItem-root": { py: 1.5, px: 2 }
                   }
                 }
@@ -494,14 +494,14 @@ export default function HospitalForm() {
             label="Status"
             value={newBranch.status}
             onChange={(e) => setNewBranch({ ...newBranch, status: e.target.value })}
-            sx={textFieldSx}
+            
             SelectProps={{
               MenuProps: {
                 PaperProps: {
                   sx: {
-                    bgcolor: "#1e293b",
-                    color: "#f8fafc",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    bgcolor: "background.paper",
+                    color: "text.primary",
+                    border: "1px solid", borderColor: "divider",
                     "& .MuiMenuItem-root": { py: 1.5, px: 2 }
                   }
                 }
@@ -513,8 +513,8 @@ export default function HospitalForm() {
             <MenuItem value="inactive">Inactive</MenuItem>
           </TextField>
         </DialogContent>
-        <DialogActions sx={{ p: 3, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-          <Button onClick={() => setBranchDialogOpen(false)} sx={{ color: "#94a3b8" }}>Cancel</Button>
+        <DialogActions sx={{ p: 3, borderTop: "1px solid", borderColor: "divider" }}>
+          <Button onClick={() => setBranchDialogOpen(false)} sx={{ color: "text.secondary" }}>Cancel</Button>
           <Button 
             onClick={handleAddBranchSubmit} 
             variant="contained" 
@@ -531,12 +531,12 @@ export default function HospitalForm() {
 
 const textFieldSx = {
   "& .MuiOutlinedInput-root": {
-    color: "#f1f5f9",
+    color: "text.primary",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)", borderRadius: "12px" },
-    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+    "& fieldset": { borderColor: "divider", borderRadius: "12px" },
+    "&:hover fieldset": { borderColor: "divider" },
     "&.Mui-focused fieldset": { borderColor: "#3b82f6" },
   },
-  "& .MuiInputLabel-root": { color: "#94a3b8" },
+  "& .MuiInputLabel-root": { color: "text.secondary" },
   "& .MuiInputLabel-root.Mui-focused": { color: "#3b82f6" },
 };

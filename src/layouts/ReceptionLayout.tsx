@@ -49,9 +49,10 @@ export default function ReceptionLayout() {
 
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/reception/dashboard" },
+    { text: "Front Desk Console", icon: <PersonAddRounded />, path: "/reception/console" },
     { text: "Appointments", icon: <CalendarTodayRounded />, path: "/reception/appointments" },
     { text: "Patient Queue", icon: <QueueRounded />, path: "/reception/queue" },
-    { text: "Patient Search & Registry", icon: <PersonAddRounded />, path: "/reception/patients" },
+    { text: "All Patients", icon: <AccountCircleRounded />, path: "/reception/patients" },
     { text: "Billing", icon: <ReceiptRounded />, path: "/reception/billing" },
     { text: "Notifications", icon: <NotificationsRounded />, path: "/reception/notifications" },
   ];
@@ -74,8 +75,8 @@ export default function ReceptionLayout() {
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        background: "linear-gradient(180deg, #0c1445 0%, #0c1a3a 100%)",
-        color: "#f8fafc",
+        bgcolor: "background.paper",
+        color: "text.primary",
       }}
     >
       {/* Logo / Hospital Name */}
@@ -91,68 +92,40 @@ export default function ReceptionLayout() {
       >
         <Box
           sx={{
-            width: 38,
-            height: 38,
-            borderRadius: 2,
-            background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
+            width: 40,
+            height: 40,
+            borderRadius: 1.5,
+            bgcolor: hospital?.logoUrl ? "transparent" : "primary.main",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "0 0 16px rgba(6, 182, 212, 0.4)",
+            boxShadow: hospital?.logoUrl ? "none" : "0 0 16px rgba(6, 182, 212, 0.4)",
             flexShrink: 0,
+            overflow: "hidden"
           }}
         >
-          <LocalHospitalRounded fontSize="small" sx={{ color: "#fff" }} />
+          {hospital?.logoUrl ? (
+            <img src={`http://localhost:5000${hospital.logoUrl}`} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : (
+            <LocalHospitalRounded fontSize="medium" sx={{ color: "#fff" }} />
+          )}
         </Box>
         <Box sx={{ overflow: "hidden" }}>
           <Typography
             variant="subtitle1"
             fontWeight="700"
             noWrap
-            sx={{ maxWidth: 170, color: "#f1f5f9" }}
+            sx={{ maxWidth: 170, color: "text.primary" }}
           >
             {hospital?.name || "Reception"}
           </Typography>
-          <Typography variant="caption" sx={{ color: "#06b6d4", fontWeight: 600 }}>
+          <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
             Reception Portal
           </Typography>
         </Box>
       </Toolbar>
 
-      {/* Status Pill */}
-      <Box sx={{ px: 2, pt: 2, pb: 1 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            px: 1.5,
-            py: 0.8,
-            borderRadius: 2,
-            bgcolor: "rgba(6, 182, 212, 0.08)",
-            border: "1px solid rgba(6, 182, 212, 0.15)",
-          }}
-        >
-          <Box
-            sx={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              bgcolor: "#34d399",
-              boxShadow: "0 0 6px #34d399",
-              animation: "pulse 2s infinite",
-              "@keyframes pulse": {
-                "0%, 100%": { opacity: 1 },
-                "50%": { opacity: 0.4 },
-              },
-            }}
-          />
-          <WifiRounded sx={{ fontSize: 14, color: "#06b6d4" }} />
-          <Typography variant="caption" sx={{ color: "#94a3b8", fontWeight: 500 }}>
-            Live System
-          </Typography>
-        </Box>
-      </Box>
+      {/* Status Pill Removed for clean aesthetic */}
 
       {/* Navigation */}
       <List sx={{ px: 1.5, pt: 1, flex: 1, overflowY: "auto" }}>
@@ -175,15 +148,9 @@ export default function ReceptionLayout() {
                 }}
                 sx={{
                   borderRadius: 2,
-                  bgcolor: isActive
-                    ? "rgba(6, 182, 212, 0.15)"
-                    : "transparent",
-                  border: isActive
-                    ? "1px solid rgba(6, 182, 212, 0.25)"
-                    : "1px solid transparent",
+                  bgcolor: isActive ? "action.selected" : "transparent",
                   "&:hover": {
-                    bgcolor: "rgba(6, 182, 212, 0.08)",
-                    border: "1px solid rgba(6, 182, 212, 0.15)",
+                    bgcolor: "action.hover",
                   },
                   transition: "all 0.15s ease",
                 }}
@@ -191,7 +158,7 @@ export default function ReceptionLayout() {
                 <ListItemIcon
                   sx={{
                     minWidth: 40,
-                    color: isActive ? "#06b6d4" : "#64748b",
+                    color: isActive ? "primary.main" : "text.secondary",
                     transition: "color 0.15s ease",
                   }}
                 >
@@ -208,20 +175,9 @@ export default function ReceptionLayout() {
                   primaryTypographyProps={{
                     fontSize: "0.9rem",
                     fontWeight: isActive ? 600 : 500,
-                    color: isActive ? "#e2e8f0" : "#94a3b8",
+                    color: isActive ? "primary.main" : "text.secondary",
                   }}
                 />
-                {isActive && (
-                  <Box
-                    sx={{
-                      width: 4,
-                      height: 24,
-                      borderRadius: 2,
-                      bgcolor: "#06b6d4",
-                      boxShadow: "0 0 8px rgba(6, 182, 212, 0.6)",
-                    }}
-                  />
-                )}
               </ListItemButton>
             </ListItem>
           );
@@ -239,15 +195,16 @@ export default function ReceptionLayout() {
             gap: 1.5,
             p: 1.5,
             borderRadius: 2,
-            bgcolor: "rgba(6, 182, 212, 0.06)",
-            border: "1px solid rgba(6, 182, 212, 0.12)",
+            bgcolor: "background.default",
+            border: "1px solid",
+            borderColor: "divider",
           }}
         >
           <Avatar
             sx={{
               width: 34,
               height: 34,
-              bgcolor: "#0891b2",
+              bgcolor: "primary.main",
               fontSize: "0.85rem",
               fontWeight: 700,
             }}
@@ -255,10 +212,10 @@ export default function ReceptionLayout() {
             {user?.firstName?.charAt(0) || "R"}
           </Avatar>
           <Box sx={{ overflow: "hidden", flex: 1 }}>
-            <Typography variant="caption" sx={{ color: "#e2e8f0", fontWeight: 600, display: "block" }} noWrap>
+            <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600, display: "block" }} noWrap>
               {user?.firstName} {user?.lastName}
             </Typography>
-            <Typography variant="caption" sx={{ color: "#06b6d4", fontSize: "0.7rem" }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
               {user?.roleName || "Receptionist"}
             </Typography>
           </Box>
@@ -271,15 +228,16 @@ export default function ReceptionLayout() {
   );
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#070e24" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       {/* ── Topbar ──────────────────────────────────────── */}
       <AppBar
         position="fixed"
         elevation={0}
         sx={{
+          display: { xs: "block", md: "none" },
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
-          bgcolor: "rgba(7, 14, 36, 0.85)",
+          bgcolor: "background.paper",
           backdropFilter: "blur(16px)",
           borderBottom: "1px solid rgba(6, 182, 212, 0.12)",
         }}
@@ -294,126 +252,6 @@ export default function ReceptionLayout() {
             >
               <MenuIcon />
             </IconButton>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <AccessTimeRounded sx={{ color: "#06b6d4", fontSize: 18 }} />
-              <Typography variant="body2" sx={{ color: "#94a3b8", fontWeight: 500 }}>
-                {new Date().toLocaleDateString("en-IN", {
-                  weekday: "short",
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Chip
-              label="Reception"
-              size="small"
-              sx={{
-                bgcolor: "rgba(6, 182, 212, 0.1)",
-                color: "#06b6d4",
-                border: "1px solid rgba(6, 182, 212, 0.25)",
-                fontWeight: 600,
-                fontSize: "0.75rem",
-              }}
-            />
-
-            <Tooltip title="Notifications">
-              <IconButton
-                size="small"
-                sx={{ color: "#64748b", "&:hover": { color: "#06b6d4" } }}
-              >
-                <Badge badgeContent={0} color="error">
-                  <NotificationsRounded fontSize="small" />
-                </Badge>
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="Account settings">
-              <IconButton
-                onClick={handleMenuOpen}
-                sx={{
-                  p: 0.5,
-                  border: "2px solid rgba(6, 182, 212, 0.4)",
-                  "&:hover": { borderColor: "#06b6d4" },
-                }}
-              >
-                <Avatar
-                  sx={{
-                    bgcolor: "#0891b2",
-                    width: 32,
-                    height: 32,
-                    fontSize: "0.9rem",
-                    fontWeight: 700,
-                  }}
-                >
-                  {user?.firstName?.charAt(0) || "R"}
-                </Avatar>
-              </IconButton>
-            </Tooltip>
-
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-              transformOrigin={{ horizontal: "right", vertical: "top" }}
-              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-              PaperProps={{
-                elevation: 0,
-                sx: {
-                  mt: 1.5,
-                  bgcolor: "#0c1a3a",
-                  color: "#f8fafc",
-                  border: "1px solid rgba(6, 182, 212, 0.2)",
-                  minWidth: 200,
-                  "&:before": {
-                    content: '""',
-                    display: "block",
-                    position: "absolute",
-                    top: 0,
-                    right: 14,
-                    width: 10,
-                    height: 10,
-                    bgcolor: "#0c1a3a",
-                    transform: "translateY(-50%) rotate(45deg)",
-                    zIndex: 0,
-                    borderLeft: "1px solid rgba(6, 182, 212, 0.2)",
-                    borderTop: "1px solid rgba(6, 182, 212, 0.2)",
-                  },
-                },
-              }}
-            >
-              <Box
-                sx={{
-                  px: 2,
-                  py: 1.5,
-                  borderBottom: "1px solid rgba(6, 182, 212, 0.1)",
-                  mb: 1,
-                }}
-              >
-                <Typography variant="subtitle2" fontWeight="600">
-                  {user?.firstName} {user?.lastName}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#94a3b8", fontSize: "0.8rem" }}>
-                  {user?.email}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: "#06b6d4", mt: 0.5, display: "block", fontWeight: 600 }}
-                >
-                  {user?.roleName || "Receptionist"}
-                </Typography>
-              </Box>
-              <MenuItem
-                onClick={handleLogout}
-                sx={{ gap: 1.5, py: 1, color: "#f87171" }}
-              >
-                <LogoutRounded fontSize="small" />
-                Logout
-              </MenuItem>
-            </Menu>
           </Box>
         </Toolbar>
       </AppBar>
@@ -443,7 +281,10 @@ export default function ReceptionLayout() {
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
-              borderRight: "1px solid rgba(6, 182, 212, 0.1)",
+              borderRight: "none",
+              borderTopRightRadius: 24,
+              borderBottomRightRadius: 24,
+              boxShadow: "4px 0 24px rgba(0,0,0,0.03)",
             },
           }}
           open
@@ -464,7 +305,7 @@ export default function ReceptionLayout() {
           flexDirection: "column",
         }}
       >
-        <Toolbar sx={{ minHeight: "70px !important" }} />
+        <Toolbar sx={{ display: { xs: "block", md: "none" }, minHeight: "70px !important" }} />
         <Outlet />
       </Box>
     </Box>

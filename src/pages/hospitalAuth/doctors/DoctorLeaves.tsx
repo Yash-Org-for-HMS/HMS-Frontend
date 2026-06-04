@@ -56,17 +56,17 @@ export default function DoctorLeaves() {
     <Box sx={{ maxWidth: 900, mx: "auto" }}>
       <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Box>
-          <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
+          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
             Manage Leaves
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             {doctorName}
           </Typography>
         </Box>
         <Button
           variant="outlined"
           onClick={() => navigate("/hospital/doctors")}
-          sx={{ color: "#94a3b8", borderColor: "rgba(255,255,255,0.2)" }}
+          sx={{ color: "text.secondary", borderColor: "divider" }}
         >
           Back to Doctors
         </Button>
@@ -78,33 +78,33 @@ export default function DoctorLeaves() {
         </Alert>
       )}
 
-      <TableContainer component={Paper} sx={{ bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}>
+      <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Leave Date</TableCell>
-              <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Reason</TableCell>
-              <TableCell sx={{ color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Status</TableCell>
+              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Leave Date</TableCell>
+              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Reason</TableCell>
+              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Status</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {leaves.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} align="center" sx={{ py: 4, color: "#94a3b8", borderBottom: "none" }}>
+                <TableCell colSpan={3} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
                   No leaves found for this doctor.
                 </TableCell>
               </TableRow>
             ) : (
               leaves.map((leave) => (
                 <TableRow key={leave.doctorLeaveId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                  <TableCell sx={{ borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#f8fafc" }}>
+                  <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary" }}>
                     {new Date(leave.leaveDate).toLocaleDateString()}
                   </TableCell>
-                  <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                     {leave.leaveReason || "N/A"}
                   </TableCell>
-                  <TableCell sx={{ color: "#cbd5e1", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    <Chip label={leave.status} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "#cbd5e1" }} />
+                  <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
+                    <Chip label={leave.status} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.primary" }} />
                   </TableCell>
                 </TableRow>
               ))

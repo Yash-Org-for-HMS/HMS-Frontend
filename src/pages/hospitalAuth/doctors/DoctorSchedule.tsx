@@ -83,14 +83,14 @@ export default function DoctorSchedule() {
 
   const textFieldProps = {
     fullWidth: true,
-    InputLabelProps: { style: { color: "#94a3b8" } },
+    InputLabelProps: { style: { color: "text.secondary" } },
     sx: {
       "& .MuiOutlinedInput-root": {
-        color: "#f1f5f9",
-        "& fieldset": { borderColor: "rgba(255, 255, 255, 0.1)" },
-        "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.2)" },
+        color: "text.primary",
+        "& fieldset": { borderColor: "divider" },
+        "&:hover fieldset": { borderColor: "divider" },
         "&.Mui-focused fieldset": { borderColor: "#6366f1" },
-        "& .MuiSvgIcon-root": { color: "#94a3b8" }
+        "& .MuiSvgIcon-root": { color: "text.secondary" }
       },
     },
   };
@@ -99,17 +99,17 @@ export default function DoctorSchedule() {
     <Box sx={{ maxWidth: 900, mx: "auto" }}>
       <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Box>
-          <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700, mb: 1 }}>
+          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
             Configure Schedule
           </Typography>
-          <Typography variant="body1" sx={{ color: "#94a3b8" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             {doctorName}
           </Typography>
         </Box>
         <Button
           variant="outlined"
           onClick={() => navigate("/hospital/doctors")}
-          sx={{ color: "#94a3b8", borderColor: "rgba(255,255,255,0.2)" }}
+          sx={{ color: "text.secondary", borderColor: "divider" }}
         >
           Cancel
         </Button>
@@ -121,10 +121,10 @@ export default function DoctorSchedule() {
         </Alert>
       )}
 
-      <Paper sx={{ p: 4, bgcolor: "#1e293b", backgroundImage: "none", borderRadius: 2 }}>
+      <Paper sx={{ p: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
         <form onSubmit={handleSubmit}>
           {schedules.map((schedule, idx) => (
-            <Box key={idx} sx={{ p: 2, mb: 3, bgcolor: "rgba(255,255,255,0.02)", borderRadius: 1, border: "1px solid rgba(255,255,255,0.05)" }}>
+            <Box key={idx} sx={{ p: 2, mb: 3, bgcolor: "action.hover", borderRadius: 1, border: "1px solid", borderColor: "divider" }}>
               <Grid container spacing={2} alignItems="center">
                 <Grid size={{ xs: 12, md: 3 }}>
                   <TextField
@@ -147,7 +147,7 @@ export default function DoctorSchedule() {
                     value={schedule.startTime}
                     onChange={(e) => handleChange(idx, "startTime", e.target.value)}
                     {...textFieldProps}
-                    InputLabelProps={{ shrink: true, style: { color: "#94a3b8" } }}
+                    InputLabelProps={{ shrink: true, style: { color: "text.secondary" } }}
                   />
                 </Grid>
                 <Grid size={{ xs: 6, md: 3 }}>
@@ -157,7 +157,7 @@ export default function DoctorSchedule() {
                     value={schedule.endTime}
                     onChange={(e) => handleChange(idx, "endTime", e.target.value)}
                     {...textFieldProps}
-                    InputLabelProps={{ shrink: true, style: { color: "#94a3b8" } }}
+                    InputLabelProps={{ shrink: true, style: { color: "text.secondary" } }}
                   />
                 </Grid>
                 <Grid size={{ xs: 10, md: 2 }}>
@@ -186,7 +186,7 @@ export default function DoctorSchedule() {
             Add Working Day
           </Button>
 
-          <Box sx={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid rgba(255,255,255,0.1)", pt: 3 }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid", borderColor: "divider", pt: 3 }}>
             <Button
               type="submit"
               variant="contained"
