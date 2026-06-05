@@ -112,7 +112,7 @@ export default function ReceptionDashboard() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axiosInstance.get("/reception/dashboard");
+      const response = await axiosInstance.get("/reception/dashboard/stats");
       setStats(response.data.data);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load dashboard statistics");

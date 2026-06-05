@@ -25,9 +25,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if token and user data exist on mount
-    const token = localStorage.getItem("accessToken");
-    const storedUser = localStorage.getItem("user");
+    const token = sessionStorage.getItem("accessToken");
+    const storedUser = sessionStorage.getItem("user");
 
     if (token && storedUser) {
       try {
@@ -41,9 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (token: string, refresh: string, userData: User) => {
-    localStorage.setItem("accessToken", token);
-    localStorage.setItem("refreshToken", refresh);
-    localStorage.setItem("user", JSON.stringify(userData));
+    sessionStorage.setItem("accessToken", token);
+    sessionStorage.setItem("refreshToken", refresh);
+    sessionStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
     navigate("/");
   };
@@ -55,9 +54,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error("Error logging out from server", err);
     } finally {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
+      sessionStorage.removeItem("accessToken");
+      sessionStorage.removeItem("refreshToken");
+      sessionStorage.removeItem("user");
       setUser(null);
       navigate("/login");
     }

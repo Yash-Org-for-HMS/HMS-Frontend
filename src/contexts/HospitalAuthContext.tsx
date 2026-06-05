@@ -10,6 +10,7 @@ export interface HospitalUser {
   employeeCode: string | null;
   role: string;
   roleName: string;
+  permissions: string[];
 }
 
 export interface HospitalInfo {
@@ -56,11 +57,11 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Check if token and user data exist on mount
-    const token = localStorage.getItem("hospitalAccessToken");
-    const storedUser = localStorage.getItem("hospitalUser");
-    const storedHospital = localStorage.getItem("hospitalInfo");
-    const storedBranch = localStorage.getItem("hospitalBranch");
-    const storedSession = localStorage.getItem("hospitalSessionId");
+    const token = sessionStorage.getItem("hospitalAccessToken");
+    const storedUser = sessionStorage.getItem("hospitalUser");
+    const storedHospital = sessionStorage.getItem("hospitalInfo");
+    const storedBranch = sessionStorage.getItem("hospitalBranch");
+    const storedSession = sessionStorage.getItem("hospitalSessionId");
 
     if (token && storedUser && storedHospital) {
       try {
@@ -84,24 +85,30 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
     branchData: BranchInfo | null,
     sessId: string,
   ) => {
-    localStorage.setItem("hospitalAccessToken", token);
-    localStorage.setItem("hospitalRefreshToken", refresh);
-    localStorage.setItem("hospitalUser", JSON.stringify(userData));
-    localStorage.setItem("hospitalInfo", JSON.stringify(hospitalData));
+    sessionStorage.setItem("hospitalAccessToken", token);
+    sessionStorage.setItem("hospitalRefreshToken", refresh);
+    sessionStorage.setItem("hospitalUser", JSON.stringify(userData));
+    sessionStorage.setItem("hospitalInfo", JSON.stringify(hospitalData));
     if (branchData) {
-      localStorage.setItem("hospitalBranch", JSON.stringify(branchData));
+      sessionStorage.setItem("hospitalBranch", JSON.stringify(branchData));
     }
-    localStorage.setItem("hospitalSessionId", sessId);
+    sessionStorage.setItem("hospitalSessionId", sessId);
 
     setUser(userData);
     setHospital(hospitalData);
     setBranch(branchData);
     setSessionId(sessId);
 
-    // Role-based redirect: receptionists go to /reception/dashboard
+    // Role-based redirect
     const receptionRoles = ["RECEPTIONIST", "RECEPTION", "receptionist", "reception"];
+    const nurseRoles = ["NURSE", "nurse"];
+    const doctorRoles = ["DOCTOR", "doctor"];
     if (receptionRoles.includes(userData.role)) {
       navigate("/reception/dashboard");
+    } else if (nurseRoles.includes(userData.role)) {
+      navigate("/nurse/dashboard");
+    } else if (doctorRoles.includes(userData.role)) {
+      navigate("/doctor/dashboard");
     } else {
       navigate("/hospital/dashboard");
     }
@@ -111,7 +118,7 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
     setHospital((prev) => {
       if (!prev) return prev;
       const updated = { ...prev, ...hospitalData };
-      localStorage.setItem("hospitalInfo", JSON.stringify(updated));
+      sessionStorage.setItem("hospitalInfo", JSON.stringify(updated));
       return updated;
     });
   };
@@ -124,7 +131,7 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
           { sessionId },
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("hospitalAccessToken")}`,
+              Authorization: `Bearer ${sessionStorage.getItem("hospitalAccessToken")}`,
             },
           }
         );
@@ -132,12 +139,12 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error("Error logging out from server", err);
     } finally {
-      localStorage.removeItem("hospitalAccessToken");
-      localStorage.removeItem("hospitalRefreshToken");
-      localStorage.removeItem("hospitalUser");
-      localStorage.removeItem("hospitalInfo");
-      localStorage.removeItem("hospitalBranch");
-      localStorage.removeItem("hospitalSessionId");
+      sessionStorage.removeItem("hospitalAccessToken");
+      sessionStorage.removeItem("hospitalRefreshToken");
+      sessionStorage.removeItem("hospitalUser");
+      sessionStorage.removeItem("hospitalInfo");
+      sessionStorage.removeItem("hospitalBranch");
+      sessionStorage.removeItem("hospitalSessionId");
       
       setUser(null);
       setHospital(null);

@@ -82,20 +82,18 @@ export default function HospitalChangePassword() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: `linear-gradient(135deg, #0f172a 0%, #064e3b 100%)`,
-        position: "relative",
+        bgcolor: "background.default",
       }}
     >
       <Container maxWidth="xs" sx={{ position: "relative", zIndex: 1 }}>
         <Paper
-          elevation={24}
+          elevation={0}
           sx={{
             p: { xs: 4, md: 5 },
-            borderRadius: 3,
-            background: "rgba(30, 41, 59, 0.7)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid", borderColor: "divider",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+            borderRadius: 4,
+            bgcolor: "background.paper",
+            boxShadow: "0 10px 40px -10px rgba(0,0,0,0.08)",
+            border: "1px solid rgba(15, 23, 42, 0.05)",
           }}
         >
           <Box sx={{ mb: 4, textAlign: "center" }}>
@@ -122,7 +120,16 @@ export default function HospitalChangePassword() {
           </Box>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
+            <Alert
+              severity="error"
+              sx={{
+                mb: 3,
+                backgroundColor: "rgba(239, 68, 68, 0.1)",
+                color: "#fca5a5",
+                border: "1px solid rgba(239, 68, 68, 0.2)",
+                "& .MuiAlert-icon": { color: "#f87171" },
+              }}
+            >
               {error}
             </Alert>
           )}
@@ -138,15 +145,12 @@ export default function HospitalChangePassword() {
               onChange={(e) => setNewPassword(e.target.value)}
               disabled={isLoading}
               required
-              sx={{
-                mb: 2.5,
-                "& .MuiOutlinedInput-root": {
-                  color: "text.primary",
-                  backgroundColor: "rgba(15, 23, 42, 0.6)",
-                  "& fieldset": { borderColor: "divider" },
-                  "&.Mui-focused fieldset": { borderColor: "#10b981" },
-                },
-                "& .MuiInputLabel-root": { color: "text.secondary" },
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockOutlined />
+                  </InputAdornment>
+                ),
               }}
             />
             <TextField
@@ -159,17 +163,12 @@ export default function HospitalChangePassword() {
               onChange={(e) => setConfirmNewPassword(e.target.value)}
               disabled={isLoading}
               required
-              sx={{
-                mb: 4,
-                "& .MuiOutlinedInput-root": {
-                  color: "text.primary",
-                  backgroundColor: "rgba(15, 23, 42, 0.6)",
-                  "& fieldset": { borderColor: "divider" },
-                  "&.Mui-focused fieldset": { borderColor: "#10b981" },
-                },
-                "& .MuiInputLabel-root": { color: "text.secondary" },
-              }}
               InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockOutlined />
+                  </InputAdornment>
+                ),
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: "text.secondary" }}>
@@ -186,9 +185,20 @@ export default function HospitalChangePassword() {
               disabled={isLoading}
               sx={{
                 py: 1.5,
-                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                mt: 2,
+                bgcolor: "primary.main",
+                color: "#FFFFFF",
                 fontWeight: 600,
+                fontSize: "1rem",
                 textTransform: "none",
+                borderRadius: 2,
+                boxShadow: "none",
+                "&:hover": {
+                  bgcolor: "primary.dark",
+                  boxShadow: "0 4px 12px rgba(16, 185, 129, 0.2)",
+                  transform: "translateY(-1px)",
+                },
+                transition: "all 0.2s ease-in-out",
               }}
             >
               {isLoading ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Update Password & Continue"}

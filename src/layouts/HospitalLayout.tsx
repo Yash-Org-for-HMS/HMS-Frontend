@@ -51,23 +51,27 @@ export default function HospitalLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Placeholder navigation items for future phases
+  // Map sidebar items to required permissions
   const menuItems = [
-    { text: "Dashboard", icon: <DashboardRounded />, path: "/hospital/dashboard" },
-    { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments" },
-    { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users" },
-    { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors" },
-    { text: "Role Management", icon: <ShieldRounded />, path: "/hospital/roles" },
-    { text: "Permission Matrix", icon: <RuleRounded />, path: "/hospital/permissions-matrix" },
-    { text: "Patients", icon: <PeopleRounded />, path: "/hospital/patients" },
-    { text: "Appointments", icon: <CalendarTodayRounded />, path: "/hospital/appointments" },
-    { text: "Laboratory", icon: <ScienceRounded />, path: "/hospital/lab" },
-    { text: "Master Data", icon: <DatasetRounded />, path: "/hospital/lookups" },
-    { text: "Form Builder", icon: <DynamicFormRounded />, path: "/hospital/form-builder" },
-    { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access" },
-    { text: "Audit Logs", icon: <SecurityRounded />, path: "/hospital/audit-logs" },
-    { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings" },
+    { text: "Dashboard", icon: <DashboardRounded />, path: "/hospital/dashboard", permission: null },
+    { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", permission: "DEPARTMENT_MANAGE" },
+    { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", permission: "USER_MANAGE" },
+    { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", permission: "USER_MANAGE" },
+    { text: "Role Management", icon: <ShieldRounded />, path: "/hospital/roles", permission: "ROLE_MANAGE" },
+    { text: "Permission Matrix", icon: <RuleRounded />, path: "/hospital/permissions-matrix", permission: "ROLE_MANAGE" },
+    { text: "Master Data", icon: <DatasetRounded />, path: "/hospital/lookups", permission: "SETTINGS_MANAGE" },
+    { text: "Form Builder", icon: <DynamicFormRounded />, path: "/hospital/form-builder", permission: "SETTINGS_MANAGE" },
+    { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", permission: "SETTINGS_MANAGE" },
+    { text: "Audit Logs", icon: <SecurityRounded />, path: "/hospital/audit-logs", permission: "SETTINGS_MANAGE" },
+    { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", permission: "SETTINGS_MANAGE" },
   ];
+
+  // Filter based on assigned permissions
+  const visibleMenuItems = menuItems.filter(item => {
+    if (!item.permission) return true;
+    if (user?.role === "HOSPITAL_ADMIN") return true;
+    return user?.permissions?.includes(item.permission);
+  });
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -134,7 +138,7 @@ export default function HospitalLayout() {
       </Toolbar>
       
       <List sx={{ px: 2, pt: 2, flex: 1, overflowY: "auto" }}>
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           const isActive = location.pathname.startsWith(item.path);
           return (
             <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>

@@ -20,6 +20,9 @@ import {
   LanguageRounded,
   SettingsSuggestRounded,
   ReceiptRounded,
+  MedicalServicesRounded,
+  PersonRounded,
+  LocalHospitalRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 
@@ -63,7 +66,6 @@ export default function HospitalSettings() {
     // Appointment Settings
     appointmentDuration: 15,
     bufferTime: 5,
-    // workingHoursJson: null, // Keeping simple for this phase
 
     // Localization
     languageCode: "en",
@@ -80,6 +82,9 @@ export default function HospitalSettings() {
     currencyCode: "USD",
     taxPercentage: 0,
     invoicePrefix: "INV-",
+
+    // Clinical Workflow
+    vitalsCollector: "RECEPTIONIST" as "RECEPTIONIST" | "NURSE",
   });
 
   useEffect(() => {
@@ -107,6 +112,7 @@ export default function HospitalSettings() {
         currencyCode: settings.currencyCode || "USD",
         taxPercentage: settings.taxPercentage ?? 0,
         invoicePrefix: settings.invoicePrefix || "INV-",
+        vitalsCollector: (settings.vitalsCollector as "RECEPTIONIST" | "NURSE") || "RECEPTIONIST",
       });
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load settings");
@@ -210,6 +216,7 @@ export default function HospitalSettings() {
             <Tab icon={<LanguageRounded sx={{ mr: 1 }} />} iconPosition="start" label="Localization" {...a11yProps(1)} />
             <Tab icon={<SettingsSuggestRounded sx={{ mr: 1 }} />} iconPosition="start" label="System Settings" {...a11yProps(2)} />
             <Tab icon={<ReceiptRounded sx={{ mr: 1 }} />} iconPosition="start" label="Billing Defaults" {...a11yProps(3)} />
+            <Tab icon={<MedicalServicesRounded sx={{ mr: 1 }} />} iconPosition="start" label="Clinical Workflow" {...a11yProps(4)} />
           </Tabs>
         </Box>
 
@@ -360,6 +367,144 @@ export default function HospitalSettings() {
                 />
               </Grid>
             </Grid>
+          </CustomTabPanel>
+
+          {/* Clinical Workflow Tab */}
+          <CustomTabPanel value={tabValue} index={4}>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, mb: 0.5 }}>
+                Who Records Patient Vitals?
+              </Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                Select the role responsible for recording vitals before the patient sees the doctor.
+                This controls where the "Record Vitals" action appears in your workflow.
+              </Typography>
+            </Box>
+
+            <Grid container spacing={3}>
+              {/* Receptionist Option */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Box
+                  id="vitals-collector-receptionist"
+                  onClick={() => setFormData(prev => ({ ...prev, vitalsCollector: "RECEPTIONIST" }))}
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    border: "2px solid",
+                    borderColor: formData.vitalsCollector === "RECEPTIONIST" ? "#06b6d4" : "divider",
+                    bgcolor: formData.vitalsCollector === "RECEPTIONIST" ? "rgba(6,182,212,0.06)" : "background.default",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    "&:hover": { borderColor: "#06b6d4", bgcolor: "rgba(6,182,212,0.04)" },
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 2,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
+                      bgcolor: formData.vitalsCollector === "RECEPTIONIST" ? "rgba(6,182,212,0.2)" : "rgba(100,116,139,0.1)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <PersonRounded sx={{ color: formData.vitalsCollector === "RECEPTIONIST" ? "#06b6d4" : "text.secondary", fontSize: 28 }} />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+                      <Typography variant="subtitle1" sx={{ color: formData.vitalsCollector === "RECEPTIONIST" ? "#06b6d4" : "text.primary", fontWeight: 700 }}>
+                        Receptionist
+                      </Typography>
+                      {formData.vitalsCollector === "RECEPTIONIST" && (
+                        <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: "#06b6d4" }} />
+                      )}
+                    </Box>
+                    <Typography variant="body2" sx={{ color: "text.secondary", lineHeight: 1.5 }}>
+                      Vitals are recorded at the front desk during check-in. The receptionist enters all
+                      measurements before the patient is called to the doctor.
+                    </Typography>
+                    <Box sx={{ mt: 1.5, display: "flex", gap: 1, flexWrap: "wrap" }}>
+                      {["Quick check-in flow", "Single-staff hospitals", "OPD clinics"].map(tag => (
+                        <Box key={tag} sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: "rgba(6,182,212,0.1)", fontSize: "0.7rem", color: "#06b6d4", fontWeight: 600 }}>{tag}</Box>
+                      ))}
+                    </Box>
+                  </Box>
+                </Box>
+              </Grid>
+
+              {/* Nurse Option */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Box
+                  id="vitals-collector-nurse"
+                  onClick={() => setFormData(prev => ({ ...prev, vitalsCollector: "NURSE" }))}
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    border: "2px solid",
+                    borderColor: formData.vitalsCollector === "NURSE" ? "#a78bfa" : "divider",
+                    bgcolor: formData.vitalsCollector === "NURSE" ? "rgba(167,139,250,0.06)" : "background.default",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    "&:hover": { borderColor: "#a78bfa", bgcolor: "rgba(167,139,250,0.04)" },
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 2,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
+                      bgcolor: formData.vitalsCollector === "NURSE" ? "rgba(167,139,250,0.2)" : "rgba(100,116,139,0.1)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <LocalHospitalRounded sx={{ color: formData.vitalsCollector === "NURSE" ? "#a78bfa" : "text.secondary", fontSize: 28 }} />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+                      <Typography variant="subtitle1" sx={{ color: formData.vitalsCollector === "NURSE" ? "#a78bfa" : "text.primary", fontWeight: 700 }}>
+                        Nurse
+                      </Typography>
+                      {formData.vitalsCollector === "NURSE" && (
+                        <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: "#a78bfa" }} />
+                      )}
+                    </Box>
+                    <Typography variant="body2" sx={{ color: "text.secondary", lineHeight: 1.5 }}>
+                      A dedicated nurse records vitals in the examination room before the doctor consults
+                      the patient. Ideal for multi-staff hospitals.
+                    </Typography>
+                    <Box sx={{ mt: 1.5, display: "flex", gap: 1, flexWrap: "wrap" }}>
+                      {["Clinical-grade accuracy", "Multi-staff hospitals", "Specialized care"].map(tag => (
+                        <Box key={tag} sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: "rgba(167,139,250,0.1)", fontSize: "0.7rem", color: "#a78bfa", fontWeight: 600 }}>{tag}</Box>
+                      ))}
+                    </Box>
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+
+            {/* Info Banner */}
+            <Box sx={{ mt: 3, p: 2.5, borderRadius: 2, bgcolor: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", gap: 1.5 }}>
+              <MedicalServicesRounded sx={{ color: "#f59e0b", flexShrink: 0, mt: 0.2 }} />
+              <Box>
+                <Typography variant="body2" sx={{ color: "#fbbf24", fontWeight: 600, mb: 0.3 }}>Current Selection: {formData.vitalsCollector === "RECEPTIONIST" ? "Receptionist" : "Nurse"}</Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  {formData.vitalsCollector === "RECEPTIONIST"
+                    ? 'The "Record Vitals" button will appear in the Reception Queue for receptionists.'
+                    : 'The "Record Vitals" button will appear in the Nurse Panel (/nurse/vitals). Receptionists will not see it in the queue.'}
+                </Typography>
+              </Box>
+            </Box>
           </CustomTabPanel>
         </Box>
 

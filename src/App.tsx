@@ -51,6 +51,7 @@ import { HospitalAuthProvider } from "./contexts/HospitalAuthContext";
 import { HospitalProtectedRoute } from "./components/HospitalProtectedRoute";
 import HospitalLayout from "./layouts/HospitalLayout";
 import ReceptionLayout from "./layouts/ReceptionLayout";
+import NurseLayout from "./layouts/NurseLayout";
 import ReceptionDashboard from "./pages/reception/ReceptionDashboard";
 import PatientsList from "./pages/reception/PatientsList";
 import PatientForm from "./pages/reception/PatientForm";
@@ -61,6 +62,16 @@ import QueueDashboard from "./pages/reception/QueueDashboard";
 import BillingDashboard from "./pages/reception/BillingDashboard";
 import NotificationsLog from "./pages/reception/NotificationsLog";
 import FrontDeskConsole from "./pages/reception/FrontDeskConsole";
+
+// Nurse Imports
+import NurseDashboard from "./pages/nurse/NurseDashboard";
+import NurseQueue from "./pages/nurse/NurseQueue";
+import NurseVitalsStation from "./pages/nurse/NurseVitalsStation";
+// Doctor Imports
+import DoctorLayout from "./layouts/DoctorLayout";
+import DoctorDashboard from "./pages/doctor/DoctorDashboard";
+import DoctorQueue from "./pages/doctor/DoctorQueue";
+import ConsultationWorkspace from "./pages/doctor/ConsultationWorkspace";
 
 function App() {
   return (
@@ -160,6 +171,23 @@ function App() {
             
             <Route path="/reception/billing" element={<BillingDashboard />} />
             <Route path="/reception/notifications" element={<NotificationsLog />} />
+          </Route>
+        </Route>
+        {/* ── Nurse Panel Routes ────────────────────────────────────── */}
+        <Route element={<HospitalProtectedRoute />}>
+          <Route element={<NurseLayout />}>
+            <Route path="/nurse/dashboard" element={<NurseDashboard />} />
+            <Route path="/nurse/queue" element={<NurseQueue />} />
+            <Route path="/nurse/vitals" element={<NurseVitalsStation />} />
+          </Route>
+        </Route>
+
+        {/* ── Doctor Panel Routes ───────────────────────────────────── */}
+        <Route element={<HospitalProtectedRoute />}>
+          <Route element={<DoctorLayout />}>
+            <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+            <Route path="/doctor/queue" element={<DoctorQueue />} />
+            <Route path="/doctor/consultation/:appointmentId" element={<ConsultationWorkspace />} />
           </Route>
         </Route>
       </Routes>

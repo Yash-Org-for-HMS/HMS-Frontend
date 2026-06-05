@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -6,15 +6,30 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Checkbox,
+  Switch,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  IconButton,
+  Collapse,
+  Tooltip,
+  Chip,
+  Menu,
+  MenuItem,
+  alpha,
 } from "@mui/material";
-import { SaveRounded } from "@mui/icons-material";
+import {
+  SaveRounded,
+  KeyboardArrowDownRounded,
+  KeyboardArrowRightRounded,
+  MoreVertRounded,
+  ChecklistRounded,
+  RemoveDoneRounded,
+  VpnKeyRounded,
+} from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
 
 interface Permission {
@@ -41,16 +56,22 @@ export default function PermissionMatrix() {
 
   const [roles, setRoles] = useState<Role[]>([]);
   const [groupedPermissions, setGroupedPermissions] = useState<Record<string, Permission[]>>({});
+  
+  // State for collapsible modules
+  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
 
   // matrixState[roleId] = Set of permissionIds
   const [matrixState, setMatrixState] = useState<Record<string, Set<string>>>({});
+
+  // Anchor for Role Bulk Actions Menu
+  const [anchorEl, setAnchorEl] = useState<{ element: null | HTMLElement; roleId: string | null }>({ element: null, roleId: null });
 
   const fetchData = async () => {
     try {
       setInitialLoad(true);
       const [permRes, roleRes] = await Promise.all([
         axiosInstance.get("/hospital/roles/permissions"),
-        axiosInstance.get("/hospital/roles")
+        axiosInstance.get("/hospital/roles"),
       ]);
 
       const permsData = permRes.data.data;
@@ -58,25 +79,25 @@ export default function PermissionMatrix() {
 
       setGroupedPermissions(permsData);
 
-      // Now fetch details for each role to get their permissions
-      // Since /hospital/roles only gives summary, we fetch each role's permissions
-      const roleDetailsPromises = rolesData.map((r: any) => 
-        axiosInstance.get(`/hospital/roles/${r.roleId}`)
-      );
-      
+      // Expand all modules by default
+      const initialExpanded: Record<string, boolean> = {};
+      Object.keys(permsData).forEach((mod) => (initialExpanded[mod] = true));
+      setExpandedModules(initialExpanded);
+
+      // Fetch details for each role
+      const roleDetailsPromises = rolesData.map((r: any) => axiosInstance.get(`/hospital/roles/${r.roleId}`));
       const roleDetailsRes = await Promise.all(roleDetailsPromises);
-      const fullRoles = roleDetailsRes.map(res => res.data.data);
-      
+      const fullRoles = roleDetailsRes.map((res) => res.data.data);
+
       setRoles(fullRoles);
 
       // Initialize Matrix State
       const newState: Record<string, Set<string>> = {};
-      fullRoles.forEach(role => {
+      fullRoles.forEach((role) => {
         const pIds = role.rolePermissions.map((rp: any) => rp.permissionId);
         newState[role.roleId] = new Set(pIds);
       });
       setMatrixState(newState);
-
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load data");
     } finally {
@@ -88,10 +109,13 @@ export default function PermissionMatrix() {
     fetchData();
   }, []);
 
+  const totalPermissionsCount = useMemo(() => {
+    return Object.values(groupedPermissions).flat().length;
+  }, [groupedPermissions]);
+
   const handleToggle = (roleId: string, permissionId: string, isSystemRole: boolean) => {
-    if (isSystemRole) return; // Prevent modifying system roles
-    
-    setMatrixState(prev => {
+    if (isSystemRole) return;
+    setMatrixState((prev) => {
       const nextSet = new Set(prev[roleId]);
       if (nextSet.has(permissionId)) {
         nextSet.delete(permissionId);
@@ -102,21 +126,47 @@ export default function PermissionMatrix() {
     });
   };
 
+  const toggleModule = (moduleName: string) => {
+    setExpandedModules((prev) => ({ ...prev, [moduleName]: !prev[moduleName] }));
+  };
+
+  const handleBulkActionOpen = (event: React.MouseEvent<HTMLElement>, roleId: string) => {
+    setAnchorEl({ element: event.currentTarget, roleId });
+  };
+
+  const handleBulkActionClose = () => {
+    setAnchorEl({ element: null, roleId: null });
+  };
+
+  const handleBulkEnable = () => {
+    if (anchorEl.roleId) {
+      const allPermIds = Object.values(groupedPermissions).flat().map((p) => p.permissionId);
+      setMatrixState((prev) => ({ ...prev, [anchorEl.roleId as string]: new Set(allPermIds) }));
+    }
+    handleBulkActionClose();
+  };
+
+  const handleBulkDisable = () => {
+    if (anchorEl.roleId) {
+      setMatrixState((prev) => ({ ...prev, [anchorEl.roleId as string]: new Set() }));
+    }
+    handleBulkActionClose();
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setError(null);
-
     try {
       const updates = roles
-        .filter(r => !r.isSystemRole)
-        .map(r => ({
+        .filter((r) => !r.isSystemRole)
+        .map((r) => ({
           roleId: r.roleId,
-          permissionIds: Array.from(matrixState[r.roleId])
+          permissionIds: Array.from(matrixState[r.roleId]),
         }));
 
       await axiosInstance.put("/hospital/roles/matrix", { updates });
       alert("Permission matrix saved successfully!");
-      fetchData(); // Refresh to ensure sync
+      fetchData();
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to save matrix");
     } finally {
@@ -126,7 +176,7 @@ export default function PermissionMatrix() {
 
   if (initialLoad) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 10 }}>
         <CircularProgress sx={{ color: "#6366f1" }} />
       </Box>
     );
@@ -134,13 +184,15 @@ export default function PermissionMatrix() {
 
   return (
     <Box>
-      <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      {/* Header Area */}
+      <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
         <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
+          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 1, display: "flex", alignItems: "center", gap: 1.5 }}>
+            <VpnKeyRounded sx={{ color: "#6366f1", fontSize: 32 }} />
             Permission Matrix
           </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Comprehensive view of all roles and their assigned permissions.
+          <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 600 }}>
+            Fine-tune access control across your hospital. Expand modules to assign granular actions to specific staff roles.
           </Typography>
         </Box>
         <Button
@@ -152,115 +204,208 @@ export default function PermissionMatrix() {
             bgcolor: "#6366f1",
             "&:hover": { bgcolor: "#4f46e5" },
             textTransform: "none",
-            fontWeight: 600,
-            px: 3,
+            fontWeight: 700,
+            px: 4,
+            py: 1.2,
+            borderRadius: 3,
+            boxShadow: "0 8px 16px rgba(99, 102, 241, 0.2)",
           }}
         >
-          {saving ? "Saving..." : "Save Matrix Changes"}
+          {saving ? "Saving Matrix..." : "Save Changes"}
         </Button>
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 3 }}>
           {error}
         </Alert>
       )}
 
-      <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "70vh" }}>
-        <Table stickyHeader>
+      {/* Main Matrix Table */}
+      <TableContainer
+        component={Paper}
+        elevation={0}
+        sx={{
+          bgcolor: "background.paper",
+          borderRadius: 4,
+          border: "1px solid",
+          borderColor: "divider",
+          overflow: "auto",
+          maxHeight: "calc(100vh - 220px)",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.02)",
+        }}
+      >
+        <Table stickyHeader sx={{ minWidth: 800 }}>
           <TableHead>
             <TableRow>
-              <TableCell 
-                sx={{ 
-                  bgcolor: "background.paper", 
-                  color: "text.secondary", 
-                  borderBottom: "1px solid", borderColor: "divider",
-                  minWidth: 250,
-                  zIndex: 3
+              <TableCell
+                sx={{
+                  bgcolor: "rgba(255, 255, 255, 0.9)",
+                  backdropFilter: "blur(8px)",
+                  color: "text.primary",
+                  borderBottom: "2px solid",
+                  borderColor: "divider",
+                  minWidth: 280,
+                  fontWeight: 800,
+                  fontSize: "0.95rem",
+                  zIndex: 3,
                 }}
               >
-                Module / Permission
+                Module & Permissions
               </TableCell>
-              {roles.map(role => (
-                <TableCell 
-                  key={role.roleId} 
-                  align="center"
-                  sx={{ 
-                    bgcolor: "background.paper", 
-                    color: "text.primary", 
-                    borderBottom: "1px solid", borderColor: "divider",
-                    minWidth: 120,
-                    fontWeight: 600,
-                    borderLeft: "1px solid"
-                  }}
-                >
-                  {role.roleName}
-                  {role.isSystemRole && (
-                    <Typography variant="caption" display="block" sx={{ color: "#60a5fa", mt: 0.5 }}>
-                      System Role (Read-only)
-                    </Typography>
-                  )}
-                </TableCell>
-              ))}
+              {roles.map((role) => {
+                const activeCount = matrixState[role.roleId]?.size || 0;
+                const isAllActive = activeCount === totalPermissionsCount;
+                return (
+                  <TableCell
+                    key={role.roleId}
+                    align="center"
+                    sx={{
+                      bgcolor: "rgba(255, 255, 255, 0.9)",
+                      backdropFilter: "blur(8px)",
+                      color: "text.primary",
+                      borderBottom: "2px solid",
+                      borderColor: "divider",
+                      minWidth: 160,
+                      borderLeft: "1px solid",
+                      borderLeftColor: "divider",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                          {role.roleName}
+                        </Typography>
+                        {!role.isSystemRole && (
+                          <IconButton size="small" onClick={(e) => handleBulkActionOpen(e, role.roleId)}>
+                            <MoreVertRounded fontSize="small" sx={{ color: "text.secondary" }} />
+                          </IconButton>
+                        )}
+                      </Box>
+
+                      {role.isSystemRole ? (
+                        <Chip label="System Role" size="small" sx={{ height: 22, fontSize: "0.65rem", fontWeight: 700, bgcolor: alpha("#3b82f6", 0.1), color: "#3b82f6" }} />
+                      ) : (
+                        <Tooltip title={`${activeCount} out of ${totalPermissionsCount} permissions granted`}>
+                          <Chip
+                            label={`${activeCount} / ${totalPermissionsCount}`}
+                            size="small"
+                            sx={{
+                              height: 22,
+                              fontSize: "0.65rem",
+                              fontWeight: 700,
+                              bgcolor: isAllActive ? alpha("#10b981", 0.1) : alpha("#6366f1", 0.1),
+                              color: isAllActive ? "#10b981" : "#6366f1",
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+                    </Box>
+                  </TableCell>
+                );
+              })}
             </TableRow>
           </TableHead>
           <TableBody>
-            {Object.entries(groupedPermissions).map(([moduleName, perms]) => (
-              <React.Fragment key={moduleName}>
-                {/* Module Header Row */}
-                <TableRow>
-                  <TableCell 
-                    colSpan={roles.length + 1} 
-                    sx={{ 
-                      bgcolor: "action.hover", 
-                      color: "text.primary", 
-                      fontWeight: 700,
-                      borderBottom: "1px solid", borderColor: "divider"
-                    }}
+            {Object.entries(groupedPermissions).map(([moduleName, perms]) => {
+              const isExpanded = expandedModules[moduleName];
+              return (
+                <React.Fragment key={moduleName}>
+                  {/* Accordion Style Header Row */}
+                  <TableRow
+                    hover
+                    onClick={() => toggleModule(moduleName)}
+                    sx={{ cursor: "pointer", "& > *": { borderBottom: "unset" }, bgcolor: isExpanded ? alpha("#6366f1", 0.02) : "transparent" }}
                   >
-                    {moduleName} Module
-                  </TableCell>
-                </TableRow>
-                
-                {/* Permission Rows */}
-                {perms.map(perm => (
-                  <TableRow key={perm.permissionId} hover sx={{ "&:last-child td": { borderBottom: 0 } }}>
-                    <TableCell sx={{ color: "text.secondary", pl: 4, borderBottom: "1px solid", borderColor: "divider" }}>
-                      {perm.actionName}
+                    <TableCell
+                      colSpan={roles.length + 1}
+                      sx={{
+                        py: 2,
+                        borderBottom: "1px solid",
+                        borderColor: "divider",
+                        borderTop: "4px solid",
+                        borderTopColor: "background.default"
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <IconButton size="small" sx={{ color: "text.secondary", bgcolor: "background.default" }}>
+                          {isExpanded ? <KeyboardArrowDownRounded /> : <KeyboardArrowRightRounded />}
+                        </IconButton>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "text.primary" }}>
+                          {moduleName} Module
+                        </Typography>
+                        <Chip label={`${perms.length} actions`} size="small" sx={{ height: 20, fontSize: "0.65rem", fontWeight: 600 }} />
+                      </Box>
                     </TableCell>
-                    
-                    {roles.map(role => {
-                      const isChecked = matrixState[role.roleId]?.has(perm.permissionId) || false;
-                      return (
-                        <TableCell 
-                          key={role.roleId} 
-                          align="center" 
-                          sx={{ 
-                            borderBottom: "1px solid",
-                            borderLeft: "1px solid", borderColor: "divider",
-                            bgcolor: isChecked ? "rgba(99, 102, 241, 0.05)" : "transparent"
-                          }}
-                        >
-                          <Checkbox
-                            checked={isChecked}
-                            onChange={() => handleToggle(role.roleId, perm.permissionId, role.isSystemRole)}
-                            disabled={role.isSystemRole}
-                            size="small"
-                            sx={{ 
-                              color: "rgba(255,255,255,0.2)", 
-                              "&.Mui-checked": { color: role.isSystemRole ? "#94a3b8" : "#6366f1" } 
-                            }}
-                          />
-                        </TableCell>
-                      );
-                    })}
                   </TableRow>
-                ))}
-              </React.Fragment>
-            ))}
+
+                  {/* Collapsible Permission Rows */}
+                  {isExpanded &&
+                    perms.map((perm) => (
+                      <TableRow key={perm.permissionId} sx={{ "&:last-child td": { borderBottom: isExpanded ? "1px solid rgba(224, 224, 224, 1)" : 0 } }}>
+                        <TableCell sx={{ color: "text.secondary", pl: 6, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {perm.actionName}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: "text.disabled", display: "block", mt: 0.2 }}>
+                            {perm.permissionCode}
+                          </Typography>
+                        </TableCell>
+
+                        {roles.map((role) => {
+                          const isChecked = matrixState[role.roleId]?.has(perm.permissionId) || false;
+                          return (
+                            <TableCell
+                              key={role.roleId}
+                              align="center"
+                              sx={{
+                                borderBottom: "1px solid",
+                                borderLeft: "1px solid",
+                                borderColor: "divider",
+                                bgcolor: isChecked ? alpha("#10b981", 0.03) : "transparent",
+                                py: 1,
+                              }}
+                            >
+                              <Tooltip title={role.isSystemRole ? "System roles cannot be modified" : `Toggle ${perm.actionName} for ${role.roleName}`}>
+                                <span>
+                                  <Switch
+                                    checked={isChecked}
+                                    onChange={() => handleToggle(role.roleId, perm.permissionId, role.isSystemRole)}
+                                    disabled={role.isSystemRole}
+                                    size="small"
+                                    sx={{
+                                      "& .MuiSwitch-switchBase.Mui-checked": {
+                                        color: "#10b981",
+                                        "&:hover": { bgcolor: alpha("#10b981", 0.1) },
+                                      },
+                                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                                        bgcolor: "#10b981",
+                                      },
+                                    }}
+                                  />
+                                </span>
+                              </Tooltip>
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    ))}
+                </React.Fragment>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Bulk Action Menu */}
+      <Menu anchorEl={anchorEl.element} open={Boolean(anchorEl.element)} onClose={handleBulkActionClose} transformOrigin={{ horizontal: 'right', vertical: 'top' }} anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}>
+        <MenuItem onClick={handleBulkEnable} sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#10b981", py: 1.5 }}>
+          <ChecklistRounded fontSize="small" sx={{ mr: 1.5 }} /> Enable All
+        </MenuItem>
+        <MenuItem onClick={handleBulkDisable} sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#ef4444", py: 1.5 }}>
+          <RemoveDoneRounded fontSize="small" sx={{ mr: 1.5 }} /> Disable All
+        </MenuItem>
+      </Menu>
     </Box>
   );
 }

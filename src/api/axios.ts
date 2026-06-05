@@ -16,10 +16,15 @@ axiosInstance.interceptors.request.use(
     let token = null;
     
     // Determine which token to use based on the API route
-    if (config.url?.startsWith("/hospital") || config.url?.startsWith("/reception")) {
-      token = localStorage.getItem("hospitalAccessToken");
+    if (
+      config.url?.startsWith("/hospital") ||
+      config.url?.startsWith("/reception") ||
+      config.url?.startsWith("/doctor") ||
+      config.url?.startsWith("/nurse")
+    ) {
+      token = sessionStorage.getItem("hospitalAccessToken");
     } else {
-      token = localStorage.getItem("accessToken");
+      token = sessionStorage.getItem("accessToken");
     }
 
     if (token && config.headers) {
