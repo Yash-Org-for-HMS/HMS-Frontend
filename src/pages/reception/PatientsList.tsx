@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -67,63 +68,57 @@ interface Meta {
 
 export default function PatientsList() {
   const navigate = useNavigate();
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [meta, setMeta] = useState<Meta>({ total: 0, page: 1, limit: 20, totalPages: 1 });
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [error, setError] = useState<string | null>(null);
+  const [errorMsg, setError] = useState<string | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; patient: Patient | null }>({
     open: false,
     patient: null,
   });
-  const [deleting, setDeleting] = useState(false);
+  
+  const searchRef = useRef<NodeJS.Timeout | null>(null);
 
-  const searchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const fetchPatients = useCallback(
-    async (q: string, p: number) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await axiosInstance.get("/reception/patients", {
-          params: { search: q, page: p, limit: 20 },
-        });
-        setPatients(res.data.data);
-        setMeta(res.data.meta);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load patients");
-      } finally {
-        setLoading(false);
-      }
+  const { data, isLoading: loading, error } = useQuery({
+    queryKey: ["patients", search, page],
+    queryFn: async () => {
+      const res = await axiosInstance.get("/reception/patients", {
+        params: { search, page, limit: 20 },
+      });
+      return res.data;
     },
-    []
-  );
+    staleTime: 60000,
+  });
 
-  useEffect(() => {
-    fetchPatients(search, page);
-  }, [page]);
+  const patients = data?.data || [];
+  const meta = data?.meta || { total: 0, page: 1, limit: 20, totalPages: 1 };
+
+  const deleteMutation = useMutation({
+    mutationFn: async (patientId: string) => {
+      await axiosInstance.delete(`/reception/patients/${patientId}`);
+    },
+    onSuccess: () => {
+      setDeleteDialog({ open: false, patient: null });
+      queryClient.invalidateQueries({ queryKey: ["patients"] });
+    },
+    onError: (err: any) => {
+      setError(err.response?.data?.message || "Failed to delete patient");
+    }
+  });
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    setSearch(val);
-    setPage(1);
     if (searchRef.current) clearTimeout(searchRef.current);
-    searchRef.current = setTimeout(() => fetchPatients(val, 1), 400);
+    searchRef.current = setTimeout(() => {
+      setSearch(val);
+      setPage(1);
+    }, 400);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!deleteDialog.patient) return;
-    setDeleting(true);
-    try {
-      await axiosInstance.delete(`/reception/patients/${deleteDialog.patient.patientId}`);
-      setDeleteDialog({ open: false, patient: null });
-      fetchPatients(search, page);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to delete patient");
-    } finally {
-      setDeleting(false);
-    }
+    deleteMutation.mutate(deleteDialog.patient.patientId);
   };
 
   const getInitials = (p: Patient) => {
@@ -153,36 +148,39 @@ export default function PatientsList() {
               {meta.total} patient{meta.total !== 1 ? "s" : ""} registered
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<PersonAddRounded />}
-            onClick={() => navigate("/reception/patients/new")}
-            sx={{
-              background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
-              fontWeight: 600,
-              px: 3,
-              py: 1.2,
-              textTransform: "none",
-              borderRadius: 2,
-              boxShadow: "0 4px 14px rgba(6, 182, 212, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #0e7490 0%, #0891b2 100%)",
-                transform: "translateY(-1px)",
-                boxShadow: "0 6px 20px rgba(6, 182, 212, 0.4)",
-              },
-              transition: "all 0.2s ease",
-            }}
-          >
-            Register Patient
-          </Button>
+          <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
+            <Button
+              variant="contained"
+              startIcon={<PersonAddRounded />}
+              onClick={() => navigate("/reception/patients/new")}
+              sx={{
+                background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
+                fontWeight: 600,
+                px: 3,
+                py: 1.2,
+                textTransform: "none",
+                borderRadius: 2,
+                boxShadow: "0 4px 14px rgba(6, 182, 212, 0.4)",
+              }}
+            >
+              Register New Patient
+            </Button>
+          </Box>
         </Box>
+
+        {errorMsg && (
+          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+            {errorMsg}
+          </Alert>
+        )}
+
 
         {/* ── Search ── */}
         <Box sx={{ mb: 3 }}>
           <TextField
             fullWidth
             placeholder="Search by name, MRN, phone, or email..."
-            value={search}
+            defaultValue={search}
             onChange={handleSearchChange}
             InputProps={{
               startAdornment: (
@@ -211,9 +209,14 @@ export default function PatientsList() {
           />
         </Box>
 
-        {error && (
+        {error && typeof error === "string" && (
           <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5" }} onClose={() => setError(null)}>
             {error}
+          </Alert>
+        )}
+        {error && typeof error !== "string" && (
+          <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5" }}>
+            Failed to load patients
           </Alert>
         )}
 
@@ -471,8 +474,8 @@ export default function PatientsList() {
           <Button fullWidth variant="outlined" onClick={() => setDeleteDialog({ open: false, patient: null })} sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none" }}>
             Cancel
           </Button>
-          <Button fullWidth variant="contained" onClick={handleDelete} disabled={deleting} sx={{ bgcolor: "#ef4444", "&:hover": { bgcolor: "#dc2626" }, textTransform: "none", fontWeight: 600 }}>
-            {deleting ? <CircularProgress size={18} color="inherit" /> : "Delete"}
+          <Button fullWidth variant="contained" onClick={handleDelete} disabled={deleteMutation.isPending} sx={{ bgcolor: "#ef4444", "&:hover": { bgcolor: "#dc2626" }, textTransform: "none", fontWeight: 600 }}>
+            {deleteMutation.isPending ? <CircularProgress size={18} color="inherit" /> : "Delete"}
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,0 +1,285 @@
+import { useState, useEffect, useRef } from "react";
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Chip, Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert } from "@mui/material";
+import { EditRounded, CloudUploadRounded, CheckCircleRounded, InsertDriveFileRounded } from "@mui/icons-material";
+import { axiosInstance } from "../../api/axios";
+
+export default function RadiologyOrdersQueue() {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [macros, setMacros] = useState<any[]>([]);
+  const [selectedMacro, setSelectedMacro] = useState("");
+  
+  const [editOrder, setEditOrder] = useState<any>(null);
+  const [status, setStatus] = useState("PENDING");
+  const [notes, setNotes] = useState("");
+  const [reportUrl, setReportUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetchOrders();
+    fetchMacros();
+  }, []);
+
+  const fetchMacros = async () => {
+    try {
+      const res = await axiosInstance.get("/lab/radiology-macros");
+      setMacros(res.data.data || []);
+    } catch (err) {
+      console.error("Failed to fetch macros", err);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const res = await axiosInstance.get("/lab/radiology-orders");
+      setOrders(res.data.data || []);
+    } catch (err) {
+      console.error("Failed to fetch radiology orders", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "COMPLETED": return "success";
+      case "IN_PROGRESS": return "warning";
+      default: return "default";
+    }
+  };
+
+  const handleEditClick = (order: any) => {
+    setEditOrder(order);
+    setStatus(order.status || "PENDING");
+    setNotes(order.radiologistNotes || "");
+    setReportUrl(order.reportUrl || "");
+  };
+
+  const handleClose = () => {
+    setEditOrder(null);
+    setSelectedMacro("");
+  };
+
+  const handleFileUpload = async (e: any) => {
+    const file = e.target.files?.[0] || e.dataTransfer?.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await axiosInstance.post(`/lab/radiology-orders/${editOrder.radiologyOrderId}/upload`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      
+      setReportUrl(res.data.data.reportUrl);
+      setStatus("COMPLETED");
+    } catch (err: any) {
+      console.error("Failed to upload report", err);
+      alert(err.response?.data?.message || "Failed to upload the file.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDragOver = (e: any) => e.preventDefault();
+  const handleDrop = (e: any) => {
+    e.preventDefault();
+    handleFileUpload(e);
+  };
+
+  const handleSave = async () => {
+    if (!editOrder) return;
+    try {
+      setSaving(true);
+      await axiosInstance.put(`/lab/radiology-orders/${editOrder.radiologyOrderId}/results`, {
+        status,
+        radiologistNotes: notes,
+        reportUrl,
+      });
+      handleClose();
+      fetchOrders();
+    } catch (err) {
+      console.error("Failed to update radiology order", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Box>
+      <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>Radiology Orders</Typography>
+      <Paper sx={{ p: 2, borderRadius: 3 }}>
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}><CircularProgress /></Box>
+        ) : orders.length === 0 ? (
+          <Typography sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>No radiology orders found.</Typography>
+        ) : (
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Scan Type</TableCell>
+                <TableCell>Patient</TableCell>
+                <TableCell>Doctor</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="right">Action</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {orders.map((order) => (
+                <TableRow key={order.radiologyOrderId} hover>
+                  <TableCell sx={{ fontWeight: 600 }}>{order.scanType}</TableCell>
+                  <TableCell>{order.patient?.firstName} {order.patient?.lastName}</TableCell>
+                  <TableCell>{order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</TableCell>
+                  <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Chip label={order.status || "PENDING"} color={getStatusColor(order.status) as any} size="small" />
+                  </TableCell>
+                  <TableCell align="right">
+                    <Button 
+                      variant="outlined" 
+                      size="small" 
+                      startIcon={<EditRounded />}
+                      onClick={() => handleEditClick(order)}
+                    >
+                      Update
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Paper>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editOrder} onClose={handleClose} maxWidth="sm" fullWidth>
+        <DialogTitle>Update Radiology Order</DialogTitle>
+        <DialogContent dividers>
+          {editOrder?.paymentStatus !== "PAID" && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              Billing Lock Active: The invoice for this scan has not been paid. Processing is disabled.
+            </Alert>
+          )}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <Typography variant="subtitle2" color="text.secondary">Scan Type: {editOrder?.scanType}</Typography>
+            <TextField
+              select
+              label="Status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              fullWidth
+              disabled={editOrder?.paymentStatus !== "PAID"}
+            >
+              <MenuItem value="PENDING">Pending</MenuItem>
+              <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
+              <MenuItem value="COMPLETED">Completed</MenuItem>
+            </TextField>
+            
+            <Box>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>Upload Report (PDF/Image)</Typography>
+              <Box 
+                onDragOver={handleDragOver}
+                onDrop={(e) => {
+                  if (editOrder?.paymentStatus === 'PAID') handleDrop(e);
+                }}
+                onClick={() => {
+                  if (editOrder?.paymentStatus === 'PAID') fileInputRef.current?.click();
+                }}
+                sx={{
+                  border: "2px dashed",
+                  borderColor: reportUrl ? "success.main" : "divider",
+                  borderRadius: 2,
+                  p: 3,
+                  textAlign: "center",
+                  cursor: editOrder?.paymentStatus === "PAID" ? "pointer" : "not-allowed",
+                  bgcolor: reportUrl ? "success.50" : "action.hover",
+                  opacity: editOrder?.paymentStatus === "PAID" ? 1 : 0.6,
+                  transition: "all 0.2s",
+                  "&:hover": { borderColor: "primary.main", bgcolor: "primary.50" }
+                }}
+              >
+                <input 
+                  type="file" 
+                  hidden 
+                  ref={fileInputRef} 
+                  onChange={handleFileUpload}
+                  accept="application/pdf,image/jpeg,image/png"
+                />
+                {uploading ? (
+                  <CircularProgress size={24} />
+                ) : reportUrl ? (
+                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                    <CheckCircleRounded color="success" fontSize="large" />
+                    <Typography variant="body2" color="success.main" fontWeight="600">File Uploaded Successfully</Typography>
+                    <Link href={`http://localhost:5000${reportUrl}`} target="_blank" underline="hover">View Uploaded File</Link>
+                  </Box>
+                ) : (
+                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                    <CloudUploadRounded color="action" fontSize="large" />
+                    <Typography variant="body2" color="text.secondary">
+                      Drag & drop a file here, or click to browse
+                    </Typography>
+                    <Typography variant="caption" color="text.disabled">Max size: 10MB (PDF, JPG, PNG)</Typography>
+                  </Box>
+                )}
+              </Box>
+            </Box>
+
+            <Box sx={{ mt: 2 }}>
+              <TextField
+                select
+                label="Insert Template / Macro"
+                value={selectedMacro}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSelectedMacro(val);
+                  const macro = macros.find(m => m.macroId === val);
+                  if (macro) {
+                    setNotes(prev => prev ? `${prev}\n\n${macro.content}` : macro.content);
+                  }
+                }}
+                fullWidth
+                disabled={editOrder?.paymentStatus !== "PAID"}
+                sx={{ mb: 2 }}
+              >
+                <MenuItem value=""><em>None</em></MenuItem>
+                {macros.map(m => (
+                  <MenuItem key={m.macroId} value={m.macroId}>{m.title}</MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                label="Radiologist Notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              fullWidth
+              multiline
+              rows={4}
+              disabled={editOrder?.paymentStatus !== "PAID"}
+            />
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          {editOrder?.paymentStatus !== "PAID" && (
+            <Button color="success" variant="outlined" onClick={async () => {
+              await axiosInstance.put(`/lab/radiology-orders/${editOrder.radiologyOrderId}/toggle-payment`);
+              fetchOrders();
+              setEditOrder({...editOrder, paymentStatus: 'PAID'});
+            }}>Mock Payment</Button>
+          )}
+          <Button onClick={handleClose} color="inherit">Cancel</Button>
+          <Button onClick={handleSave} variant="contained" disabled={saving || editOrder?.paymentStatus !== "PAID"}>
+            {saving ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+}

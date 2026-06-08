@@ -20,7 +20,8 @@ axiosInstance.interceptors.request.use(
       config.url?.startsWith("/hospital") ||
       config.url?.startsWith("/reception") ||
       config.url?.startsWith("/doctor") ||
-      config.url?.startsWith("/nurse")
+      config.url?.startsWith("/nurse") ||
+      config.url?.startsWith("/lab")
     ) {
       token = sessionStorage.getItem("hospitalAccessToken");
     } else {

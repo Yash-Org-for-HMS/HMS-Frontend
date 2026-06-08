@@ -72,6 +72,15 @@ import DoctorLayout from "./layouts/DoctorLayout";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import DoctorQueue from "./pages/doctor/DoctorQueue";
 import ConsultationWorkspace from "./pages/doctor/ConsultationWorkspace";
+// Lab Imports
+import LabLayout from "./layouts/LabLayout";
+import LabDashboard from "./pages/lab/LabDashboard";
+import LabOrdersQueue from "./pages/lab/LabOrdersQueue";
+import UpdateLabOrder from "./pages/lab/UpdateLabOrder";
+import RadiologyOrdersQueue from "./pages/lab/RadiologyOrdersQueue";
+import LabTestCatalog from "./pages/lab/LabTestCatalog";
+import PrintLabReport from "./pages/lab/PrintLabReport";
+import RadiologyCatalog from "./pages/lab/RadiologyCatalog";
 
 function App() {
   return (
@@ -188,6 +197,19 @@ function App() {
             <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
             <Route path="/doctor/queue" element={<DoctorQueue />} />
             <Route path="/doctor/consultation/:appointmentId" element={<ConsultationWorkspace />} />
+          </Route>
+        </Route>
+
+        {/* ── Lab Panel Routes ──────────────────────────────────────── */}
+        <Route element={<HospitalProtectedRoute />}>
+          <Route path="/lab/orders/:id/print" element={<PrintLabReport />} />
+          <Route element={<LabLayout />}>
+            <Route path="/lab/dashboard" element={<LabDashboard />} />
+            <Route path="/lab/orders" element={<LabOrdersQueue />} />
+            <Route path="/lab/orders/:id" element={<UpdateLabOrder />} />
+            <Route path="/lab/radiology" element={<RadiologyOrdersQueue />} />
+            <Route path="/lab/catalog" element={<LabTestCatalog />} />
+            <Route path="/lab/radiology-catalog" element={<RadiologyCatalog />} />
           </Route>
         </Route>
       </Routes>

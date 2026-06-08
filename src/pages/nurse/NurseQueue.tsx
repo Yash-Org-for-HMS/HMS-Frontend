@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, CircularProgress,
@@ -15,51 +16,26 @@ const NURSE_PURPLE = "#a78bfa";
 const NURSE_PURPLE_DARK = "#7c3aed";
 
 export default function NurseQueue() {
-  const [tokens, setTokens] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [vitalsRecorded, setVitalsRecorded] = useState<Set<string>>(new Set());
-  const [vitalsDialog, setVitalsDialog] = useState<{ open: boolean; token: any }>({ open: false, token: null });
-
-  const fetchQueue = useCallback(async () => {
-    try {
+  const { data: tokens = [], isLoading: loading, error, refetch: fetchQueue } = useQuery({
+    queryKey: ["nurse-queue"],
+    queryFn: async () => {
       const res = await axiosInstance.get("/reception/queue");
-      const tokenList = res.data.data;
-      setTokens(tokenList);
+      return res.data.data;
+    },
+    refetchInterval: 30000,
+  });
 
-      const apptIds = tokenList.map((t: any) => t.appointmentId).filter(Boolean);
-      const vitalsChecks = await Promise.allSettled(
-        apptIds.map((id: string) => axiosInstance.get(`/reception/appointments/${id}/vitals`))
-      );
-      const recorded = new Set<string>();
-      vitalsChecks.forEach((result, i) => {
-        if (result.status === "fulfilled" && result.value.data.data) {
-          recorded.add(apptIds[i]);
-        }
-      });
-      setVitalsRecorded(recorded);
-    } catch {
-      setError("Failed to load queue");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchQueue();
-    // Auto refresh every 30s as a fallback
-    const interval = setInterval(fetchQueue, 30000);
-    return () => clearInterval(interval);
-  }, [fetchQueue]);
+  const [vitalsDialog, setVitalsDialog] = useState<{ open: boolean; token: any }>({ open: false, token: null });
 
   // Listen for real-time queue updates
   useSocket({
     QUEUE_UPDATED: fetchQueue
   });
 
-  const waiting = tokens.filter(t => t.statusCode === "WAITING_FOR_VITALS" || t.statusCode === "READY_FOR_DOCTOR" || t.statusCode === "SKIPPED").length;
-  const inProgress = tokens.filter(t => t.statusCode === "IN_CONSULTATION").length;
-  const completed = tokens.filter(t => t.statusCode === "COMPLETED").length;
+  const waiting = tokens.filter((t: any) => t.statusCode === "WAITING_FOR_VITALS" || t.statusCode === "READY_FOR_DOCTOR" || t.statusCode === "SKIPPED").length;
+  const inProgress = tokens.filter((t: any) => t.statusCode === "IN_CONSULTATION").length;
+  const completed = tokens.filter((t: any) => t.statusCode === "COMPLETED").length;
+  const vitalsRecordedCount = tokens.filter((t: any) => t.vitalsRecorded).length;
 
   return (
     <Box>
@@ -106,12 +82,12 @@ export default function NurseQueue() {
         />
         <Chip
           icon={<MonitorHeartRounded sx={{ fontSize: "16px !important" }} />}
-          label={`${vitalsRecorded.size} Vitals Done`}
+          label={`${vitalsRecordedCount} Vitals Done`}
           sx={{ bgcolor: `rgba(167,139,250,0.1)`, color: NURSE_PURPLE, border: `1px solid rgba(167,139,250,0.3)`, fontWeight: 600 }}
         />
       </Box>
 
-      {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 3 }}>Failed to load queue</Alert>}
 
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", overflow: "hidden" }}>
         <TableContainer>
@@ -143,8 +119,8 @@ export default function NurseQueue() {
                   </TableCell>
                 </TableRow>
               ) : (
-                tokens.map(token => {
-                  const hasVitals = token.appointmentId && vitalsRecorded.has(token.appointmentId);
+                tokens.map((token: any) => {
+                  const hasVitals = token.vitalsRecorded;
                   const isCompleted = token.statusCode === "COMPLETED" || token.statusCode === "CANCELLED";
                   return (
                     <TableRow key={token.queueTokenId} sx={{ "&:hover": { bgcolor: "background.default" } }}>
@@ -249,9 +225,7 @@ export default function NurseQueue() {
           appointmentId={vitalsDialog.token.appointmentId}
           patientId={vitalsDialog.token.patientId}
           patientName={vitalsDialog.token.patientName}
-          onSaved={() => {
-            setVitalsRecorded(prev => new Set([...prev, vitalsDialog.token.appointmentId]));
-          }}
+          onSaved={() => fetchQueue()}
         />
       )}
     </Box>

@@ -37,6 +37,19 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
   const [unit, setUnit] = useState("Tab");
 
   useEffect(() => {
+    if (frequency && durationDays && typeof durationDays === "number") {
+      // Parse frequency like "1-0-1", "1+1", "1-1-1", or even numbers.
+      // E.g. "1-0-1" -> 1 + 0 + 1 = 2
+      const parts = frequency.split(/[-+]/).map(p => Number(p) || 0);
+      const dosesPerDay = parts.length > 0 ? parts.reduce((sum, curr) => sum + curr, 0) : 0;
+      
+      if (dosesPerDay > 0) {
+        setQuantity(dosesPerDay * durationDays);
+      }
+    }
+  }, [frequency, durationDays]);
+
+  useEffect(() => {
     if (consultationId) {
       fetchPrescription(consultationId);
     }

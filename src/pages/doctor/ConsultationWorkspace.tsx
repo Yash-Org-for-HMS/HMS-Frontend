@@ -12,6 +12,7 @@ import { axiosInstance } from "../../api/axios";
 import PrescriptionWriter from "./PrescriptionWriter";
 import LabOrderForm from "./LabOrderForm";
 import RadiologyOrderForm from "./RadiologyOrderForm";
+import RichTextEditor from "../../components/RichTextEditor";
 
 const DOCTOR_BLUE = "#3b82f6";
 
@@ -355,12 +356,11 @@ export default function ConsultationWorkspace() {
                     <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: "text.primary" }}>
                       S - Subjective
                     </Typography>
-                    <TextField
-                      fullWidth multiline rows={3}
-                      placeholder="Patient's chief complaints, history of present illness..."
+                    <RichTextEditor
                       value={form.soapSubjective}
-                      onChange={(e) => setForm({ ...form, soapSubjective: e.target.value })}
-                      sx={{ "& fieldset": { borderColor: "divider" } }}
+                      onChange={(val) => setForm({ ...form, soapSubjective: val })}
+                      placeholder="Patient's chief complaints, history of present illness..."
+                      minHeight={100}
                     />
                   </Grid>
 
@@ -368,12 +368,11 @@ export default function ConsultationWorkspace() {
                     <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: "text.primary" }}>
                       O - Objective
                     </Typography>
-                    <TextField
-                      fullWidth multiline rows={3}
-                      placeholder="Physical examination findings, visible signs..."
+                    <RichTextEditor
                       value={form.soapObjective}
-                      onChange={(e) => setForm({ ...form, soapObjective: e.target.value })}
-                      sx={{ "& fieldset": { borderColor: "divider" } }}
+                      onChange={(val) => setForm({ ...form, soapObjective: val })}
+                      placeholder="Physical examination findings, visible signs..."
+                      minHeight={100}
                     />
                   </Grid>
 
@@ -381,13 +380,13 @@ export default function ConsultationWorkspace() {
                     <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: "text.primary" }}>
                       A - Assessment & Diagnosis
                     </Typography>
-                    <TextField
-                      fullWidth multiline rows={3}
-                      placeholder="Medical diagnosis, differential diagnosis..."
+                    <RichTextEditor
                       value={form.soapAssessment}
-                      onChange={(e) => setForm({ ...form, soapAssessment: e.target.value })}
-                      sx={{ mb: 2, "& fieldset": { borderColor: "divider" } }}
+                      onChange={(val) => setForm({ ...form, soapAssessment: val })}
+                      placeholder="Medical diagnosis, differential diagnosis..."
+                      minHeight={100}
                     />
+                    <Box sx={{ mt: 2 }} />
                     <Autocomplete
                       options={icd10Options}
                       getOptionLabel={(option) => `[${option.icd10Code}] ${option.shortDescription}`}
@@ -423,12 +422,11 @@ export default function ConsultationWorkspace() {
                     <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: "text.primary" }}>
                       P - Plan
                     </Typography>
-                    <TextField
-                      fullWidth multiline rows={4}
-                      placeholder="Treatment plan, prescribed medicines, lab tests ordered, follow-up instructions..."
+                    <RichTextEditor
                       value={form.soapPlan}
-                      onChange={(e) => setForm({ ...form, soapPlan: e.target.value })}
-                      sx={{ "& fieldset": { borderColor: "divider" } }}
+                      onChange={(val) => setForm({ ...form, soapPlan: val })}
+                      placeholder="Treatment plan, prescribed medicines, lab tests ordered, follow-up instructions..."
+                      minHeight={150}
                     />
                   </Grid>
 

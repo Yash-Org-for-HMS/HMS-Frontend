@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   Box, Drawer, AppBar, Toolbar, List, Typography, Divider,
@@ -19,6 +19,10 @@ const DOCTOR_BLUE = "#3b82f6";
 const DOCTOR_BLUE_DARK = "#2563eb";
 
 export default function DoctorLayout() {
+  useEffect(() => {
+    document.title = "HMS | Doctor";
+  }, []);
+
   const { user, hospital, logout } = useHospitalAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));

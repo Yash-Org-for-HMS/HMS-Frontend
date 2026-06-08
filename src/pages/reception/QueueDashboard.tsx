@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Tooltip,
@@ -15,68 +16,52 @@ import VitalsModal from "./VitalsModal";
 import { useSocket } from "../../hooks/useSocket";
 
 export default function QueueDashboard() {
-  const [tokens, setTokens] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [selectedAppt, setSelectedAppt] = useState<any>(null);
   const [billingDialog, setBillingDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
   const [vitalsDialog, setVitalsDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
-  const [vitalsCollector, setVitalsCollector] = useState<"RECEPTIONIST" | "NURSE">("RECEPTIONIST");
-  const [vitalsRecorded, setVitalsRecorded] = useState<Set<string>>(new Set()); // appointmentIds
 
-  const fetchQueue = useCallback(async () => {
-    try {
-      const res = await axiosInstance.get("/reception/queue");
-      const tokenList = res.data.data;
-      setTokens(tokenList);
-
-      // Check which appointments already have vitals recorded
-      const apptIds = tokenList.map((t: any) => t.appointmentId).filter(Boolean);
-      const vitalsChecks = await Promise.allSettled(
-        apptIds.map((id: string) => axiosInstance.get(`/reception/appointments/${id}/vitals`))
-      );
-      const recorded = new Set<string>();
-      vitalsChecks.forEach((result, i) => {
-        if (result.status === "fulfilled" && result.value.data.data) {
-          recorded.add(apptIds[i]);
-        }
-      });
-      setVitalsRecorded(recorded);
-    } catch (err: any) {
-      setError("Failed to load queue");
-    } finally {
-      setLoading(false);
+  const { data: vitalsCollector = "RECEPTIONIST" } = useQuery({
+    queryKey: ['hospitalSettings', 'vitalsCollector'],
+    queryFn: async () => {
+      const res = await axiosInstance.get("/hospital/settings");
+      return res.data?.data?.settings?.vitalsCollector || "RECEPTIONIST";
     }
-  }, []);
-
-  useEffect(() => {
-    fetchQueue();
-    // Fetch hospital settings to determine vitalsCollector
-    axiosInstance.get("/hospital/settings").then(res => {
-      const collector = res.data?.data?.settings?.vitalsCollector;
-      if (collector) setVitalsCollector(collector);
-    }).catch(() => {});
-    // Auto refresh every 30s as a fallback
-    const interval = setInterval(fetchQueue, 30000);
-    return () => clearInterval(interval);
-  }, [fetchQueue]);
-
-  // Listen for real-time queue updates
-  useSocket({
-    QUEUE_UPDATED: fetchQueue
   });
 
-  const handleAction = async (action: 'call' | 'complete' | 'skip' | 'cancel') => {
-    setAnchorEl(null);
-    if (!selectedTokenId) return;
-    try {
-      await axiosInstance.put(`/reception/queue/${selectedTokenId}/${action}`);
-      fetchQueue();
-    } catch (err: any) {
-      setError(err.response?.data?.message || `Failed to ${action} patient`);
+  const { data: tokens = [], isLoading: loading, error: queryError } = useQuery({
+    queryKey: ['queue'],
+    queryFn: async () => {
+      const res = await axiosInstance.get("/reception/queue");
+      return res.data.data;
+    },
+    refetchInterval: 30000 // Auto refresh every 30s as a fallback
+  });
+
+  const error = queryError ? "Failed to load queue" : null;
+
+  // Listen for real-time queue updates
+  const invalidateQueue = useCallback(() => queryClient.invalidateQueries({ queryKey: ['queue'] }), [queryClient]);
+  useSocket({
+    QUEUE_UPDATED: invalidateQueue
+  });
+
+  const actionMutation = useMutation({
+    mutationFn: async ({ id, action }: { id: string, action: string }) => {
+      return await axiosInstance.put(`/reception/queue/${id}/${action}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['queue'] });
     }
+  });
+
+  const handleAction = async (action: 'call' | 'complete' | 'skip' | 'cancel', tokenId?: string) => {
+    setAnchorEl(null);
+    const idToUse = tokenId || selectedTokenId;
+    if (!idToUse) return;
+    actionMutation.mutate({ id: idToUse, action });
   };
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>, token: any) => {
@@ -118,7 +103,7 @@ export default function QueueDashboard() {
         <Button
           variant="outlined"
           startIcon={<SyncRounded />}
-          onClick={fetchQueue}
+          onClick={invalidateQueue}
           sx={{
             color: "#06b6d4", borderColor: "rgba(6,182,212,0.5)", fontWeight: 600,
             "&:hover": { borderColor: "#0891b2", bgcolor: "rgba(6,182,212,0.1)" }
@@ -128,7 +113,8 @@ export default function QueueDashboard() {
         </Button>
       </Box>
 
-      {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+      {actionMutation.isError && <Alert severity="error" sx={{ mb: 3 }}>{actionMutation.error?.message || "Action failed"}</Alert>}
 
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", overflow: "hidden" }}>
         <TableContainer>
@@ -169,7 +155,7 @@ export default function QueueDashboard() {
                       </TableCell>
                       {/* Vitals Badge Cell */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                        {token.appointmentId && vitalsRecorded.has(token.appointmentId) ? (
+                        {token.appointmentId && token.vitalsRecorded ? (
                           <Tooltip title="Vitals recorded">
                             <Chip
                               icon={<MonitorHeartRounded sx={{ fontSize: "14px !important" }} />}
@@ -187,7 +173,7 @@ export default function QueueDashboard() {
                           <Button
                             size="small" variant="contained"
                             startIcon={<PlayArrowRounded />}
-                            onClick={() => { setSelectedTokenId(token.queueTokenId); handleAction('call'); }}
+                            onClick={() => handleAction('call', token.queueTokenId)}
                             sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, textTransform: "none", mr: 1 }}
                           >
                             Call Next
@@ -197,7 +183,7 @@ export default function QueueDashboard() {
                           <Button
                             size="small" variant="contained"
                             startIcon={<CheckCircleRounded />}
-                            onClick={() => { setSelectedTokenId(token.queueTokenId); handleAction('complete'); }}
+                            onClick={() => handleAction('complete', token.queueTokenId)}
                             sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" }, textTransform: "none", mr: 1 }}
                           >
                             Complete
@@ -228,7 +214,7 @@ export default function QueueDashboard() {
         {vitalsCollector === "RECEPTIONIST" && selectedAppt?.appointmentId && (
           <MenuItem onClick={openVitals} sx={{ "&:hover": { bgcolor: "rgba(6,182,212,0.08)" } }}>
             <MonitorHeartRounded fontSize="small" sx={{ mr: 1.5, color: "#06b6d4" }} />
-            {vitalsRecorded.has(selectedAppt.appointmentId) ? "Update Vitals" : "Record Vitals"}
+            {tokens.find((t: any) => t.appointmentId === selectedAppt.appointmentId)?.vitalsRecorded ? "Update Vitals" : "Record Vitals"}
           </MenuItem>
         )}
         {selectedAppt?.appointmentId && (
@@ -264,7 +250,7 @@ export default function QueueDashboard() {
           patientId={vitalsDialog.appt.patientId}
           patientName={vitalsDialog.appt.patientName}
           onSaved={() => {
-            setVitalsRecorded(prev => new Set([...prev, vitalsDialog.appt.appointmentId]));
+            queryClient.invalidateQueries({ queryKey: ['queue'] });
           }}
         />
       )}

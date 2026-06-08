@@ -31,6 +31,12 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const [transactionRef, setTransactionRef] = useState<string>("");
   const [paying, setPaying] = useState(false);
 
+  // Custom Line Item
+  const [newItemDesc, setNewItemDesc] = useState("");
+  const [newItemQty, setNewItemQty] = useState("1");
+  const [newItemPrice, setNewItemPrice] = useState("");
+  const [addingItem, setAddingItem] = useState(false);
+
   // For printing
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -128,6 +134,31 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     }
   };
 
+  const handleAddLineItem = async () => {
+    if (!invoice || !newItemDesc || !newItemPrice || Number(newItemPrice) < 0) return;
+    try {
+      setAddingItem(true);
+      setError(null);
+      const res = await axiosInstance.post(`/reception/billing/invoices/${invoice.invoiceId}/items`, {
+        description: newItemDesc,
+        quantity: Number(newItemQty),
+        unitPrice: Number(newItemPrice)
+      });
+      if (res.data.success) {
+        // Refresh invoice
+        await fetchBillingData();
+        setNewItemDesc("");
+        setNewItemQty("1");
+        setNewItemPrice("");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.message || "Failed to add line item");
+    } finally {
+      setAddingItem(false);
+    }
+  };
+
   const handlePrint = () => {
     if (receiptRef.current) {
       const printContents = receiptRef.current.innerHTML;
@@ -137,14 +168,23 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       const printStyle = `
         <style>
           @media print {
-            body { font-family: Arial, sans-serif; padding: 20px; color: #000; background: #fff; }
+            @page { margin: 0.5cm; }
+            body { font-family: 'Inter', Arial, sans-serif; padding: 20px; color: #1f2937; background: #fff; }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
+            th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+            th { font-weight: 700; color: #4b5563; text-transform: uppercase; font-size: 12px; }
             .text-right { text-align: right; }
-            .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; }
+            .hospital-name { font-size: 28px; font-weight: 900; color: #1e3a8a; margin: 0; letter-spacing: 1px; }
+            .hospital-info { font-size: 14px; color: #6b7280; margin: 5px 0 0 0; }
+            .receipt-title { margin-top: 20px; font-size: 16px; font-weight: 800; letter-spacing: 3px; color: #3b82f6; text-transform: uppercase; }
+            .grid-info { display: flex; justify-content: space-between; margin-bottom: 30px; font-size: 14px; }
+            .totals-box { margin-top: 30px; border-top: 2px solid #1f2937; padding-top: 15px; }
+            .total-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+            .total-row.bold { font-weight: 800; font-size: 16px; }
+            .watermark { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 120px; font-weight: 900; color: rgba(16, 185, 129, 0.1); pointer-events: none; }
           }
         </style>
       `;
@@ -209,77 +249,85 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                 }}
               >
                 {/* Print Header */}
-                <Box className="header" sx={{ textAlign: "center", mb: 3, borderBottom: "2px dashed #ccc", pb: 2 }}>
-                  <Typography variant="h5" sx={{ fontWeight: 800, color: "#000" }}>HMS HOSPITAL</Typography>
-                  <Typography variant="body2" sx={{ color: "#555" }}>123 Health Avenue, Medical District</Typography>
-                  <Typography variant="body2" sx={{ color: "#555" }}>Phone: +1 234 567 8900</Typography>
-                  <Typography variant="h6" sx={{ mt: 2, fontWeight: 700, letterSpacing: 2 }}>PAYMENT RECEIPT</Typography>
+                <Box className="header" sx={{ textAlign: "center", mb: 4, borderBottom: "2px solid #3b82f6", pb: 3 }}>
+                  <Typography className="hospital-name" variant="h4" sx={{ fontWeight: 900, color: "#1e3a8a", letterSpacing: 1 }}>HMS HOSPITAL</Typography>
+                  <Typography className="hospital-info" variant="body2" sx={{ color: "#6b7280", mt: 0.5 }}>123 Health Avenue, Medical District</Typography>
+                  <Typography className="hospital-info" variant="body2" sx={{ color: "#6b7280" }}>Phone: +1 234 567 8900 | Web: www.hmshospital.com</Typography>
+                  <Typography className="receipt-title" variant="subtitle1" sx={{ mt: 3, fontWeight: 800, letterSpacing: 3, color: "#3b82f6" }}>PAYMENT RECEIPT</Typography>
                 </Box>
 
                 {/* Info */}
-                <Grid container spacing={2} sx={{ mb: 3 }}>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2"><strong>Receipt No:</strong> {invoice.invoiceNumber}</Typography>
-                    <Typography variant="body2"><strong>Date:</strong> {new Date(invoice.invoiceDate).toLocaleDateString()}</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }} sx={{ textAlign: "right" }}>
-                    <Typography variant="body2"><strong>Patient:</strong> {patientName}</Typography>
-                    <Typography variant="body2"><strong>Appt Date:</strong> {new Date(appointmentDate).toLocaleDateString()}</Typography>
-                  </Grid>
-                </Grid>
-
-                {/* Items */}
-                <Box sx={{ mb: 3 }}>
-                  <Box sx={{ display: "flex", borderBottom: "1px solid #000", pb: 1, mb: 1 }}>
-                    <Typography variant="body2" sx={{ flex: 1, fontWeight: 700 }}>Description</Typography>
-                    <Typography variant="body2" sx={{ width: 60, textAlign: "center", fontWeight: 700 }}>Qty</Typography>
-                    <Typography variant="body2" sx={{ width: 100, textAlign: "right", fontWeight: 700 }}>Amount</Typography>
+                <Box className="grid-info" sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}><strong style={{ color: "#4b5563" }}>Receipt No:</strong> {invoice.invoiceNumber}</Typography>
+                    <Typography variant="body2"><strong style={{ color: "#4b5563" }}>Date:</strong> {new Date(invoice.invoiceDate).toLocaleDateString()}</Typography>
                   </Box>
-                  {invoice.InvoiceItem?.map((item: any, idx: number) => (
-                    <Box key={idx} sx={{ display: "flex", mb: 1 }}>
-                      <Typography variant="body2" sx={{ flex: 1 }}>{item.description}</Typography>
-                      <Typography variant="body2" sx={{ width: 60, textAlign: "center" }}>{item.quantity}</Typography>
-                      <Typography variant="body2" sx={{ width: 100, textAlign: "right" }}>{Number(item.totalPrice).toFixed(2)}</Typography>
-                    </Box>
-                  ))}
+                  <Box sx={{ textAlign: "right" }}>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}><strong style={{ color: "#4b5563" }}>Patient:</strong> {patientName}</Typography>
+                    <Typography variant="body2"><strong style={{ color: "#4b5563" }}>Appt Date:</strong> {new Date(appointmentDate).toLocaleDateString()}</Typography>
+                  </Box>
                 </Box>
 
-                <Box sx={{ borderTop: "1px solid #000", pt: 1, mb: 3 }}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                    <Typography variant="body1" sx={{ fontWeight: 700 }}>Total Amount:</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 700 }}>{netAmount.toFixed(2)} INR</Typography>
+                {/* Items */}
+                <Box sx={{ mb: 4 }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "20px" }}>
+                    <thead>
+                      <tr>
+                        <th style={{ padding: "12px 8px", textAlign: "left", borderBottom: "2px solid #e5e7eb", color: "#4b5563", textTransform: "uppercase", fontSize: "12px" }}>Description</th>
+                        <th style={{ padding: "12px 8px", textAlign: "center", borderBottom: "2px solid #e5e7eb", color: "#4b5563", textTransform: "uppercase", fontSize: "12px" }}>Qty</th>
+                        <th style={{ padding: "12px 8px", textAlign: "right", borderBottom: "2px solid #e5e7eb", color: "#4b5563", textTransform: "uppercase", fontSize: "12px" }}>Amount (INR)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {invoice.InvoiceItem?.map((item: any, idx: number) => (
+                        <tr key={idx}>
+                          <td style={{ padding: "12px 8px", borderBottom: "1px solid #f3f4f6", fontSize: "14px" }}>{item.description}</td>
+                          <td style={{ padding: "12px 8px", borderBottom: "1px solid #f3f4f6", fontSize: "14px", textAlign: "center" }}>{item.quantity}</td>
+                          <td style={{ padding: "12px 8px", borderBottom: "1px solid #f3f4f6", fontSize: "14px", textAlign: "right" }}>{Number(item.totalPrice).toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </Box>
+
+                <Box className="totals-box" sx={{ borderTop: "2px solid #1f2937", pt: 2, mb: 4 }}>
+                  <Box className="total-row bold" sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 800 }}>Total Amount:</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 800 }}>{netAmount.toFixed(2)} INR</Typography>
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.5 }}>
+                  <Box className="total-row" sx={{ display: "flex", justifyContent: "space-between", mb: 1, color: "#4b5563" }}>
                     <Typography variant="body2">Amount Paid:</Typography>
                     <Typography variant="body2">{totalPaid.toFixed(2)} INR</Typography>
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.5 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>Balance Due:</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{balance.toFixed(2)} INR</Typography>
+                  <Box className="total-row bold" sx={{ display: "flex", justifyContent: "space-between", mt: 1, pt: 1, borderTop: "1px dashed #d1d5db" }}>
+                    <Typography variant="body1" sx={{ fontWeight: 800, color: balance > 0 ? "#ef4444" : "#10b981" }}>Balance Due:</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 800, color: balance > 0 ? "#ef4444" : "#10b981" }}>{balance.toFixed(2)} INR</Typography>
                   </Box>
                 </Box>
 
                 {/* Payment History */}
                 {invoice.Payment?.length > 0 && (
-                  <Box sx={{ borderTop: "1px dashed #ccc", pt: 2, mb: 2 }}>
-                    <Typography variant="caption" sx={{ fontWeight: 700, display: "block", mb: 1 }}>PAYMENT HISTORY:</Typography>
+                  <Box sx={{ borderTop: "1px solid #e5e7eb", pt: 3, mb: 3 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 800, display: "block", mb: 2, color: "#6b7280", letterSpacing: 1 }}>PAYMENT HISTORY</Typography>
                     {invoice.Payment.map((p: any, idx: number) => (
-                      <Typography key={idx} variant="caption" sx={{ display: "block", color: "#555" }}>
-                        {new Date().toLocaleDateString()} - {p.paymentMethod?.methodName} - {Number(p.paidAmount).toFixed(2)} INR
-                        {p.transactionReference && ` (Ref: ${p.transactionReference})`}
-                      </Typography>
+                      <Box key={idx} sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                        <Typography variant="caption" sx={{ color: "#4b5563" }}>
+                          {new Date().toLocaleDateString()} • {p.paymentMethod?.methodName}
+                          {p.transactionReference && ` (Ref: ${p.transactionReference})`}
+                        </Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: "#4b5563" }}>
+                          {Number(p.paidAmount).toFixed(2)} INR
+                        </Typography>
+                      </Box>
                     ))}
                   </Box>
                 )}
 
                 {isFullyPaid && (
-                  <Box sx={{ position: "absolute", top: 100, right: 30, opacity: 0.2, transform: "rotate(-30deg)", pointerEvents: "none" }}>
-                    <CheckCircleRounded sx={{ fontSize: 120, color: "#10b981" }} />
-                    <Typography variant="h3" sx={{ color: "#10b981", fontWeight: 900, textAlign: "center", mt: -2 }}>PAID</Typography>
-                  </Box>
+                  <Typography className="watermark" variant="h1">PAID</Typography>
                 )}
 
-                <Typography variant="caption" sx={{ display: "block", textAlign: "center", color: "#888", mt: 4 }}>
+                <Typography variant="caption" sx={{ display: "block", textAlign: "center", color: "#9ca3af", mt: 6, fontStyle: "italic" }}>
                   Thank you for your visit. Get well soon!
                 </Typography>
               </Paper>
@@ -340,7 +388,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                       fullWidth
                       variant="contained"
                       onClick={handlePayment}
-                      disabled={paying || !paymentAmount || !paymentMethodId}
+                      disabled={paying || !paymentAmount || !paymentMethodId || Number(paymentAmount) <= 0}
                       startIcon={paying ? <CircularProgress size={20} /> : <PaymentRounded />}
                       sx={{ 
                         py: 1.5, 
@@ -360,6 +408,51 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                     <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
                       No further payments required for this invoice.
                     </Typography>
+                  </Box>
+                )}
+
+                {!isFullyPaid && (
+                  <Box sx={{ mt: 5, p: 2, bgcolor: "rgba(59,130,246,0.05)", borderRadius: 2, border: "1px dashed rgba(59,130,246,0.3)" }}>
+                    <Typography variant="subtitle2" sx={{ color: "#3b82f6", fontWeight: 700, mb: 2 }}>
+                      + Add Custom Line Item
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 12 }}>
+                        <TextField
+                          fullWidth size="small"
+                          label="Item Description"
+                          placeholder="e.g. Consumables, Reg Fee"
+                          value={newItemDesc}
+                          onChange={(e) => setNewItemDesc(e.target.value)}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 4 }}>
+                        <TextField
+                          fullWidth size="small"
+                          label="Qty"
+                          type="number"
+                          value={newItemQty}
+                          onChange={(e) => setNewItemQty(e.target.value)}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 8 }}>
+                        <TextField
+                          fullWidth size="small"
+                          label="Unit Price (INR)"
+                          type="number"
+                          value={newItemPrice}
+                          onChange={(e) => setNewItemPrice(e.target.value)}
+                        />
+                      </Grid>
+                    </Grid>
+                    <Button 
+                      fullWidth variant="outlined" 
+                      onClick={handleAddLineItem}
+                      disabled={addingItem || !newItemDesc || !newItemPrice || Number(newItemPrice) < 0}
+                      sx={{ mt: 2, color: "#3b82f6", borderColor: "rgba(59,130,246,0.5)", fontWeight: 600 }}
+                    >
+                      {addingItem ? "Adding..." : "Add Item"}
+                    </Button>
                   </Box>
                 )}
               </Box>

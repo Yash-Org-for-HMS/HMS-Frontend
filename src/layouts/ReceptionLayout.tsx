@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
@@ -41,6 +41,10 @@ import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 const drawerWidth = 260;
 
 export default function ReceptionLayout() {
+  useEffect(() => {
+    document.title = "HMS | Reception";
+  }, []);
+
   const { user, hospital, logout } = useHospitalAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));

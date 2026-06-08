@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   Box, Drawer, AppBar, Toolbar, List, Typography, Divider,
@@ -21,6 +21,10 @@ const NURSE_PURPLE = "#a78bfa";
 const NURSE_PURPLE_DARK = "#7c3aed";
 
 export default function NurseLayout() {
+  useEffect(() => {
+    document.title = "HMS | Nurse";
+  }, []);
+
   const { user, hospital, logout } = useHospitalAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));

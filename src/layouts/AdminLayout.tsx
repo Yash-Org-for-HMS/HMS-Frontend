@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -41,6 +41,10 @@ import { useAuth } from "../contexts/AuthContext";
 const drawerWidth = 260;
 
 export default function AdminLayout() {
+  useEffect(() => {
+    document.title = "HMS | Super Admin";
+  }, []);
+
   const { user, logout } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
