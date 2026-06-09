@@ -47,6 +47,7 @@ import LookupManager from "./pages/hospitalAuth/settings/LookupManager";
 import FormTemplatesList from "./pages/hospitalAuth/formBuilder/FormTemplatesList";
 import FormBuilder from "./pages/hospitalAuth/formBuilder/FormBuilder";
 import AuditLogs from "./pages/hospitalAuth/settings/AuditLogs";
+import FinancialDashboard from "./pages/billing/FinancialDashboard";
 import { HospitalAuthProvider } from "./contexts/HospitalAuthContext";
 import { HospitalProtectedRoute } from "./components/HospitalProtectedRoute";
 import HospitalLayout from "./layouts/HospitalLayout";
@@ -59,7 +60,7 @@ import PatientProfile from "./pages/reception/PatientProfile";
 import AppointmentsList from "./pages/reception/AppointmentsList";
 import AppointmentForm from "./pages/reception/AppointmentForm";
 import QueueDashboard from "./pages/reception/QueueDashboard";
-import BillingDashboard from "./pages/reception/BillingDashboard";
+import GenerateInvoice from "./pages/billing/GenerateInvoice";
 import NotificationsLog from "./pages/reception/NotificationsLog";
 import FrontDeskConsole from "./pages/reception/FrontDeskConsole";
 
@@ -144,6 +145,7 @@ function App() {
             <Route path="/hospital/roles" element={<HospitalRolesList />} />
             <Route path="/hospital/roles/new" element={<HospitalRoleForm />} />
             <Route path="/hospital/roles/:id/edit" element={<HospitalRoleForm />} />
+            <Route path="/hospital/financials" element={<FinancialDashboard />} />
             <Route path="/hospital/permissions-matrix" element={<PermissionMatrix />} />
             <Route path="/hospital/module-access" element={<ModuleAccess />} />
             <Route path="/hospital/doctors" element={<DoctorsList />} />
@@ -177,8 +179,7 @@ function App() {
             
             <Route path="/reception/queue" element={<QueueDashboard />} />
             <Route path="/reception/queue/new" element={<QueueDashboard />} />
-            
-            <Route path="/reception/billing" element={<BillingDashboard />} />
+            <Route path="/reception/billing" element={<GenerateInvoice />} />
             <Route path="/reception/notifications" element={<NotificationsLog />} />
           </Route>
         </Route>

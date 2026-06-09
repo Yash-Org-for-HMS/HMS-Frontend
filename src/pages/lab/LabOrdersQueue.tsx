@@ -3,6 +3,7 @@ import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRo
 import { VisibilityRounded, BloodtypeRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { useNavigate } from "react-router-dom";
+import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
 
 export default function LabOrdersQueue() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -12,6 +13,7 @@ export default function LabOrdersQueue() {
   const [barcodeInput, setBarcodeInput] = useState("");
   const [collecting, setCollecting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [showPOS, setShowPOS] = useState(false);
 
   const navigate = useNavigate();
 
@@ -131,9 +133,9 @@ export default function LabOrdersQueue() {
       <Dialog open={!!collectOrder} onClose={() => setCollectOrder(null)} maxWidth="sm" fullWidth>
         <DialogTitle>Confirm Sample Collection</DialogTitle>
         <DialogContent dividers>
-          {collectOrder?.paymentStatus !== "PAID" && (
+          {collectOrder?.billingLockActive && (
             <Alert severity="error" sx={{ mb: 2 }}>
-              Billing Lock Active: The invoice for this order has not been paid. You cannot collect the sample until payment is received at reception.
+              Billing Lock Active: The invoice for this order has not been paid. You cannot collect the sample until payment is received.
             </Alert>
           )}
           {errorMsg && <Alert severity="error" sx={{ mb: 2 }}>{errorMsg}</Alert>}
@@ -147,24 +149,41 @@ export default function LabOrdersQueue() {
             variant="outlined"
             value={barcodeInput}
             onChange={(e) => setBarcodeInput(e.target.value)}
-            disabled={collecting || collectOrder?.paymentStatus !== "PAID"}
+            disabled={collecting || collectOrder?.billingLockActive}
             placeholder="e.g. BARCODE123"
           />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          {collectOrder?.paymentStatus !== "PAID" && (
-            <Button color="success" variant="outlined" onClick={async () => {
-              await axiosInstance.put(`/lab/orders/${collectOrder.labOrderId}/toggle-payment`);
-              fetchOrders();
-              setCollectOrder({...collectOrder, paymentStatus: 'PAID'});
-            }}>Mock Payment</Button>
+          {collectOrder?.billingLockActive && (
+            <Button color="success" variant="outlined" onClick={() => setShowPOS(true)}>Collect Payment (Cash)</Button>
           )}
           <Button onClick={() => setCollectOrder(null)} color="inherit" disabled={collecting}>Cancel</Button>
-          <Button onClick={handleConfirmCollect} variant="contained" disabled={collecting || collectOrder?.paymentStatus !== "PAID"}>
+          <Button onClick={handleConfirmCollect} variant="contained" disabled={collecting || collectOrder?.billingLockActive}>
             {collecting ? <CircularProgress size={24} color="inherit" /> : "Confirm Collection"}
           </Button>
         </DialogActions>
       </Dialog>
+
+      {showPOS && collectOrder && (
+        <PointOfCarePOS
+          open={showPOS}
+          onClose={() => setShowPOS(false)}
+          onSuccess={() => {
+            setShowPOS(false);
+            fetchOrders();
+            setCollectOrder({...collectOrder, paymentStatus: 'PAID', billingLockActive: false});
+          }}
+          patientId={collectOrder.patientId}
+          patientName={`${collectOrder.patient?.firstName || ''} ${collectOrder.patient?.lastName || ''}`}
+          item={{
+            id: collectOrder.labOrderId,
+            type: "LAB",
+            description: `Lab Tests: ${collectOrder.reports?.map((r: any) => r.labTest?.testName).filter(Boolean).join(', ') || 'Pending Tests'}`,
+            amount: collectOrder.reports?.reduce((sum: number, r: any) => sum + Number(r.labTest?.price || 0), 0) || 300,
+            date: collectOrder.createdAt
+          }}
+        />
+      )}
     </Box>
   );
 }

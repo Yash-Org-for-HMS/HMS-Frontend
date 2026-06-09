@@ -1,0 +1,340 @@
+import { useState, useEffect } from "react";
+import { 
+  Box, Typography, Paper, Autocomplete, TextField, CircularProgress, 
+  Table, TableBody, TableCell, TableHead, TableRow, Checkbox, 
+  Button, Divider, Grid, Dialog, DialogTitle, DialogContent, DialogActions, alpha, useTheme
+} from "@mui/material";
+import { ReceiptLongRounded, PaymentRounded, CheckCircleRounded } from "@mui/icons-material";
+import { axiosInstance } from "../../api/axios";
+
+export default function GenerateInvoice() {
+  const theme = useTheme();
+  
+  // Patient Search
+  const [patientQuery, setPatientQuery] = useState("");
+  const [patients, setPatients] = useState<any[]>([]);
+  const [patientLoading, setPatientLoading] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
+
+  // Billing Items
+  const [unbilledItems, setUnbilledItems] = useState<any[]>([]);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+
+  // Invoice Calculator
+  const [discount, setDiscount] = useState<number | "">("");
+  const [taxPercent, setTaxPercent] = useState<number | "">(0);
+  
+  // Modal State
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedInvoice, setGeneratedInvoice] = useState<any | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState<number | "">("");
+  const [paymentMethod, setPaymentMethod] = useState("Cash");
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (patientQuery.length >= 2) {
+        try {
+          setPatientLoading(true);
+          const res = await axiosInstance.get(`/reception/patients?search=${patientQuery}`);
+          setPatients(Array.isArray(res.data.data) ? res.data.data : []);
+        } catch (err) {
+          console.error("Failed to fetch patients", err);
+        } finally {
+          setPatientLoading(false);
+        }
+      } else {
+        setPatients([]);
+      }
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [patientQuery]);
+
+  useEffect(() => {
+    if (selectedPatient) {
+      fetchUnbilledItems(selectedPatient.patientId);
+    } else {
+      setUnbilledItems([]);
+      setSelectedItemIds(new Set());
+    }
+  }, [selectedPatient]);
+
+  const fetchUnbilledItems = async (patientId: string) => {
+    try {
+      setItemsLoading(true);
+      const res = await axiosInstance.get(`/billing/unbilled/${patientId}`);
+      const items = res.data.data || [];
+      setUnbilledItems(items);
+      // Auto-select all by default
+      setSelectedItemIds(new Set(items.map((i: any) => i.id)));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setItemsLoading(false);
+    }
+  };
+
+  const handleToggleItem = (id: string) => {
+    const newSelected = new Set(selectedItemIds);
+    if (newSelected.has(id)) newSelected.delete(id);
+    else newSelected.add(id);
+    setSelectedItemIds(newSelected);
+  };
+
+  const selectedItemsList = unbilledItems.filter(i => selectedItemIds.has(i.id));
+  const grossAmount = selectedItemsList.reduce((sum, item) => sum + item.amount, 0);
+  const discountAmount = Number(discount || 0);
+  const taxableAmount = grossAmount - discountAmount;
+  const taxAmount = taxableAmount * (Number(taxPercent || 0) / 100);
+  const netAmount = taxableAmount + taxAmount;
+
+  const handleGenerateInvoice = async () => {
+    if (!selectedPatient || selectedItemIds.size === 0) return;
+    try {
+      setIsGenerating(true);
+      const payload = {
+        selectedItems: selectedItemsList,
+        discountAmount,
+        taxPercentage: Number(taxPercent || 0)
+      };
+      const res = await axiosInstance.post(`/billing/invoices/${selectedPatient.patientId}`, payload);
+      setGeneratedInvoice(res.data.data);
+      setPaymentAmount(netAmount);
+    } catch (err) {
+      console.error("Failed to generate invoice", err);
+      alert("Error generating invoice");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleProcessPayment = async () => {
+    if (!generatedInvoice) return;
+    try {
+      setIsProcessingPayment(true);
+      await axiosInstance.post(`/billing/payments/${generatedInvoice.invoiceId}`, {
+        amount: Number(paymentAmount),
+        paymentMethod
+      });
+      alert("Payment successful!");
+      // Reset
+      setGeneratedInvoice(null);
+      fetchUnbilledItems(selectedPatient.patientId);
+    } catch (err) {
+      console.error("Payment failed", err);
+      alert("Payment failed");
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  return (
+    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: "auto" }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" sx={{ 
+          fontWeight: 800, 
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          color: 'primary.main'
+        }}>
+          <ReceiptLongRounded fontSize="large" />
+          Generate Invoice
+        </Typography>
+        <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 0.5 }}>
+          Search for a patient to view and bill their pending charges across all departments.
+        </Typography>
+      </Box>
+
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 3 }}>
+        <Typography variant="subtitle2" fontWeight={700} mb={2}>Select Patient</Typography>
+        <Autocomplete
+          options={patients}
+          getOptionLabel={(option) => `${option.firstName} ${option.lastName} (${option.uhidNumber})`}
+          loading={patientLoading}
+          value={selectedPatient}
+          onInputChange={(e, val) => setPatientQuery(val)}
+          onChange={(e, val) => setSelectedPatient(val)}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Search by Name or UHID"
+              variant="outlined"
+              fullWidth
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {patientLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+        />
+      </Paper>
+
+      {selectedPatient && (
+        <Grid container spacing={4}>
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Paper sx={{ borderRadius: 3, overflow: "hidden", border: '1px solid', borderColor: 'divider' }}>
+              <Box sx={{ p: 2, bgcolor: alpha(theme.palette.primary.main, 0.04), borderBottom: '1px solid', borderColor: 'divider' }}>
+                <Typography variant="h6" fontWeight="700">Unbilled Charges</Typography>
+              </Box>
+              
+              {itemsLoading ? (
+                <Box sx={{ p: 4, display: "flex", justifyContent: "center" }}><CircularProgress /></Box>
+              ) : unbilledItems.length === 0 ? (
+                <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
+                  No pending charges found for this patient.
+                </Box>
+              ) : (
+                <Box sx={{ width: "100%", overflowX: "auto" }}>
+                  <Table sx={{ minWidth: 600 }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell padding="checkbox">
+                        <Checkbox 
+                          checked={selectedItemIds.size === unbilledItems.length && unbilledItems.length > 0}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedItemIds(new Set(unbilledItems.map(i => i.id)));
+                            else setSelectedItemIds(new Set());
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Department</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Description</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700 }}>Amount</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {unbilledItems.map((item) => (
+                      <TableRow key={item.id} hover selected={selectedItemIds.has(item.id)}>
+                        <TableCell padding="checkbox">
+                          <Checkbox checked={selectedItemIds.has(item.id)} onChange={() => handleToggleItem(item.id)} />
+                        </TableCell>
+                        <TableCell>{new Date(item.date).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Typography variant="caption" sx={{ 
+                            px: 1, py: 0.5, borderRadius: 1, fontWeight: 700,
+                            bgcolor: item.type === "CONSULTATION" ? "#E0E7FF" : item.type === "PHARMACY" ? "#D1FAE5" : "#FEF3C7",
+                            color: item.type === "CONSULTATION" ? "#3730A3" : item.type === "PHARMACY" ? "#065F46" : "#92400E"
+                          }}>
+                            {item.type}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>{item.description}</TableCell>
+                        <TableCell align="right" fontWeight={600}>${item.amount.toFixed(2)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                </Box>
+              )}
+            </Paper>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', position: 'sticky', top: 24 }}>
+              <Typography variant="h6" fontWeight="700" mb={3}>Invoice Summary</Typography>
+              
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                <Typography color="text.secondary">Gross Amount</Typography>
+                <Typography fontWeight={600}>${grossAmount.toFixed(2)}</Typography>
+              </Box>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography color="text.secondary">Discount ($)</Typography>
+                <TextField 
+                  size="small" type="number" 
+                  value={discount} onChange={e => setDiscount(e.target.value === "" ? "" : Number(e.target.value))}
+                  sx={{ width: 100 }}
+                  inputProps={{ style: { textAlign: 'right' } }}
+                />
+              </Box>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                <Typography color="text.secondary">Tax (%)</Typography>
+                <TextField 
+                  size="small" type="number" 
+                  value={taxPercent} onChange={e => setTaxPercent(e.target.value === "" ? "" : Number(e.target.value))}
+                  sx={{ width: 100 }}
+                  inputProps={{ style: { textAlign: 'right' } }}
+                />
+              </Box>
+
+              <Divider sx={{ mb: 2 }} />
+              
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography color="text.secondary">Tax Amount</Typography>
+                <Typography fontWeight={600}>${taxAmount.toFixed(2)}</Typography>
+              </Box>
+              
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4, mt: 2 }}>
+                <Typography variant="h5" fontWeight={800}>Net Total</Typography>
+                <Typography variant="h5" fontWeight={800} color="primary.main">${netAmount.toFixed(2)}</Typography>
+              </Box>
+
+              <Button
+                variant="contained"
+                fullWidth
+                size="large"
+                startIcon={<ReceiptLongRounded />}
+                disabled={selectedItemIds.size === 0 || isGenerating}
+                onClick={handleGenerateInvoice}
+                sx={{ py: 1.5, borderRadius: 2, fontWeight: 700 }}
+              >
+                {isGenerating ? "Generating..." : "Generate Invoice"}
+              </Button>
+            </Paper>
+          </Grid>
+        </Grid>
+      )}
+
+      {/* Payment Modal */}
+      <Dialog open={!!generatedInvoice} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <CheckCircleRounded color="success" /> Invoice Created
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" color="text.secondary" mb={3}>
+            Invoice <strong>{generatedInvoice?.invoiceNumber}</strong> has been created successfully. Would you like to collect payment now?
+          </Typography>
+          
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField 
+              label="Amount to Pay ($)" 
+              type="number" 
+              fullWidth 
+              value={paymentAmount} 
+              onChange={e => setPaymentAmount(e.target.value === "" ? "" : Number(e.target.value))} 
+            />
+            <Autocomplete
+              options={["Cash", "Credit Card", "Insurance", "Bank Transfer"]}
+              value={paymentMethod}
+              onChange={(e, val) => setPaymentMethod(val || "Cash")}
+              renderInput={(params) => <TextField {...params} label="Payment Method" />}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setGeneratedInvoice(null)} color="inherit">
+            Pay Later
+          </Button>
+          <Button 
+            variant="contained" 
+            color="success" 
+            onClick={handleProcessPayment} 
+            disabled={isProcessingPayment || !paymentAmount}
+            startIcon={<PaymentRounded />}
+          >
+            {isProcessingPayment ? "Processing..." : "Collect Payment"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+}

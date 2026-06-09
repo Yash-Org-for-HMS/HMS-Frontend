@@ -104,6 +104,7 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
     const nurseRoles = ["NURSE", "nurse"];
     const doctorRoles = ["DOCTOR", "doctor"];
     const labRoles = ["LAB_ADMIN", "LAB_TECH", "LAB", "lab admin", "lab tech"];
+    const pharmacyRoles = ["PHARMACIST", "PHARMACY", "pharmacist", "pharmacy"];
     
     if (receptionRoles.includes(userData.role)) {
       navigate("/reception/dashboard");
@@ -113,6 +114,8 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
       navigate("/doctor/dashboard");
     } else if (labRoles.includes(userData.role)) {
       navigate("/lab/dashboard");
+    } else if (pharmacyRoles.includes(userData.role)) {
+      navigate("/pharmacy/dashboard");
     } else {
       navigate("/hospital/dashboard");
     }

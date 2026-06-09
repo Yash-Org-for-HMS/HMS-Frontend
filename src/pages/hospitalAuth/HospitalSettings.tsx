@@ -85,6 +85,7 @@ export default function HospitalSettings() {
 
     // Clinical Workflow
     vitalsCollector: "RECEPTIONIST" as "RECEPTIONIST" | "NURSE",
+    billingStrategy: "PRE_PAID" as "PRE_PAID" | "POST_PAID",
   });
 
   useEffect(() => {
@@ -113,6 +114,7 @@ export default function HospitalSettings() {
         taxPercentage: settings.taxPercentage ?? 0,
         invoicePrefix: settings.invoicePrefix || "INV-",
         vitalsCollector: (settings.vitalsCollector as "RECEPTIONIST" | "NURSE") || "RECEPTIONIST",
+        billingStrategy: (settings.billingStrategy as "PRE_PAID" | "POST_PAID") || "PRE_PAID",
       });
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load settings");
@@ -365,6 +367,37 @@ export default function HospitalSettings() {
                   onChange={handleChange}
                   placeholder="e.g. INV-"
                 />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="subtitle2" sx={{ color: "text.secondary", mt: 2, mb: 2 }}>Payment Strategy</Typography>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Box
+                      onClick={() => setFormData(prev => ({ ...prev, billingStrategy: "PRE_PAID" }))}
+                      sx={{
+                        p: 2, borderRadius: 2, border: "2px solid", cursor: "pointer",
+                        borderColor: formData.billingStrategy === "PRE_PAID" ? "#10b981" : "divider",
+                        bgcolor: formData.billingStrategy === "PRE_PAID" ? "rgba(16, 185, 129, 0.05)" : "transparent"
+                      }}
+                    >
+                      <Typography variant="subtitle1" fontWeight={600} color={formData.billingStrategy === "PRE_PAID" ? "#10b981" : "text.primary"}>PRE-PAID (Strict Lock)</Typography>
+                      <Typography variant="body2" color="text.secondary">Services are locked until the patient pays the bill. Payments can be collected anywhere.</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Box
+                      onClick={() => setFormData(prev => ({ ...prev, billingStrategy: "POST_PAID" }))}
+                      sx={{
+                        p: 2, borderRadius: 2, border: "2px solid", cursor: "pointer",
+                        borderColor: formData.billingStrategy === "POST_PAID" ? "#10b981" : "divider",
+                        bgcolor: formData.billingStrategy === "POST_PAID" ? "rgba(16, 185, 129, 0.05)" : "transparent"
+                      }}
+                    >
+                      <Typography variant="subtitle1" fontWeight={600} color={formData.billingStrategy === "POST_PAID" ? "#10b981" : "text.primary"}>POST-PAID (Consolidated)</Typography>
+                      <Typography variant="body2" color="text.secondary">Services are instantly unlocked. Bills accumulate for discharge payment.</Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
               </Grid>
             </Grid>
           </CustomTabPanel>

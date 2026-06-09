@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Chip, Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert } from "@mui/material";
 import { EditRounded, CloudUploadRounded, CheckCircleRounded, InsertDriveFileRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
 
 export default function RadiologyOrdersQueue() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -15,6 +16,7 @@ export default function RadiologyOrdersQueue() {
   const [reportUrl, setReportUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showPOS, setShowPOS] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -162,7 +164,7 @@ export default function RadiologyOrdersQueue() {
       <Dialog open={!!editOrder} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>Update Radiology Order</DialogTitle>
         <DialogContent dividers>
-          {editOrder?.paymentStatus !== "PAID" && (
+          {editOrder?.billingLockActive && (
             <Alert severity="error" sx={{ mb: 2 }}>
               Billing Lock Active: The invoice for this scan has not been paid. Processing is disabled.
             </Alert>
@@ -175,7 +177,7 @@ export default function RadiologyOrdersQueue() {
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               fullWidth
-              disabled={editOrder?.paymentStatus !== "PAID"}
+              disabled={editOrder?.billingLockActive}
             >
               <MenuItem value="PENDING">Pending</MenuItem>
               <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
@@ -187,10 +189,10 @@ export default function RadiologyOrdersQueue() {
               <Box 
                 onDragOver={handleDragOver}
                 onDrop={(e) => {
-                  if (editOrder?.paymentStatus === 'PAID') handleDrop(e);
+                  if (!editOrder?.billingLockActive) handleDrop(e);
                 }}
                 onClick={() => {
-                  if (editOrder?.paymentStatus === 'PAID') fileInputRef.current?.click();
+                  if (!editOrder?.billingLockActive) fileInputRef.current?.click();
                 }}
                 sx={{
                   border: "2px dashed",
@@ -198,9 +200,9 @@ export default function RadiologyOrdersQueue() {
                   borderRadius: 2,
                   p: 3,
                   textAlign: "center",
-                  cursor: editOrder?.paymentStatus === "PAID" ? "pointer" : "not-allowed",
+                  cursor: !editOrder?.billingLockActive ? "pointer" : "not-allowed",
                   bgcolor: reportUrl ? "success.50" : "action.hover",
-                  opacity: editOrder?.paymentStatus === "PAID" ? 1 : 0.6,
+                  opacity: !editOrder?.billingLockActive ? 1 : 0.6,
                   transition: "all 0.2s",
                   "&:hover": { borderColor: "primary.main", bgcolor: "primary.50" }
                 }}
@@ -246,7 +248,7 @@ export default function RadiologyOrdersQueue() {
                   }
                 }}
                 fullWidth
-                disabled={editOrder?.paymentStatus !== "PAID"}
+                disabled={editOrder?.billingLockActive}
                 sx={{ mb: 2 }}
               >
                 <MenuItem value=""><em>None</em></MenuItem>
@@ -261,25 +263,42 @@ export default function RadiologyOrdersQueue() {
               fullWidth
               multiline
               rows={4}
-              disabled={editOrder?.paymentStatus !== "PAID"}
+              disabled={editOrder?.billingLockActive}
             />
             </Box>
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          {editOrder?.paymentStatus !== "PAID" && (
-            <Button color="success" variant="outlined" onClick={async () => {
-              await axiosInstance.put(`/lab/radiology-orders/${editOrder.radiologyOrderId}/toggle-payment`);
-              fetchOrders();
-              setEditOrder({...editOrder, paymentStatus: 'PAID'});
-            }}>Mock Payment</Button>
+          {editOrder?.billingLockActive && (
+            <Button color="success" variant="outlined" onClick={() => setShowPOS(true)}>Collect Payment (Cash)</Button>
           )}
           <Button onClick={handleClose} color="inherit">Cancel</Button>
-          <Button onClick={handleSave} variant="contained" disabled={saving || editOrder?.paymentStatus !== "PAID"}>
+          <Button onClick={handleSave} variant="contained" disabled={saving || editOrder?.billingLockActive}>
             {saving ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
           </Button>
         </DialogActions>
       </Dialog>
+
+      {showPOS && editOrder && (
+        <PointOfCarePOS
+          open={showPOS}
+          onClose={() => setShowPOS(false)}
+          onSuccess={() => {
+            setShowPOS(false);
+            fetchOrders();
+            setEditOrder({...editOrder, paymentStatus: 'PAID', billingLockActive: false});
+          }}
+          patientId={editOrder.patientId}
+          patientName={`${editOrder.patient?.firstName || ''} ${editOrder.patient?.lastName || ''}`}
+          item={{
+            id: editOrder.radiologyOrderId,
+            type: "RADIOLOGY",
+            description: `Radiology Scan: ${editOrder.scanType}`,
+            amount: 1000, // Or fetch the actual test price like we did for lab
+            date: editOrder.orderDate
+          }}
+        />
+      )}
     </Box>
   );
 }

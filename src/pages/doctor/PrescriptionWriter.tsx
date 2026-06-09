@@ -34,12 +34,12 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
   const [frequency, setFrequency] = useState("1-0-1");
   const [durationDays, setDurationDays] = useState<number | "">("");
   const [quantity, setQuantity] = useState<number | "">("");
+  const [manualQuantity, setManualQuantity] = useState(false);
   const [unit, setUnit] = useState("Tab");
 
   useEffect(() => {
-    if (frequency && durationDays && typeof durationDays === "number") {
+    if (!manualQuantity && frequency && durationDays && typeof durationDays === "number") {
       // Parse frequency like "1-0-1", "1+1", "1-1-1", or even numbers.
-      // E.g. "1-0-1" -> 1 + 0 + 1 = 2
       const parts = frequency.split(/[-+]/).map(p => Number(p) || 0);
       const dosesPerDay = parts.length > 0 ? parts.reduce((sum, curr) => sum + curr, 0) : 0;
       
@@ -47,7 +47,7 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
         setQuantity(dosesPerDay * durationDays);
       }
     }
-  }, [frequency, durationDays]);
+  }, [frequency, durationDays, manualQuantity]);
 
   useEffect(() => {
     if (consultationId) {
@@ -92,19 +92,32 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
   }, [medicineQuery]);
 
   const handleAddItem = () => {
-    if (!selectedMedicine || !dosage || !frequency || !durationDays || !quantity) {
-      setError("Please fill all fields for the medicine.");
+    const finalMedicine = selectedMedicine || medicineQuery.trim();
+
+    if (!finalMedicine || !dosage || !frequency) {
+      setError("Please fill medicine, dosage, and frequency.");
       return;
     }
 
+    if (!durationDays && !quantity) {
+      setError("Please provide either duration (Days) or Quantity.");
+      return;
+    }
+
+    // Handle freeSolo custom medicine (string) vs selected object
+    const isCustom = typeof finalMedicine === "string";
+    const medId = isCustom ? null : finalMedicine.medicineId;
+    const medName = isCustom ? finalMedicine : finalMedicine.medicineName;
+    const genName = isCustom ? null : finalMedicine.genericName;
+
     const newItem = {
-      medicineId: selectedMedicine.medicineId,
-      medicineName: selectedMedicine.medicineName,
-      genericName: selectedMedicine.genericName,
+      medicineId: medId,
+      medicineName: medName,
+      genericName: genName,
       dosage,
       frequency,
-      durationDays: Number(durationDays),
-      quantity: Number(quantity),
+      durationDays: Number(durationDays) || 0,
+      quantity: Number(quantity) || 0,
       unit
     };
 
@@ -113,10 +126,12 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
     // Reset form
     setSelectedMedicine(null);
     setMedicineQuery("");
+    setMedicineQuery("");
     setDosage("");
     setFrequency("1-0-1");
     setDurationDays("");
     setQuantity("");
+    setManualQuantity(false);
     setUnit("Tab");
     setError(null);
   };
@@ -179,8 +194,10 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
         <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>Add Medicine</Typography>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <Autocomplete
+            freeSolo
             options={medicineOptions}
             getOptionLabel={(option) => {
+               if (typeof option === "string") return option;
                let label = option.medicineName || "Unknown Brand";
                if (option.genericName) label += ` (${option.genericName})`;
                return label;
@@ -189,10 +206,22 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
             value={selectedMedicine}
             onInputChange={(e, newInputValue) => setMedicineQuery(newInputValue)}
             onChange={(e, newValue) => setSelectedMedicine(newValue)}
+            renderOption={(props, option) => (
+              <Box component="li" {...props} sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+                <Box>
+                  <Typography variant="body2">{option.medicineName} <Typography component="span" variant="caption" color="text.secondary">({option.genericName})</Typography></Typography>
+                </Box>
+                {option.inStock <= 0 ? (
+                  <Typography variant="caption" color="error" fontWeight={700}>[OUT OF STOCK]</Typography>
+                ) : (
+                  <Typography variant="caption" color="success.main">Stock: {option.inStock}</Typography>
+                )}
+              </Box>
+            )}
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Search Medicine"
+                label="Search Medicine or Type Custom"
                 placeholder="e.g. Paracetamol"
                 size="small"
                 InputProps={{
@@ -217,11 +246,17 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
           />
           <TextField 
             fullWidth size="small" label="Days" type="number" 
-            value={durationDays} onChange={e => setDurationDays(e.target.value === "" ? "" : Number(e.target.value))} 
+            value={durationDays} onChange={e => {
+              setDurationDays(e.target.value === "" ? "" : Number(e.target.value));
+              setManualQuantity(false); // reset manual flag if they change days
+            }} 
           />
           <TextField 
             fullWidth size="small" label="Qty" type="number" 
-            value={quantity} onChange={e => setQuantity(e.target.value === "" ? "" : Number(e.target.value))} 
+            value={quantity} onChange={e => {
+              setQuantity(e.target.value === "" ? "" : Number(e.target.value));
+              setManualQuantity(true); // flag that user manually overrode quantity
+            }} 
           />
           <Button 
             fullWidth variant="contained" 

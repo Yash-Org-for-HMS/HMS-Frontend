@@ -39,6 +39,7 @@ import {
   DatasetRounded,
   DynamicFormRounded,
   SecurityRounded,
+  AccountBalanceRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 
@@ -58,6 +59,7 @@ export default function HospitalLayout() {
   // Map sidebar items to required permissions
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/hospital/dashboard", permission: null },
+    { text: "Financial Analytics", icon: <AccountBalanceRounded />, path: "/hospital/financials", permission: null },
     { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", permission: "DEPARTMENT_MANAGE" },
     { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", permission: "USER_MANAGE" },
     { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", permission: "USER_MANAGE" },

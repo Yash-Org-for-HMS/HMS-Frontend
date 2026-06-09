@@ -3,6 +3,7 @@ import { Box, Typography, Paper, Grid, TextField, Button, CircularProgress, Aler
 import { SaveRounded, ArrowBackRounded, ScienceRounded, AccessTimeRounded, PrintRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { useParams, useNavigate } from "react-router-dom";
+import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
 
 const evaluateCriticalValue = (testCode: string, resultValue: string): boolean => {
   const val = parseFloat(resultValue);
@@ -24,6 +25,7 @@ export default function UpdateLabOrder() {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showPOS, setShowPOS] = useState(false);
   const [results, setResults] = useState<Record<string, { value: string, range: string, remarks: string }>>({});
   const [message, setMessage] = useState<{type: "success" | "error", text: string} | null>(null);
 
@@ -92,11 +94,8 @@ export default function UpdateLabOrder() {
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Chip label={order.paymentStatus === "PAID" ? "PAID" : "UNPAID"} color={order.paymentStatus === "PAID" ? "success" : "error"} />
           {order.paymentStatus !== "PAID" && (
-            <Button size="small" variant="outlined" color="success" onClick={async () => {
-              await axiosInstance.put(`/lab/orders/${id}/toggle-payment`);
-              fetchOrder();
-            }}>
-              Mock Payment
+            <Button size="small" variant="outlined" color="success" onClick={() => setShowPOS(true)}>
+              Collect Payment (Cash)
             </Button>
           )}
           <Chip label={order.status || "PENDING"} color={order.status === "COMPLETED" ? "success" : "warning"} />
@@ -165,12 +164,12 @@ export default function UpdateLabOrder() {
       <Paper sx={{ p: 3, borderRadius: 3 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Test Results</Typography>
 
-        {order.paymentStatus !== "PAID" && (
+        {order.billingLockActive && (
           <Alert severity="error" sx={{ mb: 3 }}>
             Billing Lock Active: The invoice for these tests has not been paid. Processing is disabled.
           </Alert>
         )}
-        {order.status === "PENDING" && !order.sampleCollectedAt && order.paymentStatus === "PAID" && (
+        {order.status === "PENDING" && !order.sampleCollectedAt && !order.billingLockActive && (
           <Alert severity="warning" sx={{ mb: 3 }}>
             Sample collection is pending. You cannot enter test results until the sample is collected and verified.
           </Alert>
@@ -202,7 +201,7 @@ export default function UpdateLabOrder() {
                   fullWidth label="Result Value" size="small"
                   value={results[report.labReportId]?.value || ""}
                   onChange={(e) => setResults({...results, [report.labReportId]: {...results[report.labReportId], value: e.target.value}})}
-                  disabled={order.paymentStatus !== "PAID" || (order.status === "PENDING" && !order.sampleCollectedAt)}
+                  disabled={order.billingLockActive || (order.status === "PENDING" && !order.sampleCollectedAt)}
                   error={isCriticalNow}
                   helperText={isCriticalNow ? "Immediate doctor notification will be sent upon saving." : ""}
                 />
@@ -212,7 +211,7 @@ export default function UpdateLabOrder() {
                   fullWidth label="Normal Range" size="small"
                   value={results[report.labReportId]?.range || ""}
                   onChange={(e) => setResults({...results, [report.labReportId]: {...results[report.labReportId], range: e.target.value}})}
-                  disabled={order.paymentStatus !== "PAID" || (order.status === "PENDING" && !order.sampleCollectedAt)}
+                  disabled={order.billingLockActive || (order.status === "PENDING" && !order.sampleCollectedAt)}
                 />
               </Grid>
                   <Grid item xs={12} sm={4}>
@@ -220,7 +219,7 @@ export default function UpdateLabOrder() {
                   fullWidth label="Remarks" size="small"
                   value={results[report.labReportId]?.remarks || ""}
                   onChange={(e) => setResults({...results, [report.labReportId]: {...results[report.labReportId], remarks: e.target.value}})}
-                  disabled={order.paymentStatus !== "PAID" || (order.status === "PENDING" && !order.sampleCollectedAt)}
+                  disabled={order.billingLockActive || (order.status === "PENDING" && !order.sampleCollectedAt)}
                 />
               </Grid>
             </Grid>
@@ -232,13 +231,32 @@ export default function UpdateLabOrder() {
             variant="contained" 
             startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRounded />} 
             onClick={handleSave}
-            disabled={saving || order.paymentStatus !== "PAID" || (order.status === "PENDING" && !order.sampleCollectedAt)}
+            disabled={saving || order.billingLockActive || (order.status === "PENDING" && !order.sampleCollectedAt)}
           >
             Save Results
           </Button>
         </Box>
       </Paper>
+
+      {showPOS && (
+        <PointOfCarePOS
+          open={showPOS}
+          onClose={() => setShowPOS(false)}
+          onSuccess={() => {
+            setShowPOS(false);
+            fetchOrder();
+          }}
+          patientId={order.patientId}
+          patientName={`${order.patient?.firstName || ''} ${order.patient?.lastName || ''}`}
+          item={{
+            id: order.labOrderId,
+            type: "LAB",
+            description: `Lab Tests: ${order.reports?.map((r: any) => r.labTest?.testName).filter(Boolean).join(', ') || 'Pending Tests'}`,
+            amount: order.reports?.reduce((sum: number, r: any) => sum + Number(r.labTest?.price || 0), 0) || 300,
+            date: order.createdAt
+          }}
+        />
+      )}
     </Box>
   );
 }
-
