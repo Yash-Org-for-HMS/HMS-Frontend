@@ -16,6 +16,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 export default function LeadForm() {
   const { t } = useTranslation();
@@ -25,8 +26,7 @@ export default function LeadForm() {
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(isEdit);
-  const [error, setError] = useState<string | null>(null);
-
+  const toast = useToast();
   const [formData, setFormData] = useState({
     hospitalName: "",
     contactPersonName: "",
@@ -62,7 +62,7 @@ export default function LeadForm() {
             assignedSalesAdminId: response.data.data.assignedSalesAdminId || "",
           });
         } catch (err) {
-          setError(t("common.error"));
+          toast.error(t("common.error"));
         } finally {
           setInitialLoading(false);
         }
@@ -78,7 +78,6 @@ export default function LeadForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
     try {
       if (isEdit) {
         await axiosInstance.put(`/leads/${id}`, {
@@ -99,7 +98,7 @@ export default function LeadForm() {
       }
       navigate("/leads");
     } catch (err: any) {
-      setError(err.response?.data?.message || t("common.error"));
+      toast.error(err.response?.data?.message || t("common.error"));
     } finally {
       setLoading(false);
     }
@@ -133,10 +132,7 @@ export default function LeadForm() {
           </Typography>
         </Box>
       </Box>
-
-      {error && <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>{error}</Alert>}
-
-      <Paper
+<Paper
         elevation={2}
         sx={{
           p: { xs: 3, md: 5 },

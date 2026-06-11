@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import {
   Box, Typography, Button, TextField, IconButton, Autocomplete, CircularProgress,
-  Paper, Grid, Alert, Divider, Table, TableBody, TableCell, TableHead, TableRow, Tooltip
+  Paper, Grid, Alert, Divider, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Switch, FormControlLabel, Chip
 } from "@mui/material";
 import { DeleteRounded, SaveRounded, AddRounded, PrintRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 const DOCTOR_BLUE = "#3b82f6";
 
@@ -17,11 +18,11 @@ interface PrescriptionWriterProps {
 export default function PrescriptionWriter({ consultationId, patientId, onRequireSave }: PrescriptionWriterProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
+  const toast = useToast();
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [items, setItems] = useState<any[]>([]);
+  const [dispensingStatus, setDispensingStatus] = useState<string | null>(null);
+  const [bulkBuyOutside, setBulkBuyOutside] = useState(false);
 
   // Autocomplete state
   const [medicineQuery, setMedicineQuery] = useState("");
@@ -63,6 +64,12 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
       if (data) {
         setSpecialInstructions(data.specialInstructions || "");
         setItems(data.items || []);
+        setDispensingStatus(data.dispensingStatus || null);
+        
+        // If all items are buyOutside, set bulk to true
+        if (data.items && data.items.length > 0 && data.items.every((i: any) => i.buyOutside)) {
+          setBulkBuyOutside(true);
+        }
       }
     } catch (err) {
       console.error("Failed to load prescription", err);
@@ -95,12 +102,17 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
     const finalMedicine = selectedMedicine || medicineQuery.trim();
 
     if (!finalMedicine || !dosage || !frequency) {
-      setError("Please fill medicine, dosage, and frequency.");
+      toast.error("Please fill medicine, dosage, and frequency.");
       return;
     }
 
     if (!durationDays && !quantity) {
-      setError("Please provide either duration (Days) or Quantity.");
+      toast.error("Please provide either duration (Days) or Quantity.");
+      return;
+    }
+
+    if (Number(quantity) <= 0) {
+      toast.error("Quantity must be greater than 0.");
       return;
     }
 
@@ -118,7 +130,8 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
       frequency,
       durationDays: Number(durationDays) || 0,
       quantity: Number(quantity) || 0,
-      unit
+      unit,
+      buyOutside: bulkBuyOutside
     };
 
     setItems([...items, newItem]);
@@ -133,7 +146,6 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
     setQuantity("");
     setManualQuantity(false);
     setUnit("Tab");
-    setError(null);
   };
 
   const handleRemoveItem = (index: number) => {
@@ -142,12 +154,22 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
     setItems(newItems);
   };
 
+  const toggleBulkBuyOutside = (checked: boolean) => {
+    setBulkBuyOutside(checked);
+    setItems(items.map(item => ({ ...item, buyOutside: checked })));
+  };
+
+  const toggleItemBuyOutside = (index: number, checked: boolean) => {
+    const newItems = [...items];
+    newItems[index].buyOutside = checked;
+    setItems(newItems);
+    if (!checked) setBulkBuyOutside(false);
+    if (checked && newItems.every(i => i.buyOutside)) setBulkBuyOutside(true);
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
-      setError(null);
-      setSuccess(null);
-
       let targetConsultationId = consultationId;
 
       if (!targetConsultationId) {
@@ -164,10 +186,13 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
         items
       });
 
-      setSuccess("Prescription saved successfully!");
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "Failed to save prescription");
+      // Update status locally based on items
+      const allExternal = items.length > 0 && items.every(i => i.buyOutside);
+      setDispensingStatus(allExternal ? "external" : "pending");
+
+      toast.success("Prescription saved successfully!");
+} catch (err: any) {
+      toast.error(err.response?.data?.message || err.message || "Failed to save prescription");
     } finally {
       setSaving(false);
     }
@@ -187,11 +212,23 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      {success && <Alert severity="success">{success}</Alert>}
-      {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
+{dispensingStatus && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography variant="subtitle2" fontWeight={700}>Status:</Typography>
+          {dispensingStatus === "pending" && <Chip label="Sent to Pharmacy" color="warning" size="small" />}
+          {dispensingStatus === "dispensed" && <Chip label="Dispensed" color="success" size="small" />}
+          {dispensingStatus === "external" && <Chip label="Buy Outside (External)" color="default" size="small" />}
+        </Box>
+      )}
 
       <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, borderColor: "divider" }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>Add Medicine</Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Add Medicine</Typography>
+          <FormControlLabel
+            control={<Switch checked={bulkBuyOutside} onChange={(e) => toggleBulkBuyOutside(e.target.checked)} color="primary" />}
+            label={<Typography variant="body2" fontWeight={600} color={bulkBuyOutside ? "primary.main" : "text.secondary"}>Buy Outside (All items)</Typography>}
+          />
+        </Box>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <Autocomplete
             freeSolo
@@ -279,12 +316,13 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
                 <TableCell>Frequency</TableCell>
                 <TableCell>Days</TableCell>
                 <TableCell>Qty</TableCell>
+                <TableCell align="center">Buy Outside</TableCell>
                 <TableCell align="center">Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {items.map((item, index) => (
-                <TableRow key={index}>
+                <TableRow key={index} sx={{ opacity: item.buyOutside ? 0.7 : 1 }}>
                   <TableCell>
                     <Typography variant="body2" fontWeight={600}>{item.medicineName || "Custom"}</Typography>
                     {item.genericName && <Typography variant="caption" color="text.secondary">{item.genericName}</Typography>}
@@ -293,6 +331,13 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
                   <TableCell>{item.frequency}</TableCell>
                   <TableCell>{item.durationDays}</TableCell>
                   <TableCell>{item.quantity} {item.unit}</TableCell>
+                  <TableCell align="center">
+                    <Switch 
+                      size="small" 
+                      checked={item.buyOutside || false} 
+                      onChange={(e) => toggleItemBuyOutside(index, e.target.checked)} 
+                    />
+                  </TableCell>
                   <TableCell align="center">
                     <IconButton size="small" color="error" onClick={() => handleRemoveItem(index)}>
                       <DeleteRounded fontSize="small" />

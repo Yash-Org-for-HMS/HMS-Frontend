@@ -11,6 +11,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../../contexts/ToastContext";
 
 const NURSE_PURPLE = "#a78bfa";
 const NURSE_PURPLE_DARK = "#7c3aed";
@@ -65,7 +66,7 @@ export default function NurseDashboard() {
   const { hospital, user } = useHospitalAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
   const [tokens, setTokens] = useState<any[]>([]);
   const [vitalsRecorded, setVitalsRecorded] = useState<Set<string>>(new Set());
 
@@ -89,7 +90,7 @@ export default function NurseDashboard() {
       });
       setVitalsRecorded(recorded);
     } catch {
-      setError("Failed to load queue data");
+      toast.error("Failed to load queue data");
     } finally {
       setLoading(false);
     }
@@ -135,10 +136,7 @@ export default function NurseDashboard() {
           Good morning, {user?.firstName}! Today's vitals overview for {hospital?.name || "the hospital"}.
         </Typography>
       </Box>
-
-      {error && <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setError(null)}>{error}</Alert>}
-
-      {/* KPI Cards */}
+{/* KPI Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard

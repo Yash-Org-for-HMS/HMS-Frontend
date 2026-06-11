@@ -10,6 +10,7 @@ import {
   SentimentVeryDissatisfied, SentimentSatisfied, SentimentVerySatisfied,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 interface VitalsModalProps {
   open: boolean;
@@ -88,9 +89,8 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
   const [form, setForm] = useState(defaultVitals);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
+  const toast = useToast();
   // BMI calculation
   const bmi = form.heightCm && form.weightKg
     ? (Number(form.weightKg) / Math.pow(Number(form.heightCm) / 100, 2)).toFixed(1)
@@ -117,7 +117,6 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
     }
     if (!open) {
       setForm(defaultVitals);
-      setError(null);
       setSuccess(false);
     }
   }, [open, appointmentId]);
@@ -156,7 +155,6 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
 
   const handleSubmit = async () => {
     setSaving(true);
-    setError(null);
     try {
       await axiosInstance.post("/reception/vitals", {
         appointmentId,
@@ -173,10 +171,11 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
         painScale: Number(form.painScale) || 0,
       });
       setSuccess(true);
+      toast.success("Vitals saved successfully");
       onSaved?.();
       setTimeout(() => onClose(), 1200);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to save vitals");
+      toast.error(err.response?.data?.message || "Failed to save vitals");
     } finally {
       setSaving(false);
     }
@@ -242,18 +241,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
           </Box>
         ) : (
           <>
-            {error && (
-              <Alert severity="error" sx={{ mb: 2, bgcolor: "rgba(239,68,68,0.1)", color: "#fca5a5" }} onClose={() => setError(null)}>
-                {error}
-              </Alert>
-            )}
-            {success && (
-              <Alert severity="success" sx={{ mb: 2, bgcolor: "rgba(16,185,129,0.1)", color: "#6ee7b7" }}>
-                ✅ Vitals saved successfully!
-              </Alert>
-            )}
-
-            {/* ── Section 1: Blood Pressure & Pulse ── */}
+{/* ── Section 1: Blood Pressure & Pulse ── */}
             <SectionHeader icon={<FavoriteRounded sx={{ color: "#ef4444", fontSize: 20 }} />} label="Cardiovascular" />
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid size={{ xs: 12, sm: 4 }}>

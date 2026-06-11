@@ -31,6 +31,7 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import PatientDocumentsSection from "./PatientDocumentsSection";
+import { useToast } from "../../contexts/ToastContext";
 
 interface Patient {
   patientId: string;
@@ -105,6 +106,14 @@ export default function PatientProfile() {
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
+  
+  let userRole = "";
+  try {
+    const hospitalUserStr = sessionStorage.getItem("hospitalUser");
+    if (hospitalUserStr) userRole = JSON.parse(hospitalUserStr).role?.toLowerCase() || "";
+  } catch (e) {}
+  const canEdit = userRole.includes("reception") || userRole.includes("admin");
 
   useEffect(() => {
     const fetch = async () => {
@@ -112,7 +121,9 @@ export default function PatientProfile() {
         const res = await axiosInstance.get(`/reception/patients/${id}`);
         setPatient(res.data.data);
       } catch (err: any) {
-        setError(err.response?.data?.message || "Patient not found");
+        const errMsg = err.response?.data?.message || "Patient not found";
+        toast.error(errMsg);
+        setError(errMsg);
       } finally {
         setLoading(false);
       }
@@ -126,12 +137,11 @@ export default function PatientProfile() {
   const handleSendWelcome = async () => {
     try {
       setNotifProcessing(true);
-      setError(null);
       setSuccessMsg(null);
       const res = await axiosInstance.post(`/reception/notifications/patients/${id}/registration`);
       setSuccessMsg(res.data.message || "Welcome notification sent");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to send notification");
+      toast.error(err.response?.data?.message || "Failed to send notification");
     } finally {
       setNotifProcessing(false);
     }
@@ -170,8 +180,8 @@ export default function PatientProfile() {
         <Alert severity="error" sx={{ bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5" }}>
           {error || "Patient not found"}
         </Alert>
-        <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/reception/patients")} sx={{ mt: 2, color: "#06b6d4" }}>
-          Back to Patients
+        <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ mt: 2, color: "#06b6d4" }}>
+          Back
         </Button>
       </Box>
     );
@@ -183,12 +193,13 @@ export default function PatientProfile() {
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Button
           startIcon={<ArrowBackRounded />}
-          onClick={() => navigate("/reception/patients")}
+          onClick={() => navigate(-1)}
           sx={{ color: "text.secondary", textTransform: "none" }}
         >
-          Back to Patients
+          Back
         </Button>
         <Box sx={{ display: "flex", gap: 2 }}>
+          {canEdit && (
           <Button
             variant="outlined"
             startIcon={notifProcessing ? <CircularProgress size={20} color="inherit" /> : <NotificationsActiveRounded />}
@@ -205,20 +216,23 @@ export default function PatientProfile() {
           >
             Send Welcome
           </Button>
-          <Button
-            variant="contained"
-            startIcon={<EditRounded />}
-            onClick={() => navigate(`/reception/patients/${id}/edit`)}
-            sx={{
-              background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
-              fontWeight: 600,
-              textTransform: "none",
-              borderRadius: 2,
-              px: 3,
-            }}
-          >
-            Edit Patient
-          </Button>
+          )}
+          {canEdit && (
+            <Button
+              variant="contained"
+              startIcon={<EditRounded />}
+              onClick={() => navigate(`/reception/patients/${id}/edit`)}
+              sx={{
+                background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
+                fontWeight: 600,
+                textTransform: "none",
+                borderRadius: 2,
+                px: 3,
+              }}
+            >
+              Edit Patient
+            </Button>
+          )}
         </Box>
       </Box>
 

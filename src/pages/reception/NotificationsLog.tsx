@@ -14,12 +14,12 @@ import {
 } from "@mui/material";
 import { NotificationsRounded, EmailRounded, SmsRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 export default function NotificationsLog() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+  const toast = useToast();
   useEffect(() => {
     fetchNotifications();
   }, []);
@@ -29,7 +29,7 @@ export default function NotificationsLog() {
       const res = await axiosInstance.get("/reception/notifications?limit=100");
       setNotifications(res.data.data);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load notifications");
+      toast.error(err.response?.data?.message || "Failed to load notifications");
     } finally {
       setLoading(false);
     }

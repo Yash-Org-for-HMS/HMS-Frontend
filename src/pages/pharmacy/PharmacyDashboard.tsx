@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
-  Box, Typography, Grid, Paper, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, alpha, useTheme 
+  Box, Typography, Grid, Paper, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, alpha, useTheme,
+  Tabs, Tab, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Select, MenuItem, TextField, Chip, Tooltip
 } from "@mui/material";
 import { 
-  MedicationRounded, LocalShippingRounded, InventoryRounded, PointOfSaleRounded, WarningRounded 
+  MedicationRounded, LocalShippingRounded, WarningRounded, PointOfSaleRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 
@@ -84,102 +86,102 @@ export default function PharmacyDashboard() {
       ) : (
         <>
           <Grid container spacing={3} mb={4}>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard 
-                title="Total Medicines" 
-                value={medicines.length} 
-                icon={<MedicationRounded sx={{ fontSize: 32, color: '#4F46E5' }} />} 
-                color="#4F46E5"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard 
-                title="Low Stock Alerts" 
-                value={lowStockItems.length} 
-                icon={<WarningRounded sx={{ fontSize: 32, color: '#EF4444' }} />} 
-                color="#EF4444"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard 
-                title="Pending POs" 
-                value={pendingPOs.length} 
-                icon={<LocalShippingRounded sx={{ fontSize: 32, color: '#F59E0B' }} />} 
-                color="#F59E0B"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard 
-                title="Total Sales" 
-                value={`$${totalSalesValue.toFixed(2)}`} 
-                icon={<PointOfSaleRounded sx={{ fontSize: 32, color: '#10B981' }} />} 
-                color="#10B981"
-              />
-            </Grid>
-          </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <StatCard 
+                    title="Total Medicines" 
+                    value={medicines.length} 
+                    icon={<MedicationRounded sx={{ fontSize: 32, color: '#4F46E5' }} />} 
+                    color="#4F46E5"
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <StatCard 
+                    title="Low Stock Alerts" 
+                    value={lowStockItems.length} 
+                    icon={<WarningRounded sx={{ fontSize: 32, color: '#EF4444' }} />} 
+                    color="#EF4444"
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <StatCard 
+                    title="Pending POs" 
+                    value={pendingPOs.length} 
+                    icon={<LocalShippingRounded sx={{ fontSize: 32, color: '#F59E0B' }} />} 
+                    color="#F59E0B"
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <StatCard 
+                    title="Total Sales" 
+                    value={`$${totalSalesValue.toFixed(2)}`} 
+                    icon={<PointOfSaleRounded sx={{ fontSize: 32, color: '#10B981' }} />} 
+                    color="#10B981"
+                  />
+                </Grid>
+              </Grid>
 
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ borderRadius: 4, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-                <Box sx={{ p: 2, bgcolor: alpha(theme.palette.error.main, 0.04), borderBottom: '1px solid', borderColor: 'divider' }}>
-                  <Typography variant="h6" fontWeight="700" color="error.main" display="flex" alignItems="center" gap={1}>
-                    <WarningRounded /> Low Stock Alerts
-                  </Typography>
-                </Box>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>Medicine</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Available</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Reorder Level</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {lowStockItems.length === 0 ? (
-                      <TableRow><TableCell colSpan={3} align="center" sx={{ py: 3 }}>No low stock items</TableCell></TableRow>
-                    ) : lowStockItems.map(item => (
-                      <TableRow key={item.inventoryId}>
-                        <TableCell sx={{ fontWeight: 600 }}>{getMedicineName(item.medicineId)}</TableCell>
-                        <TableCell sx={{ color: 'error.main', fontWeight: 700 }}>{item.availableQuantity}</TableCell>
-                        <TableCell>{item.reorderLevel}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Paper>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ borderRadius: 4, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-                <Box sx={{ p: 2, bgcolor: alpha(theme.palette.success.main, 0.04), borderBottom: '1px solid', borderColor: 'divider' }}>
-                  <Typography variant="h6" fontWeight="700" color="success.main" display="flex" alignItems="center" gap={1}>
-                    <PointOfSaleRounded /> Recent Sales
-                  </Typography>
-                </Box>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>Order ID</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>Amount</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {sales.slice(0, 5).length === 0 ? (
-                      <TableRow><TableCell colSpan={3} align="center" sx={{ py: 3 }}>No recent sales</TableCell></TableRow>
-                    ) : sales.slice(0, 5).map(sale => (
-                      <TableRow key={sale.pharmacyOrderId}>
-                        <TableCell sx={{ fontFamily: 'monospace' }}>{sale.pharmacyOrderId.split('-')[0].toUpperCase()}</TableCell>
-                        <TableCell>{new Date(sale.createdAt).toLocaleString()}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, color: '#10B981' }}>${parseFloat(sale.totalAmount).toFixed(2)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Paper>
-            </Grid>
-          </Grid>
-        </>
+              <Grid container spacing={4}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Paper sx={{ borderRadius: 4, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+                    <Box sx={{ p: 2, bgcolor: alpha(theme.palette.error.main, 0.04), borderBottom: '1px solid', borderColor: 'divider' }}>
+                      <Typography variant="h6" fontWeight="700" color="error.main" display="flex" alignItems="center" gap={1}>
+                        <WarningRounded /> Low Stock Alerts
+                      </Typography>
+                    </Box>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 600 }}>Medicine</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Available</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Reorder Level</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {lowStockItems.length === 0 ? (
+                          <TableRow><TableCell colSpan={3} align="center" sx={{ py: 3 }}>No low stock items</TableCell></TableRow>
+                        ) : lowStockItems.map(item => (
+                          <TableRow key={item.inventoryId}>
+                            <TableCell sx={{ fontWeight: 600 }}>{getMedicineName(item.medicineId)}</TableCell>
+                            <TableCell sx={{ color: 'error.main', fontWeight: 700 }}>{item.availableQuantity}</TableCell>
+                            <TableCell>{item.reorderLevel}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </Paper>
+                </Grid>
+                
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Paper sx={{ borderRadius: 4, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+                    <Box sx={{ p: 2, bgcolor: alpha(theme.palette.success.main, 0.04), borderBottom: '1px solid', borderColor: 'divider' }}>
+                      <Typography variant="h6" fontWeight="700" color="success.main" display="flex" alignItems="center" gap={1}>
+                        <PointOfSaleRounded /> Recent Sales
+                      </Typography>
+                    </Box>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 600 }}>Order ID</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600 }}>Amount</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {sales.filter(s => s.status !== "cancelled").slice(0, 5).length === 0 ? (
+                          <TableRow><TableCell colSpan={3} align="center" sx={{ py: 3 }}>No recent sales</TableCell></TableRow>
+                        ) : sales.filter(s => s.status !== "cancelled").slice(0, 5).map(sale => (
+                          <TableRow key={sale.pharmacyOrderId}>
+                            <TableCell sx={{ fontFamily: 'monospace' }}>{sale.pharmacyOrderId.split('-')[0].toUpperCase()}</TableCell>
+                            <TableCell>{new Date(sale.createdAt).toLocaleString()}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, color: '#10B981' }}>${parseFloat(sale.totalAmount).toFixed(2)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </Paper>
+                </Grid>
+              </Grid>
+            </>
       )}
     </Box>
   );

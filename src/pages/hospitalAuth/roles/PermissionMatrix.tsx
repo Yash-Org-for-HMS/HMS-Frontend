@@ -31,6 +31,7 @@ import {
   VpnKeyRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
+import { useToast } from "../../../contexts/ToastContext";
 
 interface Permission {
   permissionId: string;
@@ -52,8 +53,7 @@ export default function PermissionMatrix() {
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
+  const toast = useToast();
   const [roles, setRoles] = useState<Role[]>([]);
   const [groupedPermissions, setGroupedPermissions] = useState<Record<string, Permission[]>>({});
   
@@ -99,7 +99,7 @@ export default function PermissionMatrix() {
       });
       setMatrixState(newState);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load data");
+      toast.error(err.response?.data?.message || "Failed to load data");
     } finally {
       setInitialLoad(false);
     }
@@ -155,7 +155,6 @@ export default function PermissionMatrix() {
 
   const handleSave = async () => {
     setSaving(true);
-    setError(null);
     try {
       const updates = roles
         .filter((r) => !r.isSystemRole)
@@ -168,7 +167,7 @@ export default function PermissionMatrix() {
       alert("Permission matrix saved successfully!");
       fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to save matrix");
+      toast.error(err.response?.data?.message || "Failed to save matrix");
     } finally {
       setSaving(false);
     }
@@ -214,14 +213,7 @@ export default function PermissionMatrix() {
           {saving ? "Saving Matrix..." : "Save Changes"}
         </Button>
       </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3, borderRadius: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      {/* Main Matrix Table */}
+{/* Main Matrix Table */}
       <TableContainer
         component={Paper}
         elevation={0}

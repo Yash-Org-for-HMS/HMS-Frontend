@@ -99,7 +99,7 @@ export default function PrintLabReport() {
       {/* Patient Information Grid */}
       <Box sx={{ mb: 4 }}>
         <Grid container spacing={2}>
-          <Grid item xs={6}>
+          <Grid size={{ xs: 6 }}>
             <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 600, width: "100px" }}>Patient Name:</Typography>
               <Typography variant="body2">{order.patient?.firstName} {order.patient?.lastName}</Typography>
@@ -116,7 +116,7 @@ export default function PrintLabReport() {
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={6}>
+          <Grid size={{ xs: 6 }}>
             <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 600, width: "120px" }}>Referred By:</Typography>
               <Typography variant="body2">Dr. {order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</Typography>

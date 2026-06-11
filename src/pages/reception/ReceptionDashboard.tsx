@@ -27,6 +27,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { useToast } from "../../contexts/ToastContext";
 
 interface AppointmentEntry {
   appointmentId: string;
@@ -106,16 +107,14 @@ export default function ReceptionDashboard() {
   const { hospital } = useHospitalAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+  const toast = useToast();
   const fetchStats = async () => {
     try {
       setLoading(true);
-      setError(null);
       const response = await axiosInstance.get("/reception/dashboard/stats");
       setStats(response.data.data);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load dashboard statistics");
+      toast.error(err.response?.data?.message || "Failed to load dashboard statistics");
     } finally {
       setLoading(false);
     }
@@ -136,14 +135,7 @@ export default function ReceptionDashboard() {
           Manage patient flow and front desk operations for {hospital?.name || "the hospital"}.
         </Typography>
       </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      {/* KPI Cards */}
+{/* KPI Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6 }} sx={{ flexBasis: { md: "20%" }, maxWidth: { md: "20%" } }}>
           <StatCard

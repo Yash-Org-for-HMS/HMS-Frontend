@@ -23,7 +23,7 @@ export default function SupplierDirectory() {
   const [email, setEmail] = useState("");
   const [gstNumber, setGstNumber] = useState("");
   const [city, setCity] = useState("");
-  const [state, setStateLoc] = useState("");
+  const [stateLoc, setStateLoc] = useState("");
   const [country, setCountry] = useState("India");
   const [saving, setSaving] = useState(false);
   
@@ -366,7 +366,7 @@ export default function SupplierDirectory() {
               />
               <TextField
                 label="State"
-                value={state}
+                value={stateLoc}
                 onChange={(e) => setStateLoc(e.target.value)}
                 fullWidth
                 variant="outlined"

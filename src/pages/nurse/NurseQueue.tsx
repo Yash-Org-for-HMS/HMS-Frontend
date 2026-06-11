@@ -12,6 +12,15 @@ import { axiosInstance } from "../../api/axios";
 import VitalsModal from "../reception/VitalsModal";
 import { useSocket } from "../../hooks/useSocket";
 
+const getDoctorInitials = (doctorName?: string) => {
+  if (!doctorName || doctorName === "Unknown") return "";
+  const cleanName = doctorName.replace(/^Dr\.\s*/i, "");
+  const parts = cleanName.split(" ").filter(Boolean);
+  if (parts.length === 0) return "";
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
+
 const NURSE_PURPLE = "#a78bfa";
 const NURSE_PURPLE_DARK = "#7c3aed";
 
@@ -52,7 +61,7 @@ export default function NurseQueue() {
         <Button
           variant="outlined"
           startIcon={<SyncRounded />}
-          onClick={fetchQueue}
+          onClick={() => fetchQueue()}
           sx={{
             color: NURSE_PURPLE, borderColor: `rgba(167,139,250,0.4)`,
             fontWeight: 600, textTransform: "none",
@@ -126,16 +135,16 @@ export default function NurseQueue() {
                     <TableRow key={token.queueTokenId} sx={{ "&:hover": { bgcolor: "background.default" } }}>
                       {/* Token Number */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                        <Avatar
+                        <Chip 
+                          label={`${getDoctorInitials(token.doctorName)}-${token.displayNumber}`}
                           sx={{
-                            width: 40, height: 40, fontWeight: 800, fontSize: "0.9rem",
                             bgcolor: hasVitals ? "rgba(16,185,129,0.15)" : `rgba(167,139,250,0.15)`,
                             color: hasVitals ? "#10b981" : NURSE_PURPLE,
-                            border: `2px solid ${hasVitals ? "rgba(16,185,129,0.3)" : "rgba(167,139,250,0.3)"}`,
+                            border: `1px solid ${hasVitals ? "rgba(16,185,129,0.3)" : "rgba(167,139,250,0.3)"}`,
+                            fontWeight: 800,
+                            borderRadius: '8px'
                           }}
-                        >
-                          {token.displayNumber}
-                        </Avatar>
+                        />
                       </TableCell>
 
                       {/* Patient */}

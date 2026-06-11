@@ -1,27 +1,120 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Tooltip,
-  TextField, InputAdornment, Avatar, CircularProgress, Alert,
-  Dialog, DialogContent, DialogActions
+  TextField, InputAdornment, CircularProgress, Alert,
+  Dialog, DialogContent, Grid, Tabs, Tab, Avatar, Stack, Popover
 } from "@mui/material";
 import {
-  CalendarMonthRounded, AddRounded, SearchRounded,
-  EditRounded, CancelRounded, CheckCircleRounded,
-  WarningAmberRounded, VisibilityRounded, ReceiptRounded,
-  NotificationsActiveRounded, ChecklistRounded
+  AddRounded, SearchRounded, CancelRounded, CheckCircleRounded,
+  WarningAmberRounded, ReceiptRounded, NotificationsActiveRounded, ChecklistRounded,
+  NotesRounded, ChevronLeftRounded, ChevronRightRounded, CalendarMonthRounded,
+  FilterAltRounded
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import BillingModal from "./BillingModal";
+import { useToast } from "../../contexts/ToastContext";
+import dayjs, { Dayjs } from "dayjs";
+
+const getAppointmentType = (reason: string | null | undefined) => {
+  if (!reason) return { label: "Standard", color: "#64748b", bgcolor: "rgba(100,116,139,0.1)" };
+  const lower = reason.toLowerCase();
+  if (lower.includes("urgent") || lower.includes("emergency") || lower.includes("stat")) {
+    return { label: "Urgent", color: "#ef4444", bgcolor: "rgba(239,68,68,0.1)" };
+  }
+  if (lower.includes("follow") || lower.includes("review")) {
+    return { label: "Follow-up", color: "#3b82f6", bgcolor: "rgba(59,130,246,0.1)" };
+  }
+  return { label: "Standard", color: "#64748b", bgcolor: "rgba(100,116,139,0.1)" };
+};
+
+function MiniCalendar({ selectedDate, onDateChange, highlightedDays }: { selectedDate: Dayjs | null, onDateChange: (d: Dayjs) => void, highlightedDays: string[] }) {
+  const [currentMonth, setCurrentMonth] = useState(dayjs().startOf('month'));
+  
+  const daysInMonth = currentMonth.daysInMonth();
+  const firstDay = currentMonth.day();
+  
+  const days = [];
+  for (let i = 0; i < firstDay; i++) {
+    days.push(null);
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push(currentMonth.date(i));
+  }
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <IconButton size="small" onClick={() => setCurrentMonth(currentMonth.subtract(1, 'month'))}>
+          <ChevronLeftRounded />
+        </IconButton>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+          {currentMonth.format("MMMM YYYY")}
+        </Typography>
+        <IconButton size="small" onClick={() => setCurrentMonth(currentMonth.add(1, 'month'))}>
+          <ChevronRightRounded />
+        </IconButton>
+      </Box>
+      
+      {/* Days of week header */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', mb: 1 }}>
+        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+          <Box key={d}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>{d}</Typography>
+          </Box>
+        ))}
+      </Box>
+
+      {/* Calendar grid */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.5 }}>
+        {days.map((day, idx) => {
+          if (!day) return <Box key={`empty-${idx}`} />;
+          const isSelected = selectedDate && day.isSame(selectedDate, 'day');
+          const isToday = day.isSame(dayjs(), 'day');
+          const dateStr = day.format("YYYY-MM-DD");
+          const hasAppointments = highlightedDays.includes(dateStr);
+          
+          return (
+            <Box key={dateStr} sx={{ display: 'flex', justifyContent: 'center' }}>
+              <Button
+                onClick={() => onDateChange(day)}
+                sx={{
+                  minWidth: 0, width: 32, height: 32, p: 0, borderRadius: '50%',
+                  bgcolor: isSelected ? '#0891b2' : isToday ? 'rgba(8,145,178,0.1)' : 'transparent',
+                  color: isSelected ? '#fff' : isToday ? '#0891b2' : 'text.primary',
+                  "&:hover": { bgcolor: isSelected ? '#0e7490' : 'rgba(8,145,178,0.2)' },
+                  position: 'relative'
+                }}
+              >
+                {day.date()}
+                {hasAppointments && !isSelected && (
+                  <Box sx={{ position: 'absolute', bottom: 2, width: 4, height: 4, borderRadius: '50%', bgcolor: '#0891b2' }} />
+                )}
+                {hasAppointments && isSelected && (
+                  <Box sx={{ position: 'absolute', bottom: 2, width: 4, height: 4, borderRadius: '50%', bgcolor: '#fff' }} />
+                )}
+              </Button>
+            </Box>
+          );
+        })}
+      </Box>
+    </Box>
+  );
+}
 
 export default function AppointmentsList() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  
+  const [tabValue, setTabValue] = useState("today");
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
+  const [calendarAnchor, setCalendarAnchor] = useState<HTMLButtonElement | null>(null);
+
   const [actionDialog, setActionDialog] = useState<{ open: boolean, type: 'cancel' | 'checkin' | null, appt: any }>({
     open: false, type: null, appt: null
   });
@@ -31,10 +124,10 @@ export default function AppointmentsList() {
   const fetchAppointments = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axiosInstance.get("/reception/appointments");
+      const res = await axiosInstance.get(`/reception/appointments?t=${Date.now()}`);
       setAppointments(res.data.data);
     } catch (err: any) {
-      setError("Failed to load appointments");
+      toast.error("Failed to load appointments");
     } finally {
       setLoading(false);
     }
@@ -56,7 +149,7 @@ export default function AppointmentsList() {
       setActionDialog({ open: false, type: null, appt: null });
       fetchAppointments();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to process action");
+      toast.error(err.response?.data?.message || "Failed to process action");
     } finally {
       setProcessing(false);
     }
@@ -65,22 +158,59 @@ export default function AppointmentsList() {
   const handleSendNotification = async (apptId: string, type: 'reminder' | 'visit-confirmation') => {
     try {
       setProcessing(true);
-      setError(null);
       setSuccessMsg(null);
       const res = await axiosInstance.post(`/reception/notifications/appointments/${apptId}/${type}`);
       setSuccessMsg(res.data.message || "Notification sent");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to send notification");
+      toast.error(err.response?.data?.message || "Failed to send notification");
     } finally {
       setProcessing(false);
     }
   };
 
-  const filteredAppointments = appointments.filter(a =>
-    a.patientName?.toLowerCase().includes(search.toLowerCase()) ||
-    a.doctorName?.toLowerCase().includes(search.toLowerCase()) ||
-    a.uhid?.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleDateChange = (newDate: Dayjs) => {
+    setSelectedDate(newDate);
+    setTabValue("date");
+    setCalendarAnchor(null);
+  };
+
+  const filteredAppointments = useMemo(() => {
+    let filtered = appointments;
+
+    // If searching, ignore date tabs and search globally
+    if (search) {
+      const s = search.toLowerCase();
+      return filtered.filter(a =>
+        (a.patientName && a.patientName.toLowerCase().includes(s)) ||
+        (a.doctorName && a.doctorName.toLowerCase().includes(s)) ||
+        (a.uhid && a.uhid.toLowerCase().includes(s)) ||
+        (a.reason && a.reason.toLowerCase().includes(s)) ||
+        (a.tokenNumber && String(a.tokenNumber).includes(s))
+      );
+    }
+
+    const today = dayjs().startOf('day');
+    if (tabValue === "today") {
+      filtered = filtered.filter(a => dayjs(a.appointmentDate).isSame(today, 'day'));
+    } else if (tabValue === "this_week") {
+      const endOfWeek = today.add(7, 'day');
+      filtered = filtered.filter(a => {
+        const d = dayjs(a.appointmentDate);
+        return (d.isAfter(today) || d.isSame(today, 'day')) && (d.isBefore(endOfWeek) || d.isSame(endOfWeek, 'day'));
+      });
+    } else if (tabValue === "date" && selectedDate) {
+      filtered = filtered.filter(a => dayjs(a.appointmentDate).isSame(selectedDate, 'day'));
+    }
+
+    return filtered;
+  }, [appointments, search, tabValue, selectedDate]);
+
+  const highlightedDays = useMemo(() => {
+    return appointments.map(a => dayjs(a.appointmentDate).format("YYYY-MM-DD"));
+  }, [appointments]);
+
+  const avatarColors = ["#0891b2", "#7c3aed", "#059669", "#dc2626", "#d97706", "#2563eb", "#db2777", "#65a30d"];
+  const getAvatarColor = (id: string) => avatarColors[(id || "A").charCodeAt(0) % avatarColors.length];
 
   return (
     <Box>
@@ -90,59 +220,112 @@ export default function AppointmentsList() {
             Appointments
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Manage patient appointments and check-ins
+            Manage scheduling, check-ins, and patient flow
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/reception/appointments/new")}
-          sx={{
-            background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
-            fontWeight: 600, px: 3, py: 1.2, textTransform: "none", borderRadius: 2,
-            boxShadow: "0 4px 14px rgba(6, 182, 212, 0.3)",
-            "&:hover": { background: "linear-gradient(135deg, #0e7490 0%, #0891b2 100%)" }
-          }}
-        >
-          Book Appointment
-        </Button>
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
+          <Button
+            variant="contained"
+            startIcon={<CalendarMonthRounded />}
+            onClick={() => navigate("/reception/appointments/new")}
+            sx={{
+              background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
+              fontWeight: 600, px: 3, py: 1.2, textTransform: "none", borderRadius: 2,
+              boxShadow: "0 4px 14px rgba(6, 182, 212, 0.4)",
+            }}
+          >
+            Book Appointment
+          </Button>
+        </Box>
       </Box>
 
-      <Box sx={{ mb: 3 }}>
+      {successMsg && (
+        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMsg(null)}>
+          {successMsg}
+        </Alert>
+      )}
+
+      {/* Toolbar */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', flexGrow: 1, display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={(e, v) => { setTabValue(v); if(v === "today") setSelectedDate(dayjs()); }}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.95rem" } }}
+          >
+            <Tab label="Today" value="today" />
+            <Tab label="Next 7 Days" value="this_week" />
+            <Tab label="All" value="all" />
+            {tabValue === "date" && <Tab label={`Selected: ${selectedDate?.format("MMM DD, YYYY")}`} value="date" />}
+          </Tabs>
+
+          <Button
+            size="small"
+            variant={tabValue === 'date' ? "contained" : "outlined"}
+            startIcon={<FilterAltRounded />}
+            onClick={(e) => setCalendarAnchor(e.currentTarget)}
+            sx={{ 
+              ml: 2, mb: 1, textTransform: 'none', borderRadius: 2, 
+              bgcolor: tabValue === 'date' ? '#0891b2' : 'transparent',
+              borderColor: tabValue === 'date' ? '#0891b2' : 'divider',
+              color: tabValue === 'date' ? '#fff' : 'text.secondary',
+              "&:hover": { bgcolor: tabValue === 'date' ? '#0e7490' : 'rgba(8,145,178,0.08)' }
+            }}
+          >
+            {tabValue === 'date' ? selectedDate?.format("MMM DD") : "Filter by Date"}
+          </Button>
+
+          <Popover
+            open={Boolean(calendarAnchor)}
+            anchorEl={calendarAnchor}
+            onClose={() => setCalendarAnchor(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+            PaperProps={{ sx: { p: 2, borderRadius: 3, mt: 1, boxShadow: '0 10px 40px rgba(0,0,0,0.1)', border: '1px solid', borderColor: 'divider' } }}
+          >
+            <MiniCalendar selectedDate={selectedDate} onDateChange={handleDateChange} highlightedDays={highlightedDays} />
+          </Popover>
+        </Box>
+
         <TextField
-          fullWidth
-          placeholder="Search by patient, doctor, or MRN..."
+          placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          size="small"
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchRounded sx={{ color: "text.secondary" }} />
+                <SearchRounded sx={{ color: "text.secondary", fontSize: 20 }} />
               </InputAdornment>
             ),
           }}
           sx={{
-            maxWidth: 400,
+            minWidth: 280,
             "& .MuiOutlinedInput-root": {
-              color: "text.primary", bgcolor: "background.default", borderRadius: 2,
-              "& fieldset": { borderColor: "rgba(6, 182, 212, 0.15)" },
-              "&:hover fieldset": { borderColor: "rgba(6, 182, 212, 0.3)" },
+              bgcolor: "background.paper", borderRadius: 2,
+              "& fieldset": { borderColor: "divider" },
+              "&:hover fieldset": { borderColor: "rgba(6, 182, 212, 0.4)" },
               "&.Mui-focused fieldset": { borderColor: "#06b6d4" },
             }
           }}
         />
       </Box>
 
-      {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>{error}</Alert>}
-      {successMsg && <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMsg(null)}>{successMsg}</Alert>}
-
-      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", overflow: "hidden" }}>
-        <TableContainer>
-          <Table>
+      {/* Appointments List */}
+      <Paper elevation={0} sx={{ 
+        borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", overflow: "hidden"
+      }}>
+        <TableContainer sx={{ maxHeight: 'calc(100vh - 250px)' }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {["Date & Time", "Token", "Patient", "Doctor", "Status", "Actions"].map((h, i) => (
-                  <TableCell key={h} align={i === 5 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}>
+                {["Time & Type", "Patient", "Doctor", "Status", "Actions"].map((h, i) => (
+                  <TableCell key={h} align={i === 4 ? "right" : "left"} sx={{ 
+                    color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", 
+                    py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider"
+                  }}>
                     {h}
                   </TableCell>
                 ))}
@@ -150,73 +333,81 @@ export default function AppointmentsList() {
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} align="center" sx={{ py: 4 }}><CircularProgress size={30} sx={{ color: "#06b6d4" }}/></TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}><CircularProgress size={30} sx={{ color: "#06b6d4" }}/></TableCell></TableRow>
               ) : filteredAppointments.length === 0 ? (
-                <TableRow><TableCell colSpan={6} align="center" sx={{ py: 6, color: "text.secondary" }}>No appointments found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} align="center" sx={{ py: 6, color: "text.secondary" }}>No appointments found</TableCell></TableRow>
               ) : (
-                filteredAppointments.map(appt => (
-                  <TableRow key={appt.appointmentId} sx={{ "&:hover": { bgcolor: "background.default" } }}>
-                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                      <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
-                        {new Date(appt.appointmentDate).toLocaleDateString("en-IN")}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        {new Date(appt.appointmentDate).toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' })}
-                      </Typography>
-                    </TableCell>
-                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                      <Chip label={`T-${appt.tokenNumber}`} size="small" sx={{ bgcolor: "rgba(6,182,212,0.1)", color: "#06b6d4", fontWeight: 700 }} />
-                    </TableCell>
-                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                      <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>{appt.patientName}</Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>{appt.uhid}</Typography>
-                    </TableCell>
-                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.85rem" }}>
-                      {appt.doctorName}
-                    </TableCell>
-                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                      <Chip label={appt.statusLabel} size="small" sx={{ bgcolor: `${appt.statusColor}22`, color: appt.statusColor, border: `1px solid ${appt.statusColor}55`, fontWeight: 600, fontSize: "0.7rem" }} />
-                    </TableCell>
-                    <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                      {appt.statusLabel === 'Scheduled' && (
-                        <>
-                          <Tooltip title="Check In">
-                            <IconButton size="small" onClick={() => setActionDialog({ open: true, type: 'checkin', appt })} sx={{ color: "#10b981", "&:hover": { bgcolor: "rgba(16,185,129,0.1)" } }}>
-                              <CheckCircleRounded fontSize="small" />
+                filteredAppointments.map(appt => {
+                  const typeInfo = getAppointmentType(appt.reason);
+                  return (
+                    <TableRow key={appt.appointmentId} sx={{ "&:hover": { bgcolor: "background.default" }, transition: "background 0.15s ease" }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
+                        <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
+                          {new Date(appt.appointmentDate).toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' })}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", display: 'block', mb: 0.5 }}>
+                          {new Date(appt.appointmentDate).toLocaleDateString("en-IN")}
+                        </Typography>
+                        <Chip label={typeInfo.label} size="small" sx={{ bgcolor: typeInfo.bgcolor, color: typeInfo.color, fontWeight: 700, fontSize: "0.65rem", height: 20 }} />
+                      </TableCell>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Avatar sx={{ width: 36, height: 36, bgcolor: getAvatarColor(appt.patientId || appt.patientName), fontSize: "0.8rem", fontWeight: 700 }}>
+                            {appt.patientName.charAt(0).toUpperCase()}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{appt.patientName}</Typography>
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>{appt.uhid} • T-{appt.tokenNumber}</Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.85rem", py: 1.5 }}>
+                        {appt.doctorName}
+                      </TableCell>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
+                        <Chip label={appt.statusLabel} size="small" sx={{ bgcolor: `${appt.statusColor}22`, color: appt.statusColor, border: `1px solid ${appt.statusColor}55`, fontWeight: 600, fontSize: "0.7rem" }} />
+                      </TableCell>
+                      <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
+                        {appt.statusLabel === 'Scheduled' && (
+                          <>
+                            <Tooltip title="Check In">
+                              <IconButton size="small" onClick={() => setActionDialog({ open: true, type: 'checkin', appt })} sx={{ color: "text.secondary", "&:hover": { color: "#10b981", bgcolor: "rgba(16,185,129,0.08)" } }}>
+                                <CheckCircleRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Edit / Add Notes">
+                              <IconButton size="small" onClick={() => navigate(`/reception/appointments/${appt.appointmentId}/edit`)} sx={{ color: "text.secondary", "&:hover": { color: "#3b82f6", bgcolor: "rgba(59,130,246,0.08)" } }}>
+                                <NotesRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Billing">
+                              <IconButton size="small" onClick={() => setBillingDialog({ open: true, appt })} sx={{ color: "text.secondary", "&:hover": { color: "#f59e0b", bgcolor: "rgba(245,158,11,0.08)" } }}>
+                                <ReceiptRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Cancel">
+                              <IconButton size="small" onClick={() => setActionDialog({ open: true, type: 'cancel', appt })} sx={{ color: "text.secondary", "&:hover": { color: "#ef4444", bgcolor: "rgba(239,68,68,0.08)" } }}>
+                                <CancelRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Send Reminder">
+                              <IconButton size="small" onClick={() => handleSendNotification(appt.appointmentId, 'reminder')} sx={{ color: "text.secondary", "&:hover": { color: "#8b5cf6", bgcolor: "rgba(139,92,246,0.08)" } }}>
+                                <NotificationsActiveRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </>
+                        )}
+                        {appt.statusLabel === 'Completed' && (
+                          <Tooltip title="Send Visit Confirmation">
+                            <IconButton size="small" onClick={() => handleSendNotification(appt.appointmentId, 'visit-confirmation')} sx={{ color: "text.secondary", "&:hover": { color: "#10b981", bgcolor: "rgba(16,185,129,0.08)" } }}>
+                              <ChecklistRounded fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Reschedule">
-                            <IconButton size="small" onClick={() => navigate(`/reception/appointments/${appt.appointmentId}/edit`)} sx={{ color: "#3b82f6", "&:hover": { bgcolor: "rgba(59,130,246,0.1)" } }}>
-                              <EditRounded fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Cancel">
-                            <IconButton size="small" onClick={() => setActionDialog({ open: true, type: 'cancel', appt })} sx={{ color: "#ef4444", "&:hover": { bgcolor: "rgba(239,68,68,0.1)" } }}>
-                              <CancelRounded fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Send Reminder">
-                            <IconButton size="small" onClick={() => handleSendNotification(appt.appointmentId, 'reminder')} sx={{ color: "#8b5cf6", "&:hover": { bgcolor: "rgba(139,92,246,0.1)" } }}>
-                              <NotificationsActiveRounded fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Billing">
-                            <IconButton size="small" onClick={() => setBillingDialog({ open: true, appt })} sx={{ color: "#f59e0b", "&:hover": { bgcolor: "rgba(245,158,11,0.1)" } }}>
-                              <ReceiptRounded fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </>
-                      )}
-                      {appt.statusLabel === 'Completed' && (
-                        <Tooltip title="Send Visit Confirmation">
-                          <IconButton size="small" onClick={() => handleSendNotification(appt.appointmentId, 'visit-confirmation')} sx={{ color: "#10b981", "&:hover": { bgcolor: "rgba(16,185,129,0.1)" } }}>
-                            <ChecklistRounded fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

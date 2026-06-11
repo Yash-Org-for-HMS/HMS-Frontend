@@ -18,6 +18,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 export default function FeatureFlagForm() {
   const { t } = useTranslation();
@@ -27,7 +28,7 @@ export default function FeatureFlagForm() {
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(isEdit);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
   const [hospitals, setHospitals] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
@@ -67,7 +68,7 @@ export default function FeatureFlagForm() {
             isGlobal: d.isGlobal || false,
           });
         } catch (err) {
-          setError(t("common.error"));
+          toast.error(t("common.error"));
         } finally {
           setInitialLoading(false);
         }
@@ -87,7 +88,6 @@ export default function FeatureFlagForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
     try {
       if (isEdit) {
         await axiosInstance.put(`/feature-flags/${id}`, formData);
@@ -96,7 +96,7 @@ export default function FeatureFlagForm() {
       }
       navigate("/feature-flags");
     } catch (err: any) {
-      setError(err.response?.data?.message || t("common.error"));
+      toast.error(err.response?.data?.message || t("common.error"));
     } finally {
       setLoading(false);
     }
@@ -130,10 +130,7 @@ export default function FeatureFlagForm() {
           </Typography>
         </Box>
       </Box>
-
-      {error && <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>{error}</Alert>}
-
-      <Paper
+<Paper
         elevation={2}
         sx={{
           p: { xs: 3, md: 5 },

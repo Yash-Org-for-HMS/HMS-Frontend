@@ -22,6 +22,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 export default function HospitalForm() {
   const { t } = useTranslation();
@@ -31,7 +32,7 @@ export default function HospitalForm() {
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(isEdit);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
   const [plans, setPlans] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
   const [convertedTrials, setConvertedTrials] = useState<any[]>([]);
@@ -92,7 +93,7 @@ export default function HospitalForm() {
           });
           setBranches(d.branches || []);
         } catch (err) {
-          setError(t("common.error"));
+          toast.error(t("common.error"));
         } finally {
           setInitialLoading(false);
         }
@@ -109,7 +110,6 @@ export default function HospitalForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
     try {
       if (isEdit) {
         await axiosInstance.put(`/hospitals/${id}`, formData);
@@ -118,7 +118,7 @@ export default function HospitalForm() {
       }
       navigate("/hospitals");
     } catch (err: any) {
-      setError(err.response?.data?.message || t("common.error"));
+      toast.error(err.response?.data?.message || t("common.error"));
     } finally {
       setLoading(false);
     }
@@ -148,7 +148,7 @@ export default function HospitalForm() {
       setNewBranch({ code: "", name: "", subscriptionPlanId: "", status: "active" });
       setEditingBranchId(null);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to save branch");
+      toast.error(err.response?.data?.message || "Failed to save branch");
     } finally {
       setBranchLoading(false);
     }
@@ -177,7 +177,7 @@ export default function HospitalForm() {
       await axiosInstance.delete(`/hospitals/${id}/branches/${branchId}`);
       setReload(r => r + 1);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to delete branch");
+      toast.error(err.response?.data?.message || "Failed to delete branch");
     }
   };
 
@@ -209,10 +209,7 @@ export default function HospitalForm() {
           </Typography>
         </Box>
       </Box>
-
-      {error && <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>{error}</Alert>}
-
-      <Paper
+<Paper
         elevation={2}
         sx={{
           p: { xs: 3, md: 5 },

@@ -57,7 +57,7 @@ export default function NurseVitalsStation() {
           </Typography>
         </Box>
         <Button
-          variant="outlined" startIcon={<SyncRounded />} onClick={fetchQueue}
+          variant="outlined" startIcon={<SyncRounded />} onClick={() => fetchQueue()}
           sx={{ color: NURSE_PURPLE, borderColor: `rgba(167,139,250,0.4)`, textTransform: "none", fontWeight: 600, "&:hover": { borderColor: NURSE_PURPLE, bgcolor: "rgba(167,139,250,0.06)" } }}
         >
           Refresh

@@ -21,6 +21,7 @@ import {
 } from "@mui/material";
 import { ArrowBackRounded, Visibility, VisibilityOff, ContentCopyRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 interface Hospital {
   hospitalId: string;
@@ -41,8 +42,7 @@ export default function UserForm() {
 
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
+  const toast = useToast();
   // Data for dropdowns
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -76,7 +76,7 @@ export default function UserForm() {
         setRoles(roleRes.data.data);
       } catch (err) {
         console.error("Failed to fetch lookups", err);
-        setError("Failed to load required data. Please refresh.");
+        toast.error("Failed to load required data. Please refresh.");
       }
     };
     fetchLookups();
@@ -113,7 +113,7 @@ export default function UserForm() {
           });
         } catch (err) {
           console.error("Failed to fetch user", err);
-          setError("Failed to load user data");
+          toast.error("Failed to load user data");
         } finally {
           setLoading(false);
         }
@@ -137,8 +137,6 @@ export default function UserForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setError(null);
-
     try {
       const payload: any = { ...formData };
       if (!payload.password) delete payload.password; // Omit if empty
@@ -157,7 +155,7 @@ export default function UserForm() {
         }
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to save user");
+      toast.error(err.response?.data?.message || "Failed to save user");
       setSaving(false);
     }
   };
@@ -186,14 +184,7 @@ export default function UserForm() {
           {isEdit ? "Edit User" : "Add New User"}
         </Typography>
       </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      <Card
+<Card
         sx={{
           p: 4,
           bgcolor: "background.paper",

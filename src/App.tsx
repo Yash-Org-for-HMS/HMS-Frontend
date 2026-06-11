@@ -82,6 +82,14 @@ import RadiologyOrdersQueue from "./pages/lab/RadiologyOrdersQueue";
 import LabTestCatalog from "./pages/lab/LabTestCatalog";
 import PrintLabReport from "./pages/lab/PrintLabReport";
 import RadiologyCatalog from "./pages/lab/RadiologyCatalog";
+// Pharmacy Imports
+import PharmacyLayout from "./layouts/PharmacyLayout";
+import PharmacyDashboard from "./pages/pharmacy/PharmacyDashboard";
+import MedicineCatalog from "./pages/pharmacy/MedicineCatalog";
+import SupplierDirectory from "./pages/pharmacy/SupplierDirectory";
+import InventoryManagement from "./pages/pharmacy/InventoryManagement";
+import DispensaryPOS from "./pages/pharmacy/DispensaryPOS";
+import CommandPalette from "./components/CommandPalette";
 
 function App() {
   return (
@@ -127,6 +135,7 @@ function App() {
     </AuthProvider>
     
     <HospitalAuthProvider>
+      <CommandPalette />
       <Routes>
         <Route path="/hospital/login" element={<HospitalLogin />} />
         <Route path="/hospital/change-password" element={<HospitalChangePassword />} />
@@ -189,6 +198,7 @@ function App() {
             <Route path="/nurse/dashboard" element={<NurseDashboard />} />
             <Route path="/nurse/queue" element={<NurseQueue />} />
             <Route path="/nurse/vitals" element={<NurseVitalsStation />} />
+            <Route path="/nurse/patients/:id" element={<PatientProfile />} />
           </Route>
         </Route>
 
@@ -198,6 +208,7 @@ function App() {
             <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
             <Route path="/doctor/queue" element={<DoctorQueue />} />
             <Route path="/doctor/consultation/:appointmentId" element={<ConsultationWorkspace />} />
+            <Route path="/doctor/patients/:id" element={<PatientProfile />} />
           </Route>
         </Route>
 
@@ -211,6 +222,17 @@ function App() {
             <Route path="/lab/radiology" element={<RadiologyOrdersQueue />} />
             <Route path="/lab/catalog" element={<LabTestCatalog />} />
             <Route path="/lab/radiology-catalog" element={<RadiologyCatalog />} />
+          </Route>
+        </Route>
+
+        {/* ── Pharmacy Panel Routes ─────────────────────────────────── */}
+        <Route element={<HospitalProtectedRoute />}>
+          <Route element={<PharmacyLayout />}>
+            <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
+            <Route path="/pharmacy/medicines" element={<MedicineCatalog />} />
+            <Route path="/pharmacy/suppliers" element={<SupplierDirectory />} />
+            <Route path="/pharmacy/inventory" element={<InventoryManagement />} />
+            <Route path="/pharmacy/pos" element={<DispensaryPOS />} />
           </Route>
         </Route>
       </Routes>

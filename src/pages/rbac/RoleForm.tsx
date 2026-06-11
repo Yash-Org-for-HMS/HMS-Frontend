@@ -20,6 +20,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 export default function RoleForm() {
   const { t } = useTranslation();
@@ -29,8 +30,7 @@ export default function RoleForm() {
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+  const toast = useToast();
   const [hospitals, setHospitals] = useState<any[]>([]);
   const [allPermissions, setAllPermissions] = useState<any[]>([]);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
@@ -66,7 +66,7 @@ export default function RoleForm() {
           setSelectedPermissions(d.rolePermissions.map((rp: any) => rp.permissionId));
         }
       } catch (err) {
-        setError(t("common.error"));
+        toast.error(t("common.error"));
       } finally {
         setInitialLoading(false);
       }
@@ -90,7 +90,6 @@ export default function RoleForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
     try {
       const payload = { ...formData, permissionIds: selectedPermissions };
       if (isEdit) {
@@ -100,7 +99,7 @@ export default function RoleForm() {
       }
       navigate("/rbac/roles");
     } catch (err: any) {
-      setError(err.response?.data?.message || t("common.error"));
+      toast.error(err.response?.data?.message || t("common.error"));
     } finally {
       setLoading(false);
     }
@@ -141,10 +140,7 @@ export default function RoleForm() {
           </Typography>
         </Box>
       </Box>
-
-      {error && <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>{error}</Alert>}
-
-      <Paper
+<Paper
         elevation={2}
         sx={{
           p: { xs: 3, md: 5 },

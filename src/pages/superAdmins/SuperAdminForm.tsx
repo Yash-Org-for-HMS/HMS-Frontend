@@ -16,6 +16,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 export default function SuperAdminForm() {
   const { t } = useTranslation();
@@ -25,8 +26,7 @@ export default function SuperAdminForm() {
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(isEdit);
-  const [error, setError] = useState<string | null>(null);
-
+  const toast = useToast();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -51,7 +51,7 @@ export default function SuperAdminForm() {
             status: d.status || "active",
           });
         } catch (err) {
-          setError(t("common.error"));
+          toast.error(t("common.error"));
         } finally {
           setInitialLoading(false);
         }
@@ -68,7 +68,6 @@ export default function SuperAdminForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
     try {
       const dataToSubmit = { ...formData };
       if (isEdit && !dataToSubmit.password) {
@@ -82,7 +81,7 @@ export default function SuperAdminForm() {
       }
       navigate("/super-admins");
     } catch (err: any) {
-      setError(err.response?.data?.message || t("common.error"));
+      toast.error(err.response?.data?.message || t("common.error"));
     } finally {
       setLoading(false);
     }
@@ -116,10 +115,7 @@ export default function SuperAdminForm() {
           </Typography>
         </Box>
       </Box>
-
-      {error && <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>{error}</Alert>}
-
-      <Paper
+<Paper
         elevation={2}
         sx={{
           p: { xs: 3, md: 5 },

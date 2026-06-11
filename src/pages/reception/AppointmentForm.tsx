@@ -6,6 +6,7 @@ import {
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 export interface AppointmentFormProps {
   isEmbedded?: boolean;
@@ -22,7 +23,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
   const [checkInImmediately, setCheckInImmediately] = useState(true);
 
   const [dropdowns, setDropdowns] = useState<any>({
@@ -35,6 +36,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     doctorId: "",
     appointmentDate: new Date().toISOString().split('T')[0],
     timeSlot: "",
+    visitType: "Standard Visit",
     reason: ""
   });
 
@@ -61,18 +63,27 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
             const dateObj = new Date(appt.appointmentDate);
             const dateStr = dateObj.toISOString().split('T')[0];
             const timeStr = dateObj.toLocaleTimeString("en-US", { hour12: false, hour: '2-digit', minute: '2-digit' });
+            const existingReason = appt.reason || "";
+            let parsedType = "Standard Visit";
+            const lower = existingReason.toLowerCase();
+            if (lower.includes("urgent") || lower.includes("emergency")) parsedType = "Urgent";
+            else if (lower.includes("follow") || lower.includes("review")) parsedType = "Follow-up";
+
+            let cleanReason = existingReason.replace(/\[.*?\]\s*/, "").trim();
+
             setFormData({
               patientId: appt.patientId || "",
               departmentId: appt.departmentId || "",
               doctorId: appt.doctorId || "",
               appointmentDate: dateStr,
               timeSlot: timeStr,
-              reason: appt.reason || ""
+              visitType: parsedType,
+              reason: cleanReason
             });
           }
         }
       } catch (err) {
-        setError("Failed to initialize form");
+        toast.error("Failed to initialize form");
       } finally {
         setLoading(false);
       }
@@ -130,17 +141,20 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setError(null);
     try {
       // Combine date and time
       const datetime = new Date(`${formData.appointmentDate}T${formData.timeSlot}:00`);
+      
+      const finalReason = formData.reason 
+        ? `[${formData.visitType}] ${formData.reason}`
+        : `[${formData.visitType}]`;
 
       const payload = {
         patientId: formData.patientId,
         departmentId: formData.departmentId,
         doctorId: formData.doctorId,
         appointmentDate: datetime.toISOString(),
-        reason: formData.reason
+        reason: finalReason
       };
 
       let apptId = id;
@@ -163,7 +177,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
         navigate("/reception/appointments");
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to save appointment");
+      toast.error(err.response?.data?.message || "Failed to save appointment");
       setSaving(false);
     }
   };
@@ -186,10 +200,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
           </Box>
         </Box>
       )}
-
-      {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>{error}</Alert>}
-
-      <Paper component="form" onSubmit={handleSubmit} elevation={0} sx={{ p: 4, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider" }}>
+<Paper component="form" onSubmit={handleSubmit} elevation={0} sx={{ p: 4, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider" }}>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12 }}>
             <TextField
@@ -258,12 +269,24 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
               ))}
             </TextField>
           </Grid>
-          <Grid size={{ xs: 12 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <TextField
-              fullWidth multiline rows={3}
-              label="Reason for Visit" name="reason"
+              select fullWidth required
+              label="Visit Type" name="visitType"
+              value={formData.visitType} onChange={handleChange}
+              sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
+            >
+              <MenuItem value="Standard Visit">Standard Visit</MenuItem>
+              <MenuItem value="Follow-up">Follow-up</MenuItem>
+              <MenuItem value="Urgent" sx={{ color: '#ef4444', fontWeight: 600 }}>Urgent / Emergency</MenuItem>
+            </TextField>
+          </Grid>
+          <Grid size={{ xs: 12, md: 8 }}>
+            <TextField
+              fullWidth
+              label="Additional Notes (Optional)" name="reason"
               value={formData.reason} onChange={handleChange}
-              placeholder="E.g., Follow-up, Routine checkup..."
+              placeholder="Symptoms, specific requests, etc."
               sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
             />
           </Grid>

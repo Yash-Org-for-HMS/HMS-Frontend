@@ -14,19 +14,19 @@ import {
 import { Visibility, VisibilityOff, LockOutlined, EmailOutlined } from "@mui/icons-material";
 import { useAuth } from "../contexts/AuthContext";
 import { axiosInstance } from "../api/axios";
+import { useToast } from "../contexts/ToastContext";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setIsLoading(true);
 
     try {
@@ -38,7 +38,7 @@ export default function Login() {
       const { user, tokens } = response.data.data;
       login(tokens.accessToken, tokens.refreshToken, user);
     } catch (err: any) {
-      setError(
+      toast.error(
         err.response?.data?.message ||
           "Failed to login. Please check your credentials."
       );
@@ -101,23 +101,7 @@ export default function Login() {
               Sign in to HMS Administration
             </Typography>
           </Box>
-
-          {error && (
-            <Alert
-              severity="error"
-              sx={{
-                mb: 3,
-                backgroundColor: "rgba(239, 68, 68, 0.1)",
-                color: "#fca5a5",
-                border: "1px solid rgba(239, 68, 68, 0.2)",
-                "& .MuiAlert-icon": { color: "#f87171" },
-              }}
-            >
-              {error}
-            </Alert>
-          )}
-
-          <form onSubmit={handleLogin}>
+<form onSubmit={handleLogin}>
             <TextField
               fullWidth
               label="Email Address"

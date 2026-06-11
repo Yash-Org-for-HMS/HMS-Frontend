@@ -10,6 +10,7 @@ import {
   PieChart, Pie, Cell, Legend
 } from "recharts";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"];
 const PAYMENT_COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b"];
@@ -18,6 +19,7 @@ export default function FinancialDashboard() {
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
   const [analytics, setAnalytics] = useState<any>(null);
 
   useEffect(() => {
@@ -27,12 +29,13 @@ export default function FinancialDashboard() {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      setError(null);
       const res = await axiosInstance.get("/billing/analytics?days=30");
       setAnalytics(res.data.data);
     } catch (err: any) {
       console.error(err);
-      setError(err.response?.data?.message || "Failed to load financial analytics");
+      const errMsg = err.response?.data?.message || "Failed to load financial analytics";
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }

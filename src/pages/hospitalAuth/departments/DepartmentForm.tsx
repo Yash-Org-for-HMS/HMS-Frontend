@@ -13,6 +13,7 @@ import {
 import { SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import { useToast } from "../../../contexts/ToastContext";
 
 interface DepartmentType {
   departmentTypeId: number;
@@ -33,8 +34,7 @@ export default function DepartmentForm() {
 
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(isEditing);
-  const [error, setError] = useState<string | null>(null);
-
+  const toast = useToast();
   const [departmentTypes, setDepartmentTypes] = useState<DepartmentType[]>([]);
   const [users, setUsers] = useState<User[]>([]);
 
@@ -76,7 +76,7 @@ export default function DepartmentForm() {
             status: dept.status || "active",
           });
         } catch (err: any) {
-          setError(err.response?.data?.message || "Failed to load department data");
+          toast.error(err.response?.data?.message || "Failed to load department data");
         } finally {
           setInitialLoad(false);
         }
@@ -88,14 +88,11 @@ export default function DepartmentForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-
     try {
       if (isEditing) {
         await axiosInstance.put(`/hospital/departments/${id}`, formData);
@@ -104,7 +101,7 @@ export default function DepartmentForm() {
       }
       navigate("/hospital/departments");
     } catch (err: any) {
-      setError(err.response?.data?.message || "An error occurred");
+      toast.error(err.response?.data?.message || "An error occurred");
       setLoading(false);
     }
   };
@@ -136,14 +133,7 @@ export default function DepartmentForm() {
           Cancel
         </Button>
       </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      <Paper sx={{ p: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
+<Paper sx={{ p: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12 }}>

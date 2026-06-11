@@ -25,12 +25,12 @@ import {
 } from "@mui/material";
 import { InfoRounded, SearchRounded, RefreshRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
+import { useToast } from "../../../contexts/ToastContext";
 
 export default function AuditLogs() {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
+  const toast = useToast();
   const [filters, setFilters] = useState({
     moduleName: "",
     actionType: "",
@@ -55,7 +55,6 @@ export default function AuditLogs() {
 
   const fetchLogs = async () => {
     setLoading(true);
-    setError(null);
     try {
       const params = new URLSearchParams();
       if (filters.moduleName) params.append("moduleName", filters.moduleName);
@@ -66,7 +65,7 @@ export default function AuditLogs() {
       const res = await axiosInstance.get(`/hospital/audit-logs?${params.toString()}`);
       setLogs(res.data.data);
     } catch (err: any) {
-      setError("Failed to fetch audit logs");
+      toast.error("Failed to fetch audit logs");
     } finally {
       setLoading(false);
     }
@@ -183,10 +182,7 @@ export default function AuditLogs() {
           </Grid>
         </Grid>
       </Paper>
-
-      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
-
-      <Paper sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, overflow: "hidden" }}>
+<Paper sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, overflow: "hidden" }}>
         <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
           <Button startIcon={<RefreshRounded />} onClick={fetchLogs} sx={{ color: "text.secondary" }}>Refresh</Button>
         </Box>

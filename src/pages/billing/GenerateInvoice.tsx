@@ -227,7 +227,7 @@ export default function GenerateInvoice() {
                           </Typography>
                         </TableCell>
                         <TableCell>{item.description}</TableCell>
-                        <TableCell align="right" fontWeight={600}>${item.amount.toFixed(2)}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>${item.amount.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

@@ -15,12 +15,13 @@ import { Visibility, VisibilityOff, LockOutlined, LockResetRounded } from "@mui/
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { axiosInstance } from "../../api/axios";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../../contexts/ToastContext";
 
 export default function HospitalChangePassword() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const { login } = useHospitalAuth();
@@ -35,11 +36,10 @@ export default function HospitalChangePassword() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setIsLoading(true);
 
     if (newPassword !== confirmNewPassword) {
-      setError("Passwords do not match");
+      toast.error("Passwords do not match");
       setIsLoading(false);
       return;
     }
@@ -64,7 +64,7 @@ export default function HospitalChangePassword() {
         data.sessionId
       );
     } catch (err: any) {
-      setError(
+      toast.error(
         err.response?.data?.message ||
           "Failed to change password. The link may have expired."
       );
@@ -118,23 +118,7 @@ export default function HospitalChangePassword() {
               For security reasons, you must change your password before continuing.
             </Typography>
           </Box>
-
-          {error && (
-            <Alert
-              severity="error"
-              sx={{
-                mb: 3,
-                backgroundColor: "rgba(239, 68, 68, 0.1)",
-                color: "#fca5a5",
-                border: "1px solid rgba(239, 68, 68, 0.2)",
-                "& .MuiAlert-icon": { color: "#f87171" },
-              }}
-            >
-              {error}
-            </Alert>
-          )}
-
-          <form onSubmit={handleSubmit}>
+<form onSubmit={handleSubmit}>
             <TextField
               fullWidth
               label="New Password"

@@ -24,6 +24,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 interface Gender {
   genderId: number;
@@ -57,8 +58,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
   const [activeSection, setActiveSection] = useState("personal");
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const toast = useToast();
 
   const [genders, setGenders] = useState<Gender[]>([]);
   const [bloodGroups, setBloodGroups] = useState<BloodGroup[]>([]);
@@ -112,7 +112,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
           });
         }
       } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load data");
+        toast.error(err.response?.data?.message || "Failed to load data");
       } finally {
         setInitialLoad(false);
       }
@@ -123,19 +123,16 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-    setSuccess(null);
 
     try {
       if (isEditing && id) {
         await axiosInstance.put(`/reception/patients/${id}`, formData);
-        setSuccess("Patient updated successfully.");
+        toast.success("Patient updated successfully.");
         if (isModal && onSuccess) {
           setTimeout(() => onSuccess(id, ""), 1000);
         } else {
@@ -145,7 +142,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
         const res = await axiosInstance.post("/reception/patients", formData);
         const patientId = res.data.data.patientId;
         const mrn = res.data.data.uhidNumber;
-        setSuccess(`Patient registered! MRN: ${mrn}`);
+        toast.success(`Patient registered! MRN: ${mrn}`);
         if (isModal && onSuccess) {
           setTimeout(() => onSuccess(patientId, mrn), 1000);
         } else {
@@ -153,7 +150,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
         }
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "An error occurred");
+      toast.error(err.response?.data?.message || "An error occurred");
       setLoading(false);
     }
   };
@@ -353,9 +350,6 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
           />
         )}
       </Box>
-
-      {error && <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5" }} onClose={() => setError(null)}>{error}</Alert>}
-      {success && <Alert severity="success" sx={{ mb: 3, bgcolor: "rgba(16,185,129,0.08)", color: "#34d399" }}>{success}</Alert>}
 
       <form onSubmit={handleSubmit}>
         <Grid container spacing={3}>

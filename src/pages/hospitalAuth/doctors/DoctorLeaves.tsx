@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import { useToast } from "../../../contexts/ToastContext";
 
 export default function DoctorLeaves() {
   const navigate = useNavigate();
@@ -23,8 +24,7 @@ export default function DoctorLeaves() {
 
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
+  const toast = useToast();
   const [doctorName, setDoctorName] = useState("");
   const [leaves, setLeaves] = useState<any[]>([]);
 
@@ -36,7 +36,7 @@ export default function DoctorLeaves() {
         setDoctorName(`Dr. ${d.user?.firstName} ${d.user?.lastName}`);
         setLeaves(d.leaves || []);
       } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load leaves");
+        toast.error(err.response?.data?.message || "Failed to load leaves");
       } finally {
         setInitialLoad(false);
       }
@@ -71,14 +71,7 @@ export default function DoctorLeaves() {
           Back to Doctors
         </Button>
       </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
+<TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
         <Table>
           <TableHead>
             <TableRow>

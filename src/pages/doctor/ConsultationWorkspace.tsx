@@ -13,6 +13,7 @@ import PrescriptionWriter from "./PrescriptionWriter";
 import LabOrderForm from "./LabOrderForm";
 import RadiologyOrderForm from "./RadiologyOrderForm";
 import RichTextEditor from "../../components/RichTextEditor";
+import { useToast } from "../../contexts/ToastContext";
 
 const DOCTOR_BLUE = "#3b82f6";
 
@@ -42,8 +43,7 @@ export default function ConsultationWorkspace() {
   const [saving, setSaving] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
+  const toast = useToast();
   const [context, setContext] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
 
@@ -89,7 +89,9 @@ export default function ConsultationWorkspace() {
         fetchHistory(data.patient.patientId);
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load consultation context");
+      const errMsg = err.response?.data?.message || "Failed to load consultation context";
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -127,8 +129,6 @@ export default function ConsultationWorkspace() {
   const handleSave = async (isAutoSave = false) => {
     try {
       if (!isAutoSave) setSaving(true);
-      setError(null);
-      setSuccess(null);
       const res = await axiosInstance.post(`/doctor/consultation/appointments/${appointmentId}`, form);
       
       // Update context if consultationId was generated
@@ -140,12 +140,11 @@ export default function ConsultationWorkspace() {
       }
 
       if (!isAutoSave) {
-        setSuccess("Consultation drafted successfully");
-        setTimeout(() => setSuccess(null), 3000);
-      }
+        toast.success("Consultation drafted successfully");
+}
       return res.data.data?.consultationId;
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to save consultation");
+      toast.error(err.response?.data?.message || "Failed to save consultation");
       return null;
     } finally {
       if (!isAutoSave) setSaving(false);
@@ -163,7 +162,7 @@ export default function ConsultationWorkspace() {
       
       navigate("/doctor/queue");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to complete consultation");
+      toast.error(err.response?.data?.message || "Failed to complete consultation");
       setCompleting(false);
     }
   };
@@ -233,11 +232,7 @@ export default function ConsultationWorkspace() {
           </Button>
         </Box>
       </Paper>
-
-      {success && <Alert severity="success" sx={{ borderRadius: 2 }}>{success}</Alert>}
-      {error && <Alert severity="error" sx={{ borderRadius: 2 }} onClose={() => setError(null)}>{error}</Alert>}
-
-      <Grid container spacing={2} sx={{ flex: 1, minHeight: 0 }}>
+<Grid container spacing={2} sx={{ flex: 1, minHeight: 0 }}>
         {/* Left Panel: Patient Info & Vitals */}
         <Grid size={{ xs: 12, md: 3.5 }} sx={{ height: "100%" }}>
           <Paper elevation={0} sx={{ height: "100%", borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", flexDirection: "column", overflow: "hidden" }}>
@@ -322,6 +317,25 @@ export default function ConsultationWorkspace() {
                         <Typography variant="caption" sx={{ color: "text.secondary", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.5 }}>
                           {h.soapAssessment || "No notes available for this consultation."}
                         </Typography>
+                        {h.prescribedMedicines && h.prescribedMedicines.length > 0 && (
+                          <Box sx={{ mt: 1.5, pt: 1.5, borderTop: "1px dashed", borderColor: "divider" }}>
+                            <Typography variant="caption" sx={{ fontWeight: 700, color: "text.primary", mb: 0.5, display: "block" }}>
+                              Prescribed Medicines:
+                            </Typography>
+                            {h.prescribedMedicines.map((med: any, idx: number) => (
+                              <Box key={idx} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
+                                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                  • {med.medicineName || "Medicine"} - {med.dosage} ({med.frequency}) for {med.durationDays} days
+                                </Typography>
+                                {med.buyOutside ? (
+                                  <Chip label="Bought Outside" size="small" sx={{ height: 16, fontSize: "0.6rem" }} />
+                                ) : (
+                                  <Chip label="Hospital Pharmacy" color="primary" variant="outlined" size="small" sx={{ height: 16, fontSize: "0.6rem" }} />
+                                )}
+                              </Box>
+                            ))}
+                          </Box>
+                        )}
                       </Paper>
                     </Box>
                   ))}

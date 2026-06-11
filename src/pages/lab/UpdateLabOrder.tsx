@@ -117,15 +117,15 @@ export default function UpdateLabOrder() {
       <Paper sx={{ p: 3, borderRadius: 3, mb: 3 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Patient Information</Typography>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Typography variant="body2" color="text.secondary">Name</Typography>
             <Typography variant="body1">{order.patient?.firstName} {order.patient?.lastName}</Typography>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Typography variant="body2" color="text.secondary">UHID</Typography>
             <Typography variant="body1">{order.patient?.uhidNumber}</Typography>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Typography variant="body2" color="text.secondary">Referring Doctor</Typography>
             <Typography variant="body1">{order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</Typography>
           </Grid>
@@ -137,11 +137,11 @@ export default function UpdateLabOrder() {
           <ScienceRounded fontSize="small" /> Sample Details
         </Typography>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Typography variant="body2" color="text.secondary">Barcode</Typography>
             <Typography variant="body1" sx={{ fontWeight: 600 }}>{order.sampleBarcode}</Typography>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Typography variant="body2" color="text.secondary">Collection Status</Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Chip 
@@ -151,7 +151,7 @@ export default function UpdateLabOrder() {
               />
             </Box>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Typography variant="body2" color="text.secondary">Collected At</Typography>
             <Typography variant="body1" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
               <AccessTimeRounded fontSize="small" color="disabled" />
@@ -196,7 +196,7 @@ export default function UpdateLabOrder() {
               )}
             </Box>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <TextField 
                   fullWidth label="Result Value" size="small"
                   value={results[report.labReportId]?.value || ""}
@@ -206,7 +206,7 @@ export default function UpdateLabOrder() {
                   helperText={isCriticalNow ? "Immediate doctor notification will be sent upon saving." : ""}
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <TextField 
                   fullWidth label="Normal Range" size="small"
                   value={results[report.labReportId]?.range || ""}
@@ -214,7 +214,7 @@ export default function UpdateLabOrder() {
                   disabled={order.billingLockActive || (order.status === "PENDING" && !order.sampleCollectedAt)}
                 />
               </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
                 <TextField 
                   fullWidth label="Remarks" size="small"
                   value={results[report.labReportId]?.remarks || ""}

@@ -23,6 +23,7 @@ import "@fontsource/inter/700.css";
 import { theme } from "./theme";
 import "./i18n";
 import App from "./App";
+import { ToastProvider } from "./contexts/ToastContext";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -30,7 +31,9 @@ createRoot(document.getElementById("root")!).render(
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <BrowserRouter>
-          <App />
+          <ToastProvider>
+            <App />
+          </ToastProvider>
         </BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>

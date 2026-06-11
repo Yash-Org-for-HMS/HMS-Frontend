@@ -5,6 +5,7 @@ import {
 } from "@mui/material";
 import { DeleteRounded, SaveRounded, AddRounded, ScienceRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 const DOCTOR_BLUE = "#3b82f6";
 
@@ -23,9 +24,7 @@ const priorities = [
 export default function LabOrderForm({ consultationId, patientId, onRequireSave }: LabOrderFormProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
+  const toast = useToast();
   const [existingOrders, setExistingOrders] = useState<any[]>([]);
 
   // Search state
@@ -78,20 +77,19 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
 
   const handleAddItem = () => {
     if (!selectedTest) {
-      setError("Please select a lab test to add.");
+      toast.error("Please select a lab test to add.");
       return;
     }
     
     // Check if already in the list
     if (items.some(item => item.labTestId === selectedTest.labTestId)) {
-      setError("This test is already added.");
+      toast.error("This test is already added.");
       return;
     }
 
     setItems([...items, selectedTest]);
     setSelectedTest(null);
     setTestQuery("");
-    setError(null);
   };
 
   const handleRemoveItem = (index: number) => {
@@ -102,15 +100,12 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
 
   const handleSubmit = async () => {
     if (items.length === 0) {
-      setError("Please add at least one test to create an order.");
+      toast.error("Please add at least one test to create an order.");
       return;
     }
 
     try {
       setSaving(true);
-      setError(null);
-      setSuccess(null);
-
       let targetConsultationId = consultationId;
 
       if (!targetConsultationId) {
@@ -126,15 +121,13 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
         testIds: items.map(i => i.labTestId)
       });
 
-      setSuccess("Lab order created successfully!");
+      toast.success("Lab order created successfully!");
       setItems([]);
       setSelectedPriority(1);
-      setTimeout(() => setSuccess(null), 3000);
-      
-      // Refresh list
+// Refresh list
       fetchExistingOrders(targetConsultationId);
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "Failed to create lab order");
+      toast.error(err.response?.data?.message || err.message || "Failed to create lab order");
     } finally {
       setSaving(false);
     }
@@ -142,10 +135,7 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      {success && <Alert severity="success">{success}</Alert>}
-      {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
-
-      <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, borderColor: "divider" }}>
+<Paper variant="outlined" sx={{ p: 2, borderRadius: 2, borderColor: "divider" }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>Create New Lab Order</Typography>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <Autocomplete

@@ -31,6 +31,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import { useToast } from "../../../contexts/ToastContext";
 
 interface Role {
   roleId: string;
@@ -298,8 +299,7 @@ export default function UserForm() {
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+  const toast = useToast();
   const [roles, setRoles] = useState<Role[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -375,7 +375,7 @@ export default function UserForm() {
           }));
         }
       } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load data");
+        toast.error(err.response?.data?.message || "Failed to load data");
       } finally {
         setInitialLoad(false);
       }
@@ -386,21 +386,18 @@ export default function UserForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-
     // Validate passwords if provided during creation
     if (!isEditing && formData.initialPassword) {
       if (formData.initialPassword.length < 6) {
-        setError("Password must be at least 6 characters.");
+        toast.error("Password must be at least 6 characters.");
         return;
       }
       if (formData.initialPassword !== formData.confirmPassword) {
-        setError("Passwords do not match.");
+        toast.error("Passwords do not match.");
         return;
       }
     }
@@ -427,7 +424,7 @@ export default function UserForm() {
         });
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "An error occurred");
+      toast.error(err.response?.data?.message || "An error occurred");
       setLoading(false);
     }
   };
@@ -476,14 +473,7 @@ export default function UserForm() {
             Cancel
           </Button>
         </Box>
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-
-        <Paper sx={{ p: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
+<Paper sx={{ p: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
           <form onSubmit={handleSubmit}>
             <Tabs
               value={tabValue}

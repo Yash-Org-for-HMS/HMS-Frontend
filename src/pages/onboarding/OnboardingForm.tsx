@@ -18,6 +18,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 export default function OnboardingForm() {
   const { t } = useTranslation();
@@ -26,7 +27,7 @@ export default function OnboardingForm() {
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
   const [hospitalName, setHospitalName] = useState<string>("");
 
   const [formData, setFormData] = useState({
@@ -49,7 +50,7 @@ export default function OnboardingForm() {
           paymentVerified: d.paymentVerified || false,
         });
       } catch (err) {
-        setError(t("common.error"));
+        toast.error(t("common.error"));
       } finally {
         setInitialLoading(false);
       }
@@ -65,12 +66,11 @@ export default function OnboardingForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
     try {
       await axiosInstance.put(`/onboarding/${id}`, formData);
       navigate("/onboarding");
     } catch (err: any) {
-      setError(err.response?.data?.message || t("common.error"));
+      toast.error(err.response?.data?.message || t("common.error"));
     } finally {
       setLoading(false);
     }
@@ -108,7 +108,7 @@ export default function OnboardingForm() {
         </Box>
       </Box>
 
-      {error && <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>{error}</Alert>}
+
 
       <Paper
         elevation={2}

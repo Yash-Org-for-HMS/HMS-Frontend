@@ -16,6 +16,7 @@ import {
 import { SaveRounded, BusinessRounded, PaletteRounded, GavelRounded, CloudUploadRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { useToast } from "../../contexts/ToastContext";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -52,9 +53,7 @@ export default function HospitalProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
+  const toast = useToast();
   const [formData, setFormData] = useState({
     hospitalName: "",
     registrationNumber: "",
@@ -104,7 +103,7 @@ export default function HospitalProfile() {
         accreditationType: data.accreditationType || "",
       });
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load profile");
+      toast.error(err.response?.data?.message || "Failed to load profile");
     } finally {
       setLoading(false);
     }
@@ -121,19 +120,16 @@ export default function HospitalProfile() {
       formDataUpload.append("logo", file);
 
       try {
-        setUploadingLogo(true);
-        setError(null);
-        setSuccess(null);
-        const res = await axiosInstance.post("/hospital/profile/logo", formDataUpload, {
+        setUploadingLogo(true);        const res = await axiosInstance.post("/hospital/profile/logo", formDataUpload, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
         setFormData((prev) => ({ ...prev, logoUrl: res.data.data.logoUrl }));
         updateHospital({ logoUrl: res.data.data.logoUrl });
-        setSuccess("Logo uploaded successfully!");
+        toast.success("Logo uploaded successfully!");
       } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to upload logo");
+        toast.error(err.response?.data?.message || "Failed to upload logo");
       } finally {
         setUploadingLogo(false);
       }
@@ -148,15 +144,12 @@ export default function HospitalProfile() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setSaving(true);
-      setError(null);
-      setSuccess(null);
-      await axiosInstance.put("/hospital/profile", formData);
-      setSuccess("Profile updated successfully!");
+      setSaving(true);      await axiosInstance.put("/hospital/profile", formData);
+      toast.success("Profile updated successfully!");
       // Optionally re-fetch
       await fetchProfile();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update profile");
+      toast.error(err.response?.data?.message || "Failed to update profile");
     } finally {
       setSaving(false);
     }
@@ -178,20 +171,7 @@ export default function HospitalProfile() {
       <Typography variant="body1" sx={{ mb: 4, color: "text.secondary" }}>
         Manage your hospital's details, branding, and compliance information.
       </Typography>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239, 68, 68, 0.1)", color: "#fca5a5" }}>
-          {error}
-        </Alert>
-      )}
-
-      {success && (
-        <Alert severity="success" sx={{ mb: 3, bgcolor: "rgba(16, 185, 129, 0.1)", color: "#6ee7b7" }}>
-          {success}
-        </Alert>
-      )}
-
-      <Paper
+<Paper
         component="form"
         onSubmit={handleSubmit}
         sx={{

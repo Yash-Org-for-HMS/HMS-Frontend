@@ -37,6 +37,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import { useToast } from "../../../contexts/ToastContext";
 
 interface User {
   userId: string;
@@ -65,13 +66,12 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
   const [useDefault, setUseDefault] = useState(false);
 
   const handleClose = () => {
     setNewPassword("");
     setConfirmPassword("");
-    setError(null);
     setUseDefault(false);
     onClose();
   };
@@ -79,17 +79,16 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
   const handleReset = async () => {
     if (!useDefault) {
       if (!newPassword || newPassword.length < 6) {
-        setError("Password must be at least 6 characters.");
+        toast.error("Password must be at least 6 characters.");
         return;
       }
       if (newPassword !== confirmPassword) {
-        setError("Passwords do not match.");
+        toast.error("Passwords do not match.");
         return;
       }
     }
 
     setLoading(true);
-    setError(null);
     try {
       const res = await axiosInstance.post(`/hospital/users/${user?.userId}/reset-password`, {
         newPassword: useDefault ? undefined : newPassword,
@@ -98,7 +97,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
       onSuccess(finalPassword);
       handleClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to reset password");
+      toast.error(err.response?.data?.message || "Failed to reset password");
     } finally {
       setLoading(false);
     }
@@ -154,17 +153,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
             </Typography>
           </Box>
         </Box>
-
-        {error && (
-          <Alert
-            severity="error"
-            sx={{ mb: 2, bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.2)" }}
-          >
-            {error}
-          </Alert>
-        )}
-
-        {/* Default password option */}
+{/* Default password option */}
         <Box
           onClick={() => setUseDefault(!useDefault)}
           sx={{
@@ -224,7 +213,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
                 label="New Password"
                 type={showNew ? "text" : "password"}
                 value={newPassword}
-                onChange={(e) => { setNewPassword(e.target.value); setError(null); }}
+                onChange={(e) => { setNewPassword(e.target.value); toast.error(""); }}
                 placeholder="Min 6 characters"
                 InputLabelProps={{ style: { color: "text.secondary" } }}
                 InputProps={{
@@ -250,7 +239,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
                 label="Confirm New Password"
                 type={showConfirm ? "text" : "password"}
                 value={confirmPassword}
-                onChange={(e) => { setConfirmPassword(e.target.value); setError(null); }}
+                onChange={(e) => { setConfirmPassword(e.target.value); toast.error(""); }}
                 InputLabelProps={{ style: { color: "text.secondary" } }}
                 InputProps={{
                   endAdornment: (

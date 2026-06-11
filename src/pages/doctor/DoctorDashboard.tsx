@@ -10,6 +10,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../../contexts/ToastContext";
 
 const DOCTOR_BLUE = "#3b82f6";
 
@@ -63,18 +64,17 @@ export default function DoctorDashboard() {
   const { hospital, user } = useHospitalAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
   const [stats, setStats] = useState<any>(null);
 
   const fetchStats = async () => {
     try {
       setLoading(true);
-      setError(null);
       const res = await axiosInstance.get("/doctor/dashboard/stats");
       setStats(res.data.data);
     } catch (err: any) {
       console.error("Dashboard error full:", err);
-      setError(err.response?.data?.message || err.message || "Failed to load dashboard statistics");
+      toast.error(err.response?.data?.message || err.message || "Failed to load dashboard statistics");
     } finally {
       setLoading(false);
     }
@@ -108,10 +108,7 @@ export default function DoctorDashboard() {
           Here is your schedule for today at {hospital?.name || "the hospital"}.
         </Typography>
       </Box>
-
-      {error && <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setError(null)}>{error}</Alert>}
-
-      {/* KPI Cards */}
+{/* KPI Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard

@@ -25,6 +25,7 @@ import {
 } from "@mui/material";
 import { AddRounded, EditRounded, PowerSettingsNewRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
+import { useToast } from "../../../contexts/ToastContext";
 
 const LOOKUP_CONFIGS: Record<string, any> = {
   specialization: {
@@ -67,8 +68,7 @@ export default function LookupManager() {
   const [selectedType, setSelectedType] = useState("specialization");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
+  const toast = useToast();
   const [modalOpen, setModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<any>({});
@@ -82,12 +82,11 @@ export default function LookupManager() {
 
   const fetchData = async (type: string) => {
     setLoading(true);
-    setError(null);
     try {
       const res = await axiosInstance.get(`/hospital/lookups?type=${type}`);
       setData(res.data.data);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load lookup data");
+      toast.error(err.response?.data?.message || "Failed to load lookup data");
     } finally {
       setLoading(false);
     }
@@ -191,10 +190,7 @@ export default function LookupManager() {
           </Grid>
         </Grid>
       </Paper>
-
-      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
-
-      {loading ? (
+{loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <CircularProgress sx={{ color: "#6366f1" }} />
         </Box>

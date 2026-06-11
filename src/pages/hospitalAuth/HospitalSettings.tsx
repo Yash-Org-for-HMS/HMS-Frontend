@@ -25,6 +25,7 @@ import {
   LocalHospitalRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -59,9 +60,7 @@ export default function HospitalSettings() {
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
+  const toast = useToast();
   const [formData, setFormData] = useState({
     // Appointment Settings
     appointmentDuration: 15,
@@ -117,7 +116,7 @@ export default function HospitalSettings() {
         billingStrategy: (settings.billingStrategy as "PRE_PAID" | "POST_PAID") || "PRE_PAID",
       });
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load settings");
+      toast.error(err.response?.data?.message || "Failed to load settings");
     } finally {
       setLoading(false);
     }
@@ -138,13 +137,10 @@ export default function HospitalSettings() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setSaving(true);
-      setError(null);
-      setSuccess(null);
-      await axiosInstance.put("/hospital/settings", formData);
-      setSuccess("Settings updated successfully!");
+      setSaving(true);      await axiosInstance.put("/hospital/settings", formData);
+      toast.success("Settings updated successfully!");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update settings");
+      toast.error(err.response?.data?.message || "Failed to update settings");
     } finally {
       setSaving(false);
     }
@@ -166,20 +162,7 @@ export default function HospitalSettings() {
       <Typography variant="body1" sx={{ mb: 4, color: "text.secondary" }}>
         Configure appointments, localization, notifications, and billing defaults.
       </Typography>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239, 68, 68, 0.1)", color: "#fca5a5" }}>
-          {error}
-        </Alert>
-      )}
-
-      {success && (
-        <Alert severity="success" sx={{ mb: 3, bgcolor: "rgba(16, 185, 129, 0.1)", color: "#6ee7b7" }}>
-          {success}
-        </Alert>
-      )}
-
-      <Paper
+<Paper
         component="form"
         onSubmit={handleSubmit}
         sx={{

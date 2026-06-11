@@ -8,6 +8,7 @@ import {
   ReceiptRounded, CheckCircleRounded, PrintRounded, PaymentRounded, CloseRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 interface BillingModalProps {
   open: boolean;
@@ -19,7 +20,7 @@ interface BillingModalProps {
 
 export default function BillingModal({ open, onClose, appointmentId, patientName, appointmentDate }: BillingModalProps) {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
   const [invoice, setInvoice] = useState<any>(null);
   
   // Lookups
@@ -46,7 +47,6 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     } else {
       // Reset state on close
       setInvoice(null);
-      setError(null);
       setPaymentAmount("");
       setPaymentMethodId("");
       setTransactionRef("");
@@ -56,8 +56,6 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const fetchBillingData = async () => {
     try {
       setLoading(true);
-      setError(null);
-      
       // 1. Fetch lookups
       const lookupsRes = await axiosInstance.get("/reception/billing/lookups");
       if (lookupsRes.data.success) {
@@ -91,7 +89,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
 
     } catch (err: any) {
       console.error(err);
-      setError(err.response?.data?.message || "Failed to load billing data");
+      toast.error(err.response?.data?.message || "Failed to load billing data");
     } finally {
       setLoading(false);
     }
@@ -102,8 +100,6 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     
     try {
       setPaying(true);
-      setError(null);
-      
       const res = await axiosInstance.post(`/reception/billing/invoices/${invoice.invoiceId}/payment`, {
         amount: parseFloat(paymentAmount),
         paymentMethodId,
@@ -128,7 +124,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.response?.data?.message || "Payment failed");
+      toast.error(err.response?.data?.message || "Payment failed");
     } finally {
       setPaying(false);
     }
@@ -138,7 +134,6 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     if (!invoice || !newItemDesc || !newItemPrice || Number(newItemPrice) < 0) return;
     try {
       setAddingItem(true);
-      setError(null);
       const res = await axiosInstance.post(`/reception/billing/invoices/${invoice.invoiceId}/items`, {
         description: newItemDesc,
         quantity: Number(newItemQty),
@@ -153,7 +148,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.response?.data?.message || "Failed to add line item");
+      toast.error(err.response?.data?.message || "Failed to add line item");
     } finally {
       setAddingItem(false);
     }
@@ -230,8 +225,6 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
           <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
             <CircularProgress sx={{ color: "#06b6d4" }} />
           </Box>
-        ) : error ? (
-          <Alert severity="error" sx={{ bgcolor: "rgba(239,68,68,0.1)", color: "#fca5a5" }}>{error}</Alert>
         ) : invoice ? (
           <Grid container spacing={4}>
             {/* LEFT: Receipt Preview */}

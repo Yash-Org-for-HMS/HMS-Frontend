@@ -13,6 +13,7 @@ import {
 import { SaveRounded, DeleteRounded, AddRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import { useToast } from "../../../contexts/ToastContext";
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -22,8 +23,7 @@ export default function DoctorSchedule() {
 
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
+  const toast = useToast();
   const [doctorName, setDoctorName] = useState("");
   const [schedules, setSchedules] = useState<any[]>([]);
 
@@ -35,7 +35,7 @@ export default function DoctorSchedule() {
         setDoctorName(`Dr. ${d.user?.firstName} ${d.user?.lastName}`);
         setSchedules(d.schedules || []);
       } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load schedule");
+        toast.error(err.response?.data?.message || "Failed to load schedule");
       } finally {
         setInitialLoad(false);
       }
@@ -62,13 +62,11 @@ export default function DoctorSchedule() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-
     try {
       await axiosInstance.put(`/hospital/doctors/${id}/schedule`, { schedules });
       navigate("/hospital/doctors");
     } catch (err: any) {
-      setError(err.response?.data?.message || "An error occurred");
+      toast.error(err.response?.data?.message || "An error occurred");
       setLoading(false);
     }
   };
@@ -114,14 +112,7 @@ export default function DoctorSchedule() {
           Cancel
         </Button>
       </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      <Paper sx={{ p: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
+<Paper sx={{ p: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
         <form onSubmit={handleSubmit}>
           {schedules.map((schedule, idx) => (
             <Box key={idx} sx={{ p: 2, mb: 3, bgcolor: "action.hover", borderRadius: 1, border: "1px solid", borderColor: "divider" }}>

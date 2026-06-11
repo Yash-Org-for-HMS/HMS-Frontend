@@ -1,12 +1,21 @@
 import { useState, useEffect, useRef } from "react";
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Chip, Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert } from "@mui/material";
-import { EditRounded, CloudUploadRounded, CheckCircleRounded, InsertDriveFileRounded } from "@mui/icons-material";
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Chip, Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab } from "@mui/material";
+import { VisibilityRounded, CheckCircleRounded, InsertDriveFileRounded, EditRounded, CloudUploadRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
+import { useSocket } from "../../hooks/useSocket";
+import { useQuery } from "@tanstack/react-query";
 
 export default function RadiologyOrdersQueue() {
-  const [orders, setOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: orders = [], isLoading: loading, refetch: fetchOrders } = useQuery({
+    queryKey: ["radiology-orders-queue"],
+    queryFn: async () => {
+      const res = await axiosInstance.get(`/lab/radiology-orders?t=${Date.now()}`);
+      return res.data.data || [];
+    },
+    refetchInterval: 30000,
+  });
+
   const [macros, setMacros] = useState<any[]>([]);
   const [selectedMacro, setSelectedMacro] = useState("");
   
@@ -17,10 +26,16 @@ export default function RadiologyOrdersQueue() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showPOS, setShowPOS] = useState(false);
+  const [tabValue, setTabValue] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Listen for real-time queue updates
+  useSocket({
+    QUEUE_UPDATED: () => fetchOrders(),
+    connect: () => fetchOrders(), // Refetch on socket reconnect
+  });
+
   useEffect(() => {
-    fetchOrders();
     fetchMacros();
   }, []);
 
@@ -33,17 +48,6 @@ export default function RadiologyOrdersQueue() {
     }
   };
 
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get("/lab/radiology-orders");
-      setOrders(res.data.data || []);
-    } catch (err) {
-      console.error("Failed to fetch radiology orders", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -113,9 +117,37 @@ export default function RadiologyOrdersQueue() {
     }
   };
 
+  const isToday = (dateString: string) => {
+    const today = new Date();
+    const date = new Date(dateString);
+    return date.getDate() === today.getDate() &&
+           date.getMonth() === today.getMonth() &&
+           date.getFullYear() === today.getFullYear();
+  };
+
+  const filteredOrders = orders.filter((order: any) => {
+    const today = isToday(order.orderDate);
+    const completed = order.status === "COMPLETED";
+    
+    if (tabValue === 0) return today && !completed; // Today's Pending
+    if (tabValue === 1) return !today && !completed; // Past Pending
+    if (tabValue === 2) return completed; // Completed
+    return true; // All
+  });
+
   return (
     <Box>
       <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>Radiology Orders</Typography>
+
+      <Paper sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}>
+        <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} variant="scrollable" scrollButtons="auto">
+          <Tab label="Today's Queue" />
+          <Tab label="Past Pending" />
+          <Tab label="Completed" />
+          <Tab label="All Orders" />
+        </Tabs>
+      </Paper>
+
       <Paper sx={{ p: 2, borderRadius: 3 }}>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}><CircularProgress /></Box>
@@ -134,7 +166,13 @@ export default function RadiologyOrdersQueue() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {orders.map((order) => (
+              {filteredOrders.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 3, color: "text.secondary" }}>
+                    No orders match the selected filter.
+                  </TableCell>
+                </TableRow>
+              ) : filteredOrders.map((order: any) => (
                 <TableRow key={order.radiologyOrderId} hover>
                   <TableCell sx={{ fontWeight: 600 }}>{order.scanType}</TableCell>
                   <TableCell>{order.patient?.firstName} {order.patient?.lastName}</TableCell>

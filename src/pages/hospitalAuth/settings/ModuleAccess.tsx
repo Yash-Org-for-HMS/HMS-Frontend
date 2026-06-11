@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { CheckCircleRounded, CancelRounded, UpgradeRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
+import { useToast } from "../../../contexts/ToastContext";
 
 interface ModuleAccessData {
   enabledModules: string[];
@@ -27,15 +28,14 @@ interface ModuleAccessData {
 export default function ModuleAccess() {
   const [data, setData] = useState<ModuleAccessData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+  const toast = useToast();
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axiosInstance.get("/hospital/module-access");
         setData(response.data.data);
       } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load module access data");
+        toast.error(err.response?.data?.message || "Failed to load module access data");
       } finally {
         setLoading(false);
       }
@@ -51,13 +51,6 @@ export default function ModuleAccess() {
     );
   }
 
-  if (error) {
-    return (
-      <Alert severity="error" sx={{ mb: 3 }}>
-        {error}
-      </Alert>
-    );
-  }
 
   return (
     <Box sx={{ maxWidth: 900, mx: "auto" }}>

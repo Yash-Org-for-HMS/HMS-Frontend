@@ -15,6 +15,15 @@ import BillingModal from "./BillingModal";
 import VitalsModal from "./VitalsModal";
 import { useSocket } from "../../hooks/useSocket";
 
+const getDoctorInitials = (doctorName?: string) => {
+  if (!doctorName || doctorName === "Unknown") return "";
+  const cleanName = doctorName.replace(/^Dr\.\s*/i, "");
+  const parts = cleanName.split(" ").filter(Boolean);
+  if (parts.length === 0) return "";
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
+
 export default function QueueDashboard() {
   const queryClient = useQueryClient();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -41,6 +50,9 @@ export default function QueueDashboard() {
   });
 
   const error = queryError ? "Failed to load queue" : null;
+
+  const activeTokens = tokens.filter((t: any) => t.statusCode !== "SKIPPED" && t.statusCode !== "COMPLETED" && t.statusCode !== "CANCELLED");
+  const skippedTokens = tokens.filter((t: any) => t.statusCode === "SKIPPED");
 
   // Listen for real-time queue updates
   const invalidateQueue = useCallback(() => queryClient.invalidateQueries({ queryKey: ['queue'] }), [queryClient]);
@@ -129,20 +141,26 @@ export default function QueueDashboard() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading && tokens.length === 0 ? (
+              {loading && activeTokens.length === 0 ? (
                 <TableRow><TableCell colSpan={6} align="center" sx={{ py: 4 }}><CircularProgress size={30} sx={{ color: "#06b6d4" }}/></TableCell></TableRow>
-              ) : tokens.length === 0 ? (
-                <TableRow><TableCell colSpan={6} align="center" sx={{ py: 6, color: "text.secondary" }}>No patients in queue today</TableCell></TableRow>
+              ) : activeTokens.length === 0 ? (
+                <TableRow><TableCell colSpan={6} align="center" sx={{ py: 6, color: "text.secondary" }}>No active patients in queue</TableCell></TableRow>
               ) : (
-                tokens.map(token => {
-                  const isWaiting = token.statusCode === 'WAITING_FOR_VITALS' || token.statusCode === 'READY_FOR_DOCTOR' || token.statusCode === 'SKIPPED';
+                activeTokens.map((token: any) => {
+                  const isWaiting = token.statusCode === 'WAITING_FOR_VITALS' || token.statusCode === 'READY_FOR_DOCTOR';
                   const isInProgress = token.statusCode === 'IN_CONSULTATION';
                   return (
                     <TableRow key={token.queueTokenId} sx={{ "&:hover": { bgcolor: "background.default" } }}>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                        <Avatar sx={{ bgcolor: token.statusColor || "#f59e0b", width: 40, height: 40, fontWeight: 800 }}>
-                          {token.displayNumber}
-                        </Avatar>
+                        <Chip 
+                          label={`${getDoctorInitials(token.doctorName)}-${token.displayNumber}`}
+                          sx={{ 
+                            bgcolor: token.statusColor || "#f59e0b", 
+                            color: "#fff", 
+                            fontWeight: 800,
+                            borderRadius: '8px'
+                          }} 
+                        />
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                         <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{token.patientName}</Typography>
@@ -203,6 +221,58 @@ export default function QueueDashboard() {
           </Table>
         </TableContainer>
       </Paper>
+
+      {/* Skipped Patients Section */}
+      {skippedTokens.length > 0 && (
+        <Box sx={{ mt: 6 }}>
+          <Typography variant="h6" sx={{ color: "text.secondary", fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            Skipped / Absent Patients
+            <Chip label={skippedTokens.length} size="small" sx={{ bgcolor: 'rgba(249,115,22,0.1)', color: '#f97316', fontWeight: 800 }} />
+          </Typography>
+          <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "rgba(249,115,22,0.2)", bgcolor: "rgba(249,115,22,0.02)", overflow: "hidden" }}>
+            <TableContainer>
+              <Table>
+                <TableBody>
+                  {skippedTokens.map((token: any) => (
+                    <TableRow key={token.queueTokenId} sx={{ opacity: 0.85, "&:hover": { opacity: 1, bgcolor: "rgba(249,115,22,0.05)" }, transition: 'all 0.2s' }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '10%' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#f97316' }}>{getDoctorInitials(token.doctorName)}-{token.displayNumber}</Typography>
+                      </TableCell>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '30%' }}>
+                        <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{token.patientName}</Typography>
+                      </TableCell>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '25%', color: "text.secondary", fontSize: "0.85rem" }}>
+                        {token.doctorName}
+                      </TableCell>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '15%' }}>
+                        <Chip
+                          label="Skipped" size="small"
+                          sx={{ bgcolor: `rgba(249,115,22,0.1)`, color: '#f97316', border: `1px solid rgba(249,115,22,0.3)`, fontWeight: 600, fontSize: "0.7rem" }}
+                        />
+                      </TableCell>
+                      <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '15%' }}>
+                        <Button
+                          size="small" variant="contained"
+                          startIcon={<PlayArrowRounded />}
+                          onClick={() => handleAction('call', token.queueTokenId)}
+                          sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, textTransform: "none", mr: 1 }}
+                        >
+                          Recall Patient
+                        </Button>
+                      </TableCell>
+                      <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '5%' }}>
+                        <IconButton size="small" onClick={(e) => handleMenuClick(e, token)} sx={{ color: "#f97316" }}>
+                          <MoreVertRounded fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        </Box>
+      )}
 
       <Menu
         anchorEl={anchorEl}

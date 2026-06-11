@@ -5,6 +5,7 @@ import {
 } from "@mui/material";
 import { SaveRounded, CameraAltRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 const DOCTOR_BLUE = "#3b82f6";
 
@@ -32,9 +33,7 @@ const scanTypes = [
 export default function RadiologyOrderForm({ consultationId, patientId, onRequireSave }: RadiologyOrderFormProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
+  const toast = useToast();
   const [existingOrders, setExistingOrders] = useState<any[]>([]);
 
   // Form state
@@ -62,15 +61,12 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
 
   const handleSubmit = async () => {
     if (!selectedScanType) {
-      setError("Please select a scan type.");
+      toast.error("Please select a scan type.");
       return;
     }
 
     try {
       setSaving(true);
-      setError(null);
-      setSuccess(null);
-
       let targetConsultationId = consultationId;
 
       if (!targetConsultationId) {
@@ -87,16 +83,14 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
         radiologistNotes
       });
 
-      setSuccess("Radiology order created successfully!");
+      toast.success("Radiology order created successfully!");
       setSelectedScanType("");
       setSelectedPriority(1);
       setRadiologistNotes("");
-      setTimeout(() => setSuccess(null), 3000);
-      
-      // Refresh list
+// Refresh list
       fetchExistingOrders(targetConsultationId);
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "Failed to create radiology order");
+      toast.error(err.response?.data?.message || err.message || "Failed to create radiology order");
     } finally {
       setSaving(false);
     }
@@ -104,10 +98,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      {success && <Alert severity="success">{success}</Alert>}
-      {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
-
-      <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, borderColor: "divider" }}>
+<Paper variant="outlined" sx={{ p: 2, borderRadius: 2, borderColor: "divider" }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>Create Radiology Order</Typography>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField

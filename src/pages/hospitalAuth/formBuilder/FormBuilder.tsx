@@ -17,6 +17,7 @@ import {
 import { SaveRounded, DeleteRounded, AddCircleOutlineRounded, DragIndicatorRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import { useToast } from "../../../contexts/ToastContext";
 
 const FIELD_TYPES = [
   { value: "text", label: "Text Input" },
@@ -33,8 +34,7 @@ export default function FormBuilder() {
 
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+  const toast = useToast();
   const [formData, setFormData] = useState({
     formName: "",
     formType: "Patient Registration",
@@ -62,7 +62,7 @@ export default function FormBuilder() {
       });
       setFields(t.fields || []);
     } catch (err: any) {
-      setError("Failed to load template");
+      toast.error("Failed to load template");
     } finally {
       setInitialLoad(false);
     }
@@ -100,10 +100,7 @@ export default function FormBuilder() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    // Prepare fields with sort order
+    setLoading(true);    // Prepare fields with sort order
     const processedFields = fields.map((f, i) => ({
       ...f,
       sortOrder: String(i)
@@ -122,7 +119,7 @@ export default function FormBuilder() {
       }
       navigate("/hospital/form-builder");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to save template");
+      toast.error(err.response?.data?.message || "Failed to save template");
       setLoading(false);
     }
   };
@@ -168,10 +165,7 @@ export default function FormBuilder() {
           Cancel
         </Button>
       </Box>
-
-      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
-
-      <form onSubmit={handleSave}>
+<form onSubmit={handleSave}>
         <Grid container spacing={4}>
           {/* Left Panel - Metadata */}
           <Grid size={{ xs: 12, md: 4 }}>

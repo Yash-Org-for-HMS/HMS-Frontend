@@ -15,6 +15,7 @@ import {
 import { SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import { useToast } from "../../../contexts/ToastContext";
 
 interface Permission {
   permissionId: string;
@@ -34,8 +35,7 @@ export default function RoleForm() {
 
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+  const toast = useToast();
   const [groupedPermissions, setGroupedPermissions] = useState<Record<string, Permission[]>>({});
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   
@@ -75,7 +75,7 @@ export default function RoleForm() {
           setSelectedPermissions(pIds);
         }
       } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load data");
+        toast.error(err.response?.data?.message || "Failed to load data");
       } finally {
         setInitialLoad(false);
       }
@@ -86,7 +86,6 @@ export default function RoleForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setError(null);
   };
 
   const handlePermissionToggle = (permissionId: string) => {
@@ -111,8 +110,6 @@ export default function RoleForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-
     try {
       const payload = {
         ...formData,
@@ -126,7 +123,7 @@ export default function RoleForm() {
       }
       navigate("/hospital/roles");
     } catch (err: any) {
-      setError(err.response?.data?.message || "An error occurred");
+      toast.error(err.response?.data?.message || "An error occurred");
       setLoading(false);
     }
   };
@@ -171,14 +168,7 @@ export default function RoleForm() {
           Cancel
         </Button>
       </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      <form onSubmit={handleSubmit}>
+<form onSubmit={handleSubmit}>
         <Paper sx={{ p: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, mb: 4 }}>
           <Typography variant="h6" sx={{ color: "text.primary", mb: 3 }}>Role Details</Typography>
           <Grid container spacing={3}>

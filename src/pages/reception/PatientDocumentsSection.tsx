@@ -8,12 +8,13 @@ import {
   CloudUploadRounded, DeleteRounded, VisibilityRounded, InsertDriveFileRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 export default function PatientDocumentsSection({ patientId }: { patientId: string }) {
   const [documents, setDocuments] = useState<any[]>([]);
   const [documentTypes, setDocumentTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const toast = useToast();
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   
@@ -29,7 +30,7 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
         setDocuments(res.data.data);
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load documents");
+      toast.error(err.response?.data?.message || "Failed to load documents");
     } finally {
       setLoading(false);
     }
@@ -61,7 +62,7 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
     if (!file || !selectedType) return;
     try {
       setUploading(true);
-      setError("");
+      toast.error("");
       
       const typeInfo = documentTypes.find(t => t.documentTypeId === selectedType);
       
@@ -81,7 +82,7 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
         fetchDocuments();
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to upload document");
+      toast.error(err.response?.data?.message || "Failed to upload document");
     } finally {
       setUploading(false);
     }
@@ -96,7 +97,7 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
         fetchDocuments();
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to delete document");
+      toast.error(err.response?.data?.message || "Failed to delete document");
       setLoading(false);
     }
   };
@@ -120,10 +121,7 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
           Upload Document
         </Button>
       </Box>
-
-      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
-
-      {loading ? (
+{loading ? (
         <Box sx={{ textAlign: "center", py: 5 }}>
           <CircularProgress sx={{ color: "#06b6d4" }} />
         </Box>

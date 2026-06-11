@@ -38,9 +38,11 @@ import {
   WcRounded,
   CalendarMonthRounded,
   QueuePlayNextRounded,
+  ContentCopyRounded,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 interface Patient {
   patientId: string;
@@ -69,6 +71,7 @@ interface Meta {
 export default function PatientsList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -78,7 +81,7 @@ export default function PatientsList() {
     patient: null,
   });
   
-  const searchRef = useRef<NodeJS.Timeout | null>(null);
+  const searchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data, isLoading: loading, error } = useQuery({
     queryKey: ["patients", search, page],
@@ -103,7 +106,7 @@ export default function PatientsList() {
       queryClient.invalidateQueries({ queryKey: ["patients"] });
     },
     onError: (err: any) => {
-      setError(err.response?.data?.message || "Failed to delete patient");
+      toast.error(err.response?.data?.message || "Failed to delete patient");
     }
   });
 
@@ -210,7 +213,7 @@ export default function PatientsList() {
         </Box>
 
         {error && typeof error === "string" && (
-          <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5" }} onClose={() => setError(null)}>
+          <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5" }}>
             {error}
           </Alert>
         )}
@@ -285,7 +288,7 @@ export default function PatientsList() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  patients.map((patient) => (
+                  patients.map((patient: Patient) => (
                     <TableRow
                       key={patient.patientId}
                       sx={{
@@ -321,19 +324,24 @@ export default function PatientsList() {
                       </TableCell>
                       {/* MRN */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
-                        <Chip
-                          icon={<BadgeRounded sx={{ fontSize: "14px !important" }} />}
-                          label={patient.uhidNumber}
-                          size="small"
-                          sx={{
-                            bgcolor: "rgba(6, 182, 212, 0.08)",
-                            color: "#06b6d4",
-                            border: "1px solid", borderColor: "divider",
-                            fontWeight: 700,
-                            fontFamily: "monospace",
-                            fontSize: "0.78rem",
-                          }}
-                        />
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <Chip
+                            icon={<BadgeRounded sx={{ fontSize: "14px !important" }} />}
+                            label={patient.uhidNumber}
+                            size="small"
+                            sx={{
+                              bgcolor: "rgba(6, 182, 212, 0.08)",
+                              color: "#06b6d4",
+                              border: "1px solid", borderColor: "divider",
+                              fontWeight: 700,
+                              fontFamily: "monospace",
+                              fontSize: "0.78rem",
+                            }}
+                          />
+                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(patient.uhidNumber); }} sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4" } }}>
+                            <ContentCopyRounded sx={{ fontSize: "1rem" }} />
+                          </IconButton>
+                        </Box>
                       </TableCell>
                       {/* Age / DOB */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>

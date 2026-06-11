@@ -17,6 +17,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useToast } from "../../contexts/ToastContext";
 
 // Available modules in the system that can be part of a plan
 const AVAILABLE_MODULES = [
@@ -32,8 +33,7 @@ export default function PlanForm() {
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(isEdit);
-  const [error, setError] = useState<string | null>(null);
-
+  const toast = useToast();
   const [formData, setFormData] = useState<any>({
     planName: "",
     monthlyPrice: "",
@@ -60,7 +60,7 @@ export default function PlanForm() {
             featuresJson: Array.isArray(d.featuresJson) ? d.featuresJson : [],
           });
         } catch (err) {
-          setError(t("common.error"));
+          toast.error(t("common.error"));
         } finally {
           setInitialLoading(false);
         }
@@ -80,7 +80,6 @@ export default function PlanForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
     try {
       if (isEdit) {
         await axiosInstance.put(`/plans/${id}`, formData);
@@ -89,7 +88,7 @@ export default function PlanForm() {
       }
       navigate("/plans");
     } catch (err: any) {
-      setError(err.response?.data?.message || t("common.error"));
+      toast.error(err.response?.data?.message || t("common.error"));
     } finally {
       setLoading(false);
     }
@@ -123,10 +122,7 @@ export default function PlanForm() {
           </Typography>
         </Box>
       </Box>
-
-      {error && <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>{error}</Alert>}
-
-      <Paper
+<Paper
         elevation={2}
         sx={{
           p: { xs: 3, md: 5 },

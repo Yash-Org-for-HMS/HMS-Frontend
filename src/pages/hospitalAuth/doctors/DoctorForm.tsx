@@ -15,6 +15,7 @@ import {
 import { SaveRounded, PersonRounded, LocalHospitalRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import { useToast } from "../../../contexts/ToastContext";
 
 export default function DoctorForm() {
   const navigate = useNavigate();
@@ -22,8 +23,7 @@ export default function DoctorForm() {
 
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
+  const toast = useToast();
   const [tabIndex, setTabIndex] = useState(0);
 
   const [departments, setDepartments] = useState<any[]>([]);
@@ -71,7 +71,7 @@ export default function DoctorForm() {
           });
         }
       } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load data");
+        toast.error(err.response?.data?.message || "Failed to load data");
       } finally {
         setInitialLoad(false);
       }
@@ -82,20 +82,17 @@ export default function DoctorForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-
     try {
       if (!id) throw new Error("Invalid Doctor ID");
       await axiosInstance.put(`/hospital/doctors/${id}`, formData);
       navigate("/hospital/doctors");
     } catch (err: any) {
-      setError(err.response?.data?.message || "An error occurred");
+      toast.error(err.response?.data?.message || "An error occurred");
       setLoading(false);
     }
   };
@@ -141,14 +138,7 @@ export default function DoctorForm() {
           Cancel
         </Button>
       </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      <Paper sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, overflow: "hidden" }}>
+<Paper sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, overflow: "hidden" }}>
         <Tabs
           value={tabIndex}
           onChange={(_, val) => setTabIndex(val)}
