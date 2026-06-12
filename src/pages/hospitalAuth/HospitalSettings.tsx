@@ -78,7 +78,7 @@ export default function HospitalSettings() {
     whatsappEnabled: false,
 
     // Billing Defaults
-    currencyCode: "USD",
+    currencyCode: "INR",
     taxPercentage: 0,
     invoicePrefix: "INV-",
 
@@ -109,7 +109,7 @@ export default function HospitalSettings() {
         smsEnabled: settings.smsEnabled ?? true,
         emailEnabled: settings.emailEnabled ?? true,
         whatsappEnabled: settings.whatsappEnabled ?? false,
-        currencyCode: settings.currencyCode || "USD",
+        currencyCode: settings.currencyCode || "INR",
         taxPercentage: settings.taxPercentage ?? 0,
         invoicePrefix: settings.invoicePrefix || "INV-",
         vitalsCollector: (settings.vitalsCollector as "RECEPTIONIST" | "NURSE") || "RECEPTIONIST",

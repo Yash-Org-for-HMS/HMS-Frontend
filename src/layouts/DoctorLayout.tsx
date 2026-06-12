@@ -13,6 +13,7 @@ import {
   LocalHospitalRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
+import { assetUrl } from "../utils/assetUrl";
 
 const drawerWidth = 260;
 const DOCTOR_BLUE = "#3b82f6";
@@ -69,7 +70,7 @@ export default function DoctorLayout() {
           }}
         >
           {hospital?.logoUrl ? (
-            <img src={`http://localhost:5000${hospital.logoUrl}`} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src={assetUrl(hospital.logoUrl)} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : (
             <LocalHospitalRounded fontSize="small" sx={{ color: "#fff" }} />
           )}
