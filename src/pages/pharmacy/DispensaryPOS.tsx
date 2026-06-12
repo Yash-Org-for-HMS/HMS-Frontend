@@ -10,10 +10,15 @@ import { axiosInstance } from "../../api/axios";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
 import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
+import PharmacyPage, { ROWS_PER_PAGE } from "./components/PharmacyPage";
+import { useToast } from "../../contexts/ToastContext";
+import { useConfirm } from "../../contexts/ConfirmContext";
 
 export default function DispensaryPOS() {
   const theme = useTheme();
   const location = useLocation();
+  const toast = useToast();
+  const confirm = useConfirm();
   const { data, isLoading: loading, refetch: fetchData } = useQuery({
     queryKey: ["dispensary-pos-data"],
     queryFn: async () => {
@@ -49,7 +54,7 @@ export default function DispensaryPOS() {
   
   // Pagination for Today's Orders
   const [page, setPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = ROWS_PER_PAGE;
 
   const todaysOrders = useMemo(() => {
     const today = new Date();
@@ -96,7 +101,7 @@ export default function DispensaryPOS() {
     return medicines.map((med: any) => ({
       ...med,
       inStock: medicineStock[med.medicineId] || 0,
-      label: `${med.medicineName} (${med.genericName}) - $${parseFloat(med.sellingPrice).toFixed(2)}`
+      label: `${med.medicineName} (${med.genericName}) - ₹${parseFloat(med.sellingPrice).toFixed(2)}`
     }));
   }, [medicines, medicineStock]);
 
@@ -104,7 +109,7 @@ export default function DispensaryPOS() {
     if (!orderToCancel) return;
     const finalReason = cancelReasonType === "Other" ? cancelReasonText : cancelReasonType;
     if (!finalReason.trim()) {
-      alert("Please provide a reason");
+      toast.error("Please provide a reason");
       return;
     }
     try {
@@ -115,7 +120,7 @@ export default function DispensaryPOS() {
       fetchData();
     } catch (err) {
       console.error(err);
-      alert("Failed to cancel order");
+      toast.error("Failed to cancel order");
     } finally {
       setCancelling(false);
     }
@@ -125,7 +130,7 @@ export default function DispensaryPOS() {
     if (!prescriptionToDismiss) return;
     const finalReason = dismissReasonType === "Other" ? dismissReasonText : dismissReasonType;
     if (!finalReason.trim()) {
-      alert("Please provide a reason");
+      toast.error("Please provide a reason");
       return;
     }
     try {
@@ -139,14 +144,19 @@ export default function DispensaryPOS() {
       fetchData();
     } catch (err) {
       console.error(err);
-      alert("Failed to dismiss prescription");
+      toast.error("Failed to dismiss prescription");
     } finally {
       setDismissing(false);
     }
   };
 
   const handleEditOrder = async (order: any) => {
-    if (window.confirm("Editing an order will require cancelling this order and creating a new one in the POS. Proceed?")) {
+    const ok = await confirm({
+      title: "Edit order",
+      message: "Editing an order will cancel it and create a new one in the POS. Proceed?",
+      confirmText: "Proceed",
+    });
+    if (ok) {
       try {
         setCancelling(true);
         await axiosInstance.put(`/pharmacy/orders/${order.pharmacyOrderId}/cancel`, { reason: "Editing Order" });
@@ -165,7 +175,7 @@ export default function DispensaryPOS() {
         });
         setCart(initialCart);
       } catch (err: any) {
-        alert(err.response?.data?.message || "Failed to cancel order for editing");
+        toast.error(err.response?.data?.message || "Failed to cancel order for editing");
       } finally {
         setCancelling(false);
         fetchData();
@@ -195,7 +205,7 @@ export default function DispensaryPOS() {
       setCart(initialCart);
       
       if (missingItems.length > 0) {
-        alert(`Some items from the edited order were not found:\n- ${missingItems.join('\n- ')}`);
+        toast.warning(`Some items from the edited order were not found: ${missingItems.join(', ')}`);
       }
       
       // Clear state so it doesn't trigger again on refresh
@@ -206,23 +216,23 @@ export default function DispensaryPOS() {
   const addToCart = (medicine: any, quantity: number = 1) => {
     if (!medicine) return;
     if (medicine.inStock <= 0) {
-      alert("Item is out of stock!");
+      toast.error("Item is out of stock!");
       return;
     }
     if (quantity <= 0) {
-      alert("Quantity must be greater than 0.");
+      toast.error("Quantity must be greater than 0.");
       return;
     }
     const existing = cart.find(item => item.medicineId === medicine.medicineId);
     if (existing) {
       if (existing.quantity + quantity > medicine.inStock) {
-        alert(`Cannot exceed available stock for ${medicine.medicineName}!`);
+        toast.error(`Cannot exceed available stock for ${medicine.medicineName}!`);
         return;
       }
       setCart(cart.map(item => item.medicineId === medicine.medicineId ? { ...item, quantity: item.quantity + quantity } : item));
     } else {
       if (medicine.inStock < quantity) {
-        alert(`Not enough stock for ${medicine.medicineName}!`);
+        toast.error(`Not enough stock for ${medicine.medicineName}!`);
         return;
       }
       setCart(prev => [...prev, { 
@@ -246,7 +256,7 @@ export default function DispensaryPOS() {
       
       if (match) {
         if (match.inStock < item.quantity) {
-          alert(`Not enough stock for ${match.medicineName}! Available: ${match.inStock}`);
+          toast.error(`Not enough stock for ${match.medicineName}! Available: ${match.inStock}`);
         } else {
           newCart.push({
             ...match,
@@ -262,7 +272,7 @@ export default function DispensaryPOS() {
     setCart(newCart);
 
     if (missingItems.length > 0) {
-      alert(`The following prescribed items were not found in stock or catalog:\n- ${missingItems.join('\n- ')}\n\nPlease add a generic substitute manually.`);
+      toast.warning(`Some prescribed items were not found in stock/catalog: ${missingItems.join(', ')}. Add a generic substitute manually.`);
     }
   };
 
@@ -272,7 +282,7 @@ export default function DispensaryPOS() {
         const newQty = item.quantity + delta;
         if (newQty <= 0) return item;
         if (newQty > item.inStock) {
-          alert("Cannot exceed available stock!");
+          toast.error("Cannot exceed available stock!");
           return item;
         }
         return { ...item, quantity: newQty };
@@ -306,14 +316,14 @@ export default function DispensaryPOS() {
       setShowPOS(true);
     } catch (err) {
       console.error(err);
-      alert("Failed to process sale");
+      toast.error("Failed to process sale");
     } finally {
       setProcessing(false);
     }
   };
 
   const handlePOSSuccess = () => {
-    alert("Sale completed and paid successfully!");
+    toast.success("Sale completed and paid successfully!");
     setCart([]);
     setPatientId("");
     setSelectedPrescriptionId(null);
@@ -326,11 +336,11 @@ export default function DispensaryPOS() {
     try {
       if (createdOrder) {
         await axiosInstance.put(`/pharmacy/orders/${createdOrder.pharmacyOrderId}/cancel`, { reason: "Payment aborted" });
-        alert("Payment cancelled. The draft order was automatically removed and inventory restored.");
+        toast.info("Payment cancelled. The draft order was automatically removed and inventory restored.");
       }
     } catch (err) {
       console.error(err);
-      alert("Payment cancelled, but failed to automatically remove the order. You may need to cancel it from Order History.");
+      toast.warning("Payment cancelled, but failed to automatically remove the order. You may need to cancel it from Order History.");
     }
     
     setCart([]);
@@ -341,30 +351,16 @@ export default function DispensaryPOS() {
   };
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1600, mx: "auto" }}>
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box>
-          <Typography variant="h4" sx={{ 
-            fontWeight: 800, 
-            background: 'linear-gradient(135deg, #4F46E5 0%, #EC4899 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5
-          }}>
-            <PointOfSaleRounded fontSize="large" sx={{ color: '#4F46E5' }} />
-            Dispensary & POS
-          </Typography>
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 0.5 }}>
-            Process sales, auto-load prescriptions, and auto-deduct inventory.
-          </Typography>
-        </Box>
+    <PharmacyPage
+      title="Dispensary & POS"
+      subtitle="Process sales, auto-load prescriptions, and auto-deduct inventory."
+      icon={<PointOfSaleRounded fontSize="large" sx={{ color: '#4F46E5' }} />}
+      action={
         <Button variant="outlined" onClick={() => { setCart([]); setSelectedPrescriptionId(null); setPatientId(""); }}>
           Clear Cart
         </Button>
-      </Box>
-
+      }
+    >
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
           <CircularProgress size={48} thickness={4} />
@@ -457,7 +453,7 @@ export default function DispensaryPOS() {
                         <Typography variant="caption" color="text.secondary">{option.genericName}</Typography>
                       </Box>
                       <Box textAlign="right">
-                        <Typography variant="body2" fontWeight={600} color="#10B981">${parseFloat(option.sellingPrice).toFixed(2)}</Typography>
+                        <Typography variant="body2" fontWeight={600} color="#10B981">₹{parseFloat(option.sellingPrice).toFixed(2)}</Typography>
                         <Typography variant="caption" color={option.inStock > 0 ? "text.secondary" : "error"}>
                           Stock: {option.inStock}
                         </Typography>
@@ -509,7 +505,7 @@ export default function DispensaryPOS() {
                           <Typography variant="body1" fontWeight={700} color="text.primary">{item.medicineName}</Typography>
                           <Typography variant="caption" color="text.secondary">{item.genericName}</Typography>
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 600, color: "text.secondary" }}>${item.unitPrice.toFixed(2)}</TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: "text.secondary" }}>₹{item.unitPrice.toFixed(2)}</TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <IconButton size="small" onClick={() => updateQuantity(item.medicineId, -1)}><RemoveCircleRounded fontSize="small" /></IconButton>
@@ -517,7 +513,7 @@ export default function DispensaryPOS() {
                             <IconButton size="small" onClick={() => updateQuantity(item.medicineId, 1)} color="primary"><AddCircleRounded fontSize="small" /></IconButton>
                           </Box>
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 800, color: "#10B981", fontSize: '1.1rem' }}>${(item.quantity * item.unitPrice).toFixed(2)}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 800, color: "#10B981", fontSize: '1.1rem' }}>₹{(item.quantity * item.unitPrice).toFixed(2)}</TableCell>
                         <TableCell align="right">
                           <IconButton size="small" color="error" onClick={() => removeFromCart(item.medicineId)}>
                             <DeleteRounded fontSize="small" />
@@ -532,10 +528,10 @@ export default function DispensaryPOS() {
               {/* Merged Checkout Footer */}
               <Box sx={{ flexShrink: 0, p: 2, bgcolor: alpha(theme.palette.primary.main, 0.02), borderRadius: 2, border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, flexDirection: { xs: 'column', md: 'row' } }}>
                 <Box>
-                  <Typography color="text.secondary" variant="body2" sx={{ mb: 0.5 }}>Subtotal: ${cartTotal.toFixed(2)} | Tax: $0.00</Typography>
+                  <Typography color="text.secondary" variant="body2" sx={{ mb: 0.5 }}>Subtotal: ₹{cartTotal.toFixed(2)} | Tax: ₹0.00</Typography>
                   <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
                     <Typography variant="h5" fontWeight={800}>Total:</Typography>
-                    <Typography variant="h4" fontWeight={800} color="#10B981">${cartTotal.toFixed(2)}</Typography>
+                    <Typography variant="h4" fontWeight={800} color="#10B981">₹{cartTotal.toFixed(2)}</Typography>
                   </Box>
                 </Box>
                 
@@ -724,6 +720,6 @@ export default function DispensaryPOS() {
           }}
         />
       )}
-    </Box>
+    </PharmacyPage>
   );
 }

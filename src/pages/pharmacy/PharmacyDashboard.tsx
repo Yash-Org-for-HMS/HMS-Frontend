@@ -4,10 +4,11 @@ import {
   Box, Typography, Grid, Paper, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, alpha, useTheme,
   Tabs, Tab, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Select, MenuItem, TextField, Chip, Tooltip
 } from "@mui/material";
-import { 
-  MedicationRounded, LocalShippingRounded, WarningRounded, PointOfSaleRounded
+import {
+  MedicationRounded, LocalShippingRounded, WarningRounded, PointOfSaleRounded, DashboardRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import PharmacyPage from "./components/PharmacyPage";
 
 export default function PharmacyDashboard() {
   const theme = useTheme();
@@ -17,21 +18,24 @@ export default function PharmacyDashboard() {
   const [inventory, setInventory] = useState<any[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
   const [sales, setSales] = useState<any[]>([]);
+  const [lowStockAlerts, setLowStockAlerts] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const [medRes, invRes, poRes, salesRes] = await Promise.all([
+        const [medRes, invRes, poRes, salesRes, alertsRes] = await Promise.all([
           axiosInstance.get("/pharmacy/medicines"),
           axiosInstance.get("/pharmacy/inventory"),
           axiosInstance.get("/pharmacy/purchase-orders"),
-          axiosInstance.get("/pharmacy/orders")
+          axiosInstance.get("/pharmacy/orders"),
+          axiosInstance.get("/pharmacy/low-stock-alerts")
         ]);
         setMedicines(medRes.data.data || []);
         setInventory(invRes.data.data || []);
         setPurchaseOrders(poRes.data.data || []);
         setSales(salesRes.data.data || []);
+        setLowStockAlerts(alertsRes.data.data || []);
       } catch (err) {
         console.error("Failed to fetch dashboard data", err);
       } finally {
@@ -42,7 +46,6 @@ export default function PharmacyDashboard() {
     fetchDashboardData();
   }, []);
 
-  const lowStockItems = inventory.filter(inv => inv.availableQuantity <= inv.reorderLevel);
   const pendingPOs = purchaseOrders.filter(po => po.status === 'pending');
   const totalSalesValue = sales.reduce((sum, order) => sum + parseFloat(order.totalAmount || 0), 0);
 
@@ -61,24 +64,11 @@ export default function PharmacyDashboard() {
   );
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1400, mx: "auto" }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ 
-          fontWeight: 800, 
-          background: 'linear-gradient(135deg, #4F46E5 0%, #EC4899 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.5
-        }}>
-          Dashboard Overview
-        </Typography>
-        <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 0.5 }}>
-          Pharmacy summary, low stock alerts, and recent activities.
-        </Typography>
-      </Box>
-
+    <PharmacyPage
+      title="Dashboard Overview"
+      subtitle="Pharmacy summary, low stock alerts, and recent activities."
+      icon={<DashboardRounded fontSize="large" sx={{ color: '#4F46E5' }} />}
+    >
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
           <CircularProgress size={48} thickness={4} />
@@ -97,7 +87,7 @@ export default function PharmacyDashboard() {
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
                     title="Low Stock Alerts" 
-                    value={lowStockItems.length} 
+                    value={lowStockAlerts.length} 
                     icon={<WarningRounded sx={{ fontSize: 32, color: '#EF4444' }} />} 
                     color="#EF4444"
                   />
@@ -113,7 +103,7 @@ export default function PharmacyDashboard() {
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
                     title="Total Sales" 
-                    value={`$${totalSalesValue.toFixed(2)}`} 
+                    value={`₹${totalSalesValue.toFixed(2)}`}
                     icon={<PointOfSaleRounded sx={{ fontSize: 32, color: '#10B981' }} />} 
                     color="#10B981"
                   />
@@ -137,13 +127,13 @@ export default function PharmacyDashboard() {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {lowStockItems.length === 0 ? (
+                        {lowStockAlerts.length === 0 ? (
                           <TableRow><TableCell colSpan={3} align="center" sx={{ py: 3 }}>No low stock items</TableCell></TableRow>
-                        ) : lowStockItems.map(item => (
-                          <TableRow key={item.inventoryId}>
-                            <TableCell sx={{ fontWeight: 600 }}>{getMedicineName(item.medicineId)}</TableCell>
-                            <TableCell sx={{ color: 'error.main', fontWeight: 700 }}>{item.availableQuantity}</TableCell>
-                            <TableCell>{item.reorderLevel}</TableCell>
+                        ) : lowStockAlerts.map(item => (
+                          <TableRow key={item.medicineId}>
+                            <TableCell sx={{ fontWeight: 600 }}>{item.medicineName}</TableCell>
+                            <TableCell sx={{ color: 'error.main', fontWeight: 700 }}>{item.currentStock}</TableCell>
+                            <TableCell>{item.minStockLevel}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -173,7 +163,7 @@ export default function PharmacyDashboard() {
                           <TableRow key={sale.pharmacyOrderId}>
                             <TableCell sx={{ fontFamily: 'monospace' }}>{sale.pharmacyOrderId.split('-')[0].toUpperCase()}</TableCell>
                             <TableCell>{new Date(sale.createdAt).toLocaleString()}</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, color: '#10B981' }}>${parseFloat(sale.totalAmount).toFixed(2)}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, color: '#10B981' }}>₹{parseFloat(sale.totalAmount).toFixed(2)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -183,6 +173,6 @@ export default function PharmacyDashboard() {
               </Grid>
             </>
       )}
-    </Box>
+    </PharmacyPage>
   );
 }
