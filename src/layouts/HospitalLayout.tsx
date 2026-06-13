@@ -43,6 +43,7 @@ import {
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import { assetUrl } from "../utils/assetUrl";
+import BranchSwitcher from "../components/BranchSwitcher";
 
 const drawerWidth = 260;
 
@@ -272,6 +273,10 @@ export default function HospitalLayout() {
           </Box>
       </Box>
     
+      <Box sx={{ px: 2, pb: 1 }}>
+        <BranchSwitcher />
+      </Box>
+
       <Box sx={{ p: 2 }}>
         <Typography variant="caption" sx={{ color: "text.secondary" }}>
           © {new Date().getFullYear()} HMS SaaS

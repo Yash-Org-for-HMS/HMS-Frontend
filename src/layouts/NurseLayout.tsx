@@ -16,6 +16,7 @@ import {
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import { assetUrl } from "../utils/assetUrl";
+import BranchSwitcher from "../components/BranchSwitcher";
 
 const drawerWidth = 260;
 const NURSE_PURPLE = "#a78bfa";
@@ -138,6 +139,11 @@ export default function NurseLayout() {
       </List>
 
       <Divider sx={{ borderColor: `rgba(167,139,250,0.1)` }} />
+
+      {/* Branch switcher (only shown to multi-branch users) */}
+      <Box sx={{ px: 2, pt: 2 }}>
+        <BranchSwitcher />
+      </Box>
 
       {/* User card at bottom */}
       <Box sx={{ p: 2 }}>

@@ -31,6 +31,10 @@ import {
   TimerOffRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
 
 export default function TrialsList() {
   const { t } = useTranslation();
@@ -116,32 +120,24 @@ export default function TrialsList() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("trials.title")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("trials.subtitle")}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/trials/new")}
-          sx={{
-            background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)",
-            boxShadow: "0 4px 14px 0 rgba(236, 72, 153, 0.39)",
-            borderRadius: 2,
-          }}
-        >
-          {t("trials.addTrial")}
-        </Button>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title={t("trials.title")}
+        subtitle={t("trials.subtitle")}
+        actions={
+          <ActionButton
+            accentFrom="#ec4899"
+            accentTo="#db2777"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/trials/new")}
+          >
+            {t("trials.addTrial")}
+          </ActionButton>
+        }
+      />
 
       {/* Filters */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+      <FilterBar>
         <TextField
           placeholder={t("trials.searchPlaceholder")}
           value={search}
@@ -175,7 +171,7 @@ export default function TrialsList() {
           <MenuItem value="expired">{t("trials.statusExpired")}</MenuItem>
           <MenuItem value="converted">{t("trials.statusConverted")}</MenuItem>
         </TextField>
-      </Box>
+      </FilterBar>
 
       <Paper
         elevation={2}
@@ -279,7 +275,7 @@ export default function TrialsList() {
         </MenuItem>
       </Menu>
 
-    </Container>
+    </PageContainer>
   );
 }
 

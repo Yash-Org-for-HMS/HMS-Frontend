@@ -27,6 +27,10 @@ import {
   SearchRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
 
 export default function SuperAdminsList() {
   const { t } = useTranslation();
@@ -58,32 +62,24 @@ export default function SuperAdminsList() {
   }, [page, search]);
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("superAdmins.title", "Super Admins")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("superAdmins.subtitle", "Manage global system administrators")}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/super-admins/new")}
-          sx={{
-            background: "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)",
-            boxShadow: "0 4px 14px 0 rgba(139, 92, 246, 0.39)",
-            borderRadius: 2,
-          }}
-        >
-          {t("superAdmins.addAdmin", "Add Admin")}
-        </Button>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title={t("superAdmins.title", "Super Admins")}
+        subtitle={t("superAdmins.subtitle", "Manage global system administrators")}
+        actions={
+          <ActionButton
+            accentFrom="#8b5cf6"
+            accentTo="#6d28d9"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/super-admins/new")}
+          >
+            {t("superAdmins.addAdmin", "Add Admin")}
+          </ActionButton>
+        }
+      />
 
       {/* Filters */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+      <FilterBar>
         <TextField
           placeholder={t("superAdmins.searchPlaceholder", "Search by name or email...")}
           value={search}
@@ -98,7 +94,7 @@ export default function SuperAdminsList() {
             ),
           }}
         />
-      </Box>
+      </FilterBar>
 
       <Paper
         elevation={2}
@@ -191,7 +187,7 @@ export default function SuperAdminsList() {
           </Box>
         )}
       </Paper>
-    </Container>
+    </PageContainer>
   );
 }
 

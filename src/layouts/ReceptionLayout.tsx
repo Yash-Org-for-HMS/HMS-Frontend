@@ -38,6 +38,7 @@ import {
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import { assetUrl } from "../utils/assetUrl";
+import BranchSwitcher from "../components/BranchSwitcher";
 
 const drawerWidth = 260;
 
@@ -190,6 +191,11 @@ export default function ReceptionLayout() {
       </List>
 
       <Divider sx={{ borderColor: "rgba(6, 182, 212, 0.1)" }} />
+
+      {/* Branch switcher (only shown to multi-branch users) */}
+      <Box sx={{ px: 2, pt: 2 }}>
+        <BranchSwitcher />
+      </Box>
 
       {/* User card at bottom */}
       <Box sx={{ p: 2 }}>

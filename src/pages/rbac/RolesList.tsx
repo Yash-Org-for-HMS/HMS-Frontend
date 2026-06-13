@@ -20,13 +20,36 @@ import {
   InputAdornment,
   Pagination,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import {
   AddRounded,
   EditRounded,
   SearchRounded,
+  CleaningServicesRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
+
+// Mirrors backend/src/lib/roleCatalog.ts — the standard set seeded into every
+// hospital. Anything outside this list is treated as a custom (tenant) role.
+const SYSTEM_ROLES: { code: string; name: string }[] = [
+  { code: "H_ADMIN", name: "Hospital Admin" },
+  { code: "B_ADMIN", name: "Branch Admin" },
+  { code: "DOCTOR", name: "Doctor" },
+  { code: "NURSE", name: "Nurse" },
+  { code: "RECEPTIONIST", name: "Receptionist" },
+  { code: "PHARMACIST", name: "Pharmacist" },
+  { code: "LAB_TECH", name: "Lab Technician" },
+];
+const SYSTEM_ROLE_CODES = SYSTEM_ROLES.map((r) => r.code);
 
 export default function RolesList() {
   const { t } = useTranslation();
@@ -38,14 +61,33 @@ export default function RolesList() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
 
+  // Role cleanup (remove non-standard roles that have no users)
+  const [cleanupOpen, setCleanupOpen] = useState(false);
+  const [cleaning, setCleaning] = useState(false);
+  const [cleanupResult, setCleanupResult] = useState<any | null>(null);
+
+  const handleCleanup = async () => {
+    setCleaning(true);
+    try {
+      const res = await axiosInstance.post("/rbac/roles/cleanup");
+      setCleanupOpen(false);
+      setCleanupResult(res.data.data);
+      fetchRoles();
+    } catch (error) {
+      console.error("Failed to clean up roles", error);
+    } finally {
+      setCleaning(false);
+    }
+  };
+
   const fetchRoles = async () => {
     setLoading(true);
     try {
+      // Fetch all roles so we can group them; the page is presentational, not paged.
       const response = await axiosInstance.get("/rbac/roles", {
-        params: { page, limit: 10, search }
+        params: { limit: 1000, search }
       });
       setRoles(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
     } catch (error) {
       console.error("Failed to fetch roles", error);
     } finally {
@@ -55,39 +97,73 @@ export default function RolesList() {
 
   useEffect(() => {
     fetchRoles();
-  }, [page, search]);
+  }, [search]);
+
+  const q = search.trim().toLowerCase();
+  const matches = (code: string, name: string) =>
+    !q || code.toLowerCase().includes(q) || (name || "").toLowerCase().includes(q);
+
+  // Standard roles: aggregate the per-hospital copies into one row per code.
+  const systemRows = SYSTEM_ROLES
+    .map((sr) => {
+      const copies = roles.filter((r) => r.roleCode === sr.code);
+      return {
+        code: sr.code,
+        name: sr.name,
+        hospitals: copies.length,
+        users: copies.reduce((sum, r) => sum + (r._count?.users || 0), 0),
+      };
+    })
+    .filter((row) => matches(row.code, row.name));
+
+  // Custom roles: anything not in the standard set, grouped by hospital.
+  const customRoles = roles.filter(
+    (r) => !SYSTEM_ROLE_CODES.includes(r.roleCode) && matches(r.roleCode, r.roleName),
+  );
+  const customByHospital = Object.values(
+    customRoles.reduce((acc: Record<string, { hospitalName: string; roles: any[] }>, r) => {
+      const key = r.hospital?.hospitalName || "Unknown";
+      if (!acc[key]) acc[key] = { hospitalName: key, roles: [] };
+      acc[key].roles.push(r);
+      return acc;
+    }, {}),
+  ).sort((a, b) => a.hospitalName.localeCompare(b.hospitalName));
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("rbac.title", "Hospital Roles")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("rbac.subtitle", "Global Support Mode: Manage hospital-level roles across any tenant")}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/rbac/roles/new")}
-          sx={{
-            background: "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)",
-            boxShadow: "0 4px 14px 0 rgba(20, 184, 166, 0.39)",
-            borderRadius: 2,
-          }}
-        >
-          {t("rbac.addRole", "Add Role")}
-        </Button>
-      </Box>
-      
-      <Alert severity="info" sx={{ mb: 4, borderRadius: 2 }}>
-        <strong>Global Support Mode:</strong> You are viewing roles for all hospitals on the platform. When creating or editing a role, you will be modifying the permissions for that specific hospital's staff.
+    <PageContainer>
+      <PageHeader
+        title={t("rbac.title", "Hospital Roles")}
+        subtitle={t("rbac.subtitle", "Global Support Mode: Manage hospital-level roles across any tenant")}
+        actions={
+          <>
+            <Button
+              variant="outlined"
+              startIcon={<CleaningServicesRounded />}
+              onClick={() => setCleanupOpen(true)}
+              sx={{ textTransform: "none", fontWeight: 600, borderRadius: 2, borderColor: "divider", color: "text.secondary" }}
+            >
+              Clean up roles
+            </Button>
+            <ActionButton
+              accentFrom="#14b8a6"
+              accentTo="#0d9488"
+              startIcon={<AddRounded />}
+              onClick={() => navigate("/rbac/roles/new")}
+            >
+              {t("rbac.addRole", "Add Role")}
+            </ActionButton>
+          </>
+        }
+      />
+
+      <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
+        <strong>Standard roles</strong> are seeded into every hospital and shown once below.
+        <strong> Custom roles</strong> are listed under the hospital that owns them. Roles are
+        always tenant-scoped — editing one changes only that hospital's staff.
       </Alert>
 
       {/* Filters */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+      <FilterBar>
         <TextField
           placeholder={t("rbac.searchPlaceholder", "Search by role name or code...")}
           value={search}
@@ -102,93 +178,152 @@ export default function RolesList() {
             ),
           }}
         />
-      </Box>
+      </FilterBar>
 
-      <Paper
-        elevation={2}
-        sx={{
-          bgcolor: "background.paper",
-          backdropFilter: "blur(10px)",
-          border: "1px solid", borderColor: "divider",
-          borderRadius: 3,
-          overflow: "hidden",
-        }}
-      >
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("rbac.roleCode", "Code")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("rbac.roleName", "Role Name")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("rbac.hospital", "Hospital")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("rbac.type", "Type")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("rbac.usersCount", "Users")}</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "#14b8a6" }} />
-                  </TableCell>
-                </TableRow>
-              ) : roles.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8, color: "text.secondary" }}>
-                    {t("common.noData")}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                roles.map((role) => (
-                  <TableRow key={role.roleId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
-                    <TableCell sx={{ color: "text.primary", fontFamily: "monospace", fontWeight: 600 }}>
-                      {role.roleCode}
-                    </TableCell>
-                    <TableCell sx={{ color: "text.primary", fontWeight: 500 }}>
-                      {role.roleName}
-                    </TableCell>
-                    <TableCell sx={{ color: "text.secondary" }}>
-                      {role.hospital?.hospitalName || "Unknown"}
-                    </TableCell>
-                    <TableCell>
-                      {role.isSystemRole ? (
-                        <Chip label="System Role" size="small" sx={{ bgcolor: "rgba(20, 184, 166, 0.1)", color: "#2dd4bf", fontWeight: 600 }} />
-                      ) : (
-                        <Chip label="Tenant Role" size="small" sx={{ bgcolor: "rgba(59, 130, 246, 0.1)", color: "#60a5fa", fontWeight: 600 }} />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Typography sx={{ color: "text.primary" }}>{role._count?.users || 0}</Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton onClick={() => navigate(`/rbac/roles/${role.roleId}/edit`)} sx={{ color: "text.secondary" }}>
-                        <EditRounded />
-                      </IconButton>
-                    </TableCell>
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+          <CircularProgress sx={{ color: "#14b8a6" }} />
+        </Box>
+      ) : (
+        <>
+          {/* ── Standard (System) Roles — shown once across all hospitals ── */}
+          <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, mb: 1.5 }}>
+            Standard Roles
+          </Typography>
+          <Paper
+            elevation={2}
+            sx={{ bgcolor: "background.paper", backgroundImage: "none", border: "1px solid", borderColor: "divider", borderRadius: 3, overflow: "hidden", mb: 4 }}
+          >
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: "background.paper" }}>
+                    <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Code</TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Role Name</TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Type</TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Hospitals</TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Total Users</TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {systemRows.length === 0 ? (
+                    <TableRow><TableCell colSpan={5} align="center" sx={{ py: 6, color: "text.secondary" }}>No matching standard roles</TableCell></TableRow>
+                  ) : systemRows.map((row) => (
+                    <TableRow key={row.code} hover>
+                      <TableCell sx={{ color: "text.primary", fontFamily: "monospace", fontWeight: 600 }}>{row.code}</TableCell>
+                      <TableCell sx={{ color: "text.primary", fontWeight: 500 }}>{row.name}</TableCell>
+                      <TableCell>
+                        <Chip label="System Role" size="small" sx={{ bgcolor: "rgba(20, 184, 166, 0.1)", color: "#2dd4bf", fontWeight: 600 }} />
+                      </TableCell>
+                      <TableCell sx={{ color: "text.secondary" }}>{row.hospitals}</TableCell>
+                      <TableCell sx={{ color: "text.primary" }}>{row.users}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
 
-        {totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid", borderColor: "divider" }}>
-            <Pagination 
-              count={totalPages} 
-              page={page} 
-              onChange={(_, value) => setPage(value)} 
-              color="primary"
-              sx={{
-                "& .MuiPaginationItem-root": { color: "text.primary" },
-                "& .Mui-selected": { bgcolor: "rgba(20, 184, 166, 0.2) !important", color: "#2dd4bf" }
-              }}
-            />
-          </Box>
-        )}
-      </Paper>
-    </Container>
+          {/* ── Custom Roles grouped by hospital ── */}
+          <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, mb: 1.5 }}>
+            Custom Roles by Hospital
+          </Typography>
+          {customByHospital.length === 0 ? (
+            <Paper elevation={2} sx={{ bgcolor: "background.paper", backgroundImage: "none", border: "1px solid", borderColor: "divider", borderRadius: 3, p: 4, textAlign: "center" }}>
+              <Typography sx={{ color: "text.secondary" }}>No custom roles — every hospital uses the standard set.</Typography>
+            </Paper>
+          ) : (
+            customByHospital.map((group) => (
+              <Paper
+                key={group.hospitalName}
+                elevation={2}
+                sx={{ bgcolor: "background.paper", backgroundImage: "none", border: "1px solid", borderColor: "divider", borderRadius: 3, overflow: "hidden", mb: 2 }}
+              >
+                <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.default" }}>
+                  <Typography sx={{ fontWeight: 700, color: "text.primary" }}>{group.hospitalName}</Typography>
+                </Box>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: "background.paper" }}>
+                        <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Code</TableCell>
+                        <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Role Name</TableCell>
+                        <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Users</TableCell>
+                        <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {group.roles.map((role) => (
+                        <TableRow key={role.roleId} hover>
+                          <TableCell sx={{ color: "text.primary", fontFamily: "monospace", fontWeight: 600 }}>{role.roleCode}</TableCell>
+                          <TableCell sx={{ color: "text.primary", fontWeight: 500 }}>{role.roleName}</TableCell>
+                          <TableCell sx={{ color: "text.primary" }}>{role._count?.users || 0}</TableCell>
+                          <TableCell align="right">
+                            <IconButton onClick={() => navigate(`/rbac/roles/${role.roleId}/edit`)} sx={{ color: "text.secondary" }}>
+                              <EditRounded />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            ))
+          )}
+        </>
+      )}
+
+      {/* Cleanup confirm */}
+      <Dialog open={cleanupOpen} onClose={() => !cleaning && setCleanupOpen(false)} maxWidth="sm" fullWidth
+        PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 700 }}>Clean up roles</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: "text.secondary" }}>
+            This removes non-standard roles (anything outside the standard set:
+            H_ADMIN, B_ADMIN, DOCTOR, NURSE, RECEPTIONIST, PHARMACIST, LAB_TECH).
+            A role is only deleted if it has <strong>no users assigned</strong> — roles still
+            in use are kept and reported. Continue?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setCleanupOpen(false)} disabled={cleaning} sx={{ color: "text.secondary" }}>Cancel</Button>
+          <Button onClick={handleCleanup} variant="contained" disabled={cleaning} sx={{ bgcolor: "#14b8a6", "&:hover": { bgcolor: "#0d9488" } }}>
+            {cleaning ? <CircularProgress size={22} sx={{ color: "#fff" }} /> : "Clean up"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Cleanup result */}
+      <Dialog open={Boolean(cleanupResult)} onClose={() => setCleanupResult(null)} maxWidth="sm" fullWidth
+        PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 700, color: "#14b8a6" }}>Cleanup complete</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 1 }}>
+            Removed <strong>{cleanupResult?.removedCount ?? 0}</strong> non-standard role(s).
+          </Typography>
+          {cleanupResult?.skippedCount > 0 && (
+            <>
+              <Typography variant="body2" sx={{ color: "text.secondary", mt: 1, mb: 0.5 }}>
+                Kept {cleanupResult.skippedCount} role(s) that still have users assigned:
+              </Typography>
+              <Box component="ul" sx={{ pl: 3, m: 0 }}>
+                {cleanupResult.skipped?.map((s: any, i: number) => (
+                  <li key={i}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                      {s.roleCode} — {s.hospitalName || "Unknown"} ({s.users} user{s.users === 1 ? "" : "s"})
+                    </Typography>
+                  </li>
+                ))}
+              </Box>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setCleanupResult(null)} variant="contained" sx={{ bgcolor: "#14b8a6", "&:hover": { bgcolor: "#0d9488" } }}>Done</Button>
+        </DialogActions>
+      </Dialog>
+    </PageContainer>
   );
 }
 

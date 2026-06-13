@@ -18,14 +18,22 @@ import {
   DialogContentText,
   DialogActions,
   Tooltip,
+  Chip,
 } from "@mui/material";
 import { ArrowBackRounded, Visibility, VisibilityOff, ContentCopyRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
 
+interface Branch {
+  branchId: string;
+  branchName: string;
+  status?: string;
+}
+
 interface Hospital {
   hospitalId: string;
   hospitalName: string;
+  branches?: Branch[];
 }
 
 interface Role {
@@ -52,6 +60,7 @@ export default function UserForm() {
   const [formData, setFormData] = useState({
     hospitalId: "",
     roleId: "",
+    branchIds: [] as string[],
     firstName: "",
     lastName: "",
     email: "",
@@ -60,6 +69,12 @@ export default function UserForm() {
     password: "",
     status: "active",
   });
+
+  // Branches available for the currently selected hospital
+  const selectedHospital = hospitals.find((h) => h.hospitalId === formData.hospitalId);
+  const availableBranches = (selectedHospital?.branches ?? []).filter(
+    (b) => b.status === undefined || b.status === "active",
+  );
 
   const [showPassword, setShowPassword] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
@@ -103,6 +118,11 @@ export default function UserForm() {
           setFormData({
             hospitalId: user.hospitalId || "",
             roleId: user.roleId || "",
+            branchIds: Array.isArray(user.branchIds)
+              ? user.branchIds
+              : user.branchId
+                ? [user.branchId]
+                : [],
             firstName: user.firstName || "",
             lastName: user.lastName || "",
             email: user.email || "",
@@ -126,12 +146,21 @@ export default function UserForm() {
     const { name, value } = e.target;
     setFormData((prev) => {
       const next = { ...prev, [name]: value };
-      // Reset role if hospital changes
+      // Reset role and branch assignments if hospital changes (they are hospital-scoped)
       if (name === "hospitalId" && prev.hospitalId !== value) {
         next.roleId = "";
+        next.branchIds = [];
       }
       return next;
     });
+  };
+
+  const handleBranchChange = (e: { target: { value: unknown } }) => {
+    const value = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      branchIds: typeof value === "string" ? value.split(",") : (value as string[]),
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -142,7 +171,6 @@ export default function UserForm() {
       if (!payload.password) delete payload.password; // Omit if empty
       
       if (isEdit) {
-        delete payload.email; // Don't send email on update (not supported in backend yet or shouldn't change)
         delete payload.password; // Don't send password on update via this form
         await axiosInstance.put(`/rbac/users/${id}`, payload);
         navigate("/rbac/users");
@@ -245,7 +273,7 @@ export default function UserForm() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                disabled={isEdit}
+                helperText="This is the user's login email. Changing it changes how they sign in."
                 InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
@@ -355,7 +383,53 @@ export default function UserForm() {
                 ))}
               </TextField>
             </Grid>
-            
+
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                select
+                label="Branches (access scope)"
+                name="branchIds"
+                value={formData.branchIds}
+                onChange={handleBranchChange}
+                disabled={!formData.hospitalId}
+                helperText={
+                  !formData.hospitalId
+                    ? "Select a hospital first"
+                    : availableBranches.length === 0
+                      ? "This hospital has no branches yet"
+                      : "Leave empty to grant organization-wide access, or pick one or more branches to scope this user"
+                }
+                SelectProps={{
+                  multiple: true,
+                  renderValue: (selected) => (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                      {(selected as string[]).map((value) => {
+                        const branch = availableBranches.find((b) => b.branchId === value);
+                        return <Chip key={value} label={branch?.branchName || value} size="small" />;
+                      })}
+                    </Box>
+                  ),
+                }}
+                InputLabelProps={{ style: { color: "text.secondary" } }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    color: "text.primary",
+                    "& fieldset": { borderColor: "divider" },
+                    "&:hover fieldset": { borderColor: "divider" },
+                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "& .MuiSvgIcon-root": { color: "text.secondary" },
+                  },
+                }}
+              >
+                {availableBranches.map((branch) => (
+                  <MenuItem key={branch.branchId} value={branch.branchId}>
+                    {branch.branchName}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+
             {!isEdit && (
               <Grid size={{ xs: 12 }}>
                 <TextField

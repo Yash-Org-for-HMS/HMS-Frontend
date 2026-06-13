@@ -34,6 +34,10 @@ import {
   SearchRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
 
 export default function FeatureFlagsList() {
   const { t } = useTranslation();
@@ -88,32 +92,24 @@ export default function FeatureFlagsList() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("flags.title", "Feature Flags")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("flags.subtitle", "Manage hospital-specific feature toggles and overrides")}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/feature-flags/new")}
-          sx={{
-            background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-            boxShadow: "0 4px 14px 0 rgba(245, 158, 11, 0.39)",
-            borderRadius: 2,
-          }}
-        >
-          {t("flags.addFlag", "Add Flag")}
-        </Button>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title={t("flags.title", "Feature Flags")}
+        subtitle={t("flags.subtitle", "Manage hospital-specific feature toggles and overrides")}
+        actions={
+          <ActionButton
+            accentFrom="#f59e0b"
+            accentTo="#d97706"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/feature-flags/new")}
+          >
+            {t("flags.addFlag", "Add Flag")}
+          </ActionButton>
+        }
+      />
 
       {/* Filters */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+      <FilterBar>
         <TextField
           placeholder={t("flags.searchPlaceholder", "Search flags by name or key...")}
           value={search}
@@ -128,7 +124,7 @@ export default function FeatureFlagsList() {
             ),
           }}
         />
-      </Box>
+      </FilterBar>
 
       <Paper
         elevation={2}
@@ -238,7 +234,7 @@ export default function FeatureFlagsList() {
           <Button onClick={handleDelete} color="error" variant="contained">{t("common.delete", "Delete")}</Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </PageContainer>
   );
 }
 

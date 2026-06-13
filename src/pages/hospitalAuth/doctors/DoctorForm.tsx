@@ -10,9 +10,10 @@ import {
   Alert,
   MenuItem,
   Tabs,
-  Tab
+  Tab,
+  Chip
 } from "@mui/material";
-import { SaveRounded, PersonRounded, LocalHospitalRounded } from "@mui/icons-material";
+import { SaveRounded, PersonRounded, LocalHospitalRounded, AccountTreeRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import { useToast } from "../../../contexts/ToastContext";
@@ -28,6 +29,8 @@ export default function DoctorForm() {
 
   const [departments, setDepartments] = useState<any[]>([]);
   const [specializations, setSpecializations] = useState<any[]>([]);
+  const [branches, setBranches] = useState<any[]>([]);
+  const [branchIds, setBranchIds] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -46,12 +49,14 @@ export default function DoctorForm() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [deptRes, specRes] = await Promise.all([
+        const [deptRes, specRes, dropdownRes] = await Promise.all([
           axiosInstance.get("/hospital/departments"),
-          axiosInstance.get("/hospital/doctors/specializations").catch(() => ({ data: { data: [] } }))
+          axiosInstance.get("/hospital/doctors/specializations").catch(() => ({ data: { data: [] } })),
+          axiosInstance.get("/hospital/users/dropdowns").catch(() => ({ data: { data: { branches: [] } } }))
         ]);
         setDepartments(deptRes.data.data);
         setSpecializations(specRes.data.data);
+        setBranches(dropdownRes.data?.data?.branches ?? []);
 
         if (id) {
           const docRes = await axiosInstance.get(`/hospital/doctors/${id}`);
@@ -69,6 +74,7 @@ export default function DoctorForm() {
             qualification: d.qualification || "",
             experienceYears: d.experienceYears || "",
           });
+          setBranchIds(Array.isArray(d.branchIds) ? d.branchIds : []);
         }
       } catch (err: any) {
         toast.error(err.response?.data?.message || "Failed to load data");
@@ -90,6 +96,8 @@ export default function DoctorForm() {
     try {
       if (!id) throw new Error("Invalid Doctor ID");
       await axiosInstance.put(`/hospital/doctors/${id}`, formData);
+      // Persist branch availability (which branches this doctor can be booked at).
+      await axiosInstance.put(`/hospital/doctors/${id}/branches`, { branchIds });
       navigate("/hospital/doctors");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "An error occurred");
@@ -151,6 +159,7 @@ export default function DoctorForm() {
         >
           <Tab icon={<PersonRounded />} iconPosition="start" label="Personal Details" />
           <Tab icon={<LocalHospitalRounded />} iconPosition="start" label="Professional Details" />
+          <Tab icon={<AccountTreeRounded />} iconPosition="start" label="Branch Availability" />
         </Tabs>
 
         <Box component="form" onSubmit={handleSubmit} sx={{ p: 4 }}>
@@ -275,14 +284,50 @@ export default function DoctorForm() {
             </Grid>
           )}
 
+          {tabIndex === 2 && (
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
+                  Select the branches where this doctor is available. Appointments can only be
+                  booked for this doctor at the selected branches. Leave empty to allow all branches.
+                </Typography>
+                <TextField
+                  select
+                  label="Available at branches"
+                  value={branchIds}
+                  onChange={(e) => {
+                    const v = e.target.value as unknown as string[] | string;
+                    setBranchIds(typeof v === "string" ? v.split(",") : v);
+                  }}
+                  SelectProps={{
+                    multiple: true,
+                    renderValue: (selected) => (
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                        {(selected as string[]).map((value) => {
+                          const b = branches.find((x) => x.branchId === value);
+                          return <Chip key={value} label={b?.branchName || value} size="small" />;
+                        })}
+                      </Box>
+                    ),
+                  }}
+                  {...textFieldProps}
+                >
+                  {branches.map((b) => (
+                    <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+            </Grid>
+          )}
+
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4 }}>
-            {tabIndex === 0 ? (
+            {tabIndex < 2 ? (
               <Button
                 variant="contained"
-                onClick={() => setTabIndex(1)}
+                onClick={() => setTabIndex(tabIndex + 1)}
                 sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, py: 1.5, px: 4 }}
               >
-                Next: Professional Details
+                {tabIndex === 0 ? "Next: Professional Details" : "Next: Branch Availability"}
               </Button>
             ) : (
               <Button

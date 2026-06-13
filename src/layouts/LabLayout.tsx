@@ -30,6 +30,7 @@ import {
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import { assetUrl } from "../utils/assetUrl";
+import BranchSwitcher from "../components/BranchSwitcher";
 
 const drawerWidth = 260;
 
@@ -95,7 +96,11 @@ export default function LabLayout() {
           );
         })}
       </List>
-      
+
+      <Box sx={{ px: 2, pb: 1 }}>
+        <BranchSwitcher />
+      </Box>
+
       <Box sx={{ p: 2, borderTop: "1px solid", borderColor: "divider" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <ListItem disablePadding>

@@ -46,6 +46,14 @@ axiosInstance.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // For hospital-portal requests, tell the backend which branch this request
+    // targets. The backend validates it against the user's allowed branches.
+    if (realm === "hospital" && config.headers) {
+      const activeBranchId = sessionStorage.getItem("activeBranchId");
+      if (activeBranchId) {
+        config.headers["X-Branch-Id"] = activeBranchId;
+      }
+    }
     return config;
   },
   (error) => Promise.reject(error)

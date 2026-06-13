@@ -28,6 +28,10 @@ import {
 import { SearchRounded, VisibilityRounded, CloseRounded } from "@mui/icons-material";
 import Grid from "@mui/material/Grid";
 import { axiosInstance } from "../../api/axios";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function AuditLogsList() {
@@ -77,20 +81,14 @@ export default function AuditLogsList() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("auditLogs.title", "System Audit Logs")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("auditLogs.subtitle", "Track all sensitive actions across the platform")}
-          </Typography>
-        </Box>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title={t("auditLogs.title", "System Audit Logs")}
+        subtitle={t("auditLogs.subtitle", "Track all sensitive actions across the platform")}
+      />
 
       {/* Filters */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+      <FilterBar>
         <TextField
           placeholder={t("auditLogs.searchPlaceholder", "Search by user or table...")}
           value={search}
@@ -117,7 +115,7 @@ export default function AuditLogsList() {
           label={<Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>My Actions Only</Typography>}
           sx={{ ml: 2 }}
         />
-      </Box>
+      </FilterBar>
 
       <Paper
         elevation={2}
@@ -286,7 +284,7 @@ export default function AuditLogsList() {
           <Button onClick={() => setSelectedLog(null)} sx={{ color: "text.primary" }}>Close</Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </PageContainer>
   );
 }
 

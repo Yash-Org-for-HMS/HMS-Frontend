@@ -30,6 +30,10 @@ import {
   DeleteRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
 
 export default function PlansList() {
   const { t } = useTranslation();
@@ -76,29 +80,21 @@ export default function PlansList() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("plans.title", "Subscription Plans")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("plans.subtitle", "Manage hospital subscription tiers and features")}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/plans/new")}
-          sx={{
-            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-            boxShadow: "0 4px 14px 0 rgba(16, 185, 129, 0.39)",
-            borderRadius: 2,
-          }}
-        >
-          {t("plans.addPlan", "Add Plan")}
-        </Button>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title={t("plans.title", "Subscription Plans")}
+        subtitle={t("plans.subtitle", "Manage hospital subscription tiers and features")}
+        actions={
+          <ActionButton
+            accentFrom="#10b981"
+            accentTo="#059669"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/plans/new")}
+          >
+            {t("plans.addPlan", "Add Plan")}
+          </ActionButton>
+        }
+      />
 
       <Paper
         elevation={2}
@@ -204,6 +200,6 @@ export default function PlansList() {
           <Button onClick={handleDelete} color="error" variant="contained">{t("common.delete", "Delete")}</Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </PageContainer>
   );
 }

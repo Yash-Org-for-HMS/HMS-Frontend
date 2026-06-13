@@ -60,12 +60,12 @@ export default function TrialForm() {
   };
 
   useEffect(() => {
-    // Fetch non-converted leads for the dropdown
+    // A trial is an evaluation period for a PROSPECT, so only leads that have
+    // not yet been converted to a hospital can start one.
     const fetchLeads = async () => {
       try {
         const response = await axiosInstance.get("/leads", { params: { limit: 1000 } });
-        // Only include converted leads
-        setLeads(response.data.data.filter((l: any) => l.leadStatus === "converted"));
+        setLeads(response.data.data.filter((l: any) => l.leadStatus !== "converted"));
       } catch (err) {
         console.error(err);
         toast.error("Failed to load leads");

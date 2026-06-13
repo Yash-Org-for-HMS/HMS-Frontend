@@ -37,6 +37,10 @@ import {
   VisibilityRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
 
 export default function HospitalsList() {
   const { t } = useTranslation();
@@ -111,29 +115,21 @@ export default function HospitalsList() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("hospitals.title", "Hospitals Directory")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("hospitals.subtitle", "Manage all hospital tenants and their subscriptions")}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/hospitals/new")}
-          sx={{
-            background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-            boxShadow: "0 4px 14px 0 rgba(59, 130, 246, 0.39)",
-            borderRadius: 2,
-          }}
-        >
-          {t("hospitals.addHospital", "Add Hospital")}
-        </Button>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title={t("hospitals.title", "Hospitals Directory")}
+        subtitle={t("hospitals.subtitle", "Manage all hospital tenants and their subscriptions")}
+        actions={
+          <ActionButton
+            accentFrom="#3b82f6"
+            accentTo="#2563eb"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/hospitals/new")}
+          >
+            {t("hospitals.addHospital", "Add Hospital")}
+          </ActionButton>
+        }
+      />
 
       {/* Tabs: Active / Deleted */}
       <Box sx={{ mb: 3 }}>
@@ -151,13 +147,13 @@ export default function HospitalsList() {
       </Box>
 
       {/* Filters */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+      <FilterBar>
         <TextField
           placeholder={t("hospitals.searchPlaceholder", "Search by name, code, or email...")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"
-          
+
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -166,7 +162,7 @@ export default function HospitalsList() {
             ),
           }}
         />
-      </Box>
+      </FilterBar>
 
       <Paper
         elevation={2}
@@ -389,6 +385,6 @@ export default function HospitalsList() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </PageContainer>
   );
 }

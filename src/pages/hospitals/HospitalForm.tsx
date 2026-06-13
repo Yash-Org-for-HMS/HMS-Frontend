@@ -40,7 +40,7 @@ export default function HospitalForm() {
 
   // Branch Dialog State
   const [branchDialogOpen, setBranchDialogOpen] = useState(false);
-  const [newBranch, setNewBranch] = useState({ code: "", name: "", subscriptionPlanId: "", status: "active" });
+  const [newBranch, setNewBranch] = useState({ name: "", subscriptionPlanId: "", status: "active" });
   const [branchLoading, setBranchLoading] = useState(false);
   const [editingBranchId, setEditingBranchId] = useState<string | null>(null);
 
@@ -125,27 +125,27 @@ export default function HospitalForm() {
   };
 
   const handleAddBranchSubmit = async () => {
-    if (!newBranch.code || !newBranch.name) return;
+    if (!newBranch.name) return;
     setBranchLoading(true);
     try {
       if (editingBranchId) {
-        await axiosInstance.put(`/hospitals/${id}/branches/${editingBranchId}`, { 
-          branchCode: newBranch.code, 
-          branchName: newBranch.name, 
+        // Branch code is auto-assigned and immutable — not sent on edit.
+        await axiosInstance.put(`/hospitals/${id}/branches/${editingBranchId}`, {
+          branchName: newBranch.name,
           subscriptionPlanId: newBranch.subscriptionPlanId || undefined,
-          status: newBranch.status 
+          status: newBranch.status
         });
       } else {
-        await axiosInstance.post(`/hospitals/${id}/branches`, { 
-          branchCode: newBranch.code, 
-          branchName: newBranch.name, 
+        // No branchCode sent — the server generates a unique one.
+        await axiosInstance.post(`/hospitals/${id}/branches`, {
+          branchName: newBranch.name,
           subscriptionPlanId: newBranch.subscriptionPlanId || undefined,
-          status: newBranch.status 
+          status: newBranch.status
         });
       }
       setReload(r => r + 1);
       setBranchDialogOpen(false);
-      setNewBranch({ code: "", name: "", subscriptionPlanId: "", status: "active" });
+      setNewBranch({ name: "", subscriptionPlanId: "", status: "active" });
       setEditingBranchId(null);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to save branch");
@@ -156,14 +156,13 @@ export default function HospitalForm() {
 
   const handleAddBranch = () => {
     setEditingBranchId(null);
-    setNewBranch({ code: "", name: "", subscriptionPlanId: "", status: "active" });
+    setNewBranch({ name: "", subscriptionPlanId: "", status: "active" });
     setBranchDialogOpen(true);
   };
 
   const handleEditBranch = (branch: any) => {
     setEditingBranchId(branch.branchId);
     setNewBranch({
-      code: branch.branchCode,
       name: branch.branchName,
       subscriptionPlanId: branch.subscriptionPlanId || "",
       status: branch.status || "active"
@@ -444,19 +443,13 @@ export default function HospitalForm() {
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
           <TextField
             fullWidth
-            label="Branch Code"
-            value={newBranch.code}
-            onChange={(e) => setNewBranch({ ...newBranch, code: e.target.value })}
-            sx={{ mt: 1 }}
-            placeholder="e.g. CITY01"
-          />
-          <TextField
-            fullWidth
             label="Branch Name"
             value={newBranch.name}
             onChange={(e) => setNewBranch({ ...newBranch, name: e.target.value })}
-            
+            inputProps={{ maxLength: 100 }}
             placeholder="e.g. Main Hospital"
+            sx={{ mt: 1 }}
+            helperText={editingBranchId ? undefined : "A unique branch code is assigned automatically."}
           />
           <TextField
             select
@@ -515,7 +508,7 @@ export default function HospitalForm() {
           <Button 
             onClick={handleAddBranchSubmit} 
             variant="contained" 
-            disabled={!newBranch.code || !newBranch.name || branchLoading}
+            disabled={!newBranch.name || branchLoading}
             sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" }}
           >
             {branchLoading ? "Adding..." : "Add Branch"}

@@ -26,6 +26,7 @@ import {
   Pagination,
   FormControlLabel,
   Switch,
+  Alert,
 } from "@mui/material";
 import {
   AddRounded,
@@ -37,6 +38,10 @@ import {
   AssignmentIndRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function LeadsList() {
@@ -60,6 +65,20 @@ export default function LeadsList() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [selectedLeadStatus, setSelectedLeadStatus] = useState<string | null>(null);
   const [selectedLead, setSelectedLead] = useState<any | null>(null);
+
+  // Conversion (lead → live hospital tenant)
+  const [plans, setPlans] = useState<any[]>([]);
+  const [convertForm, setConvertForm] = useState({ planId: "", adminFirstName: "", adminLastName: "", adminEmail: "" });
+  const [converting, setConverting] = useState(false);
+  const [convertError, setConvertError] = useState<string | null>(null);
+  const [credentials, setCredentials] = useState<{ email: string; temporaryPassword: string; hospitalName: string } | null>(null);
+
+  useEffect(() => {
+    axiosInstance
+      .get("/plans", { params: { limit: 100 } })
+      .then((res) => setPlans(res.data.data || []))
+      .catch(() => {});
+  }, []);
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -93,14 +112,39 @@ export default function LeadsList() {
     }
   };
 
+  const openConvert = (lead: any) => {
+    const parts = (lead?.contactPersonName || "").trim().split(/\s+/).filter(Boolean);
+    setConvertForm({
+      planId: "",
+      adminFirstName: parts[0] || "",
+      adminLastName: parts.slice(1).join(" ") || "",
+      adminEmail: lead?.email || "",
+    });
+    setConvertError(null);
+    setConvertId(lead);
+  };
+
   const handleConvert = async () => {
     if (!convertId) return;
+    if (!convertForm.planId) {
+      setConvertError("Please select a subscription plan.");
+      return;
+    }
+    setConverting(true);
+    setConvertError(null);
     try {
-      await axiosInstance.post(`/leads/${convertId.hospitalLeadId}/convert`);
+      const res = await axiosInstance.post(`/leads/${convertId.hospitalLeadId}/convert`, convertForm);
+      const admin = res.data?.data?.admin;
+      const convertedName = convertId.hospitalName;
       setConvertId(null);
+      if (admin) {
+        setCredentials({ email: admin.email, temporaryPassword: admin.temporaryPassword, hospitalName: convertedName });
+      }
       fetchLeads();
-    } catch (error) {
-      console.error("Failed to convert lead", error);
+    } catch (error: any) {
+      setConvertError(error.response?.data?.message || "Failed to convert lead");
+    } finally {
+      setConverting(false);
     }
   };
 
@@ -155,32 +199,24 @@ export default function LeadsList() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("leads.title")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("leads.subtitle")}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/leads/new")}
-          sx={{
-            background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-            boxShadow: "0 4px 14px 0 rgba(99, 102, 241, 0.39)",
-            borderRadius: 2,
-          }}
-        >
-          {t("leads.addLead")}
-        </Button>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title={t("leads.title")}
+        subtitle={t("leads.subtitle")}
+        actions={
+          <ActionButton
+            accentFrom="#6366f1"
+            accentTo="#8b5cf6"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/leads/new")}
+          >
+            {t("leads.addLead")}
+          </ActionButton>
+        }
+      />
 
       {/* Filters */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+      <FilterBar>
         <TextField
           placeholder={t("leads.searchPlaceholder")}
           value={search}
@@ -228,7 +264,7 @@ export default function LeadsList() {
           label={<Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>My Leads Only</Typography>}
           sx={{ ml: 2 }}
         />
-      </Box>
+      </FilterBar>
 
       <Paper
         elevation={2}
@@ -354,7 +390,7 @@ export default function LeadsList() {
         PaperProps={{ sx: { bgcolor: "background.paper", border: "1px solid", borderColor: "divider", color: "text.primary" } }}
       >
         {selectedLeadStatus !== "converted" && (
-          <MenuItem onClick={() => { setConvertId(selectedLead); setAnchorEl(null); }}>
+          <MenuItem onClick={() => { openConvert(selectedLead); setAnchorEl(null); }}>
             <AddRounded sx={{ mr: 1.5, fontSize: 20, color: "#10b981" }} /> Convert to Hospital
           </MenuItem>
         )}
@@ -371,16 +407,81 @@ export default function LeadsList() {
         </MenuItem>
       </Menu>
 
-      {/* Convert Confirmation Dialog */}
-      <Dialog open={Boolean(convertId)} onClose={() => setConvertId(null)} PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>
+      {/* Convert Dialog — pick a plan + the first admin */}
+      <Dialog open={Boolean(convertId)} onClose={() => !converting && setConvertId(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>
         <DialogTitle sx={{ fontWeight: 700 }}>Convert Lead to Hospital</DialogTitle>
-        <DialogContent sx={{ color: "text.secondary" }}>
-          Are you sure you want to convert <strong>{convertId?.hospitalName}</strong> into a live hospital tenant? 
-          This will automatically generate a Hospital record, a Main Branch, and start the Onboarding tracking process.
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            Provisioning <strong>{convertId?.hospitalName}</strong> creates the hospital (pending activation), a Main Branch on the chosen plan, default roles, and the first Hospital Admin login. Activate it later by completing onboarding.
+          </Typography>
+          {convertError && <Alert severity="error" sx={{ mb: 2 }}>{convertError}</Alert>}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <TextField
+              select
+              required
+              label="Subscription Plan"
+              value={convertForm.planId}
+              onChange={(e) => setConvertForm((f) => ({ ...f, planId: e.target.value }))}
+            >
+              {plans.length === 0 && <MenuItem value="" disabled>No plans available — create one first</MenuItem>}
+              {plans.map((p) => (
+                <MenuItem key={p.planId} value={p.planId}>{p.planName}</MenuItem>
+              ))}
+            </TextField>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Admin First Name"
+                value={convertForm.adminFirstName}
+                onChange={(e) => setConvertForm((f) => ({ ...f, adminFirstName: e.target.value }))}
+              />
+              <TextField
+                fullWidth
+                label="Admin Last Name"
+                value={convertForm.adminLastName}
+                onChange={(e) => setConvertForm((f) => ({ ...f, adminLastName: e.target.value }))}
+              />
+            </Box>
+            <TextField
+              fullWidth
+              type="email"
+              label="Admin Login Email"
+              helperText="This is the email the Hospital Admin will sign in with."
+              value={convertForm.adminEmail}
+              onChange={(e) => setConvertForm((f) => ({ ...f, adminEmail: e.target.value }))}
+            />
+          </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setConvertId(null)} sx={{ color: "text.secondary" }}>{t("common.cancel")}</Button>
-          <Button onClick={handleConvert} variant="contained" sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }}>Convert to Hospital</Button>
+          <Button onClick={() => setConvertId(null)} disabled={converting} sx={{ color: "text.secondary" }}>{t("common.cancel")}</Button>
+          <Button onClick={handleConvert} variant="contained" disabled={converting || !convertForm.planId} sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }}>
+            {converting ? <CircularProgress size={22} sx={{ color: "#fff" }} /> : "Convert to Hospital"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Credentials Dialog — shown once after conversion */}
+      <Dialog open={Boolean(credentials)} onClose={() => setCredentials(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 700, color: "#10b981" }}>Hospital Provisioned</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            <strong>{credentials?.hospitalName}</strong> was created. Share these one-time admin credentials securely — the password is shown only now and must be changed on first login. The hospital becomes active once you complete its onboarding.
+          </Typography>
+          <Box sx={{ p: 2, borderRadius: 2, border: "1px solid", borderColor: "divider", bgcolor: "background.default" }}>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>Login Email</Typography>
+            <Typography variant="body1" sx={{ fontWeight: 600, mb: 1.5 }}>{credentials?.email}</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>Temporary Password</Typography>
+            <Typography variant="h6" sx={{ fontFamily: "monospace", letterSpacing: 1 }}>{credentials?.temporaryPassword}</Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => { navigator.clipboard?.writeText(`${credentials?.email} / ${credentials?.temporaryPassword}`); }}
+            sx={{ color: "text.secondary" }}
+          >
+            Copy
+          </Button>
+          <Button onClick={() => setCredentials(null)} variant="contained" sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" } }}>Done</Button>
         </DialogActions>
       </Dialog>
 
@@ -395,7 +496,7 @@ export default function LeadsList() {
           <Button onClick={handleDelete} color="error" variant="contained">{t("common.delete")}</Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </PageContainer>
   );
 }
 

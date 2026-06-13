@@ -156,6 +156,7 @@ export default function OnboardingForm() {
               </TextField>
               <Typography variant="caption" sx={{ color: "text.secondary", mt: 1, display: "block" }}>
                 Setting status to "Completed" will automatically mark the hospital as "Active" if it isn't already.
+                It is only allowed once Tenant Setup, Default Roles Seeded, and Payment Verified are all checked.
               </Typography>
             </Grid>
 

@@ -32,6 +32,10 @@ import {
   DeleteRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
 
 interface User {
   userId: string;
@@ -102,37 +106,51 @@ export default function UsersList() {
   };
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: "auto" }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: "text.primary", mb: 1 }}>
-            Hospital Staff Management
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Global Support Mode: Manage hospital administrators and staff members across any tenant
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/rbac/users/add")}
-          sx={{
-            bgcolor: "#6366f1",
-            "&:hover": { bgcolor: "#4f46e5" },
-            px: 3,
-            py: 1,
-            borderRadius: 2,
-            textTransform: "none",
-            fontWeight: 600,
-          }}
-        >
-          Add User
-        </Button>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title="Hospital Staff Management"
+        subtitle="Global Support Mode: Manage hospital administrators and staff members across any tenant"
+        actions={
+          <ActionButton
+            accentFrom="#6366f1"
+            accentTo="#4f46e5"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/rbac/users/add")}
+          >
+            Add User
+          </ActionButton>
+        }
+      />
 
-      <Alert severity="info" sx={{ mb: 4, borderRadius: 2 }}>
+      <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
         <strong>Global Support Mode:</strong> You are viewing staff user accounts for all hospitals on the platform. When adding a user, you will assign them to a specific hospital tenant.
       </Alert>
+
+      <FilterBar>
+        <TextField
+          placeholder="Search by name, email, or employee code..."
+          size="small"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{
+            width: 350,
+            "& .MuiOutlinedInput-root": {
+              color: "text.primary",
+              bgcolor: "background.paper",
+              "& fieldset": { borderColor: "divider" },
+              "&:hover fieldset": { borderColor: "divider" },
+              "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+            },
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchRounded sx={{ color: "text.secondary" }} />
+              </InputAdornment>
+            ),
+          }}
+        />
+      </FilterBar>
 
       <Card
         sx={{
@@ -143,32 +161,6 @@ export default function UsersList() {
           overflow: "hidden",
         }}
       >
-        <Box sx={{ p: 2, display: "flex", gap: 2, borderBottom: "1px solid", borderColor: "divider" }}>
-          <TextField
-            placeholder="Search by name, email, or employee code..."
-            size="small"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            sx={{
-              width: 350,
-              "& .MuiOutlinedInput-root": {
-                color: "text.primary",
-                bgcolor: "background.paper",
-                "& fieldset": { borderColor: "divider" },
-                "&:hover fieldset": { borderColor: "divider" },
-                "&.Mui-focused fieldset": { borderColor: "#6366f1" },
-              },
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchRounded sx={{ color: "text.secondary" }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Box>
-
         <TableContainer>
           <Table>
             <TableHead>
@@ -322,6 +314,6 @@ export default function UsersList() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 }

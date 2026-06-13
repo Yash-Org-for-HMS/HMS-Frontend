@@ -22,6 +22,10 @@ import {
   SearchRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
 
 export default function OnboardingList() {
   const { t } = useTranslation();
@@ -105,20 +109,14 @@ export default function OnboardingList() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("onboarding.title", "Hospital Onboarding Tracker")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("onboarding.subtitle", "Track setup and provisioning progress for new tenants")}
-          </Typography>
-        </Box>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title={t("onboarding.title", "Hospital Onboarding Tracker")}
+        subtitle={t("onboarding.subtitle", "Track setup and provisioning progress for new tenants")}
+      />
 
       {/* Filters */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+      <FilterBar>
         <TextField
           placeholder={t("onboarding.searchPlaceholder", "Search by hospital name...")}
           value={search}
@@ -133,7 +131,7 @@ export default function OnboardingList() {
             ),
           }}
         />
-      </Box>
+      </FilterBar>
 
       <Paper
         elevation={2}
@@ -262,7 +260,7 @@ export default function OnboardingList() {
           </Box>
         )}
       </Paper>
-    </Container>
+    </PageContainer>
   );
 }
 
