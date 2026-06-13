@@ -24,6 +24,7 @@ import { theme } from "./theme";
 import "./i18n";
 import App from "./App";
 import { ToastProvider } from "./contexts/ToastContext";
+import { ConfirmProvider } from "./contexts/ConfirmContext";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -32,7 +33,9 @@ createRoot(document.getElementById("root")!).render(
         <CssBaseline />
         <BrowserRouter>
           <ToastProvider>
-            <App />
+            <ConfirmProvider>
+              <App />
+            </ConfirmProvider>
           </ToastProvider>
         </BrowserRouter>
       </ThemeProvider>

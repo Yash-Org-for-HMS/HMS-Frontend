@@ -42,6 +42,7 @@ import {
   AccountBalanceRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
+import { assetUrl } from "../utils/assetUrl";
 
 const drawerWidth = 260;
 
@@ -131,7 +132,7 @@ export default function HospitalLayout() {
           }}
         >
           {hospital?.logoUrl ? (
-            <img src={`http://localhost:5000${hospital.logoUrl}`} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src={assetUrl(hospital.logoUrl)} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : (
             <LocalHospitalRounded fontSize="medium" sx={{ color: "#fff" }} />
           )}

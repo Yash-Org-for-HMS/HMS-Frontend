@@ -97,7 +97,7 @@ export default function DoctorsList() {
                       {doctor.licenseNumber || "-"}
                     </TableCell>
                     <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
-                      {doctor.consultationFee ? `$${doctor.consultationFee}` : "-"}
+                      {doctor.consultationFee ? `₹${doctor.consultationFee}` : "-"}
                     </TableCell>
                     <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Tooltip title="Configure Schedule">

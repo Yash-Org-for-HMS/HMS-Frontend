@@ -15,6 +15,7 @@ import {
   MedicalServicesRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
+import { assetUrl } from "../utils/assetUrl";
 
 const drawerWidth = 260;
 const NURSE_PURPLE = "#a78bfa";
@@ -72,7 +73,7 @@ export default function NurseLayout() {
           }}
         >
           {hospital?.logoUrl ? (
-            <img src={`http://localhost:5000${hospital.logoUrl}`} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src={assetUrl(hospital.logoUrl)} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : (
             <MedicalServicesRounded fontSize="small" sx={{ color: "#fff" }} />
           )}

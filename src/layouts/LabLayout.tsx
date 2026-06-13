@@ -29,6 +29,7 @@ import {
   MenuBookRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
+import { assetUrl } from "../utils/assetUrl";
 
 const drawerWidth = 260;
 
@@ -67,7 +68,7 @@ export default function LabLayout() {
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "background.paper", color: "text.primary" }}>
       <Toolbar sx={{ px: 2, display: "flex", alignItems: "center", gap: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
         <Box sx={{ width: 40, height: 40, borderRadius: 1.5, bgcolor: hospital?.logoUrl ? "transparent" : "primary.main", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-          {hospital?.logoUrl ? <img src={`http://localhost:5000${hospital.logoUrl}`} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <LocalHospitalRounded fontSize="medium" sx={{ color: "#fff" }} />}
+          {hospital?.logoUrl ? <img src={assetUrl(hospital.logoUrl)} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <LocalHospitalRounded fontSize="medium" sx={{ color: "#fff" }} />}
         </Box>
         <Box>
           <Typography variant="subtitle1" fontWeight="700" noWrap sx={{ maxWidth: 180 }}>

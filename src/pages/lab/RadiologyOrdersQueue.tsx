@@ -5,6 +5,7 @@ import { axiosInstance } from "../../api/axios";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
 import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
+import { assetUrl } from "../../utils/assetUrl";
 
 export default function RadiologyOrdersQueue() {
   const { data: orders = [], isLoading: loading, refetch: fetchOrders } = useQuery({
@@ -258,7 +259,7 @@ export default function RadiologyOrdersQueue() {
                   <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
                     <CheckCircleRounded color="success" fontSize="large" />
                     <Typography variant="body2" color="success.main" fontWeight="600">File Uploaded Successfully</Typography>
-                    <Link href={`http://localhost:5000${reportUrl}`} target="_blank" underline="hover">View Uploaded File</Link>
+                    <Link href={assetUrl(reportUrl)} target="_blank" underline="hover">View Uploaded File</Link>
                   </Box>
                 ) : (
                   <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>

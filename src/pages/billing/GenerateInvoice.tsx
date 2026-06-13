@@ -227,7 +227,7 @@ export default function GenerateInvoice() {
                           </Typography>
                         </TableCell>
                         <TableCell>{item.description}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>${item.amount.toFixed(2)}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>₹{item.amount.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -243,7 +243,7 @@ export default function GenerateInvoice() {
               
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                 <Typography color="text.secondary">Gross Amount</Typography>
-                <Typography fontWeight={600}>${grossAmount.toFixed(2)}</Typography>
+                <Typography fontWeight={600}>₹{grossAmount.toFixed(2)}</Typography>
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -270,12 +270,12 @@ export default function GenerateInvoice() {
               
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                 <Typography color="text.secondary">Tax Amount</Typography>
-                <Typography fontWeight={600}>${taxAmount.toFixed(2)}</Typography>
+                <Typography fontWeight={600}>₹{taxAmount.toFixed(2)}</Typography>
               </Box>
               
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4, mt: 2 }}>
                 <Typography variant="h5" fontWeight={800}>Net Total</Typography>
-                <Typography variant="h5" fontWeight={800} color="primary.main">${netAmount.toFixed(2)}</Typography>
+                <Typography variant="h5" fontWeight={800} color="primary.main">₹{netAmount.toFixed(2)}</Typography>
               </Box>
 
               <Button

@@ -181,7 +181,7 @@ export default function Dashboard() {
       <Box hidden={tabIndex !== 0}>
         <Grid container spacing={3} sx={{ mb: 5 }}>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="MRR (Revenue)" value={`$${stats.totalRevenue.toLocaleString()}`} icon={<AccountBalanceRounded />} colorHex="#10B981" />
+            <StatCard title="MRR (Revenue)" value={`₹${stats.totalRevenue.toLocaleString()}`} icon={<AccountBalanceRounded />} colorHex="#10B981" />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard title="Total Hospitals" value={stats.totalHospitals} icon={<LocalHospitalRounded />} colorHex="#3B82F6" />

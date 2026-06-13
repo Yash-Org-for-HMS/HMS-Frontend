@@ -17,6 +17,7 @@ import { SaveRounded, BusinessRounded, PaletteRounded, GavelRounded, CloudUpload
 import { axiosInstance } from "../../api/axios";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useToast } from "../../contexts/ToastContext";
+import { assetUrl } from "../../utils/assetUrl";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -344,7 +345,7 @@ export default function HospitalProfile() {
                   >
                     {formData.logoUrl ? (
                       <img 
-                        src={formData.logoUrl.startsWith("http") ? formData.logoUrl : `http://localhost:5000${formData.logoUrl}`} 
+                        src={assetUrl(formData.logoUrl)} 
                         alt="Logo" 
                         style={{ width: "100%", height: "100%", objectFit: "cover" }} 
                       />

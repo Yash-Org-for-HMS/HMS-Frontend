@@ -1,21 +1,30 @@
 import { useState, useEffect } from "react";
-import { 
-  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, 
-  Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, 
+import {
+  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
+  Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha, InputAdornment
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded, LocalShippingRounded, SearchRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
+import { useToast } from "../../contexts/ToastContext";
+import { useConfirm } from "../../contexts/ConfirmContext";
 
 export default function SupplierDirectory() {
   const theme = useTheme();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageCount = Math.ceil(total / ROWS_PER_PAGE);
+
   const [openDialog, setOpenDialog] = useState(false);
   const [editSupplier, setEditSupplier] = useState<any>(null);
-  
+
   const [supplierCode, setSupplierCode] = useState("");
   const [supplierName, setSupplierName] = useState("");
   const [contactPersonName, setContactPersonName] = useState("");
@@ -26,24 +35,38 @@ export default function SupplierDirectory() {
   const [stateLoc, setStateLoc] = useState("");
   const [country, setCountry] = useState("India");
   const [saving, setSaving] = useState(false);
-  
+
   const [errorMsg, setErrorMsg] = useState("");
 
+  // Debounce the search box, resetting to page 1 whenever the term changes.
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   useEffect(() => {
-    fetchSuppliers();
-  }, []);
+    const id = setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim());
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(id);
+  }, [searchTerm]);
 
   const fetchSuppliers = async () => {
     try {
       setLoading(true);
-      const res = await axiosInstance.get("/pharmacy/suppliers");
+      const res = await axiosInstance.get("/pharmacy/suppliers", {
+        params: { page, limit: ROWS_PER_PAGE, search: debouncedSearch || undefined },
+      });
       setSuppliers(res.data.data || []);
+      setTotal(res.data.pagination?.total ?? (res.data.data || []).length);
     } catch (err) {
       console.error("Failed to fetch suppliers", err);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchSuppliers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, debouncedSearch]);
 
   const handleOpenNew = () => {
     setEditSupplier(null);
@@ -116,51 +139,35 @@ export default function SupplierDirectory() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this supplier?")) return;
+    const ok = await confirm({
+      title: "Delete supplier",
+      message: "Are you sure you want to delete this supplier? This cannot be undone.",
+      confirmText: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await axiosInstance.delete(`/pharmacy/suppliers/${id}`);
-      fetchSuppliers();
+      // If we just removed the last row on this page, step back a page.
+      if (suppliers.length === 1 && page > 1) {
+        setPage(page - 1);
+      } else {
+        fetchSuppliers();
+      }
     } catch (err: any) {
       console.error("Failed to delete supplier", err);
-      alert(err.response?.data?.message || "Failed to delete the supplier.");
+      toast.error(err.response?.data?.message || "Failed to delete the supplier.");
     }
   };
 
-  const filteredSuppliers = suppliers.filter(sup => 
-    sup.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    sup.contactPersonName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sup.supplierCode.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: "auto" }}>
-      <Box sx={{ 
-        display: "flex", 
-        flexDirection: { xs: 'column', sm: 'row' },
-        justifyContent: "space-between", 
-        alignItems: { xs: 'flex-start', sm: 'center' }, 
-        mb: 4,
-        gap: 2
-      }}>
-        <Box>
-          <Typography variant="h4" sx={{ 
-            fontWeight: 800, 
-            background: 'linear-gradient(135deg, #4F46E5 0%, #EC4899 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5
-          }}>
-            <LocalShippingRounded fontSize="large" sx={{ color: '#4F46E5' }} />
-            Supplier Directory
-          </Typography>
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 0.5 }}>
-            Manage vendors, distributors, and pharmacy suppliers.
-          </Typography>
-        </Box>
-        <Button 
-          variant="contained" 
+    <PharmacyPage
+      title="Supplier Directory"
+      subtitle="Manage vendors, distributors, and pharmacy suppliers."
+      icon={<LocalShippingRounded fontSize="large" sx={{ color: '#4F46E5' }} />}
+      action={
+        <Button
+          variant="contained"
           startIcon={<AddRounded />}
           onClick={handleOpenNew}
           sx={{
@@ -180,9 +187,9 @@ export default function SupplierDirectory() {
         >
           Add Supplier
         </Button>
-      </Box>
-
-      <Paper sx={{ 
+      }
+    >
+      <Paper sx={{
         borderRadius: 4,
         overflow: 'hidden',
         border: '1px solid',
@@ -210,76 +217,81 @@ export default function SupplierDirectory() {
           <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
             <CircularProgress size={48} thickness={4} sx={{ color: '#4F46E5' }} />
           </Box>
-        ) : filteredSuppliers.length === 0 ? (
+        ) : suppliers.length === 0 ? (
           <Box sx={{ p: 8, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
             <LocalShippingRounded sx={{ fontSize: 64, color: 'text.disabled' }} />
             <Typography variant="h6" color="text.secondary">No suppliers found</Typography>
-            <Typography variant="body2" color="text.disabled">Get started by adding your first supplier.</Typography>
+            <Typography variant="body2" color="text.disabled">
+              {debouncedSearch ? "Try a different search term." : "Get started by adding your first supplier."}
+            </Typography>
           </Box>
         ) : (
           <Fade in timeout={500}>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Code</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Company Name</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Contact Person</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Phone</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Email</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700, py: 2 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredSuppliers.map((sup) => (
-                  <TableRow 
-                    key={sup.supplierId} 
-                    hover
-                    sx={{ 
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        bgcolor: alpha(theme.palette.primary.main, 0.02),
-                        transform: 'scale(1.001)'
-                      }
-                    }}
-                  >
-                    <TableCell sx={{ fontWeight: 600, fontFamily: 'monospace', color: 'text.secondary' }}>{sup.supplierCode}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#4F46E5' }}>{sup.supplierName}</TableCell>
-                    <TableCell sx={{ fontWeight: 500 }}>{sup.contactPersonName}</TableCell>
-                    <TableCell sx={{ color: 'text.secondary' }}>{sup.phone}</TableCell>
-                    <TableCell sx={{ color: 'text.secondary' }}>{sup.email}</TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Edit">
-                        <IconButton 
-                          color="primary" 
-                          onClick={() => handleOpenEdit(sup)}
-                          sx={{ '&:hover': { bgcolor: alpha('#4F46E5', 0.1) } }}
-                        >
-                          <EditRounded fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton 
-                          color="error" 
-                          onClick={() => handleDelete(sup.supplierId)}
-                          sx={{ '&:hover': { bgcolor: alpha('#EF4444', 0.1) } }}
-                        >
-                          <DeleteRounded fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
+            <Box>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
+                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Code</TableCell>
+                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Company Name</TableCell>
+                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Contact Person</TableCell>
+                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Phone</TableCell>
+                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Email</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, py: 2 }}>Actions</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHead>
+                <TableBody>
+                  {suppliers.map((sup) => (
+                    <TableRow
+                      key={sup.supplierId}
+                      hover
+                      sx={{
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          bgcolor: alpha(theme.palette.primary.main, 0.02),
+                          transform: 'scale(1.001)'
+                        }
+                      }}
+                    >
+                      <TableCell sx={{ fontWeight: 600, fontFamily: 'monospace', color: 'text.secondary' }}>{sup.supplierCode}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: '#4F46E5' }}>{sup.supplierName}</TableCell>
+                      <TableCell sx={{ fontWeight: 500 }}>{sup.contactPersonName}</TableCell>
+                      <TableCell sx={{ color: 'text.secondary' }}>{sup.phone}</TableCell>
+                      <TableCell sx={{ color: 'text.secondary' }}>{sup.email}</TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Edit">
+                          <IconButton
+                            color="primary"
+                            onClick={() => handleOpenEdit(sup)}
+                            sx={{ '&:hover': { bgcolor: alpha('#4F46E5', 0.1) } }}
+                          >
+                            <EditRounded fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton
+                            color="error"
+                            onClick={() => handleDelete(sup.supplierId)}
+                            sx={{ '&:hover': { bgcolor: alpha('#EF4444', 0.1) } }}
+                          >
+                            <DeleteRounded fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <PaginationBar page={page} pageCount={pageCount} total={total} onChange={setPage} />
+            </Box>
           </Fade>
         )}
       </Paper>
 
       {/* Add/Edit Dialog */}
-      <Dialog 
-        open={openDialog} 
-        onClose={handleClose} 
-        maxWidth="md" 
+      <Dialog
+        open={openDialog}
+        onClose={handleClose}
+        maxWidth="md"
         fullWidth
         PaperProps={{
           sx: {
@@ -301,7 +313,7 @@ export default function SupplierDirectory() {
                 <Typography color="error" variant="body2" fontWeight="500">{errorMsg}</Typography>
               </Box>
             )}
-            
+
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
               <TextField
                 label="Supplier Code"
@@ -320,7 +332,7 @@ export default function SupplierDirectory() {
                 variant="outlined"
                 required
               />
-              
+
               <TextField
                 label="Contact Person"
                 value={contactPersonName}
@@ -337,7 +349,7 @@ export default function SupplierDirectory() {
                 variant="outlined"
                 required
               />
-              
+
               <TextField
                 label="Phone Number"
                 value={phone}
@@ -380,12 +392,12 @@ export default function SupplierDirectory() {
           <Button onClick={handleClose} color="inherit" sx={{ fontWeight: 600, borderRadius: '8px' }}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleSave} 
-            variant="contained" 
+          <Button
+            onClick={handleSave}
+            variant="contained"
             disabled={saving}
-            sx={{ 
-              fontWeight: 600, 
+            sx={{
+              fontWeight: 600,
               borderRadius: '8px',
               px: 3,
               background: 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%)',
@@ -397,6 +409,6 @@ export default function SupplierDirectory() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PharmacyPage>
   );
 }

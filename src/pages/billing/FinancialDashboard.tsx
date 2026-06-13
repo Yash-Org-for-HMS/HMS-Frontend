@@ -112,7 +112,7 @@ export default function FinancialDashboard() {
             wordBreak: "break-word",
           }}
         >
-          {title.includes("Invoices") ? value.toLocaleString() : `$${value.toLocaleString()}`}
+          {title.includes("Invoices") ? value.toLocaleString() : `₹${value.toLocaleString()}`}
         </Typography>
         <Typography 
           variant="subtitle1" 
@@ -224,7 +224,7 @@ export default function FinancialDashboard() {
                     tick={{ fill: "#64748B", fontSize: 13, fontWeight: 500 }} 
                     axisLine={false} 
                     tickLine={false}
-                    tickFormatter={(val) => `$${val}`}
+                    tickFormatter={(val) => `₹${val}`}
                   />
                   <RechartsTooltip
                     contentStyle={{ 
