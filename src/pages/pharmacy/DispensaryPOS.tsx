@@ -1,24 +1,32 @@
 import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { 
-  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, 
+  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
   Button, CircularProgress, TextField, IconButton, useTheme, Autocomplete, Divider, alpha,
-  List, ListItem, ListItemButton, Chip, Pagination, Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, Tooltip
+  List, ListItem, ListItemButton, Chip, Pagination, Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, Tooltip, Alert
 } from "@mui/material";
 import { PointOfSaleRounded, AddCircleRounded, RemoveCircleRounded, DeleteRounded, PaymentRounded, LocalPharmacyRounded, DownloadRounded, EditRounded, CancelRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
 import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
 import PharmacyPage, { ROWS_PER_PAGE } from "./components/PharmacyPage";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
+import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
 
 export default function DispensaryPOS() {
   const theme = useTheme();
   const location = useLocation();
   const toast = useToast();
   const confirm = useConfirm();
+  // A pharmacy sale is stamped to one branch. Org admins viewing "All branches"
+  // (consolidated) have no active branch, so the backend rejects the sale — guide
+  // them to pick a concrete branch here instead of failing at checkout.
+  const { activeBranchId, availableBranches, setActiveBranch } = useHospitalAuth();
+  const taxRate = useHospitalTaxRate();
   const { data, isLoading: loading, refetch: fetchData } = useQuery({
     queryKey: ["dispensary-pos-data"],
     queryFn: async () => {
@@ -296,9 +304,16 @@ export default function DispensaryPOS() {
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+  // GST preview so the cart total matches what the payment dialog actually collects.
+  const cartTax = cartTotal * (taxRate / 100);
+  const cartGrandTotal = cartTotal + cartTax;
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
+    if (!activeBranchId) {
+      toast.error("Select a branch before processing a sale.");
+      return;
+    }
     try {
       setProcessing(true);
       const payload = {
@@ -314,9 +329,12 @@ export default function DispensaryPOS() {
       const res = await axiosInstance.post("/pharmacy/orders", payload);
       setCreatedOrder(res.data.data);
       setShowPOS(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("Failed to process sale");
+      // Surface the real backend reason (e.g. "Select a branch before performing
+      // this action", "Insufficient stock to complete this sale.") instead of a
+      // generic message that hides what actually went wrong.
+      toast.error(err.response?.data?.message || "Failed to process sale");
     } finally {
       setProcessing(false);
     }
@@ -367,7 +385,37 @@ export default function DispensaryPOS() {
         </Box>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          
+
+          {/* Branch required: a sale must be recorded against a specific branch.
+              Shown when operating in consolidated / no-branch mode. */}
+          {!activeBranchId && (
+            <Alert
+              severity="warning"
+              action={
+                availableBranches.length > 0 ? (
+                  <Select
+                    size="small"
+                    displayEmpty
+                    value=""
+                    onChange={(e) => {
+                      setActiveBranch(e.target.value);
+                      // Reload so every query re-runs scoped to the chosen branch.
+                      window.location.reload();
+                    }}
+                    sx={{ minWidth: 200, bgcolor: 'background.paper' }}
+                  >
+                    <MenuItem value="" disabled>Select a branch…</MenuItem>
+                    {availableBranches.map((b) => (
+                      <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>
+                    ))}
+                  </Select>
+                ) : undefined
+              }
+            >
+              Select a branch to process sales. Pharmacy sales are recorded against a specific branch and can't be created in the consolidated "All branches" view.
+            </Alert>
+          )}
+
           {/* Top Row: Prescriptions + POS Area */}
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: '300px minmax(0, 1fr)' }, gap: 4 }}>
             
@@ -380,8 +428,8 @@ export default function DispensaryPOS() {
               </Box>
               <Box sx={{ flexGrow: 1, overflow: 'auto', minHeight: 0 }}>
                 {pendingPrescriptions.length === 0 ? (
-                  <Box sx={{ p: 4, textAlign: 'center' }}>
-                    <Typography color="text.secondary" variant="body2">No pending prescriptions</Typography>
+                  <Box sx={{ p: 2 }}>
+                    <Mascot pose="nothing-here-yet" subtitle="No pending prescriptions." size={110} />
                   </Box>
                 ) : (
                   <List disablePadding>
@@ -498,7 +546,7 @@ export default function DispensaryPOS() {
                   </TableHead>
                   <TableBody>
                     {cart.length === 0 ? (
-                      <TableRow><TableCell colSpan={5} align="center" sx={{ py: 8, color: 'text.secondary' }}>Cart is empty</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="Cart is empty — add items or load a prescription." size={110} /></TableCell></TableRow>
                     ) : cart.map((item) => (
                       <TableRow key={item.medicineId}>
                         <TableCell>
@@ -528,10 +576,12 @@ export default function DispensaryPOS() {
               {/* Merged Checkout Footer */}
               <Box sx={{ flexShrink: 0, p: 2, bgcolor: alpha(theme.palette.primary.main, 0.02), borderRadius: 2, border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, flexDirection: { xs: 'column', md: 'row' } }}>
                 <Box>
-                  <Typography color="text.secondary" variant="body2" sx={{ mb: 0.5 }}>Subtotal: ₹{cartTotal.toFixed(2)} | Tax: ₹0.00</Typography>
+                  <Typography color="text.secondary" variant="body2" sx={{ mb: 0.5 }}>
+                    Subtotal: ₹{cartTotal.toFixed(2)} | Tax ({taxRate}%): ₹{cartTax.toFixed(2)}
+                  </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
                     <Typography variant="h5" fontWeight={800}>Total:</Typography>
-                    <Typography variant="h4" fontWeight={800} color="#10B981">₹{cartTotal.toFixed(2)}</Typography>
+                    <Typography variant="h4" fontWeight={800} color="#10B981">₹{cartGrandTotal.toFixed(2)}</Typography>
                   </Box>
                 </Box>
                 
@@ -540,7 +590,7 @@ export default function DispensaryPOS() {
                   size="large"
                   startIcon={<PaymentRounded />}
                   onClick={handleCheckout}
-                  disabled={cart.length === 0 || processing}
+                  disabled={cart.length === 0 || processing || !activeBranchId}
                   sx={{
                     px: { xs: 4, md: 6 },
                     py: 1.5,
@@ -582,7 +632,7 @@ export default function DispensaryPOS() {
                 </TableHead>
                 <TableBody>
                   {todaysOrders.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}>No orders today</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No orders today." size={110} /></TableCell></TableRow>
                   ) : paginatedOrders.map((sale: any) => (
                     <TableRow key={sale.pharmacyOrderId} sx={{ opacity: sale.status === 'cancelled' ? 0.6 : 1 }}>
                       <TableCell sx={{ fontFamily: 'monospace', fontWeight: 700 }}>

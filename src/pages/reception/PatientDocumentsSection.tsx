@@ -8,6 +8,7 @@ import {
   CloudUploadRounded, DeleteRounded, VisibilityRounded, InsertDriveFileRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
 
 export default function PatientDocumentsSection({ patientId }: { patientId: string }) {
@@ -126,12 +127,8 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
           <CircularProgress sx={{ color: "#06b6d4" }} />
         </Box>
       ) : documents.length === 0 ? (
-        <Paper elevation={0} sx={{ p: 5, textAlign: "center", bgcolor: "action.hover", border: "1px dashed", borderColor: "divider", borderRadius: 3 }}>
-          <InsertDriveFileRounded sx={{ fontSize: 60, color: "#334155", mb: 2 }} />
-          <Typography variant="h6" sx={{ color: "text.secondary" }}>No documents found</Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
-            Upload Aadhaar, Insurance Cards, or Referral Letters here.
-          </Typography>
+        <Paper elevation={0} sx={{ p: 3, bgcolor: "action.hover", border: "1px dashed", borderColor: "divider", borderRadius: 3 }}>
+          <Mascot pose="nothing-here-yet" title="No documents found" subtitle="Upload Aadhaar, Insurance Cards, or Referral Letters here." size={130} />
         </Paper>
       ) : (
         <Grid container spacing={3}>

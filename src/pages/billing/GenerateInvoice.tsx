@@ -6,6 +6,7 @@ import {
 } from "@mui/material";
 import { ReceiptLongRounded, PaymentRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
 
 export default function GenerateInvoice() {
   const theme = useTheme();
@@ -21,9 +22,11 @@ export default function GenerateInvoice() {
   const [itemsLoading, setItemsLoading] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
 
-  // Invoice Calculator
+  // Invoice Calculator — tax defaults to the hospital's configured GST rate.
   const [discount, setDiscount] = useState<number | "">("");
+  const taxRate = useHospitalTaxRate();
   const [taxPercent, setTaxPercent] = useState<number | "">(0);
+  useEffect(() => { setTaxPercent(taxRate); }, [taxRate]);
   
   // Modal State
   const [isGenerating, setIsGenerating] = useState(false);

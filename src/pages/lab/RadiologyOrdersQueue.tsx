@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Chip, Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab } from "@mui/material";
 import { VisibilityRounded, CheckCircleRounded, InsertDriveFileRounded, EditRounded, CloudUploadRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
 import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
@@ -153,7 +154,7 @@ export default function RadiologyOrdersQueue() {
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}><CircularProgress /></Box>
         ) : orders.length === 0 ? (
-          <Typography sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>No radiology orders found.</Typography>
+          <Mascot pose="all-caught-up" title="No radiology orders" subtitle="No radiology orders found." />
         ) : (
           <Table>
             <TableHead>
@@ -169,8 +170,8 @@ export default function RadiologyOrdersQueue() {
             <TableBody>
               {filteredOrders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 3, color: "text.secondary" }}>
-                    No orders match the selected filter.
+                  <TableCell colSpan={6} sx={{ py: 3, border: 0 }}>
+                    <Mascot pose="no-matches" subtitle="No orders match the selected filter." size={110} />
                   </TableCell>
                 </TableRow>
               ) : filteredOrders.map((order: any) => (

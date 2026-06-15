@@ -8,6 +8,7 @@ import {
   MedicationRounded, LocalShippingRounded, WarningRounded, PointOfSaleRounded, DashboardRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import PharmacyPage from "./components/PharmacyPage";
 
 export default function PharmacyDashboard() {
@@ -128,7 +129,7 @@ export default function PharmacyDashboard() {
                       </TableHead>
                       <TableBody>
                         {lowStockAlerts.length === 0 ? (
-                          <TableRow><TableCell colSpan={3} align="center" sx={{ py: 3 }}>No low stock items</TableCell></TableRow>
+                          <TableRow><TableCell colSpan={3} sx={{ py: 3, border: 0 }}><Mascot pose="all-caught-up" subtitle="No low stock items — inventory looks healthy." size={110} /></TableCell></TableRow>
                         ) : lowStockAlerts.map(item => (
                           <TableRow key={item.medicineId}>
                             <TableCell sx={{ fontWeight: 600 }}>{item.medicineName}</TableCell>
@@ -158,7 +159,7 @@ export default function PharmacyDashboard() {
                       </TableHead>
                       <TableBody>
                         {sales.filter(s => s.status !== "cancelled").slice(0, 5).length === 0 ? (
-                          <TableRow><TableCell colSpan={3} align="center" sx={{ py: 3 }}>No recent sales</TableCell></TableRow>
+                          <TableRow><TableCell colSpan={3} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No recent sales." size={110} /></TableCell></TableRow>
                         ) : sales.filter(s => s.status !== "cancelled").slice(0, 5).map(sale => (
                           <TableRow key={sale.pharmacyOrderId}>
                             <TableCell sx={{ fontFamily: 'monospace' }}>{sale.pharmacyOrderId.split('-')[0].toUpperCase()}</TableCell>

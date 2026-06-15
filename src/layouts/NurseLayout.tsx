@@ -8,7 +8,6 @@ import {
 import {
   Menu as MenuIcon,
   DashboardRounded,
-  MonitorHeartRounded,
   PeopleAltRounded,
   LocalHospitalRounded,
   LogoutRounded,
@@ -37,7 +36,6 @@ export default function NurseLayout() {
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/nurse/dashboard" },
     { text: "Patient Queue", icon: <PeopleAltRounded />, path: "/nurse/queue" },
-    { text: "Vitals Station", icon: <MonitorHeartRounded />, path: "/nurse/vitals" },
   ];
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);

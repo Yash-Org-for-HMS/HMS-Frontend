@@ -18,6 +18,7 @@ import {
 import { AddRounded, EditRounded, EventAvailableRounded, CalendarTodayRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import Mascot from "../../../components/Mascot";
 
 export default function DoctorsList() {
   const [doctors, setDoctors] = useState<any[]>([]);
@@ -72,8 +73,8 @@ export default function DoctorsList() {
             <TableBody>
               {doctors.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
-                    No doctors found.
+                  <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
+                    <Mascot pose="nothing-here-yet" subtitle="No doctors found." size={120} />
                   </TableCell>
                 </TableRow>
               ) : (

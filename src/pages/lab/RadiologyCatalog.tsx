@@ -6,6 +6,7 @@ import {
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded, SettingsAccessibilityRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 
 export default function RadiologyCatalog() {
   const theme = useTheme();
@@ -167,11 +168,7 @@ export default function RadiologyCatalog() {
             <CircularProgress size={48} thickness={4} sx={{ color: '#0284C7' }} />
           </Box>
         ) : scans.length === 0 ? (
-          <Box sx={{ p: 8, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-            <SettingsAccessibilityRounded sx={{ fontSize: 64, color: 'text.disabled' }} />
-            <Typography variant="h6" color="text.secondary">No radiology scans found</Typography>
-            <Typography variant="body2" color="text.disabled">Get started by creating your first scan.</Typography>
-          </Box>
+          <Mascot pose="nothing-here-yet" title="No radiology scans found" subtitle="Get started by creating your first scan." />
         ) : (
           <Fade in timeout={500}>
             <Table>

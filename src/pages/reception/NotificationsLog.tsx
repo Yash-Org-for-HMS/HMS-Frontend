@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { NotificationsRounded, EmailRounded, SmsRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
 
 export default function NotificationsLog() {
@@ -68,8 +69,8 @@ export default function NotificationsLog() {
                 </TableRow>
               ) : notifications.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 8, borderBottom: "none", color: "text.secondary" }}>
-                    No notifications sent yet.
+                  <TableCell colSpan={5} sx={{ py: 4, borderBottom: "none" }}>
+                    <Mascot pose="nothing-here-yet" subtitle="No notifications sent yet." size={130} />
                   </TableCell>
                 </TableRow>
               ) : (

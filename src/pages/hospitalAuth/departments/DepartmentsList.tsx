@@ -17,6 +17,7 @@ import {
 import { AddRounded, EditRounded, BlockRounded, CheckCircleRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import Mascot from "../../../components/Mascot";
 
 interface Department {
   departmentId: string;
@@ -98,8 +99,8 @@ export default function DepartmentsList() {
           <TableBody>
             {departments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
-                  No departments found. Create one to get started.
+                <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
+                  <Mascot pose="nothing-here-yet" title="No departments yet" subtitle="Create one to get started." size={120} />
                 </TableCell>
               </TableRow>
             ) : (

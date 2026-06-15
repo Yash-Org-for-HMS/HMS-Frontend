@@ -6,6 +6,7 @@ import {
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded, LocalShippingRounded, SearchRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
@@ -218,13 +219,11 @@ export default function SupplierDirectory() {
             <CircularProgress size={48} thickness={4} sx={{ color: '#4F46E5' }} />
           </Box>
         ) : suppliers.length === 0 ? (
-          <Box sx={{ p: 8, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-            <LocalShippingRounded sx={{ fontSize: 64, color: 'text.disabled' }} />
-            <Typography variant="h6" color="text.secondary">No suppliers found</Typography>
-            <Typography variant="body2" color="text.disabled">
-              {debouncedSearch ? "Try a different search term." : "Get started by adding your first supplier."}
-            </Typography>
-          </Box>
+          <Mascot
+            pose={debouncedSearch ? "no-matches" : "nothing-here-yet"}
+            title="No suppliers found"
+            subtitle={debouncedSearch ? "Try a different search term." : "Get started by adding your first supplier."}
+          />
         ) : (
           <Fade in timeout={500}>
             <Box>

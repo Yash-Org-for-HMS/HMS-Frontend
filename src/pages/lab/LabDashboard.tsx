@@ -2,6 +2,7 @@ import { Box, Typography, Grid, Paper, CircularProgress, Chip, Table, TableBody,
 import { ScienceRounded, CheckCircleRounded, PendingActionsRounded, BiotechRounded, AttachMoneyRounded, TrendingUpRounded } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import { useNavigate } from "react-router-dom";
 
 export default function LabDashboard() {
@@ -203,7 +204,7 @@ export default function LabDashboard() {
             </Box>
             
             {recentLabOrders.length === 0 ? (
-              <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3 }}>No pending lab orders</Typography>
+              <Mascot pose="all-caught-up" subtitle="No pending lab orders." size={110} />
             ) : (
               <Table size="small">
                 <TableHead>
@@ -238,7 +239,7 @@ export default function LabDashboard() {
             </Box>
             
             {recentRadOrders.length === 0 ? (
-              <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3 }}>No pending radiology orders</Typography>
+              <Mascot pose="all-caught-up" subtitle="No pending radiology orders." size={110} />
             ) : (
               <Table size="small">
                 <TableHead>

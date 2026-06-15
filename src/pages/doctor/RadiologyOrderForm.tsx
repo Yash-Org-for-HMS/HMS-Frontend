@@ -5,6 +5,7 @@ import {
 } from "@mui/material";
 import { SaveRounded, CameraAltRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
 
 const DOCTOR_BLUE = "#3b82f6";
@@ -157,7 +158,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
         {loading ? (
           <CircularProgress size={24} />
         ) : existingOrders.length === 0 ? (
-          <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>No radiology orders for this consultation.</Typography>
+          <Mascot pose="nothing-here-yet" subtitle="No radiology orders for this consultation yet." size={130} />
         ) : (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {existingOrders.map((order, idx) => (

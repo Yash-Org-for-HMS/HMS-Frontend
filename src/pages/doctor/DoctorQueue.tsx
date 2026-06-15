@@ -10,6 +10,7 @@ import {
   LocalHospitalRounded, PlayArrowRounded, VisibilityRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import VitalsModal from "../reception/VitalsModal";
 import { useNavigate } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
@@ -130,8 +131,8 @@ export default function DoctorQueue() {
                 </TableRow>
               ) : activeTokens.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 8, color: "text.secondary" }}>
-                    No active patients in queue
+                  <TableCell colSpan={5} sx={{ py: 4, border: 0 }}>
+                    <Mascot pose="all-caught-up" title="All caught up!" subtitle="No active patients in the queue right now." />
                   </TableCell>
                 </TableRow>
               ) : (

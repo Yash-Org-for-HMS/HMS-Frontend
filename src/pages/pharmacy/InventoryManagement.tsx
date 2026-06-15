@@ -6,6 +6,7 @@ import {
 } from "@mui/material";
 import { AddRounded, InventoryRounded, ShoppingCartRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
 
@@ -273,7 +274,7 @@ export default function InventoryManagement() {
                 </TableHead>
                 <TableBody>
                   {inventory.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}>No stock available</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No stock available." size={110} /></TableCell></TableRow>
                   ) : inventory.map(inv => (
                     <TableRow key={inv.inventoryId} hover>
                       <TableCell sx={{ fontWeight: 600, color: '#4F46E5' }}>{getMedicineName(inv.medicineId)}</TableCell>
@@ -306,7 +307,7 @@ export default function InventoryManagement() {
                 </TableHead>
                 <TableBody>
                   {purchaseOrders.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}>No purchase orders</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No purchase orders." size={110} /></TableCell></TableRow>
                   ) : purchaseOrders.map(po => (
                     <TableRow key={po.purchaseOrderId} hover>
                       <TableCell sx={{ fontFamily: 'monospace' }}>{po.purchaseOrderId.split('-')[0].toUpperCase()}</TableCell>
@@ -354,7 +355,7 @@ export default function InventoryManagement() {
                 </TableHead>
                 <TableBody>
                   {lowStockAlerts.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}>No low stock alerts. Stock is healthy.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="all-caught-up" subtitle="No low stock alerts — stock is healthy." size={110} /></TableCell></TableRow>
                   ) : paginatedAlerts.map(alert => (
                     <TableRow key={alert.medicineId} hover>
                       <TableCell sx={{ fontWeight: 600, color: '#4F46E5' }}>{alert.medicineName}</TableCell>

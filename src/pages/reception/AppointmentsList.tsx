@@ -13,6 +13,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import BillingModal from "./BillingModal";
 import { useToast } from "../../contexts/ToastContext";
 import dayjs, { Dayjs } from "dayjs";
@@ -335,7 +336,7 @@ export default function AppointmentsList() {
               {loading ? (
                 <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}><CircularProgress size={30} sx={{ color: "#06b6d4" }}/></TableCell></TableRow>
               ) : filteredAppointments.length === 0 ? (
-                <TableRow><TableCell colSpan={5} align="center" sx={{ py: 6, color: "text.secondary" }}>No appointments found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No appointments" subtitle="No appointments found." /></TableCell></TableRow>
               ) : (
                 filteredAppointments.map(appt => {
                   const typeInfo = getAppointmentType(appt.reason);

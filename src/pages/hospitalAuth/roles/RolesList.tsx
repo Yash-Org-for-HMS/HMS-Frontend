@@ -17,6 +17,7 @@ import {
 import { AddRounded, EditRounded, BlockRounded, CheckCircleRounded, ContentCopyRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import Mascot from "../../../components/Mascot";
 
 interface Role {
   roleId: string;
@@ -105,8 +106,8 @@ export default function RolesList() {
           <TableBody>
             {roles.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
-                  No roles found.
+                <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
+                  <Mascot pose="nothing-here-yet" subtitle="No roles found." size={120} />
                 </TableCell>
               </TableRow>
             ) : (

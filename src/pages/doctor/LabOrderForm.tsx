@@ -5,6 +5,7 @@ import {
 } from "@mui/material";
 import { DeleteRounded, SaveRounded, AddRounded, ScienceRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
 
 const DOCTOR_BLUE = "#3b82f6";
@@ -142,6 +143,7 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
             options={testOptions}
             getOptionLabel={(option) => `${option.testName} (${option.testCode})`}
             loading={testLoading}
+            noOptionsText={<Mascot pose="no-matches" subtitle="No matching tests" size={72} sx={{ py: 1 }} />}
             value={selectedTest}
             onInputChange={(e, newInputValue) => setTestQuery(newInputValue)}
             onChange={(e, newValue) => setSelectedTest(newValue)}
@@ -232,7 +234,7 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
         {loading ? (
           <CircularProgress size={24} />
         ) : existingOrders.length === 0 ? (
-          <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>No lab orders for this consultation.</Typography>
+          <Mascot pose="nothing-here-yet" subtitle="No lab orders for this consultation yet." size={130} />
         ) : (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {existingOrders.map((order, idx) => (

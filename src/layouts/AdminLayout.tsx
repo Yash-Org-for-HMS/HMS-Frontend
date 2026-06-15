@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -55,7 +55,7 @@ export default function AdminLayout() {
   // Grouped navigation that follows the tenant lifecycle so the flow reads
   // top-to-bottom: see the overview → work the sales pipeline → manage tenants →
   // control access → configure the platform → audit.
-  const navGroups: { heading: string | null; items: { text: string; icon: JSX.Element; path: string }[] }[] = [
+  const navGroups: { heading: string | null; items: { text: string; icon: ReactNode; path: string }[] }[] = [
     {
       heading: t("nav.group.overview", "Overview"),
       items: [{ text: t("nav.dashboard"), icon: <DashboardRounded />, path: "/" }],

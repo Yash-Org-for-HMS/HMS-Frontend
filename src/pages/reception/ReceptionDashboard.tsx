@@ -26,6 +26,7 @@ import {
   TrendingUpRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useToast } from "../../contexts/ToastContext";
 
@@ -212,8 +213,8 @@ export default function ReceptionDashboard() {
                     ))
                   ) : stats?.upcomingAppointments?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 6, color: "text.secondary" }}>
-                        No upcoming appointments in the queue.
+                      <TableCell colSpan={4} sx={{ py: 4, border: 0 }}>
+                        <Mascot pose="all-caught-up" title="All caught up!" subtitle="No upcoming appointments in the queue." />
                       </TableCell>
                     </TableRow>
                   ) : (

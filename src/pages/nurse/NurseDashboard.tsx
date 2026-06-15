@@ -9,6 +9,7 @@ import {
   PeopleAltRounded, ArrowForwardRounded, SyncRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../../contexts/ToastContext";
@@ -221,11 +222,8 @@ export default function NurseDashboard() {
                     <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}><CircularProgress size={28} sx={{ color: NURSE_PURPLE }} /></TableCell></TableRow>
                   ) : needsVitals.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
-                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                          <CheckCircleRounded sx={{ fontSize: 40, color: "#10b981", opacity: 0.6 }} />
-                          <Typography variant="body2" sx={{ color: "text.secondary" }}>All vitals recorded for today! 🎉</Typography>
-                        </Box>
+                      <TableCell colSpan={5} sx={{ py: 4, border: 0 }}>
+                        <Mascot pose="all-caught-up" title="All caught up!" subtitle="All vitals recorded for today." />
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -252,7 +250,7 @@ export default function NurseDashboard() {
                           <Button
                             size="small" variant="contained"
                             startIcon={<MonitorHeartRounded />}
-                            onClick={() => navigate("/nurse/vitals", { state: { token } })}
+                            onClick={() => navigate("/nurse/queue", { state: { token } })}
                             sx={{
                               background: `linear-gradient(135deg, ${NURSE_PURPLE_DARK}, ${NURSE_PURPLE})`,
                               textTransform: "none", fontWeight: 600, fontSize: "0.8rem",
@@ -284,10 +282,7 @@ export default function NurseDashboard() {
             {loading ? (
               <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress size={24} sx={{ color: NURSE_PURPLE }} /></Box>
             ) : tokens.filter(t => t.appointmentId && vitalsRecorded.has(t.appointmentId)).length === 0 ? (
-              <Box sx={{ bgcolor: "background.default", borderRadius: 2, p: 3, textAlign: "center", border: "1px dashed", borderColor: "divider" }}>
-                <MonitorHeartRounded sx={{ fontSize: 36, color: NURSE_PURPLE, opacity: 0.4, mb: 1 }} />
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>No vitals recorded yet today</Typography>
-              </Box>
+              <Mascot pose="nothing-here-yet" subtitle="No vitals recorded yet today." size={130} />
             ) : (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 {tokens.filter(t => t.appointmentId && vitalsRecorded.has(t.appointmentId)).map(token => (

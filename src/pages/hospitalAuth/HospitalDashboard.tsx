@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import { useNavigate } from "react-router-dom";
 import { 
   PeopleAltRounded,
@@ -233,7 +234,7 @@ export default function HospitalDashboard() {
               </ResponsiveContainer>
             ) : (
               <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80%" }}>
-                <Typography color="text.secondary">No department data available</Typography>
+                <Mascot pose="nothing-here-yet" subtitle="No department data available." size={120} />
               </Box>
             )}
           </Paper>
@@ -283,8 +284,8 @@ export default function HospitalDashboard() {
             </Box>
             <List disablePadding>
               {stats?.recentActivities.length === 0 ? (
-                <ListItem sx={{ py: 4, justifyContent: "center" }}>
-                  <Typography variant="body2" color="text.secondary">No recent activities found.</Typography>
+                <ListItem sx={{ py: 2, justifyContent: "center" }}>
+                  <Mascot pose="nothing-here-yet" subtitle="No recent activities found." size={120} />
                 </ListItem>
               ) : (
                 stats?.recentActivities.map((activity, index) => (

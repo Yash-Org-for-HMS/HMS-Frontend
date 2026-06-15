@@ -37,6 +37,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import Mascot from "../../../components/Mascot";
 import { useToast } from "../../../contexts/ToastContext";
 
 interface User {
@@ -478,8 +479,8 @@ export default function UsersList() {
             <TableBody>
               {users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
-                    No staff members found.
+                  <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
+                    <Mascot pose="nothing-here-yet" subtitle="No staff members found." size={120} />
                   </TableCell>
                 </TableRow>
               ) : (

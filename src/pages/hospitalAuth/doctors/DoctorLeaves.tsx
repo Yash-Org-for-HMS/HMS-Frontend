@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import Mascot from "../../../components/Mascot";
 import { useToast } from "../../../contexts/ToastContext";
 
 export default function DoctorLeaves() {
@@ -83,8 +84,8 @@ export default function DoctorLeaves() {
           <TableBody>
             {leaves.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
-                  No leaves found for this doctor.
+                <TableCell colSpan={3} sx={{ py: 3, borderBottom: "none" }}>
+                  <Mascot pose="nothing-here-yet" subtitle="No leaves found for this doctor." size={110} />
                 </TableCell>
               </TableRow>
             ) : (

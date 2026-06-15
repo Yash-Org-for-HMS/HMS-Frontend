@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import PlansList from "./pages/plans/PlansList";
@@ -67,7 +67,6 @@ import FrontDeskConsole from "./pages/reception/FrontDeskConsole";
 // Nurse Imports
 import NurseDashboard from "./pages/nurse/NurseDashboard";
 import NurseQueue from "./pages/nurse/NurseQueue";
-import NurseVitalsStation from "./pages/nurse/NurseVitalsStation";
 // Doctor Imports
 import DoctorLayout from "./layouts/DoctorLayout";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
@@ -197,7 +196,8 @@ function App() {
           <Route element={<NurseLayout />}>
             <Route path="/nurse/dashboard" element={<NurseDashboard />} />
             <Route path="/nurse/queue" element={<NurseQueue />} />
-            <Route path="/nurse/vitals" element={<NurseVitalsStation />} />
+            {/* Vitals Station merged into the Patient Queue page (view toggle). */}
+            <Route path="/nurse/vitals" element={<Navigate to="/nurse/queue" replace />} />
             <Route path="/nurse/patients/:id" element={<PatientProfile />} />
           </Route>
         </Route>

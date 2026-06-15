@@ -7,6 +7,7 @@ import {
   SearchRounded, PersonAddRounded, CloseRounded, ChevronRightRounded, ContentCopyRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import PatientForm from "./PatientForm";
 import AppointmentForm from "./AppointmentForm";
 import BillingModal from "./BillingModal";
@@ -162,11 +163,8 @@ export default function FrontDeskConsole() {
                   </Box>
 
                   {recentPatients.length === 0 ? (
-                    <Box sx={{ p: 4, textAlign: "center", bgcolor: "background.default", borderRadius: 3, border: "1px dashed", borderColor: "divider", mx: 1 }}>
-                      <PersonAddRounded sx={{ fontSize: 40, color: "text.secondary", opacity: 0.5, mb: 1 }} />
-                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                        No recent patients found.
-                      </Typography>
+                    <Box sx={{ mx: 1 }}>
+                      <Mascot pose="nothing-here-yet" subtitle="No recent patients found." size={120} />
                     </Box>
                   ) : (
                     recentPatients.map(p => (
@@ -203,8 +201,8 @@ export default function FrontDeskConsole() {
                   )}
                 </Box>
               ) : patients.length === 0 && !loading ? (
-                <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
-                  <Typography variant="body2" gutterBottom>No patient found.</Typography>
+                <Box sx={{ textAlign: "center" }}>
+                  <Mascot pose="no-matches" subtitle="No patient found." size={120} />
                   <Button variant="outlined" size="small" onClick={() => setRegisterModalOpen(true)} sx={{ mt: 1, color: "#06b6d4", borderColor: "rgba(6, 182, 212, 0.5)" }}>
                     Register New Patient
                   </Button>

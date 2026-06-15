@@ -18,6 +18,7 @@ import {
 import { AddRounded, EditRounded, DeleteRounded, DynamicFormRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import Mascot from "../../../components/Mascot";
 
 export default function FormTemplatesList() {
   const [templates, setTemplates] = useState<any[]>([]);
@@ -95,8 +96,8 @@ export default function FormTemplatesList() {
             <TableBody>
               {templates.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
-                    No custom forms found. Click "Create Form" to begin.
+                  <TableCell colSpan={5} sx={{ py: 3, borderBottom: "none" }}>
+                    <Mascot pose="nothing-here-yet" title="No custom forms yet" subtitle='Click "Create Form" to begin.' size={120} />
                   </TableCell>
                 </TableRow>
               ) : (

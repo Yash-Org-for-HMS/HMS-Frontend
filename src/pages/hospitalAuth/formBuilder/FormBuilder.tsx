@@ -17,6 +17,7 @@ import {
 import { SaveRounded, DeleteRounded, AddCircleOutlineRounded, DragIndicatorRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import Mascot from "../../../components/Mascot";
 import { useToast } from "../../../contexts/ToastContext";
 
 const FIELD_TYPES = [
@@ -223,8 +224,9 @@ export default function FormBuilder() {
               </Box>
 
               {fields.length === 0 ? (
-                <Box sx={{ py: 8, textAlign: "center", border: "2px dashed rgba(255,255,255,0.1)", borderRadius: 2 }}>
-                  <Typography sx={{ color: "text.secondary", mb: 2 }}>No fields added yet.</Typography>
+                <Box sx={{ py: 3, textAlign: "center", border: "2px dashed rgba(255,255,255,0.1)", borderRadius: 2 }}>
+                  <Mascot pose="nothing-here-yet" subtitle="No fields added yet." size={120} sx={{ py: 1 }} />
+                  <Box sx={{ mb: 2 }} />
                   <Button variant="outlined" onClick={handleAddDataField} sx={{ color: "#38bdf8", borderColor: "rgba(56, 189, 248, 0.5)" }}>
                     Add First Field
                   </Button>

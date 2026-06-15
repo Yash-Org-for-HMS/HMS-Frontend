@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Chip, Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab } from "@mui/material";
 import { VisibilityRounded, BloodtypeRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import { useNavigate } from "react-router-dom";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
 import { useSocket } from "../../hooks/useSocket";
@@ -104,7 +105,7 @@ export default function LabOrdersQueue() {
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}><CircularProgress /></Box>
         ) : orders.length === 0 ? (
-          <Typography sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>No lab orders found.</Typography>
+          <Mascot pose="all-caught-up" title="No lab orders" subtitle="No lab orders found." />
         ) : (
           <Table>
             <TableHead>
@@ -120,8 +121,8 @@ export default function LabOrdersQueue() {
             <TableBody>
               {filteredOrders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 3, color: "text.secondary" }}>
-                    No orders match the selected filter.
+                  <TableCell colSpan={6} sx={{ py: 3, border: 0 }}>
+                    <Mascot pose="no-matches" subtitle="No orders match the selected filter." size={110} />
                   </TableCell>
                 </TableRow>
               ) : filteredOrders.map((order: any) => (

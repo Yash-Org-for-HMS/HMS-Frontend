@@ -25,6 +25,7 @@ import {
 } from "@mui/material";
 import { InfoRounded, SearchRounded, RefreshRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
+import Mascot from "../../../components/Mascot";
 import { useToast } from "../../../contexts/ToastContext";
 
 export default function AuditLogs() {
@@ -205,8 +206,8 @@ export default function AuditLogs() {
               <TableBody>
                 {logs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
-                      No audit logs found matching criteria.
+                    <TableCell colSpan={5} sx={{ py: 3, borderBottom: "none" }}>
+                      <Mascot pose="no-matches" subtitle="No audit logs found matching criteria." size={120} />
                     </TableCell>
                   </TableRow>
                 ) : (

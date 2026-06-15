@@ -25,6 +25,7 @@ import {
 } from "@mui/material";
 import { AddRounded, EditRounded, PowerSettingsNewRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
+import Mascot from "../../../components/Mascot";
 import { useToast } from "../../../contexts/ToastContext";
 
 const LOOKUP_CONFIGS: Record<string, any> = {
@@ -215,8 +216,8 @@ export default function LookupManager() {
             <TableBody>
               {data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={config.columns.length + 2} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
-                    No records found for {config.label}.
+                  <TableCell colSpan={config.columns.length + 2} sx={{ py: 3, borderBottom: "none" }}>
+                    <Mascot pose="nothing-here-yet" subtitle={`No records found for ${config.label}.`} size={120} />
                   </TableCell>
                 </TableRow>
               ) : (

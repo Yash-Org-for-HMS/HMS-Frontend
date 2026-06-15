@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  Box, Grid, Typography, Paper, CircularProgress, Alert,
+  Box, Grid, Typography, Paper, CircularProgress,
   Button, TextField, Divider, Avatar, IconButton, Chip, Tab, Tabs, Autocomplete
 } from "@mui/material";
 import {
@@ -9,6 +9,7 @@ import {
   HistoryRounded, PersonRounded, LocalHospitalRounded, DateRangeRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import PrescriptionWriter from "./PrescriptionWriter";
 import LabOrderForm from "./LabOrderForm";
 import RadiologyOrderForm from "./RadiologyOrderForm";
@@ -170,16 +171,16 @@ export default function ConsultationWorkspace() {
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80vh" }}>
-        <CircularProgress sx={{ color: DOCTOR_BLUE }} />
+        <Mascot pose="thinking" subtitle="Loading consultation…" />
       </Box>
     );
   }
 
   if (error && !context) {
     return (
-      <Box sx={{ p: 4 }}>
-        <Alert severity="error">{error}</Alert>
-        <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/doctor/queue")} sx={{ mt: 2 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", p: 4 }}>
+        <Mascot pose="oops" title="Something went wrong" subtitle={error} />
+        <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/doctor/queue")} sx={{ mt: 1 }}>
           Back to Queue
         </Button>
       </Box>
@@ -405,6 +406,7 @@ export default function ConsultationWorkspace() {
                       options={icd10Options}
                       getOptionLabel={(option) => `[${option.icd10Code}] ${option.shortDescription}`}
                       loading={icd10Loading}
+                      noOptionsText={<Mascot pose="no-matches" subtitle="No matching ICD-10 codes" size={72} sx={{ py: 1 }} />}
                       onInputChange={(e, newInputValue) => setIcd10Query(newInputValue)}
                       onChange={(e, newValue) => {
                         if (newValue) {

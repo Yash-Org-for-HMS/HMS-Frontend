@@ -5,6 +5,7 @@ import {
 } from "@mui/material";
 import { DeleteRounded, SaveRounded, AddRounded, PrintRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
 
 const DOCTOR_BLUE = "#3b82f6";
@@ -205,7 +206,7 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", p: 4 }}>
-        <CircularProgress size={24} />
+        <Mascot pose="thinking" subtitle="Loading prescription…" />
       </Box>
     );
   }
@@ -218,6 +219,12 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
           {dispensingStatus === "pending" && <Chip label="Sent to Pharmacy" color="warning" size="small" />}
           {dispensingStatus === "dispensed" && <Chip label="Dispensed" color="success" size="small" />}
           {dispensingStatus === "external" && <Chip label="Buy Outside (External)" color="default" size="small" />}
+        </Box>
+      )}
+
+      {dispensingStatus === "dispensed" && (
+        <Box sx={{ bgcolor: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: 2, p: 1 }}>
+          <Mascot pose="nice-work" title="Dispensed!" subtitle="This prescription has been filled by the pharmacy." size={110} />
         </Box>
       )}
 
@@ -240,6 +247,7 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
                return label;
             }}
             loading={medicineLoading}
+            noOptionsText={<Mascot pose="no-matches" subtitle="No matching medicines" size={72} sx={{ py: 1 }} />}
             value={selectedMedicine}
             onInputChange={(e, newInputValue) => setMedicineQuery(newInputValue)}
             onChange={(e, newValue) => setSelectedMedicine(newValue)}

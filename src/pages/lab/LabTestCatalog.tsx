@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded, ScienceRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 
 export default function LabTestCatalog() {
   const theme = useTheme();
@@ -183,11 +184,7 @@ export default function LabTestCatalog() {
             <CircularProgress size={48} thickness={4} sx={{ color: '#2563EB' }} />
           </Box>
         ) : tests.length === 0 ? (
-          <Box sx={{ p: 8, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-            <ScienceRounded sx={{ fontSize: 64, color: 'text.disabled' }} />
-            <Typography variant="h6" color="text.secondary">No lab tests found</Typography>
-            <Typography variant="body2" color="text.disabled">Get started by creating your first lab test.</Typography>
-          </Box>
+          <Mascot pose="nothing-here-yet" title="No lab tests found" subtitle="Get started by creating your first lab test." />
         ) : (
           <Fade in timeout={500}>
             <Table>

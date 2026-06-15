@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Dialog, DialogTitle, DialogContent, DialogActions, 
   Button, Typography, Box, CircularProgress, Alert, 
@@ -6,6 +6,7 @@ import {
 } from "@mui/material";
 import { CheckCircleRounded, PointOfSaleRounded, ReceiptLongRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
 
 interface PointOfCarePOSProps {
   open: boolean;
@@ -26,7 +27,11 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
   const theme = useTheme();
   
   const [discount, setDiscount] = useState<number | "">("");
-  const [taxPercent, setTaxPercent] = useState<number | "">(0); // Optional: Could fetch from settings
+  // Default the tax to the hospital's configured GST rate (was hardcoded 0, so
+  // sales were never taxed). Staff can still override it for this collection.
+  const taxRate = useHospitalTaxRate();
+  const [taxPercent, setTaxPercent] = useState<number | "">(0);
+  useEffect(() => { setTaxPercent(taxRate); }, [taxRate]);
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   
   const [loading, setLoading] = useState(false);

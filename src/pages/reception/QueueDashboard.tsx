@@ -11,6 +11,7 @@ import {
   MonitorHeartRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import BillingModal from "./BillingModal";
 import VitalsModal from "./VitalsModal";
 import { useSocket } from "../../hooks/useSocket";
@@ -144,7 +145,7 @@ export default function QueueDashboard() {
               {loading && activeTokens.length === 0 ? (
                 <TableRow><TableCell colSpan={6} align="center" sx={{ py: 4 }}><CircularProgress size={30} sx={{ color: "#06b6d4" }}/></TableCell></TableRow>
               ) : activeTokens.length === 0 ? (
-                <TableRow><TableCell colSpan={6} align="center" sx={{ py: 6, color: "text.secondary" }}>No active patients in queue</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No patients in queue" subtitle="No active patients in the queue right now." /></TableCell></TableRow>
               ) : (
                 activeTokens.map((token: any) => {
                   const isWaiting = token.statusCode === 'WAITING_FOR_VITALS' || token.statusCode === 'READY_FOR_DOCTOR';

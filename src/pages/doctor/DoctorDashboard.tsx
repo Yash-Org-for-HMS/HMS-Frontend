@@ -8,6 +8,7 @@ import {
   PeopleAltRounded, ArrowForwardRounded, LocalHospitalRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../../contexts/ToastContext";
@@ -176,11 +177,7 @@ export default function DoctorDashboard() {
             {loading ? (
               <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress size={24} sx={{ color: DOCTOR_BLUE }} /></Box>
             ) : !stats?.upcomingAppointments || stats.upcomingAppointments.length === 0 ? (
-              <Box sx={{ bgcolor: "background.default", borderRadius: 2, p: 4, textAlign: "center", border: "1px dashed", borderColor: "divider" }}>
-                <CheckCircleRounded sx={{ fontSize: 40, color: "#10b981", opacity: 0.6, mb: 1 }} />
-                <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 600 }}>All caught up!</Typography>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>No upcoming appointments found for today.</Typography>
-              </Box>
+              <Mascot pose="all-caught-up" title="All caught up!" subtitle="No upcoming appointments found for today." />
             ) : (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {stats.upcomingAppointments.map((appt: any, idx: number) => (

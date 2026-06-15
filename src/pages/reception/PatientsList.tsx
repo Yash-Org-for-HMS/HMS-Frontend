@@ -42,6 +42,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
 
 interface Patient {
@@ -270,11 +271,12 @@ export default function PatientsList() {
                   ))
                 ) : patients.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} sx={{ textAlign: "center", py: 8, borderBottom: "none" }}>
-                      <PersonAddRounded sx={{ fontSize: 48, color: "#1e3a5f", mb: 2 }} />
-                      <Typography variant="body1" sx={{ color: "#334155", mb: 1 }}>
-                        {search ? "No patients found matching your search" : "No patients registered yet"}
-                      </Typography>
+                    <TableCell colSpan={7} sx={{ textAlign: "center", py: 6, borderBottom: "none" }}>
+                      <Mascot
+                        pose={search ? "no-matches" : "nothing-here-yet"}
+                        title={search ? "No matches" : "No patients yet"}
+                        subtitle={search ? "No patients found matching your search." : "No patients registered yet."}
+                      />
                       {!search && (
                         <Button
                           variant="contained"
