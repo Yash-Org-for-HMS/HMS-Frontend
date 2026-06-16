@@ -644,12 +644,16 @@ export default function DispensaryPOS() {
                           <Tooltip title={sale.cancellationReason || "Cancelled"}>
                             <Chip size="small" label="Cancelled" color="error" variant="outlined" />
                           </Tooltip>
-                        ) : (
+                        ) : sale.status === 'completed' ? (
                           <Chip size="small" label="Completed" color="success" variant="outlined" />
+                        ) : (
+                          <Tooltip title="Draft sale — payment not yet collected">
+                            <Chip size="small" label="Unpaid" color="warning" variant="outlined" />
+                          </Tooltip>
                         )}
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 800, color: '#10B981' }}>
-                        ${parseFloat(sale.totalAmount).toFixed(2)}
+                        ₹{parseFloat(sale.totalAmount).toFixed(2)}
                       </TableCell>
                       <TableCell align="right">
                         {sale.status !== 'cancelled' && (

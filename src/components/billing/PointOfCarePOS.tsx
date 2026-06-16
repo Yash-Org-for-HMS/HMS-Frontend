@@ -114,14 +114,14 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
         <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>Service Billed</Typography>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
           <Typography variant="body1">{item?.description}</Typography>
-          <Typography variant="body1" fontWeight="600">${grossAmount.toFixed(2)}</Typography>
+          <Typography variant="body1" fontWeight="600">₹{grossAmount.toFixed(2)}</Typography>
         </Box>
         
         <Divider sx={{ my: 2 }} />
 
         <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
           <TextField
-            label="Discount Amount ($)"
+            label="Discount Amount (₹)"
             type="number"
             size="small"
             fullWidth
@@ -140,22 +140,22 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
 
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
           <Typography variant="body2" color="text.secondary">Gross Total:</Typography>
-          <Typography variant="body2">${grossAmount.toFixed(2)}</Typography>
+          <Typography variant="body2">₹{grossAmount.toFixed(2)}</Typography>
         </Box>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
           <Typography variant="body2" color="error.main">Discount:</Typography>
-          <Typography variant="body2" color="error.main">-${discountAmount.toFixed(2)}</Typography>
+          <Typography variant="body2" color="error.main">-₹{discountAmount.toFixed(2)}</Typography>
         </Box>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
           <Typography variant="body2" color="text.secondary">Tax:</Typography>
-          <Typography variant="body2">${taxAmount.toFixed(2)}</Typography>
+          <Typography variant="body2">₹{taxAmount.toFixed(2)}</Typography>
         </Box>
 
         <Divider sx={{ my: 2 }} />
 
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
           <Typography variant="h6" fontWeight="700">Net Payable:</Typography>
-          <Typography variant="h6" fontWeight="700" color="primary.main">${netAmount.toFixed(2)}</Typography>
+          <Typography variant="h6" fontWeight="700" color="primary.main">₹{netAmount.toFixed(2)}</Typography>
         </Box>
 
         <TextField
@@ -180,7 +180,7 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
           disabled={loading || netAmount < 0}
           startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <ReceiptLongRounded />}
         >
-          Confirm & Collect ${netAmount.toFixed(2)}
+          Confirm & Collect ₹{netAmount.toFixed(2)}
         </Button>
       </DialogActions>
     </Dialog>
