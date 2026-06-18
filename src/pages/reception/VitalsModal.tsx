@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Box, Typography, Button, Grid, TextField, Slider,
@@ -88,9 +89,17 @@ function VitalInput({
 export default function VitalsModal({ open, onClose, appointmentId, patientId, patientName, onSaved, readonly = false }: VitalsModalProps) {
   const [form, setForm] = useState(defaultVitals);
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const toast = useToast();
+
+  // Vitals load only when the dialog is open. A missing record is a normal
+  // state (patient has no vitals yet), so query errors are intentionally not
+  // surfaced — the form just falls back to defaults.
+  const { data: existingVitals, isLoading: loading } = useQuery({
+    queryKey: ["vitals", appointmentId],
+    queryFn: async () => (await axiosInstance.get(`/reception/appointments/${appointmentId}/vitals`)).data.data,
+    enabled: open && !!appointmentId,
+  });
   // BMI calculation
   const bmi = form.heightCm && form.weightKg
     ? (Number(form.weightKg) / Math.pow(Number(form.heightCm) / 100, 2)).toFixed(1)
@@ -111,42 +120,31 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
 
   const painColor = form.painScale <= 3 ? "#10b981" : form.painScale <= 6 ? "#f59e0b" : "#ef4444";
 
+  // Seed the form when the dialog opens (with fetched/cached vitals), and
+  // reset to defaults when it closes.
   useEffect(() => {
-    if (open && appointmentId) {
-      fetchExistingVitals();
-    }
     if (!open) {
       setForm(defaultVitals);
       setSuccess(false);
+      return;
     }
-  }, [open, appointmentId]);
-
-  const fetchExistingVitals = async () => {
-    setLoading(true);
-    try {
-      const res = await axiosInstance.get(`/reception/appointments/${appointmentId}/vitals`);
-      if (res.data.data) {
-        const v = res.data.data;
-        setForm({
-          bpSystolic: v.bpSystolic || "",
-          bpDiastolic: v.bpDiastolic || "",
-          pulseRate: v.pulseRate || "",
-          temperatureC: v.temperatureC || "",
-          oxygenSaturation: v.oxygenSaturation || "",
-          heightCm: v.heightCm || "",
-          weightKg: v.weightKg || "",
-          bloodSugarLevel: v.bloodSugarLevel || "",
-          painScale: v.painScale || 0,
-          notes: v.notes || "",
-          ecgRequired: v.ecgRequired || false,
-        });
-      }
-    } catch {
-      // No existing vitals — that's fine
-    } finally {
-      setLoading(false);
+    if (existingVitals) {
+      const v = existingVitals;
+      setForm({
+        bpSystolic: v.bpSystolic || "",
+        bpDiastolic: v.bpDiastolic || "",
+        pulseRate: v.pulseRate || "",
+        temperatureC: v.temperatureC || "",
+        oxygenSaturation: v.oxygenSaturation || "",
+        heightCm: v.heightCm || "",
+        weightKg: v.weightKg || "",
+        bloodSugarLevel: v.bloodSugarLevel || "",
+        painScale: v.painScale || 0,
+        notes: v.notes || "",
+        ecgRequired: v.ecgRequired || false,
+      });
     }
-  };
+  }, [open, existingVitals]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

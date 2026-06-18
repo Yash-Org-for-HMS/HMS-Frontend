@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Chip, Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab } from "@mui/material";
-import { VisibilityRounded, BloodtypeRounded } from "@mui/icons-material";
+import { VisibilityRounded, BloodtypeRounded, AddRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import { useNavigate } from "react-router-dom";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
+import WalkInOrderDialog from "../../components/lab/WalkInOrderDialog";
 import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
 
@@ -24,6 +25,7 @@ export default function LabOrdersQueue() {
   const [errorMsg, setErrorMsg] = useState("");
   const [showPOS, setShowPOS] = useState(false);
   const [tabValue, setTabValue] = useState(0);
+  const [walkInOpen, setWalkInOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -90,8 +92,13 @@ export default function LabOrdersQueue() {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>Lab Orders Queue</Typography>
-      
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3, gap: 2, flexWrap: "wrap" }}>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>Lab Orders Queue</Typography>
+        <Button variant="contained" startIcon={<AddRounded />} onClick={() => setWalkInOpen(true)}>
+          New Walk-in Order
+        </Button>
+      </Box>
+
       <Paper sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} variant="scrollable" scrollButtons="auto">
           <Tab label="Today's Queue" />
@@ -218,6 +225,8 @@ export default function LabOrdersQueue() {
           }}
         />
       )}
+
+      <WalkInOrderDialog kind="lab" open={walkInOpen} onClose={() => setWalkInOpen(false)} onCreated={() => fetchOrders()} />
     </Box>
   );
 }

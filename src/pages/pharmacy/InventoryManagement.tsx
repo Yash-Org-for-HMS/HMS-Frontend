@@ -9,11 +9,13 @@ import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
+import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
 
 export default function InventoryManagement() {
   const theme = useTheme();
   const toast = useToast();
+  const { activeBranchId } = useHospitalAuth();
   const [tabValue, setTabValue] = useState(0);
 
   const [inventory, setInventory] = useState<any[]>([]);
@@ -70,11 +72,17 @@ export default function InventoryManagement() {
     setPoTotal(res.data.pagination?.total ?? (res.data.data || []).length);
   };
 
-  // Initial load.
+  // Initial load (also re-run on branch switch). Suppress the page-change
+  // effects while we reset pagination to 1, so the reset doesn't trigger a
+  // duplicate fetch.
   const loadInitial = async () => {
     try {
+      didMount.current = false;
       setLoading(true);
       setLoadError(null);
+      setStockPage(1);
+      setPoPage(1);
+      setAlertPage(1);
       await Promise.all([fetchReference(), fetchInventory(1), fetchPurchaseOrders(1)]);
     } catch (err: any) {
       setLoadError(err?.response?.data?.message || "Failed to load inventory data");
@@ -84,10 +92,13 @@ export default function InventoryManagement() {
     }
   };
 
+  // Reload when the active branch changes — this page fetches imperatively, so
+  // BranchSwitcher's react-query invalidation doesn't cover it. The axios
+  // interceptor already carries the new X-Branch-Id by the time this runs.
   useEffect(() => {
     loadInitial();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeBranchId]);
 
   // Page changes fetch only the affected list (skipped on the initial mount).
   useEffect(() => {

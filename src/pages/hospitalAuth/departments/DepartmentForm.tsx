@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -13,6 +14,7 @@ import {
 import { SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 
 interface DepartmentType {
@@ -33,10 +35,7 @@ export default function DepartmentForm() {
   const isEditing = Boolean(id);
 
   const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(isEditing);
   const toast = useToast();
-  const [departmentTypes, setDepartmentTypes] = useState<DepartmentType[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
 
   const [formData, setFormData] = useState({
     departmentName: "",
@@ -46,44 +45,33 @@ export default function DepartmentForm() {
     status: "active",
   });
 
-  useEffect(() => {
-    const fetchDropdowns = async () => {
-      try {
-        const [typesRes, usersRes] = await Promise.all([
-          axiosInstance.get("/hospital/departments/types"),
-          axiosInstance.get("/hospital/departments/users")
-        ]);
-        setDepartmentTypes(typesRes.data.data || []);
-        setUsers(usersRes.data.data || []);
-      } catch (err) {
-        console.error("Failed to load dropdown data");
-      }
-    };
-    fetchDropdowns();
-  }, []);
+  const { data: departmentTypes = [] } = useQuery<DepartmentType[]>({
+    queryKey: ["department-types"],
+    queryFn: async () => (await axiosInstance.get("/hospital/departments/types")).data.data || [],
+  });
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ["department-head-users"],
+    queryFn: async () => (await axiosInstance.get("/hospital/departments/users")).data.data || [],
+  });
 
+  const { data: deptData, isLoading: initialLoad, isError, error, refetch } = useQuery({
+    queryKey: ["department", id],
+    queryFn: async () => (await axiosInstance.get(`/hospital/departments/${id}`)).data.data,
+    enabled: isEditing,
+  });
+
+  // Seed the form with the existing department when editing.
   useEffect(() => {
-    if (isEditing) {
-      const fetchDepartment = async () => {
-        try {
-          const response = await axiosInstance.get(`/hospital/departments/${id}`);
-          const dept = response.data.data;
-          setFormData({
-            departmentName: dept.departmentName || "",
-            departmentCode: dept.departmentCode || "",
-            departmentTypeId: dept.departmentTypeId ? String(dept.departmentTypeId) : "",
-            headOfDepartmentId: dept.headOfDepartmentId || "",
-            status: dept.status || "active",
-          });
-        } catch (err: any) {
-          toast.error(err.response?.data?.message || "Failed to load department data");
-        } finally {
-          setInitialLoad(false);
-        }
-      };
-      fetchDepartment();
-    }
-  }, [id, isEditing]);
+    if (!deptData) return;
+    const dept = deptData;
+    setFormData({
+      departmentName: dept.departmentName || "",
+      departmentCode: dept.departmentCode || "",
+      departmentTypeId: dept.departmentTypeId ? String(dept.departmentTypeId) : "",
+      headOfDepartmentId: dept.headOfDepartmentId || "",
+      status: dept.status || "active",
+    });
+  }, [deptData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -112,6 +100,10 @@ export default function DepartmentForm() {
         <CircularProgress sx={{ color: "#6366f1" }} />
       </Box>
     );
+  }
+
+  if (isError) {
+    return <ErrorState title="Couldn't load department" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
   }
 
   return (

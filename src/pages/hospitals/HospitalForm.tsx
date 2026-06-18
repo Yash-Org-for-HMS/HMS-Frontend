@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -22,6 +23,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
 export default function HospitalForm() {
@@ -31,12 +33,27 @@ export default function HospitalForm() {
   const isEdit = Boolean(id);
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(isEdit);
   const toast = useToast();
-  const [plans, setPlans] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
-  const [convertedTrials, setConvertedTrials] = useState<any[]>([]);
   const [reload, setReload] = useState(0);
+
+  const { data: plans = [] } = useQuery<any[]>({
+    queryKey: ["plans", "hospital-form-options"],
+    queryFn: async () => (await axiosInstance.get("/plans", { params: { limit: 100 } })).data.data,
+  });
+  const { data: convertedTrials = [] } = useQuery<any[]>({
+    queryKey: ["trials", "available"],
+    queryFn: async () =>
+      ((await axiosInstance.get("/trials", { params: { limit: 1000 } })).data.data as any[]).filter(
+        (t: any) => t.trialStatus !== "converted"
+      ),
+  });
+
+  const { data: hospitalData, isLoading: initialLoading, isError, error, refetch } = useQuery({
+    queryKey: ["hospital", id, reload],
+    queryFn: async () => (await axiosInstance.get(`/hospitals/${id}`)).data.data,
+    enabled: isEdit,
+  });
 
   // Branch Dialog State
   const [branchDialogOpen, setBranchDialogOpen] = useState(false);
@@ -53,54 +70,20 @@ export default function HospitalForm() {
     status: "active",
   });
 
+  // Seed the form + branches with the existing hospital when editing.
   useEffect(() => {
-    const fetchPlans = async () => {
-      try {
-        const response = await axiosInstance.get("/plans", { params: { limit: 100 } });
-        setPlans(response.data.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    const fetchConvertedTrials = async () => {
-      try {
-        // Fetch all trials that haven't been converted to a hospital yet
-        const response = await axiosInstance.get("/trials", { params: { limit: 1000 } });
-        // Filter out trials that are already 'converted' to a hospital
-        const availableTrials = response.data.data.filter((t: any) => t.trialStatus !== 'converted');
-        setConvertedTrials(availableTrials);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchPlans();
-    fetchConvertedTrials();
-
-    if (isEdit) {
-      const fetchHospital = async () => {
-        try {
-          const response = await axiosInstance.get(`/hospitals/${id}`);
-          const d = response.data.data;
-          setFormData({
-            hospitalName: d.hospitalName || "",
-            hospitalCode: d.hospitalCode || "",
-            officialEmail: d.officialEmail || "",
-            officialPhone: d.officialPhone || "",
-            legalBusinessName: d.legalBusinessName || "",
-            status: d.status || "active",
-          });
-          setBranches(d.branches || []);
-        } catch (err) {
-          toast.error(t("common.error"));
-        } finally {
-          setInitialLoading(false);
-        }
-      };
-      fetchHospital();
-    }
-  }, [id, isEdit, t, reload]);
+    if (!hospitalData) return;
+    const d = hospitalData;
+    setFormData({
+      hospitalName: d.hospitalName || "",
+      hospitalCode: d.hospitalCode || "",
+      officialEmail: d.officialEmail || "",
+      officialPhone: d.officialPhone || "",
+      legalBusinessName: d.legalBusinessName || "",
+      status: d.status || "active",
+    });
+    setBranches(d.branches || []);
+  }, [hospitalData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -185,6 +168,14 @@ export default function HospitalForm() {
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
         <CircularProgress sx={{ color: "#3b82f6" }} />
       </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <ErrorState title="Couldn't load hospital" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+      </Container>
     );
   }
 

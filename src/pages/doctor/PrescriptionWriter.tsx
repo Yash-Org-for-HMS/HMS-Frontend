@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, TextField, IconButton, Autocomplete, CircularProgress,
   Paper, Grid, Alert, Divider, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Switch, FormControlLabel, Chip
 } from "@mui/material";
 import { DeleteRounded, SaveRounded, AddRounded, PrintRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
 
@@ -17,7 +19,6 @@ interface PrescriptionWriterProps {
 }
 
 export default function PrescriptionWriter({ consultationId, patientId, onRequireSave }: PrescriptionWriterProps) {
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
   const [specialInstructions, setSpecialInstructions] = useState("");
@@ -51,33 +52,25 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
     }
   }, [frequency, durationDays, manualQuantity]);
 
-  useEffect(() => {
-    if (consultationId) {
-      fetchPrescription(consultationId);
-    }
-  }, [consultationId]);
+  const { data: prescription, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["prescription", consultationId],
+    queryFn: async () => (await axiosInstance.get(`/doctor/prescription/consultations/${consultationId}`)).data.data,
+    enabled: !!consultationId,
+  });
 
-  const fetchPrescription = async (id: string) => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get(`/doctor/prescription/consultations/${id}`);
-      const data = res.data.data;
-      if (data) {
-        setSpecialInstructions(data.specialInstructions || "");
-        setItems(data.items || []);
-        setDispensingStatus(data.dispensingStatus || null);
-        
-        // If all items are buyOutside, set bulk to true
-        if (data.items && data.items.length > 0 && data.items.every((i: any) => i.buyOutside)) {
-          setBulkBuyOutside(true);
-        }
-      }
-    } catch (err) {
-      console.error("Failed to load prescription", err);
-    } finally {
-      setLoading(false);
+  // Seed the writer with the saved prescription for this consultation.
+  useEffect(() => {
+    if (!prescription) return;
+    const data = prescription;
+    setSpecialInstructions(data.specialInstructions || "");
+    setItems(data.items || []);
+    setDispensingStatus(data.dispensingStatus || null);
+
+    // If all items are buyOutside, set bulk to true
+    if (data.items && data.items.length > 0 && data.items.every((i: any) => i.buyOutside)) {
+      setBulkBuyOutside(true);
     }
-  };
+  }, [prescription]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
@@ -209,6 +202,10 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
         <Mascot pose="thinking" subtitle="Loading prescription…" />
       </Box>
     );
+  }
+
+  if (isError) {
+    return <Box sx={{ p: 4 }}><ErrorState message={(error as any)?.response?.data?.message || "Failed to load prescription"} onRetry={refetch} /></Box>;
   }
 
   return (

@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Chip, Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab } from "@mui/material";
-import { VisibilityRounded, CheckCircleRounded, InsertDriveFileRounded, EditRounded, CloudUploadRounded } from "@mui/icons-material";
+import { VisibilityRounded, CheckCircleRounded, InsertDriveFileRounded, EditRounded, CloudUploadRounded, AddRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
+import WalkInOrderDialog from "../../components/lab/WalkInOrderDialog";
 import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
 import { assetUrl } from "../../utils/assetUrl";
@@ -29,6 +30,7 @@ export default function RadiologyOrdersQueue() {
   const [uploading, setUploading] = useState(false);
   const [showPOS, setShowPOS] = useState(false);
   const [tabValue, setTabValue] = useState(0);
+  const [walkInOpen, setWalkInOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Listen for real-time queue updates
@@ -139,7 +141,12 @@ export default function RadiologyOrdersQueue() {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>Radiology Orders</Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3, gap: 2, flexWrap: "wrap" }}>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>Radiology Orders</Typography>
+        <Button variant="contained" startIcon={<AddRounded />} onClick={() => setWalkInOpen(true)}>
+          New Walk-in Order
+        </Button>
+      </Box>
 
       <Paper sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} variant="scrollable" scrollButtons="auto">
@@ -339,6 +346,8 @@ export default function RadiologyOrdersQueue() {
           }}
         />
       )}
+
+      <WalkInOrderDialog kind="radiology" open={walkInOpen} onClose={() => setWalkInOpen(false)} onCreated={() => fetchOrders()} />
     </Box>
   );
 }

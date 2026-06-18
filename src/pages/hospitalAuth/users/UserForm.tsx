@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -16,7 +17,6 @@ import {
   IconButton,
   Dialog,
   DialogContent,
-  Chip,
   Tooltip,
 } from "@mui/material";
 import {
@@ -31,6 +31,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 
 interface Role {
@@ -298,11 +299,15 @@ export default function UserForm() {
 
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
   const toast = useToast();
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [branches, setBranches] = useState<Branch[]>([]);
+
+  const { data: dd, isLoading: ddLoading, isError: ddIsError, error: ddError, refetch: refetchDd } = useQuery({
+    queryKey: ["hospital-user-dropdowns"],
+    queryFn: async () => (await axiosInstance.get("/hospital/users/dropdowns")).data.data,
+  });
+  const roles: Role[] = dd?.roles ?? [];
+  const departments: Department[] = dd?.departments ?? [];
+  const branches: Branch[] = dd?.branches ?? [];
 
   // Credential dialog state
   const [credentialDialog, setCredentialDialog] = useState<{
@@ -339,49 +344,45 @@ export default function UserForm() {
     confirmPassword: "",
   });
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const ddRes = await axiosInstance.get("/hospital/users/dropdowns");
-        setRoles(ddRes.data.data.roles);
-        setDepartments(ddRes.data.data.departments);
-        setBranches(ddRes.data.data.branches);
+  const { data: userData, isLoading: userLoading, isError: userIsError, error: userError, refetch: refetchUser } = useQuery({
+    queryKey: ["hospital-user", id],
+    queryFn: async () => (await axiosInstance.get(`/hospital/users/${id}`)).data.data,
+    enabled: isEditing,
+  });
 
-        if (isEditing) {
-          const res = await axiosInstance.get(`/hospital/users/${id}`);
-          const user = res.data.data;
-          setFormData((prev) => ({
-            ...prev,
-            firstName: user.firstName || "",
-            lastName: user.lastName || "",
-            email: user.email || "",
-            phone: user.phone || "",
-            roleId: user.roleId || "",
-            employeeCode: user.employeeCode || "",
-            departmentId: user.departmentId || "",
-            branchId: user.branchId || "",
-            dateOfJoining: user.dateOfJoining
-              ? new Date(user.dateOfJoining).toISOString().split("T")[0]
-              : "",
-            designation: user.designation || "",
-            addressLine1: user.addressLine1 || "",
-            addressLine2: user.addressLine2 || "",
-            city: user.city || "",
-            state: user.state || "",
-            postalCode: user.postalCode || "",
-            emergencyContactName: user.emergencyContactName || "",
-            emergencyContactPhone: user.emergencyContactPhone || "",
-            emergencyContactRelation: user.emergencyContactRelation || "",
-          }));
-        }
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || "Failed to load data");
-      } finally {
-        setInitialLoad(false);
-      }
-    };
-    loadData();
-  }, [id, isEditing]);
+  // Seed the form with the existing user when editing.
+  useEffect(() => {
+    if (!userData) return;
+    const user = userData;
+    setFormData((prev) => ({
+      ...prev,
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      roleId: user.roleId || "",
+      employeeCode: user.employeeCode || "",
+      departmentId: user.departmentId || "",
+      branchId: user.branchId || "",
+      dateOfJoining: user.dateOfJoining
+        ? new Date(user.dateOfJoining).toISOString().split("T")[0]
+        : "",
+      designation: user.designation || "",
+      addressLine1: user.addressLine1 || "",
+      addressLine2: user.addressLine2 || "",
+      city: user.city || "",
+      state: user.state || "",
+      postalCode: user.postalCode || "",
+      emergencyContactName: user.emergencyContactName || "",
+      emergencyContactPhone: user.emergencyContactPhone || "",
+      emergencyContactRelation: user.emergencyContactRelation || "",
+    }));
+  }, [userData]);
+
+  const initialLoad = ddLoading || (isEditing && userLoading);
+  const isError = ddIsError || userIsError;
+  const error = ddError || userError;
+  const refetch = () => { refetchDd(); if (isEditing) refetchUser(); };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -435,6 +436,10 @@ export default function UserForm() {
         <CircularProgress sx={{ color: "#6366f1" }} />
       </Box>
     );
+  }
+
+  if (isError) {
+    return <ErrorState title="Couldn't load staff form" message={(error as any)?.response?.data?.message} onRetry={refetch} />;
   }
 
   const textFieldProps = {
@@ -608,7 +613,7 @@ export default function UserForm() {
                     <Typography variant="body2" sx={{ color: "text.secondary", lineHeight: 1.7 }}>
                       Set a temporary password for this staff member. They will be <strong style={{ color: "text.secondary" }}>required to change it</strong> on their first login.
                       <br />
-                      If you leave this blank, the system will use the default: <Chip label="Password@123" size="small" sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#fbbf24", fontFamily: "monospace", fontWeight: 700, fontSize: "0.78rem", ml: 0.5 }} />
+                      If you leave this blank, the system will generate a secure temporary password and show it to you once the user is created.
                     </Typography>
                   </Box>
                 </Box>

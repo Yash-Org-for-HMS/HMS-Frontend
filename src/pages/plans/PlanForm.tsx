@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -17,6 +18,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
 // Available modules in the system that can be part of a plan
@@ -32,7 +34,6 @@ export default function PlanForm() {
   const isEdit = Boolean(id);
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(isEdit);
   const toast = useToast();
   const [formData, setFormData] = useState<any>({
     planName: "",
@@ -44,30 +45,26 @@ export default function PlanForm() {
     featuresJson: [] as string[],
   });
 
+  const { data: planData, isLoading: initialLoading, isError, error, refetch } = useQuery({
+    queryKey: ["plan", id],
+    queryFn: async () => (await axiosInstance.get(`/plans/${id}`)).data.data,
+    enabled: isEdit,
+  });
+
+  // Seed the form with the existing plan when editing.
   useEffect(() => {
-    if (isEdit) {
-      const fetchPlan = async () => {
-        try {
-          const response = await axiosInstance.get(`/plans/${id}`);
-          const d = response.data.data;
-          setFormData({
-            planName: d.planName || "",
-            monthlyPrice: d.monthlyPrice !== null ? parseFloat(d.monthlyPrice) : "",
-            annualPrice: d.annualPrice !== null ? parseFloat(d.annualPrice) : "",
-            maxDoctors: d.maxDoctors !== null ? d.maxDoctors : "",
-            maxBranches: d.maxBranches !== null ? d.maxBranches : "",
-            maxStorageGb: d.maxStorageGb !== null ? d.maxStorageGb : "",
-            featuresJson: Array.isArray(d.featuresJson) ? d.featuresJson : [],
-          });
-        } catch (err) {
-          toast.error(t("common.error"));
-        } finally {
-          setInitialLoading(false);
-        }
-      };
-      fetchPlan();
-    }
-  }, [id, isEdit, t]);
+    if (!planData) return;
+    const d = planData;
+    setFormData({
+      planName: d.planName || "",
+      monthlyPrice: d.monthlyPrice !== null ? parseFloat(d.monthlyPrice) : "",
+      annualPrice: d.annualPrice !== null ? parseFloat(d.annualPrice) : "",
+      maxDoctors: d.maxDoctors !== null ? d.maxDoctors : "",
+      maxBranches: d.maxBranches !== null ? d.maxBranches : "",
+      maxStorageGb: d.maxStorageGb !== null ? d.maxStorageGb : "",
+      featuresJson: Array.isArray(d.featuresJson) ? d.featuresJson : [],
+    });
+  }, [planData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
@@ -99,6 +96,14 @@ export default function PlanForm() {
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
         <CircularProgress sx={{ color: "#10b981" }} />
       </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <ErrorState title="Couldn't load plan" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+      </Container>
     );
   }
 

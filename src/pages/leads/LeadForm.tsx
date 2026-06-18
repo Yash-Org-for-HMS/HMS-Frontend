@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -16,6 +17,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
 export default function LeadForm() {
@@ -25,7 +27,6 @@ export default function LeadForm() {
   const isEdit = Boolean(id);
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(isEdit);
   const toast = useToast();
   const [formData, setFormData] = useState({
     hospitalName: "",
@@ -36,40 +37,29 @@ export default function LeadForm() {
     assignedSalesAdminId: "",
   });
 
-  const [admins, setAdmins] = useState<any[]>([]);
+  const { data: admins = [] } = useQuery<any[]>({
+    queryKey: ["super-admins", "lead-options"],
+    queryFn: async () => (await axiosInstance.get("/super-admins", { params: { limit: 100 } })).data.data,
+  });
 
+  const { data: leadData, isLoading: initialLoading, isError, error, refetch } = useQuery({
+    queryKey: ["lead", id],
+    queryFn: async () => (await axiosInstance.get(`/leads/${id}`)).data.data,
+    enabled: isEdit,
+  });
+
+  // Seed the form with the existing lead when editing.
   useEffect(() => {
-    const fetchAdmins = async () => {
-      try {
-        const response = await axiosInstance.get("/super-admins", { params: { limit: 100 } });
-        setAdmins(response.data.data);
-      } catch (err) {
-        console.error("Failed to fetch super admins", err);
-      }
-    };
-    fetchAdmins();
-
-    if (isEdit) {
-      const fetchLead = async () => {
-        try {
-          const response = await axiosInstance.get(`/leads/${id}`);
-          setFormData({
-            hospitalName: response.data.data.hospitalName || "",
-            contactPersonName: response.data.data.contactPersonName || "",
-            email: response.data.data.email || "",
-            phone: response.data.data.phone || "",
-            leadStatus: response.data.data.leadStatus || "new",
-            assignedSalesAdminId: response.data.data.assignedSalesAdminId || "",
-          });
-        } catch (err) {
-          toast.error(t("common.error"));
-        } finally {
-          setInitialLoading(false);
-        }
-      };
-      fetchLead();
-    }
-  }, [id, isEdit, t]);
+    if (!leadData) return;
+    setFormData({
+      hospitalName: leadData.hospitalName || "",
+      contactPersonName: leadData.contactPersonName || "",
+      email: leadData.email || "",
+      phone: leadData.phone || "",
+      leadStatus: leadData.leadStatus || "new",
+      assignedSalesAdminId: leadData.assignedSalesAdminId || "",
+    });
+  }, [leadData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -109,6 +99,14 @@ export default function LeadForm() {
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
         <CircularProgress sx={{ color: "#6366f1" }} />
       </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <ErrorState title="Couldn't load lead" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+      </Container>
     );
   }
 

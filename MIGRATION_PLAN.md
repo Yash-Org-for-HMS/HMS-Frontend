@@ -86,18 +86,18 @@ kept imperative loads with an added load-error ErrorState to protect unsaved edi
 - [ ] lab/LabTestCatalog.tsx · lab/RadiologyCatalog.tsx · lab/UpdateLabOrder.tsx
 - [ ] pharmacy/InventoryManagement.tsx
 
-### Tier 4 — Forms (load-for-edit query + submit mutation)
-- [ ] plans/PlanForm.tsx · featureFlags/FeatureFlagForm.tsx · leads/LeadForm.tsx · trials/TrialForm.tsx
-- [ ] hospitals/HospitalForm.tsx · onboarding/OnboardingForm.tsx · superAdmins/SuperAdminForm.tsx
-- [ ] hospitalAuth/departments/DepartmentForm.tsx · hospitalAuth/doctors/DoctorForm.tsx
-- [ ] hospitalAuth/roles/RoleForm.tsx · hospitalAuth/users/UserForm.tsx
-- [ ] rbac/RoleForm.tsx · rbac/UserForm.tsx
-- [ ] reception/PatientForm.tsx · reception/AppointmentForm.tsx
-- [ ] hospitalAuth/formBuilder/FormBuilder.tsx
+### Tier 4 — Forms (load-for-edit query + submit mutation) ✅ DONE
+- [x] plans/PlanForm.tsx · featureFlags/FeatureFlagForm.tsx · leads/LeadForm.tsx · trials/TrialForm.tsx
+- [x] hospitals/HospitalForm.tsx · onboarding/OnboardingForm.tsx · superAdmins/SuperAdminForm.tsx
+- [x] hospitalAuth/departments/DepartmentForm.tsx · hospitalAuth/doctors/DoctorForm.tsx
+- [x] hospitalAuth/roles/RoleForm.tsx · hospitalAuth/users/UserForm.tsx
+- [x] rbac/RoleForm.tsx · rbac/UserForm.tsx
+- [x] reception/PatientForm.tsx · reception/AppointmentForm.tsx
+- [x] hospitalAuth/formBuilder/FormBuilder.tsx
 
-### Tier 5 — Clinical sub-forms / modals
-- [ ] doctor/LabOrderForm.tsx · doctor/RadiologyOrderForm.tsx · doctor/PrescriptionWriter.tsx
-- [ ] reception/VitalsModal.tsx · reception/PatientDocumentsSection.tsx
+### Tier 5 — Clinical sub-forms / modals ✅ DONE
+- [x] doctor/LabOrderForm.tsx · doctor/RadiologyOrderForm.tsx · doctor/PrescriptionWriter.tsx
+- [x] reception/VitalsModal.tsx · reception/PatientDocumentsSection.tsx
 
 ### Excluded / special-case (revisit last, likely leave as-is)
 - Login.tsx, hospitalAuth/HospitalLogin.tsx, hospitalAuth/HospitalChangePassword.tsx

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -16,6 +17,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
 export default function SuperAdminForm() {
@@ -25,7 +27,6 @@ export default function SuperAdminForm() {
   const isEdit = Boolean(id);
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(isEdit);
   const toast = useToast();
   const [formData, setFormData] = useState({
     firstName: "",
@@ -36,29 +37,25 @@ export default function SuperAdminForm() {
     status: "active",
   });
 
+  const { data: adminData, isLoading: initialLoading, isError, error, refetch } = useQuery({
+    queryKey: ["super-admin", id],
+    queryFn: async () => (await axiosInstance.get(`/super-admins/${id}`)).data.data,
+    enabled: isEdit,
+  });
+
+  // Seed the form with the existing admin when editing.
   useEffect(() => {
-    if (isEdit) {
-      const fetchAdmin = async () => {
-        try {
-          const response = await axiosInstance.get(`/super-admins/${id}`);
-          const d = response.data.data;
-          setFormData({
-            firstName: d.firstName || "",
-            lastName: d.lastName || "",
-            email: d.email || "",
-            phone: d.phone || "",
-            password: "",
-            status: d.status || "active",
-          });
-        } catch (err) {
-          toast.error(t("common.error"));
-        } finally {
-          setInitialLoading(false);
-        }
-      };
-      fetchAdmin();
-    }
-  }, [id, isEdit, t]);
+    if (!adminData) return;
+    const d = adminData;
+    setFormData({
+      firstName: d.firstName || "",
+      lastName: d.lastName || "",
+      email: d.email || "",
+      phone: d.phone || "",
+      password: "",
+      status: d.status || "active",
+    });
+  }, [adminData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -92,6 +89,14 @@ export default function SuperAdminForm() {
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
         <CircularProgress sx={{ color: "#8b5cf6" }} />
       </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <ErrorState title="Couldn't load admin" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+      </Container>
     );
   }
 

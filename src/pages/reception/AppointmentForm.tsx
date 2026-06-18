@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, TextField, MenuItem,
   CircularProgress, Alert, Grid, IconButton, FormControlLabel, Switch
@@ -6,6 +7,7 @@ import {
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
 export interface AppointmentFormProps {
@@ -21,13 +23,13 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   const [searchParams] = useSearchParams();
   const initialPatientId = searchParams.get("patientId") || "";
 
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
   const [checkInImmediately, setCheckInImmediately] = useState(true);
 
-  const [dropdowns, setDropdowns] = useState<any>({
-    departments: [], doctors: [], patients: [], statuses: [], doctorSchedules: []
+  const { data: dropdowns = { departments: [], doctors: [], patients: [], statuses: [], doctorSchedules: [] }, isLoading: ddLoading, isError: ddIsError, error: ddError, refetch: refetchDd } = useQuery({
+    queryKey: ["appointment-dropdowns"],
+    queryFn: async () => (await axiosInstance.get("/reception/appointments/dropdowns")).data.data,
   });
 
   const [formData, setFormData] = useState({
@@ -48,48 +50,41 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     }
   }, [prefilledPatientId]);
 
+  const { data: apptData, isLoading: apptLoading, isError: apptIsError, error: apptError, refetch: refetchAppt } = useQuery({
+    queryKey: ["appointment-edit", id],
+    queryFn: async () => (await axiosInstance.get(`/reception/appointments/${id}`)).data.data,
+    enabled: !!id,
+  });
+
+  // Seed the form with the existing appointment when editing.
   useEffect(() => {
-    const init = async () => {
-      try {
-        const ddRes = await axiosInstance.get("/reception/appointments/dropdowns");
-        if (ddRes.data?.data) {
-          setDropdowns(ddRes.data.data);
-        }
+    if (!apptData) return;
+    const appt = apptData;
+    const dateObj = new Date(appt.appointmentDate);
+    const dateStr = dateObj.toISOString().split('T')[0];
+    const timeStr = dateObj.toLocaleTimeString("en-US", { hour12: false, hour: '2-digit', minute: '2-digit' });
+    const existingReason = appt.reason || "";
+    let parsedType = "Standard Visit";
+    const lower = existingReason.toLowerCase();
+    if (lower.includes("urgent") || lower.includes("emergency")) parsedType = "Urgent";
+    else if (lower.includes("follow") || lower.includes("review")) parsedType = "Follow-up";
+    const cleanReason = existingReason.replace(/\[.*?\]\s*/, "").trim();
 
-        if (id) {
-          const res = await axiosInstance.get(`/reception/appointments/${id}`);
-          const appt = res.data.data;
-          if (appt) {
-            const dateObj = new Date(appt.appointmentDate);
-            const dateStr = dateObj.toISOString().split('T')[0];
-            const timeStr = dateObj.toLocaleTimeString("en-US", { hour12: false, hour: '2-digit', minute: '2-digit' });
-            const existingReason = appt.reason || "";
-            let parsedType = "Standard Visit";
-            const lower = existingReason.toLowerCase();
-            if (lower.includes("urgent") || lower.includes("emergency")) parsedType = "Urgent";
-            else if (lower.includes("follow") || lower.includes("review")) parsedType = "Follow-up";
+    setFormData({
+      patientId: appt.patientId || "",
+      departmentId: appt.departmentId || "",
+      doctorId: appt.doctorId || "",
+      appointmentDate: dateStr,
+      timeSlot: timeStr,
+      visitType: parsedType,
+      reason: cleanReason,
+    });
+  }, [apptData]);
 
-            let cleanReason = existingReason.replace(/\[.*?\]\s*/, "").trim();
-
-            setFormData({
-              patientId: appt.patientId || "",
-              departmentId: appt.departmentId || "",
-              doctorId: appt.doctorId || "",
-              appointmentDate: dateStr,
-              timeSlot: timeStr,
-              visitType: parsedType,
-              reason: cleanReason
-            });
-          }
-        }
-      } catch (err) {
-        toast.error((err as any)?.response?.data?.message || "Failed to initialize form");
-      } finally {
-        setLoading(false);
-      }
-    };
-    init();
-  }, [id]);
+  const loading = ddLoading || (!!id && apptLoading);
+  const isError = ddIsError || apptIsError;
+  const error = ddError || apptError;
+  const refetch = () => { refetchDd(); if (id) refetchAppt(); };
 
   useEffect(() => {
     // Generate slots based on doctor, date, and schedule
@@ -183,6 +178,8 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   };
 
   if (loading) return <Box sx={{ p: 4, textAlign: "center" }}><CircularProgress sx={{ color: "#06b6d4" }}/></Box>;
+
+  if (isError) return <Box sx={{ p: 4 }}><ErrorState message={(error as any)?.response?.data?.message || "Failed to initialize form"} onRetry={refetch} /></Box>;
 
   const filteredDoctors = (dropdowns?.doctors || []).filter((d: any) => !formData.departmentId || d.departmentId === formData.departmentId);
 

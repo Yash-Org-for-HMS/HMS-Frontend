@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -20,6 +21,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
 export default function RoleForm() {
@@ -29,10 +31,7 @@ export default function RoleForm() {
   const isEdit = Boolean(id);
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
   const toast = useToast();
-  const [hospitals, setHospitals] = useState<any[]>([]);
-  const [allPermissions, setAllPermissions] = useState<any[]>([]);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
@@ -43,36 +42,38 @@ export default function RoleForm() {
     status: "active",
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [hospRes, permRes] = await Promise.all([
-          axiosInstance.get("/hospitals", { params: { limit: 100 } }),
-          axiosInstance.get("/rbac/permissions")
-        ]);
-        setHospitals(hospRes.data.data);
-        setAllPermissions(permRes.data.data);
+  const { data: hospitals = [], isLoading: hospLoading, isError: hospIsError, error: hospError, refetch: refetchHosp } = useQuery<any[]>({
+    queryKey: ["hospitals", "rbac-role-options"],
+    queryFn: async () => (await axiosInstance.get("/hospitals", { params: { limit: 100 } })).data.data,
+  });
+  const { data: allPermissions = [], isLoading: permLoading, isError: permIsError, error: permError, refetch: refetchPerms } = useQuery<any[]>({
+    queryKey: ["rbac-permissions"],
+    queryFn: async () => (await axiosInstance.get("/rbac/permissions")).data.data,
+  });
+  const { data: roleData, isLoading: roleLoading, isError: roleIsError, error: roleError, refetch: refetchRole } = useQuery({
+    queryKey: ["rbac-role", id],
+    queryFn: async () => (await axiosInstance.get(`/rbac/roles/${id}`)).data.data,
+    enabled: isEdit,
+  });
 
-        if (isEdit) {
-          const roleRes = await axiosInstance.get(`/rbac/roles/${id}`);
-          const d = roleRes.data.data;
-          setFormData({
-            hospitalId: d.hospitalId || "",
-            roleCode: d.roleCode || "",
-            roleName: d.roleName || "",
-            isSystemRole: d.isSystemRole || false,
-            status: d.status || "active",
-          });
-          setSelectedPermissions(d.rolePermissions.map((rp: any) => rp.permissionId));
-        }
-      } catch (err) {
-        toast.error(t("common.error"));
-      } finally {
-        setInitialLoading(false);
-      }
-    };
-    fetchData();
-  }, [id, isEdit, t]);
+  // Seed the form + selected permissions from the loaded role when editing.
+  useEffect(() => {
+    if (!roleData) return;
+    const d = roleData;
+    setFormData({
+      hospitalId: d.hospitalId || "",
+      roleCode: d.roleCode || "",
+      roleName: d.roleName || "",
+      isSystemRole: d.isSystemRole || false,
+      status: d.status || "active",
+    });
+    setSelectedPermissions(d.rolePermissions.map((rp: any) => rp.permissionId));
+  }, [roleData]);
+
+  const initialLoading = hospLoading || permLoading || (isEdit && roleLoading);
+  const isError = hospIsError || permIsError || roleIsError;
+  const error = hospError || permError || roleError;
+  const refetch = () => { refetchHosp(); refetchPerms(); if (isEdit) refetchRole(); };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, checked, type } = e.target;
@@ -117,6 +118,14 @@ export default function RoleForm() {
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
         <CircularProgress sx={{ color: "#14b8a6" }} />
       </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <ErrorState title="Couldn't load role form" message={(error as any)?.response?.data?.message} onRetry={refetch} />
+      </Container>
     );
   }
 

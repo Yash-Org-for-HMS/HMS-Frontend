@@ -1,5 +1,6 @@
 import { TextField, MenuItem, Box } from "@mui/material";
 import { AccountTreeRounded } from "@mui/icons-material";
+import { useQueryClient } from "@tanstack/react-query";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 
 /**
@@ -13,6 +14,7 @@ import { useHospitalAuth } from "../contexts/HospitalAuthContext";
  */
 export default function BranchSwitcher() {
   const { availableBranches, activeBranchId, isOrgAdmin, setActiveBranch } = useHospitalAuth();
+  const queryClient = useQueryClient();
 
   // Nothing meaningful to switch between.
   if (availableBranches.length <= 1) return null;
@@ -29,9 +31,13 @@ export default function BranchSwitcher() {
         value={activeBranchId ?? (isOrgAdmin ? ALL : "")}
         onChange={(e) => {
           const v = e.target.value;
+          // setActiveBranch writes activeBranchId to sessionStorage synchronously,
+          // and the axios interceptor reads it per-request — so the new X-Branch-Id
+          // is live immediately. Invalidating the query cache makes every page
+          // re-fetch under the new branch without a full window reload (SPA state,
+          // scroll position, and open dialogs are preserved).
           setActiveBranch(v === ALL ? null : v);
-          // Reload so every page re-queries with the new branch (X-Branch-Id).
-          window.location.reload();
+          queryClient.invalidateQueries();
         }}
         InputProps={{
           startAdornment: <AccountTreeRounded fontSize="small" sx={{ mr: 1, color: "text.secondary" }} />,

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -17,6 +18,7 @@ import {
 import { SaveRounded, DeleteRounded, AddCircleOutlineRounded, DragIndicatorRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import ErrorState from "../../../components/ErrorState";
 import Mascot from "../../../components/Mascot";
 import { useToast } from "../../../contexts/ToastContext";
 
@@ -34,7 +36,6 @@ export default function FormBuilder() {
   const isEditing = Boolean(id);
 
   const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
   const toast = useToast();
   const [formData, setFormData] = useState({
     formName: "",
@@ -44,30 +45,24 @@ export default function FormBuilder() {
 
   const [fields, setFields] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (isEditing) {
-      loadTemplate();
-    } else {
-      setInitialLoad(false);
-    }
-  }, [id]);
+  const { data: template, isLoading: templateLoading, isError, error, refetch } = useQuery({
+    queryKey: ["form-template", id],
+    queryFn: async () => (await axiosInstance.get(`/hospital/form-builder/${id}`)).data.data,
+    enabled: isEditing,
+  });
 
-  const loadTemplate = async () => {
-    try {
-      const res = await axiosInstance.get(`/hospital/form-builder/${id}`);
-      const t = res.data.data;
-      setFormData({
-        formName: t.formName || "",
-        formType: t.formType || "",
-        description: t.description || "",
-      });
-      setFields(t.fields || []);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to load template");
-    } finally {
-      setInitialLoad(false);
-    }
-  };
+  // Seed the builder with the existing template when editing.
+  useEffect(() => {
+    if (!template) return;
+    setFormData({
+      formName: template.formName || "",
+      formType: template.formType || "",
+      description: template.description || "",
+    });
+    setFields(template.fields || []);
+  }, [template]);
+
+  const initialLoad = isEditing && templateLoading;
 
   const handleAddDataField = () => {
     setFields([
@@ -131,6 +126,10 @@ export default function FormBuilder() {
         <CircularProgress sx={{ color: "#6366f1" }} />
       </Box>
     );
+  }
+
+  if (isError) {
+    return <Box sx={{ p: 4 }}><ErrorState message={(error as any)?.response?.data?.message || "Failed to load template"} onRetry={refetch} /></Box>;
   }
 
   const textFieldProps = {

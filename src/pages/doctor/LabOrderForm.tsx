@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Button, TextField, IconButton, Autocomplete, CircularProgress,
   Paper, Grid, Alert, Table, TableBody, TableCell, TableHead, TableRow, MenuItem
 } from "@mui/material";
 import { DeleteRounded, SaveRounded, AddRounded, ScienceRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
 
@@ -23,38 +25,25 @@ const priorities = [
 ];
 
 export default function LabOrderForm({ consultationId, patientId, onRequireSave }: LabOrderFormProps) {
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
-  const [existingOrders, setExistingOrders] = useState<any[]>([]);
+  const qc = useQueryClient();
 
   // Search state
   const [testQuery, setTestQuery] = useState("");
   const [testOptions, setTestOptions] = useState<any[]>([]);
   const [testLoading, setTestLoading] = useState(false);
-  
+
   // Form state
   const [selectedTest, setSelectedTest] = useState<any | null>(null);
   const [selectedPriority, setSelectedPriority] = useState(1);
   const [items, setItems] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (consultationId) {
-      fetchExistingOrders(consultationId);
-    }
-  }, [consultationId]);
-
-  const fetchExistingOrders = async (id: string) => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get(`/doctor/lab-orders/consultations/${id}`);
-      setExistingOrders(res.data.data || []);
-    } catch (err) {
-      console.error("Failed to load lab orders", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: existingOrders = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["lab-orders", consultationId],
+    queryFn: async () => (await axiosInstance.get(`/doctor/lab-orders/consultations/${consultationId}`)).data.data || [],
+    enabled: !!consultationId,
+  });
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
@@ -125,8 +114,8 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
       toast.success("Lab order created successfully!");
       setItems([]);
       setSelectedPriority(1);
-// Refresh list
-      fetchExistingOrders(targetConsultationId);
+      // Refresh list (covers both the existing consultation and a freshly-created one)
+      qc.invalidateQueries({ queryKey: ["lab-orders"] });
     } catch (err: any) {
       toast.error(err.response?.data?.message || err.message || "Failed to create lab order");
     } finally {
@@ -233,6 +222,8 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
         </Typography>
         {loading ? (
           <CircularProgress size={24} />
+        ) : isError ? (
+          <ErrorState message={(error as any)?.response?.data?.message || "Failed to load lab orders"} onRetry={refetch} />
         ) : existingOrders.length === 0 ? (
           <Mascot pose="nothing-here-yet" subtitle="No lab orders for this consultation yet." size={130} />
         ) : (

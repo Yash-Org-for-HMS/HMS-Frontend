@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Box,
@@ -22,6 +23,7 @@ import {
 } from "@mui/material";
 import { ArrowBackRounded, Visibility, VisibilityOff, ContentCopyRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
 interface Branch {
@@ -48,12 +50,17 @@ export default function UserForm() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
   // Data for dropdowns
-  const [hospitals, setHospitals] = useState<Hospital[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
+  const { data: hospitals = [] } = useQuery<Hospital[]>({
+    queryKey: ["hospitals", "rbac-user-options"],
+    queryFn: async () => (await axiosInstance.get("/hospitals", { params: { limit: 100 } })).data.data,
+  });
+  const { data: roles = [] } = useQuery<Role[]>({
+    queryKey: ["rbac-roles-options"],
+    queryFn: async () => (await axiosInstance.get("/rbac/roles", { params: { limit: 100 } })).data.data,
+  });
   const [filteredRoles, setFilteredRoles] = useState<Role[]>([]);
 
   // Form state
@@ -79,24 +86,6 @@ export default function UserForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
 
-  // Fetch lookups
-  useEffect(() => {
-    const fetchLookups = async () => {
-      try {
-        const [hospRes, roleRes] = await Promise.all([
-          axiosInstance.get("/hospitals", { params: { limit: 100 } }),
-          axiosInstance.get("/rbac/roles", { params: { limit: 100 } })
-        ]);
-        setHospitals(hospRes.data.data);
-        setRoles(roleRes.data.data);
-      } catch (err) {
-        console.error("Failed to fetch lookups", err);
-        toast.error((err as any)?.response?.data?.message || "Failed to load required data. Please refresh.");
-      }
-    };
-    fetchLookups();
-  }, []);
-
   // Filter roles when hospital changes
   useEffect(() => {
     if (formData.hospitalId && roles.length > 0) {
@@ -109,38 +98,33 @@ export default function UserForm() {
   }, [formData.hospitalId, roles]);
 
   // Fetch user if edit mode
+  const { data: userData, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["rbac-user", id],
+    queryFn: async () => (await axiosInstance.get(`/rbac/users/${id}`)).data.data,
+    enabled: isEdit,
+  });
+
+  // Seed the form with the existing user when editing.
   useEffect(() => {
-    if (isEdit) {
-      const fetchUser = async () => {
-        try {
-          const res = await axiosInstance.get(`/rbac/users/${id}`);
-          const user = res.data.data;
-          setFormData({
-            hospitalId: user.hospitalId || "",
-            roleId: user.roleId || "",
-            branchIds: Array.isArray(user.branchIds)
-              ? user.branchIds
-              : user.branchId
-                ? [user.branchId]
-                : [],
-            firstName: user.firstName || "",
-            lastName: user.lastName || "",
-            email: user.email || "",
-            phone: user.phone || "",
-            employeeCode: user.employeeCode || "",
-            password: "",
-            status: user.status || "active",
-          });
-        } catch (err) {
-          console.error("Failed to fetch user", err);
-          toast.error((err as any)?.response?.data?.message || "Failed to load user data");
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchUser();
-    }
-  }, [id, isEdit]);
+    if (!userData) return;
+    const user = userData;
+    setFormData({
+      hospitalId: user.hospitalId || "",
+      roleId: user.roleId || "",
+      branchIds: Array.isArray(user.branchIds)
+        ? user.branchIds
+        : user.branchId
+          ? [user.branchId]
+          : [],
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      employeeCode: user.employeeCode || "",
+      password: "",
+      status: user.status || "active",
+    });
+  }, [userData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -200,6 +184,10 @@ export default function UserForm() {
         <CircularProgress sx={{ color: "#6366f1" }} />
       </Box>
     );
+  }
+
+  if (isError) {
+    return <ErrorState title="Couldn't load user" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
   }
 
   return (

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Grid, CircularProgress, Alert,
   Card, CardContent, CardActions, IconButton, Chip, Dialog,
@@ -8,50 +9,29 @@ import {
   CloudUploadRounded, DeleteRounded, VisibilityRounded, InsertDriveFileRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
 
 export default function PatientDocumentsSection({ patientId }: { patientId: string }) {
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [documentTypes, setDocumentTypes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const toast = useToast();
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
-  
+
   // Upload form state
   const [selectedType, setSelectedType] = useState<any>("");
   const [file, setFile] = useState<File | null>(null);
 
-  const fetchDocuments = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get(`/reception/patients/${patientId}/documents`);
-      if (res.data.success) {
-        setDocuments(res.data.data);
-      }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load documents");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: documents = [], isLoading: loading, isError, error, refetch: fetchDocuments } = useQuery<any[]>({
+    queryKey: ["patient-documents", patientId],
+    queryFn: async () => (await axiosInstance.get(`/reception/patients/${patientId}/documents`)).data.data || [],
+  });
 
-  const fetchDocumentTypes = async () => {
-    try {
-      const res = await axiosInstance.get("/reception/document-types");
-      if (res.data.success) {
-        setDocumentTypes(res.data.data);
-      }
-    } catch (err: any) {
-      console.error("Failed to load document types", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchDocuments();
-    fetchDocumentTypes();
-  }, [patientId]);
+  // Document types feed the upload dropdown; load failures stay silent (as before).
+  const { data: documentTypes = [] } = useQuery<any[]>({
+    queryKey: ["document-types"],
+    queryFn: async () => (await axiosInstance.get("/reception/document-types")).data.data || [],
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -92,14 +72,12 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
   const handleDelete = async (documentId: string) => {
     if (!window.confirm("Are you sure you want to delete this document?")) return;
     try {
-      setLoading(true);
       const res = await axiosInstance.delete(`/reception/documents/${documentId}`);
       if (res.data.success) {
         fetchDocuments();
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to delete document");
-      setLoading(false);
     }
   };
 
@@ -126,6 +104,8 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
         <Box sx={{ textAlign: "center", py: 5 }}>
           <CircularProgress sx={{ color: "#06b6d4" }} />
         </Box>
+      ) : isError ? (
+        <ErrorState message={(error as any)?.response?.data?.message || "Failed to load documents"} onRetry={fetchDocuments} />
       ) : documents.length === 0 ? (
         <Paper elevation={0} sx={{ p: 3, bgcolor: "action.hover", border: "1px dashed", borderColor: "divider", borderRadius: 3 }}>
           <Mascot pose="nothing-here-yet" title="No documents found" subtitle="Upload Aadhaar, Insurance Cards, or Referral Letters here." size={130} />

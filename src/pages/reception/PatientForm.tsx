@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -24,6 +25,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
 interface Gender {
@@ -57,11 +59,14 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
 
   const [activeSection, setActiveSection] = useState("personal");
   const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
   const toast = useToast();
 
-  const [genders, setGenders] = useState<Gender[]>([]);
-  const [bloodGroups, setBloodGroups] = useState<BloodGroup[]>([]);
+  const { data: dd, isLoading: ddLoading, isError: ddIsError, error: ddError, refetch: refetchDd } = useQuery({
+    queryKey: ["patient-dropdowns"],
+    queryFn: async () => (await axiosInstance.get("/reception/patients/dropdowns")).data.data,
+  });
+  const genders: Gender[] = dd?.genders ?? [];
+  const bloodGroups: BloodGroup[] = dd?.bloodGroups ?? [];
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -82,43 +87,40 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
     emergencyContactRelation: "",
   });
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const ddRes = await axiosInstance.get("/reception/patients/dropdowns");
-        setGenders(ddRes.data.data.genders);
-        setBloodGroups(ddRes.data.data.bloodGroups);
+  const { data: patientData, isLoading: patientLoading, isError: patientIsError, error: patientError, refetch: refetchPatient } = useQuery({
+    queryKey: ["patient-edit", id],
+    queryFn: async () => (await axiosInstance.get(`/reception/patients/${id}`)).data.data,
+    enabled: isEditing && !!id,
+  });
 
-        if (isEditing && id) {
-          const res = await axiosInstance.get(`/reception/patients/${id}`);
-          const p = res.data.data;
-          setFormData({
-            firstName: p.firstName || "",
-            lastName: p.lastName || "",
-            dateOfBirth: p.dateOfBirth ? new Date(p.dateOfBirth).toISOString().split("T")[0] : "",
-            genderId: String(p.genderId || ""),
-            bloodGroupId: String(p.bloodGroupId || ""),
-            phone: p.phone || "",
-            email: p.email || "",
-            addressLine1: p.addressLine1 || "",
-            addressLine2: p.addressLine2 || "",
-            city: p.city || "",
-            state: p.state || "",
-            postalCode: p.postalCode || "",
-            allergies: p.allergies || "",
-            emergencyContactName: p.emergencyContactName || "",
-            emergencyContactPhone: p.emergencyContactPhone || "",
-            emergencyContactRelation: p.emergencyContactRelation || "",
-          });
-        }
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || "Failed to load data");
-      } finally {
-        setInitialLoad(false);
-      }
-    };
-    load();
-  }, [id, isEditing]);
+  // Seed the form with the existing patient when editing.
+  useEffect(() => {
+    if (!patientData) return;
+    const p = patientData;
+    setFormData({
+      firstName: p.firstName || "",
+      lastName: p.lastName || "",
+      dateOfBirth: p.dateOfBirth ? new Date(p.dateOfBirth).toISOString().split("T")[0] : "",
+      genderId: String(p.genderId || ""),
+      bloodGroupId: String(p.bloodGroupId || ""),
+      phone: p.phone || "",
+      email: p.email || "",
+      addressLine1: p.addressLine1 || "",
+      addressLine2: p.addressLine2 || "",
+      city: p.city || "",
+      state: p.state || "",
+      postalCode: p.postalCode || "",
+      allergies: p.allergies || "",
+      emergencyContactName: p.emergencyContactName || "",
+      emergencyContactPhone: p.emergencyContactPhone || "",
+      emergencyContactRelation: p.emergencyContactRelation || "",
+    });
+  }, [patientData]);
+
+  const initialLoad = ddLoading || (isEditing && patientLoading);
+  const isError = ddIsError || patientIsError;
+  const error = ddError || patientError;
+  const refetch = () => { refetchDd(); if (isEditing) refetchPatient(); };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -161,6 +163,10 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
         <CircularProgress sx={{ color: "#06b6d4" }} />
       </Box>
     );
+  }
+
+  if (isError) {
+    return <ErrorState title="Couldn't load patient form" message={(error as any)?.response?.data?.message} onRetry={refetch} />;
   }
 
   const fieldSx = {

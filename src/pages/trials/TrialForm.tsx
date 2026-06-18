@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -16,6 +17,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
 export default function TrialForm() {
@@ -23,9 +25,16 @@ export default function TrialForm() {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
   const toast = useToast();
-  const [leads, setLeads] = useState<any[]>([]);
+
+  // A trial is for a PROSPECT, so only not-yet-converted leads can start one.
+  const { data: leads = [], isLoading: initialLoading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["leads", "trial-options"],
+    queryFn: async () =>
+      ((await axiosInstance.get("/leads", { params: { limit: 1000 } })).data.data as any[]).filter(
+        (l: any) => l.leadStatus !== "converted"
+      ),
+  });
 
   const [formData, setFormData] = useState({
     leadId: "",
@@ -59,23 +68,6 @@ export default function TrialForm() {
     return diffDays > 0 ? diffDays : 0;
   };
 
-  useEffect(() => {
-    // A trial is an evaluation period for a PROSPECT, so only leads that have
-    // not yet been converted to a hospital can start one.
-    const fetchLeads = async () => {
-      try {
-        const response = await axiosInstance.get("/leads", { params: { limit: 1000 } });
-        setLeads(response.data.data.filter((l: any) => l.leadStatus !== "converted"));
-      } catch (err) {
-        console.error(err);
-        toast.error((err as any)?.response?.data?.message || "Failed to load leads");
-      } finally {
-        setInitialLoading(false);
-      }
-    };
-    fetchLeads();
-  }, []);
-
   const handleChange = (e: any) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -102,6 +94,14 @@ export default function TrialForm() {
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
         <CircularProgress sx={{ color: "#ec4899" }} />
       </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <ErrorState title="Couldn't load leads" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+      </Container>
     );
   }
 

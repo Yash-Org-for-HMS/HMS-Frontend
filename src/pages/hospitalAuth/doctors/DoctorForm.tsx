@@ -14,8 +14,10 @@ import {
   Chip
 } from "@mui/material";
 import { SaveRounded, PersonRounded, LocalHospitalRounded, AccountTreeRounded } from "@mui/icons-material";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 
 export default function DoctorForm() {
@@ -23,13 +25,8 @@ export default function DoctorForm() {
   const { id } = useParams();
 
   const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
   const toast = useToast();
   const [tabIndex, setTabIndex] = useState(0);
-
-  const [departments, setDepartments] = useState<any[]>([]);
-  const [specializations, setSpecializations] = useState<any[]>([]);
-  const [branches, setBranches] = useState<any[]>([]);
   const [branchIds, setBranchIds] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
@@ -46,44 +43,56 @@ export default function DoctorForm() {
     experienceYears: "",
   });
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [deptRes, specRes, dropdownRes] = await Promise.all([
-          axiosInstance.get("/hospital/departments"),
-          axiosInstance.get("/hospital/doctors/specializations").catch(() => ({ data: { data: [] } })),
-          axiosInstance.get("/hospital/users/dropdowns").catch(() => ({ data: { data: { branches: [] } } }))
-        ]);
-        setDepartments(deptRes.data.data);
-        setSpecializations(specRes.data.data);
-        setBranches(dropdownRes.data?.data?.branches ?? []);
+  // Reference dropdowns (departments / specializations / branches).
+  const { data: refData, isLoading: refLoading, isError: refIsError, error: refError, refetch: refetchRefs } = useQuery({
+    queryKey: ["doctor-form-refs"],
+    queryFn: async () => {
+      const [deptRes, specRes, dropdownRes] = await Promise.all([
+        axiosInstance.get("/hospital/departments"),
+        axiosInstance.get("/hospital/doctors/specializations").catch(() => ({ data: { data: [] } })),
+        axiosInstance.get("/hospital/users/dropdowns").catch(() => ({ data: { data: { branches: [] } } })),
+      ]);
+      return {
+        departments: deptRes.data.data,
+        specializations: specRes.data.data,
+        branches: dropdownRes.data?.data?.branches ?? [],
+      };
+    },
+  });
+  const departments: any[] = refData?.departments ?? [];
+  const specializations: any[] = refData?.specializations ?? [];
+  const branches: any[] = refData?.branches ?? [];
 
-        if (id) {
-          const docRes = await axiosInstance.get(`/hospital/doctors/${id}`);
-          const d = docRes.data.data;
-          setFormData({
-            firstName: d.user?.firstName || "",
-            lastName: d.user?.lastName || "",
-            email: d.user?.email || "",
-            phone: d.user?.phone || "",
-            password: "",
-            departmentId: d.departmentId || "",
-            specializationId: d.specializationId || "",
-            licenseNumber: d.licenseNumber || "",
-            consultationFee: d.consultationFee || "",
-            qualification: d.qualification || "",
-            experienceYears: d.experienceYears || "",
-          });
-          setBranchIds(Array.isArray(d.branchIds) ? d.branchIds : []);
-        }
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || "Failed to load data");
-      } finally {
-        setInitialLoad(false);
-      }
-    };
-    loadData();
-  }, [id]);
+  const { data: docData, isLoading: docLoading, isError: docIsError, error: docError, refetch: refetchDoc } = useQuery({
+    queryKey: ["doctor", id],
+    queryFn: async () => (await axiosInstance.get(`/hospital/doctors/${id}`)).data.data,
+    enabled: !!id,
+  });
+
+  // Seed the form with the existing doctor when editing.
+  useEffect(() => {
+    if (!docData) return;
+    const d = docData;
+    setFormData({
+      firstName: d.user?.firstName || "",
+      lastName: d.user?.lastName || "",
+      email: d.user?.email || "",
+      phone: d.user?.phone || "",
+      password: "",
+      departmentId: d.departmentId || "",
+      specializationId: d.specializationId || "",
+      licenseNumber: d.licenseNumber || "",
+      consultationFee: d.consultationFee || "",
+      qualification: d.qualification || "",
+      experienceYears: d.experienceYears || "",
+    });
+    setBranchIds(Array.isArray(d.branchIds) ? d.branchIds : []);
+  }, [docData]);
+
+  const initialLoad = refLoading || (!!id && docLoading);
+  const isError = refIsError || docIsError;
+  const error = refError || docError;
+  const refetch = () => { refetchRefs(); if (id) refetchDoc(); };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -111,6 +120,10 @@ export default function DoctorForm() {
         <CircularProgress sx={{ color: "#6366f1" }} />
       </Box>
     );
+  }
+
+  if (isError) {
+    return <ErrorState title="Couldn't load doctor form" message={(error as any)?.response?.data?.message} onRetry={refetch} />;
   }
 
   const textFieldProps = {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -18,6 +19,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
 export default function OnboardingForm() {
@@ -26,9 +28,7 @@ export default function OnboardingForm() {
   const { id } = useParams();
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
   const toast = useToast();
-  const [hospitalName, setHospitalName] = useState<string>("");
 
   const [formData, setFormData] = useState({
     onboardingStatus: "pending",
@@ -37,26 +37,24 @@ export default function OnboardingForm() {
     paymentVerified: false,
   });
 
+  const { data: onboardingData, isLoading: initialLoading, isError, error, refetch } = useQuery({
+    queryKey: ["onboarding", id],
+    queryFn: async () => (await axiosInstance.get(`/onboarding/${id}`)).data.data,
+    enabled: !!id,
+  });
+  const hospitalName = onboardingData?.hospital?.hospitalName || "Unknown Hospital";
+
+  // Seed the form with the existing onboarding record.
   useEffect(() => {
-    const fetchOnboarding = async () => {
-      try {
-        const response = await axiosInstance.get(`/onboarding/${id}`);
-        const d = response.data.data;
-        setHospitalName(d.hospital?.hospitalName || "Unknown Hospital");
-        setFormData({
-          onboardingStatus: d.onboardingStatus || "pending",
-          tenantSetupCompleted: d.tenantSetupCompleted || false,
-          defaultRolesSeeded: d.defaultRolesSeeded || false,
-          paymentVerified: d.paymentVerified || false,
-        });
-      } catch (err) {
-        toast.error(t("common.error"));
-      } finally {
-        setInitialLoading(false);
-      }
-    };
-    fetchOnboarding();
-  }, [id, t]);
+    if (!onboardingData) return;
+    const d = onboardingData;
+    setFormData({
+      onboardingStatus: d.onboardingStatus || "pending",
+      tenantSetupCompleted: d.tenantSetupCompleted || false,
+      defaultRolesSeeded: d.defaultRolesSeeded || false,
+      paymentVerified: d.paymentVerified || false,
+    });
+  }, [onboardingData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, checked, type } = e.target;
@@ -81,6 +79,14 @@ export default function OnboardingForm() {
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
         <CircularProgress sx={{ color: "#10b981" }} />
       </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <ErrorState title="Couldn't load onboarding record" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+      </Container>
     );
   }
 

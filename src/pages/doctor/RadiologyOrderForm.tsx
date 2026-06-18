@@ -1,11 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Button, TextField, CircularProgress,
-  Paper, Grid, Alert, MenuItem
+  Paper, Grid, Alert, MenuItem, Link
 } from "@mui/material";
-import { SaveRounded, CameraAltRounded } from "@mui/icons-material";
+import { SaveRounded, CameraAltRounded, DescriptionRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
+import { assetUrl } from "../../utils/assetUrl";
 import { useToast } from "../../contexts/ToastContext";
 
 const DOCTOR_BLUE = "#3b82f6";
@@ -32,33 +35,20 @@ const scanTypes = [
 ];
 
 export default function RadiologyOrderForm({ consultationId, patientId, onRequireSave }: RadiologyOrderFormProps) {
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
-  const [existingOrders, setExistingOrders] = useState<any[]>([]);
+  const qc = useQueryClient();
 
   // Form state
   const [selectedScanType, setSelectedScanType] = useState<string>("");
   const [selectedPriority, setSelectedPriority] = useState(1);
   const [radiologistNotes, setRadiologistNotes] = useState("");
 
-  useEffect(() => {
-    if (consultationId) {
-      fetchExistingOrders(consultationId);
-    }
-  }, [consultationId]);
-
-  const fetchExistingOrders = async (id: string) => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get(`/doctor/radiology-orders/consultations/${id}`);
-      setExistingOrders(res.data.data || []);
-    } catch (err) {
-      console.error("Failed to load radiology orders", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: existingOrders = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["radiology-orders", consultationId],
+    queryFn: async () => (await axiosInstance.get(`/doctor/radiology-orders/consultations/${consultationId}`)).data.data || [],
+    enabled: !!consultationId,
+  });
 
   const handleSubmit = async () => {
     if (!selectedScanType) {
@@ -88,8 +78,8 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
       setSelectedScanType("");
       setSelectedPriority(1);
       setRadiologistNotes("");
-// Refresh list
-      fetchExistingOrders(targetConsultationId);
+      // Refresh list (covers both the existing consultation and a freshly-created one)
+      qc.invalidateQueries({ queryKey: ["radiology-orders"] });
     } catch (err: any) {
       toast.error(err.response?.data?.message || err.message || "Failed to create radiology order");
     } finally {
@@ -157,6 +147,8 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
         </Typography>
         {loading ? (
           <CircularProgress size={24} />
+        ) : isError ? (
+          <ErrorState message={(error as any)?.response?.data?.message || "Failed to load radiology orders"} onRetry={refetch} />
         ) : existingOrders.length === 0 ? (
           <Mascot pose="nothing-here-yet" subtitle="No radiology orders for this consultation yet." size={130} />
         ) : (
@@ -176,13 +168,39 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Typography variant="caption" sx={{ fontWeight: 600 }}>Status:</Typography>
-                  <Typography variant="caption" sx={{ 
+                  <Typography variant="caption" sx={{
                     color: order.status === "PENDING" ? "warning.main" : "success.main",
-                    fontWeight: 600 
+                    fontWeight: 600
                   }}>
                     {order.status}
                   </Typography>
                 </Box>
+
+                {/* Radiologist's report(s): findings/impression + a link to any
+                    uploaded file. Populated once the radiologist saves results
+                    or uploads a report from the lab queue. */}
+                {Array.isArray(order.reports) && order.reports.length > 0 && (
+                  <Box sx={{ mt: 1.5, pt: 1.5, borderTop: "1px solid", borderColor: "divider", display: "flex", flexDirection: "column", gap: 1.5 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <DescriptionRounded fontSize="inherit" /> Report
+                    </Typography>
+                    {order.reports.map((r: any, rIdx: number) => (
+                      <Box key={rIdx} sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                        {r.findings && (
+                          <Typography variant="body2"><strong>Findings:</strong> {r.findings}</Typography>
+                        )}
+                        {r.impression && (
+                          <Typography variant="body2" sx={{ color: "text.secondary" }}><strong>Impression:</strong> {r.impression}</Typography>
+                        )}
+                        {r.reportUrl && (
+                          <Link href={assetUrl(r.reportUrl)} target="_blank" rel="noopener noreferrer" underline="hover" sx={{ fontSize: "0.85rem", fontWeight: 600 }}>
+                            View Report File
+                          </Link>
+                        )}
+                      </Box>
+                    ))}
+                  </Box>
+                )}
               </Paper>
             ))}
           </Box>

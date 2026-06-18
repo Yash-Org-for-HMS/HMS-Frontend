@@ -190,15 +190,10 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
           </Box>
           <Box>
             <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
-              Use default password
+              Generate a temporary password
             </Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              Resets to{" "}
-              <Chip
-                label="Password@123"
-                size="small"
-                sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#fbbf24", fontFamily: "monospace", fontWeight: 700, fontSize: "0.72rem", height: 18 }}
-              />
+              A secure one-time password will be generated and shown to you next.
             </Typography>
           </Box>
         </Box>

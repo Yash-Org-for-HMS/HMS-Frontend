@@ -8,26 +8,44 @@ export const axiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  // Send the httpOnly refresh cookie with requests (the /refresh endpoint reads
+  // it). Required for the cookie to be set/sent cross-origin (localhost:5173 →
+  // :5000), alongside the backend's CORS `credentials: true`.
+  withCredentials: true,
 });
 
 // The app has two independent auth realms (platform super-admin vs hospital
-// users), each with its own token storage, refresh endpoint, and login page.
+// users), each with its own refresh endpoint and login page.
 type Realm = "hospital" | "admin";
 
-const REALMS: Record<Realm, { access: string; refresh: string; refreshUrl: string; loginPath: string }> = {
+const REALMS: Record<Realm, { refreshUrl: string; loginPath: string; profileKeys: string[] }> = {
   hospital: {
-    access: "hospitalAccessToken",
-    refresh: "hospitalRefreshToken",
     refreshUrl: "/hospital-auth/refresh",
     loginPath: "/hospital/login",
+    profileKeys: ["hospitalUser", "hospitalInfo", "hospitalBranch", "hospitalSessionId", "activeBranchId"],
   },
   admin: {
-    access: "accessToken",
-    refresh: "refreshToken",
     refreshUrl: "/auth/refresh",
     loginPath: "/login",
+    profileKeys: ["user"],
   },
 };
+
+// ── Access tokens: in MEMORY only ──────────────────────────────────────────
+// The access token is short-lived and is NEVER persisted to web storage (which
+// is readable by any XSS). It lives in this module variable for the lifetime of
+// the page; on reload it's re-obtained silently from the httpOnly refresh
+// cookie via the 401→refresh→retry flow below. The refresh token itself never
+// touches JavaScript — it's an httpOnly cookie set by the backend.
+const accessTokens: Partial<Record<Realm, string | null>> = {};
+
+export function setAccessToken(realm: Realm, token: string | null): void {
+  accessTokens[realm] = token;
+}
+
+export function getAccessToken(realm: Realm): string | null {
+  return accessTokens[realm] ?? null;
+}
 
 // Hospital-portal API prefixes use the hospital token; everything else uses the
 // super-admin token. (Same rule the request interceptor has always used.)
@@ -38,11 +56,11 @@ function realmForUrl(url?: string): Realm {
   return "admin";
 }
 
-// Interceptor to attach access token
+// Interceptor to attach the in-memory access token.
 axiosInstance.interceptors.request.use(
   (config) => {
     const realm = realmForUrl(config.url);
-    const token = sessionStorage.getItem(REALMS[realm].access);
+    const token = accessTokens[realm];
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -60,11 +78,8 @@ axiosInstance.interceptors.request.use(
 );
 
 function clearRealm(realm: Realm) {
-  const keys =
-    realm === "hospital"
-      ? ["hospitalAccessToken", "hospitalRefreshToken", "hospitalUser", "hospitalInfo", "hospitalBranch", "hospitalSessionId"]
-      : ["accessToken", "refreshToken", "user"];
-  keys.forEach((k) => sessionStorage.removeItem(k));
+  accessTokens[realm] = null;
+  REALMS[realm].profileKeys.forEach((k) => sessionStorage.removeItem(k));
 }
 
 function redirectToLogin(realm: Realm) {
@@ -79,17 +94,15 @@ const refreshing: Partial<Record<Realm, Promise<string | null>>> = {};
 
 async function doRefresh(realm: Realm): Promise<string | null> {
   const r = REALMS[realm];
-  const refreshToken = sessionStorage.getItem(r.refresh);
-  if (!refreshToken) return null;
   try {
-    // Use a bare axios call (not axiosInstance) so this request doesn't recurse
-    // back through these interceptors.
-    const resp = await axios.post(`${API_URL}${r.refreshUrl}`, { refreshToken });
-    const tokens = resp.data?.data?.tokens;
-    if (!tokens?.accessToken) return null;
-    sessionStorage.setItem(r.access, tokens.accessToken);
-    if (tokens.refreshToken) sessionStorage.setItem(r.refresh, tokens.refreshToken);
-    return tokens.accessToken;
+    // Bare axios call (not axiosInstance) so it doesn't recurse through these
+    // interceptors. The refresh token rides along as the httpOnly cookie, so we
+    // send no body — `withCredentials` makes the browser attach the cookie.
+    const resp = await axios.post(`${API_URL}${r.refreshUrl}`, {}, { withCredentials: true });
+    const accessToken = resp.data?.data?.tokens?.accessToken;
+    if (!accessToken) return null;
+    accessTokens[realm] = accessToken;
+    return accessToken;
   } catch {
     return null;
   }

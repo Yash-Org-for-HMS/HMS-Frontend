@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -18,6 +19,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
 export default function FeatureFlagForm() {
@@ -27,9 +29,7 @@ export default function FeatureFlagForm() {
   const isEdit = Boolean(id);
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(isEdit);
   const toast = useToast();
-  const [hospitals, setHospitals] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     hospitalId: "",
@@ -39,43 +39,36 @@ export default function FeatureFlagForm() {
     isGlobal: false,
   });
 
+  const { data: hospitals = [] } = useQuery<any[]>({
+    queryKey: ["hospitals", "feature-flag-options"],
+    queryFn: async () => (await axiosInstance.get("/hospitals", { params: { limit: 100 } })).data.data,
+  });
+
+  const { data: flagData, isLoading: initialLoading, isError, error, refetch } = useQuery({
+    queryKey: ["feature-flag", id],
+    queryFn: async () => (await axiosInstance.get(`/feature-flags/${id}`)).data.data,
+    enabled: isEdit,
+  });
+
+  // Default the hospital dropdown to the first option when creating.
   useEffect(() => {
-    // Fetch hospitals for dropdown
-    const fetchHospitals = async () => {
-      try {
-        const response = await axiosInstance.get("/hospitals", { params: { limit: 100 } });
-        setHospitals(response.data.data);
-        if (!isEdit && response.data.data.length > 0) {
-          setFormData(prev => ({ ...prev, hospitalId: response.data.data[0].hospitalId }));
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchHospitals();
-
-    if (isEdit) {
-      const fetchFlag = async () => {
-        try {
-          const response = await axiosInstance.get(`/feature-flags/${id}`);
-          const d = response.data.data;
-          setFormData({
-            hospitalId: d.hospitalId || "",
-            featureKey: d.featureKey || "",
-            featureName: d.featureName || "",
-            isEnabled: d.isEnabled,
-            isGlobal: d.isGlobal || false,
-          });
-        } catch (err) {
-          toast.error(t("common.error"));
-        } finally {
-          setInitialLoading(false);
-        }
-      };
-      fetchFlag();
+    if (!isEdit && hospitals.length > 0) {
+      setFormData((prev) => (prev.hospitalId ? prev : { ...prev, hospitalId: hospitals[0].hospitalId }));
     }
-  }, [id, isEdit, t]);
+  }, [hospitals, isEdit]);
+
+  // Seed the form with the existing flag when editing.
+  useEffect(() => {
+    if (!flagData) return;
+    const d = flagData;
+    setFormData({
+      hospitalId: d.hospitalId || "",
+      featureKey: d.featureKey || "",
+      featureName: d.featureName || "",
+      isEnabled: d.isEnabled,
+      isGlobal: d.isGlobal || false,
+    });
+  }, [flagData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, checked, type } = e.target;
@@ -107,6 +100,14 @@ export default function FeatureFlagForm() {
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
         <CircularProgress sx={{ color: "#f59e0b" }} />
       </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <ErrorState title="Couldn't load feature flag" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+      </Container>
     );
   }
 
