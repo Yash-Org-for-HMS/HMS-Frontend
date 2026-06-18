@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box, Grid, Typography, Paper, CircularProgress, Alert,
   Skeleton, Chip, Table, TableBody, TableCell, TableContainer,
@@ -10,9 +10,9 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "../../contexts/ToastContext";
 
 const NURSE_PURPLE = "#a78bfa";
 const NURSE_PURPLE_DARK = "#7c3aed";
@@ -66,42 +66,38 @@ function StatCard({ title, value, icon, loading, accent, sub }: any) {
 export default function NurseDashboard() {
   const { hospital, user } = useHospitalAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const toast = useToast();
-  const [tokens, setTokens] = useState<any[]>([]);
-  const [vitalsRecorded, setVitalsRecorded] = useState<Set<string>>(new Set());
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+  const { data, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["nurse-queue"],
+    queryFn: async () => {
       const res = await axiosInstance.get("/reception/queue");
-      const tokenList = res.data.data;
-      setTokens(tokenList);
-
-      // Check vitals status
+      const tokenList: any[] = res.data.data;
+      // Resolve which appointments already have vitals recorded.
       const apptIds = tokenList.map((t: any) => t.appointmentId).filter(Boolean);
       const vitalsChecks = await Promise.allSettled(
         apptIds.map((id: string) => axiosInstance.get(`/reception/appointments/${id}/vitals`))
       );
       const recorded = new Set<string>();
       vitalsChecks.forEach((result, i) => {
-        if (result.status === "fulfilled" && result.value.data.data) {
-          recorded.add(apptIds[i]);
-        }
+        if (result.status === "fulfilled" && (result.value as any).data.data) recorded.add(apptIds[i]);
       });
-      setVitalsRecorded(recorded);
-    } catch {
-      toast.error("Failed to load queue data");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { tokens: tokenList, vitalsRecorded: recorded };
+    },
+    refetchInterval: 30000, // refresh every 30s
+  });
+  const tokens: any[] = data?.tokens ?? [];
+  const vitalsRecorded: Set<string> = data?.vitalsRecorded ?? new Set();
 
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  if (isError) {
+    return (
+      <Box sx={{ pb: 6 }}>
+        <ErrorState
+          title="Couldn't load the queue"
+          message={(error as any)?.response?.data?.message}
+          onRetry={() => refetch()}
+        />
+      </Box>
+    );
+  }
 
   const totalPatients = tokens.length;
   const waiting = tokens.filter(t => t.statusCode === "WAITING" || t.statusCode === "SKIPPED").length;
@@ -196,7 +192,7 @@ export default function NurseDashboard() {
               <Button
                 size="small" variant="outlined"
                 startIcon={<SyncRounded />}
-                onClick={fetchData}
+                onClick={() => refetch()}
                 sx={{ color: NURSE_PURPLE, borderColor: `rgba(167,139,250,0.4)`, textTransform: "none", "&:hover": { borderColor: NURSE_PURPLE, bgcolor: "rgba(167,139,250,0.06)" } }}
               >
                 Refresh

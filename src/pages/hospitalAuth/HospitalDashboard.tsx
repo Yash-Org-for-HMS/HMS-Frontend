@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Grid, 
+import { useQuery } from "@tanstack/react-query";
+import {
+  Box,
+  Typography,
+  Paper,
+  Grid,
   CircularProgress,
   List,
   ListItem,
@@ -16,6 +16,7 @@ import {
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
 import { useNavigate } from "react-router-dom";
 import { 
   PeopleAltRounded,
@@ -107,27 +108,27 @@ export default function HospitalDashboard() {
   const { user } = useHospitalAuth();
   const theme = useTheme();
   const navigate = useNavigate();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await axiosInstance.get("/hospital/dashboard/stats");
-        setStats(res.data.data);
-      } catch (err) {
-        console.error("Failed to fetch dashboard stats", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
+  const { data: stats, isLoading: loading, isError, error, refetch } = useQuery<DashboardStats>({
+    queryKey: ["hospital-dashboard-stats"],
+    queryFn: async () => (await axiosInstance.get("/hospital/dashboard/stats")).data.data,
+  });
 
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
         <CircularProgress sx={{ color: theme.palette.primary.main }} />
+      </Box>
+    );
+  }
+
+  if (isError || !stats) {
+    return (
+      <Box sx={{ pb: 6 }}>
+        <ErrorState
+          title="Couldn't load the dashboard"
+          message={(error as any)?.response?.data?.message}
+          onRetry={() => refetch()}
+        />
       </Box>
     );
   }

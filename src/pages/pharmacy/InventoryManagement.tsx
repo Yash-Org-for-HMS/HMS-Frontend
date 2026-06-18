@@ -7,6 +7,7 @@ import {
 import { AddRounded, InventoryRounded, ShoppingCartRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
 
@@ -29,6 +30,7 @@ export default function InventoryManagement() {
   const [alertPage, setAlertPage] = useState(1);
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const didMount = useRef(false);
 
   const [openPoDialog, setOpenPoDialog] = useState(false);
@@ -69,18 +71,21 @@ export default function InventoryManagement() {
   };
 
   // Initial load.
+  const loadInitial = async () => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+      await Promise.all([fetchReference(), fetchInventory(1), fetchPurchaseOrders(1)]);
+    } catch (err: any) {
+      setLoadError(err?.response?.data?.message || "Failed to load inventory data");
+    } finally {
+      setLoading(false);
+      didMount.current = true;
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        await Promise.all([fetchReference(), fetchInventory(1), fetchPurchaseOrders(1)]);
-      } catch (err) {
-        console.error("Failed to fetch inventory data", err);
-      } finally {
-        setLoading(false);
-        didMount.current = true;
-      }
-    })();
+    loadInitial();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -126,7 +131,7 @@ export default function InventoryManagement() {
       await Promise.all([fetchPurchaseOrders(1), fetchReference()]);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to create PO");
+      toast.error((err as any)?.response?.data?.message || "Failed to create PO");
     } finally {
       setSavingPo(false);
     }
@@ -242,7 +247,7 @@ export default function InventoryManagement() {
                   setPoPage(1);
                   await Promise.all([fetchPurchaseOrders(1), fetchReference()]);
                 } catch(err) {
-                  toast.error("Failed to auto-generate POs");
+                  toast.error((err as any)?.response?.data?.message || "Failed to auto-generate POs");
                 } finally {
                   setAutoGenerating(false);
                 }
@@ -258,6 +263,8 @@ export default function InventoryManagement() {
           <Box sx={{ display: "flex", justifyContent: "center", p: 8, minHeight: 400, alignItems: "center" }}>
             <CircularProgress size={48} thickness={4} />
           </Box>
+        ) : loadError ? (
+          <ErrorState message={loadError} onRetry={loadInitial} />
         ) : (
           <Box sx={{ minHeight: 400 }}>
             {/* Tab 0: Current Stock */}
@@ -378,7 +385,7 @@ export default function InventoryManagement() {
                                   });
                                   await fetchReference();
                                 } catch(err) {
-                                  toast.error("Failed to assign default supplier");
+                                  toast.error((err as any)?.response?.data?.message || "Failed to assign default supplier");
                                 }
                               }
                             }}

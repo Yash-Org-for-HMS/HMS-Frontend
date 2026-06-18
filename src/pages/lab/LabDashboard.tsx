@@ -1,23 +1,13 @@
 import { Box, Typography, Grid, Paper, CircularProgress, Chip, Table, TableBody, TableCell, TableHead, TableRow, Button, alpha } from "@mui/material";
 import { ScienceRounded, CheckCircleRounded, PendingActionsRounded, BiotechRounded, AttachMoneyRounded, TrendingUpRounded } from "@mui/icons-material";
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
 import { useNavigate } from "react-router-dom";
 
 export default function LabDashboard() {
-  const [loading, setLoading] = useState(true);
-  const [labStats, setLabStats] = useState({ total: 0, pending: 0, completed: 0, todayRevenue: 0 });
-  const [radStats, setRadStats] = useState({ total: 0, pending: 0, completed: 0, todayRevenue: 0 });
-  
-  const [recentLabOrders, setRecentLabOrders] = useState<any[]>([]);
-  const [recentRadOrders, setRecentRadOrders] = useState<any[]>([]);
-
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
 
   const isToday = (dateString: string) => {
     const today = new Date();
@@ -27,18 +17,17 @@ export default function LabDashboard() {
            date.getFullYear() === today.getFullYear();
   };
 
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
+  const { data, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["lab-dashboard"],
+    queryFn: async () => {
       const [labRes, radRes] = await Promise.all([
         axiosInstance.get("/lab/orders"),
-        axiosInstance.get("/lab/radiology-orders")
+        axiosInstance.get("/lab/radiology-orders"),
       ]);
 
       const labOrders = labRes.data.data || [];
       const radOrders = radRes.data.data || [];
 
-      // Calculate Lab Stats
       let labRev = 0;
       labOrders.forEach((o: any) => {
         if (isToday(o.createdAt)) {
@@ -46,42 +35,37 @@ export default function LabDashboard() {
           if (o.paymentStatus === 'PAID') labRev += orderTotal;
         }
       });
-
-      setLabStats({
+      const labStats = {
         total: labOrders.length,
         pending: labOrders.filter((o: any) => o.status !== "COMPLETED").length,
         completed: labOrders.filter((o: any) => o.status === "COMPLETED").length,
-        todayRevenue: labRev
-      });
+        todayRevenue: labRev,
+      };
 
-      // Calculate Rad Stats
       let radRev = 0;
       radOrders.forEach((o: any) => {
-        if (isToday(o.orderDate)) {
-          if (o.paymentStatus === 'PAID') radRev += 1000; 
-        }
+        if (isToday(o.orderDate) && o.paymentStatus === 'PAID') radRev += 1000;
       });
-
-      setRadStats({
+      const radStats = {
         total: radOrders.length,
         pending: radOrders.filter((o: any) => o.status !== "COMPLETED").length,
         completed: radOrders.filter((o: any) => o.status === "COMPLETED").length,
-        todayRevenue: radRev
-      });
+        todayRevenue: radRev,
+      };
 
-      // Recent pending orders
-      const pendingLabs = labOrders.filter((o: any) => o.status !== "COMPLETED").sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
-      setRecentLabOrders(pendingLabs);
+      const recentLabOrders = labOrders.filter((o: any) => o.status !== "COMPLETED")
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
+      const recentRadOrders = radOrders.filter((o: any) => o.status !== "COMPLETED")
+        .sort((a: any, b: any) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()).slice(0, 5);
 
-      const pendingRads = radOrders.filter((o: any) => o.status !== "COMPLETED").sort((a: any, b: any) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()).slice(0, 5);
-      setRecentRadOrders(pendingRads);
+      return { labStats, radStats, recentLabOrders, recentRadOrders };
+    },
+  });
 
-    } catch (err) {
-      console.error("Failed to load dashboard stats", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const labStats = data?.labStats ?? { total: 0, pending: 0, completed: 0, todayRevenue: 0 };
+  const radStats = data?.radStats ?? { total: 0, pending: 0, completed: 0, todayRevenue: 0 };
+  const recentLabOrders: any[] = data?.recentLabOrders ?? [];
+  const recentRadOrders: any[] = data?.recentRadOrders ?? [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -107,6 +91,14 @@ export default function LabDashboard() {
 
   if (loading) {
     return <Box sx={{ display: "flex", justifyContent: "center", p: 10 }}><CircularProgress /></Box>;
+  }
+
+  if (isError) {
+    return (
+      <Box sx={{ p: { xs: 2, md: 4 } }}>
+        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+      </Box>
+    );
   }
 
   return (

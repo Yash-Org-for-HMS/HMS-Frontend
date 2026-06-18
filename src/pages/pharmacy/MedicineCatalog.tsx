@@ -5,8 +5,10 @@ import {
   TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha, InputAdornment
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded, MedicationRounded, SearchRounded } from "@mui/icons-material";
+import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
@@ -15,14 +17,8 @@ export default function MedicineCatalog() {
   const theme = useTheme();
   const toast = useToast();
   const confirm = useConfirm();
-  const [medicines, setMedicines] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [suppliers, setSuppliers] = useState<any[]>([]);
-
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const pageCount = Math.ceil(total / ROWS_PER_PAGE);
 
   const [openDialog, setOpenDialog] = useState(false);
   const [editMed, setEditMed] = useState<any>(null);
@@ -38,12 +34,11 @@ export default function MedicineCatalog() {
 
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Load suppliers once — used only for the dialog dropdown (full list).
-  useEffect(() => {
-    axiosInstance.get("/pharmacy/suppliers")
-      .then(res => setSuppliers(res.data.data || []))
-      .catch(err => console.error("Failed to fetch suppliers", err));
-  }, []);
+  // Suppliers — used only for the dialog dropdown (full list).
+  const { data: suppliers = [] } = useQuery<any[]>({
+    queryKey: ["pharmacy-suppliers"],
+    queryFn: async () => (await axiosInstance.get("/pharmacy/suppliers")).data.data || [],
+  });
 
   // Debounce the search box, resetting to page 1 whenever the term changes.
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -55,26 +50,16 @@ export default function MedicineCatalog() {
     return () => clearTimeout(id);
   }, [searchTerm]);
 
-  // Fetch a page of medicines whenever the page or search term changes.
-  const fetchMedicines = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get("/pharmacy/medicines", {
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["pharmacy-medicines", page, debouncedSearch],
+    queryFn: async () =>
+      (await axiosInstance.get("/pharmacy/medicines", {
         params: { page, limit: ROWS_PER_PAGE, search: debouncedSearch || undefined },
-      });
-      setMedicines(res.data.data || []);
-      setTotal(res.data.pagination?.total ?? (res.data.data || []).length);
-    } catch (err) {
-      console.error("Failed to fetch medicines", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchMedicines();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, debouncedSearch]);
+      })).data,
+  });
+  const medicines: any[] = data?.data ?? [];
+  const total: number = data?.pagination?.total ?? medicines.length;
+  const pageCount = Math.ceil(total / ROWS_PER_PAGE);
 
   const handleOpenNew = () => {
     setEditMed(null);
@@ -131,9 +116,8 @@ export default function MedicineCatalog() {
         await axiosInstance.post("/pharmacy/medicines", payload);
       }
       handleClose();
-      fetchMedicines();
+      refetch();
     } catch (err: any) {
-      console.error("Failed to save medicine", err);
       setErrorMsg(err.response?.data?.message || "Failed to save the medicine.");
     } finally {
       setSaving(false);
@@ -154,10 +138,9 @@ export default function MedicineCatalog() {
       if (medicines.length === 1 && page > 1) {
         setPage(page - 1);
       } else {
-        fetchMedicines();
+        refetch();
       }
     } catch (err: any) {
-      console.error("Failed to delete medicine", err);
       toast.error(err.response?.data?.message || "Failed to delete the medicine.");
     }
   };
@@ -215,10 +198,12 @@ export default function MedicineCatalog() {
           />
         </Box>
 
-        {loading ? (
+        {isLoading ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
             <CircularProgress size={48} thickness={4} sx={{ color: '#4F46E5' }} />
           </Box>
+        ) : isError ? (
+          <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
         ) : medicines.length === 0 ? (
           <Mascot
             pose={debouncedSearch ? "no-matches" : "nothing-here-yet"}

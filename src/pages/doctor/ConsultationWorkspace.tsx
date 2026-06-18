@@ -10,6 +10,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
 import PrescriptionWriter from "./PrescriptionWriter";
 import LabOrderForm from "./LabOrderForm";
 import RadiologyOrderForm from "./RadiologyOrderForm";
@@ -179,7 +180,7 @@ export default function ConsultationWorkspace() {
   if (error && !context) {
     return (
       <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", p: 4 }}>
-        <Mascot pose="oops" title="Something went wrong" subtitle={error} />
+        <ErrorState title="Couldn't load the consultation" message={error} onRetry={() => fetchContext()} />
         <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/doctor/queue")} sx={{ mt: 1 }}>
           Back to Queue
         </Button>

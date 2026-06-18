@@ -83,7 +83,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
           }
         }
       } catch (err) {
-        toast.error("Failed to initialize form");
+        toast.error((err as any)?.response?.data?.message || "Failed to initialize form");
       } finally {
         setLoading(false);
       }

@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import ErrorState from "../../components/ErrorState";
 import { Box, Typography, Paper, Grid, TextField, Button, CircularProgress, Alert, Chip, Divider } from "@mui/material";
 import { SaveRounded, ArrowBackRounded, ScienceRounded, AccessTimeRounded, PrintRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
@@ -22,39 +24,30 @@ const evaluateCriticalValue = (testCode: string, resultValue: string): boolean =
 export default function UpdateLabOrder() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [order, setOrder] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showPOS, setShowPOS] = useState(false);
   const [results, setResults] = useState<Record<string, { value: string, range: string, remarks: string }>>({});
   const [message, setMessage] = useState<{type: "success" | "error", text: string} | null>(null);
 
-  useEffect(() => {
-    fetchOrder();
-  }, [id]);
+  const { data: order, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["lab-order", id],
+    queryFn: async () => (await axiosInstance.get(`/lab/orders/${id}`)).data.data,
+    enabled: !!id,
+  });
 
-  const fetchOrder = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get(`/lab/orders/${id}`);
-      const data = res.data.data;
-      setOrder(data);
-      
-      const initialResults: any = {};
-      data.reports.forEach((r: any) => {
-        initialResults[r.labReportId] = {
-          value: r.resultValue === "PENDING" ? "" : r.resultValue,
-          range: r.normalRange === "N/A" ? "" : r.normalRange,
-          remarks: r.remarks || "",
-        };
-      });
-      setResults(initialResults);
-    } catch (err) {
-      console.error("Failed to fetch lab order", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Seed the editable result rows when the order loads (or after a refetch).
+  useEffect(() => {
+    if (!order) return;
+    const initialResults: any = {};
+    order.reports.forEach((r: any) => {
+      initialResults[r.labReportId] = {
+        value: r.resultValue === "PENDING" ? "" : r.resultValue,
+        range: r.normalRange === "N/A" ? "" : r.normalRange,
+        remarks: r.remarks || "",
+      };
+    });
+    setResults(initialResults);
+  }, [order]);
 
   const handleSave = async () => {
     try {
@@ -70,7 +63,7 @@ export default function UpdateLabOrder() {
 
       await axiosInstance.put(`/lab/orders/${id}/results`, { results: payload });
       setMessage({ type: "success", text: "Lab results updated successfully!" });
-      setTimeout(() => fetchOrder(), 1000);
+      setTimeout(() => refetch(), 1000);
     } catch (err) {
       setMessage({ type: "error", text: "Failed to update results." });
     } finally {
@@ -79,7 +72,9 @@ export default function UpdateLabOrder() {
   };
 
   if (loading) return <Box sx={{ display: "flex", p: 4, justifyContent: "center" }}><CircularProgress /></Box>;
-  if (!order) return <Typography>Order not found</Typography>;
+  if (isError || !order) {
+    return <ErrorState title="Couldn't load lab order" message={(error as any)?.response?.data?.message || "Order not found"} onRetry={() => refetch()} />;
+  }
 
   return (
     <Box>
@@ -244,7 +239,7 @@ export default function UpdateLabOrder() {
           onClose={() => setShowPOS(false)}
           onSuccess={() => {
             setShowPOS(false);
-            fetchOrder();
+            refetch();
           }}
           patientId={order.patientId}
           patientName={`${order.patient?.firstName || ''} ${order.patient?.lastName || ''}`}

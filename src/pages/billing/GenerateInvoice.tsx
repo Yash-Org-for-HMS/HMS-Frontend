@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { 
-  Box, Typography, Paper, Autocomplete, TextField, CircularProgress, 
-  Table, TableBody, TableCell, TableHead, TableRow, Checkbox, 
+import { useQuery } from "@tanstack/react-query";
+import {
+  Box, Typography, Paper, Autocomplete, TextField, CircularProgress,
+  Table, TableBody, TableCell, TableHead, TableRow, Checkbox,
   Button, Divider, Grid, Dialog, DialogTitle, DialogContent, DialogActions, alpha, useTheme
 } from "@mui/material";
 import { ReceiptLongRounded, PaymentRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
 
 export default function GenerateInvoice() {
@@ -13,13 +15,10 @@ export default function GenerateInvoice() {
   
   // Patient Search
   const [patientQuery, setPatientQuery] = useState("");
-  const [patients, setPatients] = useState<any[]>([]);
-  const [patientLoading, setPatientLoading] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
 
   // Billing Items
-  const [unbilledItems, setUnbilledItems] = useState<any[]>([]);
-  const [itemsLoading, setItemsLoading] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
 
   // Invoice Calculator — tax defaults to the hospital's configured GST rate.
@@ -35,48 +34,37 @@ export default function GenerateInvoice() {
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
+  // Debounced patient search.
   useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      if (patientQuery.length >= 2) {
-        try {
-          setPatientLoading(true);
-          const res = await axiosInstance.get(`/reception/patients?search=${patientQuery}`);
-          setPatients(Array.isArray(res.data.data) ? res.data.data : []);
-        } catch (err) {
-          console.error("Failed to fetch patients", err);
-        } finally {
-          setPatientLoading(false);
-        }
-      } else {
-        setPatients([]);
-      }
-    }, 500);
-    return () => clearTimeout(delayDebounceFn);
+    const t = setTimeout(() => setDebouncedQuery(patientQuery), 500);
+    return () => clearTimeout(t);
   }, [patientQuery]);
 
-  useEffect(() => {
-    if (selectedPatient) {
-      fetchUnbilledItems(selectedPatient.patientId);
-    } else {
-      setUnbilledItems([]);
-      setSelectedItemIds(new Set());
-    }
-  }, [selectedPatient]);
+  const { data: patients = [], isFetching: patientLoading } = useQuery<any[]>({
+    queryKey: ["patient-search", debouncedQuery],
+    queryFn: async () =>
+      (await axiosInstance.get("/reception/patients", { params: { search: debouncedQuery } })).data.data || [],
+    enabled: debouncedQuery.trim().length >= 2,
+  });
 
-  const fetchUnbilledItems = async (patientId: string) => {
-    try {
-      setItemsLoading(true);
-      const res = await axiosInstance.get(`/billing/unbilled/${patientId}`);
-      const items = res.data.data || [];
-      setUnbilledItems(items);
-      // Auto-select all by default
-      setSelectedItemIds(new Set(items.map((i: any) => i.id)));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setItemsLoading(false);
-    }
-  };
+  const patientId = selectedPatient?.patientId;
+  const {
+    data: unbilledData,
+    isLoading: itemsLoading,
+    isError: itemsError,
+    error: itemsErr,
+    refetch: refetchUnbilled,
+  } = useQuery<any[]>({
+    queryKey: ["unbilled", patientId],
+    queryFn: async () => (await axiosInstance.get(`/billing/unbilled/${patientId}`)).data.data || [],
+    enabled: !!patientId,
+  });
+  const unbilledItems: any[] = unbilledData ?? [];
+
+  // Auto-select all charges when a fresh set loads (and clear on patient change).
+  useEffect(() => {
+    setSelectedItemIds(new Set((unbilledData ?? []).map((i: any) => i.id)));
+  }, [unbilledData]);
 
   const handleToggleItem = (id: string) => {
     const newSelected = new Set(selectedItemIds);
@@ -106,7 +94,7 @@ export default function GenerateInvoice() {
       setPaymentAmount(netAmount);
     } catch (err) {
       console.error("Failed to generate invoice", err);
-      alert("Error generating invoice");
+      alert((err as any)?.response?.data?.message || "Error generating invoice");
     } finally {
       setIsGenerating(false);
     }
@@ -123,10 +111,10 @@ export default function GenerateInvoice() {
       alert("Payment successful!");
       // Reset
       setGeneratedInvoice(null);
-      fetchUnbilledItems(selectedPatient.patientId);
+      refetchUnbilled();
     } catch (err) {
       console.error("Payment failed", err);
-      alert("Payment failed");
+      alert((err as any)?.response?.data?.message || "Payment failed");
     } finally {
       setIsProcessingPayment(false);
     }
@@ -189,6 +177,10 @@ export default function GenerateInvoice() {
               
               {itemsLoading ? (
                 <Box sx={{ p: 4, display: "flex", justifyContent: "center" }}><CircularProgress /></Box>
+              ) : itemsError ? (
+                <Box sx={{ p: 2 }}>
+                  <ErrorState message={(itemsErr as any)?.response?.data?.message} onRetry={() => refetchUnbilled()} />
+                </Box>
               ) : unbilledItems.length === 0 ? (
                 <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
                   No pending charges found for this patient.

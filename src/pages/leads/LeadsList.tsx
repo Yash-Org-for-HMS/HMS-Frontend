@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -38,25 +39,24 @@ import {
   AssignmentIndRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
 import FilterBar from "../../components/layout/FilterBar";
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../contexts/ToastContext";
 
 export default function LeadsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [leads, setLeads] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  
   // Pagination & Filtering
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [myLeadsOnly, setMyLeadsOnly] = useState(false);
   const { user } = useAuth();
+  const toast = useToast();
 
   // Dialogs & Menus
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -67,48 +67,41 @@ export default function LeadsList() {
   const [selectedLead, setSelectedLead] = useState<any | null>(null);
 
   // Conversion (lead → live hospital tenant)
-  const [plans, setPlans] = useState<any[]>([]);
   const [convertForm, setConvertForm] = useState({ planId: "", adminFirstName: "", adminLastName: "", adminEmail: "" });
   const [converting, setConverting] = useState(false);
   const [convertError, setConvertError] = useState<string | null>(null);
   const [credentials, setCredentials] = useState<{ email: string; temporaryPassword: string; hospitalName: string } | null>(null);
 
-  useEffect(() => {
-    axiosInstance
-      .get("/plans", { params: { limit: 100 } })
-      .then((res) => setPlans(res.data.data || []))
-      .catch(() => {});
-  }, []);
+  const { data: plans = [] } = useQuery<any[]>({
+    queryKey: ["plans", "convert-options"],
+    queryFn: async () => (await axiosInstance.get("/plans", { params: { limit: 100 } })).data.data || [],
+  });
 
-  const fetchLeads = async () => {
-    setLoading(true);
-    try {
+  const {
+    data: leadsData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["leads", page, search, statusFilter, myLeadsOnly, user?.id],
+    queryFn: async () => {
       const params: any = { page, limit: 10, search, status: statusFilter };
-      if (myLeadsOnly && user?.id) {
-        params.assignedTo = user.id;
-      }
-      const response = await axiosInstance.get("/leads", { params });
-      setLeads(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch leads", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchLeads();
-  }, [page, search, statusFilter, myLeadsOnly, user]);
+      if (myLeadsOnly && user?.id) params.assignedTo = user.id;
+      return (await axiosInstance.get("/leads", { params })).data; // { data, pagination }
+    },
+  });
+  const leads: any[] = leadsData?.data ?? [];
+  const totalPages: number = leadsData?.pagination?.totalPages ?? 1;
 
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
       await axiosInstance.delete(`/leads/${deleteId}`);
       setDeleteId(null);
-      fetchLeads();
+      refetch();
     } catch (error) {
-      console.error("Failed to delete lead", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to delete lead");
     }
   };
 
@@ -140,7 +133,7 @@ export default function LeadsList() {
       if (admin) {
         setCredentials({ email: admin.email, temporaryPassword: admin.temporaryPassword, hospitalName: convertedName });
       }
-      fetchLeads();
+      refetch();
     } catch (error: any) {
       setConvertError(error.response?.data?.message || "Failed to convert lead");
     } finally {
@@ -151,9 +144,9 @@ export default function LeadsList() {
   const handleStatusChange = async (leadId: string, newStatus: string) => {
     try {
       await axiosInstance.patch(`/leads/${leadId}/status`, { status: newStatus });
-      fetchLeads();
+      refetch();
     } catch (error) {
-      console.error("Failed to update status", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to update status");
     }
   };
 
@@ -162,9 +155,9 @@ export default function LeadsList() {
     try {
       await axiosInstance.patch(`/leads/${selectedLeadId}/assign`, { assignedToUserId: user.id });
       setAnchorEl(null);
-      fetchLeads();
+      refetch();
     } catch (error) {
-      console.error("Failed to assign lead", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to assign lead");
     }
   };
 
@@ -288,10 +281,16 @@ export default function LeadsList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
                     <CircularProgress sx={{ color: "#6366f1" }} />
+                  </TableCell>
+                </TableRow>
+              ) : isError ? (
+                <TableRow>
+                  <TableCell colSpan={5} sx={{ py: 4, border: 0 }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : leads.length === 0 ? (

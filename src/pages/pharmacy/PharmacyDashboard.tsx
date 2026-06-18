@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { 
   Box, Typography, Grid, Paper, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, alpha, useTheme,
@@ -9,43 +9,35 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
 import PharmacyPage from "./components/PharmacyPage";
 
 export default function PharmacyDashboard() {
   const theme = useTheme();
-  const [loading, setLoading] = useState(true);
-  
-  const [medicines, setMedicines] = useState<any[]>([]);
-  const [inventory, setInventory] = useState<any[]>([]);
-  const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
-  const [sales, setSales] = useState<any[]>([]);
-  const [lowStockAlerts, setLowStockAlerts] = useState<any[]>([]);
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        const [medRes, invRes, poRes, salesRes, alertsRes] = await Promise.all([
-          axiosInstance.get("/pharmacy/medicines"),
-          axiosInstance.get("/pharmacy/inventory"),
-          axiosInstance.get("/pharmacy/purchase-orders"),
-          axiosInstance.get("/pharmacy/orders"),
-          axiosInstance.get("/pharmacy/low-stock-alerts")
-        ]);
-        setMedicines(medRes.data.data || []);
-        setInventory(invRes.data.data || []);
-        setPurchaseOrders(poRes.data.data || []);
-        setSales(salesRes.data.data || []);
-        setLowStockAlerts(alertsRes.data.data || []);
-      } catch (err) {
-        console.error("Failed to fetch dashboard data", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchDashboardData();
-  }, []);
+  const { data, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["pharmacy-dashboard"],
+    queryFn: async () => {
+      const [medRes, invRes, poRes, salesRes, alertsRes] = await Promise.all([
+        axiosInstance.get("/pharmacy/medicines"),
+        axiosInstance.get("/pharmacy/inventory"),
+        axiosInstance.get("/pharmacy/purchase-orders"),
+        axiosInstance.get("/pharmacy/orders"),
+        axiosInstance.get("/pharmacy/low-stock-alerts"),
+      ]);
+      return {
+        medicines: medRes.data.data || [],
+        inventory: invRes.data.data || [],
+        purchaseOrders: poRes.data.data || [],
+        sales: salesRes.data.data || [],
+        lowStockAlerts: alertsRes.data.data || [],
+      };
+    },
+  });
+  const medicines: any[] = data?.medicines ?? [];
+  const inventory: any[] = data?.inventory ?? [];
+  const purchaseOrders: any[] = data?.purchaseOrders ?? [];
+  const sales: any[] = data?.sales ?? [];
+  const lowStockAlerts: any[] = data?.lowStockAlerts ?? [];
 
   const pendingPOs = purchaseOrders.filter(po => po.status === 'pending');
   const totalSalesValue = sales.reduce((sum, order) => sum + parseFloat(order.totalAmount || 0), 0);
@@ -74,6 +66,8 @@ export default function PharmacyDashboard() {
         <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
           <CircularProgress size={48} thickness={4} />
         </Box>
+      ) : isError ? (
+        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (
         <>
           <Grid container spacing={3} mb={4}>

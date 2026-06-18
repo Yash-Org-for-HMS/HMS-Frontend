@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -15,26 +15,13 @@ import {
 import { NotificationsRounded, EmailRounded, SmsRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
-import { useToast } from "../../contexts/ToastContext";
+import ErrorState from "../../components/ErrorState";
 
 export default function NotificationsLog() {
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const toast = useToast();
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  const fetchNotifications = async () => {
-    try {
-      const res = await axiosInstance.get("/reception/notifications?limit=100");
-      setNotifications(res.data.data);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load notifications");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: notifications = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["reception-notifications"],
+    queryFn: async () => (await axiosInstance.get("/reception/notifications?limit=100")).data.data,
+  });
 
   return (
     <Box sx={{ p: 3, maxWidth: 1200, mx: "auto" }}>
@@ -65,6 +52,12 @@ export default function NotificationsLog() {
                 <TableRow>
                   <TableCell colSpan={5} align="center" sx={{ py: 8, borderBottom: "none" }}>
                     <CircularProgress sx={{ color: "#8b5cf6" }} />
+                  </TableCell>
+                </TableRow>
+              ) : isError ? (
+                <TableRow>
+                  <TableCell colSpan={5} sx={{ py: 4, borderBottom: "none" }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : notifications.length === 0 ? (

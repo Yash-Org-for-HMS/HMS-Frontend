@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -30,6 +31,8 @@ import {
   DeleteRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import { useToast } from "../../contexts/ToastContext";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
@@ -38,39 +41,31 @@ import FilterBar from "../../components/layout/FilterBar";
 export default function PlansList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [plans, setPlans] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
   // Dialogs & Menus
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
 
-  const fetchPlans = async () => {
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get("/plans");
-      setPlans(response.data.data);
-    } catch (error) {
-      console.error("Failed to fetch plans", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const qc = useQueryClient();
+  const toast = useToast();
 
-  useEffect(() => {
-    fetchPlans();
-  }, []);
+  const { data: plans = [], isLoading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["plans"],
+    queryFn: async () => (await axiosInstance.get("/plans")).data.data,
+  });
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    try {
-      await axiosInstance.delete(`/plans/${deleteId}`);
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => axiosInstance.delete(`/plans/${id}`),
+    onSuccess: () => {
+      toast.success("Plan deleted");
       setDeleteId(null);
-      fetchPlans();
-    } catch (error) {
-      console.error("Failed to delete plan", error);
-    }
+      qc.invalidateQueries({ queryKey: ["plans"] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || "Failed to delete plan"),
+  });
+
+  const handleDelete = () => {
+    if (deleteId) deleteMutation.mutate(deleteId);
   };
 
   const openActionMenu = (e: React.MouseEvent<HTMLElement>, planId: string) => {
@@ -119,10 +114,16 @@ export default function PlansList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                     <CircularProgress sx={{ color: "#10b981" }} />
+                  </TableCell>
+                </TableRow>
+              ) : isError ? (
+                <TableRow>
+                  <TableCell colSpan={6} sx={{ py: 4, border: 0 }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : plans.length === 0 ? (

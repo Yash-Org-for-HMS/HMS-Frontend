@@ -5,8 +5,10 @@ import {
   TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha, InputAdornment
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded, LocalShippingRounded, SearchRounded } from "@mui/icons-material";
+import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
@@ -15,13 +17,8 @@ export default function SupplierDirectory() {
   const theme = useTheme();
   const toast = useToast();
   const confirm = useConfirm();
-  const [suppliers, setSuppliers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const pageCount = Math.ceil(total / ROWS_PER_PAGE);
 
   const [openDialog, setOpenDialog] = useState(false);
   const [editSupplier, setEditSupplier] = useState<any>(null);
@@ -49,25 +46,16 @@ export default function SupplierDirectory() {
     return () => clearTimeout(id);
   }, [searchTerm]);
 
-  const fetchSuppliers = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get("/pharmacy/suppliers", {
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["pharmacy-suppliers", page, debouncedSearch],
+    queryFn: async () =>
+      (await axiosInstance.get("/pharmacy/suppliers", {
         params: { page, limit: ROWS_PER_PAGE, search: debouncedSearch || undefined },
-      });
-      setSuppliers(res.data.data || []);
-      setTotal(res.data.pagination?.total ?? (res.data.data || []).length);
-    } catch (err) {
-      console.error("Failed to fetch suppliers", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSuppliers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, debouncedSearch]);
+      })).data,
+  });
+  const suppliers: any[] = data?.data ?? [];
+  const total: number = data?.pagination?.total ?? suppliers.length;
+  const pageCount = Math.ceil(total / ROWS_PER_PAGE);
 
   const handleOpenNew = () => {
     setEditSupplier(null);
@@ -130,9 +118,8 @@ export default function SupplierDirectory() {
         await axiosInstance.post("/pharmacy/suppliers", payload);
       }
       handleClose();
-      fetchSuppliers();
+      refetch();
     } catch (err: any) {
-      console.error("Failed to save supplier", err);
       setErrorMsg(err.response?.data?.message || "Failed to save the supplier.");
     } finally {
       setSaving(false);
@@ -153,10 +140,9 @@ export default function SupplierDirectory() {
       if (suppliers.length === 1 && page > 1) {
         setPage(page - 1);
       } else {
-        fetchSuppliers();
+        refetch();
       }
     } catch (err: any) {
-      console.error("Failed to delete supplier", err);
       toast.error(err.response?.data?.message || "Failed to delete the supplier.");
     }
   };
@@ -214,10 +200,12 @@ export default function SupplierDirectory() {
           />
         </Box>
 
-        {loading ? (
+        {isLoading ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
             <CircularProgress size={48} thickness={4} sx={{ color: '#4F46E5' }} />
           </Box>
+        ) : isError ? (
+          <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
         ) : suppliers.length === 0 ? (
           <Mascot
             pose={debouncedSearch ? "no-matches" : "nothing-here-yet"}

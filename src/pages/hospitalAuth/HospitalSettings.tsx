@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import ErrorState from "../../components/ErrorState";
 import {
   Box,
   Typography,
@@ -58,7 +60,6 @@ function a11yProps(index: number) {
 
 export default function HospitalSettings() {
   const [tabValue, setTabValue] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
   const [formData, setFormData] = useState({
@@ -87,40 +88,33 @@ export default function HospitalSettings() {
     billingStrategy: "PRE_PAID" as "PRE_PAID" | "POST_PAID",
   });
 
+  const { data: settingsData, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["hospital-settings"],
+    queryFn: async () => (await axiosInstance.get("/hospital/settings")).data.data,
+  });
+
+  // Seed the editable form once settings load.
   useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get("/hospital/settings");
-      const data = res.data.data;
-      const hospital = data.hospital || {};
-      const settings = data.settings || {};
-
-      setFormData({
-        appointmentDuration: settings.appointmentDuration ?? 15,
-        bufferTime: settings.bufferTime ?? 5,
-        languageCode: hospital.languageCode || "en",
-        timezone: hospital.timezone || "UTC",
-        dateFormat: hospital.dateFormat || "YYYY-MM-DD",
-        queueEnabled: settings.queueEnabled ?? true,
-        smsEnabled: settings.smsEnabled ?? true,
-        emailEnabled: settings.emailEnabled ?? true,
-        whatsappEnabled: settings.whatsappEnabled ?? false,
-        currencyCode: settings.currencyCode || "INR",
-        taxPercentage: settings.taxPercentage ?? 0,
-        invoicePrefix: settings.invoicePrefix || "INV-",
-        vitalsCollector: (settings.vitalsCollector as "RECEPTIONIST" | "NURSE") || "RECEPTIONIST",
-        billingStrategy: (settings.billingStrategy as "PRE_PAID" | "POST_PAID") || "PRE_PAID",
-      });
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load settings");
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (!settingsData) return;
+    const hospital = settingsData.hospital || {};
+    const settings = settingsData.settings || {};
+    setFormData({
+      appointmentDuration: settings.appointmentDuration ?? 15,
+      bufferTime: settings.bufferTime ?? 5,
+      languageCode: hospital.languageCode || "en",
+      timezone: hospital.timezone || "UTC",
+      dateFormat: hospital.dateFormat || "YYYY-MM-DD",
+      queueEnabled: settings.queueEnabled ?? true,
+      smsEnabled: settings.smsEnabled ?? true,
+      emailEnabled: settings.emailEnabled ?? true,
+      whatsappEnabled: settings.whatsappEnabled ?? false,
+      currencyCode: settings.currencyCode || "INR",
+      taxPercentage: settings.taxPercentage ?? 0,
+      invoicePrefix: settings.invoicePrefix || "INV-",
+      vitalsCollector: (settings.vitalsCollector as "RECEPTIONIST" | "NURSE") || "RECEPTIONIST",
+      billingStrategy: (settings.billingStrategy as "PRE_PAID" | "POST_PAID") || "PRE_PAID",
+    });
+  }, [settingsData]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -151,6 +145,16 @@ export default function HospitalSettings() {
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
         <CircularProgress sx={{ color: "#10b981" }} />
       </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorState
+        title="Couldn't load settings"
+        message={(error as any)?.response?.data?.message}
+        onRetry={() => refetch()}
+      />
     );
   }
 

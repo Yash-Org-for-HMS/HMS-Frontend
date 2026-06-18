@@ -1,18 +1,18 @@
-import { useState, useEffect } from "react";
-import { 
-  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, 
-  Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, 
+import { useState } from "react";
+import {
+  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
+  Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded, SettingsAccessibilityRounded } from "@mui/icons-material";
+import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
 
 export default function RadiologyCatalog() {
   const theme = useTheme();
-  const [scans, setScans] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  
+
   const [openDialog, setOpenDialog] = useState(false);
   const [editScan, setEditScan] = useState<any>(null);
   
@@ -23,21 +23,10 @@ export default function RadiologyCatalog() {
   
   const [errorMsg, setErrorMsg] = useState("");
 
-  useEffect(() => {
-    fetchScans();
-  }, []);
-
-  const fetchScans = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get("/lab/radiology-catalog");
-      setScans(res.data.data || []);
-    } catch (err) {
-      console.error("Failed to fetch radiology scans", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: scans = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["radiology-catalog"],
+    queryFn: async () => (await axiosInstance.get("/lab/radiology-catalog")).data.data || [],
+  });
 
   const handleOpenNew = () => {
     setEditScan(null);
@@ -84,9 +73,8 @@ export default function RadiologyCatalog() {
         });
       }
       handleClose();
-      fetchScans();
+      refetch();
     } catch (err: any) {
-      console.error("Failed to save radiology scan", err);
       setErrorMsg(err.response?.data?.message || "Failed to save the radiology scan.");
     } finally {
       setSaving(false);
@@ -97,9 +85,8 @@ export default function RadiologyCatalog() {
     if (!window.confirm("Are you sure you want to delete this radiology scan?")) return;
     try {
       await axiosInstance.delete(`/lab/radiology-catalog/${id}`);
-      fetchScans();
+      refetch();
     } catch (err: any) {
-      console.error("Failed to delete radiology scan", err);
       alert(err.response?.data?.message || "Failed to delete the radiology scan.");
     }
   };
@@ -167,6 +154,8 @@ export default function RadiologyCatalog() {
           <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
             <CircularProgress size={48} thickness={4} sx={{ color: '#0284C7' }} />
           </Box>
+        ) : isError ? (
+          <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
         ) : scans.length === 0 ? (
           <Mascot pose="nothing-here-yet" title="No radiology scans found" subtitle="Get started by creating your first scan." />
         ) : (

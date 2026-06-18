@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -26,51 +27,35 @@ import {
 import { InfoRounded, SearchRounded, RefreshRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
-import { useToast } from "../../../contexts/ToastContext";
+import ErrorState from "../../../components/ErrorState";
+
+const EMPTY_FILTERS = { moduleName: "", actionType: "", startDate: "", endDate: "" };
 
 export default function AuditLogs() {
-  const [logs, setLogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const toast = useToast();
-  const [filters, setFilters] = useState({
-    moduleName: "",
-    actionType: "",
-    startDate: "",
-    endDate: "",
-  });
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  // Filters are applied only on explicit "Search" (not as-you-type), so the
+  // query keys off a separate "applied" snapshot.
+  const [appliedFilters, setAppliedFilters] = useState(EMPTY_FILTERS);
 
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
-  useEffect(() => {
-    // Generate samples if needed, then fetch
-    const init = async () => {
-      try {
-        await axiosInstance.post("/hospital/audit-logs/generate-samples");
-        fetchLogs();
-      } catch (err) {
-        fetchLogs();
-      }
-    };
-    init();
-  }, []);
-
-  const fetchLogs = async () => {
-    setLoading(true);
-    try {
+  const { data: logs = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["hospital-audit-logs", appliedFilters],
+    queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters.moduleName) params.append("moduleName", filters.moduleName);
-      if (filters.actionType) params.append("actionType", filters.actionType);
-      if (filters.startDate) params.append("startDate", filters.startDate);
-      if (filters.endDate) params.append("endDate", filters.endDate);
+      if (appliedFilters.moduleName) params.append("moduleName", appliedFilters.moduleName);
+      if (appliedFilters.actionType) params.append("actionType", appliedFilters.actionType);
+      if (appliedFilters.startDate) params.append("startDate", appliedFilters.startDate);
+      if (appliedFilters.endDate) params.append("endDate", appliedFilters.endDate);
+      return (await axiosInstance.get(`/hospital/audit-logs?${params.toString()}`)).data.data;
+    },
+  });
 
-      const res = await axiosInstance.get(`/hospital/audit-logs?${params.toString()}`);
-      setLogs(res.data.data);
-    } catch (err: any) {
-      toast.error("Failed to fetch audit logs");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Seed sample logs once (dev convenience), then refresh.
+  useEffect(() => {
+    axiosInstance.post("/hospital/audit-logs/generate-samples").finally(() => refetch());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
@@ -78,7 +63,7 @@ export default function AuditLogs() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchLogs();
+    setAppliedFilters(filters);
   };
 
   const getActionColor = (action: string) => {
@@ -185,12 +170,14 @@ export default function AuditLogs() {
       </Paper>
 <Paper sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, overflow: "hidden" }}>
         <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
-          <Button startIcon={<RefreshRounded />} onClick={fetchLogs} sx={{ color: "text.secondary" }}>Refresh</Button>
+          <Button startIcon={<RefreshRounded />} onClick={() => refetch()} sx={{ color: "text.secondary" }}>Refresh</Button>
         </Box>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
             <CircularProgress sx={{ color: "#6366f1" }} />
           </Box>
+        ) : isError ? (
+          <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
         ) : (
           <TableContainer>
             <Table>

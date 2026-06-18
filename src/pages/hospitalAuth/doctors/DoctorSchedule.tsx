@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import ErrorState from "../../../components/ErrorState";
 import {
   Box,
   Typography,
@@ -22,26 +24,22 @@ export default function DoctorSchedule() {
   const { id } = useParams();
 
   const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
   const toast = useToast();
   const [doctorName, setDoctorName] = useState("");
   const [schedules, setSchedules] = useState<any[]>([]);
 
+  const { data: doctorData, isLoading: initialLoad, isError, error, refetch } = useQuery({
+    queryKey: ["doctor-schedule", id],
+    queryFn: async () => (await axiosInstance.get(`/hospital/doctors/${id}`)).data.data,
+    enabled: !!id,
+  });
+
+  // Seed the editable schedule rows once the doctor loads.
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const docRes = await axiosInstance.get(`/hospital/doctors/${id}`);
-        const d = docRes.data.data;
-        setDoctorName(`Dr. ${d.user?.firstName} ${d.user?.lastName}`);
-        setSchedules(d.schedules || []);
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || "Failed to load schedule");
-      } finally {
-        setInitialLoad(false);
-      }
-    };
-    loadData();
-  }, [id]);
+    if (!doctorData) return;
+    setDoctorName(`Dr. ${doctorData.user?.firstName} ${doctorData.user?.lastName}`);
+    setSchedules(doctorData.schedules || []);
+  }, [doctorData]);
 
   const handleAddSchedule = () => {
     setSchedules([...schedules, { dayOfWeek: 1, startTime: "09:00", endTime: "17:00", slotDurationMinutes: 15 }]);
@@ -77,6 +75,10 @@ export default function DoctorSchedule() {
         <CircularProgress sx={{ color: "#6366f1" }} />
       </Box>
     );
+  }
+
+  if (isError) {
+    return <ErrorState title="Couldn't load schedule" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
   }
 
   const textFieldProps = {

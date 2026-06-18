@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Grid,
@@ -27,8 +27,8 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
-import { useToast } from "../../contexts/ToastContext";
 
 interface AppointmentEntry {
   appointmentId: string;
@@ -106,24 +106,23 @@ function StatCard({ title, value, icon, loading, prefix }: any) {
 
 export default function ReceptionDashboard() {
   const { hospital } = useHospitalAuth();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const toast = useToast();
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      const response = await axiosInstance.get("/reception/dashboard/stats");
-      setStats(response.data.data);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load dashboard statistics");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
+  const { data: stats, isLoading: loading, isError, error, refetch } = useQuery<DashboardStats>({
+    queryKey: ["reception-dashboard-stats"],
+    queryFn: async () => (await axiosInstance.get("/reception/dashboard/stats")).data.data,
+  });
+
+  if (isError) {
+    return (
+      <Box sx={{ pb: 6 }}>
+        <ErrorState
+          title="Couldn't load the dashboard"
+          message={(error as any)?.response?.data?.message}
+          onRetry={() => refetch()}
+        />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ pb: 6 }}>

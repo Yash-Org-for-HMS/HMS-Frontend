@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -37,6 +38,8 @@ import {
   VisibilityRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import { useToast } from "../../contexts/ToastContext";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
@@ -45,11 +48,9 @@ import FilterBar from "../../components/layout/FilterBar";
 export default function HospitalsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [hospitals, setHospitals] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const toast = useToast();
 
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState(0); // 0 = Active, 1 = Deleted
 
@@ -60,33 +61,19 @@ export default function HospitalsList() {
   });
   const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchHospitals = async () => {
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get("/hospitals", {
-        params: {
-          page,
-          limit: 10,
-          search,
-          ...(activeTab === 1 ? { showDeleted: "true" } : {}),
-        },
-      });
-      setHospitals(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch hospitals", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["hospitals", page, search, activeTab],
+    queryFn: async () =>
+      (await axiosInstance.get("/hospitals", {
+        params: { page, limit: 10, search, ...(activeTab === 1 ? { showDeleted: "true" } : {}) },
+      })).data,
+  });
+  const hospitals: any[] = data?.data ?? [];
+  const totalPages: number = data?.pagination?.totalPages ?? 1;
 
   useEffect(() => {
     setPage(1);
   }, [activeTab]);
-
-  useEffect(() => {
-    fetchHospitals();
-  }, [page, search, activeTab]);
 
   const handleDelete = async () => {
     if (!deleteDialog.hospital) return;
@@ -94,9 +81,9 @@ export default function HospitalsList() {
     try {
       await axiosInstance.delete(`/hospitals/${deleteDialog.hospital.hospitalId}`);
       setDeleteDialog({ open: false, hospital: null });
-      fetchHospitals();
+      refetch();
     } catch (error) {
-      console.error("Failed to delete hospital", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to delete hospital");
     } finally {
       setActionLoading(false);
     }
@@ -106,9 +93,9 @@ export default function HospitalsList() {
     setActionLoading(true);
     try {
       await axiosInstance.put(`/hospitals/${hospitalId}/restore`);
-      fetchHospitals();
+      refetch();
     } catch (error) {
-      console.error("Failed to restore hospital", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to restore hospital");
     } finally {
       setActionLoading(false);
     }
@@ -191,6 +178,12 @@ export default function HospitalsList() {
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                     <CircularProgress sx={{ color: "#3b82f6" }} />
+                  </TableCell>
+                </TableRow>
+              ) : isError ? (
+                <TableRow>
+                  <TableCell colSpan={6} sx={{ py: 4, border: 0 }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : hospitals.length === 0 ? (

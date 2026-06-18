@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
   Box,
@@ -28,6 +29,7 @@ import {
 import { SearchRounded, VisibilityRounded, CloseRounded } from "@mui/icons-material";
 import Grid from "@mui/material/Grid";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
@@ -36,38 +38,24 @@ import { useAuth } from "../../contexts/AuthContext";
 
 export default function AuditLogsList() {
   const { t } = useTranslation();
-  const [logs, setLogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
 
   const { user } = useAuth();
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const [showMyActions, setShowMyActions] = useState(false);
 
-  const fetchLogs = async () => {
-    setLoading(true);
-    try {
+  const { data, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["audit-logs", page, search, showMyActions, user?.id],
+    queryFn: async () => {
       const params: any = { page, limit: 15, search };
-      if (showMyActions && user?.id) {
-        params.userId = user.id;
-      }
-      
-      const response = await axiosInstance.get("/audit-logs", { params });
-      setLogs(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch audit logs", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchLogs();
-  }, [page, search, showMyActions, user]);
+      if (showMyActions && user?.id) params.userId = user.id;
+      return (await axiosInstance.get("/audit-logs", { params })).data;
+    },
+  });
+  const logs: any[] = data?.data ?? [];
+  const totalPages: number = data?.pagination?.totalPages ?? 1;
 
   const getActionColor = (action: string) => {
     switch(action) {
@@ -145,6 +133,12 @@ export default function AuditLogsList() {
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
                     <CircularProgress sx={{ color: "#3b82f6" }} />
+                  </TableCell>
+                </TableRow>
+              ) : isError ? (
+                <TableRow>
+                  <TableCell colSpan={7} sx={{ py: 4, border: 0 }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : logs.length === 0 ? (

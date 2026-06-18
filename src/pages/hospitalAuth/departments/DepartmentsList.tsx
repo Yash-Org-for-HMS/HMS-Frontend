@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -18,6 +18,8 @@ import { AddRounded, EditRounded, BlockRounded, CheckCircleRounded } from "@mui/
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
+import ErrorState from "../../../components/ErrorState";
+import { useToast } from "../../../contexts/ToastContext";
 
 interface Department {
   departmentId: string;
@@ -29,21 +31,13 @@ interface Department {
 }
 
 export default function DepartmentsList() {
-  const [departments, setDepartments] = useState<Department[]>([]);
   const navigate = useNavigate();
+  const toast = useToast();
 
-  const fetchDepartments = async () => {
-    try {
-      const response = await axiosInstance.get("/hospital/departments");
-      setDepartments(response.data.data);
-    } catch (error) {
-      console.error("Error fetching departments", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchDepartments();
-  }, []);
+  const { data: departments = [], isError, error, refetch } = useQuery<Department[]>({
+    queryKey: ["hospital-departments"],
+    queryFn: async () => (await axiosInstance.get("/hospital/departments")).data.data,
+  });
 
   const handleToggleStatus = async (department: Department) => {
     try {
@@ -51,9 +45,9 @@ export default function DepartmentsList() {
       await axiosInstance.put(`/hospital/departments/${department.departmentId}`, {
         status: newStatus,
       });
-      fetchDepartments();
+      refetch();
     } catch (error) {
-      console.error("Error toggling department status", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to update department status");
     }
   };
 
@@ -97,7 +91,13 @@ export default function DepartmentsList() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {departments.length === 0 ? (
+            {isError ? (
+              <TableRow>
+                <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
+                  <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+                </TableCell>
+              </TableRow>
+            ) : departments.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
                   <Mascot pose="nothing-here-yet" title="No departments yet" subtitle="Create one to get started." size={120} />

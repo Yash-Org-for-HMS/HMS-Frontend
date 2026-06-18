@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, CircularProgress, Alert, alpha, useTheme, Grid
+  Box, Typography, Paper, CircularProgress, alpha, useTheme, Grid
 } from "@mui/material";
 import {
   AccountBalanceRounded, TrendingUpRounded, ReceiptRounded, WarningRounded
@@ -10,36 +10,17 @@ import {
   PieChart, Pie, Cell, Legend
 } from "recharts";
 import { axiosInstance } from "../../api/axios";
-import { useToast } from "../../contexts/ToastContext";
+import ErrorState from "../../components/ErrorState";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"];
 const PAYMENT_COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b"];
 
 export default function FinancialDashboard() {
   const theme = useTheme();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const toast = useToast();
-  const [analytics, setAnalytics] = useState<any>(null);
-
-  useEffect(() => {
-    fetchAnalytics();
-  }, []);
-
-  const fetchAnalytics = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get("/billing/analytics?days=30");
-      setAnalytics(res.data.data);
-    } catch (err: any) {
-      console.error(err);
-      const errMsg = err.response?.data?.message || "Failed to load financial analytics";
-      setError(errMsg);
-      toast.error(errMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: analytics, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["financial-analytics", 30],
+    queryFn: async () => (await axiosInstance.get("/billing/analytics?days=30")).data.data,
+  });
 
   if (loading) {
     return (
@@ -49,12 +30,10 @@ export default function FinancialDashboard() {
     );
   }
 
-  if (error || !analytics) {
+  if (isError || !analytics) {
     return (
       <Box sx={{ p: 4, maxWidth: 1400, mx: "auto" }}>
-        <Alert severity="error" variant="filled" sx={{ borderRadius: 3 }}>
-          {error || "No data available"}
-        </Alert>
+        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       </Box>
     );
   }

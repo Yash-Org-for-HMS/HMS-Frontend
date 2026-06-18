@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -19,26 +19,15 @@ import { AddRounded, EditRounded, EventAvailableRounded, CalendarTodayRounded } 
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
+import ErrorState from "../../../components/ErrorState";
 
 export default function DoctorsList() {
-  const [doctors, setDoctors] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchDoctors();
-  }, []);
-
-  const fetchDoctors = async () => {
-    try {
-      const response = await axiosInstance.get("/hospital/doctors");
-      setDoctors(response.data.data);
-    } catch (error) {
-      console.error("Error fetching doctors", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: doctors = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["hospital-doctors"],
+    queryFn: async () => (await axiosInstance.get("/hospital/doctors")).data.data,
+  });
 
   return (
     <Box>
@@ -57,6 +46,8 @@ export default function DoctorsList() {
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <CircularProgress sx={{ color: "#6366f1" }} />
         </Box>
+      ) : isError ? (
+        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (
         <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
           <Table>

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Tooltip,
@@ -14,6 +15,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
 import BillingModal from "./BillingModal";
 import { useToast } from "../../contexts/ToastContext";
 import dayjs, { Dayjs } from "dayjs";
@@ -106,8 +108,6 @@ function MiniCalendar({ selectedDate, onDateChange, highlightedDays }: { selecte
 
 export default function AppointmentsList() {
   const navigate = useNavigate();
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const toast = useToast();
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -122,21 +122,10 @@ export default function AppointmentsList() {
   const [processing, setProcessing] = useState(false);
   const [billingDialog, setBillingDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
 
-  const fetchAppointments = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await axiosInstance.get(`/reception/appointments?t=${Date.now()}`);
-      setAppointments(res.data.data);
-    } catch (err: any) {
-      toast.error("Failed to load appointments");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAppointments();
-  }, [fetchAppointments]);
+  const { data: appointments = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["reception-appointments"],
+    queryFn: async () => (await axiosInstance.get("/reception/appointments")).data.data,
+  });
 
   const handleAction = async () => {
     if (!actionDialog.appt || !actionDialog.type) return;
@@ -148,7 +137,7 @@ export default function AppointmentsList() {
         await axiosInstance.put(`/reception/appointments/${actionDialog.appt.appointmentId}/checkin`);
       }
       setActionDialog({ open: false, type: null, appt: null });
-      fetchAppointments();
+      refetch();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to process action");
     } finally {
@@ -335,6 +324,8 @@ export default function AppointmentsList() {
             <TableBody>
               {loading ? (
                 <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}><CircularProgress size={30} sx={{ color: "#06b6d4" }}/></TableCell></TableRow>
+              ) : isError ? (
+                <TableRow><TableCell colSpan={5} sx={{ py: 4, border: 0 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : filteredAppointments.length === 0 ? (
                 <TableRow><TableCell colSpan={5} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No appointments" subtitle="No appointments found." /></TableCell></TableRow>
               ) : (

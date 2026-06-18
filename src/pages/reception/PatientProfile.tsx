@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -30,6 +31,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import PatientDocumentsSection from "./PatientDocumentsSection";
 import { useToast } from "../../contexts/ToastContext";
 
@@ -103,11 +105,8 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
 export default function PatientProfile() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [patient, setPatient] = useState<Patient | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const toast = useToast();
-  
+
   let userRole = "";
   try {
     const hospitalUserStr = sessionStorage.getItem("hospitalUser");
@@ -115,21 +114,11 @@ export default function PatientProfile() {
   } catch (e) {}
   const canEdit = userRole.includes("reception") || userRole.includes("admin");
 
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        const res = await axiosInstance.get(`/reception/patients/${id}`);
-        setPatient(res.data.data);
-      } catch (err: any) {
-        const errMsg = err.response?.data?.message || "Patient not found";
-        toast.error(errMsg);
-        setError(errMsg);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetch();
-  }, [id]);
+  const { data: patient, isLoading: loading, isError, error, refetch } = useQuery<Patient>({
+    queryKey: ["patient", id],
+    queryFn: async () => (await axiosInstance.get(`/reception/patients/${id}`)).data.data,
+    enabled: !!id,
+  });
 
   const [notifProcessing, setNotifProcessing] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -174,15 +163,19 @@ export default function PatientProfile() {
     );
   }
 
-  if (error || !patient) {
+  if (isError || !patient) {
     return (
       <Box sx={{ maxWidth: 600, mx: "auto", mt: 4 }}>
-        <Alert severity="error" sx={{ bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5" }}>
-          {error || "Patient not found"}
-        </Alert>
-        <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ mt: 2, color: "#06b6d4" }}>
-          Back
-        </Button>
+        <ErrorState
+          title="Couldn't load patient"
+          message={(error as any)?.response?.data?.message || "Patient not found"}
+          onRetry={() => refetch()}
+        />
+        <Box sx={{ textAlign: "center" }}>
+          <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ mt: 2, color: "#06b6d4" }}>
+            Back
+          </Button>
+        </Box>
       </Box>
     );
   }

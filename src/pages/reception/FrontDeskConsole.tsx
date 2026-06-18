@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Grid, Paper, TextField, InputAdornment,
   CircularProgress, Button, Avatar, Dialog, DialogContent, IconButton, Alert, Chip
@@ -29,7 +30,6 @@ interface Patient {
 export default function FrontDeskConsole() {
   const [search, setSearch] = useState("");
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(false);
   const toast = useToast();
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
@@ -38,19 +38,11 @@ export default function FrontDeskConsole() {
 
   const searchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    const fetchRecent = async () => {
-      try {
-        const res = await axiosInstance.get("/reception/patients", {
-          params: { search: "", page: 1, limit: 5 },
-        });
-        setRecentPatients(res.data.data);
-      } catch (err) {
-        console.error("Failed to fetch recent patients", err);
-      }
-    };
-    fetchRecent();
-  }, []);
+  const { data: recentPatients = [] } = useQuery<Patient[]>({
+    queryKey: ["frontdesk-recent-patients"],
+    queryFn: async () =>
+      (await axiosInstance.get("/reception/patients", { params: { search: "", page: 1, limit: 5 } })).data.data,
+  });
 
   const fetchPatients = useCallback(async (q: string) => {
     if (!q) {

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import ErrorState from "../../../components/ErrorState";
 import {
   Box,
   Typography,
@@ -16,7 +17,6 @@ import {
 } from "@mui/material";
 import { CheckCircleRounded, CancelRounded, UpgradeRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
-import { useToast } from "../../../contexts/ToastContext";
 
 interface ModuleAccessData {
   enabledModules: string[];
@@ -26,28 +26,26 @@ interface ModuleAccessData {
 }
 
 export default function ModuleAccess() {
-  const [data, setData] = useState<ModuleAccessData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const toast = useToast();
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axiosInstance.get("/hospital/module-access");
-        setData(response.data.data);
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || "Failed to load module access data");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const { data, isLoading: loading, isError, error, refetch } = useQuery<ModuleAccessData>({
+    queryKey: ["module-access"],
+    queryFn: async () => (await axiosInstance.get("/hospital/module-access")).data.data,
+  });
 
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
         <CircularProgress sx={{ color: "#6366f1" }} />
       </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorState
+        title="Couldn't load module access"
+        message={(error as any)?.response?.data?.message}
+        onRetry={() => refetch()}
+      />
     );
   }
 

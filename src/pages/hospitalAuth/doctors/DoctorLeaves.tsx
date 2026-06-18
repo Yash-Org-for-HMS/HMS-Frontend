@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -17,33 +17,19 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
-import { useToast } from "../../../contexts/ToastContext";
+import ErrorState from "../../../components/ErrorState";
 
 export default function DoctorLeaves() {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
-  const toast = useToast();
-  const [doctorName, setDoctorName] = useState("");
-  const [leaves, setLeaves] = useState<any[]>([]);
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const docRes = await axiosInstance.get(`/hospital/doctors/${id}`);
-        const d = docRes.data.data;
-        setDoctorName(`Dr. ${d.user?.firstName} ${d.user?.lastName}`);
-        setLeaves(d.leaves || []);
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || "Failed to load leaves");
-      } finally {
-        setInitialLoad(false);
-      }
-    };
-    loadData();
-  }, [id]);
+  const { data: doctorData, isLoading: initialLoad, isError, error, refetch } = useQuery({
+    queryKey: ["doctor-leaves", id],
+    queryFn: async () => (await axiosInstance.get(`/hospital/doctors/${id}`)).data.data,
+    enabled: !!id,
+  });
+  const doctorName = doctorData ? `Dr. ${doctorData.user?.firstName} ${doctorData.user?.lastName}` : "";
+  const leaves: any[] = doctorData?.leaves ?? [];
 
   if (initialLoad) {
     return (
@@ -51,6 +37,10 @@ export default function DoctorLeaves() {
         <CircularProgress sx={{ color: "#6366f1" }} />
       </Box>
     );
+  }
+
+  if (isError) {
+    return <ErrorState title="Couldn't load leaves" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
   }
 
   return (

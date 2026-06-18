@@ -68,7 +68,7 @@ export default function TrialForm() {
         setLeads(response.data.data.filter((l: any) => l.leadStatus !== "converted"));
       } catch (err) {
         console.error(err);
-        toast.error("Failed to load leads");
+        toast.error((err as any)?.response?.data?.message || "Failed to load leads");
       } finally {
         setInitialLoading(false);
       }

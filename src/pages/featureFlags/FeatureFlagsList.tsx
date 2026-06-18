@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -34,6 +35,8 @@ import {
   SearchRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import { useToast } from "../../contexts/ToastContext";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
@@ -42,12 +45,10 @@ import FilterBar from "../../components/layout/FilterBar";
 export default function FeatureFlagsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [flags, setFlags] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const toast = useToast();
 
   // Pagination & Filtering
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
 
   // Dialogs & Menus
@@ -55,33 +56,22 @@ export default function FeatureFlagsList() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
 
-  const fetchFlags = async () => {
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get("/feature-flags", {
-        params: { page, limit: 10, search }
-      });
-      setFlags(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch flags", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchFlags();
-  }, [page, search]);
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["feature-flags", page, search],
+    queryFn: async () =>
+      (await axiosInstance.get("/feature-flags", { params: { page, limit: 10, search } })).data,
+  });
+  const flags: any[] = data?.data ?? [];
+  const totalPages: number = data?.pagination?.totalPages ?? 1;
 
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
       await axiosInstance.delete(`/feature-flags/${deleteId}`);
       setDeleteId(null);
-      fetchFlags();
+      refetch();
     } catch (error) {
-      console.error("Failed to delete feature flag", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to delete feature flag");
     }
   };
 
@@ -149,10 +139,16 @@ export default function FeatureFlagsList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                     <CircularProgress sx={{ color: "#f59e0b" }} />
+                  </TableCell>
+                </TableRow>
+              ) : isError ? (
+                <TableRow>
+                  <TableCell colSpan={6} sx={{ py: 4, border: 0 }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : flags.length === 0 ? (

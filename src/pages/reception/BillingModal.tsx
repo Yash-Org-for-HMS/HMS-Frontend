@@ -8,6 +8,7 @@ import {
   ReceiptRounded, CheckCircleRounded, PrintRounded, PaymentRounded, CloseRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
 interface BillingModalProps {
@@ -20,6 +21,7 @@ interface BillingModalProps {
 
 export default function BillingModal({ open, onClose, appointmentId, patientName, appointmentDate }: BillingModalProps) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const toast = useToast();
   const [invoice, setInvoice] = useState<any>(null);
   
@@ -56,6 +58,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const fetchBillingData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       // 1. Fetch lookups
       const lookupsRes = await axiosInstance.get("/reception/billing/lookups");
       if (lookupsRes.data.success) {
@@ -88,8 +91,9 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       }
 
     } catch (err: any) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Failed to load billing data");
+      const msg = err.response?.data?.message || "Failed to load billing data";
+      setLoadError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -225,6 +229,8 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
           <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
             <CircularProgress sx={{ color: "#06b6d4" }} />
           </Box>
+        ) : loadError ? (
+          <ErrorState message={loadError} onRetry={fetchBillingData} />
         ) : invoice ? (
           <Grid container spacing={4}>
             {/* LEFT: Receipt Preview */}

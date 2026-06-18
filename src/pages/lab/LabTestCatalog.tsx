@@ -1,19 +1,19 @@
-import { useState, useEffect } from "react";
-import { 
+import { useState } from "react";
+import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, 
   Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, 
   TextField, IconButton, Tooltip, Switch, FormControlLabel, Chip, useTheme,
   Fade, Zoom, alpha
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded, ScienceRounded } from "@mui/icons-material";
+import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
 
 export default function LabTestCatalog() {
   const theme = useTheme();
-  const [tests, setTests] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  
+
   const [openDialog, setOpenDialog] = useState(false);
   const [editTest, setEditTest] = useState<any>(null);
   
@@ -27,21 +27,10 @@ export default function LabTestCatalog() {
   
   const [errorMsg, setErrorMsg] = useState("");
 
-  useEffect(() => {
-    fetchTests();
-  }, []);
-
-  const fetchTests = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get("/lab/tests");
-      setTests(res.data.data || []);
-    } catch (err) {
-      console.error("Failed to fetch lab tests", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: tests = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["lab-tests"],
+    queryFn: async () => (await axiosInstance.get("/lab/tests")).data.data || [],
+  });
 
   const handleOpenNew = () => {
     setEditTest(null);
@@ -100,7 +89,7 @@ export default function LabTestCatalog() {
         });
       }
       handleClose();
-      fetchTests();
+      refetch();
     } catch (err: any) {
       console.error("Failed to save lab test", err);
       setErrorMsg(err.response?.data?.message || "Failed to save the lab test.");
@@ -113,9 +102,8 @@ export default function LabTestCatalog() {
     if (!window.confirm("Are you sure you want to delete this lab test?")) return;
     try {
       await axiosInstance.delete(`/lab/tests/${id}`);
-      fetchTests();
+      refetch();
     } catch (err: any) {
-      console.error("Failed to delete lab test", err);
       alert(err.response?.data?.message || "Failed to delete the lab test.");
     }
   };
@@ -183,6 +171,8 @@ export default function LabTestCatalog() {
           <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
             <CircularProgress size={48} thickness={4} sx={{ color: '#2563EB' }} />
           </Box>
+        ) : isError ? (
+          <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
         ) : tests.length === 0 ? (
           <Mascot pose="nothing-here-yet" title="No lab tests found" subtitle="Get started by creating your first lab test." />
         ) : (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -30,28 +30,18 @@ import {
   WarningRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 
 export default function HospitalOverview() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
   
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchOverview = async () => {
-      try {
-        const response = await axiosInstance.get(`/hospitals/${id}/overview`);
-        setData(response.data.data);
-      } catch (error) {
-        console.error("Failed to fetch overview", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchOverview();
-  }, [id]);
+  const { data, isLoading: loading, isError, error, refetch } = useQuery<any>({
+    queryKey: ["hospital-overview", id],
+    queryFn: async () => (await axiosInstance.get(`/hospitals/${id}/overview`)).data.data,
+    enabled: !!id,
+  });
 
   if (loading) {
     return (
@@ -61,10 +51,14 @@ export default function HospitalOverview() {
     );
   }
 
-  if (!data) {
+  if (isError || !data) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Typography color="error">Hospital not found</Typography>
+        <ErrorState
+          title="Couldn't load hospital"
+          message={(error as any)?.response?.data?.message || "Hospital not found"}
+          onRetry={() => refetch()}
+        />
       </Container>
     );
   }

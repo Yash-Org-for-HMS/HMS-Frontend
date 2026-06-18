@@ -63,7 +63,7 @@ export default function FormBuilder() {
       });
       setFields(t.fields || []);
     } catch (err: any) {
-      toast.error("Failed to load template");
+      toast.error(err?.response?.data?.message || "Failed to load template");
     } finally {
       setInitialLoad(false);
     }

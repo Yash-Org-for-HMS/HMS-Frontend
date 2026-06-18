@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -19,34 +19,23 @@ import { AddRounded, EditRounded, DeleteRounded, DynamicFormRounded } from "@mui
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
+import ErrorState from "../../../components/ErrorState";
 
 export default function FormTemplatesList() {
-  const [templates, setTemplates] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchTemplates();
-  }, []);
-
-  const fetchTemplates = async () => {
-    try {
-      const response = await axiosInstance.get("/hospital/form-builder");
-      setTemplates(response.data.data);
-    } catch (error) {
-      console.error("Error fetching templates", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: templates = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["hospital-form-templates"],
+    queryFn: async () => (await axiosInstance.get("/hospital/form-builder")).data.data,
+  });
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this form template?")) return;
     try {
       await axiosInstance.delete(`/hospital/form-builder/${id}`);
-      fetchTemplates();
+      refetch();
     } catch (error) {
-      alert("Failed to delete template");
+      alert((error as any)?.response?.data?.message || "Failed to delete template");
     }
   };
 
@@ -81,6 +70,8 @@ export default function FormTemplatesList() {
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <CircularProgress sx={{ color: "#6366f1" }} />
         </Box>
+      ) : isError ? (
+        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (
         <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
           <Table>

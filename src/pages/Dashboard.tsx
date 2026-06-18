@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
   Box,
@@ -45,6 +46,7 @@ import {
 } from "recharts";
 import { axiosInstance } from "../api/axios";
 import { useAuth } from "../contexts/AuthContext";
+import ErrorState from "../components/ErrorState";
 
 interface DashboardStats {
   totalHospitals: number;
@@ -74,25 +76,23 @@ const PLAN_COLORS = ["#8B5CF6", "#3B82F6", "#14B8A6", "#F59E0B", "#EF4444"];
 export default function Dashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [tabIndex, setTabIndex] = useState(0);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await axiosInstance.get("/dashboard/stats");
-        setStats(response.data.data);
-      } catch (error) {
-        console.error("Failed to fetch dashboard stats", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
+  const {
+    data: stats,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery<DashboardStats>({
+    queryKey: ["dashboard-stats"],
+    queryFn: async () => {
+      const response = await axiosInstance.get("/dashboard/stats");
+      return response.data.data;
+    },
+  });
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "80vh" }}>
         <CircularProgress sx={{ color: "#4F46E5" }} />
@@ -100,7 +100,19 @@ export default function Dashboard() {
     );
   }
 
-  if (!stats) return null;
+  // Previously a failed fetch left `stats` null and the page rendered nothing
+  // (blank screen). Now we surface the real error with a retry.
+  if (isError || !stats) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <ErrorState
+          title="Couldn't load the dashboard"
+          message={(error as any)?.response?.data?.message || "Please check your connection and try again."}
+          onRetry={() => refetch()}
+        />
+      </Container>
+    );
+  }
 
   const StatCard = ({ title, value, icon, colorHex }: any) => (
     <Paper

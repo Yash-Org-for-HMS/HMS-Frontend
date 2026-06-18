@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -31,6 +32,8 @@ import {
   TimerOffRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import { useToast } from "../../contexts/ToastContext";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
@@ -39,12 +42,10 @@ import FilterBar from "../../components/layout/FilterBar";
 export default function TrialsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [trials, setTrials] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  
+  const toast = useToast();
+
   // Pagination & Filtering
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
@@ -52,24 +53,13 @@ export default function TrialsList() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTrialId, setSelectedTrialId] = useState<string | null>(null);
 
-  const fetchTrials = async () => {
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get("/trials", {
-        params: { page, limit: 10, search, status: statusFilter }
-      });
-      setTrials(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch trials", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTrials();
-  }, [page, search, statusFilter]);
+  const { data: trialsData, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["trials", page, search, statusFilter],
+    queryFn: async () =>
+      (await axiosInstance.get("/trials", { params: { page, limit: 10, search, status: statusFilter } })).data,
+  });
+  const trials: any[] = trialsData?.data ?? [];
+  const totalPages: number = trialsData?.pagination?.totalPages ?? 1;
 
   const openActionMenu = (e: React.MouseEvent<HTMLElement>, trialId: string) => {
     e.stopPropagation();
@@ -82,9 +72,9 @@ export default function TrialsList() {
     try {
       await axiosInstance.patch(`/trials/${selectedTrialId}/expire`);
       setAnchorEl(null);
-      fetchTrials();
+      refetch();
     } catch (error) {
-      console.error("Failed to expire trial", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to expire trial");
     }
   };
 
@@ -96,9 +86,9 @@ export default function TrialsList() {
     try {
       await axiosInstance.patch(`/trials/${selectedTrialId}/extend`, { newEndDate });
       setAnchorEl(null);
-      fetchTrials();
+      refetch();
     } catch (error) {
-      console.error("Failed to extend trial", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to extend trial");
     }
   };
 
@@ -196,10 +186,16 @@ export default function TrialsList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                     <CircularProgress sx={{ color: "#ec4899" }} />
+                  </TableCell>
+                </TableRow>
+              ) : isError ? (
+                <TableRow>
+                  <TableCell colSpan={6} sx={{ py: 4, border: 0 }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : trials.length === 0 ? (

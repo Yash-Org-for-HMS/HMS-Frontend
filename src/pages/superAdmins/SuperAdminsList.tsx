@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -27,6 +28,7 @@ import {
   SearchRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
@@ -35,31 +37,16 @@ import FilterBar from "../../components/layout/FilterBar";
 export default function SuperAdminsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [admins, setAdmins] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
 
-  const fetchAdmins = async () => {
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get("/super-admins", {
-        params: { page, limit: 10, search }
-      });
-      setAdmins(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch super admins", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAdmins();
-  }, [page, search]);
+  const { data, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["super-admins", page, search],
+    queryFn: async () => (await axiosInstance.get("/super-admins", { params: { page, limit: 10, search } })).data,
+  });
+  const admins: any[] = data?.data ?? [];
+  const totalPages: number = data?.pagination?.totalPages ?? 1;
 
   return (
     <PageContainer>
@@ -121,6 +108,12 @@ export default function SuperAdminsList() {
                 <TableRow>
                   <TableCell colSpan={4} align="center" sx={{ py: 8 }}>
                     <CircularProgress sx={{ color: "#8b5cf6" }} />
+                  </TableCell>
+                </TableRow>
+              ) : isError ? (
+                <TableRow>
+                  <TableCell colSpan={4} sx={{ py: 4, border: 0 }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : admins.length === 0 ? (

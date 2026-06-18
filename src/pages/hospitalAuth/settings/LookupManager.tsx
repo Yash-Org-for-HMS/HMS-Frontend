@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -26,6 +27,7 @@ import {
 import { AddRounded, EditRounded, PowerSettingsNewRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
+import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 
 const LOOKUP_CONFIGS: Record<string, any> = {
@@ -67,8 +69,6 @@ const LOOKUP_CONFIGS: Record<string, any> = {
 
 export default function LookupManager() {
   const [selectedType, setSelectedType] = useState("specialization");
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const toast = useToast();
   const [modalOpen, setModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -77,21 +77,10 @@ export default function LookupManager() {
 
   const config = LOOKUP_CONFIGS[selectedType];
 
-  useEffect(() => {
-    fetchData(selectedType);
-  }, [selectedType]);
-
-  const fetchData = async (type: string) => {
-    setLoading(true);
-    try {
-      const res = await axiosInstance.get(`/hospital/lookups?type=${type}`);
-      setData(res.data.data);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load lookup data");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["hospital-lookups", selectedType],
+    queryFn: async () => (await axiosInstance.get(`/hospital/lookups?type=${selectedType}`)).data.data,
+  });
 
   const handleOpenAdd = () => {
     setFormData({});
@@ -124,7 +113,7 @@ export default function LookupManager() {
         await axiosInstance.post(`/hospital/lookups?type=${selectedType}`, formData);
       }
       handleClose();
-      fetchData(selectedType);
+      refetch();
     } catch (err: any) {
       alert(err.response?.data?.message || "Failed to save");
     }
@@ -136,7 +125,7 @@ export default function LookupManager() {
       await axiosInstance.put(`/hospital/lookups/${id}/status?type=${selectedType}`, {
         isActive: !item.isActive
       });
-      fetchData(selectedType);
+      refetch();
     } catch (err: any) {
       alert(err.response?.data?.message || "Failed to toggle status");
     }
@@ -195,6 +184,8 @@ export default function LookupManager() {
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <CircularProgress sx={{ color: "#6366f1" }} />
         </Box>
+      ) : isError ? (
+        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (
         <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
           <Table>

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
   Box,
@@ -22,6 +23,8 @@ import {
   SearchRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import { useToast } from "../../contexts/ToastContext";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
@@ -29,62 +32,45 @@ import FilterBar from "../../components/layout/FilterBar";
 
 export default function OnboardingList() {
   const { t } = useTranslation();
-  const [onboardings, setOnboardings] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
+  const toast = useToast();
 
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
 
-  const fetchOnboardings = async () => {
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get("/onboarding", {
-        params: { page, limit: 10, search }
-      });
-      setOnboardings(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch onboarding records", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchOnboardings();
-  }, [page, search]);
+  const queryKey = ["onboarding", page, search];
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey,
+    queryFn: async () => (await axiosInstance.get("/onboarding", { params: { page, limit: 10, search } })).data,
+  });
+  const onboardings: any[] = data?.data ?? [];
+  const totalPages: number = data?.pagination?.totalPages ?? 1;
 
   const handleInlineUpdate = async (onboardingId: string, updatedFields: any) => {
+    const record = onboardings.find(o => o.hospitalOnboardingId === onboardingId);
+    if (!record) return;
+
+    const payload = {
+      tenantSetupCompleted: record.tenantSetupCompleted,
+      defaultRolesSeeded: record.defaultRolesSeeded,
+      paymentVerified: record.paymentVerified,
+      onboardingStatus: record.onboardingStatus,
+      ...updatedFields
+    };
+
+    // Optimistic update in the query cache so the toggle responds instantly.
+    qc.setQueryData(queryKey, (old: any) =>
+      old
+        ? { ...old, data: old.data.map((o: any) => (o.hospitalOnboardingId === onboardingId ? { ...o, ...payload } : o)) }
+        : old
+    );
+
     try {
-      const record = onboardings.find(o => o.hospitalOnboardingId === onboardingId);
-      if (!record) return;
-
-      const payload = {
-        tenantSetupCompleted: record.tenantSetupCompleted,
-        defaultRolesSeeded: record.defaultRolesSeeded,
-        paymentVerified: record.paymentVerified,
-        onboardingStatus: record.onboardingStatus,
-        ...updatedFields
-      };
-
-      setOnboardings(prev =>
-        prev.map(o =>
-          o.hospitalOnboardingId === onboardingId
-            ? { ...o, ...payload }
-            : o
-        )
-      );
-
       await axiosInstance.put(`/onboarding/${onboardingId}`, payload);
-      
-      const response = await axiosInstance.get("/onboarding", {
-        params: { page, limit: 10, search }
-      });
-      setOnboardings(response.data.data);
+      qc.invalidateQueries({ queryKey });
     } catch (error) {
-      console.error("Failed to update onboarding inline", error);
-      fetchOnboardings();
+      toast.error((error as any)?.response?.data?.message || "Failed to update onboarding");
+      refetch(); // roll back to server truth
     }
   };
 
@@ -155,10 +141,16 @@ export default function OnboardingList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
                     <CircularProgress sx={{ color: "#10b981" }} />
+                  </TableCell>
+                </TableRow>
+              ) : isError ? (
+                <TableRow>
+                  <TableCell colSpan={5} sx={{ py: 4, border: 0 }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : onboardings.length === 0 ? (

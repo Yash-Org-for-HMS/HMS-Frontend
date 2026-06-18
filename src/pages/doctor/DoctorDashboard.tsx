@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box, Grid, Typography, Paper, CircularProgress, Alert,
   Skeleton, Chip, Avatar, Button, Divider
@@ -9,9 +9,9 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "../../contexts/ToastContext";
 
 const DOCTOR_BLUE = "#3b82f6";
 
@@ -64,28 +64,24 @@ function StatCard({ title, value, icon, loading, accent, sub }: any) {
 export default function DoctorDashboard() {
   const { hospital, user } = useHospitalAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const toast = useToast();
-  const [stats, setStats] = useState<any>(null);
 
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get("/doctor/dashboard/stats");
-      setStats(res.data.data);
-    } catch (err: any) {
-      console.error("Dashboard error full:", err);
-      toast.error(err.response?.data?.message || err.message || "Failed to load dashboard statistics");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: stats, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["doctor-dashboard-stats"],
+    queryFn: async () => (await axiosInstance.get("/doctor/dashboard/stats")).data.data,
+    refetchInterval: 60000, // refresh every minute
+  });
 
-  useEffect(() => {
-    fetchStats();
-    const interval = setInterval(fetchStats, 60000); // refresh every minute
-    return () => clearInterval(interval);
-  }, []);
+  if (isError) {
+    return (
+      <Box sx={{ pb: 6 }}>
+        <ErrorState
+          title="Couldn't load your dashboard"
+          message={(error as any)?.response?.data?.message}
+          onRetry={() => refetch()}
+        />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ pb: 6 }}>

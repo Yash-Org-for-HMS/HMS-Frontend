@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import ErrorState from "../../components/ErrorState";
 import {
   Box,
   Typography,
@@ -51,7 +53,6 @@ function a11yProps(index: number) {
 export default function HospitalProfile() {
   const { hospital, updateHospital } = useHospitalAuth();
   const [tabValue, setTabValue] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const toast = useToast();
@@ -75,40 +76,35 @@ export default function HospitalProfile() {
     accreditationType: "",
   });
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  const { data: profileData, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["hospital-profile"],
+    queryFn: async () => (await axiosInstance.get("/hospital/profile")).data.data,
+  });
 
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get("/hospital/profile");
-      const data = res.data.data;
-      setFormData({
-        hospitalName: data.hospitalName || "",
-        registrationNumber: data.registrationNumber || "",
-        ownershipType: data.ownershipType || "",
-        websiteUrl: data.websiteUrl || "",
-        officialEmail: data.officialEmail || "",
-        officialPhone: data.officialPhone || "",
-        addressLine1: data.addressLine1 || "",
-        addressLine2: data.addressLine2 || "",
-        countryId: data.countryId?.toString() || "",
-        stateId: data.stateId?.toString() || "",
-        cityId: data.cityId?.toString() || "",
-        postalCode: data.postalCode || "",
-        logoUrl: data.logoUrl || "",
-        primaryColorHex: data.primaryColorHex || "",
-        gstNumber: data.gstNumber || "",
-        licenseExpiryDate: data.licenseExpiryDate ? new Date(data.licenseExpiryDate).toISOString().split('T')[0] : "",
-        accreditationType: data.accreditationType || "",
-      });
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load profile");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Seed the editable form once the profile loads (or after a refetch).
+  useEffect(() => {
+    if (!profileData) return;
+    const data = profileData;
+    setFormData({
+      hospitalName: data.hospitalName || "",
+      registrationNumber: data.registrationNumber || "",
+      ownershipType: data.ownershipType || "",
+      websiteUrl: data.websiteUrl || "",
+      officialEmail: data.officialEmail || "",
+      officialPhone: data.officialPhone || "",
+      addressLine1: data.addressLine1 || "",
+      addressLine2: data.addressLine2 || "",
+      countryId: data.countryId?.toString() || "",
+      stateId: data.stateId?.toString() || "",
+      cityId: data.cityId?.toString() || "",
+      postalCode: data.postalCode || "",
+      logoUrl: data.logoUrl || "",
+      primaryColorHex: data.primaryColorHex || "",
+      gstNumber: data.gstNumber || "",
+      licenseExpiryDate: data.licenseExpiryDate ? new Date(data.licenseExpiryDate).toISOString().split('T')[0] : "",
+      accreditationType: data.accreditationType || "",
+    });
+  }, [profileData]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -148,7 +144,7 @@ export default function HospitalProfile() {
       setSaving(true);      await axiosInstance.put("/hospital/profile", formData);
       toast.success("Profile updated successfully!");
       // Optionally re-fetch
-      await fetchProfile();
+      await refetch();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to update profile");
     } finally {
@@ -161,6 +157,16 @@ export default function HospitalProfile() {
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
         <CircularProgress sx={{ color: "#10b981" }} />
       </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorState
+        title="Couldn't load profile"
+        message={(error as any)?.response?.data?.message}
+        onRetry={() => refetch()}
+      />
     );
   }
 

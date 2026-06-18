@@ -31,6 +31,7 @@ import {
   VpnKeyRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
+import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 
 interface Permission {
@@ -52,6 +53,7 @@ interface Role {
 export default function PermissionMatrix() {
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
   const [roles, setRoles] = useState<Role[]>([]);
@@ -69,6 +71,7 @@ export default function PermissionMatrix() {
   const fetchData = async () => {
     try {
       setInitialLoad(true);
+      setLoadError(null);
       const [permRes, roleRes] = await Promise.all([
         axiosInstance.get("/hospital/roles/permissions"),
         axiosInstance.get("/hospital/roles"),
@@ -99,7 +102,9 @@ export default function PermissionMatrix() {
       });
       setMatrixState(newState);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load data");
+      const msg = err.response?.data?.message || "Failed to load data";
+      setLoadError(msg);
+      toast.error(msg);
     } finally {
       setInitialLoad(false);
     }
@@ -179,6 +184,10 @@ export default function PermissionMatrix() {
         <CircularProgress sx={{ color: "#6366f1" }} />
       </Box>
     );
+  }
+
+  if (loadError) {
+    return <ErrorState title="Couldn't load permissions" message={loadError} onRetry={fetchData} />;
   }
 
   return (

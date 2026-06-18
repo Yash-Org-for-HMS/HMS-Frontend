@@ -91,7 +91,7 @@ export default function UserForm() {
         setRoles(roleRes.data.data);
       } catch (err) {
         console.error("Failed to fetch lookups", err);
-        toast.error("Failed to load required data. Please refresh.");
+        toast.error((err as any)?.response?.data?.message || "Failed to load required data. Please refresh.");
       }
     };
     fetchLookups();
@@ -133,7 +133,7 @@ export default function UserForm() {
           });
         } catch (err) {
           console.error("Failed to fetch user", err);
-          toast.error("Failed to load user data");
+          toast.error((err as any)?.response?.data?.message || "Failed to load user data");
         } finally {
           setLoading(false);
         }

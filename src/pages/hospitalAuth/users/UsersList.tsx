@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -38,6 +39,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
+import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 
 interface User {
@@ -397,8 +399,8 @@ function CredentialSuccessDialog({ open, user, newPassword, onClose }: Credentia
 
 // ── Main UsersList ──────────────────────────────────────────────────────────
 export default function UsersList() {
-  const [users, setUsers] = useState<User[]>([]);
   const navigate = useNavigate();
+  const toast = useToast();
 
   // Reset password dialog
   const [resetDialog, setResetDialog] = useState<{ open: boolean; user: User | null }>({ open: false, user: null });
@@ -408,25 +410,17 @@ export default function UsersList() {
     password: "",
   });
 
-  const fetchUsers = async () => {
-    try {
-      const response = await axiosInstance.get("/hospital/users");
-      setUsers(response.data.data);
-    } catch (error) {
-      console.error("Error fetching users", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const { data: users = [], isError, error, refetch } = useQuery<User[]>({
+    queryKey: ["hospital-users-list"],
+    queryFn: async () => (await axiosInstance.get("/hospital/users")).data.data,
+  });
 
   const handleToggleStatus = async (user: User) => {
     try {
       await axiosInstance.put(`/hospital/users/${user.userId}/deactivate`, { isActive: !user.isActive });
-      fetchUsers();
+      refetch();
     } catch (error) {
-      console.error("Error toggling user status", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to update user status");
     }
   };
 
@@ -477,7 +471,13 @@ export default function UsersList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {users.length === 0 ? (
+              {isError ? (
+                <TableRow>
+                  <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+                  </TableCell>
+                </TableRow>
+              ) : users.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
                     <Mascot pose="nothing-here-yet" subtitle="No staff members found." size={120} />
@@ -588,7 +588,7 @@ export default function UsersList() {
         onSuccess={(pwd) => {
           setSuccessDialog({ open: true, user: resetDialog.user, password: pwd });
           setResetDialog({ open: false, user: null });
-          fetchUsers();
+          refetch();
         }}
       />
 

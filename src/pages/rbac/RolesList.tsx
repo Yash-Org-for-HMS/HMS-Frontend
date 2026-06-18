@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -33,6 +34,8 @@ import {
   CleaningServicesRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import { useToast } from "../../contexts/ToastContext";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
@@ -54,11 +57,7 @@ const SYSTEM_ROLE_CODES = SYSTEM_ROLES.map((r) => r.code);
 export default function RolesList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [roles, setRoles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const toast = useToast();
   const [search, setSearch] = useState("");
 
   // Role cleanup (remove non-standard roles that have no users)
@@ -66,38 +65,25 @@ export default function RolesList() {
   const [cleaning, setCleaning] = useState(false);
   const [cleanupResult, setCleanupResult] = useState<any | null>(null);
 
+  // Fetch all roles so we can group them; the page is presentational, not paged.
+  const { data: roles = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["rbac-roles", search],
+    queryFn: async () => (await axiosInstance.get("/rbac/roles", { params: { limit: 1000, search } })).data.data,
+  });
+
   const handleCleanup = async () => {
     setCleaning(true);
     try {
       const res = await axiosInstance.post("/rbac/roles/cleanup");
       setCleanupOpen(false);
       setCleanupResult(res.data.data);
-      fetchRoles();
+      refetch();
     } catch (error) {
-      console.error("Failed to clean up roles", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to clean up roles");
     } finally {
       setCleaning(false);
     }
   };
-
-  const fetchRoles = async () => {
-    setLoading(true);
-    try {
-      // Fetch all roles so we can group them; the page is presentational, not paged.
-      const response = await axiosInstance.get("/rbac/roles", {
-        params: { limit: 1000, search }
-      });
-      setRoles(response.data.data);
-    } catch (error) {
-      console.error("Failed to fetch roles", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRoles();
-  }, [search]);
 
   const q = search.trim().toLowerCase();
   const matches = (code: string, name: string) =>
@@ -184,6 +170,8 @@ export default function RolesList() {
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
           <CircularProgress sx={{ color: "#14b8a6" }} />
         </Box>
+      ) : isError ? (
+        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (
         <>
           {/* ── Standard (System) Roles — shown once across all hospitals ── */}

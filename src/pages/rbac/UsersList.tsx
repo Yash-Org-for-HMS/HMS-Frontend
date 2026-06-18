@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -32,6 +33,8 @@ import {
   DeleteRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import { useToast } from "../../contexts/ToastContext";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
@@ -52,44 +55,33 @@ interface User {
 
 export default function UsersList() {
   const navigate = useNavigate();
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const toast = useToast();
   const [search, setSearch] = useState("");
-  
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
   // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
 
   // Delete Dialog
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const res = await axiosInstance.get("/rbac/users", {
-        params: {
-          page: page + 1,
-          limit: rowsPerPage,
-          search: search || undefined,
-        },
-      });
-      setUsers(res.data.data);
-      setTotal(res.data.pagination.total);
-    } catch (error) {
-      console.error("Failed to fetch users", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Debounce the search box so we don't fire a query per keystroke.
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchUsers();
-    }, 500);
-    return () => clearTimeout(delayDebounceFn);
-  }, [page, rowsPerPage, search]);
+    const t = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["rbac-users", page, rowsPerPage, debouncedSearch],
+    queryFn: async () =>
+      (await axiosInstance.get("/rbac/users", {
+        params: { page: page + 1, limit: rowsPerPage, search: debouncedSearch || undefined },
+      })).data,
+  });
+  const users: User[] = data?.data ?? [];
+  const total: number = data?.pagination?.total ?? 0;
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -97,9 +89,9 @@ export default function UsersList() {
     try {
       await axiosInstance.delete(`/rbac/users/${deleteId}`);
       setDeleteId(null);
-      fetchUsers();
+      refetch();
     } catch (error) {
-      console.error("Failed to delete user", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to delete user");
     } finally {
       setDeleteLoading(false);
     }
@@ -174,10 +166,16 @@ export default function UsersList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 8, borderBottom: "none" }}>
                     <CircularProgress sx={{ color: "#6366f1" }} />
+                  </TableCell>
+                </TableRow>
+              ) : isError ? (
+                <TableRow>
+                  <TableCell colSpan={6} sx={{ py: 4, borderBottom: "none" }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : users.length === 0 ? (
