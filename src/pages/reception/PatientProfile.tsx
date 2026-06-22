@@ -30,11 +30,13 @@ import {
   NotificationsActiveRounded,
   EventAvailableRounded,
   LoginRounded,
+  QrCode2Rounded,
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import PatientDocumentsSection from "./PatientDocumentsSection";
+import IdCardModal from "../../components/reception/IdCardModal";
 import { useToast } from "../../contexts/ToastContext";
 
 interface Patient {
@@ -125,6 +127,7 @@ export default function PatientProfile() {
   const [notifProcessing, setNotifProcessing] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [checkinId, setCheckinId] = useState<string | null>(null);
+  const [idCardOpen, setIdCardOpen] = useState(false);
 
   // This patient's appointments (most recent first), for the history section
   // and the inline same-day check-in.
@@ -218,6 +221,21 @@ export default function PatientProfile() {
           Back
         </Button>
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          <Button
+            variant="outlined"
+            startIcon={<QrCode2Rounded />}
+            onClick={() => setIdCardOpen(true)}
+            sx={{
+              color: "text.secondary",
+              borderColor: "divider",
+              textTransform: "none",
+              borderRadius: 2,
+              px: 3,
+              "&:hover": { borderColor: "text.secondary", bgcolor: "action.hover" }
+            }}
+          >
+            Print ID Card
+          </Button>
           {canEdit && (
             <Button
               variant="outlined"
@@ -494,6 +512,8 @@ export default function PatientProfile() {
           <PatientDocumentsSection patientId={patient.patientId} />
         </Grid>
       </Grid>
+
+      <IdCardModal open={idCardOpen} onClose={() => setIdCardOpen(false)} patient={patient} />
     </Box>
   );
 }

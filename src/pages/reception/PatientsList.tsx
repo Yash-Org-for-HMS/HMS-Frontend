@@ -39,10 +39,12 @@ import {
   CalendarMonthRounded,
   QueuePlayNextRounded,
   ContentCopyRounded,
+  QrCode2Rounded,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import IdCardModal from "../../components/reception/IdCardModal";
 import { useToast } from "../../contexts/ToastContext";
 
 interface Patient {
@@ -81,6 +83,7 @@ export default function PatientsList() {
     open: false,
     patient: null,
   });
+  const [idCardPatient, setIdCardPatient] = useState<Patient | null>(null);
   
   const searchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -408,6 +411,18 @@ export default function PatientsList() {
                             <QueuePlayNextRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
+                        <Tooltip title="Print ID Card">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIdCardPatient(patient);
+                            }}
+                            sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6,182,212,0.08)" } }}
+                          >
+                            <QrCode2Rounded fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                         <Tooltip title="Edit Patient">
                           <IconButton
                             size="small"
@@ -484,6 +499,8 @@ export default function PatientsList() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <IdCardModal open={!!idCardPatient} onClose={() => setIdCardPatient(null)} patient={idCardPatient} />
     </>
   );
 }
