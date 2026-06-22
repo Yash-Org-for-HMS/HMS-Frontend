@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import { axiosInstance, setAccessToken } from "../api/axios";
+import { axiosInstance } from "../api/axios";
 import { useNavigate } from "react-router-dom";
 
 export interface User {
@@ -25,11 +25,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Restore from the stored profile only; the access token is held in memory
-    // and re-obtained from the httpOnly refresh cookie on the first 401.
+    const token = sessionStorage.getItem("accessToken");
     const storedUser = sessionStorage.getItem("user");
 
-    if (storedUser) {
+    if (token && storedUser) {
       try {
         setUser(JSON.parse(storedUser));
       } catch (err) {
@@ -40,9 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  const login = (token: string, _refresh: string, userData: User) => {
-    // Access token in memory only; refresh token is an httpOnly cookie.
-    setAccessToken("admin", token);
+  const login = (token: string, refresh: string, userData: User) => {
+    sessionStorage.setItem("accessToken", token);
+    sessionStorage.setItem("refreshToken", refresh);
     sessionStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
     navigate("/");
@@ -50,12 +49,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      // Invalidate server-side and clear the httpOnly refresh cookie.
+      // Optional: Call backend logout API to invalidate tokens if tracking state server-side
       await axiosInstance.post("/auth/logout");
     } catch (err) {
       console.error("Error logging out from server", err);
     } finally {
-      setAccessToken("admin", null);
+      sessionStorage.removeItem("accessToken");
+      sessionStorage.removeItem("refreshToken");
       sessionStorage.removeItem("user");
       setUser(null);
       navigate("/login");

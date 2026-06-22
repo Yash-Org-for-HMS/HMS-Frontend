@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import { axiosInstance, setAccessToken } from "../api/axios";
+import { axiosInstance } from "../api/axios";
 import { useNavigate } from "react-router-dom";
 
 export interface HospitalUser {
@@ -104,17 +104,14 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Restore the session from the (non-sensitive) profile in sessionStorage.
-    // The access token is NOT stored — it's held in memory and re-obtained
-    // silently from the httpOnly refresh cookie on the first authed request
-    // (loadBranches below) via the axios 401→refresh→retry flow. If the refresh
-    // cookie is gone/expired, that flow clears the session and redirects.
+    // Check if token and user data exist on mount
+    const token = sessionStorage.getItem("hospitalAccessToken");
     const storedUser = sessionStorage.getItem("hospitalUser");
     const storedHospital = sessionStorage.getItem("hospitalInfo");
     const storedBranch = sessionStorage.getItem("hospitalBranch");
     const storedSession = sessionStorage.getItem("hospitalSessionId");
 
-    if (storedUser && storedHospital) {
+    if (token && storedUser && storedHospital) {
       try {
         setUser(JSON.parse(storedUser));
         setHospital(JSON.parse(storedHospital));
@@ -131,16 +128,14 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
 
   const login = (
     token: string,
-    _refresh: string,
+    refresh: string,
     userData: HospitalUser,
     hospitalData: HospitalInfo,
     branchData: BranchInfo | null,
     sessId: string,
   ) => {
-    // Access token in memory only; the refresh token is an httpOnly cookie set
-    // by the backend (never touches JS). `_refresh` is accepted for call-site
-    // compatibility but intentionally not persisted.
-    setAccessToken("hospital", token);
+    sessionStorage.setItem("hospitalAccessToken", token);
+    sessionStorage.setItem("hospitalRefreshToken", refresh);
     sessionStorage.setItem("hospitalUser", JSON.stringify(userData));
     sessionStorage.setItem("hospitalInfo", JSON.stringify(hospitalData));
     if (branchData) {
@@ -192,14 +187,21 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       if (sessionId) {
-        // The interceptor attaches the in-memory access token; the logout
-        // endpoint also clears the httpOnly refresh cookie server-side.
-        await axiosInstance.post("/hospital-auth/logout", { sessionId });
+        await axiosInstance.post(
+          "/hospital-auth/logout",
+          { sessionId },
+          {
+            headers: {
+              Authorization: `Bearer ${sessionStorage.getItem("hospitalAccessToken")}`,
+            },
+          }
+        );
       }
     } catch (err) {
       console.error("Error logging out from server", err);
     } finally {
-      setAccessToken("hospital", null);
+      sessionStorage.removeItem("hospitalAccessToken");
+      sessionStorage.removeItem("hospitalRefreshToken");
       sessionStorage.removeItem("hospitalUser");
       sessionStorage.removeItem("hospitalInfo");
       sessionStorage.removeItem("hospitalBranch");
