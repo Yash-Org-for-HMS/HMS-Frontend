@@ -62,6 +62,7 @@ interface Patient {
   bloodGroupLabel: string;
   age: number | null;
   createdAt: string;
+  outstandingDues?: number;
 }
 
 interface Meta {
@@ -313,9 +314,18 @@ export default function PatientsList() {
                             {getInitials(patient)}
                           </Avatar>
                           <Box>
-                            <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
-                              {patient.firstName} {patient.lastName}
-                            </Typography>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
+                                {patient.firstName} {patient.lastName}
+                              </Typography>
+                              {(patient.outstandingDues ?? 0) > 0 && (
+                                <Chip
+                                  label={`Dues ₹${Number(patient.outstandingDues).toFixed(0)}`}
+                                  size="small"
+                                  sx={{ height: 18, bgcolor: "rgba(239,68,68,0.12)", color: "#ef4444", fontWeight: 700, fontSize: "0.65rem" }}
+                                />
+                              )}
+                            </Box>
                             <Typography variant="caption" sx={{ color: "text.secondary" }}>
                               {patient.email}
                             </Typography>

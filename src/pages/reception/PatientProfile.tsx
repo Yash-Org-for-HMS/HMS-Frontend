@@ -31,6 +31,7 @@ import {
   EventAvailableRounded,
   LoginRounded,
   QrCode2Rounded,
+  ReceiptLongRounded,
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
@@ -137,7 +138,15 @@ export default function PatientProfile() {
     enabled: !!id,
   });
 
+  // Billing summary: invoices + totals (billed / paid / dues).
+  const { data: billing } = useQuery<{ totals: any; invoices: any[] }>({
+    queryKey: ["patient-billing", id],
+    queryFn: async () => (await axiosInstance.get(`/reception/patients/${id}/billing-summary`)).data.data,
+    enabled: !!id,
+  });
+
   const isToday = (d: string) => new Date(d).toDateString() === new Date().toDateString();
+  const inr = (n: any) => `₹${Number(n || 0).toFixed(2)}`;
 
   const handleCheckIn = async (apptId: string) => {
     try {
@@ -502,6 +511,53 @@ export default function PatientProfile() {
                     </Box>
                   );
                 })}
+              </Box>
+            )}
+          </SectionCard>
+        </Grid>
+
+        {/* Billing */}
+        <Grid size={{ xs: 12 }}>
+          <SectionCard title="Billing" icon={<ReceiptLongRounded fontSize="small" />}>
+            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", mb: billing?.invoices?.length ? 2 : 0 }}>
+              <Chip label={`Billed: ${inr(billing?.totals?.totalBilled)}`} size="small" sx={{ bgcolor: "action.hover", color: "text.primary", fontWeight: 700 }} />
+              <Chip label={`Paid: ${inr(billing?.totals?.totalPaid)}`} size="small" sx={{ bgcolor: "rgba(16,185,129,0.12)", color: "#10b981", fontWeight: 700 }} />
+              <Chip
+                label={`Dues: ${inr(billing?.totals?.totalDues)}`}
+                size="small"
+                sx={{
+                  bgcolor: Number(billing?.totals?.totalDues || 0) > 0 ? "rgba(239,68,68,0.12)" : "rgba(16,185,129,0.12)",
+                  color: Number(billing?.totals?.totalDues || 0) > 0 ? "#ef4444" : "#10b981",
+                  fontWeight: 700,
+                }}
+              />
+            </Box>
+
+            {!billing?.invoices?.length ? (
+              <Box sx={{ py: 2, textAlign: "center" }}>
+                <Typography variant="body2" sx={{ color: "#334155" }}>No invoices yet</Typography>
+              </Box>
+            ) : (
+              <Box sx={{ display: "flex", flexDirection: "column" }}>
+                {billing.invoices.slice(0, 8).map((inv: any, idx: number) => (
+                  <Box key={inv.invoiceId}>
+                    {idx > 0 && <Divider sx={{ borderColor: "divider" }} />}
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, py: 1.25, flexWrap: "wrap" }}>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600, fontFamily: "monospace" }}>{inv.invoiceNumber}</Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                          {new Date(inv.invoiceDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} • {inr(inv.netAmount)}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        {Number(inv.balance) > 0 && (
+                          <Typography variant="caption" sx={{ color: "#ef4444", fontWeight: 700 }}>Bal {inr(inv.balance)}</Typography>
+                        )}
+                        <Chip label={inv.statusLabel || "—"} size="small" sx={{ bgcolor: `${inv.statusColor || "#64748b"}20`, color: inv.statusColor || "#64748b", fontWeight: 700 }} />
+                      </Box>
+                    </Box>
+                  </Box>
+                ))}
               </Box>
             )}
           </SectionCard>
