@@ -29,6 +29,7 @@ import {
   PersonRounded,
   NotificationsActiveRounded,
   EventAvailableRounded,
+  EventRepeatRounded,
   LoginRounded,
   QrCode2Rounded,
   ReceiptLongRounded,
@@ -504,6 +505,17 @@ export default function PatientProfile() {
                               sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" }, textTransform: "none" }}
                             >
                               Check in
+                            </Button>
+                          )}
+                          {canEdit && appt.statusLabel === "Completed" && (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<EventRepeatRounded />}
+                              onClick={() => navigate(`/reception/appointments/new?patientId=${id}&doctorId=${appt.doctorId || ""}&followUpOf=${appt.appointmentId}`)}
+                              sx={{ color: "#0891b2", borderColor: "rgba(8,145,178,0.4)", textTransform: "none", "&:hover": { borderColor: "#0891b2", bgcolor: "rgba(8,145,178,0.06)" } }}
+                            >
+                              Follow-up
                             </Button>
                           )}
                         </Box>

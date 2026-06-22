@@ -25,6 +25,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   const initialDate = searchParams.get("date") || new Date().toISOString().split('T')[0];
   const initialTime = searchParams.get("time") || "";
   const initialDoctorId = searchParams.get("doctorId") || "";
+  const followUpOf = searchParams.get("followUpOf") || "";
 
   const [saving, setSaving] = useState(false);
   const toast = useToast();
@@ -41,7 +42,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     doctorId: initialDoctorId,
     appointmentDate: initialDate,
     timeSlot: initialTime,
-    visitType: "Standard Visit",
+    visitType: followUpOf ? "Follow-up" : "Standard Visit",
     reason: ""
   });
 
@@ -171,7 +172,8 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
         departmentId: formData.departmentId,
         doctorId: formData.doctorId,
         appointmentDate: datetime.toISOString(),
-        reason: finalReason
+        reason: finalReason,
+        ...(followUpOf && !id ? { followUpOfAppointmentId: followUpOf } : {}),
       };
 
       let apptId = id;
@@ -221,6 +223,11 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
       )}
 <Paper component="form" onSubmit={handleSubmit} elevation={0} sx={{ p: 4, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider" }}>
         <Grid container spacing={3}>
+          {followUpOf && !id && (
+            <Grid size={{ xs: 12 }}>
+              <Alert severity="info">Booking a follow-up visit for this patient — linked to their previous appointment.</Alert>
+            </Grid>
+          )}
           <Grid size={{ xs: 12 }}>
             <TextField
               select fullWidth required

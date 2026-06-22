@@ -10,7 +10,7 @@ import {
   AddRounded, SearchRounded, CancelRounded, CheckCircleRounded,
   WarningAmberRounded, ReceiptRounded, NotificationsActiveRounded, ChecklistRounded,
   NotesRounded, ChevronLeftRounded, ChevronRightRounded, CalendarMonthRounded,
-  FilterAltRounded
+  FilterAltRounded, EventRepeatRounded
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
@@ -400,11 +400,18 @@ export default function AppointmentsList() {
                           </>
                         )}
                         {appt.statusLabel === 'Completed' && (
-                          <Tooltip title="Send Visit Confirmation">
-                            <IconButton size="small" onClick={() => handleSendNotification(appt.appointmentId, 'visit-confirmation')} sx={{ color: "text.secondary", "&:hover": { color: "#10b981", bgcolor: "rgba(16,185,129,0.08)" } }}>
-                              <ChecklistRounded fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                          <>
+                            <Tooltip title="Book Follow-up">
+                              <IconButton size="small" onClick={() => navigate(`/reception/appointments/new?patientId=${appt.patientId}&doctorId=${appt.doctorId || ""}&followUpOf=${appt.appointmentId}`)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2", bgcolor: "rgba(8,145,178,0.08)" } }}>
+                                <EventRepeatRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Send Visit Confirmation">
+                              <IconButton size="small" onClick={() => handleSendNotification(appt.appointmentId, 'visit-confirmation')} sx={{ color: "text.secondary", "&:hover": { color: "#10b981", bgcolor: "rgba(16,185,129,0.08)" } }}>
+                                <ChecklistRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </>
                         )}
                       </TableCell>
                     </TableRow>
