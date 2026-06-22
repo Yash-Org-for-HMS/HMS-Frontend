@@ -51,6 +51,13 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const [taxInput, setTaxInput] = useState("");
   const [adjusting, setAdjusting] = useState(false);
 
+  // Refund
+  const [showRefund, setShowRefund] = useState(false);
+  const [refundPaymentId, setRefundPaymentId] = useState("");
+  const [refundAmount, setRefundAmount] = useState("");
+  const [refundReason, setRefundReason] = useState("");
+  const [refunding, setRefunding] = useState(false);
+
   // For printing
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -98,7 +105,8 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       // Pre-fill payment amount with remaining balance
       if (currentInvoice) {
         const totalPaid = currentInvoice.Payment?.reduce((sum: number, p: any) => sum + Number(p.paidAmount), 0) || 0;
-        const remaining = Number(currentInvoice.netAmount) - totalPaid;
+        const totalRefunded = currentInvoice.Refund?.reduce((sum: number, r: any) => sum + Number(r.refundAmount), 0) || 0;
+        const remaining = Number(currentInvoice.netAmount) - (totalPaid - totalRefunded);
         if (remaining > 0) {
           setPaymentAmount(remaining.toString());
         }
@@ -143,7 +151,8 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
           
           const updatedInvoice = getInvoiceRes.data.data;
           const totalPaid = updatedInvoice.Payment?.reduce((sum: number, p: any) => sum + Number(p.paidAmount), 0) || 0;
-          const remaining = Number(updatedInvoice.netAmount) - totalPaid;
+          const totalRefunded = updatedInvoice.Refund?.reduce((sum: number, r: any) => sum + Number(r.refundAmount), 0) || 0;
+          const remaining = Number(updatedInvoice.netAmount) - (totalPaid - totalRefunded);
           if (remaining > 0) {
              setPaymentAmount(remaining.toString());
           } else {
@@ -265,15 +274,51 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     }, 250);
   };
 
+  const handleRefund = async () => {
+    if (!invoice || !refundPaymentId || !refundAmount || refundReason.trim().length < 3) return;
+    try {
+      setRefunding(true);
+      const res = await axiosInstance.post(`/reception/billing/invoices/${invoice.invoiceId}/refund`, {
+        paymentId: refundPaymentId,
+        amount: parseFloat(refundAmount),
+        reason: refundReason.trim(),
+      });
+      if (res.data.success) {
+        toast.success("Refund processed");
+        setShowRefund(false);
+        setRefundPaymentId("");
+        setRefundAmount("");
+        setRefundReason("");
+        await fetchBillingData();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Refund failed");
+    } finally {
+      setRefunding(false);
+    }
+  };
+
   if (!open) return null;
 
   const totalPaid = invoice?.Payment?.reduce((sum: number, p: any) => sum + Number(p.paidAmount), 0) || 0;
+  const totalRefunded = invoice?.Refund?.reduce((sum: number, r: any) => sum + Number(r.refundAmount), 0) || 0;
+  const netPaid = totalPaid - totalRefunded;
   const grossAmount = Number(invoice?.grossAmount || 0);
   const discountAmount = Number(invoice?.discountAmount || 0);
   const taxAmount = Number(invoice?.taxAmount || 0);
   const netAmount = Number(invoice?.netAmount || 0);
-  const balance = netAmount - totalPaid;
+  const balance = netAmount - netPaid;
   const isFullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || balance <= 0;
+
+  // How much of each payment is still refundable (paid − refunds against it).
+  const refundedByPayment: Record<string, number> = {};
+  (invoice?.Refund || []).forEach((r: any) => {
+    refundedByPayment[r.paymentId] = (refundedByPayment[r.paymentId] || 0) + Number(r.refundAmount);
+  });
+  const refundablePayments = (invoice?.Payment || [])
+    .map((p: any) => ({ ...p, refundable: Number(p.paidAmount) - (refundedByPayment[p.paymentId] || 0) }))
+    .filter((p: any) => p.refundable > 0.005);
+  const selectedRefundable = refundablePayments.find((p: any) => p.paymentId === refundPaymentId)?.refundable || 0;
 
   return (
     <Dialog 
@@ -402,6 +447,12 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                     <Typography variant="body2">Amount Paid:</Typography>
                     <Typography variant="body2">{totalPaid.toFixed(2)} INR</Typography>
                   </Box>
+                  {totalRefunded > 0 && (
+                    <Box className="total-row" sx={{ display: "flex", justifyContent: "space-between", mb: 1, color: "#8b5cf6" }}>
+                      <Typography variant="body2">Refunded:</Typography>
+                      <Typography variant="body2">- {totalRefunded.toFixed(2)} INR</Typography>
+                    </Box>
+                  )}
                   <Box className="total-row bold" sx={{ display: "flex", justifyContent: "space-between", mt: 1, pt: 1, borderTop: "1px dashed #d1d5db" }}>
                     <Typography variant="body1" sx={{ fontWeight: 800, color: balance > 0 ? "#ef4444" : "#10b981" }}>Balance Due:</Typography>
                     <Typography variant="body1" sx={{ fontWeight: 800, color: balance > 0 ? "#ef4444" : "#10b981" }}>{balance.toFixed(2)} INR</Typography>
@@ -426,7 +477,24 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                   </Box>
                 )}
 
-                {isFullyPaid && (
+                {/* Refund History */}
+                {invoice.Refund?.length > 0 && (
+                  <Box sx={{ borderTop: "1px solid #e5e7eb", pt: 3, mb: 3 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 800, display: "block", mb: 2, color: "#6b7280", letterSpacing: 1 }}>REFUNDS</Typography>
+                    {invoice.Refund.map((r: any, idx: number) => (
+                      <Box key={idx} sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                        <Typography variant="caption" sx={{ color: "#4b5563" }}>
+                          {r.processedAt ? new Date(r.processedAt).toLocaleDateString() : "—"} • {r.refundReason || "Refund"}
+                        </Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: "#8b5cf6" }}>
+                          - {Number(r.refundAmount).toFixed(2)} INR
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+
+                {isFullyPaid && totalRefunded <= 0 && (
                   <Typography className="watermark" variant="h1">PAID</Typography>
                 )}
 
@@ -511,6 +579,81 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                     <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
                       No further payments required for this invoice.
                     </Typography>
+                  </Box>
+                )}
+
+                {/* Refund — available whenever there's collected money left to return. */}
+                {refundablePayments.length > 0 && (
+                  <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(139,92,246,0.05)", borderRadius: 2, border: "1px dashed rgba(139,92,246,0.3)" }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <Typography variant="subtitle2" sx={{ color: "#8b5cf6", fontWeight: 700 }}>
+                        Refund
+                      </Typography>
+                      {!showRefund && (
+                        <Button size="small" onClick={() => {
+                          setShowRefund(true);
+                          const first = refundablePayments[0];
+                          if (first) { setRefundPaymentId(first.paymentId); setRefundAmount(first.refundable.toFixed(2)); }
+                        }} sx={{ color: "#8b5cf6", textTransform: "none", fontWeight: 600 }}>
+                          Process a refund
+                        </Button>
+                      )}
+                    </Box>
+
+                    {showRefund && (
+                      <Box sx={{ mt: 2 }}>
+                        <TextField
+                          select fullWidth size="small"
+                          label="Refund against payment"
+                          value={refundPaymentId}
+                          onChange={(e) => {
+                            setRefundPaymentId(e.target.value);
+                            const p = refundablePayments.find((x: any) => x.paymentId === e.target.value);
+                            if (p) setRefundAmount(p.refundable.toFixed(2));
+                          }}
+                          sx={{ mb: 2 }}
+                        >
+                          {refundablePayments.map((p: any) => (
+                            <MenuItem key={p.paymentId} value={p.paymentId}>
+                              {p.paymentMethod?.methodName || "Payment"} — {Number(p.paidAmount).toFixed(2)} (refundable {p.refundable.toFixed(2)})
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                        <TextField
+                          fullWidth size="small"
+                          label="Refund amount (INR)"
+                          type="number"
+                          value={refundAmount}
+                          onChange={(e) => setRefundAmount(e.target.value)}
+                          inputProps={{ min: 0, max: selectedRefundable, step: "0.01" }}
+                          helperText={`Max refundable: ${selectedRefundable.toFixed(2)} INR`}
+                          sx={{ mb: 2 }}
+                        />
+                        <TextField
+                          fullWidth size="small"
+                          label="Reason (required)"
+                          placeholder="e.g. Service cancelled, overcharge"
+                          value={refundReason}
+                          onChange={(e) => setRefundReason(e.target.value)}
+                          multiline rows={2}
+                          sx={{ mb: 2 }}
+                        />
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          <Button fullWidth variant="outlined" onClick={() => setShowRefund(false)} disabled={refunding}
+                            sx={{ color: "text.secondary", borderColor: "divider", fontWeight: 600 }}>
+                            Cancel
+                          </Button>
+                          <Button
+                            fullWidth variant="contained"
+                            onClick={handleRefund}
+                            disabled={refunding || !refundPaymentId || !refundAmount || Number(refundAmount) <= 0 || Number(refundAmount) > selectedRefundable + 0.005 || refundReason.trim().length < 3}
+                            sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" }, fontWeight: 700 }}
+                          >
+                            {refunding ? "Processing..." : "Process Refund"}
+                          </Button>
+                        </Box>
+                      </Box>
+                    )}
                   </Box>
                 )}
 
