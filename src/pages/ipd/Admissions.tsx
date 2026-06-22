@@ -1,0 +1,141 @@
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Box, Typography, Button, Paper, Table, TableHead, TableBody, TableRow, TableCell,
+  TableContainer, Chip, TextField, InputAdornment, Tabs, Tab, Tooltip, IconButton,
+  CircularProgress, Menu, MenuItem,
+} from "@mui/material";
+import {
+  LocalHotelRounded, SearchRounded, SwapHorizRounded, LogoutRounded, MoreVertRounded,
+  CancelRounded,
+} from "@mui/icons-material";
+import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import Mascot from "../../components/Mascot";
+import { useToast } from "../../contexts/ToastContext";
+import AdmitDialog from "../../components/ipd/AdmitDialog";
+import TransferDialog from "../../components/ipd/TransferDialog";
+import DischargeDialog from "../../components/ipd/DischargeDialog";
+
+const STATUS_META: Record<string, { label: string; color: string }> = {
+  ADMITTED: { label: "Admitted", color: "#0891b2" },
+  DISCHARGED: { label: "Discharged", color: "#10b981" },
+  CANCELLED: { label: "Cancelled", color: "#64748b" },
+};
+const TABS = ["ADMITTED", "DISCHARGED", ""];
+
+export default function Admissions() {
+  const toast = useToast();
+  const [tab, setTab] = useState(0);
+  const [search, setSearch] = useState("");
+  const [admitOpen, setAdmitOpen] = useState(false);
+  const [transferFor, setTransferFor] = useState<any>(null);
+  const [dischargeFor, setDischargeFor] = useState<any>(null);
+  const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: any }>({ anchor: null, row: null });
+
+  const status = TABS[tab];
+  const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["ipd-admissions", status],
+    queryFn: async () => (await axiosInstance.get("/ipd/admissions", { params: status ? { status } : {} })).data.data,
+  });
+
+  const filtered = useMemo(() => {
+    const s = search.trim().toLowerCase();
+    if (!s) return admissions;
+    return admissions.filter((a) => [a.patientName, a.uhid, a.admissionNumber, a.admittingDiagnosis].filter(Boolean).some((v: string) => v.toLowerCase().includes(s)));
+  }, [admissions, search]);
+
+  const cancel = async (row: any) => {
+    setMenu({ anchor: null, row: null });
+    try {
+      await axiosInstance.post(`/ipd/admissions/${row.admissionId}/cancel`);
+      toast.success("Admission cancelled");
+      refetch();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to cancel");
+    }
+  };
+
+  return (
+    <Box>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
+        <Box>
+          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>Admissions</Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>In-patient admissions, transfers, and discharges</Typography>
+        </Box>
+        <Button variant="contained" startIcon={<LocalHotelRounded />} onClick={() => setAdmitOpen(true)}
+          sx={{ background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)", fontWeight: 600, textTransform: "none", borderRadius: 2 }}>
+          Admit Patient
+        </Button>
+      </Box>
+
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2, mb: 2 }}>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ "& .MuiTab-root": { textTransform: "none", fontWeight: 600 }, "& .Mui-selected": { color: "#0891b2 !important" }, "& .MuiTabs-indicator": { bgcolor: "#0891b2" } }}>
+          <Tab label="Current" /><Tab label="Discharged" /><Tab label="All" />
+        </Tabs>
+        <TextField placeholder="Search patient, IPD#, diagnosis…" value={search} onChange={(e) => setSearch(e.target.value)} size="small"
+          InputProps={{ startAdornment: (<InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary", fontSize: 20 }} /></InputAdornment>) }} sx={{ minWidth: 280 }} />
+      </Box>
+
+      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
+            <TableHead>
+              <TableRow>
+                {["Patient", "IPD #", "Diagnosis", "Bed", "Doctor", "Days", "Status", ""].map((h, i) => (
+                  <TableCell key={h || i} align={i === 7 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default" }}>{h}</TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {isLoading ? (
+                <TableRow><TableCell colSpan={8} align="center" sx={{ py: 4 }}><CircularProgress size={28} sx={{ color: "#06b6d4" }} /></TableCell></TableRow>
+              ) : isError ? (
+                <TableRow><TableCell colSpan={8} sx={{ py: 4, border: 0 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
+              ) : filtered.length === 0 ? (
+                <TableRow><TableCell colSpan={8} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No admissions" subtitle="Nothing here for this filter." /></TableCell></TableRow>
+              ) : filtered.map((a) => {
+                const sm = STATUS_META[a.status] || { label: a.status, color: "#64748b" };
+                return (
+                  <TableRow key={a.admissionId} hover>
+                    <TableCell sx={{ py: 1.5 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>{a.patientName}</Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>{a.uhid}</Typography>
+                    </TableCell>
+                    <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{a.admissionNumber || "—"}</TableCell>
+                    <TableCell sx={{ maxWidth: 220 }}>
+                      <Tooltip title={a.admittingDiagnosis || ""}>
+                        <Typography variant="body2" sx={{ color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 220 }}>{a.admittingDiagnosis || "—"}</Typography>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell><Typography variant="body2" sx={{ color: "text.primary" }}>{a.bed?.label || "—"}</Typography></TableCell>
+                    <TableCell sx={{ color: "text.secondary" }}>{a.doctorName || "—"}</TableCell>
+                    <TableCell sx={{ color: "text.secondary" }}>{a.days ?? "—"}</TableCell>
+                    <TableCell><Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700 }} /></TableCell>
+                    <TableCell align="right">
+                      {a.status === "ADMITTED" && (
+                        <>
+                          <Tooltip title="Transfer bed"><IconButton size="small" onClick={() => setTransferFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2" } }}><SwapHorizRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Discharge"><IconButton size="small" onClick={() => setDischargeFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#ef4444" } }}><LogoutRounded fontSize="small" /></IconButton></Tooltip>
+                          <IconButton size="small" onClick={(e) => setMenu({ anchor: e.currentTarget, row: a })} sx={{ color: "text.secondary" }}><MoreVertRounded fontSize="small" /></IconButton>
+                        </>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+
+      <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={() => setMenu({ anchor: null, row: null })}>
+        <MenuItem onClick={() => cancel(menu.row)} sx={{ color: "#ef4444" }}><CancelRounded fontSize="small" sx={{ mr: 1 }} /> Cancel admission</MenuItem>
+      </Menu>
+
+      {admitOpen && <AdmitDialog open={admitOpen} onClose={() => setAdmitOpen(false)} onAdmitted={() => { setAdmitOpen(false); refetch(); }} />}
+      {transferFor && <TransferDialog open admission={transferFor} onClose={() => setTransferFor(null)} onDone={() => { setTransferFor(null); refetch(); }} />}
+      {dischargeFor && <DischargeDialog open admissionId={dischargeFor.admissionId} onClose={() => setDischargeFor(null)} onDone={() => { setDischargeFor(null); refetch(); }} />}
+    </Box>
+  );
+}

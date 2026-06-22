@@ -7,6 +7,7 @@ import {
 import {
   PrintRounded, EventRounded, CheckCircleRounded, CancelRounded, PaymentsRounded,
   PersonAddRounded, TrendingUpRounded, AccessTimeRounded, ReplayRounded, AccountBalanceWalletRounded,
+  HotelRounded, LocalHotelRounded, MeetingRoomRounded,
 } from "@mui/icons-material";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
@@ -78,12 +79,79 @@ export default function Reports() {
           <Tab icon={<EventRounded fontSize="small" />} iconPosition="start" label="Daily OPD Summary" />
           <Tab icon={<TrendingUpRounded fontSize="small" />} iconPosition="start" label="Appointment Analytics" />
           <Tab icon={<PaymentsRounded fontSize="small" />} iconPosition="start" label="Collection Report" />
+          <Tab icon={<HotelRounded fontSize="small" />} iconPosition="start" label="IPD Census" />
         </Tabs>
       </Paper>
 
       {tab === 0 && <DailyOpd />}
       {tab === 1 && <Analytics />}
       {tab === 2 && <Collection />}
+      {tab === 3 && <Census />}
+    </Box>
+  );
+}
+
+// ── IPD Census ───────────────────────────────────────────────────────────────
+function Census() {
+  const [from, setFrom] = useState(dayjs().format("YYYY-MM-DD"));
+  const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
+  const ref = useRef<HTMLDivElement>(null);
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["report-census", from, to],
+    queryFn: async () => (await axiosInstance.get("/ipd/census", { params: { from, to } })).data.data,
+  });
+  const beds = data?.beds;
+
+  return (
+    <Box>
+      <Toolbar onPrint={() => printRegion(ref.current, `IPD Census — ${from} to ${to}`)}>
+        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
+        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
+      </Toolbar>
+
+      {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+        <Box ref={ref}>
+          <Grid container spacing={2} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHotelRounded />} label="Current inpatients" value={String(data.currentInpatients)} color={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<MeetingRoomRounded />} label="Bed occupancy" value={`${beds.occupancyRate}%`} color="#ef4444" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="Admissions" value={String(data.movement.admissions)} color="#10b981" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ReplayRounded />} label="Discharges" value={String(data.movement.discharges)} color="#8b5cf6" /></Grid>
+          </Grid>
+
+          <Grid container spacing={2.5}>
+            <Grid size={{ xs: 12, md: 5 }}>
+              <ChartCard title="Beds by status" height={260}>
+                {beds.total ? (
+                  <PieChart>
+                    <Pie dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label
+                      data={[
+                        { name: "Occupied", value: beds.occupied }, { name: "Available", value: beds.available },
+                        { name: "Reserved", value: beds.reserved }, { name: "Maintenance", value: beds.maintenance },
+                      ].filter((d) => d.value > 0)}>
+                      {["#ef4444", "#10b981", "#f59e0b", "#64748b"].map((c, i) => <Cell key={i} fill={c} />)}
+                    </Pie><Legend /><RTooltip />
+                  </PieChart>
+                ) : <Empty />}
+              </ChartCard>
+            </Grid>
+            <Grid size={{ xs: 12, md: 7 }}>
+              <ChartCard title="Occupancy by ward (%)" height={260}>
+                {data.byWard.length ? (
+                  <BarChart data={data.byWard} layout="vertical" margin={{ left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+                    <XAxis type="number" domain={[0, 100]} {...axisProps} /><YAxis type="category" dataKey="wardName" width={120} {...axisProps} />
+                    <RTooltip formatter={(v: any) => `${v}%`} /><Bar dataKey="occupancyRate" name="Occupancy" fill={ACCENT} radius={[0, 6, 6, 0]} />
+                  </BarChart>
+                ) : <Empty />}
+              </ChartCard>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <SimpleTable title="Ward detail" head={["Ward", "Beds", "Occupied", "Available", "Occupancy"]}
+                rows={data.byWard.map((w: any) => [w.wardName || "—", String(w.totalBeds), String(w.occupied), String(w.available), `${w.occupancyRate}%`])} />
+            </Grid>
+          </Grid>
+        </Box>
+      )}
     </Box>
   );
 }
