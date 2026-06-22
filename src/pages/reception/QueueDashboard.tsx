@@ -8,12 +8,13 @@ import {
 import {
   MoreVertRounded, PlayArrowRounded, CheckCircleRounded,
   SkipNextRounded, CancelRounded, SyncRounded, ReceiptRounded,
-  MonitorHeartRounded,
+  MonitorHeartRounded, LogoutRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import BillingModal from "./BillingModal";
 import VitalsModal from "./VitalsModal";
+import CheckoutDialog from "../../components/reception/CheckoutDialog";
 import { useSocket } from "../../hooks/useSocket";
 
 const getDoctorInitials = (doctorName?: string) => {
@@ -32,6 +33,8 @@ export default function QueueDashboard() {
   const [selectedAppt, setSelectedAppt] = useState<any>(null);
   const [billingDialog, setBillingDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
   const [vitalsDialog, setVitalsDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [checkoutToken, setCheckoutToken] = useState<any>(null);
 
   const { data: vitalsCollector = "RECEPTIONIST" } = useQuery({
     queryKey: ['hospitalSettings', 'vitalsCollector'],
@@ -98,6 +101,7 @@ export default function QueueDashboard() {
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>, token: any) => {
     setAnchorEl(event.currentTarget);
     setSelectedTokenId(token.queueTokenId);
+    setSelectedStatus(token.statusCode);
     setSelectedAppt({
       appointmentId: token.appointmentId,
       patientId: token.patientId,
@@ -338,6 +342,17 @@ export default function QueueDashboard() {
             <ReceiptRounded fontSize="small" sx={{ mr: 1.5, color: "#f59e0b" }} /> Billing & Receipt
           </MenuItem>
         )}
+        {["READY_FOR_DOCTOR", "IN_CONSULTATION", "PHARMACY_PENDING"].includes(selectedStatus) && (
+          <MenuItem
+            onClick={() => {
+              setAnchorEl(null);
+              setCheckoutToken({ queueTokenId: selectedTokenId, appointmentId: selectedAppt?.appointmentId, patientName: selectedAppt?.patientName });
+            }}
+            sx={{ "&:hover": { bgcolor: "rgba(16,185,129,0.08)" }, color: "#10b981" }}
+          >
+            <LogoutRounded fontSize="small" sx={{ mr: 1.5, color: "#10b981" }} /> Check out
+          </MenuItem>
+        )}
         <MenuItem onClick={() => handleAction('skip')} sx={{ "&:hover": { bgcolor: "action.hover" } }}>
           <SkipNextRounded fontSize="small" sx={{ mr: 1.5, color: "#f59e0b" }} /> Skip Patient
         </MenuItem>
@@ -356,6 +371,14 @@ export default function QueueDashboard() {
           appointmentDate={billingDialog.appt.appointmentDate || new Date().toISOString()}
         />
       )}
+
+      {/* Check-out Dialog */}
+      <CheckoutDialog
+        open={!!checkoutToken}
+        onClose={() => setCheckoutToken(null)}
+        token={checkoutToken}
+        onDone={() => queryClient.invalidateQueries({ queryKey: ['queue'] })}
+      />
 
       {/* Vitals Modal */}
       {vitalsDialog.appt && (
