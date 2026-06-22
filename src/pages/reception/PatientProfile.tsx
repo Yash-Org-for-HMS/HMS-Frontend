@@ -42,6 +42,7 @@ import PatientDocumentsSection from "./PatientDocumentsSection";
 import IdCardModal from "../../components/reception/IdCardModal";
 import ReferralDialog from "../../components/reception/ReferralDialog";
 import ClinicalRecordsSection from "../../components/reception/ClinicalRecordsSection";
+import ConsentFormsSection from "../../components/reception/ConsentFormsSection";
 import { useToast } from "../../contexts/ToastContext";
 
 interface Patient {
@@ -599,6 +600,11 @@ export default function PatientProfile() {
         {/* Prescriptions & Reports (read-only, reprintable) */}
         <Grid size={{ xs: 12 }}>
           <ClinicalRecordsSection patientId={patient.patientId} />
+        </Grid>
+
+        {/* Consent Forms */}
+        <Grid size={{ xs: 12 }}>
+          <ConsentFormsSection patientId={patient.patientId} patientName={`${patient.firstName || ""} ${patient.lastName || ""}`.trim()} />
         </Grid>
 
         {/* Patient Documents Section */}
