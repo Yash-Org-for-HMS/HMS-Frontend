@@ -42,6 +42,9 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const [newItemPrice, setNewItemPrice] = useState("");
   const [addingItem, setAddingItem] = useState(false);
 
+  // Hospital identity for the receipt header
+  const [hospitalProfile, setHospitalProfile] = useState<any>(null);
+
   // Discount & Tax
   const [defaultTaxPct, setDefaultTaxPct] = useState(0);
   const [discountInput, setDiscountInput] = useState("");
@@ -73,6 +76,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       if (lookupsRes.data.success) {
         setPaymentMethods(lookupsRes.data.data.methods);
         setDefaultTaxPct(hospitalTaxPct);
+        setHospitalProfile(lookupsRes.data.data.hospital || null);
       }
 
       // 2. Fetch or Generate Invoice
@@ -317,13 +321,27 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                 }}
               >
                 {/* Print Header */}
-                <Box className="header" sx={{ textAlign: "center", mb: 4, borderBottom: "2px solid #3b82f6", pb: 3 }}>
-                  <Typography className="hospital-name" variant="h4" sx={{ fontWeight: 900, color: "#1e3a8a", letterSpacing: 1 }}>{hospital?.name || "Hospital"}</Typography>
-                  {hospital?.code && (
-                    <Typography className="hospital-info" variant="body2" sx={{ color: "#6b7280", mt: 0.5 }}>Facility Code: {hospital.code}</Typography>
-                  )}
-                  <Typography className="receipt-title" variant="subtitle1" sx={{ mt: 3, fontWeight: 800, letterSpacing: 3, color: "#3b82f6" }}>PAYMENT RECEIPT</Typography>
-                </Box>
+                {(() => {
+                  const addressLine = [hospitalProfile?.addressLine1, hospitalProfile?.addressLine2, hospitalProfile?.postalCode].filter(Boolean).join(", ");
+                  const contactLine = [
+                    hospitalProfile?.officialPhone ? `Phone: ${hospitalProfile.officialPhone}` : null,
+                    hospitalProfile?.officialEmail ? hospitalProfile.officialEmail : null,
+                  ].filter(Boolean).join(" | ");
+                  return (
+                    <Box className="header" sx={{ textAlign: "center", mb: 4, borderBottom: "2px solid #3b82f6", pb: 3 }}>
+                      <Typography className="hospital-name" variant="h4" sx={{ fontWeight: 900, color: "#1e3a8a", letterSpacing: 1 }}>
+                        {hospitalProfile?.hospitalName || hospital?.name || "Hospital"}
+                      </Typography>
+                      {addressLine && (
+                        <Typography className="hospital-info" variant="body2" sx={{ color: "#6b7280", mt: 0.5 }}>{addressLine}</Typography>
+                      )}
+                      {contactLine && (
+                        <Typography className="hospital-info" variant="body2" sx={{ color: "#6b7280" }}>{contactLine}</Typography>
+                      )}
+                      <Typography className="receipt-title" variant="subtitle1" sx={{ mt: 3, fontWeight: 800, letterSpacing: 3, color: "#3b82f6" }}>PAYMENT RECEIPT</Typography>
+                    </Box>
+                  );
+                })()}
 
                 {/* Info */}
                 <Box className="grid-info" sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}>

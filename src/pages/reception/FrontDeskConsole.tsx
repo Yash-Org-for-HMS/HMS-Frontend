@@ -305,6 +305,7 @@ export default function FrontDeskConsole() {
                   isEmbedded={true} 
                   prefilledPatientId={selectedPatientId} 
                   onSuccess={(apptId, pName, apptDate) => {
+                     toast.success(`Appointment booked${pName ? ` for ${pName}` : ""}`);
                      if (apptId) {
                         setBillingDialog({ open: true, apptId, patientName: pName || "Patient", apptDate: apptDate || new Date().toISOString() });
                      }

@@ -213,14 +213,9 @@ export default function PatientsList() {
           />
         </Box>
 
-        {error && typeof error === "string" && (
+        {error && (
           <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5" }}>
-            {error}
-          </Alert>
-        )}
-        {error && typeof error !== "string" && (
-          <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5" }}>
-            Failed to load patients
+            {(error as any)?.response?.data?.message || "Failed to load patients"}
           </Alert>
         )}
 
