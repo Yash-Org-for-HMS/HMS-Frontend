@@ -41,6 +41,7 @@ import ErrorState from "../../components/ErrorState";
 import PatientDocumentsSection from "./PatientDocumentsSection";
 import IdCardModal from "../../components/reception/IdCardModal";
 import ReferralDialog from "../../components/reception/ReferralDialog";
+import ClinicalRecordsSection from "../../components/reception/ClinicalRecordsSection";
 import { useToast } from "../../contexts/ToastContext";
 
 interface Patient {
@@ -593,6 +594,11 @@ export default function PatientProfile() {
               </Box>
             )}
           </SectionCard>
+        </Grid>
+
+        {/* Prescriptions & Reports (read-only, reprintable) */}
+        <Grid size={{ xs: 12 }}>
+          <ClinicalRecordsSection patientId={patient.patientId} />
         </Grid>
 
         {/* Patient Documents Section */}
