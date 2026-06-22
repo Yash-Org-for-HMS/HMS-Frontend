@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Grid, Chip, Avatar, Button, CircularProgress, Alert,
+  Box, Typography, Paper, Chip, Avatar, Button, CircularProgress, Alert,
   Divider, Skeleton, Tabs, Tab, Table, TableHead, TableBody, TableRow, TableCell,
   TableContainer, TablePagination, Menu, MenuItem, IconButton, Stack, Tooltip,
   ListItemIcon, ListItemText,
@@ -307,26 +307,18 @@ export default function PatientProfile() {
       </Paper>
 
       {/* ── Stat tiles ── */}
-      <Grid container spacing={2} sx={{ mb: 2.5 }}>
-        <Grid size={{ xs: 6, md: 3 }}>
-          <StatTile icon={<EventRounded />} label="Appointments" value={String(stats.total)} color={ACCENT}
-            sub={stats.upcoming ? `${stats.upcoming} upcoming` : "none upcoming"} />
-        </Grid>
-        <Grid size={{ xs: 6, md: 3 }}>
-          <StatTile icon={<CalendarTodayRounded />} label="Last visit" color="#8b5cf6"
-            value={stats.lastVisit ? stats.lastVisit.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—"}
-            sub={stats.lastVisit ? stats.lastVisit.getFullYear().toString() : "no visits yet"} />
-        </Grid>
-        <Grid size={{ xs: 6, md: 3 }}>
-          <StatTile icon={<PaymentsRounded />} label="Total billed" value={inr(billing?.totals?.totalBilled)} color="#10b981"
-            sub={`${billing?.totals?.invoiceCount || 0} invoices`} />
-        </Grid>
-        <Grid size={{ xs: 6, md: 3 }}>
-          <StatTile icon={<AccountBalanceWalletRounded />} label="Outstanding dues" value={inr(billing?.totals?.totalDues)}
-            color={Number(billing?.totals?.totalDues || 0) > 0 ? "#ef4444" : "#10b981"}
-            sub={Number(billing?.totals?.totalDues || 0) > 0 ? "due now" : "all settled"} />
-        </Grid>
-      </Grid>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }, gap: 2, mb: 2.5 }}>
+        <StatTile icon={<EventRounded />} label="Appointments" value={String(stats.total)} color={ACCENT}
+          sub={stats.upcoming ? `${stats.upcoming} upcoming` : "none upcoming"} />
+        <StatTile icon={<CalendarTodayRounded />} label="Last visit" color="#8b5cf6"
+          value={stats.lastVisit ? stats.lastVisit.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—"}
+          sub={stats.lastVisit ? stats.lastVisit.getFullYear().toString() : "no visits yet"} />
+        <StatTile icon={<PaymentsRounded />} label="Total billed" value={inr(billing?.totals?.totalBilled)} color="#10b981"
+          sub={`${billing?.totals?.invoiceCount || 0} invoices`} />
+        <StatTile icon={<AccountBalanceWalletRounded />} label="Outstanding dues" value={inr(billing?.totals?.totalDues)}
+          color={Number(billing?.totals?.totalDues || 0) > 0 ? "#ef4444" : "#10b981"}
+          sub={Number(billing?.totals?.totalDues || 0) > 0 ? "due now" : "all settled"} />
+      </Box>
 
       {/* ── Tabs ── */}
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", mb: 2.5 }}>
@@ -345,62 +337,54 @@ export default function PatientProfile() {
 
       {/* ── Tab: Overview ── */}
       {tab === 0 && (
-        <Grid container spacing={2.5}>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <SectionCard title="Personal Information" icon={<PersonRounded fontSize="small" />}>
-              <InfoRow icon={<CakeRounded sx={{ fontSize: 18 }} />} label="Date of Birth" value={new Date(patient.dateOfBirth).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })} />
-              <Divider sx={{ borderColor: "divider" }} />
-              <InfoRow icon={<WcRounded sx={{ fontSize: 18 }} />} label="Gender" value={patient.genderLabel} />
-              <Divider sx={{ borderColor: "divider" }} />
-              <InfoRow icon={<BloodtypeRounded sx={{ fontSize: 18 }} />} label="Blood Group" value={patient.bloodGroupLabel} />
-            </SectionCard>
-          </Grid>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" }, gap: 2.5 }}>
+          <SectionCard title="Personal Information" icon={<PersonRounded fontSize="small" />}>
+            <InfoRow icon={<CakeRounded sx={{ fontSize: 18 }} />} label="Date of Birth" value={new Date(patient.dateOfBirth).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })} />
+            <Divider sx={{ borderColor: "divider" }} />
+            <InfoRow icon={<WcRounded sx={{ fontSize: 18 }} />} label="Gender" value={patient.genderLabel} />
+            <Divider sx={{ borderColor: "divider" }} />
+            <InfoRow icon={<BloodtypeRounded sx={{ fontSize: 18 }} />} label="Blood Group" value={patient.bloodGroupLabel} />
+          </SectionCard>
 
-          <Grid size={{ xs: 12, md: 6 }}>
-            <SectionCard title="Contact Details" icon={<LocalPhoneRounded fontSize="small" />}>
-              <InfoRow icon={<LocalPhoneRounded sx={{ fontSize: 18 }} />} label="Phone" value={patient.phone} />
-              <Divider sx={{ borderColor: "divider" }} />
-              <InfoRow icon={<EmailRounded sx={{ fontSize: 18 }} />} label="Email" value={patient.email} />
-              <Divider sx={{ borderColor: "divider" }} />
-              <InfoRow icon={<LocationOnRounded sx={{ fontSize: 18 }} />} label="Address" value={formatAddress(patient)} />
-            </SectionCard>
-          </Grid>
+          <SectionCard title="Contact Details" icon={<LocalPhoneRounded fontSize="small" />}>
+            <InfoRow icon={<LocalPhoneRounded sx={{ fontSize: 18 }} />} label="Phone" value={patient.phone} />
+            <Divider sx={{ borderColor: "divider" }} />
+            <InfoRow icon={<EmailRounded sx={{ fontSize: 18 }} />} label="Email" value={patient.email} />
+            <Divider sx={{ borderColor: "divider" }} />
+            <InfoRow icon={<LocationOnRounded sx={{ fontSize: 18 }} />} label="Address" value={formatAddress(patient)} />
+          </SectionCard>
 
-          <Grid size={{ xs: 12, md: 6 }}>
-            <SectionCard title="Emergency Contact" icon={<ContactPhoneRounded fontSize="small" />}>
-              {patient.emergencyContactName ? (
-                <>
-                  <InfoRow icon={<PersonRounded sx={{ fontSize: 18 }} />} label="Name" value={patient.emergencyContactName} />
-                  <Divider sx={{ borderColor: "divider" }} />
-                  <InfoRow icon={<LocalPhoneRounded sx={{ fontSize: 18 }} />} label="Phone" value={patient.emergencyContactPhone} />
-                  <Divider sx={{ borderColor: "divider" }} />
-                  <InfoRow icon={<WcRounded sx={{ fontSize: 18 }} />} label="Relationship" value={patient.emergencyContactRelation} />
-                </>
-              ) : (
-                <Box sx={{ py: 3, textAlign: "center" }}>
-                  <ContactPhoneRounded sx={{ fontSize: 32, color: "text.disabled", mb: 1 }} />
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>No emergency contact on file</Typography>
-                  {canEdit && <Button size="small" onClick={() => navigate(`/reception/patients/${id}/edit`)} sx={{ color: ACCENT, textTransform: "none", mt: 0.5 }}>Add now</Button>}
-                </Box>
-              )}
-            </SectionCard>
-          </Grid>
+          <SectionCard title="Emergency Contact" icon={<ContactPhoneRounded fontSize="small" />}>
+            {patient.emergencyContactName ? (
+              <>
+                <InfoRow icon={<PersonRounded sx={{ fontSize: 18 }} />} label="Name" value={patient.emergencyContactName} />
+                <Divider sx={{ borderColor: "divider" }} />
+                <InfoRow icon={<LocalPhoneRounded sx={{ fontSize: 18 }} />} label="Phone" value={patient.emergencyContactPhone} />
+                <Divider sx={{ borderColor: "divider" }} />
+                <InfoRow icon={<WcRounded sx={{ fontSize: 18 }} />} label="Relationship" value={patient.emergencyContactRelation} />
+              </>
+            ) : (
+              <Box sx={{ py: 3, textAlign: "center" }}>
+                <ContactPhoneRounded sx={{ fontSize: 32, color: "text.disabled", mb: 1 }} />
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>No emergency contact on file</Typography>
+                {canEdit && <Button size="small" onClick={() => navigate(`/reception/patients/${id}/edit`)} sx={{ color: ACCENT, textTransform: "none", mt: 0.5 }}>Add now</Button>}
+              </Box>
+            )}
+          </SectionCard>
 
-          <Grid size={{ xs: 12, md: 6 }}>
-            <SectionCard title="Allergies & Medical Notes" icon={<WarningAmberRounded fontSize="small" />}>
-              {patient.allergies ? (
-                <Box sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
-                  <Typography variant="body2" sx={{ color: "#d97706", lineHeight: 1.7, fontWeight: 500 }}>{patient.allergies}</Typography>
-                </Box>
-              ) : (
-                <Box sx={{ py: 3, textAlign: "center" }}>
-                  <WarningAmberRounded sx={{ fontSize: 32, color: "text.disabled", mb: 1 }} />
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>No known allergies recorded</Typography>
-                </Box>
-              )}
-            </SectionCard>
-          </Grid>
-        </Grid>
+          <SectionCard title="Allergies & Medical Notes" icon={<WarningAmberRounded fontSize="small" />}>
+            {patient.allergies ? (
+              <Box sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
+                <Typography variant="body2" sx={{ color: "#d97706", lineHeight: 1.7, fontWeight: 500 }}>{patient.allergies}</Typography>
+              </Box>
+            ) : (
+              <Box sx={{ py: 3, textAlign: "center" }}>
+                <WarningAmberRounded sx={{ fontSize: 32, color: "text.disabled", mb: 1 }} />
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>No known allergies recorded</Typography>
+              </Box>
+            )}
+          </SectionCard>
+        </Box>
       )}
 
       {/* ── Tab: Appointments ── */}
