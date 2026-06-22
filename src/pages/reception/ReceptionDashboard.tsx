@@ -21,6 +21,7 @@ import {
   CalendarTodayRounded,
   HowToRegRounded,
   HourglassTopRounded,
+  AccessTimeRounded,
   CheckCircleRounded,
   CurrencyRupeeRounded,
   TrendingUpRounded,
@@ -43,6 +44,7 @@ interface DashboardStats {
   todaysAppointments: number;
   checkedInPatients: number;
   waitingPatients: number;
+  avgWaitMinutes: number;
   completedVisits: number;
   todaysRevenue: number;
   upcomingAppointments: AppointmentEntry[];
@@ -158,6 +160,14 @@ export default function ReceptionDashboard() {
             title="Waiting"
             value={stats?.waitingPatients || 0}
             icon={<HourglassTopRounded />}
+            loading={loading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }} sx={{ flexBasis: { md: "20%" }, maxWidth: { md: "20%" } }}>
+          <StatCard
+            title="Avg Wait"
+            value={stats ? (stats.avgWaitMinutes >= 60 ? `${Math.floor(stats.avgWaitMinutes / 60)}h ${stats.avgWaitMinutes % 60}m` : `${stats.avgWaitMinutes}m`) : "0m"}
+            icon={<AccessTimeRounded />}
             loading={loading}
           />
         </Grid>

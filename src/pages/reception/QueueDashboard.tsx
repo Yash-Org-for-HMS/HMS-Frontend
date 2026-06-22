@@ -55,6 +55,24 @@ export default function QueueDashboard() {
   const activeTokens = tokens.filter((t: any) => t.statusCode !== "SKIPPED" && t.statusCode !== "COMPLETED" && t.statusCode !== "CANCELLED");
   const skippedTokens = tokens.filter((t: any) => t.statusCode === "SKIPPED");
 
+  // ── Waiting-time monitor ──────────────────────────────────────────────
+  // Minutes from joining the queue until seen by the doctor (or until now if
+  // still waiting). Recomputed each render; the 30s refetch keeps it fresh.
+  const now = Date.now();
+  const isWaitingStatus = (t: any) => t.statusCode === "WAITING_FOR_VITALS" || t.statusCode === "READY_FOR_DOCTOR";
+  const waitMinutes = (t: any) => {
+    if (!t.createdAt) return 0;
+    const end = t.consultationStartedAt ? new Date(t.consultationStartedAt).getTime() : now;
+    return Math.max(0, Math.round((end - new Date(t.createdAt).getTime()) / 60000));
+  };
+  const waitColor = (m: number) => (m >= 30 ? "#ef4444" : m >= 15 ? "#f59e0b" : "#10b981");
+  const fmtWait = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`);
+
+  const waitingTokens = activeTokens.filter(isWaitingStatus);
+  const waits = waitingTokens.map(waitMinutes);
+  const avgWait = waits.length ? Math.round(waits.reduce((a: number, b: number) => a + b, 0) / waits.length) : 0;
+  const maxWait = waits.length ? Math.max(...waits) : 0;
+
   // Listen for real-time queue updates
   const invalidateQueue = useCallback(() => queryClient.invalidateQueries({ queryKey: ['queue'] }), [queryClient]);
   useSocket({
@@ -126,6 +144,20 @@ export default function QueueDashboard() {
         </Button>
       </Box>
 
+      {/* Waiting-time monitor */}
+      <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        {[
+          { label: "Patients Waiting", value: String(waitingTokens.length), color: "#06b6d4" },
+          { label: "Avg Wait", value: fmtWait(avgWait), color: waitColor(avgWait) },
+          { label: "Longest Wait", value: fmtWait(maxWait), color: waitColor(maxWait) },
+        ].map((s) => (
+          <Paper key={s.label} elevation={0} sx={{ flex: "1 1 140px", minWidth: 140, p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4 }}>{s.label}</Typography>
+            <Typography variant="h5" sx={{ color: s.color, fontWeight: 800, mt: 0.5 }}>{s.value}</Typography>
+          </Paper>
+        ))}
+      </Box>
+
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
       {actionMutation.isError && <Alert severity="error" sx={{ mb: 3 }}>{actionMutation.error?.message || "Action failed"}</Alert>}
 
@@ -134,8 +166,8 @@ export default function QueueDashboard() {
           <Table>
             <TableHead>
               <TableRow>
-                {["Token", "Patient", "Doctor", "Status", "Vitals", "Quick Actions", ""].map((h, i) => (
-                  <TableCell key={h} align={i >= 5 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}>
+                {["Token", "Patient", "Doctor", "Status", "Wait", "Vitals", "Quick Actions", ""].map((h, i) => (
+                  <TableCell key={h} align={i >= 6 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}>
                     {h}
                   </TableCell>
                 ))}
@@ -143,9 +175,9 @@ export default function QueueDashboard() {
             </TableHead>
             <TableBody>
               {loading && activeTokens.length === 0 ? (
-                <TableRow><TableCell colSpan={6} align="center" sx={{ py: 4 }}><CircularProgress size={30} sx={{ color: "#06b6d4" }}/></TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} align="center" sx={{ py: 4 }}><CircularProgress size={30} sx={{ color: "#06b6d4" }}/></TableCell></TableRow>
               ) : activeTokens.length === 0 ? (
-                <TableRow><TableCell colSpan={6} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No patients in queue" subtitle="No active patients in the queue right now." /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No patients in queue" subtitle="No active patients in the queue right now." /></TableCell></TableRow>
               ) : (
                 activeTokens.map((token: any) => {
                   const isWaiting = token.statusCode === 'WAITING_FOR_VITALS' || token.statusCode === 'READY_FOR_DOCTOR';
@@ -171,6 +203,19 @@ export default function QueueDashboard() {
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                         <Chip label={token.statusLabel} size="small" sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}55`, fontWeight: 600, fontSize: "0.7rem" }} />
+                      </TableCell>
+                      {/* Wait time cell */}
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
+                        {(() => {
+                          const m = waitMinutes(token);
+                          return isWaiting ? (
+                            <Chip label={fmtWait(m)} size="small" sx={{ bgcolor: `${waitColor(m)}1f`, color: waitColor(m), fontWeight: 700, fontSize: "0.72rem" }} />
+                          ) : (
+                            <Tooltip title="Time waited before being seen">
+                              <Typography variant="caption" sx={{ color: "text.secondary" }}>{fmtWait(m)}</Typography>
+                            </Tooltip>
+                          );
+                        })()}
                       </TableCell>
                       {/* Vitals Badge Cell */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
