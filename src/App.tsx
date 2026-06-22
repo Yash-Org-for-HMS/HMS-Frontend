@@ -77,6 +77,7 @@ const AppointmentsList = lazy(() => import("./pages/reception/AppointmentsList")
 const AppointmentCalendar = lazy(() => import("./pages/reception/AppointmentCalendar"));
 const AppointmentForm = lazy(() => import("./pages/reception/AppointmentForm"));
 const DoctorAvailability = lazy(() => import("./pages/reception/DoctorAvailability"));
+const DepartmentDirectory = lazy(() => import("./pages/reception/DepartmentDirectory"));
 const QueueDashboard = lazy(() => import("./pages/reception/QueueDashboard"));
 const GenerateInvoice = lazy(() => import("./pages/billing/GenerateInvoice"));
 const NotificationsLog = lazy(() => import("./pages/reception/NotificationsLog"));
@@ -214,6 +215,7 @@ function App() {
             <Route path="/reception/appointments/new" element={el(AppointmentForm)} />
             <Route path="/reception/appointments/:id/edit" element={el(AppointmentForm)} />
             <Route path="/reception/doctors" element={el(DoctorAvailability)} />
+            <Route path="/reception/directory" element={el(DepartmentDirectory)} />
 
             <Route path="/reception/queue" element={el(QueueDashboard)} />
             <Route path="/reception/queue/new" element={el(QueueDashboard)} />

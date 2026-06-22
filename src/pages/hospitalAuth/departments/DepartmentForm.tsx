@@ -43,6 +43,9 @@ export default function DepartmentForm() {
     departmentTypeId: "",
     headOfDepartmentId: "",
     status: "active",
+    location: "",
+    phoneExtension: "",
+    opdHours: "",
   });
 
   const { data: departmentTypes = [] } = useQuery<DepartmentType[]>({
@@ -70,6 +73,9 @@ export default function DepartmentForm() {
       departmentTypeId: dept.departmentTypeId ? String(dept.departmentTypeId) : "",
       headOfDepartmentId: dept.headOfDepartmentId || "",
       status: dept.status || "active",
+      location: dept.location || "",
+      phoneExtension: dept.phoneExtension || "",
+      opdHours: dept.opdHours || "",
     });
   }, [deptData]);
 
@@ -222,6 +228,63 @@ export default function DepartmentForm() {
                   </MenuItem>
                 ))}
               </TextField>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Location (e.g. Block B, 2nd Floor)"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                InputLabelProps={{ style: { color: "text.secondary" } }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    color: "text.primary",
+                    "& fieldset": { borderColor: "divider" },
+                    "&:hover fieldset": { borderColor: "divider" },
+                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                  },
+                }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Phone Extension (e.g. 204)"
+                name="phoneExtension"
+                value={formData.phoneExtension}
+                onChange={handleChange}
+                InputLabelProps={{ style: { color: "text.secondary" } }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    color: "text.primary",
+                    "& fieldset": { borderColor: "divider" },
+                    "&:hover fieldset": { borderColor: "divider" },
+                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                  },
+                }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="OPD Hours (e.g. Mon–Sat, 9:00 AM – 1:00 PM)"
+                name="opdHours"
+                value={formData.opdHours}
+                onChange={handleChange}
+                InputLabelProps={{ style: { color: "text.secondary" } }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    color: "text.primary",
+                    "& fieldset": { borderColor: "divider" },
+                    "&:hover fieldset": { borderColor: "divider" },
+                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                  },
+                }}
+              />
             </Grid>
 
             <Grid size={{ xs: 12 }}>
