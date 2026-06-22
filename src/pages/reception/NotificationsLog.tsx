@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -11,29 +12,85 @@ import {
   TableRow,
   Chip,
   CircularProgress,
+  TextField,
+  InputAdornment,
+  Pagination,
+  Alert,
+  Tooltip,
 } from "@mui/material";
-import { NotificationsRounded, EmailRounded, SmsRounded, CheckCircleRounded } from "@mui/icons-material";
+import { NotificationsRounded, EmailRounded, SmsRounded, CheckCircleRounded, SearchRounded, ScienceRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 
+const PAGE_SIZE = 20;
+
 export default function NotificationsLog() {
-  const { data: notifications = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
-    queryKey: ["reception-notifications"],
-    queryFn: async () => (await axiosInstance.get("/reception/notifications?limit=100")).data.data,
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+
+  // Debounce the search box; reset to page 1 whenever the term changes.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const { data, isLoading: loading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["reception-notifications", search, page],
+    queryFn: async () =>
+      (await axiosInstance.get("/reception/notifications", {
+        params: { search, page, limit: PAGE_SIZE },
+      })).data,
+    placeholderData: keepPreviousData, // keep the current page visible while the next loads
   });
+
+  const notifications: any[] = data?.data || [];
+  const meta = data?.meta as { total: number; totalPages: number } | undefined;
 
   return (
     <Box sx={{ p: 3, maxWidth: 1200, mx: "auto" }}>
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 3 }}>
         <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1, display: "flex", alignItems: "center", gap: 1.5 }}>
           <NotificationsRounded sx={{ color: "#8b5cf6", fontSize: 32 }} />
           Notifications Log
+          <Tooltip title="These notifications are logged for the record but are not yet delivered as real SMS/email.">
+            <Chip
+              icon={<ScienceRounded sx={{ fontSize: "16px !important" }} />}
+              label="Simulated"
+              size="small"
+              sx={{ bgcolor: "rgba(245,158,11,0.12)", color: "#f59e0b", fontWeight: 700, border: "1px solid rgba(245,158,11,0.3)" }}
+            />
+          </Tooltip>
         </Typography>
         <Typography variant="body1" sx={{ color: "text.secondary" }}>
-          History of all simulated SMS and Email notifications sent to patients.
+          History of SMS and Email notifications sent to patients.
         </Typography>
       </Box>
+
+      <Alert severity="info" icon={<ScienceRounded />} sx={{ mb: 3 }}>
+        Notifications are <strong>simulated</strong> — they're recorded here but not actually delivered yet. Wire up an SMS/email provider to send for real.
+      </Alert>
+
+      <TextField
+        fullWidth
+        size="small"
+        placeholder="Search by title, message, or channel…"
+        value={searchInput}
+        onChange={(e) => setSearchInput(e.target.value)}
+        sx={{ mb: 2, maxWidth: 420 }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchRounded sx={{ color: "text.secondary" }} />
+            </InputAdornment>
+          ),
+          endAdornment: isFetching ? <CircularProgress size={16} sx={{ color: "#8b5cf6" }} /> : undefined,
+        }}
+      />
 
       <Paper sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, overflow: "hidden" }}>
         <TableContainer sx={{ maxHeight: 600 }}>
@@ -63,7 +120,7 @@ export default function NotificationsLog() {
               ) : notifications.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} sx={{ py: 4, borderBottom: "none" }}>
-                    <Mascot pose="nothing-here-yet" subtitle="No notifications sent yet." size={130} />
+                    <Mascot pose="nothing-here-yet" subtitle={search ? "No notifications match your search." : "No notifications sent yet."} size={130} />
                   </TableCell>
                 </TableRow>
               ) : (
@@ -90,12 +147,20 @@ export default function NotificationsLog() {
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                      <Chip
-                        icon={<CheckCircleRounded fontSize="small" />}
-                        label={notif.status}
-                        size="small"
-                        sx={{ bgcolor: "rgba(16, 185, 129, 0.15)", color: "#10b981", fontWeight: 600 }}
-                      />
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                        <Chip
+                          icon={<CheckCircleRounded fontSize="small" />}
+                          label={notif.status}
+                          size="small"
+                          sx={{ bgcolor: "rgba(16, 185, 129, 0.15)", color: "#10b981", fontWeight: 600 }}
+                        />
+                        <Chip
+                          label="Simulated"
+                          size="small"
+                          variant="outlined"
+                          sx={{ color: "#f59e0b", borderColor: "rgba(245,158,11,0.4)", fontWeight: 600, fontSize: "0.68rem", height: 20 }}
+                        />
+                      </Box>
                     </TableCell>
                     <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {notif.sentAt ? new Date(notif.sentAt).toLocaleString() : "N/A"}
@@ -106,6 +171,22 @@ export default function NotificationsLog() {
             </TableBody>
           </Table>
         </TableContainer>
+
+        {meta && meta.totalPages > 1 && (
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", px: 2, py: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              {meta.total} notification{meta.total === 1 ? "" : "s"}
+            </Typography>
+            <Pagination
+              count={meta.totalPages}
+              page={page}
+              onChange={(_, p) => setPage(p)}
+              color="primary"
+              shape="rounded"
+              size="small"
+            />
+          </Box>
+        )}
       </Paper>
     </Box>
   );
