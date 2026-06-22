@@ -35,6 +35,7 @@ import {
   MedicalServicesRounded,
   ApartmentRounded,
   CallSplitRounded,
+  AssessmentRounded,
   NotificationsRounded,
   WifiRounded,
   AccessTimeRounded,
@@ -66,6 +67,7 @@ export default function ReceptionLayout() {
     { text: "Patient Queue", icon: <QueueRounded />, path: "/reception/queue" },
     { text: "All Patients", icon: <AccountCircleRounded />, path: "/reception/patients" },
     { text: "Billing", icon: <ReceiptRounded />, path: "/reception/billing" },
+    { text: "Reports", icon: <AssessmentRounded />, path: "/reception/reports" },
     { text: "Notifications", icon: <NotificationsRounded />, path: "/reception/notifications" },
   ];
 
