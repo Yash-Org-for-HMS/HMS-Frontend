@@ -217,8 +217,16 @@ export default function AppointmentsList() {
         </Box>
         <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
           <Button
-            variant="contained"
+            variant="outlined"
             startIcon={<CalendarMonthRounded />}
+            onClick={() => navigate("/reception/appointments/calendar")}
+            sx={{ fontWeight: 600, px: 3, py: 1.2, textTransform: "none", borderRadius: 2, borderColor: "divider", color: "text.secondary" }}
+          >
+            Calendar view
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddRounded />}
             onClick={() => navigate("/reception/appointments/new")}
             sx={{
               background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",

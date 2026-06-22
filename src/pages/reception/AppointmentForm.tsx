@@ -22,6 +22,9 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const initialPatientId = searchParams.get("patientId") || "";
+  const initialDate = searchParams.get("date") || new Date().toISOString().split('T')[0];
+  const initialTime = searchParams.get("time") || "";
+  const initialDoctorId = searchParams.get("doctorId") || "";
 
   const [saving, setSaving] = useState(false);
   const toast = useToast();
@@ -35,9 +38,9 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   const [formData, setFormData] = useState({
     patientId: prefilledPatientId || initialPatientId,
     departmentId: "",
-    doctorId: "",
-    appointmentDate: new Date().toISOString().split('T')[0],
-    timeSlot: "",
+    doctorId: initialDoctorId,
+    appointmentDate: initialDate,
+    timeSlot: initialTime,
     visitType: "Standard Visit",
     reason: ""
   });
