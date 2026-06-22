@@ -42,6 +42,12 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const [newItemPrice, setNewItemPrice] = useState("");
   const [addingItem, setAddingItem] = useState(false);
 
+  // Discount & Tax
+  const [defaultTaxPct, setDefaultTaxPct] = useState(0);
+  const [discountInput, setDiscountInput] = useState("");
+  const [taxInput, setTaxInput] = useState("");
+  const [adjusting, setAdjusting] = useState(false);
+
   // For printing
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -63,8 +69,10 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       setLoadError(null);
       // 1. Fetch lookups
       const lookupsRes = await axiosInstance.get("/reception/billing/lookups");
+      const hospitalTaxPct = Number(lookupsRes.data?.data?.taxPercentage || 0);
       if (lookupsRes.data.success) {
         setPaymentMethods(lookupsRes.data.data.methods);
+        setDefaultTaxPct(hospitalTaxPct);
       }
 
       // 2. Fetch or Generate Invoice
@@ -82,7 +90,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       }
       
       setInvoice(currentInvoice);
-      
+
       // Pre-fill payment amount with remaining balance
       if (currentInvoice) {
         const totalPaid = currentInvoice.Payment?.reduce((sum: number, p: any) => sum + Number(p.paidAmount), 0) || 0;
@@ -90,6 +98,16 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         if (remaining > 0) {
           setPaymentAmount(remaining.toString());
         }
+
+        // Prefill the discount/tax fields: existing discount, and either the
+        // tax rate already on the invoice or the hospital's configured default.
+        const g = Number(currentInvoice.grossAmount || 0);
+        const d = Number(currentInvoice.discountAmount || 0);
+        const t = Number(currentInvoice.taxAmount || 0);
+        setDiscountInput(d > 0 ? String(d) : "");
+        const taxable = g - d;
+        const currentRate = taxable > 0 && t > 0 ? Math.round((t / taxable) * 10000) / 100 : hospitalTaxPct;
+        setTaxInput(currentRate ? String(currentRate) : "");
       }
 
     } catch (err: any) {
@@ -162,6 +180,25 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     }
   };
 
+  const handleAdjust = async () => {
+    if (!invoice) return;
+    try {
+      setAdjusting(true);
+      const res = await axiosInstance.put(`/reception/billing/invoices/${invoice.invoiceId}/adjust`, {
+        discountAmount: Number(discountInput || 0),
+        taxPercent: Number(taxInput || 0),
+      });
+      if (res.data.success) {
+        toast.success("Discount & tax applied");
+        await fetchBillingData();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to update invoice");
+    } finally {
+      setAdjusting(false);
+    }
+  };
+
   const handlePrint = () => {
     if (!receiptRef.current) return;
     const printContents = receiptRef.current.innerHTML;
@@ -227,6 +264,9 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   if (!open) return null;
 
   const totalPaid = invoice?.Payment?.reduce((sum: number, p: any) => sum + Number(p.paidAmount), 0) || 0;
+  const grossAmount = Number(invoice?.grossAmount || 0);
+  const discountAmount = Number(invoice?.discountAmount || 0);
+  const taxAmount = Number(invoice?.taxAmount || 0);
   const netAmount = Number(invoice?.netAmount || 0);
   const balance = netAmount - totalPaid;
   const isFullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || balance <= 0;
@@ -320,7 +360,23 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                 </Box>
 
                 <Box className="totals-box" sx={{ borderTop: "2px solid #1f2937", pt: 2, mb: 4 }}>
-                  <Box className="total-row bold" sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                  <Box className="total-row" sx={{ display: "flex", justifyContent: "space-between", mb: 1, color: "#4b5563" }}>
+                    <Typography variant="body2">Subtotal:</Typography>
+                    <Typography variant="body2">{grossAmount.toFixed(2)} INR</Typography>
+                  </Box>
+                  {discountAmount > 0 && (
+                    <Box className="total-row" sx={{ display: "flex", justifyContent: "space-between", mb: 1, color: "#059669" }}>
+                      <Typography variant="body2">Discount:</Typography>
+                      <Typography variant="body2">- {discountAmount.toFixed(2)} INR</Typography>
+                    </Box>
+                  )}
+                  {taxAmount > 0 && (
+                    <Box className="total-row" sx={{ display: "flex", justifyContent: "space-between", mb: 1, color: "#4b5563" }}>
+                      <Typography variant="body2">Tax (CGST + SGST):</Typography>
+                      <Typography variant="body2">+ {taxAmount.toFixed(2)} INR</Typography>
+                    </Box>
+                  )}
+                  <Box className="total-row bold" sx={{ display: "flex", justifyContent: "space-between", mt: 1, mb: 1, pt: 1, borderTop: "1px dashed #d1d5db" }}>
                     <Typography variant="body1" sx={{ fontWeight: 800 }}>Total Amount:</Typography>
                     <Typography variant="body1" sx={{ fontWeight: 800 }}>{netAmount.toFixed(2)} INR</Typography>
                   </Box>
@@ -441,7 +497,46 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                 )}
 
                 {!isFullyPaid && (
-                  <Box sx={{ mt: 5, p: 2, bgcolor: "rgba(59,130,246,0.05)", borderRadius: 2, border: "1px dashed rgba(59,130,246,0.3)" }}>
+                  <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(16,185,129,0.05)", borderRadius: 2, border: "1px dashed rgba(16,185,129,0.3)" }}>
+                    <Typography variant="subtitle2" sx={{ color: "#10b981", fontWeight: 700, mb: 2 }}>
+                      Discount & Tax
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 6 }}>
+                        <TextField
+                          fullWidth size="small"
+                          label="Discount (INR)"
+                          type="number"
+                          value={discountInput}
+                          onChange={(e) => setDiscountInput(e.target.value)}
+                          inputProps={{ min: 0 }}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 6 }}>
+                        <TextField
+                          fullWidth size="small"
+                          label="Tax (%)"
+                          type="number"
+                          value={taxInput}
+                          onChange={(e) => setTaxInput(e.target.value)}
+                          inputProps={{ min: 0, max: 100 }}
+                          helperText={defaultTaxPct ? `Hospital default: ${defaultTaxPct}%` : undefined}
+                        />
+                      </Grid>
+                    </Grid>
+                    <Button
+                      fullWidth variant="outlined"
+                      onClick={handleAdjust}
+                      disabled={adjusting}
+                      sx={{ mt: 2, color: "#10b981", borderColor: "rgba(16,185,129,0.5)", fontWeight: 600 }}
+                    >
+                      {adjusting ? "Applying..." : "Apply Discount & Tax"}
+                    </Button>
+                  </Box>
+                )}
+
+                {!isFullyPaid && (
+                  <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(59,130,246,0.05)", borderRadius: 2, border: "1px dashed rgba(59,130,246,0.3)" }}>
                     <Typography variant="subtitle2" sx={{ color: "#3b82f6", fontWeight: 700, mb: 2 }}>
                       + Add Custom Line Item
                     </Typography>

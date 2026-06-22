@@ -28,6 +28,8 @@ import {
   CalendarTodayRounded,
   PersonRounded,
   NotificationsActiveRounded,
+  EventAvailableRounded,
+  LoginRounded,
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
@@ -122,6 +124,30 @@ export default function PatientProfile() {
 
   const [notifProcessing, setNotifProcessing] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [checkinId, setCheckinId] = useState<string | null>(null);
+
+  // This patient's appointments (most recent first), for the history section
+  // and the inline same-day check-in.
+  const { data: appointments = [], refetch: refetchAppts } = useQuery<any[]>({
+    queryKey: ["patient-appointments", id],
+    queryFn: async () => (await axiosInstance.get("/reception/appointments", { params: { patientId: id } })).data.data || [],
+    enabled: !!id,
+  });
+
+  const isToday = (d: string) => new Date(d).toDateString() === new Date().toDateString();
+
+  const handleCheckIn = async (apptId: string) => {
+    try {
+      setCheckinId(apptId);
+      await axiosInstance.put(`/reception/appointments/${apptId}/checkin`);
+      toast.success("Patient checked in");
+      refetchAppts();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to check in");
+    } finally {
+      setCheckinId(null);
+    }
+  };
 
   const handleSendWelcome = async () => {
     try {
@@ -191,7 +217,24 @@ export default function PatientProfile() {
         >
           Back
         </Button>
-        <Box sx={{ display: "flex", gap: 2 }}>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          {canEdit && (
+            <Button
+              variant="outlined"
+              startIcon={<EventAvailableRounded />}
+              onClick={() => navigate(`/reception/appointments/new?patientId=${id}`)}
+              sx={{
+                color: "#06b6d4",
+                borderColor: "rgba(6,182,212,0.3)",
+                textTransform: "none",
+                borderRadius: 2,
+                px: 3,
+                "&:hover": { bgcolor: "rgba(6,182,212,0.1)", borderColor: "#06b6d4" }
+              }}
+            >
+              Book Appointment
+            </Button>
+          )}
           {canEdit && (
           <Button
             variant="outlined"
@@ -384,6 +427,63 @@ export default function PatientProfile() {
                 <Typography variant="body2" sx={{ color: "#334155" }}>
                   No known allergies recorded
                 </Typography>
+              </Box>
+            )}
+          </SectionCard>
+        </Grid>
+
+        {/* Appointments */}
+        <Grid size={{ xs: 12 }}>
+          <SectionCard title="Appointments" icon={<CalendarTodayRounded fontSize="small" />}>
+            {appointments.length === 0 ? (
+              <Box sx={{ py: 3, textAlign: "center" }}>
+                <CalendarTodayRounded sx={{ fontSize: 32, color: "#1e3a5f", mb: 1 }} />
+                <Typography variant="body2" sx={{ color: "#334155", mb: 1 }}>No appointments yet</Typography>
+                {canEdit && (
+                  <Button size="small" startIcon={<EventAvailableRounded />} onClick={() => navigate(`/reception/appointments/new?patientId=${id}`)} sx={{ color: "#06b6d4", textTransform: "none" }}>
+                    Book the first appointment
+                  </Button>
+                )}
+              </Box>
+            ) : (
+              <Box sx={{ display: "flex", flexDirection: "column" }}>
+                {appointments.slice(0, 6).map((appt: any, idx: number) => {
+                  const canCheckIn = canEdit && appt.statusLabel === "Scheduled" && isToday(appt.appointmentDate);
+                  return (
+                    <Box key={appt.appointmentId}>
+                      {idx > 0 && <Divider sx={{ borderColor: "divider" }} />}
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, py: 1.5, flexWrap: "wrap" }}>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
+                            {new Date(appt.appointmentDate).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                            {appt.doctorName || "Unassigned"}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                          <Chip
+                            label={appt.statusLabel || "—"}
+                            size="small"
+                            sx={{ bgcolor: `${appt.statusColor || "#64748b"}20`, color: appt.statusColor || "#64748b", fontWeight: 700 }}
+                          />
+                          {canCheckIn && (
+                            <Button
+                              size="small"
+                              variant="contained"
+                              startIcon={checkinId === appt.appointmentId ? <CircularProgress size={16} color="inherit" /> : <LoginRounded />}
+                              disabled={checkinId === appt.appointmentId}
+                              onClick={() => handleCheckIn(appt.appointmentId)}
+                              sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" }, textTransform: "none" }}
+                            >
+                              Check in
+                            </Button>
+                          )}
+                        </Box>
+                      </Box>
+                    </Box>
+                  );
+                })}
               </Box>
             )}
           </SectionCard>
