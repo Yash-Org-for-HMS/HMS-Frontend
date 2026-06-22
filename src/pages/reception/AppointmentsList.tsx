@@ -10,13 +10,14 @@ import {
   AddRounded, SearchRounded, CancelRounded, CheckCircleRounded,
   WarningAmberRounded, ReceiptRounded, NotificationsActiveRounded, ChecklistRounded,
   NotesRounded, ChevronLeftRounded, ChevronRightRounded, CalendarMonthRounded,
-  FilterAltRounded, EventRepeatRounded
+  FilterAltRounded, EventRepeatRounded, CallSplitRounded
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import BillingModal from "./BillingModal";
+import ReferralDialog from "../../components/reception/ReferralDialog";
 import { useToast } from "../../contexts/ToastContext";
 import dayjs, { Dayjs } from "dayjs";
 
@@ -121,6 +122,7 @@ export default function AppointmentsList() {
   });
   const [processing, setProcessing] = useState(false);
   const [billingDialog, setBillingDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
+  const [referralDialog, setReferralDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
 
   const { data: appointments = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
     queryKey: ["reception-appointments"],
@@ -370,6 +372,11 @@ export default function AppointmentsList() {
                         <Chip label={appt.statusLabel} size="small" sx={{ bgcolor: `${appt.statusColor}22`, color: appt.statusColor, border: `1px solid ${appt.statusColor}55`, fontWeight: 600, fontSize: "0.7rem" }} />
                       </TableCell>
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
+                        <Tooltip title="Refer Patient">
+                          <IconButton size="small" onClick={() => setReferralDialog({ open: true, appt })} sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6,182,212,0.08)" } }}>
+                            <CallSplitRounded fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                         {appt.statusLabel === 'Scheduled' && (
                           <>
                             <Tooltip title="Check In">
@@ -456,6 +463,19 @@ export default function AppointmentsList() {
           appointmentId={billingDialog.appt.appointmentId}
           patientName={billingDialog.appt.patientName}
           appointmentDate={billingDialog.appt.appointmentDate}
+        />
+      )}
+
+      {/* Referral Dialog */}
+      {referralDialog.appt && (
+        <ReferralDialog
+          open={referralDialog.open}
+          onClose={() => setReferralDialog({ open: false, appt: null })}
+          onCreated={() => setReferralDialog({ open: false, appt: null })}
+          prefilledPatientId={referralDialog.appt.patientId}
+          prefilledFromDepartmentId={referralDialog.appt.departmentId}
+          lockPatient
+          patientLabel={referralDialog.appt.patientName}
         />
       )}
     </Box>

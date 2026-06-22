@@ -30,6 +30,7 @@ import {
   NotificationsActiveRounded,
   EventAvailableRounded,
   EventRepeatRounded,
+  CallSplitRounded,
   LoginRounded,
   QrCode2Rounded,
   ReceiptLongRounded,
@@ -39,6 +40,7 @@ import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import PatientDocumentsSection from "./PatientDocumentsSection";
 import IdCardModal from "../../components/reception/IdCardModal";
+import ReferralDialog from "../../components/reception/ReferralDialog";
 import { useToast } from "../../contexts/ToastContext";
 
 interface Patient {
@@ -130,6 +132,7 @@ export default function PatientProfile() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [checkinId, setCheckinId] = useState<string | null>(null);
   const [idCardOpen, setIdCardOpen] = useState(false);
+  const [referralOpen, setReferralOpen] = useState(false);
 
   // This patient's appointments (most recent first), for the history section
   // and the inline same-day check-in.
@@ -261,6 +264,23 @@ export default function PatientProfile() {
               }}
             >
               Book Appointment
+            </Button>
+          )}
+          {canEdit && (
+            <Button
+              variant="outlined"
+              startIcon={<CallSplitRounded />}
+              onClick={() => setReferralOpen(true)}
+              sx={{
+                color: "#06b6d4",
+                borderColor: "rgba(6,182,212,0.3)",
+                textTransform: "none",
+                borderRadius: 2,
+                px: 3,
+                "&:hover": { bgcolor: "rgba(6,182,212,0.1)", borderColor: "#06b6d4" }
+              }}
+            >
+              Refer
             </Button>
           )}
           {canEdit && (
@@ -582,6 +602,17 @@ export default function PatientProfile() {
       </Grid>
 
       <IdCardModal open={idCardOpen} onClose={() => setIdCardOpen(false)} patient={patient} />
+
+      {referralOpen && (
+        <ReferralDialog
+          open={referralOpen}
+          onClose={() => setReferralOpen(false)}
+          onCreated={() => setReferralOpen(false)}
+          prefilledPatientId={patient.patientId}
+          lockPatient
+          patientLabel={`${patient.firstName || ""} ${patient.lastName || ""} — ${patient.uhidNumber}`}
+        />
+      )}
     </Box>
   );
 }
