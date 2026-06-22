@@ -10,6 +10,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
+import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 
 interface BillingModalProps {
   open: boolean;
@@ -23,6 +24,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const toast = useToast();
+  const { hospital } = useHospitalAuth();
   const [invoice, setInvoice] = useState<any>(null);
   
   // Lookups
@@ -111,6 +113,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       });
       
       if (res.data.success) {
+        toast.success("Payment recorded successfully");
         // Refresh invoice data
         const getInvoiceRes = await axiosInstance.get(`/reception/billing/appointments/${appointmentId}/invoice`);
         if (getInvoiceRes.data.success) {
@@ -144,6 +147,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         unitPrice: Number(newItemPrice)
       });
       if (res.data.success) {
+        toast.success("Line item added");
         // Refresh invoice
         await fetchBillingData();
         setNewItemDesc("");
@@ -159,12 +163,11 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   };
 
   const handlePrint = () => {
-    if (receiptRef.current) {
-      const printContents = receiptRef.current.innerHTML;
-      const originalContents = document.body.innerHTML;
-      
-      // Basic print styling
-      const printStyle = `
+    if (!receiptRef.current) return;
+    const printContents = receiptRef.current.innerHTML;
+
+    // Basic print styling
+    const printStyle = `
         <style>
           @media print {
             @page { margin: 0.5cm; }
@@ -188,11 +191,37 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         </style>
       `;
 
-      document.body.innerHTML = printStyle + printContents;
-      window.print();
-      document.body.innerHTML = originalContents;
-      window.location.reload(); // Reload to restore React state cleanly after DOM manipulation
+    // Print inside a hidden iframe instead of swapping document.body + reloading.
+    // The old approach destroyed the React tree and forced a full page reload
+    // (losing all SPA state). We clone the page's stylesheets so the receipt's
+    // MUI styling renders identically inside the iframe.
+    const headStyles = Array.from(
+      document.querySelectorAll('style, link[rel="stylesheet"]')
+    ).map((el) => el.outerHTML).join("");
+
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("aria-hidden", "true");
+    Object.assign(iframe.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" });
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      document.body.removeChild(iframe);
+      return;
     }
+    doc.open();
+    doc.write(`<!doctype html><html><head><title>Receipt</title>${headStyles}${printStyle}</head><body>${printContents}</body></html>`);
+    doc.close();
+
+    const win = iframe.contentWindow!;
+    const cleanup = () => { if (iframe.parentNode) document.body.removeChild(iframe); };
+    win.onafterprint = cleanup;
+    // Give cloned styles/fonts a tick to apply before printing.
+    setTimeout(() => {
+      win.focus();
+      win.print();
+      setTimeout(cleanup, 1000); // fallback if onafterprint never fires
+    }, 250);
   };
 
   if (!open) return null;
@@ -249,9 +278,10 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
               >
                 {/* Print Header */}
                 <Box className="header" sx={{ textAlign: "center", mb: 4, borderBottom: "2px solid #3b82f6", pb: 3 }}>
-                  <Typography className="hospital-name" variant="h4" sx={{ fontWeight: 900, color: "#1e3a8a", letterSpacing: 1 }}>HMS HOSPITAL</Typography>
-                  <Typography className="hospital-info" variant="body2" sx={{ color: "#6b7280", mt: 0.5 }}>123 Health Avenue, Medical District</Typography>
-                  <Typography className="hospital-info" variant="body2" sx={{ color: "#6b7280" }}>Phone: +1 234 567 8900 | Web: www.hmshospital.com</Typography>
+                  <Typography className="hospital-name" variant="h4" sx={{ fontWeight: 900, color: "#1e3a8a", letterSpacing: 1 }}>{hospital?.name || "Hospital"}</Typography>
+                  {hospital?.code && (
+                    <Typography className="hospital-info" variant="body2" sx={{ color: "#6b7280", mt: 0.5 }}>Facility Code: {hospital.code}</Typography>
+                  )}
                   <Typography className="receipt-title" variant="subtitle1" sx={{ mt: 3, fontWeight: 800, letterSpacing: 3, color: "#3b82f6" }}>PAYMENT RECEIPT</Typography>
                 </Box>
 

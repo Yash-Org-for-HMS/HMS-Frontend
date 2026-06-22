@@ -44,6 +44,16 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
 
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
 
+  // Doctor availability for the chosen date: whether they're on leave, and the
+  // times already booked (doctor-wide). Drives slot filtering below.
+  const { data: availability } = useQuery<{ onLeave: boolean; leaveReason: string | null; bookedDateTimes: string[] }>({
+    queryKey: ["appointment-availability", formData.doctorId, formData.appointmentDate, id],
+    queryFn: async () => (await axiosInstance.get("/reception/appointments/availability", {
+      params: { doctorId: formData.doctorId, date: formData.appointmentDate, ...(id ? { excludeAppointmentId: id } : {}) },
+    })).data.data,
+    enabled: !!formData.doctorId && !!formData.appointmentDate,
+  });
+
   useEffect(() => {
     if (prefilledPatientId) {
       setFormData(prev => ({ ...prev, patientId: prefilledPatientId }));
@@ -87,37 +97,46 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   const refetch = () => { refetchDd(); if (id) refetchAppt(); };
 
   useEffect(() => {
-    // Generate slots based on doctor, date, and schedule
-    if (formData.doctorId && formData.appointmentDate) {
-      const date = new Date(formData.appointmentDate);
-      const dayOfWeek = date.getDay(); // 0 (Sun) - 6 (Sat)
-      const schedules = (dropdowns?.doctorSchedules || []).filter((s: any) => s.doctorId === formData.doctorId && s.dayOfWeek === dayOfWeek);
+    // No doctor/date, or the doctor is on leave that day -> no bookable slots.
+    if (!formData.doctorId || !formData.appointmentDate || availability?.onLeave) {
+      setAvailableSlots([]);
+      return;
+    }
 
-      if (schedules.length > 0) {
-        // Generate slots from the first matching schedule
-        const sched = schedules[0];
-        const slots = [];
-        let [hour, minute] = (sched.startTime || "09:00").split(':').map(Number);
-        const [endHour, endMinute] = (sched.endTime || "17:00").split(':').map(Number);
-        
-        const endTotal = endHour * 60 + endMinute;
-        let currentTotal = hour * 60 + minute;
+    const date = new Date(formData.appointmentDate);
+    const dayOfWeek = date.getDay(); // 0 (Sun) - 6 (Sat)
+    const schedules = (dropdowns?.doctorSchedules || []).filter((s: any) => s.doctorId === formData.doctorId && s.dayOfWeek === dayOfWeek);
 
-        while (currentTotal < endTotal) {
-          const h = Math.floor(currentTotal / 60).toString().padStart(2, '0');
-          const m = (currentTotal % 60).toString().padStart(2, '0');
-          slots.push(`${h}:${m}`);
-          currentTotal += sched.slotDurationMinutes || 15;
-        }
-        setAvailableSlots(slots);
-      } else {
-        // Fallback generic slots if no strict schedule
-        setAvailableSlots(["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "14:00", "14:30", "15:00", "15:30"]);
+    let rawSlots: string[];
+    if (schedules.length > 0) {
+      // Generate slots from the first matching schedule.
+      const sched = schedules[0];
+      rawSlots = [];
+      const [hour, minute] = (sched.startTime || "09:00").split(':').map(Number);
+      const [endHour, endMinute] = (sched.endTime || "17:00").split(':').map(Number);
+      const endTotal = endHour * 60 + endMinute;
+      let currentTotal = hour * 60 + minute;
+      while (currentTotal < endTotal) {
+        const h = Math.floor(currentTotal / 60).toString().padStart(2, '0');
+        const m = (currentTotal % 60).toString().padStart(2, '0');
+        rawSlots.push(`${h}:${m}`);
+        currentTotal += sched.slotDurationMinutes || 15;
       }
     } else {
-      setAvailableSlots([]);
+      // Fallback generic slots if no strict schedule.
+      rawSlots = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "14:00", "14:30", "15:00", "15:30"];
     }
-  }, [formData.doctorId, formData.appointmentDate, dropdowns]);
+
+    // Remove times already booked for this doctor (formatted the same way the
+    // slots are). The appointment being edited is excluded server-side, so its
+    // own slot stays selectable.
+    const bookedTimes = new Set(
+      (availability?.bookedDateTimes || []).map((iso) =>
+        new Date(iso).toLocaleTimeString("en-US", { hour12: false, hour: '2-digit', minute: '2-digit' })
+      )
+    );
+    setAvailableSlots(rawSlots.filter((s) => !bookedTimes.has(s)));
+  }, [formData.doctorId, formData.appointmentDate, dropdowns, availability]);
 
   useEffect(() => {
     // Default checkInImmediately to true only if appointment is for today
@@ -243,6 +262,15 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
               ))}
             </TextField>
           </Grid>
+          {availability?.onLeave && (
+            <Grid size={{ xs: 12 }}>
+              <Alert severity="warning">
+                {availability.leaveReason
+                  ? `This doctor is on leave on the selected date (${availability.leaveReason}). Choose another date or doctor.`
+                  : "This doctor is on leave on the selected date. Choose another date or doctor."}
+              </Alert>
+            </Grid>
+          )}
           <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth required type="date"
@@ -257,11 +285,23 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
               select fullWidth required
               label="Time Slot" name="timeSlot"
               value={formData.timeSlot || ""} onChange={handleChange}
-              disabled={!formData.appointmentDate || !formData.doctorId}
+              disabled={!formData.appointmentDate || !formData.doctorId || !!availability?.onLeave}
+              error={!!availability?.onLeave}
+              helperText={
+                availability?.onLeave
+                  ? "Doctor is on leave on this date — pick another date or doctor."
+                  : (formData.doctorId && formData.appointmentDate && availableSlots.length === 0
+                      ? "No open slots for this doctor on this date."
+                      : "")
+              }
               sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
             >
               <MenuItem value="" disabled>Select a Time Slot</MenuItem>
-              {availableSlots.map(slot => (
+              {/* Keep the currently-selected slot visible even if it's off-grid (e.g. an existing appointment being edited). */}
+              {(formData.timeSlot && !availableSlots.includes(formData.timeSlot)
+                ? [formData.timeSlot, ...availableSlots]
+                : availableSlots
+              ).map(slot => (
                 <MenuItem key={slot} value={slot}>{slot}</MenuItem>
               ))}
             </TextField>

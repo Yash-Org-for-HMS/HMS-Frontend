@@ -129,15 +129,17 @@ export default function AppointmentsList() {
 
   const handleAction = async () => {
     if (!actionDialog.appt || !actionDialog.type) return;
+    const actionType = actionDialog.type;
     setProcessing(true);
     try {
-      if (actionDialog.type === 'cancel') {
+      if (actionType === 'cancel') {
         await axiosInstance.put(`/reception/appointments/${actionDialog.appt.appointmentId}/cancel`, { reason: "Cancelled by reception" });
-      } else if (actionDialog.type === 'checkin') {
+      } else if (actionType === 'checkin') {
         await axiosInstance.put(`/reception/appointments/${actionDialog.appt.appointmentId}/checkin`);
       }
       setActionDialog({ open: false, type: null, appt: null });
       refetch();
+      toast.success(actionType === 'cancel' ? "Appointment cancelled" : "Patient checked in");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to process action");
     } finally {
