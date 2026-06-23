@@ -58,7 +58,7 @@ const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFr
 // ── Info row inside the overview cards ───────────────────────────────────────
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | null }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, py: 1.5 }}>
+    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, py: 1.1 }}>
       <Box sx={{ color: ACCENT, mt: 0.3, flexShrink: 0, display: "flex" }}>{icon}</Box>
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block" }}>
@@ -74,15 +74,15 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 
 function SectionCard({ title, icon, action, children }: { title: string; icon: React.ReactNode; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", height: "100%" }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5, mb: 2 }}>
+    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5, mb: 1.5 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Box sx={{ color: ACCENT, display: "flex" }}>{icon}</Box>
           <Typography variant="subtitle1" sx={{ color: "text.primary", fontWeight: 700 }}>{title}</Typography>
         </Box>
         {action}
       </Box>
-      <Divider sx={{ borderColor: "divider", mb: 1 }} />
+      <Divider sx={{ borderColor: "divider", mb: 0.5 }} />
       {children}
     </Paper>
   );
@@ -90,8 +90,8 @@ function SectionCard({ title, icon, action, children }: { title: string; icon: R
 
 function StatTile({ icon, label, value, color, sub }: { icon: React.ReactNode; label: string; value: string; color: string; sub?: string }) {
   return (
-    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", display: "flex", alignItems: "center", gap: 2, height: "100%" }}>
-      <Box sx={{ width: 46, height: 46, borderRadius: 2.5, bgcolor: `${color}1a`, color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+    <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", display: "flex", alignItems: "center", gap: 2, height: "100%" }}>
+      <Box sx={{ width: 42, height: 42, borderRadius: 2.5, bgcolor: `${color}1a`, color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
         {icon}
       </Box>
       <Box sx={{ minWidth: 0 }}>
@@ -272,15 +272,15 @@ export default function PatientProfile() {
       {successMsg && <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMsg(null)}>{successMsg}</Alert>}
 
       {/* ── Hero ── */}
-      <Paper elevation={0} sx={{ p: 3.5, mb: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", position: "relative", overflow: "hidden",
+      <Paper elevation={0} sx={{ p: 2.5, mb: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", position: "relative", overflow: "hidden",
         background: "linear-gradient(135deg, rgba(8,145,178,0.06) 0%, rgba(56,189,248,0.03) 100%)",
         "&::before": { content: '""', position: "absolute", top: 0, left: 0, right: 0, height: "4px", background: "linear-gradient(90deg, #0891b2, #06b6d4, #38bdf8)" } }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "wrap" }}>
-          <Avatar sx={{ width: 84, height: 84, bgcolor: getColor(patient.patientId), fontSize: "2rem", fontWeight: 800, boxShadow: "0 8px 24px rgba(6,182,212,0.25)" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2.5, flexWrap: "wrap" }}>
+          <Avatar sx={{ width: 68, height: 68, bgcolor: getColor(patient.patientId), fontSize: "1.6rem", fontWeight: 800, boxShadow: "0 8px 24px rgba(6,182,212,0.25)" }}>
             {getInitials(patient)}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 220 }}>
-            <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 1 }}>
+            <Typography variant="h5" sx={{ color: "text.primary", fontWeight: 800, mb: 0.75 }}>
               {patient.firstName} {patient.lastName}
             </Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
@@ -309,7 +309,7 @@ export default function PatientProfile() {
       </Paper>
 
       {/* ── Stat tiles ── */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }, gap: 2, mb: 2.5 }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
         <StatTile icon={<EventRounded />} label="Appointments" value={String(stats.total)} color={ACCENT}
           sub={stats.upcoming ? `${stats.upcoming} upcoming` : "none upcoming"} />
         <StatTile icon={<CalendarTodayRounded />} label="Last visit" color="#8b5cf6"
@@ -323,7 +323,7 @@ export default function PatientProfile() {
       </Box>
 
       {/* ── Tabs ── */}
-      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", mb: 2.5 }}>
+      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", mb: 2 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
           sx={{ px: 1, borderBottom: "1px solid", borderColor: "divider",
             "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 56 },
@@ -339,7 +339,7 @@ export default function PatientProfile() {
 
       {/* ── Tab: Overview ── */}
       {tab === 0 && (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" }, gap: 2.5 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" }, gap: 2, alignItems: "start" }}>
           <SectionCard title="Personal Information" icon={<PersonRounded fontSize="small" />}>
             <InfoRow icon={<CakeRounded sx={{ fontSize: 18 }} />} label="Date of Birth" value={new Date(patient.dateOfBirth).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })} />
             <Divider sx={{ borderColor: "divider" }} />
