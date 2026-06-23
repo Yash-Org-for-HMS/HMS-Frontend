@@ -510,9 +510,10 @@ export default function ConsultationWorkspace() {
 
             <TabPanel value={rightTabIndex} index={1}>
               <Box sx={{ p: 1 }}>
-                <PrescriptionWriter 
+                <PrescriptionWriter
                   consultationId={context?.consultation?.consultationId}
                   patientId={p?.patientId}
+                  patientAllergies={(p?.allergiesList || []).map((a: any) => a.allergen).filter(Boolean)}
                   onRequireSave={() => handleSave(true)}
                 />
               </Box>

@@ -4,7 +4,7 @@ import {
   Box, Typography, Button, TextField, IconButton, Autocomplete, CircularProgress,
   Paper, Grid, Alert, Divider, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Switch, FormControlLabel, Chip
 } from "@mui/material";
-import { DeleteRounded, SaveRounded, AddRounded, PrintRounded } from "@mui/icons-material";
+import { DeleteRounded, SaveRounded, AddRounded, PrintRounded, ReplayRounded, WarningAmberRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
@@ -15,16 +15,34 @@ const DOCTOR_BLUE = "#3b82f6";
 interface PrescriptionWriterProps {
   consultationId?: string | null;
   patientId?: string;
+  patientAllergies?: string[];
   onRequireSave: () => Promise<string | undefined>;
 }
 
-export default function PrescriptionWriter({ consultationId, patientId, onRequireSave }: PrescriptionWriterProps) {
+export default function PrescriptionWriter({ consultationId, patientId, patientAllergies = [], onRequireSave }: PrescriptionWriterProps) {
   const [saving, setSaving] = useState(false);
+  const [repeating, setRepeating] = useState(false);
   const toast = useToast();
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [items, setItems] = useState<any[]>([]);
   const [dispensingStatus, setDispensingStatus] = useState<string | null>(null);
   const [bulkBuyOutside, setBulkBuyOutside] = useState(false);
+
+  // Lightweight allergy safety net: direct name/generic match against the
+  // patient's recorded allergies. This is NOT a drug-interaction engine — it
+  // won't catch class cross-reactivity (e.g. penicillin → amoxicillin) — but it
+  // reliably flags prescribing exactly what the patient is allergic to.
+  const normalize = (s?: string | null) => (s || "").toLowerCase().trim();
+  const allergyHitsFor = (medName?: string | null, generic?: string | null): string[] => {
+    const names = [normalize(medName), normalize(generic)].filter(Boolean);
+    return patientAllergies.filter((al) => {
+      const a = normalize(al);
+      if (a.length < 3) return false;
+      return names.some((n) => n.length >= 3 && (n.includes(a) || a.includes(n)));
+    });
+  };
+  const itemConflicts = items.map((it) => allergyHitsFor(it.medicineName, it.genericName));
+  const hasAnyConflict = itemConflicts.some((c) => c.length > 0);
 
   // Autocomplete state
   const [medicineQuery, setMedicineQuery] = useState("");
@@ -128,6 +146,11 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
       buyOutside: bulkBuyOutside
     };
 
+    const hits = allergyHitsFor(medName, genName);
+    if (hits.length) {
+      toast.error(`⚠ Allergy alert: patient is allergic to ${hits.join(", ")}. Added — review before saving.`);
+    }
+
     setItems([...items, newItem]);
     
     // Reset form
@@ -140,6 +163,43 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
     setQuantity("");
     setManualQuantity(false);
     setUnit("Tab");
+  };
+
+  const handleRepeatLast = async () => {
+    if (!patientId) {
+      toast.error("No patient context available.");
+      return;
+    }
+    try {
+      setRepeating(true);
+      const res = await axiosInstance.get(`/doctor/prescription/patients/${patientId}/last`, {
+        params: consultationId ? { excludeConsultationId: consultationId } : {},
+      });
+      const last = res.data?.data;
+      if (!last || !last.items?.length) {
+        toast.error("No previous prescription found for this patient.");
+        return;
+      }
+      // Merge in, skipping medicines already on the list (same name + dosage).
+      const existingKeys = new Set(items.map((i) => `${normalize(i.medicineName)}|${normalize(i.dosage)}`));
+      const toAdd = last.items
+        .filter((i: any) => !existingKeys.has(`${normalize(i.medicineName)}|${normalize(i.dosage)}`))
+        .map((i: any) => ({ ...i, buyOutside: i.buyOutside || false }));
+      if (toAdd.length === 0) {
+        toast.error("All medicines from the last visit are already added.");
+        return;
+      }
+      setItems([...items, ...toAdd]);
+      if (!specialInstructions && last.specialInstructions) setSpecialInstructions(last.specialInstructions);
+      const dateStr = last.prescriptionDate
+        ? new Date(last.prescriptionDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+        : "the previous visit";
+      toast.success(`Added ${toAdd.length} medicine${toAdd.length === 1 ? "" : "s"} from ${dateStr}.`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to load the last prescription.");
+    } finally {
+      setRepeating(false);
+    }
   };
 
   const handleRemoveItem = (index: number) => {
@@ -210,6 +270,35 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      {/* Toolbar: recorded allergies + repeat-last shortcut */}
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+        <Box>
+          {patientAllergies.length > 0 ? (
+            <Typography variant="caption" sx={{ color: "#ef4444", fontWeight: 700, display: "flex", alignItems: "center", gap: 0.5 }}>
+              <WarningAmberRounded sx={{ fontSize: 16 }} /> Known allergies: {patientAllergies.join(", ")}
+            </Typography>
+          ) : (
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>No recorded allergies</Typography>
+          )}
+        </Box>
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={repeating ? <CircularProgress size={14} color="inherit" /> : <ReplayRounded />}
+          onClick={handleRepeatLast}
+          disabled={repeating || dispensingStatus === "dispensed"}
+          sx={{ textTransform: "none", fontWeight: 600 }}
+        >
+          Repeat last Rx
+        </Button>
+      </Box>
+
+      {hasAnyConflict && (
+        <Alert severity="error" icon={<WarningAmberRounded />}>
+          <strong>Allergy alert:</strong> this prescription includes medicine(s) matching the patient's recorded allergies. Review highlighted rows before saving.
+        </Alert>
+      )}
+
 {dispensingStatus && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Typography variant="subtitle2" fontWeight={700}>Status:</Typography>
@@ -327,10 +416,19 @@ export default function PrescriptionWriter({ consultationId, patientId, onRequir
             </TableHead>
             <TableBody>
               {items.map((item, index) => (
-                <TableRow key={index} sx={{ opacity: item.buyOutside ? 0.7 : 1 }}>
+                <TableRow key={index} sx={{ opacity: item.buyOutside ? 0.7 : 1, bgcolor: itemConflicts[index]?.length ? "rgba(239,68,68,0.06)" : "transparent" }}>
                   <TableCell>
-                    <Typography variant="body2" fontWeight={600}>{item.medicineName || "Custom"}</Typography>
-                    {item.genericName && <Typography variant="caption" color="text.secondary">{item.genericName}</Typography>}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                      {itemConflicts[index]?.length > 0 && (
+                        <Tooltip title={`Allergy match: ${itemConflicts[index].join(", ")}`}>
+                          <WarningAmberRounded sx={{ color: "#ef4444", fontSize: 18 }} />
+                        </Tooltip>
+                      )}
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>{item.medicineName || "Custom"}</Typography>
+                        {item.genericName && <Typography variant="caption" color="text.secondary">{item.genericName}</Typography>}
+                      </Box>
+                    </Box>
                   </TableCell>
                   <TableCell>{item.dosage}</TableCell>
                   <TableCell>{item.frequency}</TableCell>
