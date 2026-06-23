@@ -33,6 +33,10 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const bedCharge = Number(detail?.estimatedBedCharge || 0);
   const extrasTotal = extras.reduce((s, e) => s + (Number(e.amount) || 0), 0);
   const total = bedCharge + extrasTotal;
+  const deposit = Number(detail?.depositBalance || 0);
+  const depositApplied = Math.min(deposit, total);
+  const payable = Math.max(0, total - depositApplied);
+  const depositRefundable = Math.max(0, deposit - depositApplied);
 
   const submit = async () => {
     setSaving(true);
@@ -81,9 +85,30 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
 
           <Divider />
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>Final bill total</Typography>
-            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0891b2" }}>{inr(total)}</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>Bill total</Typography>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>{inr(total)}</Typography>
           </Box>
+          {deposit > 0 && (
+            <>
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>Deposit held</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: "#0891b2" }}>{inr(deposit)}</Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>Deposit applied</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: "#8b5cf6" }}>- {inr(depositApplied)}</Typography>
+              </Box>
+            </>
+          )}
+          <Box sx={{ display: "flex", justifyContent: "space-between", pt: 0.5, borderTop: deposit > 0 ? "1px dashed" : "none", borderColor: "divider" }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>{deposit > 0 ? "Payable now" : "Final bill total"}</Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: payable > 0 ? "#ef4444" : "#10b981" }}>{inr(payable)}</Typography>
+          </Box>
+          {depositRefundable > 0 && (
+            <Typography variant="caption" sx={{ color: "#8b5cf6" }}>
+              {inr(depositRefundable)} deposit will remain after this bill — refund it from the admission's ⋮ menu.
+            </Typography>
+          )}
 
           <TextField fullWidth label="Discharge summary" value={summary} onChange={(e) => setSummary(e.target.value)} multiline rows={3} placeholder="Condition at discharge, instructions, follow-up…" />
         </Stack>

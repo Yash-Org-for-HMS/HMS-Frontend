@@ -88,8 +88,8 @@ function BillsList() {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {["Invoice #", "Patient", "Date", "Net", "Paid", "Balance", "Status", ""].map((h, i) => (
-                  <TableCell key={h || i} align={["Net", "Paid", "Balance"].includes(h) ? "right" : i === 7 ? "right" : "left"}
+                {["Invoice #", "Patient", "Date", "Net", "Paid", "Balance Due", "Status", ""].map((h, i) => (
+                  <TableCell key={h || i} align={["Net", "Paid", "Balance Due"].includes(h) ? "right" : i === 7 ? "right" : "left"}
                     sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default" }}>{h}</TableCell>
                 ))}
               </TableRow>

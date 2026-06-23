@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import {
   LocalHotelRounded, SearchRounded, SwapHorizRounded, LogoutRounded, MoreVertRounded,
-  CancelRounded,
+  CancelRounded, SavingsRounded, UndoRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
@@ -16,6 +16,9 @@ import { useToast } from "../../contexts/ToastContext";
 import AdmitDialog from "../../components/ipd/AdmitDialog";
 import TransferDialog from "../../components/ipd/TransferDialog";
 import DischargeDialog from "../../components/ipd/DischargeDialog";
+import DepositDialog from "../../components/ipd/DepositDialog";
+
+const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
   ADMITTED: { label: "Admitted", color: "#0891b2" },
@@ -31,6 +34,7 @@ export default function Admissions() {
   const [admitOpen, setAdmitOpen] = useState(false);
   const [transferFor, setTransferFor] = useState<any>(null);
   const [dischargeFor, setDischargeFor] = useState<any>(null);
+  const [depositFor, setDepositFor] = useState<{ row: any; mode: "collect" | "refund" } | null>(null);
   const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: any }>({ anchor: null, row: null });
 
   const status = TABS[tab];
@@ -82,18 +86,18 @@ export default function Admissions() {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {["Patient", "IPD #", "Diagnosis", "Bed", "Doctor", "Days", "Status", ""].map((h, i) => (
-                  <TableCell key={h || i} align={i === 7 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default" }}>{h}</TableCell>
+                {["Patient", "IPD #", "Diagnosis", "Bed", "Doctor", "Days", "Deposit", "Status", ""].map((h, i) => (
+                  <TableCell key={h || i} align={h === "Deposit" ? "right" : i === 8 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default" }}>{h}</TableCell>
                 ))}
               </TableRow>
             </TableHead>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={8} align="center" sx={{ py: 4 }}><CircularProgress size={28} sx={{ color: "#06b6d4" }} /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} align="center" sx={{ py: 4 }}><CircularProgress size={28} sx={{ color: "#06b6d4" }} /></TableCell></TableRow>
               ) : isError ? (
-                <TableRow><TableCell colSpan={8} sx={{ py: 4, border: 0 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} sx={{ py: 4, border: 0 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={8} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No admissions" subtitle="Nothing here for this filter." /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No admissions" subtitle="Nothing here for this filter." /></TableCell></TableRow>
               ) : filtered.map((a) => {
                 const sm = STATUS_META[a.status] || { label: a.status, color: "#64748b" };
                 return (
@@ -111,6 +115,11 @@ export default function Admissions() {
                     <TableCell><Typography variant="body2" sx={{ color: "text.primary" }}>{a.bed?.label || "—"}</Typography></TableCell>
                     <TableCell sx={{ color: "text.secondary" }}>{a.doctorName || "—"}</TableCell>
                     <TableCell sx={{ color: "text.secondary" }}>{a.days ?? "—"}</TableCell>
+                    <TableCell align="right">
+                      {Number(a.depositBalance) > 0
+                        ? <Chip label={inr(a.depositBalance)} size="small" sx={{ bgcolor: "rgba(8,145,178,0.12)", color: "#0891b2", fontWeight: 700 }} />
+                        : <Typography variant="caption" sx={{ color: "text.disabled" }}>—</Typography>}
+                    </TableCell>
                     <TableCell><Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700 }} /></TableCell>
                     <TableCell align="right">
                       {a.status === "ADMITTED" && (
@@ -130,12 +139,21 @@ export default function Admissions() {
       </Paper>
 
       <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={() => setMenu({ anchor: null, row: null })}>
+        <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setDepositFor({ row: r, mode: "collect" }); }}>
+          <SavingsRounded fontSize="small" sx={{ mr: 1, color: "#0891b2" }} /> Collect deposit
+        </MenuItem>
+        {Number(menu.row?.depositBalance) > 0 && (
+          <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setDepositFor({ row: r, mode: "refund" }); }}>
+            <UndoRounded fontSize="small" sx={{ mr: 1, color: "#8b5cf6" }} /> Refund deposit
+          </MenuItem>
+        )}
         <MenuItem onClick={() => cancel(menu.row)} sx={{ color: "#ef4444" }}><CancelRounded fontSize="small" sx={{ mr: 1 }} /> Cancel admission</MenuItem>
       </Menu>
 
       {admitOpen && <AdmitDialog open={admitOpen} onClose={() => setAdmitOpen(false)} onAdmitted={() => { setAdmitOpen(false); refetch(); }} />}
       {transferFor && <TransferDialog open admission={transferFor} onClose={() => setTransferFor(null)} onDone={() => { setTransferFor(null); refetch(); }} />}
       {dischargeFor && <DischargeDialog open admissionId={dischargeFor.admissionId} onClose={() => setDischargeFor(null)} onDone={() => { setDischargeFor(null); refetch(); }} />}
+      {depositFor && <DepositDialog open mode={depositFor.mode} admission={depositFor.row} onClose={() => setDepositFor(null)} onDone={() => { setDepositFor(null); refetch(); }} />}
     </Box>
   );
 }
