@@ -97,6 +97,7 @@ const DoctorQueue = lazy(() => import("./pages/doctor/DoctorQueue"));
 const ConsultationWorkspace = lazy(() => import("./pages/doctor/ConsultationWorkspace"));
 const DoctorPatients = lazy(() => import("./pages/doctor/DoctorPatients"));
 const DoctorPatientProfile = lazy(() => import("./pages/doctor/DoctorPatientProfile"));
+const DoctorResults = lazy(() => import("./pages/doctor/DoctorResults"));
 
 // Lab
 const LabDashboard = lazy(() => import("./pages/lab/LabDashboard"));
@@ -250,6 +251,7 @@ function App() {
             <Route path="/doctor/queue" element={el(DoctorQueue)} />
             <Route path="/doctor/consultation/:appointmentId" element={el(ConsultationWorkspace)} />
             <Route path="/doctor/patients" element={el(DoctorPatients)} />
+            <Route path="/doctor/results" element={el(DoctorResults)} />
             <Route path="/doctor/patients/:id" element={el(DoctorPatientProfile)} />
           </Route>
         </Route>

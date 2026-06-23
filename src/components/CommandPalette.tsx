@@ -37,6 +37,7 @@ const STATIC_ROUTES = [
   { name: "Doctor Dashboard", path: "/doctor/dashboard", icon: <DashboardRounded />, section: "Doctor" },
   { name: "My Queue", path: "/doctor/queue", icon: <QueueRounded />, section: "Doctor" },
   { name: "My Patients", path: "/doctor/patients", icon: <PersonRounded />, section: "Doctor" },
+  { name: "Results (Lab / Radiology)", path: "/doctor/results", icon: <ScienceRounded />, section: "Doctor" },
   { name: "Hospital Settings", path: "/hospital/settings", icon: <DashboardRounded />, section: "Admin" },
 ];
 
