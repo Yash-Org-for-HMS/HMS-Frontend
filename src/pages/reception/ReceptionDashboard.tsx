@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Skeleton, Chip, Button, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow,
@@ -13,6 +13,7 @@ import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { useSocket } from "../../hooks/useSocket";
 
 interface AppointmentEntry {
   appointmentId: string;
@@ -77,7 +78,13 @@ function MiniStat({ icon, title, value, loading, prefix }: any) {
 export default function ReceptionDashboard() {
   const { hospital } = useHospitalAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
+
+  // Live updates: refresh the dashboard whenever the queue changes elsewhere.
+  useSocket({
+    QUEUE_UPDATED: () => queryClient.invalidateQueries({ queryKey: ["reception-dashboard-stats"] }),
+  });
 
   const { data: stats, isLoading: loading, isError, error, refetch } = useQuery<DashboardStats>({
     queryKey: ["reception-dashboard-stats"],
