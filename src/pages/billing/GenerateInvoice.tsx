@@ -11,7 +11,7 @@ import ErrorState from "../../components/ErrorState";
 import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
 import { useToast } from "../../contexts/ToastContext";
 
-export default function GenerateInvoice() {
+export default function GenerateInvoice({ patientId: initialPatientId }: { patientId?: string } = {}) {
   const theme = useTheme();
   const toast = useToast();
   
@@ -41,6 +41,16 @@ export default function GenerateInvoice() {
     const t = setTimeout(() => setDebouncedQuery(patientQuery), 500);
     return () => clearTimeout(t);
   }, [patientQuery]);
+
+  // Preselect a patient when launched from "Bill" on a patient row.
+  useEffect(() => {
+    if (!initialPatientId) return;
+    let cancelled = false;
+    axiosInstance.get(`/reception/patients/${initialPatientId}`)
+      .then((res) => { if (!cancelled && res.data?.data) setSelectedPatient(res.data.data); })
+      .catch(() => { /* ignore */ });
+    return () => { cancelled = true; };
+  }, [initialPatientId]);
 
   const { data: patients = [], isFetching: patientLoading } = useQuery<any[]>({
     queryKey: ["patient-search", debouncedQuery],

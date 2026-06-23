@@ -23,6 +23,11 @@ import {
   Dialog,
   DialogContent,
   DialogActions,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
 } from "@mui/material";
 import {
   PersonAddRounded,
@@ -30,21 +35,21 @@ import {
   SearchRounded,
   VisibilityRounded,
   DeleteRounded,
-  CloseRounded,
   WarningAmberRounded,
   BadgeRounded,
-  CakeRounded,
-  LocalPhoneRounded,
-  WcRounded,
   CalendarMonthRounded,
   QueuePlayNextRounded,
   ContentCopyRounded,
   QrCode2Rounded,
+  ReceiptLongRounded,
+  LocalHotelRounded,
+  MoreVertRounded,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import IdCardModal from "../../components/reception/IdCardModal";
+import AdmitDialog from "../../components/ipd/AdmitDialog";
 import { useToast } from "../../contexts/ToastContext";
 
 interface Patient {
@@ -85,7 +90,9 @@ export default function PatientsList() {
     patient: null,
   });
   const [idCardPatient, setIdCardPatient] = useState<Patient | null>(null);
-  
+  const [admitPatient, setAdmitPatient] = useState<Patient | null>(null);
+  const [menu, setMenu] = useState<{ anchor: HTMLElement | null; patient: Patient | null }>({ anchor: null, patient: null });
+
   const searchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data, isLoading: loading, error } = useQuery({
@@ -386,69 +393,41 @@ export default function PatientsList() {
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, color: "text.secondary", fontSize: "0.85rem" }}>
                         {patient.phone}
                       </TableCell>
-                      {/* Actions */}
-                      <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }} onClick={(e) => e.stopPropagation()}>
-                        <Tooltip title="View Profile">
-                          <IconButton
-                            size="small"
-                            onClick={() => navigate(`/reception/patients/${patient.patientId}`)}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6,182,212,0.08)" } }}
-                          >
-                            <VisibilityRounded fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Book Appointment">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/reception/appointments/new?patientId=${patient.patientId}`);
-                            }}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#3b82f6", bgcolor: "rgba(59,130,246,0.08)" } }}
-                          >
+                      {/* Actions — primary quick-actions + overflow menu */}
+                      <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
+                        <Tooltip title="Book appointment">
+                          <IconButton size="small"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/reception/appointments/new?patientId=${patient.patientId}`); }}
+                            sx={{ color: "text.secondary", "&:hover": { color: "#3b82f6", bgcolor: "rgba(59,130,246,0.08)" } }}>
                             <CalendarMonthRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Create Visit">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/reception/queue/new?patientId=${patient.patientId}`);
-                            }}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#10b981", bgcolor: "rgba(16,185,129,0.08)" } }}
-                          >
-                            <QueuePlayNextRounded fontSize="small" />
+                        <Tooltip title="Bill / collect payment">
+                          <IconButton size="small"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/reception/billing?patientId=${patient.patientId}`); }}
+                            sx={{ color: "text.secondary", "&:hover": { color: "#f59e0b", bgcolor: "rgba(245,158,11,0.08)" } }}>
+                            <ReceiptLongRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Print ID Card">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIdCardPatient(patient);
-                            }}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6,182,212,0.08)" } }}
-                          >
-                            <QrCode2Rounded fontSize="small" />
+                        <Tooltip title="Admit (IPD)">
+                          <IconButton size="small"
+                            onClick={(e) => { e.stopPropagation(); setAdmitPatient(patient); }}
+                            sx={{ color: "text.secondary", "&:hover": { color: "#0891b2", bgcolor: "rgba(8,145,178,0.08)" } }}>
+                            <LocalHotelRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Edit Patient">
-                          <IconButton
-                            size="small"
-                            onClick={() => navigate(`/reception/patients/${patient.patientId}/edit`)}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#a78bfa", bgcolor: "rgba(139,92,246,0.08)" } }}
-                          >
-                            <EditRounded fontSize="small" />
+                        <Tooltip title="View profile">
+                          <IconButton size="small"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/reception/patients/${patient.patientId}`); }}
+                            sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6,182,212,0.08)" } }}>
+                            <VisibilityRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Delete">
-                          <IconButton
-                            size="small"
-                            onClick={() => setDeleteDialog({ open: true, patient })}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#f87171", bgcolor: "rgba(239,68,68,0.08)" } }}
-                          >
-                            <DeleteRounded fontSize="small" />
+                        <Tooltip title="More">
+                          <IconButton size="small"
+                            onClick={(e) => { e.stopPropagation(); setMenu({ anchor: e.currentTarget, patient }); }}
+                            sx={{ color: "text.secondary" }}>
+                            <MoreVertRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       </TableCell>
@@ -510,7 +489,37 @@ export default function PatientsList() {
         </DialogActions>
       </Dialog>
 
+      {/* Row overflow menu */}
+      <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={() => setMenu({ anchor: null, patient: null })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}>
+        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); navigate(`/reception/queue/new?patientId=${p.patientId}`); }}>
+          <ListItemIcon><QueuePlayNextRounded fontSize="small" /></ListItemIcon>
+          <ListItemText>Walk-in visit</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); setIdCardPatient(p); }}>
+          <ListItemIcon><QrCode2Rounded fontSize="small" /></ListItemIcon>
+          <ListItemText>Print ID card</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); navigator.clipboard.writeText(p.uhidNumber); toast.success("UHID copied"); }}>
+          <ListItemIcon><ContentCopyRounded fontSize="small" /></ListItemIcon>
+          <ListItemText>Copy UHID</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); navigate(`/reception/patients/${p.patientId}/edit`); }}>
+          <ListItemIcon><EditRounded fontSize="small" /></ListItemIcon>
+          <ListItemText>Edit patient</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); setDeleteDialog({ open: true, patient: p }); }} sx={{ color: "#ef4444" }}>
+          <ListItemIcon><DeleteRounded fontSize="small" sx={{ color: "#ef4444" }} /></ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
+
       <IdCardModal open={!!idCardPatient} onClose={() => setIdCardPatient(null)} patient={idCardPatient} />
+      {admitPatient && (
+        <AdmitDialog open onClose={() => setAdmitPatient(null)} prefilledPatientId={admitPatient.patientId}
+          onAdmitted={() => setAdmitPatient(null)} />
+      )}
     </>
   );
 }

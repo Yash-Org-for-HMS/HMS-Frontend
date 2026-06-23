@@ -13,6 +13,7 @@ import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import GenerateInvoice from "../billing/GenerateInvoice";
 import InvoiceViewDialog from "../../components/reception/InvoiceViewDialog";
+import { useSearchParams } from "react-router-dom";
 
 const ACCENT = "#0891b2";
 const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -26,7 +27,9 @@ const STATUSES = [
 ];
 
 export default function Billing() {
-  const [tab, setTab] = useState(0);
+  const [params] = useSearchParams();
+  const billPatientId = params.get("patientId") || undefined;
+  const [tab, setTab] = useState(billPatientId ? 1 : 0);
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
@@ -42,7 +45,7 @@ export default function Billing() {
         </Tabs>
       </Paper>
 
-      {tab === 0 ? <BillsList /> : <GenerateInvoice />}
+      {tab === 0 ? <BillsList /> : <GenerateInvoice patientId={billPatientId} />}
     </Box>
   );
 }
