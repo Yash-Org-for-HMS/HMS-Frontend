@@ -126,8 +126,10 @@ export default function Admissions() {
                         <>
                           <Tooltip title="Transfer bed"><IconButton size="small" onClick={() => setTransferFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2" } }}><SwapHorizRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Discharge"><IconButton size="small" onClick={() => setDischargeFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#ef4444" } }}><LogoutRounded fontSize="small" /></IconButton></Tooltip>
-                          <IconButton size="small" onClick={(e) => setMenu({ anchor: e.currentTarget, row: a })} sx={{ color: "text.secondary" }}><MoreVertRounded fontSize="small" /></IconButton>
                         </>
+                      )}
+                      {(a.status === "ADMITTED" || Number(a.depositBalance) > 0) && (
+                        <IconButton size="small" onClick={(e) => setMenu({ anchor: e.currentTarget, row: a })} sx={{ color: "text.secondary" }}><MoreVertRounded fontSize="small" /></IconButton>
                       )}
                     </TableCell>
                   </TableRow>
@@ -139,15 +141,19 @@ export default function Admissions() {
       </Paper>
 
       <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={() => setMenu({ anchor: null, row: null })}>
-        <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setDepositFor({ row: r, mode: "collect" }); }}>
-          <SavingsRounded fontSize="small" sx={{ mr: 1, color: "#0891b2" }} /> Collect deposit
-        </MenuItem>
-        {Number(menu.row?.depositBalance) > 0 && (
-          <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setDepositFor({ row: r, mode: "refund" }); }}>
-            <UndoRounded fontSize="small" sx={{ mr: 1, color: "#8b5cf6" }} /> Refund deposit
+        {menu.row?.status === "ADMITTED" && (
+          <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setDepositFor({ row: r, mode: "collect" }); }}>
+            <SavingsRounded fontSize="small" sx={{ mr: 1, color: "#0891b2" }} /> Collect deposit
           </MenuItem>
         )}
-        <MenuItem onClick={() => cancel(menu.row)} sx={{ color: "#ef4444" }}><CancelRounded fontSize="small" sx={{ mr: 1 }} /> Cancel admission</MenuItem>
+        {Number(menu.row?.depositBalance) > 0 && (
+          <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setDepositFor({ row: r, mode: "refund" }); }}>
+            <UndoRounded fontSize="small" sx={{ mr: 1, color: "#8b5cf6" }} /> Refund deposit{menu.row?.status !== "ADMITTED" ? ` (${inr(menu.row?.depositBalance)})` : ""}
+          </MenuItem>
+        )}
+        {menu.row?.status === "ADMITTED" && (
+          <MenuItem onClick={() => cancel(menu.row)} sx={{ color: "#ef4444" }}><CancelRounded fontSize="small" sx={{ mr: 1 }} /> Cancel admission</MenuItem>
+        )}
       </Menu>
 
       {admitOpen && <AdmitDialog open={admitOpen} onClose={() => setAdmitOpen(false)} onAdmitted={() => { setAdmitOpen(false); refetch(); }} />}
