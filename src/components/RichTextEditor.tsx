@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Box, IconButton, Tooltip, Divider } from "@mui/material";
 import {
   FormatBoldRounded,
@@ -105,6 +106,17 @@ export default function RichTextEditor({ value, onChange, placeholder = "Type he
       onChange(editor.getHTML());
     },
   });
+
+  // Sync the editor when `value` is changed from the outside (e.g. applying a
+  // SOAP template or loading a saved consultation). TipTap only reads `content`
+  // at init, so without this the editor ignores external updates. The guard
+  // avoids resetting (and jumping the cursor) on the user's own keystrokes,
+  // since those make `value` already equal to the editor's HTML.
+  useEffect(() => {
+    if (editor && value !== editor.getHTML()) {
+      editor.commands.setContent(value || "", { emitUpdate: false });
+    }
+  }, [value, editor]);
 
   return (
     <Box
