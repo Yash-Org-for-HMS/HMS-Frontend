@@ -36,6 +36,7 @@ import {
   ApartmentRounded,
   CallSplitRounded,
   AssessmentRounded,
+  SearchRounded,
   LocalHotelRounded,
   HotelRounded,
   NotificationsRounded,
@@ -175,7 +176,21 @@ export default function ReceptionLayout() {
         </Box>
       </Toolbar>
 
-      {/* Status Pill Removed for clean aesthetic */}
+      {/* Quick search — opens the command palette (also ⌘K / Ctrl+K) */}
+      <Box sx={{ px: 1.5, pt: 1.5 }}>
+        <Box
+          onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
+          sx={{
+            display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1, borderRadius: 2, cursor: "pointer",
+            border: "1px solid", borderColor: "divider", bgcolor: "background.default", color: "text.secondary",
+            "&:hover": { borderColor: "primary.main", color: "text.primary" }, transition: "all 0.15s ease",
+          }}
+        >
+          <SearchRounded sx={{ fontSize: 18 }} />
+          <Typography variant="body2" sx={{ flex: 1 }}>Search…</Typography>
+          <Chip label="⌘K" size="small" sx={{ height: 20, fontSize: "0.65rem", fontWeight: 700, bgcolor: "action.hover", color: "text.secondary" }} />
+        </Box>
+      </Box>
 
       {/* Navigation */}
       <List sx={{ px: 1.5, pt: 1, flex: 1, overflowY: "auto" }}>

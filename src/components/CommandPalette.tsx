@@ -1,12 +1,35 @@
 import { useState, useEffect, useRef } from "react";
 import { Dialog, Box, InputBase, Typography, List, ListItemButton, ListItemIcon, ListItemText, CircularProgress, Chip } from "@mui/material";
-import { SearchRounded, DashboardRounded, ScienceRounded, LocalPharmacyRounded, PersonalVideoRounded, ArrowForwardRounded, PersonRounded } from "@mui/icons-material";
+import {
+  SearchRounded, DashboardRounded, ScienceRounded, LocalPharmacyRounded, PersonalVideoRounded,
+  ArrowForwardRounded, PersonRounded, PersonAddRounded, CalendarMonthRounded, QueueRounded,
+  ReceiptLongRounded, AssessmentRounded, LocalHotelRounded, HotelRounded, MedicalServicesRounded,
+  ApartmentRounded, CallSplitRounded, BoltRounded,
+} from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { axiosInstance } from "../api/axios";
 
+// Create-flows surfaced as one-tap actions (reception/admin).
+const QUICK_ACTIONS = [
+  { name: "Register new patient", path: "/reception/patients/new", icon: <PersonAddRounded />, section: "Reception" },
+  { name: "Book appointment", path: "/reception/appointments/new", icon: <CalendarMonthRounded />, section: "Reception" },
+  { name: "Create / collect a bill", path: "/reception/billing", icon: <ReceiptLongRounded />, section: "Reception" },
+  { name: "Admit a patient", path: "/reception/ipd/admissions", icon: <LocalHotelRounded />, section: "Reception" },
+];
+
 const STATIC_ROUTES = [
+  { name: "Reception Dashboard", path: "/reception/dashboard", icon: <DashboardRounded />, section: "Reception" },
   { name: "Front Desk Console", path: "/reception/console", icon: <PersonalVideoRounded />, section: "Reception" },
-  { name: "Patient Registry", path: "/reception/patients", icon: <PersonRounded />, section: "Reception" },
+  { name: "All Patients", path: "/reception/patients", icon: <PersonRounded />, section: "Reception" },
+  { name: "Appointments", path: "/reception/appointments", icon: <CalendarMonthRounded />, section: "Reception" },
+  { name: "Patient Queue", path: "/reception/queue", icon: <QueueRounded />, section: "Reception" },
+  { name: "Doctor Availability", path: "/reception/doctors", icon: <MedicalServicesRounded />, section: "Reception" },
+  { name: "Department Directory", path: "/reception/directory", icon: <ApartmentRounded />, section: "Reception" },
+  { name: "Referrals", path: "/reception/referrals", icon: <CallSplitRounded />, section: "Reception" },
+  { name: "Admissions (IPD)", path: "/reception/ipd/admissions", icon: <LocalHotelRounded />, section: "Reception" },
+  { name: "Bed Management", path: "/reception/ipd/beds", icon: <HotelRounded />, section: "Reception" },
+  { name: "Billing", path: "/reception/billing", icon: <ReceiptLongRounded />, section: "Reception" },
+  { name: "Reports", path: "/reception/reports", icon: <AssessmentRounded />, section: "Reception" },
   { name: "Lab Dashboard", path: "/lab/dashboard", icon: <ScienceRounded />, section: "Laboratory" },
   { name: "Radiology Queue", path: "/lab/radiology", icon: <ScienceRounded />, section: "Laboratory" },
   { name: "Pharmacy POS", path: "/pharmacy/pos", icon: <LocalPharmacyRounded />, section: "Pharmacy" },
@@ -35,8 +58,13 @@ export default function CommandPalette() {
         setOpen((prev) => !prev);
       }
     };
+    const openEvt = () => setOpen(true);
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("open-command-palette", openEvt);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("open-command-palette", openEvt);
+    };
   }, []);
 
   useEffect(() => {
@@ -93,19 +121,20 @@ export default function CommandPalette() {
   const isNurse = userRole.includes("nurse");
   const isAdmin = userRole === "admin" || userRole === "hospital_admin";
 
-  const filteredRoutes = STATIC_ROUTES.filter(r => {
-    const matchesSearch = r.name.toLowerCase().includes(search.toLowerCase()) || r.section.toLowerCase().includes(search.toLowerCase());
-    if (!matchesSearch) return false;
-
+  const allowSection = (section: string) => {
     if (isAdmin) return true;
-    if (r.section === "Reception" && !isReception) return false;
-    if (r.section === "Laboratory" && !isLab) return false;
-    if (r.section === "Pharmacy" && !isPharmacy) return false;
-    if (r.section === "Doctor" && !isDoctor) return false;
-    if (r.section === "Admin" && !isAdmin) return false;
-
+    if (section === "Reception") return isReception;
+    if (section === "Laboratory") return isLab;
+    if (section === "Pharmacy") return isPharmacy;
+    if (section === "Doctor") return isDoctor;
+    if (section === "Admin") return isAdmin;
     return true;
-  });
+  };
+  const matches = (name: string, section: string) =>
+    name.toLowerCase().includes(search.toLowerCase()) || section.toLowerCase().includes(search.toLowerCase());
+
+  const filteredActions = QUICK_ACTIONS.filter((a) => allowSection(a.section) && matches(a.name, a.section));
+  const filteredRoutes = STATIC_ROUTES.filter((r) => allowSection(r.section) && matches(r.name, r.section));
 
   if (!isClinicalRoute) return null;
 
@@ -142,10 +171,29 @@ export default function CommandPalette() {
       </Box>
 
       <List sx={{ p: 1, maxHeight: "60vh", overflowY: "auto" }}>
-        {search.length > 0 && filteredRoutes.length === 0 && patients.length === 0 && !loading && (
+        {search.length > 0 && filteredActions.length === 0 && filteredRoutes.length === 0 && patients.length === 0 && !loading && (
           <Box sx={{ p: 3, textAlign: "center", color: "text.secondary" }}>
             <Typography variant="body2">No results found for "{search}"</Typography>
           </Box>
+        )}
+
+        {filteredActions.length > 0 && (
+          <>
+            <Typography variant="overline" sx={{ px: 2, py: 1, color: "text.secondary", display: "block", lineHeight: 1 }}>
+              Quick Actions
+            </Typography>
+            {filteredActions.map((action) => (
+              <ListItemButton
+                key={action.path}
+                onClick={() => handleSelect(action.path)}
+                sx={{ borderRadius: 2, mb: 0.5, "&:hover": { bgcolor: "rgba(245,158,11,0.1)" } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40, color: "#f59e0b" }}>{action.icon}</ListItemIcon>
+                <ListItemText primary={action.name} primaryTypographyProps={{ fontWeight: 600, color: "text.primary" }} />
+                <BoltRounded sx={{ color: "#f59e0b", opacity: 0.6, fontSize: "1.1rem" }} />
+              </ListItemButton>
+            ))}
+          </>
         )}
 
         {filteredRoutes.length > 0 && (
