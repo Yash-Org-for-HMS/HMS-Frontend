@@ -1,11 +1,11 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Grid, Paper, TextField, InputAdornment,
+  Box, Typography, Paper, TextField, InputAdornment,
   CircularProgress, Button, Avatar, Dialog, DialogContent, IconButton, Alert, Chip
 } from "@mui/material";
 import {
-  SearchRounded, PersonAddRounded, CloseRounded, ChevronRightRounded, ContentCopyRounded
+  SearchRounded, PersonAddRounded, CloseRounded, ChevronRightRounded, ContentCopyRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
@@ -88,9 +88,58 @@ export default function FrontDeskConsole() {
     setSelectedPatientId(patientId);
   };
 
+  // One row style for both the "Recent" list and live search results, so the
+  // list doesn't visually jump when the user starts typing.
+  const renderPatientRow = (p: Patient) => {
+    const selected = selectedPatientId === p.patientId;
+    return (
+      <Box
+        key={p.patientId}
+        onClick={() => setSelectedPatientId(p.patientId)}
+        sx={{
+          display: "flex", alignItems: "center", p: 1.5, mb: 1,
+          borderRadius: 2, cursor: "pointer",
+          bgcolor: selected ? "rgba(6, 182, 212, 0.15)" : "transparent",
+          border: "1px solid",
+          borderColor: selected ? "rgba(6, 182, 212, 0.35)" : "divider",
+          "&:hover": { bgcolor: "rgba(6, 182, 212, 0.08)", borderColor: "rgba(6, 182, 212, 0.3)" },
+          transition: "background-color 0.2s ease, border-color 0.2s ease",
+        }}
+      >
+        <Avatar sx={{ width: 40, height: 40, bgcolor: getAvatarColor(p.patientId), mr: 1.5, fontSize: "0.95rem", fontWeight: 600 }}>
+          {getInitials(p)}
+        </Avatar>
+        <Box sx={{ flex: 1, overflow: "hidden" }}>
+          <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }} noWrap>
+            {p.firstName} {p.lastName}
+          </Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary", display: "flex", alignItems: "center" }} noWrap>
+            MRN: {p.uhidNumber}{p.phone ? ` • ${p.phone}` : ""}
+            <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(p.uhidNumber); }} sx={{ p: 0.2, ml: 0.5, color: "text.secondary", "&:hover": { color: "#06b6d4" } }}>
+              <ContentCopyRounded sx={{ fontSize: "0.9rem" }} />
+            </IconButton>
+          </Typography>
+        </Box>
+        <ChevronRightRounded sx={{ color: selected ? "#06b6d4" : "text.disabled" }} />
+      </Box>
+    );
+  };
+
   return (
     <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
-{/* Main Split Layout */}
+      {/* Header */}
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
+        <Box>
+          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
+            Front Desk Console
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            Find or register a patient, then book and bill in one flow.
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Main Split Layout */}
       <Box sx={{ flex: 1, display: "flex", gap: 3, minHeight: 0, flexDirection: { xs: "column", md: "row" } }}>
         {/* Left Panel: Search & Results */}
         <Paper
@@ -142,11 +191,11 @@ export default function FrontDeskConsole() {
               </Button>
             </Box>
             
-            <Box sx={{ flex: 1, overflowY: "auto", p: 1 }}>
+            <Box sx={{ flex: 1, overflowY: "auto", p: 1.5 }}>
               {search.length < 2 ? (
-                <Box sx={{ p: 2 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 2, px: 1 }}>
-                    <Typography variant="subtitle2" sx={{ color: "text.primary", fontWeight: 700, flex: 1, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                <>
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 1.5, px: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 700, flex: 1, textTransform: "uppercase", letterSpacing: 0.5, fontSize: "0.72rem" }}>
                       Recent Registrations
                     </Typography>
                     {recentPatients.length > 0 && (
@@ -155,82 +204,25 @@ export default function FrontDeskConsole() {
                   </Box>
 
                   {recentPatients.length === 0 ? (
-                    <Box sx={{ mx: 1 }}>
-                      <Mascot pose="nothing-here-yet" subtitle="No recent patients found." size={120} />
-                    </Box>
+                    <Mascot pose="nothing-here-yet" subtitle="No recent patients found." size={120} />
                   ) : (
-                    recentPatients.map(p => (
-                      <Box
-                        key={p.patientId}
-                        onClick={() => setSelectedPatientId(p.patientId)}
-                        sx={{
-                          display: "flex", alignItems: "center", p: 1.5, mb: 1,
-                          borderRadius: 2, cursor: "pointer",
-                          bgcolor: selectedPatientId === p.patientId ? "rgba(6, 182, 212, 0.15)" : "transparent",
-                          border: "1px solid",
-                          borderColor: selectedPatientId === p.patientId ? "rgba(6, 182, 212, 0.3)" : "rgba(0,0,0,0.05)",
-                          "&:hover": { bgcolor: "rgba(6, 182, 212, 0.08)", borderColor: "rgba(6, 182, 212, 0.3)" },
-                          transition: "all 0.2s ease"
-                        }}
-                      >
-                        <Avatar sx={{ width: 40, height: 40, bgcolor: getAvatarColor(p.patientId), mr: 1.5 }}>
-                          {getInitials(p)}
-                        </Avatar>
-                        <Box sx={{ flex: 1, overflow: "hidden" }}>
-                          <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }} noWrap>
-                            {p.firstName} {p.lastName}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: "text.secondary", display: "flex", alignItems: "center" }} noWrap>
-                            MRN: {p.uhidNumber}
-                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(p.uhidNumber); }} sx={{ p: 0.2, ml: 0.5, color: "text.secondary", "&:hover": { color: "#06b6d4" } }}>
-                              <ContentCopyRounded sx={{ fontSize: "0.9rem" }} />
-                            </IconButton>
-                          </Typography>
-                        </Box>
-                        <ChevronRightRounded sx={{ color: selectedPatientId === p.patientId ? "#06b6d4" : "#475569" }} />
-                      </Box>
-                    ))
+                    recentPatients.map(renderPatientRow)
                   )}
-                </Box>
+                </>
               ) : patients.length === 0 && !loading ? (
-                <Box sx={{ textAlign: "center" }}>
+                <Box sx={{ textAlign: "center", py: 4 }}>
                   <Mascot pose="no-matches" subtitle="No patient found." size={120} />
                   <Button variant="outlined" size="small" onClick={() => setRegisterModalOpen(true)} sx={{ mt: 1, color: "#06b6d4", borderColor: "rgba(6, 182, 212, 0.5)" }}>
                     Register New Patient
                   </Button>
                 </Box>
               ) : (
-                patients.map(p => (
-                  <Box
-                    key={p.patientId}
-                    onClick={() => setSelectedPatientId(p.patientId)}
-                    sx={{
-                      display: "flex", alignItems: "center", p: 1.5, mb: 1,
-                      borderRadius: 2, cursor: "pointer",
-                      bgcolor: selectedPatientId === p.patientId ? "rgba(6, 182, 212, 0.15)" : "transparent",
-                      border: "1px solid",
-                      borderColor: selectedPatientId === p.patientId ? "rgba(6, 182, 212, 0.3)" : "transparent",
-                      "&:hover": { bgcolor: "rgba(6, 182, 212, 0.08)" },
-                      transition: "all 0.2s ease"
-                    }}
-                  >
-                    <Avatar sx={{ width: 40, height: 40, bgcolor: getAvatarColor(p.patientId), mr: 1.5 }}>
-                      {getInitials(p)}
-                    </Avatar>
-                    <Box sx={{ flex: 1, overflow: "hidden" }}>
-                      <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }} noWrap>
-                        {p.firstName} {p.lastName}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary", display: "flex", alignItems: "center" }} noWrap>
-                        MRN: {p.uhidNumber} • {p.phone}
-                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(p.uhidNumber); }} sx={{ p: 0.2, ml: 0.5, color: "text.secondary", "&:hover": { color: "#06b6d4" } }}>
-                          <ContentCopyRounded sx={{ fontSize: "0.9rem" }} />
-                        </IconButton>
-                      </Typography>
-                    </Box>
-                    <ChevronRightRounded sx={{ color: selectedPatientId === p.patientId ? "#06b6d4" : "#475569" }} />
-                  </Box>
-                ))
+                <>
+                  <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 700, mb: 1.5, px: 0.5, textTransform: "uppercase", letterSpacing: 0.5, fontSize: "0.72rem" }}>
+                    {patients.length} Result{patients.length === 1 ? "" : "s"}
+                  </Typography>
+                  {patients.map(renderPatientRow)}
+                </>
               )}
             </Box>
           </Paper>
@@ -265,20 +257,16 @@ export default function FrontDeskConsole() {
                   Search for an existing patient to book an appointment, or register a new patient to get started.
                 </Typography>
                 
-                <Grid container spacing={2} sx={{ maxWidth: 500 }}>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Paper elevation={0} sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 3, textAlign: "center", bgcolor: "background.default" }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "text.primary", mb: 0.5 }}>Step 1</Typography>
-                      <Typography variant="body2" sx={{ color: "text.secondary" }}>Find or Register Patient</Typography>
-                    </Paper>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Paper elevation={0} sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 3, textAlign: "center", bgcolor: "background.default" }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "text.primary", mb: 0.5 }}>Step 2</Typography>
-                      <Typography variant="body2" sx={{ color: "text.secondary" }}>Book & Proceed to Billing</Typography>
-                    </Paper>
-                  </Grid>
-                </Grid>
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2, width: "100%", maxWidth: 500 }}>
+                  <Paper elevation={0} sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 3, textAlign: "center", bgcolor: "background.default" }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "text.primary", mb: 0.5 }}>Step 1</Typography>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>Find or Register Patient</Typography>
+                  </Paper>
+                  <Paper elevation={0} sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 3, textAlign: "center", bgcolor: "background.default" }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "text.primary", mb: 0.5 }}>Step 2</Typography>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>Book & Proceed to Billing</Typography>
+                  </Paper>
+                </Box>
               </Box>
             ) : (
               <Box sx={{ p: 4 }}>

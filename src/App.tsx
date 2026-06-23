@@ -226,7 +226,6 @@ function App() {
             <Route path="/reception/ipd/beds" element={el(BedBoard)} />
 
             <Route path="/reception/queue" element={el(QueueDashboard)} />
-            <Route path="/reception/queue/new" element={el(QueueDashboard)} />
             <Route path="/reception/billing" element={el(Billing)} />
             <Route path="/reception/notifications" element={el(NotificationsLog)} />
           </Route>
