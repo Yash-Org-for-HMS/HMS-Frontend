@@ -289,9 +289,12 @@ export default function GenerateInvoice() {
             <TextField
               label="Amount to Pay (₹)"
               type="number"
-              fullWidth 
-              value={paymentAmount} 
-              onChange={e => setPaymentAmount(e.target.value === "" ? "" : Number(e.target.value))} 
+              fullWidth
+              value={paymentAmount}
+              onChange={e => setPaymentAmount(e.target.value === "" ? "" : Number(e.target.value))}
+              inputProps={{ min: 0, max: netAmount, step: "0.01" }}
+              error={Number(paymentAmount || 0) > netAmount + 0.005}
+              helperText={Number(paymentAmount || 0) > netAmount + 0.005 ? `Cannot exceed the bill of ₹${netAmount.toFixed(2)}` : undefined}
             />
             <Autocomplete
               options={["Cash", "Credit Card", "Insurance", "Bank Transfer"]}
@@ -308,8 +311,8 @@ export default function GenerateInvoice() {
           <Button 
             variant="contained" 
             color="success" 
-            onClick={handleProcessPayment} 
-            disabled={isProcessingPayment || !paymentAmount}
+            onClick={handleProcessPayment}
+            disabled={isProcessingPayment || !paymentAmount || Number(paymentAmount) <= 0 || Number(paymentAmount) > netAmount + 0.005}
             startIcon={<PaymentRounded />}
           >
             {isProcessingPayment ? "Processing..." : "Collect Payment"}

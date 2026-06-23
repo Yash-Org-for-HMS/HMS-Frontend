@@ -156,7 +156,10 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged 
                   <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#10b981", mb: 1.5 }}>Collect Payment</Typography>
                   <Grid container spacing={1.5}>
                     <Grid size={{ xs: 5 }}>
-                      <TextField fullWidth size="small" type="number" label="Amount (₹)" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={String(balance.toFixed(2))} />
+                      <TextField fullWidth size="small" type="number" label="Amount (₹)" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={String(balance.toFixed(2))}
+                        inputProps={{ min: 0, max: balance, step: "0.01" }}
+                        error={Number(amount) > balance + 0.005}
+                        helperText={Number(amount) > balance + 0.005 ? `Max ₹${balance.toFixed(2)}` : " "} />
                     </Grid>
                     <Grid size={{ xs: 4 }}>
                       <TextField select fullWidth size="small" label="Method" value={methodId} onChange={(e) => setMethodId(e.target.value)}>
@@ -164,9 +167,12 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged 
                       </TextField>
                     </Grid>
                     <Grid size={{ xs: 3 }}>
-                      <Button fullWidth variant="contained" disabled={paying || !amount || Number(amount) <= 0 || !methodId} onClick={pay}
+                      <Button fullWidth variant="contained" disabled={paying || !amount || Number(amount) <= 0 || Number(amount) > balance + 0.005 || !methodId} onClick={pay}
                         startIcon={paying ? <CircularProgress size={14} color="inherit" /> : <PaymentRounded />}
                         sx={{ height: 40, bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }}>Pay</Button>
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <Button size="small" onClick={() => setAmount(balance.toFixed(2))} sx={{ textTransform: "none", color: "#10b981", p: 0, minWidth: 0 }}>Pay full balance ({inr(balance)})</Button>
                     </Grid>
                   </Grid>
                 </Box>
