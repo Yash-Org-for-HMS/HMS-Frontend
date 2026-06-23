@@ -9,9 +9,11 @@ import { ReceiptLongRounded, PaymentRounded, CheckCircleRounded } from "@mui/ico
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
+import { useToast } from "../../contexts/ToastContext";
 
 export default function GenerateInvoice() {
   const theme = useTheme();
+  const toast = useToast();
   
   // Patient Search
   const [patientQuery, setPatientQuery] = useState("");
@@ -92,9 +94,9 @@ export default function GenerateInvoice() {
       const res = await axiosInstance.post(`/billing/invoices/${selectedPatient.patientId}`, payload);
       setGeneratedInvoice(res.data.data);
       setPaymentAmount(netAmount);
+      toast.success(`Invoice ${res.data.data?.invoiceNumber || ""} generated`);
     } catch (err) {
-      console.error("Failed to generate invoice", err);
-      alert((err as any)?.response?.data?.message || "Error generating invoice");
+      toast.error((err as any)?.response?.data?.message || "Error generating invoice");
     } finally {
       setIsGenerating(false);
     }
@@ -108,38 +110,22 @@ export default function GenerateInvoice() {
         amount: Number(paymentAmount),
         paymentMethod
       });
-      alert("Payment successful!");
-      // Reset
+      toast.success("Payment collected successfully");
       setGeneratedInvoice(null);
       refetchUnbilled();
     } catch (err) {
-      console.error("Payment failed", err);
-      alert((err as any)?.response?.data?.message || "Payment failed");
+      toast.error((err as any)?.response?.data?.message || "Payment failed");
     } finally {
       setIsProcessingPayment(false);
     }
   };
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: "auto" }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ 
-          fontWeight: 800, 
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.5,
-          color: 'primary.main'
-        }}>
-          <ReceiptLongRounded fontSize="large" />
-          Generate Invoice
+    <Box>
+      <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+        <Typography variant="subtitle2" fontWeight={700} mb={2}>
+          Select a patient to bill their pending charges
         </Typography>
-        <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 0.5 }}>
-          Search for a patient to view and bill their pending charges across all departments.
-        </Typography>
-      </Box>
-
-      <Paper sx={{ p: 3, mb: 4, borderRadius: 3 }}>
-        <Typography variant="subtitle2" fontWeight={700} mb={2}>Select Patient</Typography>
         <Autocomplete
           options={patients}
           getOptionLabel={(option) => `${option.firstName} ${option.lastName} (${option.uhidNumber})`}
@@ -170,7 +156,7 @@ export default function GenerateInvoice() {
       {selectedPatient && (
         <Grid container spacing={4}>
           <Grid size={{ xs: 12, md: 8 }}>
-            <Paper sx={{ borderRadius: 3, overflow: "hidden", border: '1px solid', borderColor: 'divider' }}>
+            <Paper elevation={0} sx={{ borderRadius: 3, overflow: "hidden", border: '1px solid', borderColor: 'divider' }}>
               <Box sx={{ p: 2, bgcolor: alpha(theme.palette.primary.main, 0.04), borderBottom: '1px solid', borderColor: 'divider' }}>
                 <Typography variant="h6" fontWeight="700">Unbilled Charges</Typography>
               </Box>
@@ -233,7 +219,7 @@ export default function GenerateInvoice() {
           </Grid>
 
           <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', position: 'sticky', top: 24 }}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', position: 'sticky', top: 24 }}>
               <Typography variant="h6" fontWeight="700" mb={3}>Invoice Summary</Typography>
               
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
@@ -242,7 +228,7 @@ export default function GenerateInvoice() {
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography color="text.secondary">Discount ($)</Typography>
+                <Typography color="text.secondary">Discount (₹)</Typography>
                 <TextField 
                   size="small" type="number" 
                   value={discount} onChange={e => setDiscount(e.target.value === "" ? "" : Number(e.target.value))}
@@ -300,9 +286,9 @@ export default function GenerateInvoice() {
           </Typography>
           
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField 
-              label="Amount to Pay ($)" 
-              type="number" 
+            <TextField
+              label="Amount to Pay (₹)"
+              type="number"
               fullWidth 
               value={paymentAmount} 
               onChange={e => setPaymentAmount(e.target.value === "" ? "" : Number(e.target.value))} 

@@ -83,7 +83,7 @@ const Reports = lazy(() => import("./pages/reception/Reports"));
 const Admissions = lazy(() => import("./pages/ipd/Admissions"));
 const BedBoard = lazy(() => import("./pages/ipd/BedBoard"));
 const QueueDashboard = lazy(() => import("./pages/reception/QueueDashboard"));
-const GenerateInvoice = lazy(() => import("./pages/billing/GenerateInvoice"));
+const Billing = lazy(() => import("./pages/reception/Billing"));
 const NotificationsLog = lazy(() => import("./pages/reception/NotificationsLog"));
 const FrontDeskConsole = lazy(() => import("./pages/reception/FrontDeskConsole"));
 
@@ -227,7 +227,7 @@ function App() {
 
             <Route path="/reception/queue" element={el(QueueDashboard)} />
             <Route path="/reception/queue/new" element={el(QueueDashboard)} />
-            <Route path="/reception/billing" element={el(GenerateInvoice)} />
+            <Route path="/reception/billing" element={el(Billing)} />
             <Route path="/reception/notifications" element={el(NotificationsLog)} />
           </Route>
         </Route>
