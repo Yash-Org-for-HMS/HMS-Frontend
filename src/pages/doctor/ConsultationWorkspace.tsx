@@ -537,6 +537,7 @@ export default function ConsultationWorkspace() {
                       : null,
                     gender: p?.gender,
                   }}
+                  patientWeightKg={v?.weightKg != null ? Number(v.weightKg) : null}
                   diagnosis={form.diagnosis}
                   onRequireSave={() => handleSave(true)}
                 />

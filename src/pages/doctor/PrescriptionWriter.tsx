@@ -11,6 +11,7 @@ import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { assetUrl } from "../../utils/assetUrl";
+import DoseCalculator from "../../components/doctor/DoseCalculator";
 
 const DOCTOR_BLUE = "#3b82f6";
 
@@ -26,11 +27,12 @@ interface PrescriptionWriterProps {
   patientId?: string;
   patientAllergies?: string[];
   patientInfo?: PatientPrintInfo;
+  patientWeightKg?: number | null;
   diagnosis?: string;
   onRequireSave: () => Promise<string | undefined>;
 }
 
-export default function PrescriptionWriter({ consultationId, patientId, patientAllergies = [], patientInfo, diagnosis, onRequireSave }: PrescriptionWriterProps) {
+export default function PrescriptionWriter({ consultationId, patientId, patientAllergies = [], patientInfo, patientWeightKg, diagnosis, onRequireSave }: PrescriptionWriterProps) {
   const [saving, setSaving] = useState(false);
   const [repeating, setRepeating] = useState(false);
   const toast = useToast();
@@ -490,9 +492,18 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
               />
             )}
           />
-          <TextField 
-            fullWidth size="small" label="Dosage" placeholder="e.g. 500mg" 
-            value={dosage} onChange={e => setDosage(e.target.value)} 
+          <TextField
+            fullWidth size="small" label="Dosage" placeholder="e.g. 500mg"
+            value={dosage} onChange={e => setDosage(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <DoseCalculator
+                  ageYears={patientInfo?.age ?? null}
+                  weightKg={patientWeightKg ?? null}
+                  onApply={(mg) => setDosage(`${mg}mg`)}
+                />
+              ),
+            }}
           />
           <TextField 
             fullWidth size="small" label="Frequency" placeholder="e.g. 1-0-1" 
