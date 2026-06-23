@@ -9,20 +9,32 @@ import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
+import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { assetUrl } from "../../utils/assetUrl";
 
 const DOCTOR_BLUE = "#3b82f6";
+
+interface PatientPrintInfo {
+  name?: string;
+  uhid?: string | null;
+  age?: number | null;
+  gender?: string | null;
+}
 
 interface PrescriptionWriterProps {
   consultationId?: string | null;
   patientId?: string;
   patientAllergies?: string[];
+  patientInfo?: PatientPrintInfo;
+  diagnosis?: string;
   onRequireSave: () => Promise<string | undefined>;
 }
 
-export default function PrescriptionWriter({ consultationId, patientId, patientAllergies = [], onRequireSave }: PrescriptionWriterProps) {
+export default function PrescriptionWriter({ consultationId, patientId, patientAllergies = [], patientInfo, diagnosis, onRequireSave }: PrescriptionWriterProps) {
   const [saving, setSaving] = useState(false);
   const [repeating, setRepeating] = useState(false);
   const toast = useToast();
+  const { hospital, user, branch } = useHospitalAuth();
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [items, setItems] = useState<any[]>([]);
   const [dispensingStatus, setDispensingStatus] = useState<string | null>(null);
@@ -253,7 +265,118 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   };
 
   const handlePrint = () => {
-    window.print();
+    if (items.length === 0) {
+      toast.error("Add at least one medicine to print.");
+      return;
+    }
+
+    const esc = (s: any) =>
+      String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+
+    const today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    const logo = hospital?.logoUrl ? assetUrl(hospital.logoUrl) : "";
+    const doctorName = `Dr. ${user?.firstName || ""} ${user?.lastName || ""}`.trim();
+    const doctorRole = user?.roleName || "Doctor";
+
+    const rowsHtml = items
+      .map(
+        (it, i) => `
+        <tr>
+          <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb;text-align:center;color:#64748b">${i + 1}</td>
+          <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb">
+            <span style="font-weight:700">${esc(it.medicineName || "—")}</span>
+            ${it.genericName ? `<div style="font-size:11px;color:#64748b">${esc(it.genericName)}</div>` : ""}
+            ${it.buyOutside ? `<span style="display:inline-block;margin-top:2px;font-size:10px;font-weight:700;color:#b45309;background:#fef3c7;border-radius:4px;padding:1px 6px">BUY OUTSIDE</span>` : ""}
+          </td>
+          <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb">${esc(it.dosage)}</td>
+          <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb">${esc(it.frequency)}</td>
+          <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb">${it.durationDays ? esc(it.durationDays) + " days" : "—"}</td>
+          <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb">${esc(it.quantity)} ${esc(it.unit || "")}</td>
+        </tr>`
+      )
+      .join("");
+
+    const patientBits = [
+      patientInfo?.name ? `<span><b>Patient:</b> ${esc(patientInfo.name)}</span>` : "",
+      patientInfo?.uhid ? `<span><b>UHID:</b> ${esc(patientInfo.uhid)}</span>` : "",
+      patientInfo?.age != null ? `<span><b>Age:</b> ${esc(patientInfo.age)}y</span>` : "",
+      patientInfo?.gender ? `<span><b>Sex:</b> ${esc(patientInfo.gender)}</span>` : "",
+    ].filter(Boolean).join("");
+
+    const allergyHtml = patientAllergies.length
+      ? `<div style="margin-top:6px;font-size:12px;color:#b91c1c"><b>Allergies:</b> ${esc(patientAllergies.join(", "))}</div>`
+      : "";
+
+    const html = `
+      <div style="max-width:760px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#0f172a">
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #3b82f6;padding-bottom:12px">
+          <div style="display:flex;align-items:center;gap:12px">
+            ${logo ? `<img src="${esc(logo)}" alt="" style="height:48px;width:48px;object-fit:contain;border-radius:8px" />` : ""}
+            <div>
+              <div style="font-size:20px;font-weight:800">${esc(hospital?.name || "Hospital")}</div>
+              ${branch?.name ? `<div style="font-size:12px;color:#64748b">${esc(branch.name)} Branch</div>` : ""}
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:13px;color:#64748b">Date</div>
+            <div style="font-weight:700">${today}</div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:6px 20px;font-size:13px;color:#334155;margin-top:14px">
+          ${patientBits}
+        </div>
+        ${diagnosis ? `<div style="margin-top:6px;font-size:13px"><b>Diagnosis:</b> ${esc(diagnosis)}</div>` : ""}
+        ${allergyHtml}
+
+        <div style="font-size:36px;font-weight:800;color:#3b82f6;margin:18px 0 4px;line-height:1">&#8478;</div>
+
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="background:#f1f5f9;text-align:left">
+              <th style="padding:8px 6px;width:28px">#</th>
+              <th style="padding:8px 6px">Medicine</th>
+              <th style="padding:8px 6px">Dosage</th>
+              <th style="padding:8px 6px">Frequency</th>
+              <th style="padding:8px 6px">Duration</th>
+              <th style="padding:8px 6px">Qty</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+
+        ${specialInstructions
+          ? `<div style="margin-top:16px;font-size:13px"><b>Instructions:</b><div style="margin-top:4px;color:#334155;white-space:pre-wrap">${esc(specialInstructions)}</div></div>`
+          : ""}
+
+        <div style="margin-top:48px;display:flex;justify-content:flex-end">
+          <div style="text-align:center;min-width:220px">
+            <div style="border-top:1px solid #94a3b8;padding-top:6px;font-weight:700">${esc(doctorName)}</div>
+            <div style="font-size:12px;color:#64748b">${esc(doctorRole)}</div>
+          </div>
+        </div>
+        <div style="margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px dashed #cbd5e1;padding-top:8px">
+          This prescription is not valid without the doctor's signature. Generated by ${esc(hospital?.name || "HMS")}.
+        </div>
+      </div>`;
+
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("aria-hidden", "true");
+    Object.assign(iframe.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" });
+    document.body.appendChild(iframe);
+    const doc = iframe.contentWindow?.document;
+    if (!doc) { document.body.removeChild(iframe); return; }
+    doc.open();
+    doc.write(
+      `<!doctype html><html><head><title>Prescription</title>` +
+      `<style>@page{margin:14mm} body{margin:0;padding:16px;font-family:Inter,Arial,sans-serif;}</style>` +
+      `</head><body>${html}</body></html>`
+    );
+    doc.close();
+    const win = iframe.contentWindow!;
+    const cleanup = () => { if (iframe.parentNode) document.body.removeChild(iframe); };
+    win.onafterprint = cleanup;
+    setTimeout(() => { win.focus(); win.print(); setTimeout(cleanup, 1000); }, 300);
   };
 
   if (loading) {
@@ -469,7 +592,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
           startIcon={<PrintRounded />}
           onClick={handlePrint}
         >
-          Print Preview
+          Print
         </Button>
         <Button 
           variant="contained" 

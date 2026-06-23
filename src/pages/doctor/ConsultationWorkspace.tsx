@@ -514,6 +514,15 @@ export default function ConsultationWorkspace() {
                   consultationId={context?.consultation?.consultationId}
                   patientId={p?.patientId}
                   patientAllergies={(p?.allergiesList || []).map((a: any) => a.allergen).filter(Boolean)}
+                  patientInfo={{
+                    name: `${p?.firstName || ""} ${p?.lastName || ""}`.trim(),
+                    uhid: p?.uhidNumber,
+                    age: (p?.dateOfBirth || p?.dob)
+                      ? Math.floor((Date.now() - new Date(p?.dateOfBirth || p?.dob).getTime()) / (1000 * 60 * 60 * 24 * 365.25))
+                      : null,
+                    gender: p?.gender,
+                  }}
+                  diagnosis={form.diagnosis}
                   onRequireSave={() => handleSave(true)}
                 />
               </Box>
