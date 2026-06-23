@@ -23,6 +23,7 @@ import IdCardModal from "../../components/reception/IdCardModal";
 import ReferralDialog from "../../components/reception/ReferralDialog";
 import ClinicalRecordsSection from "../../components/reception/ClinicalRecordsSection";
 import ConsentFormsSection from "../../components/reception/ConsentFormsSection";
+import InvoiceViewDialog from "../../components/reception/InvoiceViewDialog";
 import { useToast } from "../../contexts/ToastContext";
 
 const ACCENT = "#0891b2";
@@ -126,6 +127,7 @@ export default function PatientProfile() {
   const [checkinId, setCheckinId] = useState<string | null>(null);
   const [idCardOpen, setIdCardOpen] = useState(false);
   const [referralOpen, setReferralOpen] = useState(false);
+  const [invoiceView, setInvoiceView] = useState<string | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
   const [apptPage, setApptPage] = useState(0);
@@ -139,7 +141,7 @@ export default function PatientProfile() {
     enabled: !!id,
   });
 
-  const { data: billing } = useQuery<{ totals: any; invoices: any[] }>({
+  const { data: billing, refetch: refetchBilling } = useQuery<{ totals: any; invoices: any[] }>({
     queryKey: ["patient-billing", id],
     queryFn: async () => (await axiosInstance.get(`/reception/patients/${id}/billing-summary`)).data.data,
     enabled: !!id,
@@ -455,6 +457,8 @@ export default function PatientProfile() {
             <Chip label={`Paid: ${inr(billing?.totals?.totalPaid)}`} sx={{ bgcolor: "rgba(16,185,129,0.12)", color: "#10b981", fontWeight: 700 }} />
             <Chip label={`Dues: ${inr(billing?.totals?.totalDues)}`}
               sx={{ bgcolor: Number(billing?.totals?.totalDues || 0) > 0 ? "rgba(239,68,68,0.12)" : "rgba(16,185,129,0.12)", color: Number(billing?.totals?.totalDues || 0) > 0 ? "#ef4444" : "#10b981", fontWeight: 700 }} />
+            <Chip label={`Deposits: ${inr(billing?.totals?.totalDeposit)}`}
+              sx={{ bgcolor: "rgba(8,145,178,0.12)", color: "#0891b2", fontWeight: 700 }} />
           </Stack>
           {invoices.length === 0 ? (
             <Box sx={{ py: 2 }}><Mascot pose="all-caught-up" title="No invoices" subtitle="This patient has no invoices yet." /></Box>
@@ -464,8 +468,8 @@ export default function PatientProfile() {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      {["Invoice #", "Date", "Amount", "Balance", "Status"].map((h) => (
-                        <TableCell key={h} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", borderColor: "divider" }}>{h}</TableCell>
+                      {["Invoice #", "Date", "Amount", "Balance", "Status", ""].map((h, i) => (
+                        <TableCell key={h || i} align={i === 5 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", borderColor: "divider" }}>{h}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
@@ -480,6 +484,15 @@ export default function PatientProfile() {
                         </TableCell>
                         <TableCell sx={{ borderColor: "divider" }}>
                           <Chip label={inv.statusLabel || "—"} size="small" sx={{ bgcolor: `${inv.statusColor || "#64748b"}22`, color: inv.statusColor || "#64748b", fontWeight: 700 }} />
+                        </TableCell>
+                        <TableCell align="right" sx={{ borderColor: "divider" }}>
+                          <Button size="small" variant={Number(inv.balance) > 0 ? "contained" : "text"}
+                            onClick={() => setInvoiceView(inv.invoiceId)}
+                            sx={Number(inv.balance) > 0
+                              ? { textTransform: "none", bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }
+                              : { textTransform: "none", color: "#0891b2" }}>
+                            {Number(inv.balance) > 0 ? "Pay" : "View"}
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -504,6 +517,10 @@ export default function PatientProfile() {
       {tab === 5 && <PatientDocumentsSection patientId={patient.patientId} />}
 
       <IdCardModal open={idCardOpen} onClose={() => setIdCardOpen(false)} patient={patient} />
+
+      {invoiceView && (
+        <InvoiceViewDialog open invoiceId={invoiceView} onClose={() => setInvoiceView(null)} onChanged={() => refetchBilling()} />
+      )}
 
       {referralOpen && (
         <ReferralDialog
