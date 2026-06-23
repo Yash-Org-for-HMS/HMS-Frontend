@@ -14,6 +14,7 @@ import {
   LocalHospitalRounded,
   QueueRounded,
   ScienceRounded,
+  AssessmentRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import { assetUrl } from "../utils/assetUrl";
@@ -53,6 +54,7 @@ export default function DoctorLayout() {
     { text: "My Queue", icon: <QueueRounded />, path: "/doctor/queue", badge: badges?.queueWaiting || 0 },
     { text: "My Patients", icon: <PeopleAltRounded />, path: "/doctor/patients", badge: 0 },
     { text: "Results", icon: <ScienceRounded />, path: "/doctor/results", badge: badges?.resultsReady || 0 },
+    { text: "My Reports", icon: <AssessmentRounded />, path: "/doctor/reports", badge: 0 },
   ];
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
