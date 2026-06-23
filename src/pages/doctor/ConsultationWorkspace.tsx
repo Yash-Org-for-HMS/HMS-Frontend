@@ -13,6 +13,7 @@ import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import PrescriptionWriter from "./PrescriptionWriter";
+import SoapTemplateBar, { type SoapTemplate } from "../../components/doctor/SoapTemplateBar";
 import LabOrderForm from "./LabOrderForm";
 import RadiologyOrderForm from "./RadiologyOrderForm";
 import RichTextEditor from "../../components/RichTextEditor";
@@ -185,6 +186,17 @@ export default function ConsultationWorkspace() {
     } finally {
       if (!isAutoSave) setSaving(false);
     }
+  };
+
+  const applyTemplate = (t: SoapTemplate) => {
+    setForm((prev) => ({
+      ...prev,
+      soapSubjective: t.soapSubjective || "",
+      soapObjective: t.soapObjective || "",
+      soapAssessment: t.soapAssessment || "",
+      soapPlan: t.soapPlan || "",
+      diagnosis: t.diagnosis || prev.diagnosis,
+    }));
   };
 
   const handleComplete = async () => {
@@ -406,9 +418,12 @@ export default function ConsultationWorkspace() {
 
             <TabPanel value={rightTabIndex} index={0}>
               <Box sx={{ p: 1 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
-                  <LocalHospitalRounded sx={{ color: DOCTOR_BLUE }} />
-                  <Typography variant="h6" sx={{ fontWeight: 800 }}>Clinical Notes (SOAP)</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: 3, flexWrap: "wrap" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <LocalHospitalRounded sx={{ color: DOCTOR_BLUE }} />
+                    <Typography variant="h6" sx={{ fontWeight: 800 }}>Clinical Notes (SOAP)</Typography>
+                  </Box>
+                  <SoapTemplateBar current={form} onApply={applyTemplate} />
                 </Box>
 
                 <Grid container spacing={3}>
