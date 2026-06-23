@@ -59,20 +59,52 @@ export default function ReceptionLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const menuItems = [
-    { text: "Dashboard", icon: <DashboardRounded />, path: "/reception/dashboard" },
-    { text: "Front Desk Console", icon: <PersonAddRounded />, path: "/reception/console" },
-    { text: "Appointments", icon: <CalendarTodayRounded />, path: "/reception/appointments" },
-    { text: "Doctor Availability", icon: <MedicalServicesRounded />, path: "/reception/doctors" },
-    { text: "Department Directory", icon: <ApartmentRounded />, path: "/reception/directory" },
-    { text: "Referrals", icon: <CallSplitRounded />, path: "/reception/referrals" },
-    { text: "Admissions (IPD)", icon: <LocalHotelRounded />, path: "/reception/ipd/admissions" },
-    { text: "Bed Management", icon: <HotelRounded />, path: "/reception/ipd/beds" },
-    { text: "Patient Queue", icon: <QueueRounded />, path: "/reception/queue" },
-    { text: "All Patients", icon: <AccountCircleRounded />, path: "/reception/patients" },
-    { text: "Billing", icon: <ReceiptRounded />, path: "/reception/billing" },
-    { text: "Reports", icon: <AssessmentRounded />, path: "/reception/reports" },
-    { text: "Notifications", icon: <NotificationsRounded />, path: "/reception/notifications" },
+  // Grouped into sections that follow the front-desk workflow:
+  // overview → patient flow → clinical lookups → in-patient → finance → system.
+  const navSections = [
+    {
+      heading: "Overview",
+      items: [
+        { text: "Dashboard", icon: <DashboardRounded />, path: "/reception/dashboard" },
+        { text: "Front Desk Console", icon: <PersonAddRounded />, path: "/reception/console" },
+      ],
+    },
+    {
+      heading: "Patient Flow",
+      items: [
+        { text: "All Patients", icon: <AccountCircleRounded />, path: "/reception/patients" },
+        { text: "Appointments", icon: <CalendarTodayRounded />, path: "/reception/appointments" },
+        { text: "Patient Queue", icon: <QueueRounded />, path: "/reception/queue" },
+      ],
+    },
+    {
+      heading: "Clinical",
+      items: [
+        { text: "Doctor Availability", icon: <MedicalServicesRounded />, path: "/reception/doctors" },
+        { text: "Department Directory", icon: <ApartmentRounded />, path: "/reception/directory" },
+        { text: "Referrals", icon: <CallSplitRounded />, path: "/reception/referrals" },
+      ],
+    },
+    {
+      heading: "In-Patient",
+      items: [
+        { text: "Admissions", icon: <LocalHotelRounded />, path: "/reception/ipd/admissions" },
+        { text: "Bed Management", icon: <HotelRounded />, path: "/reception/ipd/beds" },
+      ],
+    },
+    {
+      heading: "Finance & Insights",
+      items: [
+        { text: "Billing", icon: <ReceiptRounded />, path: "/reception/billing" },
+        { text: "Reports", icon: <AssessmentRounded />, path: "/reception/reports" },
+      ],
+    },
+    {
+      heading: "System",
+      items: [
+        { text: "Notifications", icon: <NotificationsRounded />, path: "/reception/notifications" },
+      ],
+    },
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -147,59 +179,63 @@ export default function ReceptionLayout() {
 
       {/* Navigation */}
       <List sx={{ px: 1.5, pt: 1, flex: 1, overflowY: "auto" }}>
-        <Typography
-          variant="caption"
-          sx={{ color: "#475569", fontWeight: 700, px: 1.5, pb: 1, display: "block", letterSpacing: 1, textTransform: "uppercase" }}
-        >
-          Reception
-        </Typography>
-        {menuItems.map((item) => {
-          const isActive =
-            location.pathname === item.path ||
-            (item.path !== "/reception/dashboard" && location.pathname.startsWith(item.path));
-          return (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton
-                onClick={() => {
-                  navigate(item.path);
-                  if (isMobile) setMobileOpen(false);
-                }}
-                sx={{
-                  borderRadius: 2,
-                  bgcolor: isActive ? "action.selected" : "transparent",
-                  "&:hover": {
-                    bgcolor: "action.hover",
-                  },
-                  transition: "all 0.15s ease",
-                }}
-              >
-                <ListItemIcon
-                  sx={{
-                    minWidth: 40,
-                    color: isActive ? "primary.main" : "text.secondary",
-                    transition: "color 0.15s ease",
-                  }}
-                >
-                  {(item as any).badge ? (
-                    <Badge badgeContent={(item as any).badge} color="error">
-                      {item.icon}
-                    </Badge>
-                  ) : (
-                    item.icon
-                  )}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.text}
-                  primaryTypographyProps={{
-                    fontSize: "0.9rem",
-                    fontWeight: isActive ? 600 : 500,
-                    color: isActive ? "primary.main" : "text.secondary",
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
-          );
-        })}
+        {navSections.map((section, si) => (
+          <Box key={section.heading} sx={{ mb: 0.5 }}>
+            <Typography
+              variant="caption"
+              sx={{ color: "#475569", fontWeight: 700, px: 1.5, pt: si === 0 ? 0 : 1.5, pb: 0.75, display: "block", letterSpacing: 1, textTransform: "uppercase", fontSize: "0.68rem" }}
+            >
+              {section.heading}
+            </Typography>
+            {section.items.map((item) => {
+              const isActive =
+                location.pathname === item.path ||
+                (item.path !== "/reception/dashboard" && location.pathname.startsWith(item.path));
+              return (
+                <ListItem key={item.text} disablePadding sx={{ mb: 0.25 }}>
+                  <ListItemButton
+                    onClick={() => {
+                      navigate(item.path);
+                      if (isMobile) setMobileOpen(false);
+                    }}
+                    sx={{
+                      borderRadius: 2,
+                      bgcolor: isActive ? "action.selected" : "transparent",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                      },
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 40,
+                        color: isActive ? "primary.main" : "text.secondary",
+                        transition: "color 0.15s ease",
+                      }}
+                    >
+                      {(item as any).badge ? (
+                        <Badge badgeContent={(item as any).badge} color="error">
+                          {item.icon}
+                        </Badge>
+                      ) : (
+                        item.icon
+                      )}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.text}
+                      primaryTypographyProps={{
+                        fontSize: "0.9rem",
+                        fontWeight: isActive ? 600 : 500,
+                        color: isActive ? "primary.main" : "text.secondary",
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              );
+            })}
+          </Box>
+        ))}
       </List>
 
       <Divider sx={{ borderColor: "rgba(6, 182, 212, 0.1)" }} />
