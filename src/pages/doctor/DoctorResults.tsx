@@ -1,6 +1,6 @@
 import { useState, useEffect, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Chip, CircularProgress, TextField, InputAdornment, Pagination, Tabs, Tab,
@@ -26,7 +26,17 @@ const TABS = [
 
 export default function DoctorResults() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState(0);
+
+  // Opening the inbox marks results as seen, clearing the sidebar "new results"
+  // badge. Fire-and-forget; refresh the badge count afterwards.
+  useEffect(() => {
+    axiosInstance
+      .post("/doctor/badges/results-seen")
+      .then(() => queryClient.invalidateQueries({ queryKey: ["doctor-badges"] }))
+      .catch(() => {});
+  }, []);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);

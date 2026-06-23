@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Drawer, AppBar, Toolbar, List, Typography, Divider,
   IconButton, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  Avatar, useTheme, useMediaQuery,
+  Avatar, useTheme, useMediaQuery, Badge,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -17,6 +18,8 @@ import {
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import { assetUrl } from "../utils/assetUrl";
 import BranchSwitcher from "../components/BranchSwitcher";
+import { axiosInstance } from "../api/axios";
+import { useSocket } from "../hooks/useSocket";
 
 const drawerWidth = 260;
 const DOCTOR_BLUE = "#3b82f6";
@@ -32,13 +35,24 @@ export default function DoctorLayout() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Sidebar notification counts (unread results, patients waiting). Polls as a
+  // fallback and refreshes instantly on queue/order socket events.
+  const { data: badges } = useQuery({
+    queryKey: ["doctor-badges"],
+    queryFn: async () => (await axiosInstance.get("/doctor/badges")).data.data as { resultsReady: number; queueWaiting: number },
+    refetchInterval: 60000,
+    refetchOnWindowFocus: true,
+  });
+  useSocket({ QUEUE_UPDATED: () => queryClient.invalidateQueries({ queryKey: ["doctor-badges"] }) });
+
   const menuItems = [
-    { text: "Dashboard", icon: <DashboardRounded />, path: "/doctor/dashboard" },
-    { text: "My Queue", icon: <QueueRounded />, path: "/doctor/queue" },
-    { text: "My Patients", icon: <PeopleAltRounded />, path: "/doctor/patients" },
-    { text: "Results", icon: <ScienceRounded />, path: "/doctor/results" },
+    { text: "Dashboard", icon: <DashboardRounded />, path: "/doctor/dashboard", badge: 0 },
+    { text: "My Queue", icon: <QueueRounded />, path: "/doctor/queue", badge: badges?.queueWaiting || 0 },
+    { text: "My Patients", icon: <PeopleAltRounded />, path: "/doctor/patients", badge: 0 },
+    { text: "Results", icon: <ScienceRounded />, path: "/doctor/results", badge: badges?.resultsReady || 0 },
   ];
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
@@ -123,7 +137,9 @@ export default function DoctorLayout() {
                     transition: "color 0.15s ease",
                   }}
                 >
-                  {item.icon}
+                  <Badge badgeContent={item.badge} color="error" max={99} overlap="circular">
+                    {item.icon}
+                  </Badge>
                 </ListItemIcon>
                 <ListItemText
                   primary={item.text}
