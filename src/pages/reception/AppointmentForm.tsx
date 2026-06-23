@@ -8,6 +8,7 @@ import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
+import BillingModal from "./BillingModal";
 import { useToast } from "../../contexts/ToastContext";
 
 export interface AppointmentFormProps {
@@ -30,6 +31,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   const [saving, setSaving] = useState(false);
   const toast = useToast();
   const [checkInImmediately, setCheckInImmediately] = useState(true);
+  const [postBooking, setPostBooking] = useState<{ apptId?: string; patientName: string; apptDate: string } | null>(null);
 
   const { data: dropdowns = { departments: [], doctors: [], patients: [], statuses: [], doctorSchedules: [] }, isLoading: ddLoading, isError: ddIsError, error: ddError, refetch: refetchDd } = useQuery({
     queryKey: ["appointment-dropdowns"],
@@ -188,10 +190,17 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
         await axiosInstance.put(`/reception/appointments/${apptId}/checkin`);
       }
       
+      const selectedPatient = dropdowns.patients?.find((p: any) => p.patientId === formData.patientId);
+      const pName = selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : "Patient";
+
       if (isEmbedded && onSuccess) {
-        const selectedPatient = dropdowns.patients?.find((p: any) => p.patientId === formData.patientId);
-        const pName = selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : "Patient";
         onSuccess(apptId, pName, payload.appointmentDate);
+      } else if (!id && apptId) {
+        // New booking from the standalone form: open the bill (same as the
+        // Front Desk Console flow) instead of jumping straight to the list.
+        toast.success("Appointment booked");
+        setPostBooking({ apptId, patientName: pName, apptDate: payload.appointmentDate });
+        setSaving(false);
       } else {
         navigate("/reception/appointments");
       }
@@ -362,6 +371,16 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
           </Grid>
         </Grid>
       </Paper>
+
+      {postBooking && (
+        <BillingModal
+          open
+          onClose={() => { setPostBooking(null); navigate("/reception/appointments"); }}
+          appointmentId={postBooking.apptId || ""}
+          patientName={postBooking.patientName}
+          appointmentDate={postBooking.apptDate}
+        />
+      )}
     </Box>
   );
 }
