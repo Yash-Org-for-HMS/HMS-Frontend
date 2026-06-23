@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Box, Grid, Typography, Paper, CircularProgress,
@@ -6,7 +6,8 @@ import {
 } from "@mui/material";
 import {
   ArrowBackRounded, CheckCircleRounded, SaveRounded, MonitorHeartRounded,
-  HistoryRounded, PersonRounded, LocalHospitalRounded, DateRangeRounded
+  HistoryRounded, PersonRounded, LocalHospitalRounded, DateRangeRounded,
+  CloudDoneRounded, CloudSyncRounded, CloudOffRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
@@ -49,6 +50,11 @@ export default function ConsultationWorkspace() {
   const [context, setContext] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
 
+  // Auto-save: track the last-persisted form so we only save real changes, and
+  // surface a quiet status indicator instead of a toast on every keystroke.
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const lastSavedRef = useRef<string>("");
+
   const [tabIndex, setTabIndex] = useState(0);
   const [rightTabIndex, setRightTabIndex] = useState(0);
 
@@ -76,16 +82,19 @@ export default function ConsultationWorkspace() {
       const data = res.data.data;
       setContext(data);
 
-      if (data.consultation) {
-        setForm({
-          soapSubjective: data.consultation.soapSubjective || "",
-          soapObjective: data.consultation.soapObjective || "",
-          soapAssessment: data.consultation.soapAssessment || "",
-          soapPlan: data.consultation.soapPlan || "",
-          diagnosis: data.consultation.diagnosis || "",
-          followUpDate: data.consultation.followUpDate ? new Date(data.consultation.followUpDate).toISOString().split('T')[0] : "",
-        });
-      }
+      const loadedForm = data.consultation
+        ? {
+            soapSubjective: data.consultation.soapSubjective || "",
+            soapObjective: data.consultation.soapObjective || "",
+            soapAssessment: data.consultation.soapAssessment || "",
+            soapPlan: data.consultation.soapPlan || "",
+            diagnosis: data.consultation.diagnosis || "",
+            followUpDate: data.consultation.followUpDate ? new Date(data.consultation.followUpDate).toISOString().split('T')[0] : "",
+          }
+        : { soapSubjective: "", soapObjective: "", soapAssessment: "", soapPlan: "", diagnosis: "", followUpDate: "" };
+      setForm(loadedForm);
+      // Seed the baseline so the auto-save effect doesn't fire on the initial load.
+      lastSavedRef.current = JSON.stringify(loadedForm);
 
       if (data.patient?.patientId) {
         fetchHistory(data.patient.patientId);
@@ -128,11 +137,31 @@ export default function ConsultationWorkspace() {
     return () => clearTimeout(delayDebounceFn);
   }, [icd10Query]);
 
+  // Debounced auto-save: persist SOAP edits ~2s after the doctor stops typing so
+  // closing the tab mid-note no longer loses work. Skips while loading and when
+  // nothing has changed since the last save.
+  useEffect(() => {
+    if (loading) return;
+    const serialized = JSON.stringify(form);
+    if (serialized === lastSavedRef.current) return;
+    const t = setTimeout(async () => {
+      setSaveStatus("saving");
+      const result = await handleSave(true);
+      if (result !== null) {
+        lastSavedRef.current = serialized;
+        setSaveStatus("saved");
+      } else {
+        setSaveStatus("error");
+      }
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [form, loading]);
+
   const handleSave = async (isAutoSave = false) => {
     try {
       if (!isAutoSave) setSaving(true);
       const res = await axiosInstance.post(`/doctor/consultation/appointments/${appointmentId}`, form);
-      
+
       // Update context if consultationId was generated
       if (res.data.data?.consultationId && !context?.consultation?.consultationId) {
         setContext((prev: any) => ({
@@ -142,11 +171,16 @@ export default function ConsultationWorkspace() {
       }
 
       if (!isAutoSave) {
+        // A manual save also satisfies the auto-save baseline.
+        lastSavedRef.current = JSON.stringify(form);
+        setSaveStatus("saved");
         toast.success("Consultation drafted successfully");
-}
-      return res.data.data?.consultationId;
+      }
+      // Return the id when present, but treat any non-throwing save as success
+      // (existing consultations may not echo the id back).
+      return res.data.data?.consultationId ?? true;
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save consultation");
+      if (!isAutoSave) toast.error(err.response?.data?.message || "Failed to save consultation");
       return null;
     } finally {
       if (!isAutoSave) setSaving(false);
@@ -213,7 +247,17 @@ export default function ConsultationWorkspace() {
             </Box>
           </Box>
         </Box>
-        <Box sx={{ display: "flex", gap: 1.5 }}>
+        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+          {saveStatus !== "idle" && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mr: 0.5 }}>
+              {saveStatus === "saving" && <CloudSyncRounded sx={{ fontSize: 18, color: "text.secondary" }} />}
+              {saveStatus === "saved" && <CloudDoneRounded sx={{ fontSize: 18, color: "#16a34a" }} />}
+              {saveStatus === "error" && <CloudOffRounded sx={{ fontSize: 18, color: "#ef4444" }} />}
+              <Typography variant="caption" sx={{ color: saveStatus === "error" ? "#ef4444" : "text.secondary", fontWeight: 600 }}>
+                {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "All changes saved" : "Save failed — retrying on next edit"}
+              </Typography>
+            </Box>
+          )}
           <Button
             variant="outlined"
             onClick={() => handleSave(false)}

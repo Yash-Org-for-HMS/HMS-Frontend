@@ -35,6 +35,8 @@ const STATIC_ROUTES = [
   { name: "Pharmacy POS", path: "/pharmacy/pos", icon: <LocalPharmacyRounded />, section: "Pharmacy" },
   { name: "Pharmacy Inventory", path: "/pharmacy/inventory", icon: <LocalPharmacyRounded />, section: "Pharmacy" },
   { name: "Doctor Dashboard", path: "/doctor/dashboard", icon: <DashboardRounded />, section: "Doctor" },
+  { name: "My Queue", path: "/doctor/queue", icon: <QueueRounded />, section: "Doctor" },
+  { name: "My Patients", path: "/doctor/patients", icon: <PersonRounded />, section: "Doctor" },
   { name: "Hospital Settings", path: "/hospital/settings", icon: <DashboardRounded />, section: "Admin" },
 ];
 
