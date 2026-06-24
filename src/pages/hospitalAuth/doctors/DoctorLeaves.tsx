@@ -1,101 +1,175 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Box,
-  Typography,
-  Paper,
-  Button,
-  CircularProgress,
-  Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip
+  Box, Typography, Paper, Button, CircularProgress, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Chip, TextField, IconButton, Tooltip, Divider,
 } from "@mui/material";
+import { AddRounded, DeleteOutlineRounded, EventBusyRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
+import dayjs from "dayjs";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
+import { useToast } from "../../../contexts/ToastContext";
+
+const INACTIVE = ["rejected", "cancelled", "declined"];
 
 export default function DoctorLeaves() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const toast = useToast();
+  const queryClient = useQueryClient();
 
-  const { data: doctorData, isLoading: initialLoad, isError, error, refetch } = useQuery({
-    queryKey: ["doctor-leaves", id],
+  const [fromDate, setFromDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const [toDate, setToDate] = useState("");
+  const [reason, setReason] = useState("");
+
+  const { data: doctorData } = useQuery({
+    queryKey: ["doctor", id],
     queryFn: async () => (await axiosInstance.get(`/hospital/doctors/${id}`)).data.data,
     enabled: !!id,
   });
-  const doctorName = doctorData ? `Dr. ${doctorData.user?.firstName} ${doctorData.user?.lastName}` : "";
-  const leaves: any[] = doctorData?.leaves ?? [];
+  const doctorName = doctorData ? `Dr. ${doctorData.user?.firstName ?? ""} ${doctorData.user?.lastName ?? ""}`.trim() : "";
 
-  if (initialLoad) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress sx={{ color: "#6366f1" }} />
-      </Box>
-    );
-  }
+  const { data: leaves = [], isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["doctor-leaves", id],
+    queryFn: async () => (await axiosInstance.get(`/hospital/doctors/${id}/leaves`)).data.data as any[],
+    enabled: !!id,
+  });
 
-  if (isError) {
-    return <ErrorState title="Couldn't load leaves" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
-  }
+  const addLeave = useMutation({
+    mutationFn: async () =>
+      (await axiosInstance.post(`/hospital/doctors/${id}/leaves`, {
+        fromDate,
+        toDate: toDate || undefined,
+        reason: reason || undefined,
+      })).data,
+    onSuccess: (res) => {
+      toast.success(res?.message || "Leave added");
+      setReason("");
+      setToDate("");
+      queryClient.invalidateQueries({ queryKey: ["doctor-leaves", id] });
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to add leave"),
+  });
+
+  const removeLeave = useMutation({
+    mutationFn: async (leaveId: string) => (await axiosInstance.delete(`/hospital/doctors/${id}/leaves/${leaveId}`)).data,
+    onSuccess: () => {
+      toast.success("Leave removed");
+      queryClient.invalidateQueries({ queryKey: ["doctor-leaves", id] });
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to remove leave"),
+  });
 
   return (
     <Box sx={{ maxWidth: 900, mx: "auto" }}>
-      <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Box sx={{ mb: 3, display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
         <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            Manage Leaves
+          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5, display: "flex", alignItems: "center", gap: 1.5 }}>
+            <EventBusyRounded sx={{ color: "#6366f1", fontSize: 32 }} /> Manage Leaves
           </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {doctorName}
-          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>{doctorName}</Typography>
         </Box>
-        <Button
-          variant="outlined"
-          onClick={() => navigate("/hospital/doctors")}
-          sx={{ color: "text.secondary", borderColor: "divider" }}
-        >
+        <Button variant="outlined" onClick={() => navigate("/hospital/doctors")} sx={{ color: "text.secondary", borderColor: "divider" }}>
           Back to Doctors
         </Button>
       </Box>
-<TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Leave Date</TableCell>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Reason</TableCell>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Status</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {leaves.length === 0 ? (
+
+      {/* Add leave */}
+      <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5 }}>Add a leave</Typography>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "flex-end" }}>
+          <TextField
+            size="small" type="date" label="From" InputLabelProps={{ shrink: true }}
+            value={fromDate} onChange={(e) => setFromDate(e.target.value)}
+          />
+          <TextField
+            size="small" type="date" label="To (optional)" InputLabelProps={{ shrink: true }}
+            value={toDate} onChange={(e) => setToDate(e.target.value)}
+            helperText="Leave empty for a single day"
+          />
+          <TextField
+            size="small" label="Reason (optional)" value={reason} onChange={(e) => setReason(e.target.value)}
+            sx={{ minWidth: 220, flex: 1 }}
+          />
+          <Button
+            variant="contained"
+            startIcon={addLeave.isPending ? <CircularProgress size={16} color="inherit" /> : <AddRounded />}
+            onClick={() => addLeave.mutate()}
+            disabled={addLeave.isPending || !fromDate}
+            sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, textTransform: "none", fontWeight: 600 }}
+          >
+            Add Leave
+          </Button>
+        </Box>
+      </Paper>
+
+      <Divider sx={{ mb: 2 }} />
+
+      {isLoading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><CircularProgress sx={{ color: "#6366f1" }} /></Box>
+      ) : isError ? (
+        <ErrorState title="Couldn't load leaves" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+      ) : (
+        <TableContainer component={Paper} elevation={0} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+          <Table>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={3} sx={{ py: 3, borderBottom: "none" }}>
-                  <Mascot pose="nothing-here-yet" subtitle="No leaves found for this doctor." size={110} />
-                </TableCell>
+                {["Leave Date", "Reason", "Status", ""].map((h, i) => (
+                  <TableCell key={i} sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>{h}</TableCell>
+                ))}
               </TableRow>
-            ) : (
-              leaves.map((leave) => (
-                <TableRow key={leave.doctorLeaveId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                  <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary" }}>
-                    {new Date(leave.leaveDate).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
-                    {leave.leaveReason || "N/A"}
-                  </TableCell>
-                  <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
-                    <Chip label={leave.status} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.primary" }} />
+            </TableHead>
+            <TableBody>
+              {leaves.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} sx={{ py: 3, borderBottom: "none" }}>
+                    <Mascot pose="nothing-here-yet" subtitle="No leaves recorded for this doctor." size={110} />
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              ) : (
+                leaves.map((leave) => {
+                  const inactive = INACTIVE.includes((leave.status || "").toLowerCase());
+                  return (
+                    <TableRow key={leave.doctorLeaveId} hover sx={{ "&:last-child td": { border: 0 } }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary", fontWeight: 600 }}>
+                        {dayjs(leave.leaveDate).format("ddd, DD MMM YYYY")}
+                      </TableCell>
+                      <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>
+                        {leave.leaveReason || "—"}
+                      </TableCell>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
+                        <Chip
+                          label={leave.status}
+                          size="small"
+                          sx={{
+                            bgcolor: inactive ? "rgba(148,163,184,0.15)" : "rgba(16,185,129,0.15)",
+                            color: inactive ? "text.secondary" : "#16a34a",
+                            fontWeight: 600,
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
+                        <Tooltip title="Remove leave">
+                          <IconButton
+                            size="small"
+                            onClick={() => { if (window.confirm("Remove this leave?")) removeLeave.mutate(leave.doctorLeaveId); }}
+                            disabled={removeLeave.isPending}
+                            sx={{ color: "text.secondary", "&:hover": { color: "#ef4444" } }}
+                          >
+                            <DeleteOutlineRounded fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
     </Box>
   );
 }
