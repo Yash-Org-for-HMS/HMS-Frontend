@@ -94,6 +94,17 @@ export default function FormBuilder() {
     setFields(updated);
   };
 
+  // Set/clear a single validation rule on a field (kept alongside dropdown options).
+  const setRule = (index: number, key: string, raw: string) => {
+    const rules = { ...(fields[index].validationRulesJson || {}) };
+    if (raw === "") {
+      delete rules[key];
+    } else {
+      rules[key] = key === "pattern" ? raw : Number(raw);
+    }
+    handleFieldChange(index, "validationRulesJson", rules);
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);    // Prepare fields with sort order
@@ -275,6 +286,24 @@ export default function FormBuilder() {
                               placeholder="e.g. Option 1, Option 2, Option 3"
                               {...textFieldProps}
                             />
+                          </Grid>
+                        )}
+
+                        {field.fieldType === "text" && (
+                          <Grid size={{xs: 12}}>
+                            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+                              <TextField size="small" type="number" label="Min length" value={field.validationRulesJson?.minLength ?? ""} onChange={(e) => setRule(idx, "minLength", e.target.value)} sx={{ width: 130 }} />
+                              <TextField size="small" type="number" label="Max length" value={field.validationRulesJson?.maxLength ?? ""} onChange={(e) => setRule(idx, "maxLength", e.target.value)} sx={{ width: 130 }} />
+                              <TextField size="small" label="Pattern (regex)" value={field.validationRulesJson?.pattern ?? ""} onChange={(e) => setRule(idx, "pattern", e.target.value)} placeholder="e.g. ^[0-9]{10}$" sx={{ flex: 1, minWidth: 180 }} />
+                            </Box>
+                          </Grid>
+                        )}
+                        {field.fieldType === "number" && (
+                          <Grid size={{xs: 12}}>
+                            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+                              <TextField size="small" type="number" label="Min value" value={field.validationRulesJson?.min ?? ""} onChange={(e) => setRule(idx, "min", e.target.value)} sx={{ width: 140 }} />
+                              <TextField size="small" type="number" label="Max value" value={field.validationRulesJson?.max ?? ""} onChange={(e) => setRule(idx, "max", e.target.value)} sx={{ width: 140 }} />
+                            </Box>
                           </Grid>
                         )}
                         

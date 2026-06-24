@@ -14,6 +14,7 @@ import ErrorState from "../ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import { assetUrl } from "../../utils/assetUrl";
 import dayjs from "dayjs";
+import DynamicFormRenderer, { validateFormResponses, type FormValues } from "../DynamicFormRenderer";
 
 const ACCENT = "#0891b2";
 const STATUS_META: Record<string, { label: string; color: string }> = {
@@ -27,6 +28,7 @@ export default function ConsentFormsSection({ patientId, patientName }: { patien
   const toast = useToast();
   const [issueOpen, setIssueOpen] = useState(false);
   const [signTarget, setSignTarget] = useState<any>(null);
+  const [responsesTarget, setResponsesTarget] = useState<any>(null);
 
   const { data: forms = [], isLoading, isError, error, refetch } = useQuery<any[]>({
     queryKey: ["consent-forms", patientId],
@@ -79,6 +81,9 @@ export default function ConsentFormsSection({ patientId, patientName }: { patien
                   </Box>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700 }} />
+                    {f.responseDataJson && Object.keys(f.responseDataJson).length > 0 && (
+                      <Button size="small" onClick={() => setResponsesTarget(f)} sx={{ textTransform: "none", color: ACCENT }}>Responses</Button>
+                    )}
                     {f.signatureUrl && (
                       <Button size="small" startIcon={<GestureRounded />} onClick={() => window.open(assetUrl(f.signatureUrl), "_blank")} sx={{ textTransform: "none", color: ACCENT }}>Signature</Button>
                     )}
@@ -105,6 +110,26 @@ export default function ConsentFormsSection({ patientId, patientName }: { patien
       {signTarget && (
         <SignConsentDialog form={signTarget} patientName={patientName} onClose={() => setSignTarget(null)} onSigned={() => { setSignTarget(null); refetch(); }} />
       )}
+      {responsesTarget && (
+        <Dialog open onClose={() => setResponsesTarget(null)} maxWidth="xs" fullWidth>
+          <DialogTitle>{responsesTarget.title} — responses</DialogTitle>
+          <DialogContent dividers>
+            <Stack spacing={1.2}>
+              {Object.entries(responsesTarget.responseDataJson as Record<string, any>).map(([k, v]) => (
+                <Box key={k} sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>{k}</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "right" }}>
+                    {typeof v === "boolean" ? (v ? "Yes" : "No") : String(v ?? "—") || "—"}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setResponsesTarget(null)}>Close</Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Paper>
   );
 }
@@ -114,20 +139,42 @@ function IssueConsentDialog({ patientId, onClose, onIssued }: { patientId: strin
   const [templateId, setTemplateId] = useState("");
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
+  const [values, setValues] = useState<FormValues>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { data: templates = [] } = useQuery<any[]>({
     queryKey: ["form-templates"],
     queryFn: async () => (await axiosInstance.get("/hospital/form-builder")).data.data,
   });
 
+  // Load the selected template's fields so they can be filled at issue time.
+  const { data: template } = useQuery({
+    queryKey: ["form-template", templateId],
+    queryFn: async () => (await axiosInstance.get(`/hospital/form-builder/${templateId}`)).data.data,
+    enabled: !!templateId,
+  });
+  const fields = (template?.fields || []) as any[];
+
   const submit = async () => {
     if (!templateId && !title.trim()) return;
+
+    // Validate the template's fields (required + rules) before issuing.
+    if (fields.length > 0) {
+      const errs = validateFormResponses(fields, values);
+      if (Object.keys(errs).length > 0) {
+        setErrors(errs);
+        toast.error("Please fix the highlighted fields");
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       await axiosInstance.post("/reception/consent-forms", {
         patientId,
         formTemplateId: templateId || undefined,
         title: title.trim() || undefined,
+        responseData: fields.length > 0 ? values : undefined,
       });
       toast.success("Consent form issued");
       onIssued();
@@ -139,12 +186,12 @@ function IssueConsentDialog({ patientId, onClose, onIssued }: { patientId: strin
   };
 
   return (
-    <Dialog open onClose={saving ? undefined : onClose} maxWidth="xs" fullWidth>
+    <Dialog open onClose={saving ? undefined : onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Issue Consent Form</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>
           <TextField select fullWidth label="Consent template" value={templateId}
-            onChange={(e) => { setTemplateId(e.target.value); const t = templates.find((x) => x.formTemplateId === e.target.value); if (t) setTitle(t.formName || ""); }}>
+            onChange={(e) => { setTemplateId(e.target.value); setValues({}); setErrors({}); const t = templates.find((x) => x.formTemplateId === e.target.value); if (t) setTitle(t.formName || ""); }}>
             <MenuItem value="">— Custom (no template) —</MenuItem>
             {templates.map((t) => (
               <MenuItem key={t.formTemplateId} value={t.formTemplateId}>{t.formName} {t.formType ? `(${t.formType})` : ""}</MenuItem>
@@ -152,6 +199,15 @@ function IssueConsentDialog({ patientId, onClose, onIssued }: { patientId: strin
           </TextField>
           <TextField fullWidth label="Title" value={title} onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Surgical Consent" helperText="Pre-filled from the template; edit if needed" />
+
+          {fields.length > 0 && (
+            <>
+              <Divider textAlign="left" sx={{ "&::before, &::after": { borderColor: "divider" } }}>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>Form fields</Typography>
+              </Divider>
+              <DynamicFormRenderer fields={fields} values={values} onChange={setValues} errors={errors} />
+            </>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
