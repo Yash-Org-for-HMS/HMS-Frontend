@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -14,8 +15,10 @@ import {
   IconButton,
   Tooltip,
   CircularProgress,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
-import { AddRounded, EditRounded, DeleteRounded, DynamicFormRounded } from "@mui/icons-material";
+import { AddRounded, EditRounded, DeleteRounded, DynamicFormRounded, SearchRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
@@ -23,11 +26,17 @@ import ErrorState from "../../../components/ErrorState";
 
 export default function FormTemplatesList() {
   const navigate = useNavigate();
+  const [q, setQ] = useState("");
 
   const { data: templates = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
     queryKey: ["hospital-form-templates"],
     queryFn: async () => (await axiosInstance.get("/hospital/form-builder")).data.data,
   });
+
+  const term = q.trim().toLowerCase();
+  const filtered = term
+    ? templates.filter((t) => (t.formName || "").toLowerCase().includes(term) || (t.formType || "").toLowerCase().includes(term) || (t.description || "").toLowerCase().includes(term))
+    : templates;
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this form template?")) return;
@@ -66,6 +75,15 @@ export default function FormTemplatesList() {
         </Button>
       </Box>
 
+      <TextField
+        size="small"
+        placeholder="Search forms by name, type, or description…"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        sx={{ mb: 2, width: "100%", maxWidth: 400 }}
+        InputProps={{ startAdornment: <InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary" }} /></InputAdornment> }}
+      />
+
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <CircularProgress sx={{ color: "#6366f1" }} />
@@ -85,14 +103,14 @@ export default function FormTemplatesList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {templates.length === 0 ? (
+              {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} sx={{ py: 3, borderBottom: "none" }}>
-                    <Mascot pose="nothing-here-yet" title="No custom forms yet" subtitle='Click "Create Form" to begin.' size={120} />
+                    <Mascot pose="nothing-here-yet" title={term ? "No matching forms" : "No custom forms yet"} subtitle={term ? "Try a different search." : 'Click "Create Form" to begin.'} size={120} />
                   </TableCell>
                 </TableRow>
               ) : (
-                templates.map((t) => (
+                filtered.map((t) => (
                   <TableRow key={t.formTemplateId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                     <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary", fontWeight: 500 }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

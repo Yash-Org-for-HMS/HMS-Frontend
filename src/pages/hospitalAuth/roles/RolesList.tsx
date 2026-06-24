@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -13,8 +14,10 @@ import {
   Chip,
   IconButton,
   Tooltip,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
-import { AddRounded, EditRounded, BlockRounded, CheckCircleRounded, ContentCopyRounded } from "@mui/icons-material";
+import { AddRounded, EditRounded, BlockRounded, CheckCircleRounded, ContentCopyRounded, SearchRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
@@ -35,11 +38,17 @@ interface Role {
 export default function RolesList() {
   const navigate = useNavigate();
   const toast = useToast();
+  const [q, setQ] = useState("");
 
   const { data: roles = [], isError, error, refetch } = useQuery<Role[]>({
     queryKey: ["hospital-roles"],
     queryFn: async () => (await axiosInstance.get("/hospital/roles")).data.data,
   });
+
+  const term = q.trim().toLowerCase();
+  const filtered = term
+    ? roles.filter((r) => r.roleName.toLowerCase().includes(term) || r.roleCode.toLowerCase().includes(term))
+    : roles;
 
   const handleToggleStatus = async (role: Role) => {
     if (role.isSystemRole && role.status === 'active') {
@@ -85,6 +94,15 @@ export default function RolesList() {
         </Button>
       </Box>
 
+      <TextField
+        size="small"
+        placeholder="Search roles by name or code…"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        sx={{ mb: 2, width: "100%", maxWidth: 360 }}
+        InputProps={{ startAdornment: <InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary" }} /></InputAdornment> }}
+      />
+
       <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
         <Table>
           <TableHead>
@@ -104,14 +122,14 @@ export default function RolesList() {
                   <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                 </TableCell>
               </TableRow>
-            ) : roles.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
-                  <Mascot pose="nothing-here-yet" subtitle="No roles found." size={120} />
+                  <Mascot pose="nothing-here-yet" subtitle={term ? "No roles match your search." : "No roles found."} size={120} />
                 </TableCell>
               </TableRow>
             ) : (
-              roles.map((role) => (
+              filtered.map((role) => (
                 <TableRow key={role.roleId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                   <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary", fontWeight: 500 }}>
                     {role.roleName}

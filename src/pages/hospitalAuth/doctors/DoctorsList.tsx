@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   Box,
   Typography,
-  Button,
   Paper,
   Table,
   TableBody,
@@ -14,24 +14,42 @@ import {
   IconButton,
   Tooltip,
   CircularProgress,
+  TextField,
+  InputAdornment,
+  Pagination,
 } from "@mui/material";
-import { AddRounded, EditRounded, EventAvailableRounded, CalendarTodayRounded } from "@mui/icons-material";
+import { EditRounded, EventAvailableRounded, CalendarTodayRounded, SearchRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 
+const PAGE_SIZE = 20;
+
 export default function DoctorsList() {
   const navigate = useNavigate();
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
-  const { data: doctors = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
-    queryKey: ["hospital-doctors"],
-    queryFn: async () => (await axiosInstance.get("/hospital/doctors")).data.data,
+  // Debounce the search box; reset to page 1 whenever the term changes.
+  useEffect(() => {
+    const t = setTimeout(() => { setSearch(searchInput.trim()); setPage(1); }, 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const { data, isLoading: loading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["hospital-doctors", search, page],
+    queryFn: async () =>
+      (await axiosInstance.get("/hospital/doctors", { params: { search, page, limit: PAGE_SIZE } })).data,
+    placeholderData: keepPreviousData,
   });
+  const doctors: any[] = data?.data || [];
+  const meta = data?.meta as { total: number; totalPages: number } | undefined;
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3, flexWrap: "wrap", gap: 2 }}>
         <Box>
           <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
             Doctor Management
@@ -41,6 +59,18 @@ export default function DoctorsList() {
           </Typography>
         </Box>
       </Box>
+
+      <TextField
+        size="small"
+        placeholder="Search by name, email, license, specialization, department…"
+        value={searchInput}
+        onChange={(e) => setSearchInput(e.target.value)}
+        sx={{ mb: 2, width: "100%", maxWidth: 460 }}
+        InputProps={{
+          startAdornment: <InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary" }} /></InputAdornment>,
+          endAdornment: isFetching ? <CircularProgress size={16} sx={{ color: "#6366f1" }} /> : undefined,
+        }}
+      />
 
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
@@ -125,6 +155,14 @@ export default function DoctorsList() {
               )}
             </TableBody>
           </Table>
+          {meta && meta.totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", px: 2, py: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                {meta.total} doctor{meta.total === 1 ? "" : "s"}
+              </Typography>
+              <Pagination count={meta.totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" size="small" />
+            </Box>
+          )}
         </TableContainer>
       )}
     </Box>
