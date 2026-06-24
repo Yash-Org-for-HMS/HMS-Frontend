@@ -74,10 +74,13 @@ export default function HospitalLayout() {
     { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", permission: "SETTINGS_MANAGE" },
   ];
 
-  // Filter based on assigned permissions
+  // Org AND branch admins see everything (mirrors the backend ADMIN_ROLE_CODES
+  // bypass). B_ADMIN was previously omitted, which hid every permission-gated
+  // tab for branch admins — leaving only the two ungated items (the "2 tabs" bug).
+  const isAdmin = ["H_ADMIN", "B_ADMIN", "HOSPITAL_ADMIN"].includes(user?.role || "");
   const visibleMenuItems = menuItems.filter(item => {
     if (!item.permission) return true;
-    if (user?.role === "HOSPITAL_ADMIN" || user?.role === "H_ADMIN") return true;
+    if (isAdmin) return true;
     return user?.permissions?.includes(item.permission);
   });
 
