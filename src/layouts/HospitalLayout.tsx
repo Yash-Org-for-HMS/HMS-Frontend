@@ -32,8 +32,6 @@ import {
   SettingsRounded,
   DomainRounded,
   BadgeRounded,
-  ShieldRounded,
-  RuleRounded,
   WidgetsRounded,
   MedicalServicesRounded,
   DatasetRounded,
@@ -61,12 +59,17 @@ export default function HospitalLayout() {
   // Map sidebar items to required permissions
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/hospital/dashboard", permission: null },
-    { text: "Financial Analytics", icon: <AccountBalanceRounded />, path: "/hospital/financials", permission: null },
+    // Admin-only: its endpoint (/billing/analytics) is admin-gated, so don't show
+    // a tab non-admins can't actually open.
+    { text: "Financial Analytics", icon: <AccountBalanceRounded />, path: "/hospital/financials", permission: null, adminOnly: true },
     { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", permission: "DEPARTMENT_MANAGE" },
     { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", permission: "USER_MANAGE" },
     { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", permission: "USER_MANAGE" },
-    { text: "Role Management", icon: <ShieldRounded />, path: "/hospital/roles", permission: "ROLE_MANAGE" },
-    { text: "Permission Matrix", icon: <RuleRounded />, path: "/hospital/permissions-matrix", permission: "ROLE_MANAGE" },
+    // Custom roles + granular permissions are shelved until the permission model
+    // is fully wired/enforced. Routes still exist; just hidden from the nav for
+    // now (re-add these two entries to bring the feature back).
+    // { text: "Role Management", icon: <ShieldRounded />, path: "/hospital/roles", permission: "ROLE_MANAGE" },
+    // { text: "Permission Matrix", icon: <RuleRounded />, path: "/hospital/permissions-matrix", permission: "ROLE_MANAGE" },
     { text: "Master Data", icon: <DatasetRounded />, path: "/hospital/lookups", permission: "SETTINGS_MANAGE" },
     { text: "Form Builder", icon: <DynamicFormRounded />, path: "/hospital/form-builder", permission: "SETTINGS_MANAGE" },
     { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", permission: "SETTINGS_MANAGE" },
@@ -79,6 +82,7 @@ export default function HospitalLayout() {
   // tab for branch admins — leaving only the two ungated items (the "2 tabs" bug).
   const isAdmin = ["H_ADMIN", "B_ADMIN", "HOSPITAL_ADMIN"].includes(user?.role || "");
   const visibleMenuItems = menuItems.filter(item => {
+    if ((item as any).adminOnly) return isAdmin;   // admin-only tab (e.g. Financial)
     if (!item.permission) return true;
     if (isAdmin) return true;
     return user?.permissions?.includes(item.permission);
