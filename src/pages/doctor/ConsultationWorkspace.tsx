@@ -254,7 +254,7 @@ export default function ConsultationWorkspace() {
                 {p?.firstName} {p?.lastName}
               </Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {p?.gender} • {p?.dob ? `${new Date().getFullYear() - new Date(p.dob).getFullYear()} yrs` : "Age Unknown"} • {context?.appointment?.reason || "General Checkup"}
+                {p?.gender} • {(p?.dateOfBirth || p?.dob) ? `${Math.floor((Date.now() - new Date(p?.dateOfBirth || p?.dob).getTime()) / (1000 * 60 * 60 * 24 * 365.25))} yrs` : "Age Unknown"} • {context?.appointment?.reason || "General Checkup"}
               </Typography>
             </Box>
           </Box>
