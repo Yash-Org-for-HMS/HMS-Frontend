@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Chip, CircularProgress,
+  TableContainer, TableHead, TableRow, Chip,
   Alert, Avatar, Tooltip, IconButton,
 } from "@mui/material";
 import {
@@ -13,6 +13,7 @@ import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import PageHeader from "../../components/layout/PageHeader";
 import VitalsModal from "../reception/VitalsModal";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import { useNavigate } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
 
@@ -120,11 +121,7 @@ export default function DoctorQueue() {
             </TableHead>
             <TableBody>
               {loading && activeTokens.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
-                    <CircularProgress size={30} sx={{ color: DOCTOR_BLUE }} />
-                  </TableCell>
-                </TableRow>
+                <TableRowsSkeleton rows={6} columns={5} />
               ) : activeTokens.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} sx={{ py: 4, border: 0 }}>

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Tooltip,
-  CircularProgress, Alert, Avatar, Menu, MenuItem
+  Alert, Avatar, Menu, MenuItem
 } from "@mui/material";
 import {
   MoreVertRounded, PlayArrowRounded, CheckCircleRounded,
@@ -13,6 +13,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import BillingModal from "./BillingModal";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import VitalsModal from "./VitalsModal";
 import CheckoutDialog from "../../components/reception/CheckoutDialog";
 import { useSocket } from "../../hooks/useSocket";
@@ -176,7 +177,7 @@ export default function QueueDashboard() {
             </TableHead>
             <TableBody>
               {loading && activeTokens.length === 0 ? (
-                <TableRow><TableCell colSpan={8} align="center" sx={{ py: 4 }}><CircularProgress size={30} sx={{ color: "#06b6d4" }}/></TableCell></TableRow>
+                <TableRowsSkeleton rows={6} columns={8} />
               ) : activeTokens.length === 0 ? (
                 <TableRow><TableCell colSpan={8} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No patients in queue" subtitle="No active patients in the queue right now." /></TableCell></TableRow>
               ) : (

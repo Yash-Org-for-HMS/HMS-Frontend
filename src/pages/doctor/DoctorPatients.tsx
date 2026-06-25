@@ -13,6 +13,7 @@ import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 
 const DOCTOR_BLUE = "#3b82f6";
 const PAGE_SIZE = 20;
@@ -85,11 +86,7 @@ export default function DoctorPatients() {
             </TableHead>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 8, borderBottom: "none" }}>
-                    <CircularProgress sx={{ color: DOCTOR_BLUE }} />
-                  </TableCell>
-                </TableRow>
+                <TableRowsSkeleton rows={6} columns={7} />
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={7} sx={{ py: 4, borderBottom: "none" }}>

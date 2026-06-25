@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Grid, Chip, TextField, CircularProgress, Avatar,
+  Box, Typography, Paper, Grid, Chip, TextField, Avatar,
   Button, Stack, Divider,
 } from "@mui/material";
 import {
@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
+import { CardGridSkeleton } from "../../components/TableRowsSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 import dayjs from "dayjs";
 
@@ -67,7 +68,7 @@ export default function DoctorAvailability() {
       )}
 
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress sx={{ color: "#06b6d4" }} /></Box>
+        <CardGridSkeleton />
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : doctors.length === 0 ? (

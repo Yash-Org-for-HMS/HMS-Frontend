@@ -10,6 +10,7 @@ import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
+import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
 
@@ -201,8 +202,8 @@ export default function SupplierDirectory() {
         </Box>
 
         {isLoading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
-            <CircularProgress size={48} thickness={4} sx={{ color: '#4F46E5' }} />
+          <Box sx={{ p: 2 }}>
+            <ListSkeleton rows={6} />
           </Box>
         ) : isError ? (
           <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />

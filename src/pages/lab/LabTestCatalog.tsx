@@ -11,6 +11,7 @@ import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
+import { ListSkeleton } from "../../components/TableRowsSkeleton";
 
 export default function LabTestCatalog() {
   const theme = useTheme();
@@ -149,9 +150,7 @@ export default function LabTestCatalog() {
         backdropFilter: 'blur(20px)',
       }}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
-            <CircularProgress size={48} thickness={4} sx={{ color: '#2563EB' }} />
-          </Box>
+          <ListSkeleton rows={6} />
         ) : isError ? (
           <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
         ) : tests.length === 0 ? (

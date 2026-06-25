@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
-  Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
+  Button, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, useTheme, alpha, Tabs, Tab, MenuItem, Select
 } from "@mui/material";
 import { AddRounded, InventoryRounded, ShoppingCartRounded, CheckCircleRounded } from "@mui/icons-material";
@@ -11,6 +11,7 @@ import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
+import { ListSkeleton } from "../../components/TableRowsSkeleton";
 
 export default function InventoryManagement() {
   const theme = useTheme();
@@ -271,8 +272,8 @@ export default function InventoryManagement() {
         </Box>
 
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 8, minHeight: 400, alignItems: "center" }}>
-            <CircularProgress size={48} thickness={4} />
+          <Box sx={{ p: 2, minHeight: 400 }}>
+            <ListSkeleton rows={6} />
           </Box>
         ) : loadError ? (
           <ErrorState message={loadError} onRetry={loadInitial} />

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Grid, Typography, Paper, CircularProgress, Alert,
+  Box, Grid, Typography, Paper, Alert,
   Skeleton, Chip, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Avatar, Button,
 } from "@mui/material";
@@ -10,6 +10,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import { TableRowsSkeleton, CardGridSkeleton } from "../../components/TableRowsSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 import ErrorState from "../../components/ErrorState";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
@@ -204,7 +205,7 @@ export default function NurseDashboard() {
                 </TableHead>
                 <TableBody>
                   {loading && needsVitals.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}><CircularProgress size={28} sx={{ color: NURSE_PURPLE }} /></TableCell></TableRow>
+                    <TableRowsSkeleton rows={6} columns={5} />
                   ) : needsVitals.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} sx={{ py: 4, border: 0 }}>
@@ -265,7 +266,7 @@ export default function NurseDashboard() {
               Patients whose vitals are recorded
             </Typography>
             {loading ? (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress size={24} sx={{ color: NURSE_PURPLE }} /></Box>
+              <CardGridSkeleton count={4} height={60} minWidth={220} />
             ) : tokens.filter(t => t.appointmentId && vitalsRecorded.has(t.appointmentId)).length === 0 ? (
               <Mascot pose="nothing-here-yet" subtitle="No vitals recorded yet today." size={130} />
             ) : (

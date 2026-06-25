@@ -48,6 +48,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import IdCardModal from "../../components/reception/IdCardModal";
 import AdmitDialog from "../../components/ipd/AdmitDialog";
 import { useToast } from "../../contexts/ToastContext";
@@ -261,15 +262,7 @@ export default function PatientsList() {
               </TableHead>
               <TableBody>
                 {loading && patients.length === 0 ? (
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <TableRow key={i}>
-                      {Array.from({ length: 7 }).map((_, j) => (
-                        <TableCell key={j} sx={{ borderBottom: "1px solid", borderColor: "divider", py: 2 }}>
-                          <Box sx={{ height: 20, borderRadius: 1, bgcolor: "rgba(255,255,255,0.04)" }} />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
+                  <TableRowsSkeleton rows={6} columns={7} />
                 ) : patients.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} sx={{ textAlign: "center", py: 6, borderBottom: "none" }}>

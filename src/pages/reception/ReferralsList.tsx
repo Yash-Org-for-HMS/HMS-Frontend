@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Chip, TextField, InputAdornment, MenuItem, CircularProgress,
+  TableHead, TableRow, Chip, TextField, InputAdornment, MenuItem,
   IconButton, Tooltip, Menu,
 } from "@mui/material";
 import {
@@ -11,6 +11,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import ReferralDialog from "../../components/reception/ReferralDialog";
 import PageHeader from "../../components/layout/PageHeader";
@@ -111,7 +112,7 @@ export default function ReferralsList() {
             </TableHead>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={7} align="center" sx={{ py: 4 }}><CircularProgress size={28} sx={{ color: "#06b6d4" }} /></TableCell></TableRow>
+                <TableRowsSkeleton rows={6} columns={7} />
               ) : isError ? (
                 <TableRow><TableCell colSpan={7} sx={{ py: 4, border: 0 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : filtered.length === 0 ? (

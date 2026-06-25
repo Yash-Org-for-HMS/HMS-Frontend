@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Chip, CircularProgress,
+  TableContainer, TableHead, TableRow, Chip,
   Alert, Avatar, Tooltip, Grid, ToggleButton, ToggleButtonGroup,
 } from "@mui/material";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import { TableRowsSkeleton, CardGridSkeleton } from "../../components/TableRowsSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 import VitalsModal from "../reception/VitalsModal";
 import { useSocket } from "../../hooks/useSocket";
@@ -167,11 +168,7 @@ export default function NurseQueue() {
               </TableHead>
               <TableBody>
                 {loading && tokens.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
-                      <CircularProgress size={30} sx={{ color: NURSE_PURPLE }} />
-                    </TableCell>
-                  </TableRow>
+                  <TableRowsSkeleton rows={6} columns={6} />
                 ) : tokens.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} sx={{ py: 4, border: 0 }}>
@@ -300,9 +297,7 @@ export default function NurseQueue() {
               </Box>
 
               {loading ? (
-                <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-                  <CircularProgress sx={{ color: NURSE_PURPLE }} />
-                </Box>
+                <CardGridSkeleton count={4} height={76} minWidth={300} />
               ) : pending.length === 0 ? (
                 <Mascot pose="all-caught-up" title="All done!" subtitle="All patients have their vitals recorded." />
               ) : (

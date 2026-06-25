@@ -22,6 +22,7 @@ import { EmailRounded, SmsRounded, CheckCircleRounded, SearchRounded, ScienceRou
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 
 const PAGE_SIZE = 20;
@@ -104,11 +105,7 @@ export default function NotificationsLog() {
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 8, borderBottom: "none" }}>
-                    <CircularProgress sx={{ color: "#8b5cf6" }} />
-                  </TableCell>
-                </TableRow>
+                <TableRowsSkeleton rows={6} columns={5} />
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={5} sx={{ py: 4, borderBottom: "none" }}>

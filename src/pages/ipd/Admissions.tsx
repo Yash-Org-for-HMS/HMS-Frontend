@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableHead, TableBody, TableRow, TableCell,
   TableContainer, Chip, TextField, InputAdornment, Tabs, Tab, Tooltip, IconButton,
-  CircularProgress, Menu, MenuItem,
+  Menu, MenuItem,
 } from "@mui/material";
 import {
   LocalHotelRounded, SearchRounded, SwapHorizRounded, LogoutRounded, MoreVertRounded,
@@ -12,6 +12,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import AdmitDialog from "../../components/ipd/AdmitDialog";
 import TransferDialog from "../../components/ipd/TransferDialog";
@@ -94,7 +95,7 @@ export default function Admissions() {
             </TableHead>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={9} align="center" sx={{ py: 4 }}><CircularProgress size={28} sx={{ color: "#06b6d4" }} /></TableCell></TableRow>
+                <TableRowsSkeleton rows={6} columns={9} />
               ) : isError ? (
                 <TableRow><TableCell colSpan={9} sx={{ py: 4, border: 0 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : filtered.length === 0 ? (

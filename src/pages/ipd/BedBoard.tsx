@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Grid, CircularProgress, Button, Chip, Menu, MenuItem,
+  Box, Typography, Paper, Grid, Button, Chip, Menu, MenuItem,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, Divider, Tooltip,
 } from "@mui/material";
 import {
@@ -11,6 +11,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
+import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 
@@ -81,7 +82,7 @@ export default function BedBoard() {
         </Grid>
       )}
 
-      {isLoading ? <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress sx={{ color: "#06b6d4" }} /></Box>
+      {isLoading ? <ListSkeleton />
         : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
         : wards.length === 0 ? <Mascot pose="all-caught-up" title="No wards yet" subtitle="Use Setup to add a ward, room, and beds." />
         : (

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Tabs, Tab, TextField, InputAdornment, MenuItem, Table,
-  TableHead, TableBody, TableRow, TableCell, TableContainer, Chip, CircularProgress,
+  TableHead, TableBody, TableRow, TableCell, TableContainer, Chip,
   Button, Pagination, Stack,
 } from "@mui/material";
 import {
@@ -11,6 +11,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import GenerateInvoice from "../billing/GenerateInvoice";
 import InvoiceViewDialog from "../../components/reception/InvoiceViewDialog";
 import PageHeader from "../../components/layout/PageHeader";
@@ -97,7 +98,7 @@ function BillsList() {
             </TableHead>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={8} align="center" sx={{ py: 4 }}><CircularProgress size={28} sx={{ color: ACCENT }} /></TableCell></TableRow>
+                <TableRowsSkeleton rows={6} columns={8} />
               ) : isError ? (
                 <TableRow><TableCell colSpan={8} sx={{ py: 4, border: 0 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : rows.length === 0 ? (

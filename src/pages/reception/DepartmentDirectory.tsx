@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Grid, Chip, TextField, InputAdornment, CircularProgress,
+  Box, Typography, Paper, Grid, Chip, TextField, InputAdornment,
   Avatar, Stack, Divider, Tooltip,
 } from "@mui/material";
 import {
@@ -11,6 +11,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
+import { CardGridSkeleton } from "../../components/TableRowsSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 
 export default function DepartmentDirectory() {
@@ -50,7 +51,7 @@ export default function DepartmentDirectory() {
       />
 
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress sx={{ color: "#06b6d4" }} /></Box>
+        <CardGridSkeleton />
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : filtered.length === 0 ? (

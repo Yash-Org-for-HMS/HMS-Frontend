@@ -3,6 +3,7 @@ import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRo
 import { VisibilityRounded, BloodtypeRounded, AddRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import { useNavigate } from "react-router-dom";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
 import WalkInOrderDialog from "../../components/lab/WalkInOrderDialog";
@@ -113,7 +114,7 @@ export default function LabOrdersQueue() {
 
       <Paper sx={{ p: 2, borderRadius: 3 }}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}><CircularProgress /></Box>
+          <ListSkeleton rows={6} />
         ) : orders.length === 0 ? (
           <Mascot pose="all-caught-up" title="No lab orders" subtitle="No lab orders found." />
         ) : (
