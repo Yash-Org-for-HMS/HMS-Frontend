@@ -243,7 +243,6 @@ function App() {
             <Route path="/nurse/queue" element={el(NurseQueue)} />
             {/* Vitals Station merged into the Patient Queue page (view toggle). */}
             <Route path="/nurse/vitals" element={<Navigate to="/nurse/queue" replace />} />
-            <Route path="/nurse/patients/:id" element={el(PatientProfile)} />
           </Route>
         </Route>
 
