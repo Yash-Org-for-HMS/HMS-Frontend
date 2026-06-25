@@ -35,6 +35,7 @@ const TrialForm = lazy(() => import("./pages/trials/TrialForm"));
 const HospitalsList = lazy(() => import("./pages/hospitals/HospitalsList"));
 const HospitalForm = lazy(() => import("./pages/hospitals/HospitalForm"));
 const HospitalOverview = lazy(() => import("./pages/superAdmins/HospitalOverview"));
+const HospitalModules = lazy(() => import("./pages/hospitals/HospitalModules"));
 const OnboardingList = lazy(() => import("./pages/onboarding/OnboardingList"));
 const OnboardingForm = lazy(() => import("./pages/onboarding/OnboardingForm"));
 const SuperAdminsList = lazy(() => import("./pages/superAdmins/SuperAdminsList"));
@@ -152,6 +153,7 @@ function App() {
             <Route path="/hospitals/new" element={el(HospitalForm)} />
             <Route path="/hospitals/:id/edit" element={el(HospitalForm)} />
             <Route path="/hospitals/:id/overview" element={el(HospitalOverview)} />
+            <Route path="/hospitals/:id/modules" element={el(HospitalModules)} />
             <Route path="/onboarding" element={el(OnboardingList)} />
             <Route path="/onboarding/:id/edit" element={el(OnboardingForm)} />
             <Route path="/super-admins" element={el(SuperAdminsList)} />

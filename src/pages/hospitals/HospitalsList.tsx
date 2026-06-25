@@ -32,6 +32,7 @@ import {
 import {
   AddRounded,
   EditRounded,
+  WidgetsRounded,
   SearchRounded,
   DeleteOutlineRounded,
   RestoreRounded,
@@ -265,6 +266,14 @@ export default function HospitalsList() {
                               sx={{ color: "#3b82f6" }}
                             >
                               <VisibilityRounded />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Module Access">
+                            <IconButton
+                              onClick={() => navigate(`/hospitals/${hospital.hospitalId}/modules`)}
+                              sx={{ color: "#8b5cf6" }}
+                            >
+                              <WidgetsRounded />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="Edit">
