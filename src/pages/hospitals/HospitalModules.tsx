@@ -2,65 +2,93 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Switch, Chip, Button, CircularProgress, Grid, Tooltip,
+  Box, Typography, Paper, Button, CircularProgress, Grid, Chip, MenuItem, TextField, Tooltip,
 } from "@mui/material";
-import { ArrowBackRounded, SaveRounded, WidgetsRounded, LockOpenRounded } from "@mui/icons-material";
+import { ArrowBackRounded, SaveRounded, WidgetsRounded, CheckCircleRounded, AddCircleOutlineRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
-interface ModuleRow {
-  key: string;
-  label: string;
-  inPlan: boolean;
-  overridden: boolean;
-  enabled: boolean;
+interface ModuleRow { key: string; label: string; entitled: boolean }
+interface ModulesResp {
+  hospitalName: string;
+  planId: string | null;
+  planName: string;
+  entitlementSource: "hospital" | "plan" | "default";
+  modules: ModuleRow[];
 }
+
+// A distinct accent per module so the grid reads as colourful cards.
+const ACCENTS: Record<string, string> = {
+  OPD: "#3b82f6",
+  Doctor: "#8b5cf6",
+  IPD: "#ec4899",
+  Laboratory: "#f59e0b",
+  Pharmacy: "#10b981",
+  Billing: "#06b6d4",
+};
 
 export default function HospitalModules() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const [draft, setDraft] = useState<Record<string, boolean>>({});
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [planId, setPlanId] = useState<string>("");
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["hospital-modules", id],
-    queryFn: async () => (await axiosInstance.get(`/hospitals/${id}/modules`)).data.data as { hospitalName: string; modules: ModuleRow[] },
+    queryFn: async () => (await axiosInstance.get(`/hospitals/${id}/modules`)).data.data as ModulesResp,
     enabled: !!id,
   });
 
-  // Seed the local toggle state from the fetched effective state.
+  const { data: plans = [] } = useQuery({
+    queryKey: ["plans-options"],
+    queryFn: async () => (await axiosInstance.get(`/plans?limit=100`)).data.data as { planId: string; planName: string }[],
+  });
+
   useEffect(() => {
-    if (data?.modules) {
-      const seed: Record<string, boolean> = {};
-      data.modules.forEach((m) => (seed[m.key] = m.enabled));
-      setDraft(seed);
+    if (data) {
+      setSelected(new Set(data.modules.filter((m) => m.entitled).map((m) => m.key)));
+      setPlanId(data.planId || "");
     }
   }, [data]);
 
   const save = useMutation({
-    mutationFn: async () => (await axiosInstance.put(`/hospitals/${id}/modules`, { modules: draft })).data,
-    onSuccess: () => { toast.success("Modules updated"); refetch(); },
-    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to update modules"),
+    mutationFn: async () =>
+      (await axiosInstance.put(`/hospitals/${id}/modules`, {
+        entitledModules: [...selected],
+        planId: planId || null,
+      })).data,
+    onSuccess: () => { toast.success("Module access updated"); refetch(); },
+    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to save"),
   });
 
   const modules = data?.modules || [];
-  const dirty = modules.some((m) => draft[m.key] !== m.enabled);
+  const baselineSel = new Set(modules.filter((m) => m.entitled).map((m) => m.key));
+  const dirty =
+    selected.size !== baselineSel.size ||
+    [...selected].some((k) => !baselineSel.has(k)) ||
+    planId !== (data?.planId || "");
+
+  const toggle = (key: string) =>
+    setSelected((s) => {
+      const next = new Set(s);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
 
   return (
-    <Box sx={{ maxWidth: 1000, mx: "auto", p: { xs: 2, md: 3 } }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-        <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/hospitals")} sx={{ color: "text.secondary", textTransform: "none" }}>
-          Hospitals
-        </Button>
-      </Box>
+    <Box sx={{ maxWidth: 1040, mx: "auto", p: { xs: 2, md: 3 } }}>
+      <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/hospitals")} sx={{ color: "text.secondary", textTransform: "none", mb: 1 }}>
+        Hospitals
+      </Button>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, display: "flex", alignItems: "center", gap: 1.5 }}>
             <WidgetsRounded sx={{ color: "#3b82f6", fontSize: 32 }} /> Module Access
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {data?.hospitalName ? `${data.hospitalName} — ` : ""}enable or disable modules for this hospital. Overrides take precedence over the plan.
+            {data?.hospitalName ? `${data.hospitalName} — ` : ""}assign the modules this hospital may use. Its admin can enable/disable within this set; anything else they must request from you.
           </Typography>
         </Box>
         <Button
@@ -79,53 +107,66 @@ export default function HospitalModules() {
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (
-        <Grid container spacing={2}>
-          {modules.map((m) => {
-            const on = draft[m.key] ?? m.enabled;
-            const beyondPlan = on && !m.inPlan;
-            return (
-              <Grid key={m.key} size={{ xs: 12, sm: 6 }}>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2.5, borderRadius: 3, border: "1px solid",
-                    borderColor: on ? "rgba(59,130,246,0.4)" : "divider",
-                    bgcolor: on ? "rgba(59,130,246,0.04)" : "background.paper",
-                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2,
-                  }}
-                >
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography sx={{ fontWeight: 700 }}>{m.label}</Typography>
-                    <Box sx={{ display: "flex", gap: 0.75, mt: 0.75, flexWrap: "wrap" }}>
-                      <Chip
-                        size="small"
-                        label={m.inPlan ? "In plan" : "Not in plan"}
-                        sx={{
-                          height: 20, fontSize: "0.68rem", fontWeight: 600,
-                          bgcolor: m.inPlan ? "rgba(16,185,129,0.12)" : "rgba(148,163,184,0.15)",
-                          color: m.inPlan ? "#16a34a" : "text.secondary",
-                        }}
-                      />
-                      {beyondPlan && (
-                        <Tooltip title="Granted to this hospital beyond its subscription plan">
-                          <Chip
-                            size="small" icon={<LockOpenRounded sx={{ fontSize: "14px !important" }} />} label="Beyond plan"
-                            sx={{ height: 20, fontSize: "0.68rem", fontWeight: 600, bgcolor: "rgba(245,158,11,0.15)", color: "#d97706" }}
-                          />
-                        </Tooltip>
-                      )}
+        <>
+          {/* Plan picker */}
+          <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+            <TextField
+              select size="small" label="Subscription plan" value={planId}
+              onChange={(e) => setPlanId(e.target.value)} sx={{ minWidth: 260 }}
+            >
+              <MenuItem value="">— No plan —</MenuItem>
+              {plans.map((p) => <MenuItem key={p.planId} value={p.planId}>{p.planName}</MenuItem>)}
+            </TextField>
+            <Chip
+              size="small"
+              label={data?.entitlementSource === "hospital" ? "Custom module set" : `Following plan (${data?.planName || "—"})`}
+              sx={{ fontWeight: 600, bgcolor: data?.entitlementSource === "hospital" ? "rgba(139,92,246,0.12)" : "rgba(148,163,184,0.15)", color: data?.entitlementSource === "hospital" ? "#8b5cf6" : "text.secondary" }}
+            />
+          </Paper>
+
+          {/* Colourful module cards */}
+          <Grid container spacing={2}>
+            {modules.map((m) => {
+              const on = selected.has(m.key);
+              const accent = ACCENTS[m.key] || "#3b82f6";
+              return (
+                <Grid key={m.key} size={{ xs: 12, sm: 6, md: 4 }}>
+                  <Paper
+                    onClick={() => toggle(m.key)}
+                    elevation={0}
+                    sx={{
+                      p: 2.5, borderRadius: 4, cursor: "pointer", userSelect: "none",
+                      border: "2px solid", borderColor: on ? accent : "divider",
+                      background: on ? `linear-gradient(135deg, ${accent}1f, ${accent}0a)` : "background.paper",
+                      transition: "all .15s ease", minHeight: 104,
+                      display: "flex", flexDirection: "column", justifyContent: "space-between",
+                      "&:hover": { borderColor: accent, boxShadow: `0 6px 20px ${accent}22` },
+                    }}
+                  >
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <Box sx={{ width: 40, height: 40, borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: on ? accent : `${accent}22`, color: on ? "#fff" : accent }}>
+                        <WidgetsRounded />
+                      </Box>
+                      {on
+                        ? <CheckCircleRounded sx={{ color: accent }} />
+                        : <AddCircleOutlineRounded sx={{ color: "text.disabled" }} />}
                     </Box>
-                  </Box>
-                  <Switch
-                    checked={on}
-                    onChange={(e) => setDraft((d) => ({ ...d, [m.key]: e.target.checked }))}
-                    color="primary"
-                  />
-                </Paper>
-              </Grid>
-            );
-          })}
-        </Grid>
+                    <Box sx={{ mt: 1.5 }}>
+                      <Typography sx={{ fontWeight: 700, color: on ? "text.primary" : "text.secondary" }}>{m.label}</Typography>
+                      <Typography variant="caption" sx={{ color: on ? accent : "text.disabled", fontWeight: 600 }}>
+                        {on ? "Assigned" : "Not assigned"}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
+              );
+            })}
+          </Grid>
+
+          <Typography variant="caption" sx={{ display: "block", mt: 3, color: "text.secondary" }}>
+            Tip: assigned modules become the hospital's ceiling. To remove access entirely, unassign here; to let the hospital self-manage which of these are active, leave them assigned.
+          </Typography>
+        </>
       )}
     </Box>
   );
