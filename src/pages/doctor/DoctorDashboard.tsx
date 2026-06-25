@@ -5,11 +5,12 @@ import {
 } from "@mui/material";
 import {
   MonitorHeartRounded, CheckCircleRounded, HourglassTopRounded,
-  PeopleAltRounded, ArrowForwardRounded, LocalHospitalRounded,
+  PeopleAltRounded, ArrowForwardRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
+import PageHeader from "../../components/layout/PageHeader";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -85,26 +86,10 @@ export default function DoctorDashboard() {
 
   return (
     <Box sx={{ pb: 6 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
-          <Box
-            sx={{
-              width: 36, height: 36, borderRadius: 1.5,
-              background: `linear-gradient(135deg, #2563eb, #3b82f6)`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-          >
-            <LocalHospitalRounded sx={{ color: "#fff", fontSize: 20 }} />
-          </Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary", letterSpacing: "-0.5px" }}>
-            Welcome, Dr. {user?.lastName}
-          </Typography>
-        </Box>
-        <Typography variant="body1" sx={{ color: "text.secondary", mt: 0.5, ml: 0.5 }}>
-          Here is your schedule for today at {hospital?.name || "the hospital"}.
-        </Typography>
-      </Box>
+      <PageHeader
+        title={`Welcome, Dr. ${user?.lastName ?? ""}`}
+        subtitle={`Here is your schedule for today at ${hospital?.name || "the hospital"}.`}
+      />
 {/* KPI Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>

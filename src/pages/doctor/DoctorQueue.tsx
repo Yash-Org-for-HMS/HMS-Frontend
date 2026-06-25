@@ -11,6 +11,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import PageHeader from "../../components/layout/PageHeader";
 import VitalsModal from "../reception/VitalsModal";
 import { useNavigate } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
@@ -55,29 +56,24 @@ export default function DoctorQueue() {
 
   return (
     <Box sx={{ pb: 6 }}>
-      {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
-            My Queue
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Patients waiting for consultation
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          startIcon={<SyncRounded />}
-          onClick={() => fetchQueue()}
-          sx={{
-            color: DOCTOR_BLUE, borderColor: `rgba(59,130,246,0.4)`,
-            fontWeight: 600, textTransform: "none",
-            "&:hover": { borderColor: DOCTOR_BLUE, bgcolor: "rgba(59,130,246,0.06)" },
-          }}
-        >
-          Refresh
-        </Button>
-      </Box>
+      <PageHeader
+        title="My Queue"
+        subtitle="Patients waiting for consultation"
+        actions={
+          <Button
+            variant="outlined"
+            startIcon={<SyncRounded />}
+            onClick={() => fetchQueue()}
+            sx={{
+              color: DOCTOR_BLUE, borderColor: `rgba(59,130,246,0.4)`,
+              fontWeight: 600, textTransform: "none",
+              "&:hover": { borderColor: DOCTOR_BLUE, bgcolor: "rgba(59,130,246,0.06)" },
+            }}
+          >
+            Refresh
+          </Button>
+        }
+      />
 
       {/* Summary Chips */}
       <Box sx={{ display: "flex", gap: 1.5, mb: 3, flexWrap: "wrap" }}>

@@ -7,11 +7,12 @@ import {
   Pagination, Avatar, Tooltip, IconButton,
 } from "@mui/material";
 import {
-  PeopleAltRounded, SearchRounded, ChevronRightRounded, BloodtypeRounded,
+  SearchRounded, ChevronRightRounded, BloodtypeRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
+import PageHeader from "../../components/layout/PageHeader";
 
 const DOCTOR_BLUE = "#3b82f6";
 const PAGE_SIZE = 20;
@@ -48,18 +49,10 @@ export default function DoctorPatients() {
 
   return (
     <Box sx={{ p: { xs: 0, md: 1 } }}>
-      {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5, display: "flex", alignItems: "center", gap: 1.5 }}>
-            <PeopleAltRounded sx={{ color: DOCTOR_BLUE, fontSize: 32 }} />
-            My Patients
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Patients you've consulted with — search and open a read-only clinical record.
-          </Typography>
-        </Box>
-      </Box>
+      <PageHeader
+        title="My Patients"
+        subtitle="Patients you've consulted with — search and open a read-only clinical record."
+      />
 
       <TextField
         fullWidth

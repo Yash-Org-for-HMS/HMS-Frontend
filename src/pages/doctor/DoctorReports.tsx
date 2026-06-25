@@ -5,7 +5,7 @@ import {
   Box, Typography, Paper, CircularProgress, TextField, Button, ButtonGroup,
 } from "@mui/material";
 import {
-  AssessmentRounded, GroupRounded, EventAvailableRounded, MedicationRounded,
+  GroupRounded, EventAvailableRounded, MedicationRounded,
   ScienceRounded, MonitorHeartRounded, DescriptionRounded,
 } from "@mui/icons-material";
 import {
@@ -15,6 +15,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
+import PageHeader from "../../components/layout/PageHeader";
 
 const DOCTOR_BLUE = "#3b82f6";
 const PIE_COLORS = ["#3b82f6", "#ec4899", "#f59e0b", "#10b981", "#8b5cf6", "#64748b"];
@@ -72,19 +73,11 @@ export default function DoctorReports() {
 
   return (
     <Box sx={{ p: { xs: 0, md: 1 } }}>
-      {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5, display: "flex", alignItems: "center", gap: 1.5 }}>
-            <AssessmentRounded sx={{ color: DOCTOR_BLUE, fontSize: 32 }} />
-            My Reports
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Your practice analytics — consultations, diagnoses, and orders over a date range.
-          </Typography>
-        </Box>
-        {isFetching && <CircularProgress size={20} sx={{ color: DOCTOR_BLUE, mt: 1 }} />}
-      </Box>
+      <PageHeader
+        title="My Reports"
+        subtitle="Your practice analytics — consultations, diagnoses, and orders over a date range."
+        actions={isFetching ? <CircularProgress size={20} sx={{ color: DOCTOR_BLUE }} /> : undefined}
+      />
 
       {/* Date range */}
       <Paper elevation={0} sx={{ p: 1.5, borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2, display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>

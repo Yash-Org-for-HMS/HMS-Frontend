@@ -7,13 +7,14 @@ import {
   IconButton, Collapse, Button, Tooltip,
 } from "@mui/material";
 import {
-  ScienceRounded, SearchRounded, KeyboardArrowDownRounded, KeyboardArrowUpRounded,
+  SearchRounded, KeyboardArrowDownRounded, KeyboardArrowUpRounded,
   WarningAmberRounded, BiotechRounded, MonitorHeartRounded, OpenInNewRounded, PersonRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { assetUrl } from "../../utils/assetUrl";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
+import PageHeader from "../../components/layout/PageHeader";
 
 const DOCTOR_BLUE = "#3b82f6";
 const PAGE_SIZE = 20;
@@ -71,18 +72,10 @@ export default function DoctorResults() {
 
   return (
     <Box sx={{ p: { xs: 0, md: 1 } }}>
-      {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5, display: "flex", alignItems: "center", gap: 1.5 }}>
-            <ScienceRounded sx={{ color: DOCTOR_BLUE, fontSize: 32 }} />
-            Results
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Lab and radiology results for tests you've ordered — including those that came back after the visit.
-          </Typography>
-        </Box>
-      </Box>
+      <PageHeader
+        title="Results"
+        subtitle="Lab and radiology results for tests you've ordered — including those that came back after the visit."
+      />
 
       <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
         <Box sx={{ borderBottom: 1, borderColor: "divider", px: 1 }}>
