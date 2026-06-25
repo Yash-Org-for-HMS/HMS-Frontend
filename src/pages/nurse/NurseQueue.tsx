@@ -31,7 +31,7 @@ type ViewMode = "queue" | "station";
 
 export default function NurseQueue() {
   const location = useLocation();
-  const { data: tokens = [], isLoading: loading, error, refetch: fetchQueue } = useQuery({
+  const { data, isLoading: loading, error, refetch: fetchQueue } = useQuery({
     queryKey: ["nurse-queue"],
     queryFn: async () => {
       const res = await axiosInstance.get("/reception/queue");
@@ -39,6 +39,8 @@ export default function NurseQueue() {
     },
     refetchInterval: 30000,
   });
+  // Coerce to an array so an unexpected payload can never crash the page.
+  const tokens: any[] = Array.isArray(data) ? data : [];
 
   const [view, setView] = useState<ViewMode>("queue");
   const [vitalsDialog, setVitalsDialog] = useState<{ open: boolean; token: any }>({ open: false, token: null });

@@ -67,10 +67,13 @@ export default function NurseDashboard() {
   const { hospital, user } = useHospitalAuth();
   const navigate = useNavigate();
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
-    queryKey: ["nurse-queue"],
+    // Distinct key from NurseQueue's ["nurse-queue"]: this query returns an
+    // aggregate object ({ tokens, vitalsRecorded }), not the raw token array, so
+    // sharing a cache key would feed the wrong shape to whichever page reads it.
+    queryKey: ["nurse-dashboard-queue"],
     queryFn: async () => {
       const res = await axiosInstance.get("/reception/queue");
-      const tokenList: any[] = res.data.data;
+      const tokenList: any[] = Array.isArray(res.data?.data) ? res.data.data : [];
       // Resolve which appointments already have vitals recorded.
       const apptIds = tokenList.map((t: any) => t.appointmentId).filter(Boolean);
       const vitalsChecks = await Promise.allSettled(
