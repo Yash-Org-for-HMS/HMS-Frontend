@@ -8,6 +8,7 @@ import WalkInOrderDialog from "../../components/lab/WalkInOrderDialog";
 import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
 import { assetUrl } from "../../utils/assetUrl";
+import PageHeader from "../../components/layout/PageHeader";
 
 export default function RadiologyOrdersQueue() {
   const { data: orders = [], isLoading: loading, refetch: fetchOrders } = useQuery({
@@ -141,12 +142,14 @@ export default function RadiologyOrdersQueue() {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3, gap: 2, flexWrap: "wrap" }}>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>Radiology Orders</Typography>
-        <Button variant="contained" startIcon={<AddRounded />} onClick={() => setWalkInOpen(true)}>
-          New Walk-in Order
-        </Button>
-      </Box>
+      <PageHeader
+        title="Radiology Orders"
+        actions={
+          <Button variant="contained" startIcon={<AddRounded />} onClick={() => setWalkInOpen(true)}>
+            New Walk-in Order
+          </Button>
+        }
+      />
 
       <Paper sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} variant="scrollable" scrollButtons="auto">

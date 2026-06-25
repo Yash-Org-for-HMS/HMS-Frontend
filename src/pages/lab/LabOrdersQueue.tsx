@@ -8,6 +8,7 @@ import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
 import WalkInOrderDialog from "../../components/lab/WalkInOrderDialog";
 import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
+import PageHeader from "../../components/layout/PageHeader";
 
 export default function LabOrdersQueue() {
   const { data: orders = [], isLoading: loading, refetch: fetchOrders } = useQuery({
@@ -92,12 +93,14 @@ export default function LabOrdersQueue() {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3, gap: 2, flexWrap: "wrap" }}>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>Lab Orders Queue</Typography>
-        <Button variant="contained" startIcon={<AddRounded />} onClick={() => setWalkInOpen(true)}>
-          New Walk-in Order
-        </Button>
-      </Box>
+      <PageHeader
+        title="Lab Orders Queue"
+        actions={
+          <Button variant="contained" startIcon={<AddRounded />} onClick={() => setWalkInOpen(true)}>
+            New Walk-in Order
+          </Button>
+        }
+      />
 
       <Paper sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} variant="scrollable" scrollButtons="auto">

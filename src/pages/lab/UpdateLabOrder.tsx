@@ -6,6 +6,7 @@ import { SaveRounded, ArrowBackRounded, ScienceRounded, AccessTimeRounded, Print
 import { axiosInstance } from "../../api/axios";
 import { useParams, useNavigate } from "react-router-dom";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
+import PageHeader from "../../components/layout/PageHeader";
 
 const evaluateCriticalValue = (testCode: string, resultValue: string): boolean => {
   const val = parseFloat(resultValue);
@@ -82,30 +83,30 @@ export default function UpdateLabOrder() {
         Back to Queue
       </Button>
       
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
-          Update Lab Order: {order.sampleBarcode}
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Chip label={order.paymentStatus === "PAID" ? "PAID" : "UNPAID"} color={order.paymentStatus === "PAID" ? "success" : "error"} />
-          {order.paymentStatus !== "PAID" && (
-            <Button size="small" variant="outlined" color="success" onClick={() => setShowPOS(true)}>
-              Collect Payment (Cash)
-            </Button>
-          )}
-          <Chip label={order.status || "PENDING"} color={order.status === "COMPLETED" ? "success" : "warning"} />
-          {order.status === "COMPLETED" && (
-            <Button 
-              variant="contained" 
-              color="primary"
-              startIcon={<PrintRounded />} 
-              onClick={() => window.open(`/lab/orders/${id}/print`, '_blank')}
-            >
-              Print Report
-            </Button>
-          )}
-        </Box>
-      </Box>
+      <PageHeader
+        title={`Update Lab Order: ${order.sampleBarcode}`}
+        actions={
+          <>
+            <Chip label={order.paymentStatus === "PAID" ? "PAID" : "UNPAID"} color={order.paymentStatus === "PAID" ? "success" : "error"} />
+            {order.paymentStatus !== "PAID" && (
+              <Button size="small" variant="outlined" color="success" onClick={() => setShowPOS(true)}>
+                Collect Payment (Cash)
+              </Button>
+            )}
+            <Chip label={order.status || "PENDING"} color={order.status === "COMPLETED" ? "success" : "warning"} />
+            {order.status === "COMPLETED" && (
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<PrintRounded />}
+                onClick={() => window.open(`/lab/orders/${id}/print`, '_blank')}
+              >
+                Print Report
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {message && <Alert severity={message.type} sx={{ mb: 3 }}>{message.text}</Alert>}
 

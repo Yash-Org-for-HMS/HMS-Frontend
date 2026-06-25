@@ -5,11 +5,12 @@ import {
   TextField, IconButton, Tooltip, Switch, FormControlLabel, Chip, useTheme,
   Fade, Zoom, alpha
 } from "@mui/material";
-import { EditRounded, DeleteRounded, AddRounded, ScienceRounded } from "@mui/icons-material";
+import { EditRounded, DeleteRounded, AddRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
+import PageHeader from "../../components/layout/PageHeader";
 
 export default function LabTestCatalog() {
   const theme = useTheme();
@@ -110,53 +111,33 @@ export default function LabTestCatalog() {
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: "auto" }}>
-      <Box sx={{ 
-        display: "flex", 
-        flexDirection: { xs: 'column', sm: 'row' },
-        justifyContent: "space-between", 
-        alignItems: { xs: 'flex-start', sm: 'center' }, 
-        mb: 4,
-        gap: 2
-      }}>
-        <Box>
-          <Typography variant="h4" sx={{ 
-            fontWeight: 800, 
-            background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5
-          }}>
-            <ScienceRounded fontSize="large" sx={{ color: '#2563EB' }} />
-            Lab Test Catalog
-          </Typography>
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 0.5 }}>
-            Manage available lab tests, profiles, and their reference ranges.
-          </Typography>
-        </Box>
-        <Button 
-          variant="contained" 
-          startIcon={<AddRounded />}
-          onClick={handleOpenNew}
-          sx={{
-            borderRadius: '12px',
-            textTransform: 'none',
-            fontWeight: 600,
-            px: 3,
-            py: 1.2,
-            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-            boxShadow: '0 8px 16px -4px rgba(16, 185, 129, 0.4)',
-            transition: 'all 0.2s',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: '0 12px 20px -4px rgba(16, 185, 129, 0.5)',
-            }
-          }}
-        >
-          Add New Test
-        </Button>
-      </Box>
+      <PageHeader
+        title="Lab Test Catalog"
+        subtitle="Manage available lab tests, profiles, and their reference ranges."
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<AddRounded />}
+            onClick={handleOpenNew}
+            sx={{
+              borderRadius: '12px',
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 3,
+              py: 1.2,
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              boxShadow: '0 8px 16px -4px rgba(16, 185, 129, 0.4)',
+              transition: 'all 0.2s',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 12px 20px -4px rgba(16, 185, 129, 0.5)',
+              }
+            }}
+          >
+            Add New Test
+          </Button>
+        }
+      />
 
       <Paper sx={{ 
         borderRadius: 4,

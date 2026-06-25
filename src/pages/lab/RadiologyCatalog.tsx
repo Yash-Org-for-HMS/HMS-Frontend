@@ -4,11 +4,12 @@ import {
   Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha
 } from "@mui/material";
-import { EditRounded, DeleteRounded, AddRounded, SettingsAccessibilityRounded } from "@mui/icons-material";
+import { EditRounded, DeleteRounded, AddRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
+import PageHeader from "../../components/layout/PageHeader";
 
 export default function RadiologyCatalog() {
   const theme = useTheme();
@@ -93,53 +94,33 @@ export default function RadiologyCatalog() {
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: "auto" }}>
-      <Box sx={{ 
-        display: "flex", 
-        flexDirection: { xs: 'column', sm: 'row' },
-        justifyContent: "space-between", 
-        alignItems: { xs: 'flex-start', sm: 'center' }, 
-        mb: 4,
-        gap: 2
-      }}>
-        <Box>
-          <Typography variant="h4" sx={{ 
-            fontWeight: 800, 
-            background: 'linear-gradient(135deg, #0284C7 0%, #4F46E5 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5
-          }}>
-            <SettingsAccessibilityRounded fontSize="large" sx={{ color: '#0284C7' }} />
-            Radiology Catalog
-          </Typography>
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 0.5 }}>
-            Manage available radiology scans, imaging services, and pricing.
-          </Typography>
-        </Box>
-        <Button 
-          variant="contained" 
-          startIcon={<AddRounded />}
-          onClick={handleOpenNew}
-          sx={{
-            borderRadius: '12px',
-            textTransform: 'none',
-            fontWeight: 600,
-            px: 3,
-            py: 1.2,
-            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-            boxShadow: '0 8px 16px -4px rgba(16, 185, 129, 0.4)',
-            transition: 'all 0.2s',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: '0 12px 20px -4px rgba(16, 185, 129, 0.5)',
-            }
-          }}
-        >
-          Add New Scan
-        </Button>
-      </Box>
+      <PageHeader
+        title="Radiology Catalog"
+        subtitle="Manage available radiology scans, imaging services, and pricing."
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<AddRounded />}
+            onClick={handleOpenNew}
+            sx={{
+              borderRadius: '12px',
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 3,
+              py: 1.2,
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              boxShadow: '0 8px 16px -4px rgba(16, 185, 129, 0.4)',
+              transition: 'all 0.2s',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 12px 20px -4px rgba(16, 185, 129, 0.5)',
+              }
+            }}
+          >
+            Add New Scan
+          </Button>
+        }
+      />
 
       <Paper sx={{ 
         borderRadius: 4,

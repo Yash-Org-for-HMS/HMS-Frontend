@@ -5,6 +5,7 @@ import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import { useNavigate } from "react-router-dom";
+import PageHeader from "../../components/layout/PageHeader";
 
 export default function LabDashboard() {
   const navigate = useNavigate();
@@ -103,27 +104,15 @@ export default function LabDashboard() {
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" sx={{ 
-            fontWeight: 800, 
-            background: 'linear-gradient(135deg, #4F46E5 0%, #EC4899 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5
-          }}>
-            Lab & Radiology Overview
-          </Typography>
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 0.5 }}>
-            Pending orders and recent activity across the laboratory and radiology departments.
-          </Typography>
-        </Box>
-        <Button variant="contained" onClick={() => navigate("/lab/orders")} startIcon={<ScienceRounded />} sx={{ borderRadius: 2 }}>
-          View Worklist
-        </Button>
-      </Box>
+      <PageHeader
+        title="Lab & Radiology Overview"
+        subtitle="Pending orders and recent activity across the laboratory and radiology departments."
+        actions={
+          <Button variant="contained" onClick={() => navigate("/lab/orders")} startIcon={<ScienceRounded />} sx={{ borderRadius: 2 }}>
+            View Worklist
+          </Button>
+        }
+      />
 
       {/* KPI Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
