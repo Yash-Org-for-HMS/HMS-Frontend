@@ -17,6 +17,7 @@ import AdmitDialog from "../../components/ipd/AdmitDialog";
 import TransferDialog from "../../components/ipd/TransferDialog";
 import DischargeDialog from "../../components/ipd/DischargeDialog";
 import DepositDialog from "../../components/ipd/DepositDialog";
+import PageHeader from "../../components/layout/PageHeader";
 
 const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
@@ -62,16 +63,16 @@ export default function Admissions() {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>Admissions</Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>In-patient admissions, transfers, and discharges</Typography>
-        </Box>
-        <Button variant="contained" startIcon={<LocalHotelRounded />} onClick={() => setAdmitOpen(true)}
-          sx={{ background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)", fontWeight: 600, textTransform: "none", borderRadius: 2 }}>
-          Admit Patient
-        </Button>
-      </Box>
+      <PageHeader
+        title="Admissions"
+        subtitle="In-patient admissions, transfers, and discharges"
+        actions={
+          <Button variant="contained" startIcon={<LocalHotelRounded />} onClick={() => setAdmitOpen(true)}
+            sx={{ background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)", fontWeight: 600, textTransform: "none", borderRadius: 2 }}>
+            Admit Patient
+          </Button>
+        }
+      />
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2, mb: 2 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ "& .MuiTab-root": { textTransform: "none", fontWeight: 600 }, "& .Mui-selected": { color: "#0891b2 !important" }, "& .MuiTabs-indicator": { bgcolor: "#0891b2" } }}>

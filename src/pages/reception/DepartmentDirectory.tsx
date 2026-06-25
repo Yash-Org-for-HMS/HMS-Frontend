@@ -11,6 +11,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
+import PageHeader from "../../components/layout/PageHeader";
 
 export default function DepartmentDirectory() {
   const [search, setSearch] = useState("");
@@ -33,24 +34,20 @@ export default function DepartmentDirectory() {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
-            Department Directory
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Where to send patients, who to call, and OPD timings
-          </Typography>
-        </Box>
-        <TextField
-          placeholder="Search departments, doctors…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          size="small"
-          InputProps={{ startAdornment: (<InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary", fontSize: 20 }} /></InputAdornment>) }}
-          sx={{ minWidth: 280 }}
-        />
-      </Box>
+      <PageHeader
+        title="Department Directory"
+        subtitle="Where to send patients, who to call, and OPD timings"
+        actions={
+          <TextField
+            placeholder="Search departments, doctors…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            size="small"
+            InputProps={{ startAdornment: (<InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary", fontSize: 20 }} /></InputAdornment>) }}
+            sx={{ minWidth: 280 }}
+          />
+        }
+      />
 
       {isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress sx={{ color: "#06b6d4" }} /></Box>

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, IconButton, TextField, MenuItem,
-  CircularProgress, ToggleButton, ToggleButtonGroup, Tooltip, Chip, Stack,
+  CircularProgress, ToggleButton, ToggleButtonGroup, Tooltip, Chip,
 } from "@mui/material";
 import {
   ChevronLeftRounded, ChevronRightRounded, TodayRounded, AddRounded,
@@ -11,6 +11,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
+import PageHeader from "../../components/layout/PageHeader";
 import dayjs, { Dayjs } from "dayjs";
 
 // Grid bounds. Slots run START_HOUR→END_HOUR in SLOT_MINUTES steps.
@@ -99,26 +100,22 @@ export default function AppointmentCalendar() {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
-            Appointment Calendar
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Day / week schedule across doctors and departments
-          </Typography>
-        </Box>
-        <Stack direction="row" spacing={1.5}>
-          <Button variant="outlined" startIcon={<ViewListRounded />} onClick={() => navigate("/reception/appointments")}
-            sx={{ textTransform: "none", borderRadius: 2, borderColor: "divider", color: "text.secondary" }}>
-            List view
-          </Button>
-          <Button variant="contained" startIcon={<AddRounded />} onClick={() => navigate("/reception/appointments/new")}
-            sx={{ background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)", fontWeight: 600, textTransform: "none", borderRadius: 2 }}>
-            Book Appointment
-          </Button>
-        </Stack>
-      </Box>
+      <PageHeader
+        title="Appointment Calendar"
+        subtitle="Day / week schedule across doctors and departments"
+        actions={
+          <>
+            <Button variant="outlined" startIcon={<ViewListRounded />} onClick={() => navigate("/reception/appointments")}
+              sx={{ textTransform: "none", borderRadius: 2, borderColor: "divider", color: "text.secondary" }}>
+              List view
+            </Button>
+            <Button variant="contained" startIcon={<AddRounded />} onClick={() => navigate("/reception/appointments/new")}
+              sx={{ background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)", fontWeight: 600, textTransform: "none", borderRadius: 2 }}>
+              Book Appointment
+            </Button>
+          </>
+        }
+      />
 
       {/* Toolbar */}
       <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>

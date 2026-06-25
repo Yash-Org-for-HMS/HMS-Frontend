@@ -13,6 +13,7 @@ import PatientForm from "./PatientForm";
 import AppointmentForm from "./AppointmentForm";
 import BillingModal from "./BillingModal";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
 
 interface Patient {
   patientId: string;
@@ -128,16 +129,10 @@ export default function FrontDeskConsole() {
   return (
     <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
       {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
-            Front Desk Console
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Find or register a patient, then book and bill in one flow.
-          </Typography>
-        </Box>
-      </Box>
+      <PageHeader
+        title="Front Desk Console"
+        subtitle="Find or register a patient, then book and bill in one flow."
+      />
 
       {/* Main Split Layout */}
       <Box sx={{ flex: 1, display: "flex", gap: 3, minHeight: 0, flexDirection: { xs: "column", md: "row" } }}>

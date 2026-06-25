@@ -16,6 +16,7 @@ import BillingModal from "./BillingModal";
 import VitalsModal from "./VitalsModal";
 import CheckoutDialog from "../../components/reception/CheckoutDialog";
 import { useSocket } from "../../hooks/useSocket";
+import PageHeader from "../../components/layout/PageHeader";
 
 const getDoctorInitials = (doctorName?: string) => {
   if (!doctorName || doctorName === "Unknown") return "";
@@ -126,27 +127,23 @@ export default function QueueDashboard() {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
-            Live Queue Management
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Monitor and manage today's patient queue
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          startIcon={<SyncRounded />}
-          onClick={invalidateQueue}
-          sx={{
-            color: "#06b6d4", borderColor: "rgba(6,182,212,0.5)", fontWeight: 600,
-            "&:hover": { borderColor: "#0891b2", bgcolor: "rgba(6,182,212,0.1)" }
-          }}
-        >
-          Refresh
-        </Button>
-      </Box>
+      <PageHeader
+        title="Live Queue Management"
+        subtitle="Monitor and manage today's patient queue"
+        actions={
+          <Button
+            variant="outlined"
+            startIcon={<SyncRounded />}
+            onClick={invalidateQueue}
+            sx={{
+              color: "#06b6d4", borderColor: "rgba(6,182,212,0.5)", fontWeight: 600,
+              "&:hover": { borderColor: "#0891b2", bgcolor: "rgba(6,182,212,0.1)" }
+            }}
+          >
+            Refresh
+          </Button>
+        }
+      />
 
       {/* Waiting-time monitor */}
       <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>

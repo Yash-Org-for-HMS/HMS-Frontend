@@ -13,6 +13,7 @@ import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
 import ReferralDialog from "../../components/reception/ReferralDialog";
+import PageHeader from "../../components/layout/PageHeader";
 import dayjs from "dayjs";
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
@@ -67,16 +68,16 @@ export default function ReferralsList() {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>Referrals</Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>Refer patients to another department or an external facility</Typography>
-        </Box>
-        <Button variant="contained" startIcon={<AddRounded />} onClick={() => setCreateOpen(true)}
-          sx={{ background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)", fontWeight: 600, textTransform: "none", borderRadius: 2 }}>
-          New Referral
-        </Button>
-      </Box>
+      <PageHeader
+        title="Referrals"
+        subtitle="Refer patients to another department or an external facility"
+        actions={
+          <Button variant="contained" startIcon={<AddRounded />} onClick={() => setCreateOpen(true)}
+            sx={{ background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)", fontWeight: 600, textTransform: "none", borderRadius: 2 }}>
+            New Referral
+          </Button>
+        }
+      />
 
       {/* Filters */}
       <Box sx={{ display: "flex", gap: 2, mb: 2, flexWrap: "wrap", alignItems: "center" }}>

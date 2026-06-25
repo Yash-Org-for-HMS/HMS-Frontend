@@ -18,10 +18,11 @@ import {
   Alert,
   Tooltip,
 } from "@mui/material";
-import { NotificationsRounded, EmailRounded, SmsRounded, CheckCircleRounded, SearchRounded, ScienceRounded } from "@mui/icons-material";
+import { EmailRounded, SmsRounded, CheckCircleRounded, SearchRounded, ScienceRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
+import PageHeader from "../../components/layout/PageHeader";
 
 const PAGE_SIZE = 20;
 
@@ -53,10 +54,10 @@ export default function NotificationsLog() {
 
   return (
     <Box sx={{ p: 3, maxWidth: 1200, mx: "auto" }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1, display: "flex", alignItems: "center", gap: 1.5 }}>
-          <NotificationsRounded sx={{ color: "#8b5cf6", fontSize: 32 }} />
-          Notifications Log
+      <PageHeader
+        title="Notifications Log"
+        subtitle="History of SMS and Email notifications sent to patients."
+        actions={
           <Tooltip title="These notifications are logged for the record but are not yet delivered as real SMS/email.">
             <Chip
               icon={<ScienceRounded sx={{ fontSize: "16px !important" }} />}
@@ -65,11 +66,8 @@ export default function NotificationsLog() {
               sx={{ bgcolor: "rgba(245,158,11,0.12)", color: "#f59e0b", fontWeight: 700, border: "1px solid rgba(245,158,11,0.3)" }}
             />
           </Tooltip>
-        </Typography>
-        <Typography variant="body1" sx={{ color: "text.secondary" }}>
-          History of SMS and Email notifications sent to patients.
-        </Typography>
-      </Box>
+        }
+      />
 
       <Alert severity="info" icon={<ScienceRounded />} sx={{ mb: 3 }}>
         Notifications are <strong>simulated</strong> — they're recorded here but not actually delivered yet. Wire up an SMS/email provider to send for real.

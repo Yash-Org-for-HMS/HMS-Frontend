@@ -27,6 +27,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
 
 interface Gender {
   genderId: number;
@@ -323,27 +324,21 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
   return (
     <Box sx={{ maxWidth: 1000, mx: "auto" }}>
       {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4 }}>
-        <Box>
-          {!isModal && (
-            <Button
-              startIcon={<ArrowBackRounded />}
-              onClick={() => navigate("/reception/patients")}
-              sx={{ color: "text.secondary", textTransform: "none", mb: 1, pl: 0 }}
-            >
-              Back to Patients
-            </Button>
-          )}
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
-            {isEditing ? "Edit Patient" : "Register Patient"}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {isEditing
-              ? "Update patient registration details"
-              : "Fill in the patient information to register them in the system"}
-          </Typography>
-        </Box>
-        {!isEditing && (
+      {!isModal && (
+        <Button
+          startIcon={<ArrowBackRounded />}
+          onClick={() => navigate("/reception/patients")}
+          sx={{ color: "text.secondary", textTransform: "none", mb: 1, pl: 0 }}
+        >
+          Back to Patients
+        </Button>
+      )}
+      <PageHeader
+        title={isEditing ? "Edit Patient" : "Register Patient"}
+        subtitle={isEditing
+          ? "Update patient registration details"
+          : "Fill in the patient information to register them in the system"}
+        actions={!isEditing ? (
           <Chip
             icon={<LockOpenRounded sx={{ fontSize: "16px !important" }} />}
             label="MRN will be auto-generated"
@@ -354,8 +349,8 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
               fontWeight: 600,
             }}
           />
-        )}
-      </Box>
+        ) : undefined}
+      />
 
       <form onSubmit={handleSubmit}>
         <Grid container spacing={3}>

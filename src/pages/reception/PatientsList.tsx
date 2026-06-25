@@ -51,6 +51,7 @@ import Mascot from "../../components/Mascot";
 import IdCardModal from "../../components/reception/IdCardModal";
 import AdmitDialog from "../../components/ipd/AdmitDialog";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
 
 interface Patient {
   patientId: string;
@@ -154,16 +155,10 @@ export default function PatientsList() {
     <>
       <Box>
         {/* ── Header ── */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4, flexWrap: "wrap", gap: 2 }}>
-          <Box>
-            <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
-              Patient Search & Registry
-            </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              {meta.total} patient{meta.total !== 1 ? "s" : ""} registered
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
+        <PageHeader
+          title="Patient Search & Registry"
+          subtitle={`${meta.total} patient${meta.total !== 1 ? "s" : ""} registered`}
+          actions={
             <Button
               variant="contained"
               startIcon={<PersonAddRounded />}
@@ -180,8 +175,8 @@ export default function PatientsList() {
             >
               Register New Patient
             </Button>
-          </Box>
-        </Box>
+          }
+        />
 
         {errorMsg && (
           <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>

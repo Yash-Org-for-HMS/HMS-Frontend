@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
+import PageHeader from "../../components/layout/PageHeader";
 import dayjs from "dayjs";
 
 const ACCENT = "#0891b2";
@@ -68,10 +69,7 @@ export default function Reports() {
   const [tab, setTab] = useState(0);
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>Reports</Typography>
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>Daily OPD summary, appointment analytics, and collections</Typography>
-      </Box>
+      <PageHeader title="Reports" subtitle="Daily OPD summary, appointment analytics, and collections" />
 
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2.5 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"

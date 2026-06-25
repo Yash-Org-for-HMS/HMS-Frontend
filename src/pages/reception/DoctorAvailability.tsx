@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
+import PageHeader from "../../components/layout/PageHeader";
 import dayjs from "dayjs";
 
 const STATUS = {
@@ -42,22 +43,18 @@ export default function DoctorAvailability() {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
-            Doctor Availability
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Working hours, leaves, and today's load for the medical team
-          </Typography>
-        </Box>
-        <TextField
-          type="date" size="small" label="Date"
-          InputLabelProps={{ shrink: true }}
-          value={date} onChange={(e) => setDate(e.target.value)}
-          sx={{ minWidth: 180 }}
-        />
-      </Box>
+      <PageHeader
+        title="Doctor Availability"
+        subtitle="Working hours, leaves, and today's load for the medical team"
+        actions={
+          <TextField
+            type="date" size="small" label="Date"
+            InputLabelProps={{ shrink: true }}
+            value={date} onChange={(e) => setDate(e.target.value)}
+            sx={{ minWidth: 180 }}
+          />
+        }
+      />
 
       {/* Summary chips */}
       {summary && (

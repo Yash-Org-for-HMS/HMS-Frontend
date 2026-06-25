@@ -10,6 +10,7 @@ import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import BillingModal from "./BillingModal";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
 
 export interface AppointmentFormProps {
   isEmbedded?: boolean;
@@ -219,14 +220,12 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   return (
     <Box sx={{ maxWidth: isEmbedded ? "100%" : 800, mx: "auto", pb: isEmbedded ? 0 : 4 }}>
       {!isEmbedded && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <IconButton onClick={() => navigate(-1)} sx={{ color: "text.secondary", "&:hover": { color: "text.primary", bgcolor: "action.hover" } }}>
             <ArrowBackRounded />
           </IconButton>
-          <Box>
-            <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800 }}>
-              {id ? "Reschedule Appointment" : "Book New Appointment"}
-            </Typography>
+          <Box sx={{ flex: 1 }}>
+            <PageHeader title={id ? "Reschedule Appointment" : "Book New Appointment"} />
           </Box>
         </Box>
       )}

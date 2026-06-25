@@ -13,6 +13,7 @@ import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import GenerateInvoice from "../billing/GenerateInvoice";
 import InvoiceViewDialog from "../../components/reception/InvoiceViewDialog";
+import PageHeader from "../../components/layout/PageHeader";
 import { useSearchParams } from "react-router-dom";
 
 const ACCENT = "#0891b2";
@@ -32,10 +33,7 @@ export default function Billing() {
   const [tab, setTab] = useState(billPatientId ? 1 : 0);
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>Billing</Typography>
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>Browse bills, collect payments, and generate new invoices</Typography>
-      </Box>
+      <PageHeader title="Billing" subtitle="Browse bills, collect payments, and generate new invoices" />
 
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2.5 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)}

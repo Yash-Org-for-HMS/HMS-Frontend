@@ -14,6 +14,7 @@ import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useSocket } from "../../hooks/useSocket";
+import PageHeader from "../../components/layout/PageHeader";
 
 interface AppointmentEntry {
   appointmentId: string;
@@ -120,12 +121,7 @@ export default function ReceptionDashboard() {
   return (
     <Box sx={{ pb: 5 }}>
       {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary", letterSpacing: "-0.5px" }}>Reception Desk</Typography>
-        <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-          Front-desk operations for {hospital?.name || "the hospital"}
-        </Typography>
-      </Box>
+      <PageHeader title="Reception Desk" subtitle={`Front-desk operations for ${hospital?.name || "the hospital"}`} />
 
       {/* Needs attention — action cards */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" }, gap: 2, mb: 2.5 }}>

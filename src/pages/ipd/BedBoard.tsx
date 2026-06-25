@@ -12,6 +12,7 @@ import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
 
 const WARD_TYPES = ["general", "surgical", "maternity", "pediatric", "ICU"];
 const ROOM_TYPES = ["general", "semi_private", "private_room", "ICU", "NICU"];
@@ -54,19 +55,21 @@ export default function BedBoard() {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>Bed Management</Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>Ward occupancy, bed availability, and reservations</Typography>
-        </Box>
-        <Button variant="outlined" startIcon={<AddRounded />} onClick={(e) => setSetupAnchor(e.currentTarget)}
-          sx={{ textTransform: "none", borderRadius: 2, color: "#0891b2", borderColor: "rgba(8,145,178,0.4)" }}>Setup</Button>
-        <Menu anchorEl={setupAnchor} open={Boolean(setupAnchor)} onClose={() => setSetupAnchor(null)}>
-          <MenuItem onClick={() => { setSetupAnchor(null); setDialog("ward"); }}><ApartmentRounded fontSize="small" sx={{ mr: 1 }} /> Add ward</MenuItem>
-          <MenuItem onClick={() => { setSetupAnchor(null); setDialog("room"); }}><MeetingRoomRounded fontSize="small" sx={{ mr: 1 }} /> Add room</MenuItem>
-          <MenuItem onClick={() => { setSetupAnchor(null); setDialog("bed"); }}><HotelRounded fontSize="small" sx={{ mr: 1 }} /> Add bed</MenuItem>
-        </Menu>
-      </Box>
+      <PageHeader
+        title="Bed Management"
+        subtitle="Ward occupancy, bed availability, and reservations"
+        actions={
+          <>
+            <Button variant="outlined" startIcon={<AddRounded />} onClick={(e) => setSetupAnchor(e.currentTarget)}
+              sx={{ textTransform: "none", borderRadius: 2, color: "#0891b2", borderColor: "rgba(8,145,178,0.4)" }}>Setup</Button>
+            <Menu anchorEl={setupAnchor} open={Boolean(setupAnchor)} onClose={() => setSetupAnchor(null)}>
+              <MenuItem onClick={() => { setSetupAnchor(null); setDialog("ward"); }}><ApartmentRounded fontSize="small" sx={{ mr: 1 }} /> Add ward</MenuItem>
+              <MenuItem onClick={() => { setSetupAnchor(null); setDialog("room"); }}><MeetingRoomRounded fontSize="small" sx={{ mr: 1 }} /> Add room</MenuItem>
+              <MenuItem onClick={() => { setSetupAnchor(null); setDialog("bed"); }}><HotelRounded fontSize="small" sx={{ mr: 1 }} /> Add bed</MenuItem>
+            </Menu>
+          </>
+        }
+      />
 
       {summary && (
         <Grid container spacing={2} sx={{ mb: 3 }}>

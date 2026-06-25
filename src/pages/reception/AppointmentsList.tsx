@@ -19,6 +19,7 @@ import ErrorState from "../../components/ErrorState";
 import BillingModal from "./BillingModal";
 import ReferralDialog from "../../components/reception/ReferralDialog";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
 import dayjs, { Dayjs } from "dayjs";
 
 const getAppointmentType = (reason: string | null | undefined) => {
@@ -208,38 +209,34 @@ export default function AppointmentsList() {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4, flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
-            Appointments
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Manage scheduling, check-ins, and patient flow
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
-          <Button
-            variant="outlined"
-            startIcon={<CalendarMonthRounded />}
-            onClick={() => navigate("/reception/appointments/calendar")}
-            sx={{ fontWeight: 600, px: 3, py: 1.2, textTransform: "none", borderRadius: 2, borderColor: "divider", color: "text.secondary" }}
-          >
-            Calendar view
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddRounded />}
-            onClick={() => navigate("/reception/appointments/new")}
-            sx={{
-              background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
-              fontWeight: 600, px: 3, py: 1.2, textTransform: "none", borderRadius: 2,
-              boxShadow: "0 4px 14px rgba(6, 182, 212, 0.4)",
-            }}
-          >
-            Book Appointment
-          </Button>
-        </Box>
-      </Box>
+      <PageHeader
+        title="Appointments"
+        subtitle="Manage scheduling, check-ins, and patient flow"
+        actions={
+          <>
+            <Button
+              variant="outlined"
+              startIcon={<CalendarMonthRounded />}
+              onClick={() => navigate("/reception/appointments/calendar")}
+              sx={{ fontWeight: 600, px: 3, py: 1.2, textTransform: "none", borderRadius: 2, borderColor: "divider", color: "text.secondary" }}
+            >
+              Calendar view
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddRounded />}
+              onClick={() => navigate("/reception/appointments/new")}
+              sx={{
+                background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
+                fontWeight: 600, px: 3, py: 1.2, textTransform: "none", borderRadius: 2,
+                boxShadow: "0 4px 14px rgba(6, 182, 212, 0.4)",
+              }}
+            >
+              Book Appointment
+            </Button>
+          </>
+        }
+      />
 
       {successMsg && (
         <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMsg(null)}>
