@@ -21,6 +21,7 @@ import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
+import { TableRowsSkeleton } from "../../../components/TableRowsSkeleton";
 
 interface Department {
   departmentId: string;
@@ -35,7 +36,7 @@ export default function DepartmentsList() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const { data: departments = [], isError, error, refetch } = useQuery<Department[]>({
+  const { data: departments = [], isLoading, isError, error, refetch } = useQuery<Department[]>({
     queryKey: ["hospital-departments"],
     queryFn: async () => (await axiosInstance.get("/hospital/departments")).data.data,
   });
@@ -88,7 +89,9 @@ export default function DepartmentsList() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {isError ? (
+            {isLoading ? (
+              <TableRowsSkeleton rows={6} columns={6} />
+            ) : isError ? (
               <TableRow>
                 <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
                   <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />

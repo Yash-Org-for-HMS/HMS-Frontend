@@ -12,7 +12,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  CircularProgress,
   TextField,
   InputAdornment,
   Pagination,
@@ -29,6 +28,7 @@ import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
 import FilterBar from "../../components/layout/FilterBar";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 
 export default function OnboardingList() {
   const { t } = useTranslation();
@@ -142,11 +142,7 @@ export default function OnboardingList() {
             </TableHead>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "primary.main" }} />
-                  </TableCell>
-                </TableRow>
+                <TableRowsSkeleton rows={6} columns={5} />
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={5} sx={{ py: 4, border: 0 }}>

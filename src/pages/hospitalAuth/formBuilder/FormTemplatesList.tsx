@@ -14,7 +14,6 @@ import {
   Chip,
   IconButton,
   Tooltip,
-  CircularProgress,
   TextField,
   InputAdornment,
 } from "@mui/material";
@@ -24,6 +23,7 @@ import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import PageHeader from "../../../components/layout/PageHeader";
+import { ListSkeleton } from "../../../components/TableRowsSkeleton";
 
 export default function FormTemplatesList() {
   const navigate = useNavigate();
@@ -82,9 +82,7 @@ export default function FormTemplatesList() {
       />
 
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-          <CircularProgress sx={{ color: "primary.main" }} />
-        </Box>
+        <ListSkeleton rows={6} />
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (

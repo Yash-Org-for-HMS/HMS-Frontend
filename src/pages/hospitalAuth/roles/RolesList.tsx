@@ -23,6 +23,7 @@ import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
+import { TableRowsSkeleton } from "../../../components/TableRowsSkeleton";
 
 interface Role {
   roleId: string;
@@ -40,7 +41,7 @@ export default function RolesList() {
   const toast = useToast();
   const [q, setQ] = useState("");
 
-  const { data: roles = [], isError, error, refetch } = useQuery<Role[]>({
+  const { data: roles = [], isLoading, isError, error, refetch } = useQuery<Role[]>({
     queryKey: ["hospital-roles"],
     queryFn: async () => (await axiosInstance.get("/hospital/roles")).data.data,
   });
@@ -112,7 +113,9 @@ export default function RolesList() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {isError ? (
+            {isLoading ? (
+              <TableRowsSkeleton rows={6} columns={6} />
+            ) : isError ? (
               <TableRow>
                 <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
                   <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />

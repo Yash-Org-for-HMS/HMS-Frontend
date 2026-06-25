@@ -46,6 +46,7 @@ import ActionButton from "../../components/layout/ActionButton";
 import FilterBar from "../../components/layout/FilterBar";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 
 export default function LeadsList() {
   const { t } = useTranslation();
@@ -282,11 +283,7 @@ export default function LeadsList() {
             </TableHead>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "primary.main" }} />
-                  </TableCell>
-                </TableRow>
+                <TableRowsSkeleton rows={6} columns={5} />
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={5} sx={{ py: 4, border: 0 }}>

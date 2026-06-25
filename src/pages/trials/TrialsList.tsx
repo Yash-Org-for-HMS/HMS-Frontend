@@ -20,7 +20,6 @@ import {
   InputAdornment,
   Menu,
   MenuItem,
-  CircularProgress,
   Pagination,
 } from "@mui/material";
 import {
@@ -38,6 +37,7 @@ import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
 import FilterBar from "../../components/layout/FilterBar";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 
 export default function TrialsList() {
   const { t } = useTranslation();
@@ -187,11 +187,7 @@ export default function TrialsList() {
             </TableHead>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "primary.main" }} />
-                  </TableCell>
-                </TableRow>
+                <TableRowsSkeleton rows={6} columns={6} />
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={6} sx={{ py: 4, border: 0 }}>

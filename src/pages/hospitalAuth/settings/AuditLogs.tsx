@@ -5,7 +5,6 @@ import {
   Typography,
   Paper,
   Grid,
-  CircularProgress,
   Alert,
   MenuItem,
   TextField,
@@ -29,6 +28,7 @@ import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import PageHeader from "../../../components/layout/PageHeader";
+import { ListSkeleton } from "../../../components/TableRowsSkeleton";
 
 const EMPTY_FILTERS = { moduleName: "", actionType: "", startDate: "", endDate: "" };
 
@@ -170,8 +170,8 @@ export default function AuditLogs() {
           <Button startIcon={<RefreshRounded />} onClick={() => refetch()} sx={{ color: "text.secondary" }}>Refresh</Button>
         </Box>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-            <CircularProgress sx={{ color: "primary.main" }} />
+          <Box sx={{ p: 2 }}>
+            <ListSkeleton rows={6} />
           </Box>
         ) : isError ? (
           <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />

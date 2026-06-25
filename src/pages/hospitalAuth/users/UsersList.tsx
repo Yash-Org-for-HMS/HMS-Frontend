@@ -42,6 +42,7 @@ import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
+import { TableRowsSkeleton } from "../../../components/TableRowsSkeleton";
 
 interface User {
   userId: string;
@@ -406,7 +407,7 @@ export default function UsersList() {
     password: "",
   });
 
-  const { data: users = [], isError, error, refetch } = useQuery<User[]>({
+  const { data: users = [], isLoading, isError, error, refetch } = useQuery<User[]>({
     queryKey: ["hospital-users-list"],
     queryFn: async () => (await axiosInstance.get("/hospital/users")).data.data,
   });
@@ -463,7 +464,9 @@ export default function UsersList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {isError ? (
+              {isLoading ? (
+                <TableRowsSkeleton rows={6} columns={6} />
+              ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
                     <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
