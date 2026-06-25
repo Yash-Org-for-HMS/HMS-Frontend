@@ -11,6 +11,15 @@ import { axiosInstance } from "../api/axios";
  * enforces. Only once we know a module is disabled do we hide it.
  */
 export function useEnabledModules() {
+  // Only probe module access when there's a hospital session. This hook is
+  // pulled in by the globally-mounted CommandPalette, which renders on the
+  // super-admin portal too — without this gate the query fires a hospital-realm
+  // request with no hospital token, 401s, and the axios interceptor hard-
+  // redirects the whole window to /hospital/login (bouncing you off the
+  // super-admin portal).
+  const hasHospitalSession =
+    typeof window !== "undefined" && !!sessionStorage.getItem("hospitalAccessToken");
+
   const { data } = useQuery({
     queryKey: ["enabled-modules"],
     queryFn: async () =>
@@ -18,6 +27,7 @@ export function useEnabledModules() {
         enabledModules: string[];
         planModules: string[];
       },
+    enabled: hasHospitalSession,
     staleTime: 5 * 60 * 1000,
   });
 

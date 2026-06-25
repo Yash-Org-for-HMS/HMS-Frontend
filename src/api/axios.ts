@@ -125,7 +125,13 @@ axiosInstance.interceptors.response.use(
 
     if (!newToken) {
       clearRealm(realm);
-      redirectToLogin(realm);
+      // Only bounce to a realm's login if the user is actually viewing a page in
+      // that realm. A background call from the OTHER realm (e.g. the globally-
+      // mounted command palette probing /hospital/module-access while you're on
+      // the super-admin portal) must not hijack navigation.
+      if (realmForUrl(window.location.pathname) === realm) {
+        redirectToLogin(realm);
+      }
       return Promise.reject(error);
     }
 
