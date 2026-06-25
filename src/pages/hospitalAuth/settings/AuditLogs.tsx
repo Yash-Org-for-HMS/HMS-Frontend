@@ -28,6 +28,7 @@ import { InfoRounded, SearchRounded, RefreshRounded } from "@mui/icons-material"
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
+import PageHeader from "../../../components/layout/PageHeader";
 
 const EMPTY_FILTERS = { moduleName: "", actionType: "", startDate: "", endDate: "" };
 
@@ -92,14 +93,10 @@ export default function AuditLogs() {
 
   return (
     <Box>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-          Audit & Activity Logs
-        </Typography>
-        <Typography variant="body1" sx={{ color: "text.secondary" }}>
-          Monitor system events, user actions, and security changes.
-        </Typography>
-      </Box>
+      <PageHeader
+        title="Audit & Activity Logs"
+        subtitle="Monitor system events, user actions, and security changes."
+      />
 
       {/* Filters */}
       <Paper component="form" onSubmit={handleSearch} sx={{ p: 3, mb: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>

@@ -4,9 +4,10 @@ import {
   Box, Typography, Paper, CircularProgress, List, ListItem, ListItemText,
   Chip, Switch, Divider, Tooltip,
 } from "@mui/material";
-import { LockRounded, WidgetsRounded } from "@mui/icons-material";
+import { LockRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
 import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
 
 interface ModuleAccessData {
   enabledModules: string[];
@@ -48,14 +49,10 @@ export default function ModuleAccess() {
 
   return (
     <Box sx={{ maxWidth: 900, mx: "auto" }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5, display: "flex", alignItems: "center", gap: 1.5 }}>
-          <WidgetsRounded sx={{ color: "#6366f1", fontSize: 32 }} /> Module Access
-        </Typography>
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          Turn modules your plan includes on or off. Modules outside your plan are locked — contact your provider to upgrade.
-        </Typography>
-      </Box>
+      <PageHeader
+        title="Module Access"
+        subtitle="Turn modules your plan includes on or off. Modules outside your plan are locked — contact your provider to upgrade."
+      />
 
       <Paper sx={{ p: 3, mb: 3, bgcolor: "rgba(99, 102, 241, 0.08)", borderRadius: 2, border: "1px solid rgba(99, 102, 241, 0.2)" }}>
         <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>

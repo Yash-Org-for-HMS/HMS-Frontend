@@ -21,6 +21,7 @@ import { axiosInstance } from "../../../api/axios";
 import ErrorState from "../../../components/ErrorState";
 import Mascot from "../../../components/Mascot";
 import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
 
 const FIELD_TYPES = [
   { value: "text", label: "Text Input" },
@@ -159,23 +160,19 @@ export default function FormBuilder() {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto" }}>
-      <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            {isEditing ? "Edit Form Template" : "Form Builder"}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Design your form by adding and configuring fields dynamically.
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          onClick={() => navigate("/hospital/form-builder")}
-          sx={{ color: "text.secondary", borderColor: "divider" }}
-        >
-          Cancel
-        </Button>
-      </Box>
+      <PageHeader
+        title={isEditing ? "Edit Form Template" : "Form Builder"}
+        subtitle="Design your form by adding and configuring fields dynamically."
+        actions={
+          <Button
+            variant="outlined"
+            onClick={() => navigate("/hospital/form-builder")}
+            sx={{ color: "text.secondary", borderColor: "divider" }}
+          >
+            Cancel
+          </Button>
+        }
+      />
 <form onSubmit={handleSave}>
         <Grid container spacing={4}>
           {/* Left Panel - Metadata */}

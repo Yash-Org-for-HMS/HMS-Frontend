@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
+import PageHeader from "../../../components/layout/PageHeader";
 
 const PAGE_SIZE = 20;
 
@@ -49,16 +50,10 @@ export default function DoctorsList() {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3, flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            Doctor Management
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Manage doctor profiles, schedules, and leaves. Doctors are auto-synced from Staff & Users.
-          </Typography>
-        </Box>
-      </Box>
+      <PageHeader
+        title="Doctor Management"
+        subtitle="Manage doctor profiles, schedules, and leaves. Doctors are auto-synced from Staff & Users."
+      />
 
       <TextField
         size="small"

@@ -28,6 +28,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -160,12 +161,10 @@ export default function HospitalSettings() {
 
   return (
     <Box sx={{ maxWidth: 1000, mx: "auto" }}>
-      <Typography variant="h4" fontWeight="700" sx={{ mb: 1, color: "text.primary" }}>
-        Hospital Settings
-      </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: "text.secondary" }}>
-        Configure appointments, localization, notifications, and billing defaults.
-      </Typography>
+      <PageHeader
+        title="Hospital Settings"
+        subtitle="Configure appointments, localization, notifications, and billing defaults."
+      />
 <Paper
         component="form"
         onSubmit={handleSubmit}

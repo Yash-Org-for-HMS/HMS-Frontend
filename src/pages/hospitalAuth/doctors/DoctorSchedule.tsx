@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import ErrorState from "../../../components/ErrorState";
 import {
   Box,
-  Typography,
   Paper,
   TextField,
   Button,
@@ -16,6 +15,7 @@ import { SaveRounded, DeleteRounded, AddRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -97,23 +97,19 @@ export default function DoctorSchedule() {
 
   return (
     <Box sx={{ maxWidth: 900, mx: "auto" }}>
-      <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            Configure Schedule
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {doctorName}
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          onClick={() => navigate("/hospital/doctors")}
-          sx={{ color: "text.secondary", borderColor: "divider" }}
-        >
-          Cancel
-        </Button>
-      </Box>
+      <PageHeader
+        title="Configure Schedule"
+        subtitle={doctorName}
+        actions={
+          <Button
+            variant="outlined"
+            onClick={() => navigate("/hospital/doctors")}
+            sx={{ color: "text.secondary", borderColor: "divider" }}
+          >
+            Cancel
+          </Button>
+        }
+      />
 <Paper sx={{ p: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
         <form onSubmit={handleSubmit}>
           {schedules.map((schedule, idx) => (

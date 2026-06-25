@@ -20,6 +20,7 @@ import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
 
 interface Department {
   departmentId: string;
@@ -53,30 +54,26 @@ export default function DepartmentsList() {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            Departments
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Manage your hospital's departments and clinical units.
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/hospital/departments/new")}
-          sx={{
-            bgcolor: "#6366f1",
-            "&:hover": { bgcolor: "#4f46e5" },
-            textTransform: "none",
-            fontWeight: 600,
-            px: 3,
-          }}
-        >
-          Add Department
-        </Button>
-      </Box>
+      <PageHeader
+        title="Departments"
+        subtitle="Manage your hospital's departments and clinical units."
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/hospital/departments/new")}
+            sx={{
+              bgcolor: "#6366f1",
+              "&:hover": { bgcolor: "#4f46e5" },
+              textTransform: "none",
+              fontWeight: 600,
+              px: 3,
+            }}
+          >
+            Add Department
+          </Button>
+        }
+      />
 
       <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
         <Table>

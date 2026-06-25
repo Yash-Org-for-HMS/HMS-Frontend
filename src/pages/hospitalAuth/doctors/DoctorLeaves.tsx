@@ -4,13 +4,14 @@ import {
   Box, Typography, Paper, Button, CircularProgress, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, TextField, IconButton, Tooltip, Divider,
 } from "@mui/material";
-import { AddRounded, DeleteOutlineRounded, EventBusyRounded } from "@mui/icons-material";
+import { AddRounded, DeleteOutlineRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
 
 const INACTIVE = ["rejected", "cancelled", "declined"];
 
@@ -64,17 +65,15 @@ export default function DoctorLeaves() {
 
   return (
     <Box sx={{ maxWidth: 900, mx: "auto" }}>
-      <Box sx={{ mb: 3, display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5, display: "flex", alignItems: "center", gap: 1.5 }}>
-            <EventBusyRounded sx={{ color: "#6366f1", fontSize: 32 }} /> Manage Leaves
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>{doctorName}</Typography>
-        </Box>
-        <Button variant="outlined" onClick={() => navigate("/hospital/doctors")} sx={{ color: "text.secondary", borderColor: "divider" }}>
-          Back to Doctors
-        </Button>
-      </Box>
+      <PageHeader
+        title="Manage Leaves"
+        subtitle={doctorName}
+        actions={
+          <Button variant="outlined" onClick={() => navigate("/hospital/doctors")} sx={{ color: "text.secondary", borderColor: "divider" }}>
+            Back to Doctors
+          </Button>
+        }
+      />
 
       {/* Add leave */}
       <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2 }}>

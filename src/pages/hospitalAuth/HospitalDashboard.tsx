@@ -17,6 +17,7 @@ import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
+import PageHeader from "../../components/layout/PageHeader";
 import { useNavigate } from "react-router-dom";
 import { 
   PeopleAltRounded,
@@ -135,22 +136,18 @@ export default function HospitalDashboard() {
 
   return (
     <Box sx={{ pb: 6 }}>
-      <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: "text.primary", mb: 1, letterSpacing: "-0.5px" }}>
-            Hospital Dashboard
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Welcome back, {user?.firstName} {user?.lastName}. Here's what's happening today.
-          </Typography>
-        </Box>
-        {stats?.activePlanName && (
-          <Chip
-            label={`Active Plan: ${stats.activePlanName}`}
-            sx={{ bgcolor: "background.paper", color: "text.primary", fontWeight: 600, px: 1, border: "1px solid", borderColor: "divider" }}
-          />
-        )}
-      </Box>
+      <PageHeader
+        title="Hospital Dashboard"
+        subtitle={`Welcome back, ${user?.firstName} ${user?.lastName}. Here's what's happening today.`}
+        actions={
+          stats?.activePlanName ? (
+            <Chip
+              label={`Active Plan: ${stats.activePlanName}`}
+              sx={{ bgcolor: "background.paper", color: "text.primary", fontWeight: 600, px: 1, border: "1px solid", borderColor: "divider" }}
+            />
+          ) : undefined
+        }
+      />
 
       {/* Primary Metrics Row */}
       <Grid container spacing={3} sx={{ mb: 4 }}>

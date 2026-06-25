@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
-  Typography,
   Button,
   Paper,
   Table,
@@ -23,6 +22,7 @@ import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
 
 interface Role {
   roleId: string;
@@ -69,30 +69,26 @@ export default function RolesList() {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            Role Management (RBAC)
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Manage hospital roles, system permissions, and view user assignments.
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/hospital/roles/new")}
-          sx={{
-            bgcolor: "#6366f1",
-            "&:hover": { bgcolor: "#4f46e5" },
-            textTransform: "none",
-            fontWeight: 600,
-            px: 3,
-          }}
-        >
-          Create Custom Role
-        </Button>
-      </Box>
+      <PageHeader
+        title="Role Management (RBAC)"
+        subtitle="Manage hospital roles, system permissions, and view user assignments."
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/hospital/roles/new")}
+            sx={{
+              bgcolor: "#6366f1",
+              "&:hover": { bgcolor: "#4f46e5" },
+              textTransform: "none",
+              fontWeight: 600,
+              px: 3,
+            }}
+          >
+            Create Custom Role
+          </Button>
+        }
+      />
 
       <TextField
         size="small"

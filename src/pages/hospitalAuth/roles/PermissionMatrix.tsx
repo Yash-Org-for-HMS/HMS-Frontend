@@ -28,11 +28,11 @@ import {
   MoreVertRounded,
   ChecklistRounded,
   RemoveDoneRounded,
-  VpnKeyRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
 
 interface Permission {
   permissionId: string;
@@ -193,35 +193,30 @@ export default function PermissionMatrix() {
   return (
     <Box>
       {/* Header Area */}
-      <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 1, display: "flex", alignItems: "center", gap: 1.5 }}>
-            <VpnKeyRounded sx={{ color: "#6366f1", fontSize: 32 }} />
-            Permission Matrix
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 600 }}>
-            Fine-tune access control across your hospital. Expand modules to assign granular actions to specific staff roles.
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={saving}
-          startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />}
-          sx={{
-            bgcolor: "#6366f1",
-            "&:hover": { bgcolor: "#4f46e5" },
-            textTransform: "none",
-            fontWeight: 700,
-            px: 4,
-            py: 1.2,
-            borderRadius: 3,
-            boxShadow: "0 8px 16px rgba(99, 102, 241, 0.2)",
-          }}
-        >
-          {saving ? "Saving Matrix..." : "Save Changes"}
-        </Button>
-      </Box>
+      <PageHeader
+        title="Permission Matrix"
+        subtitle="Fine-tune access control across your hospital. Expand modules to assign granular actions to specific staff roles."
+        actions={
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={saving}
+            startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />}
+            sx={{
+              bgcolor: "#6366f1",
+              "&:hover": { bgcolor: "#4f46e5" },
+              textTransform: "none",
+              fontWeight: 700,
+              px: 4,
+              py: 1.2,
+              borderRadius: 3,
+              boxShadow: "0 8px 16px rgba(99, 102, 241, 0.2)",
+            }}
+          >
+            {saving ? "Saving Matrix..." : "Save Changes"}
+          </Button>
+        }
+      />
 {/* Main Matrix Table */}
       <TableContainer
         component={Paper}

@@ -20,6 +20,7 @@ import { axiosInstance } from "../../api/axios";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useToast } from "../../contexts/ToastContext";
 import { assetUrl } from "../../utils/assetUrl";
+import PageHeader from "../../components/layout/PageHeader";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -172,12 +173,10 @@ export default function HospitalProfile() {
 
   return (
     <Box sx={{ maxWidth: 1000, mx: "auto" }}>
-      <Typography variant="h4" fontWeight="700" sx={{ mb: 1, color: "text.primary" }}>
-        Hospital Profile
-      </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: "text.secondary" }}>
-        Manage your hospital's details, branding, and compliance information.
-      </Typography>
+      <PageHeader
+        title="Hospital Profile"
+        subtitle="Manage your hospital's details, branding, and compliance information."
+      />
 <Paper
         component="form"
         onSubmit={handleSubmit}

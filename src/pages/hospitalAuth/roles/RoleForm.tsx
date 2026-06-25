@@ -18,6 +18,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
 
 interface Permission {
   permissionId: string;
@@ -146,23 +147,19 @@ export default function RoleForm() {
 
   return (
     <Box sx={{ maxWidth: 1000, mx: "auto" }}>
-      <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            {isEditing ? "Edit Role" : isCloning ? "Clone Role" : "Create New Role"}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Configure role details and module permissions.
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          onClick={() => navigate("/hospital/roles")}
-          sx={{ color: "text.secondary", borderColor: "divider" }}
-        >
-          Cancel
-        </Button>
-      </Box>
+      <PageHeader
+        title={isEditing ? "Edit Role" : isCloning ? "Clone Role" : "Create New Role"}
+        subtitle="Configure role details and module permissions."
+        actions={
+          <Button
+            variant="outlined"
+            onClick={() => navigate("/hospital/roles")}
+            sx={{ color: "text.secondary", borderColor: "divider" }}
+          >
+            Cancel
+          </Button>
+        }
+      />
 <form onSubmit={handleSubmit}>
         <Paper sx={{ p: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, mb: 4 }}>
           <Typography variant="h6" sx={{ color: "text.primary", mb: 3 }}>Role Details</Typography>

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
-  Typography,
   Paper,
   Grid,
   CircularProgress,
@@ -29,6 +28,7 @@ import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
 
 const LOOKUP_CONFIGS: Record<string, any> = {
   specialization: {
@@ -133,16 +133,10 @@ export default function LookupManager() {
 
   return (
     <Box sx={{ maxWidth: 1000, mx: "auto" }}>
-      <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            Master Data Management
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Configure system dropdowns and settings without code changes.
-          </Typography>
-        </Box>
-      </Box>
+      <PageHeader
+        title="Master Data Management"
+        subtitle="Configure system dropdowns and settings without code changes."
+      />
 
       <Paper sx={{ p: 3, mb: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
         <Grid container spacing={3} alignItems="center">

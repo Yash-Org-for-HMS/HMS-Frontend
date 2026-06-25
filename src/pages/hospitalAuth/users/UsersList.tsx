@@ -41,6 +41,7 @@ import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
 
 interface User {
   userId: string;
@@ -422,30 +423,26 @@ export default function UsersList() {
   return (
     <>
       <Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-          <Box>
-            <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-              Staff & Users
-            </Typography>
-            <Typography variant="body1" sx={{ color: "text.secondary" }}>
-              Manage your hospital's staff, roles, and assignments.
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddRounded />}
-            onClick={() => navigate("/hospital/users/new")}
-            sx={{
-              bgcolor: "#6366f1",
-              "&:hover": { bgcolor: "#4f46e5" },
-              textTransform: "none",
-              fontWeight: 600,
-              px: 3,
-            }}
-          >
-            Add Staff
-          </Button>
-        </Box>
+        <PageHeader
+          title="Staff & Users"
+          subtitle="Manage your hospital's staff, roles, and assignments."
+          actions={
+            <Button
+              variant="contained"
+              startIcon={<AddRounded />}
+              onClick={() => navigate("/hospital/users/new")}
+              sx={{
+                bgcolor: "#6366f1",
+                "&:hover": { bgcolor: "#4f46e5" },
+                textTransform: "none",
+                fontWeight: 600,
+                px: 3,
+              }}
+            >
+              Add Staff
+            </Button>
+          }
+        />
 
         <TableContainer
           component={Paper}

@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
+import PageHeader from "../../../components/layout/PageHeader";
 
 export default function FormTemplatesList() {
   const navigate = useNavigate();
@@ -50,30 +51,26 @@ export default function FormTemplatesList() {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            Form Builder
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Design and manage custom forms for Patient Registration, Consent, and more.
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/hospital/form-builder/new")}
-          sx={{
-            bgcolor: "#6366f1",
-            "&:hover": { bgcolor: "#4f46e5" },
-            textTransform: "none",
-            fontWeight: 600,
-            px: 3,
-          }}
-        >
-          Create Form
-        </Button>
-      </Box>
+      <PageHeader
+        title="Form Builder"
+        subtitle="Design and manage custom forms for Patient Registration, Consent, and more."
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/hospital/form-builder/new")}
+            sx={{
+              bgcolor: "#6366f1",
+              "&:hover": { bgcolor: "#4f46e5" },
+              textTransform: "none",
+              fontWeight: 600,
+              px: 3,
+            }}
+          >
+            Create Form
+          </Button>
+        }
+      />
 
       <TextField
         size="small"

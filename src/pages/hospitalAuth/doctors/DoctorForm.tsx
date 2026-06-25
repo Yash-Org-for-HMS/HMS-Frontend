@@ -19,6 +19,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
 
 export default function DoctorForm() {
   const navigate = useNavigate();
@@ -142,23 +143,19 @@ export default function DoctorForm() {
 
   return (
     <Box sx={{ maxWidth: 900, mx: "auto" }}>
-      <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            Edit Doctor Profile
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Configure personal details and medical qualifications.
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          onClick={() => navigate("/hospital/doctors")}
-          sx={{ color: "text.secondary", borderColor: "divider" }}
-        >
-          Cancel
-        </Button>
-      </Box>
+      <PageHeader
+        title="Edit Doctor Profile"
+        subtitle="Configure personal details and medical qualifications."
+        actions={
+          <Button
+            variant="outlined"
+            onClick={() => navigate("/hospital/doctors")}
+            sx={{ color: "text.secondary", borderColor: "divider" }}
+          >
+            Cancel
+          </Button>
+        }
+      />
 <Paper sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, overflow: "hidden" }}>
         <Tabs
           value={tabIndex}
