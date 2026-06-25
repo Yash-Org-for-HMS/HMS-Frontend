@@ -12,6 +12,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import PageHeader from "../../components/layout/PageHeader";
 import VitalsModal from "../reception/VitalsModal";
 import { useSocket } from "../../hooks/useSocket";
 
@@ -75,29 +76,11 @@ export default function NurseQueue() {
 
   return (
     <Box>
-      {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4, gap: 2, flexWrap: "wrap" }}>
-        <Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
-            <Box
-              sx={{
-                width: 36, height: 36, borderRadius: 1.5,
-                background: `linear-gradient(135deg, ${NURSE_PURPLE_DARK}, ${NURSE_PURPLE})`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}
-            >
-              <MonitorHeartRounded sx={{ color: "#fff", fontSize: 20 }} />
-            </Box>
-            <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800 }}>
-              Patient Queue
-            </Typography>
-          </Box>
-          <Typography variant="body2" sx={{ color: "text.secondary", ml: 0.5 }}>
-            Record vitals for patients before their consultation
-          </Typography>
-        </Box>
-
-        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
+      <PageHeader
+        title="Patient Queue"
+        subtitle="Record vitals for patients before their consultation"
+        actions={
+          <>
           <ToggleButtonGroup
             value={view}
             exclusive
@@ -134,8 +117,9 @@ export default function NurseQueue() {
           >
             Refresh
           </Button>
-        </Box>
-      </Box>
+          </>
+        }
+      />
 
       {/* Summary Chips */}
       <Box sx={{ display: "flex", gap: 1.5, mb: 3, flexWrap: "wrap" }}>

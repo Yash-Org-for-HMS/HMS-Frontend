@@ -10,6 +10,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import PageHeader from "../../components/layout/PageHeader";
 import ErrorState from "../../components/ErrorState";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
@@ -117,26 +118,11 @@ export default function NurseDashboard() {
   return (
     <Box sx={{ pb: 6 }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
-          <Box
-            sx={{
-              width: 36, height: 36, borderRadius: 1.5,
-              background: `linear-gradient(135deg, ${NURSE_PURPLE_DARK}, ${NURSE_PURPLE})`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-          >
-            <MonitorHeartRounded sx={{ color: "#fff", fontSize: 20 }} />
-          </Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary", letterSpacing: "-0.5px" }}>
-            Nursing Station
-          </Typography>
-        </Box>
-        <Typography variant="body1" sx={{ color: "text.secondary", mt: 0.5, ml: 0.5 }}>
-          Good morning, {user?.firstName}! Today's vitals overview for {hospital?.name || "the hospital"}.
-        </Typography>
-      </Box>
-{/* KPI Cards */}
+      <PageHeader
+        title="Nursing Station"
+        subtitle={`Good morning, ${user?.firstName}! Today's vitals overview for ${hospital?.name || "the hospital"}.`}
+      />
+      {/* KPI Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
