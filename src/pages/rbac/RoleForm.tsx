@@ -23,6 +23,7 @@ import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
 
 export default function RoleForm() {
   const { t } = useTranslation();
@@ -143,10 +144,10 @@ export default function RoleForm() {
         >
           <ArrowBackRounded />
         </IconButton>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
-            {isEdit ? t("rbac.editRole", "Edit Role") : t("rbac.addRole", "Add Role")}
-          </Typography>
+        <Box sx={{ flexGrow: 1 }}>
+          <PageHeader
+            title={isEdit ? t("rbac.editRole", "Edit Role") : t("rbac.addRole", "Add Role")}
+          />
         </Box>
       </Box>
 <Paper

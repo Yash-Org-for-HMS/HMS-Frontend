@@ -31,6 +31,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
+import PageHeader from "../../components/layout/PageHeader";
 
 export default function HospitalOverview() {
   const { id } = useParams();
@@ -71,16 +72,16 @@ export default function HospitalOverview() {
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
-        <Button 
-          startIcon={<ArrowBackRounded />} 
+        <Button
+          startIcon={<ArrowBackRounded />}
           onClick={() => navigate("/hospitals")}
           sx={{ color: "text.secondary", "&:hover": { bgcolor: "rgba(255,255,255,0.05)" } }}
         >
           Back
         </Button>
-        <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary" }}>
-          {data.hospitalName} Overview
-        </Typography>
+        <Box sx={{ flexGrow: 1 }}>
+          <PageHeader title={`${data.hospitalName} Overview`} />
+        </Box>
       </Box>
 
       <Grid container spacing={4}>

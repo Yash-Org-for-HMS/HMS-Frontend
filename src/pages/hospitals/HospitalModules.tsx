@@ -8,6 +8,7 @@ import { ArrowBackRounded, SaveRounded, WidgetsRounded, CheckCircleRounded, AddC
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
 
 interface ModuleRow { key: string; label: string; entitled: boolean }
 interface ModulesResp {
@@ -82,25 +83,21 @@ export default function HospitalModules() {
       <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/hospitals")} sx={{ color: "text.secondary", textTransform: "none", mb: 1 }}>
         Hospitals
       </Button>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, display: "flex", alignItems: "center", gap: 1.5 }}>
-            <WidgetsRounded sx={{ color: "#3b82f6", fontSize: 32 }} /> Module Access
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {data?.hospitalName ? `${data.hospitalName} — ` : ""}assign the modules this hospital may use. Its admin can enable/disable within this set; anything else they must request from you.
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={save.isPending ? <CircularProgress size={16} color="inherit" /> : <SaveRounded />}
-          disabled={!dirty || save.isPending}
-          onClick={() => save.mutate()}
-          sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, textTransform: "none", fontWeight: 600 }}
-        >
-          Save changes
-        </Button>
-      </Box>
+      <PageHeader
+        title="Module Access"
+        subtitle={`${data?.hospitalName ? `${data.hospitalName} — ` : ""}assign the modules this hospital may use. Its admin can enable/disable within this set; anything else they must request from you.`}
+        actions={
+          <Button
+            variant="contained"
+            startIcon={save.isPending ? <CircularProgress size={16} color="inherit" /> : <SaveRounded />}
+            disabled={!dirty || save.isPending}
+            onClick={() => save.mutate()}
+            sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, textTransform: "none", fontWeight: 600 }}
+          >
+            Save changes
+          </Button>
+        }
+      />
 
       {isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress sx={{ color: "#3b82f6" }} /></Box>

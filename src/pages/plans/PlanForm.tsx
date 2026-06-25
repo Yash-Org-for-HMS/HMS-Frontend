@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import {
   Box,
   Container,
-  Typography,
   Button,
   Paper,
   TextField,
@@ -20,6 +19,7 @@ import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
 
 export default function PlanForm() {
   const { t } = useTranslation();
@@ -123,10 +123,10 @@ export default function PlanForm() {
         >
           <ArrowBackRounded />
         </IconButton>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
-            {isEdit ? t("plans.editPlan", "Edit Plan") : t("plans.addPlan", "Add Plan")}
-          </Typography>
+        <Box sx={{ flexGrow: 1 }}>
+          <PageHeader
+            title={isEdit ? t("plans.editPlan", "Edit Plan") : t("plans.addPlan", "Add Plan")}
+          />
         </Box>
       </Box>
 <Paper

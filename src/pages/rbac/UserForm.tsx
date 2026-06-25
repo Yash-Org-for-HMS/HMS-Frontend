@@ -25,6 +25,7 @@ import { ArrowBackRounded, Visibility, VisibilityOff, ContentCopyRounded } from 
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
 
 interface Branch {
   branchId: string;
@@ -196,9 +197,9 @@ export default function UserForm() {
         <IconButton onClick={() => navigate("/rbac/users")} sx={{ color: "text.secondary" }}>
           <ArrowBackRounded />
         </IconButton>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: "text.primary" }}>
-          {isEdit ? "Edit User" : "Add New User"}
-        </Typography>
+        <Box sx={{ flexGrow: 1 }}>
+          <PageHeader title={isEdit ? "Edit User" : "Add New User"} />
+        </Box>
       </Box>
 <Card
         sx={{

@@ -19,6 +19,7 @@ import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
 
 export default function TrialForm() {
   const { t } = useTranslation();
@@ -119,10 +120,8 @@ export default function TrialForm() {
         >
           <ArrowBackRounded />
         </IconButton>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
-            {t("trials.addTrial")}
-          </Typography>
+        <Box sx={{ flexGrow: 1 }}>
+          <PageHeader title={t("trials.addTrial")} />
         </Box>
       </Box>
 <Paper

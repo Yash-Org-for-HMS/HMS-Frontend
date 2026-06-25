@@ -21,6 +21,7 @@ import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
 
 export default function OnboardingForm() {
   const { t } = useTranslation();
@@ -104,13 +105,11 @@ export default function OnboardingForm() {
         >
           <ArrowBackRounded />
         </IconButton>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
-            {t("onboarding.updateProgress", "Update Onboarding Progress")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {hospitalName}
-          </Typography>
+        <Box sx={{ flexGrow: 1 }}>
+          <PageHeader
+            title={t("onboarding.updateProgress", "Update Onboarding Progress")}
+            subtitle={hospitalName}
+          />
         </Box>
       </Box>
 
