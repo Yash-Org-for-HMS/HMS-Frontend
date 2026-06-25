@@ -168,7 +168,7 @@ export default function RolesList() {
 
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-          <CircularProgress sx={{ color: "#14b8a6" }} />
+          <CircularProgress sx={{ color: "primary.main" }} />
         </Box>
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />

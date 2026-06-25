@@ -63,13 +63,13 @@ export default function DoctorsList() {
         sx={{ mb: 2, width: "100%", maxWidth: 460 }}
         InputProps={{
           startAdornment: <InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary" }} /></InputAdornment>,
-          endAdornment: isFetching ? <CircularProgress size={16} sx={{ color: "#6366f1" }} /> : undefined,
+          endAdornment: isFetching ? <CircularProgress size={16} sx={{ color: "primary.main" }} /> : undefined,
         }}
       />
 
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-          <CircularProgress sx={{ color: "#6366f1" }} />
+          <CircularProgress sx={{ color: "primary.main" }} />
         </Box>
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />

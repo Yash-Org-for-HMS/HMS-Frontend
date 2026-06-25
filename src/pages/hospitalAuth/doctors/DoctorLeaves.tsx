@@ -107,7 +107,7 @@ export default function DoctorLeaves() {
       <Divider sx={{ mb: 2 }} />
 
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><CircularProgress sx={{ color: "#6366f1" }} /></Box>
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><CircularProgress sx={{ color: "primary.main" }} /></Box>
       ) : isError ? (
         <ErrorState title="Couldn't load leaves" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (

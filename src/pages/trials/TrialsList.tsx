@@ -189,7 +189,7 @@ export default function TrialsList() {
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "#ec4899" }} />
+                    <CircularProgress sx={{ color: "primary.main" }} />
                   </TableCell>
                 </TableRow>
               ) : isError ? (

@@ -87,7 +87,7 @@ export default function SuperAdminForm() {
   if (initialLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "#8b5cf6" }} />
+        <CircularProgress sx={{ color: "primary.main" }} />
       </Box>
     );
   }

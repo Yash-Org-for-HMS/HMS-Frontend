@@ -72,7 +72,7 @@ export default function DoctorSchedule() {
   if (initialLoad) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress sx={{ color: "#6366f1" }} />
+        <CircularProgress sx={{ color: "primary.main" }} />
       </Box>
     );
   }

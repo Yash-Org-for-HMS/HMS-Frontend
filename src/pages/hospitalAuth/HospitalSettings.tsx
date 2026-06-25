@@ -132,7 +132,8 @@ export default function HospitalSettings() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setSaving(true);      await axiosInstance.put("/hospital/settings", formData);
+      setSaving(true);
+      await axiosInstance.put("/hospital/settings", formData);
       toast.success("Settings updated successfully!");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to update settings");
@@ -144,7 +145,7 @@ export default function HospitalSettings() {
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
-        <CircularProgress sx={{ color: "#10b981" }} />
+        <CircularProgress sx={{ color: "primary.main" }} />
       </Box>
     );
   }

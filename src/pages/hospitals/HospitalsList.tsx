@@ -178,7 +178,7 @@ export default function HospitalsList() {
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "#3b82f6" }} />
+                    <CircularProgress sx={{ color: "primary.main" }} />
                   </TableCell>
                 </TableRow>
               ) : isError ? (

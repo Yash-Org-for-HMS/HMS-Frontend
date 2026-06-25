@@ -167,7 +167,7 @@ export default function HospitalForm() {
   if (initialLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "#3b82f6" }} />
+        <CircularProgress sx={{ color: "primary.main" }} />
       </Box>
     );
   }

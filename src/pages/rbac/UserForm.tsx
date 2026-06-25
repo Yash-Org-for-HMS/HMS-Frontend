@@ -182,7 +182,7 @@ export default function UserForm() {
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
-        <CircularProgress sx={{ color: "#6366f1" }} />
+        <CircularProgress sx={{ color: "primary.main" }} />
       </Box>
     );
   }

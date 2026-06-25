@@ -108,7 +108,8 @@ export default function FormBuilder() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);    // Prepare fields with sort order
+    setLoading(true);
+    // Prepare fields with sort order
     const processedFields = fields.map((f, i) => ({
       ...f,
       sortOrder: String(i)
@@ -135,7 +136,7 @@ export default function FormBuilder() {
   if (initialLoad) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress sx={{ color: "#6366f1" }} />
+        <CircularProgress sx={{ color: "primary.main" }} />
       </Box>
     );
   }

@@ -78,7 +78,7 @@ export default function OnboardingForm() {
   if (initialLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "#10b981" }} />
+        <CircularProgress sx={{ color: "primary.main" }} />
       </Box>
     );
   }

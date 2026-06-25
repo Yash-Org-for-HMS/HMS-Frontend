@@ -47,7 +47,7 @@ export default function HospitalOverview() {
   if (loading) {
     return (
       <Container maxWidth="xl" sx={{ py: 4, display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
-        <CircularProgress sx={{ color: "#6366f1" }} />
+        <CircularProgress sx={{ color: "primary.main" }} />
       </Container>
     );
   }

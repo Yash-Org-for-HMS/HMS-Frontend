@@ -144,7 +144,7 @@ export default function OnboardingList() {
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "#10b981" }} />
+                    <CircularProgress sx={{ color: "primary.main" }} />
                   </TableCell>
                 </TableRow>
               ) : isError ? (

@@ -95,7 +95,7 @@ export default function Dashboard() {
   if (isLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "80vh" }}>
-        <CircularProgress sx={{ color: "#4F46E5" }} />
+        <CircularProgress sx={{ color: "primary.main" }} />
       </Box>
     );
   }

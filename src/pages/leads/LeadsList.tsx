@@ -284,7 +284,7 @@ export default function LeadsList() {
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "#6366f1" }} />
+                    <CircularProgress sx={{ color: "primary.main" }} />
                   </TableCell>
                 </TableRow>
               ) : isError ? (

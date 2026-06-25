@@ -93,7 +93,7 @@ export default function TrialForm() {
   if (initialLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "#ec4899" }} />
+        <CircularProgress sx={{ color: "primary.main" }} />
       </Box>
     );
   }

@@ -99,7 +99,7 @@ export default function FeatureFlagForm() {
   if (initialLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "#f59e0b" }} />
+        <CircularProgress sx={{ color: "primary.main" }} />
       </Box>
     );
   }

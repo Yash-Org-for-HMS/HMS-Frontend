@@ -117,7 +117,7 @@ export default function RoleForm() {
   if (initialLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "#14b8a6" }} />
+        <CircularProgress sx={{ color: "primary.main" }} />
       </Box>
     );
   }

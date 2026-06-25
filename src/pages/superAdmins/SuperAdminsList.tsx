@@ -107,7 +107,7 @@ export default function SuperAdminsList() {
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={4} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "#8b5cf6" }} />
+                    <CircularProgress sx={{ color: "primary.main" }} />
                   </TableCell>
                 </TableRow>
               ) : isError ? (

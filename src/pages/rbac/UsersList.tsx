@@ -169,7 +169,7 @@ export default function UsersList() {
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 8, borderBottom: "none" }}>
-                    <CircularProgress sx={{ color: "#6366f1" }} />
+                    <CircularProgress sx={{ color: "primary.main" }} />
                   </TableCell>
                 </TableRow>
               ) : isError ? (

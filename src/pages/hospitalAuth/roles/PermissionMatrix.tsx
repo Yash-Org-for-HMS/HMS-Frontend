@@ -181,7 +181,7 @@ export default function PermissionMatrix() {
   if (initialLoad) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 10 }}>
-        <CircularProgress sx={{ color: "#6366f1" }} />
+        <CircularProgress sx={{ color: "primary.main" }} />
       </Box>
     );
   }

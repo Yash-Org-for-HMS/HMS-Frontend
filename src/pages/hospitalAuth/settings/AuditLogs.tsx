@@ -171,7 +171,7 @@ export default function AuditLogs() {
         </Box>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-            <CircularProgress sx={{ color: "#6366f1" }} />
+            <CircularProgress sx={{ color: "primary.main" }} />
           </Box>
         ) : isError ? (
           <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />

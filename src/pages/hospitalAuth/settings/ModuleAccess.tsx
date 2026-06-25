@@ -37,7 +37,7 @@ export default function ModuleAccess() {
   });
 
   if (loading) {
-    return <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><CircularProgress sx={{ color: "#6366f1" }} /></Box>;
+    return <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><CircularProgress sx={{ color: "primary.main" }} /></Box>;
   }
   if (isError) {
     return <ErrorState title="Couldn't load module access" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
