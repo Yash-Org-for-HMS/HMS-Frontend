@@ -46,6 +46,7 @@ import {
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import { assetUrl } from "../utils/assetUrl";
 import BranchSwitcher from "../components/BranchSwitcher";
+import { useEnabledModules } from "../hooks/useEnabledModules";
 
 const drawerWidth = 260;
 
@@ -55,6 +56,7 @@ export default function ReceptionLayout() {
   }, []);
 
   const { user, hospital, logout } = useHospitalAuth();
+  const { isModuleEnabled } = useEnabledModules();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
@@ -89,8 +91,8 @@ export default function ReceptionLayout() {
     {
       heading: "In-Patient",
       items: [
-        { text: "Admissions", icon: <LocalHotelRounded />, path: "/reception/ipd/admissions" },
-        { text: "Bed Management", icon: <HotelRounded />, path: "/reception/ipd/beds" },
+        { text: "Admissions", icon: <LocalHotelRounded />, path: "/reception/ipd/admissions", module: "IPD" },
+        { text: "Bed Management", icon: <HotelRounded />, path: "/reception/ipd/beds", module: "IPD" },
       ],
     },
     {
@@ -192,9 +194,13 @@ export default function ReceptionLayout() {
         </Box>
       </Box>
 
-      {/* Navigation */}
+      {/* Navigation — hide items for modules this hospital doesn't have, and
+          drop any section left empty. */}
       <List sx={{ px: 1.5, pt: 1, flex: 1, overflowY: "auto" }}>
-        {navSections.map((section, si) => (
+        {navSections
+          .map((section) => ({ ...section, items: section.items.filter((i) => isModuleEnabled((i as any).module)) }))
+          .filter((section) => section.items.length > 0)
+          .map((section, si) => (
           <Box key={section.heading} sx={{ mb: 0.5 }}>
             <Typography
               variant="caption"

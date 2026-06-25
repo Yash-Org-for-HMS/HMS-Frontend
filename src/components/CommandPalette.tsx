@@ -8,13 +8,14 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { axiosInstance } from "../api/axios";
+import { useEnabledModules } from "../hooks/useEnabledModules";
 
 // Create-flows surfaced as one-tap actions (reception/admin).
 const QUICK_ACTIONS = [
   { name: "Register new patient", path: "/reception/patients/new", icon: <PersonAddRounded />, section: "Reception" },
   { name: "Book appointment", path: "/reception/appointments/new", icon: <CalendarMonthRounded />, section: "Reception" },
   { name: "Create / collect a bill", path: "/reception/billing", icon: <ReceiptLongRounded />, section: "Reception" },
-  { name: "Admit a patient", path: "/reception/ipd/admissions", icon: <LocalHotelRounded />, section: "Reception" },
+  { name: "Admit a patient", path: "/reception/ipd/admissions", icon: <LocalHotelRounded />, section: "Reception", module: "IPD" },
 ];
 
 const STATIC_ROUTES = [
@@ -26,19 +27,19 @@ const STATIC_ROUTES = [
   { name: "Doctor Availability", path: "/reception/doctors", icon: <MedicalServicesRounded />, section: "Reception" },
   { name: "Department Directory", path: "/reception/directory", icon: <ApartmentRounded />, section: "Reception" },
   { name: "Referrals", path: "/reception/referrals", icon: <CallSplitRounded />, section: "Reception" },
-  { name: "Admissions (IPD)", path: "/reception/ipd/admissions", icon: <LocalHotelRounded />, section: "Reception" },
-  { name: "Bed Management", path: "/reception/ipd/beds", icon: <HotelRounded />, section: "Reception" },
+  { name: "Admissions (IPD)", path: "/reception/ipd/admissions", icon: <LocalHotelRounded />, section: "Reception", module: "IPD" },
+  { name: "Bed Management", path: "/reception/ipd/beds", icon: <HotelRounded />, section: "Reception", module: "IPD" },
   { name: "Billing", path: "/reception/billing", icon: <ReceiptLongRounded />, section: "Reception" },
   { name: "Reports", path: "/reception/reports", icon: <AssessmentRounded />, section: "Reception" },
-  { name: "Lab Dashboard", path: "/lab/dashboard", icon: <ScienceRounded />, section: "Laboratory" },
-  { name: "Radiology Queue", path: "/lab/radiology", icon: <ScienceRounded />, section: "Laboratory" },
-  { name: "Pharmacy POS", path: "/pharmacy/pos", icon: <LocalPharmacyRounded />, section: "Pharmacy" },
-  { name: "Pharmacy Inventory", path: "/pharmacy/inventory", icon: <LocalPharmacyRounded />, section: "Pharmacy" },
-  { name: "Doctor Dashboard", path: "/doctor/dashboard", icon: <DashboardRounded />, section: "Doctor" },
-  { name: "My Queue", path: "/doctor/queue", icon: <QueueRounded />, section: "Doctor" },
-  { name: "My Patients", path: "/doctor/patients", icon: <PersonRounded />, section: "Doctor" },
-  { name: "Results (Lab / Radiology)", path: "/doctor/results", icon: <ScienceRounded />, section: "Doctor" },
-  { name: "My Reports", path: "/doctor/reports", icon: <AssessmentRounded />, section: "Doctor" },
+  { name: "Lab Dashboard", path: "/lab/dashboard", icon: <ScienceRounded />, section: "Laboratory", module: "Laboratory" },
+  { name: "Radiology Queue", path: "/lab/radiology", icon: <ScienceRounded />, section: "Laboratory", module: "Laboratory" },
+  { name: "Pharmacy POS", path: "/pharmacy/pos", icon: <LocalPharmacyRounded />, section: "Pharmacy", module: "Pharmacy" },
+  { name: "Pharmacy Inventory", path: "/pharmacy/inventory", icon: <LocalPharmacyRounded />, section: "Pharmacy", module: "Pharmacy" },
+  { name: "Doctor Dashboard", path: "/doctor/dashboard", icon: <DashboardRounded />, section: "Doctor", module: "Doctor" },
+  { name: "My Queue", path: "/doctor/queue", icon: <QueueRounded />, section: "Doctor", module: "Doctor" },
+  { name: "My Patients", path: "/doctor/patients", icon: <PersonRounded />, section: "Doctor", module: "Doctor" },
+  { name: "Results (Lab / Radiology)", path: "/doctor/results", icon: <ScienceRounded />, section: "Doctor", module: "Doctor" },
+  { name: "My Reports", path: "/doctor/reports", icon: <AssessmentRounded />, section: "Doctor", module: "Doctor" },
   { name: "Hospital Settings", path: "/hospital/settings", icon: <DashboardRounded />, section: "Admin" },
 ];
 
@@ -49,6 +50,7 @@ export default function CommandPalette() {
   const [patients, setPatients] = useState<any[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
+  const { isModuleEnabled } = useEnabledModules();
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Determine if we're in a hospital/clinical route. If not, don't mount the palette at all.
@@ -137,8 +139,8 @@ export default function CommandPalette() {
   const matches = (name: string, section: string) =>
     name.toLowerCase().includes(search.toLowerCase()) || section.toLowerCase().includes(search.toLowerCase());
 
-  const filteredActions = QUICK_ACTIONS.filter((a) => allowSection(a.section) && matches(a.name, a.section));
-  const filteredRoutes = STATIC_ROUTES.filter((r) => allowSection(r.section) && matches(r.name, r.section));
+  const filteredActions = QUICK_ACTIONS.filter((a) => allowSection(a.section) && isModuleEnabled((a as any).module) && matches(a.name, a.section));
+  const filteredRoutes = STATIC_ROUTES.filter((r) => allowSection(r.section) && isModuleEnabled((r as any).module) && matches(r.name, r.section));
 
   if (!isClinicalRoute) return null;
 

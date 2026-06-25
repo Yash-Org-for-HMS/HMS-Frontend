@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import ModuleGate from "../components/ModuleGate";
 import {
   Box,
   Drawer,
@@ -155,7 +156,7 @@ export default function LabLayout() {
 
       <Box component="main" sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` }, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <Toolbar sx={{ display: { xs: "block", md: "none" } }} />
-        <Outlet />
+        <ModuleGate module="Laboratory"><Outlet /></ModuleGate>
       </Box>
     </Box>
   );

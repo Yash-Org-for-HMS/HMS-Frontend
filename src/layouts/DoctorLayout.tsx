@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import ModuleGate from "../components/ModuleGate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Drawer, AppBar, Toolbar, List, Typography, Divider,
@@ -262,7 +263,7 @@ export default function DoctorLayout() {
         }}
       >
         <Toolbar sx={{ display: { xs: "block", md: "none" }, minHeight: "70px !important" }} />
-        <Outlet />
+        <ModuleGate module="Doctor"><Outlet /></ModuleGate>
       </Box>
     </Box>
   );
