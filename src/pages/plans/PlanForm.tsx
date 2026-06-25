@@ -21,12 +21,6 @@ import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
-// Available modules in the system that can be part of a plan
-const AVAILABLE_MODULES = [
-  "OPD", "IPD", "Billing", "Pharmacy", "Laboratory", "Radiology", 
-  "Inventory", "HR", "Analytics", "Telemedicine", "PatientPortal"
-];
-
 export default function PlanForm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -50,6 +44,14 @@ export default function PlanForm() {
     queryFn: async () => (await axiosInstance.get(`/plans/${id}`)).data.data,
     enabled: isEdit,
   });
+
+  // Module options come from the backend registry (single source of truth) —
+  // not a hardcoded list — so plans only ever reference real, built modules.
+  const { data: moduleList = [] } = useQuery({
+    queryKey: ["modules-registry"],
+    queryFn: async () => (await axiosInstance.get("/modules")).data.data as { key: string; label: string }[],
+  });
+  const moduleKeys = moduleList.map((m) => m.key);
 
   // Seed the form with the existing plan when editing.
   useEffect(() => {
@@ -219,7 +221,7 @@ export default function PlanForm() {
             <Grid size={{ xs: 12 }}>
               <Autocomplete
                 multiple
-                options={AVAILABLE_MODULES}
+                options={moduleKeys}
                 value={formData.featuresJson}
                 onChange={(_, newValue) => setFormData({ ...formData, featuresJson: newValue })}
                 renderTags={(value: readonly string[], getTagProps) =>
