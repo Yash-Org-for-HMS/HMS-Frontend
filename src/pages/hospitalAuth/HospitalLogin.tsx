@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   Box,
   Button,
+  Paper,
   TextField,
   Typography,
   InputAdornment,
@@ -64,160 +65,127 @@ export default function HospitalLogin() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", display: "flex", bgcolor: "background.default" }}>
-      {/* ── Left: hero image panel (hidden on mobile) ─────────────────────── */}
-      <Box
+    // Full-bleed family photo background (drop a photo at /public/login-family.jpg).
+    // A neutral background-colour shows if the image is missing, so it never looks broken.
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        p: { xs: 2, sm: 4 },
+        backgroundColor: "#dbe4e3",
+        backgroundImage: `url('/login-family.jpg')`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      {/* Small floating login card */}
+      <Paper
+        elevation={0}
         sx={{
-          display: { xs: "none", md: "flex" },
-          flex: 1.15,
-          position: "relative",
-          flexDirection: "column",
-          justifyContent: "flex-end",
-          p: 7,
-          color: "#fff",
-          // The green gradient overlay sits ON TOP of the photo, so the panel
-          // looks intentional and the text stays legible even before the image
-          // is added (drop a photo at /public/login-family.jpg).
-          backgroundColor: GREEN_DARK,
-          backgroundImage: `linear-gradient(135deg, rgba(5,150,105,0.78) 0%, rgba(16,185,129,0.55) 100%), url('/login-family.jpg')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
+          width: "100%",
+          maxWidth: 400,
+          borderRadius: "20px",
+          p: { xs: 3.5, sm: 5 },
+          bgcolor: "background.paper",
+          boxShadow: "0 24px 64px -12px rgba(0,0,0,0.35)",
         }}
       >
-        {/* Brand mark top-left */}
-        <Box sx={{ position: "absolute", top: 40, left: 56, display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Box sx={{ mb: 4 }}>
           <Box
             sx={{
-              width: 44, height: 44, borderRadius: 2,
-              bgcolor: "rgba(255,255,255,0.18)",
-              backdropFilter: "blur(6px)",
+              width: 56, height: 56, borderRadius: "16px",
+              background: `linear-gradient(135deg, ${GREEN} 0%, ${GREEN_DARK} 100%)`,
               display: "flex", alignItems: "center", justifyContent: "center",
+              mb: 2.5,
+              boxShadow: "0 10px 15px -3px rgba(16, 185, 129, 0.3)",
             }}
           >
-            <LocalHospitalRounded sx={{ color: "#fff", fontSize: 26 }} />
+            <LocalHospitalRounded sx={{ color: "#fff", fontSize: 30 }} />
           </Box>
-          <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: "-0.3px" }}>
-            HMS
+          <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary", letterSpacing: "-0.5px", mb: 0.5 }}>
+            Welcome back
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            Sign in to your hospital staff portal
           </Typography>
         </Box>
 
-        {/* Headline bottom-left */}
-        <Box>
-          <Typography variant="h3" sx={{ fontWeight: 800, letterSpacing: "-1px", mb: 1.5, maxWidth: 540, lineHeight: 1.15 }}>
-            Caring for families, together.
-          </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 400, opacity: 0.95, maxWidth: 480 }}>
-            One platform for your whole hospital — appointments, patients, billing and care, in one place.
-          </Typography>
-        </Box>
-      </Box>
+        <form onSubmit={handleLogin}>
+          <TextField
+            fullWidth
+            label="Email Address"
+            variant="outlined"
+            margin="normal"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={isLoading}
+            required
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <EmailOutlined />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <TextField
+            fullWidth
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            variant="outlined"
+            margin="normal"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
+            required
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockOutlined />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
 
-      {/* ── Right: login form ─────────────────────────────────────────────── */}
-      <Box
-        sx={{
-          flex: { xs: 1, md: "0 0 520px" },
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          p: { xs: 3, sm: 6 },
-        }}
-      >
-        <Box sx={{ width: "100%", maxWidth: 400 }}>
-          <Box sx={{ mb: 4 }}>
-            <Box
-              sx={{
-                width: 56, height: 56, borderRadius: "16px",
-                background: `linear-gradient(135deg, ${GREEN} 0%, ${GREEN_DARK} 100%)`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                mb: 2.5,
-                boxShadow: "0 10px 15px -3px rgba(16, 185, 129, 0.3)",
-              }}
-            >
-              <LocalHospitalRounded sx={{ color: "#fff", fontSize: 30 }} />
-            </Box>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary", letterSpacing: "-0.5px", mb: 0.5 }}>
-              Welcome back
-            </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              Sign in to your hospital staff portal
-            </Typography>
-          </Box>
+          <Button
+            fullWidth
+            type="submit"
+            variant="contained"
+            disabled={isLoading}
+            sx={{
+              py: 1.5,
+              mt: 3,
+              background: `linear-gradient(135deg, ${GREEN} 0%, ${GREEN_DARK} 100%)`,
+              color: "#FFFFFF",
+              fontWeight: 600,
+              fontSize: "1rem",
+              textTransform: "none",
+              borderRadius: 2,
+              boxShadow: "none",
+              "&:hover": {
+                background: `linear-gradient(135deg, ${GREEN_DARK} 0%, #047857 100%)`,
+                boxShadow: "0 8px 20px -6px rgba(16, 185, 129, 0.5)",
+              },
+              transition: "all 0.2s ease-in-out",
+            }}
+          >
+            {isLoading ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Sign In"}
+          </Button>
+        </form>
 
-          <form onSubmit={handleLogin}>
-            <TextField
-              fullWidth
-              label="Email Address"
-              variant="outlined"
-              margin="normal"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailOutlined />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <TextField
-              fullWidth
-              label="Password"
-              type={showPassword ? "text" : "password"}
-              variant="outlined"
-              margin="normal"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockOutlined />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <Button
-              fullWidth
-              type="submit"
-              variant="contained"
-              disabled={isLoading}
-              sx={{
-                py: 1.5,
-                mt: 3,
-                background: `linear-gradient(135deg, ${GREEN} 0%, ${GREEN_DARK} 100%)`,
-                color: "#FFFFFF",
-                fontWeight: 600,
-                fontSize: "1rem",
-                textTransform: "none",
-                borderRadius: 2,
-                boxShadow: "none",
-                "&:hover": {
-                  background: `linear-gradient(135deg, ${GREEN_DARK} 0%, #047857 100%)`,
-                  boxShadow: "0 8px 20px -6px rgba(16, 185, 129, 0.5)",
-                },
-                transition: "all 0.2s ease-in-out",
-              }}
-            >
-              {isLoading ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Sign In"}
-            </Button>
-          </form>
-
-          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", textAlign: "center", mt: 4 }}>
-            © {new Date().getFullYear()} HMS SaaS · Secure staff access
-          </Typography>
-        </Box>
-      </Box>
+        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", textAlign: "center", mt: 4 }}>
+          © {new Date().getFullYear()} HMS SaaS · Secure staff access
+        </Typography>
+      </Paper>
     </Box>
   );
 }
