@@ -87,7 +87,7 @@ export default function HospitalLogin() {
         minHeight: "100vh",
         display: "flex",
         alignItems: "flex-end",
-        justifyContent: "flex-start",
+        justifyContent: "flex-end",
         p: { xs: 2.5, sm: 5, md: 7 },
         backgroundColor: "#2b3a39",
         backgroundImage: `url('/login-family.jpg')`,
