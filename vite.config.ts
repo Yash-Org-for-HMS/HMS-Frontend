@@ -1,10 +1,22 @@
-import { defineConfig } from "vite";
+import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 // Force vite restart
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
+export default defineConfig(async () => {
+  // Bundle analyzer (Phase 0, opt-in): `ANALYZE=1 npm run build` writes
+  // dist/stats.html. Dynamic import + gate means a normal build never touches
+  // the plugin, so it can't affect or break regular builds.
+  const plugins: PluginOption[] = [react()];
+  if (process.env.ANALYZE) {
+    const { visualizer } = await import("rollup-plugin-visualizer");
+    plugins.push(
+      visualizer({ filename: "dist/stats.html", gzipSize: true, brotliSize: true, template: "treemap" }) as PluginOption,
+    );
+  }
+
+  return {
+  plugins,
   server: {
     port: 5173,
     proxy: {
@@ -24,7 +36,7 @@ export default defineConfig({
         // (a) aren't duplicated across route chunks and (b) stay cached across
         // deploys when only app code changes. Order matters: more specific
         // matches first (react-router before react; charts/d3 before the rest).
-        manualChunks(id) {
+        manualChunks(id: string) {
           if (!id.includes("node_modules")) return;
           if (id.includes("recharts") || id.includes("/d3-") || id.includes("victory")) return "vendor-charts";
           // Rich-text editor — only the form builder / consultation notes use it,
@@ -38,4 +50,5 @@ export default defineConfig({
       },
     },
   },
+  };
 });
