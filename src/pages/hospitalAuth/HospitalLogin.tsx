@@ -32,6 +32,15 @@ const glassField = {
     "&.Mui-focused fieldset": { borderColor: "#fff", boxShadow: "none" },
   },
   "& .MuiInputAdornment-root .MuiSvgIcon-root": { color: "rgba(255,255,255,0.7)" },
+  // Kill Chrome's opaque autofill background so the field stays glassy.
+  // The 9999s background-color transition defers Chrome's fill indefinitely,
+  // and text-fill-color keeps the autofilled text white.
+  "& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active": {
+    WebkitTextFillColor: "#fff",
+    caretColor: "#fff",
+    transition: "background-color 9999s ease-in-out 0s",
+    WebkitBoxShadow: "0 0 0 1000px transparent inset",
+  },
 };
 
 export default function HospitalLogin() {
