@@ -2,13 +2,10 @@ import { useState } from "react";
 import {
   Box,
   Button,
-  Container,
   TextField,
   Typography,
-  Paper,
   InputAdornment,
   IconButton,
-  Alert,
   CircularProgress,
 } from "@mui/material";
 import { Visibility, VisibilityOff, LockOutlined, EmailOutlined, LocalHospitalRounded } from "@mui/icons-material";
@@ -16,6 +13,9 @@ import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { axiosInstance } from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../../contexts/ToastContext";
+
+const GREEN = "#10b981";
+const GREEN_DARK = "#059669";
 
 export default function HospitalLogin() {
   const [email, setEmail] = useState("");
@@ -32,7 +32,6 @@ export default function HospitalLogin() {
     setIsLoading(true);
 
     try {
-      // Use the new hospital auth endpoint
       const response = await axiosInstance.post("/hospital-auth/login", {
         email,
         password,
@@ -40,15 +39,12 @@ export default function HospitalLogin() {
 
       const data = response.data.data;
 
-      // Handle mustChangePassword flow
       if (data.requiresPasswordChange) {
-        // Store temp token and redirect to change password screen
         localStorage.setItem("hospitalTempToken", data.tempToken);
         navigate("/hospital/change-password");
         return;
       }
 
-      // Normal login success
       login(
         data.tokens.accessToken,
         data.tokens.refreshToken,
@@ -68,58 +64,86 @@ export default function HospitalLogin() {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: "background.default",
-      }}
-    >
-      <Container maxWidth="xs" sx={{ position: "relative", zIndex: 1 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 4, md: 5 },
-            borderRadius: 4,
-            bgcolor: "background.paper",
-            boxShadow: "0 10px 40px -10px rgba(0,0,0,0.08)",
-            border: "1px solid rgba(15, 23, 42, 0.05)",
-          }}
-        >
-          <Box sx={{ mb: 4, textAlign: "center" }}>
+    <Box sx={{ minHeight: "100vh", display: "flex", bgcolor: "background.default" }}>
+      {/* ── Left: hero image panel (hidden on mobile) ─────────────────────── */}
+      <Box
+        sx={{
+          display: { xs: "none", md: "flex" },
+          flex: 1.15,
+          position: "relative",
+          flexDirection: "column",
+          justifyContent: "flex-end",
+          p: 7,
+          color: "#fff",
+          // The green gradient overlay sits ON TOP of the photo, so the panel
+          // looks intentional and the text stays legible even before the image
+          // is added (drop a photo at /public/login-family.jpg).
+          backgroundColor: GREEN_DARK,
+          backgroundImage: `linear-gradient(135deg, rgba(5,150,105,0.78) 0%, rgba(16,185,129,0.55) 100%), url('/login-family.jpg')`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        {/* Brand mark top-left */}
+        <Box sx={{ position: "absolute", top: 40, left: 56, display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 44, height: 44, borderRadius: 2,
+              bgcolor: "rgba(255,255,255,0.18)",
+              backdropFilter: "blur(6px)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}
+          >
+            <LocalHospitalRounded sx={{ color: "#fff", fontSize: 26 }} />
+          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: "-0.3px" }}>
+            HMS
+          </Typography>
+        </Box>
+
+        {/* Headline bottom-left */}
+        <Box>
+          <Typography variant="h3" sx={{ fontWeight: 800, letterSpacing: "-1px", mb: 1.5, maxWidth: 540, lineHeight: 1.15 }}>
+            Caring for families, together.
+          </Typography>
+          <Typography variant="h6" sx={{ fontWeight: 400, opacity: 0.95, maxWidth: 480 }}>
+            One platform for your whole hospital — appointments, patients, billing and care, in one place.
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* ── Right: login form ─────────────────────────────────────────────── */}
+      <Box
+        sx={{
+          flex: { xs: 1, md: "0 0 520px" },
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          p: { xs: 3, sm: 6 },
+        }}
+      >
+        <Box sx={{ width: "100%", maxWidth: 400 }}>
+          <Box sx={{ mb: 4 }}>
             <Box
               sx={{
-                width: 64,
-                height: 64,
-                borderRadius: "16px",
-                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "0 auto 16px",
+                width: 56, height: 56, borderRadius: "16px",
+                background: `linear-gradient(135deg, ${GREEN} 0%, ${GREEN_DARK} 100%)`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                mb: 2.5,
                 boxShadow: "0 10px 15px -3px rgba(16, 185, 129, 0.3)",
               }}
             >
-              <LocalHospitalRounded sx={{ color: "#fff", fontSize: 32 }} />
+              <LocalHospitalRounded sx={{ color: "#fff", fontSize: 30 }} />
             </Box>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                color: "text.primary",
-                mb: 1,
-                letterSpacing: "-0.5px",
-              }}
-            >
-              Staff Portal
+            <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary", letterSpacing: "-0.5px", mb: 0.5 }}>
+              Welcome back
             </Typography>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              Sign in to Hospital Administration
+              Sign in to your hospital staff portal
             </Typography>
           </Box>
-<form onSubmit={handleLogin}>
+
+          <form onSubmit={handleLogin}>
             <TextField
               fullWidth
               label="Email Address"
@@ -155,10 +179,7 @@ export default function HospitalLogin() {
                 ),
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                    >
+                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
@@ -173,8 +194,8 @@ export default function HospitalLogin() {
               disabled={isLoading}
               sx={{
                 py: 1.5,
-                mt: 2,
-                bgcolor: "primary.main",
+                mt: 3,
+                background: `linear-gradient(135deg, ${GREEN} 0%, ${GREEN_DARK} 100%)`,
                 color: "#FFFFFF",
                 fontWeight: 600,
                 fontSize: "1rem",
@@ -182,22 +203,21 @@ export default function HospitalLogin() {
                 borderRadius: 2,
                 boxShadow: "none",
                 "&:hover": {
-                  bgcolor: "primary.dark",
-                  boxShadow: "0 4px 12px rgba(16, 185, 129, 0.2)",
-                  transform: "translateY(-1px)",
+                  background: `linear-gradient(135deg, ${GREEN_DARK} 0%, #047857 100%)`,
+                  boxShadow: "0 8px 20px -6px rgba(16, 185, 129, 0.5)",
                 },
                 transition: "all 0.2s ease-in-out",
               }}
             >
-              {isLoading ? (
-                <CircularProgress size={24} sx={{ color: "#fff" }} />
-              ) : (
-                "Sign In"
-              )}
+              {isLoading ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Sign In"}
             </Button>
           </form>
-        </Paper>
-      </Container>
+
+          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", textAlign: "center", mt: 4 }}>
+            © {new Date().getFullYear()} HMS SaaS · Secure staff access
+          </Typography>
+        </Box>
+      </Box>
     </Box>
   );
 }
