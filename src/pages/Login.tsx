@@ -2,19 +2,42 @@ import { useState } from "react";
 import {
   Box,
   Button,
-  Container,
   TextField,
   Typography,
-  Paper,
   InputAdornment,
   IconButton,
-  Alert,
   CircularProgress,
 } from "@mui/material";
 import { Visibility, VisibilityOff, LockOutlined, EmailOutlined } from "@mui/icons-material";
 import { useAuth } from "../contexts/AuthContext";
 import { axiosInstance } from "../api/axios";
 import { useToast } from "../contexts/ToastContext";
+
+const DARK = "#0f172a";
+const DARK_HOVER = "#1e293b";
+
+// Dark form styling — sits directly on the photo (no card), so text, outlines,
+// labels and icons are dark for legibility over a light area of the image.
+const darkField = {
+  "& .MuiInputBase-input": { color: DARK },
+  "& .MuiInputBase-input::placeholder": { color: "rgba(15,23,42,0.5)" },
+  "& .MuiInputLabel-root": { color: "rgba(15,23,42,0.7)" },
+  "& .MuiInputLabel-root.Mui-focused": { color: DARK },
+  "& .MuiOutlinedInput-root": {
+    backgroundColor: "transparent",
+    "& fieldset": { borderColor: "rgba(15,23,42,0.4)" },
+    "&:hover fieldset": { borderColor: "rgba(15,23,42,0.7)" },
+    "&.Mui-focused fieldset": { borderColor: DARK, boxShadow: "none" },
+  },
+  "& .MuiInputAdornment-root .MuiSvgIcon-root": { color: "rgba(15,23,42,0.7)" },
+  // Keep autofilled fields transparent with dark text (no opaque Chrome fill).
+  "& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active": {
+    WebkitTextFillColor: DARK,
+    caretColor: DARK,
+    transition: "background-color 9999s ease-in-out 0s",
+    WebkitBoxShadow: "0 0 0 1000px transparent inset",
+  },
+};
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -48,138 +71,118 @@ export default function Login() {
   };
 
   return (
+    // Full-bleed photo; the form sits directly on it (no card), centered.
     <Box
       sx={{
         minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        bgcolor: "background.default",
+        p: { xs: 2.5, sm: 5, md: 7 },
+        backgroundColor: "#dbe4e3",
+        backgroundImage: `url('/login-page.png')`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
       }}
     >
-      <Container maxWidth="xs" sx={{ position: "relative", zIndex: 1 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 4, md: 5 },
-            borderRadius: 4,
-            bgcolor: "background.paper",
-            boxShadow: "0 10px 40px -10px rgba(0,0,0,0.08)",
-            border: "1px solid rgba(15, 23, 42, 0.05)",
-          }}
-        >
-          <Box sx={{ mb: 4, textAlign: "center" }}>
-            <Box
-              sx={{
-                width: 64,
-                height: 64,
-                borderRadius: "16px",
-                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "0 auto 16px",
-                boxShadow: "0 10px 15px -3px rgba(99, 102, 241, 0.3)",
-              }}
-            >
-              <Typography variant="h4" sx={{ color: "#fff", fontWeight: 800 }}>
-                H
-              </Typography>
-            </Box>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                color: "text.primary",
-                mb: 1,
-                letterSpacing: "-0.5px",
-              }}
-            >
-              Welcome Back
-            </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              Sign in to HMS Administration
+      <Box sx={{ width: "100%", maxWidth: 400 }}>
+        <Box sx={{ mb: 4 }}>
+          <Box
+            sx={{
+              width: 56, height: 56, borderRadius: "16px",
+              bgcolor: DARK,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              mb: 2.5,
+            }}
+          >
+            <Typography variant="h4" sx={{ color: "#fff", fontWeight: 800 }}>
+              H
             </Typography>
           </Box>
-<form onSubmit={handleLogin}>
-            <TextField
-              fullWidth
-              label="Email Address"
-              variant="outlined"
-              margin="normal"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailOutlined />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <TextField
-              fullWidth
-              label="Password"
-              type={showPassword ? "text" : "password"}
-              variant="outlined"
-              margin="normal"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockOutlined />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
+          <Typography variant="h4" sx={{ fontWeight: 800, color: DARK, letterSpacing: "-0.5px", mb: 0.5 }}>
+            Welcome Back
+          </Typography>
+          <Typography variant="body2" sx={{ color: "rgba(15,23,42,0.75)" }}>
+            Sign in to HMS Administration
+          </Typography>
+        </Box>
 
-            <Button
-              fullWidth
-              type="submit"
-              variant="contained"
-              disabled={isLoading}
-              sx={{
-                py: 1.5,
-                mt: 2,
-                bgcolor: "primary.main",
-                color: "#FFFFFF",
-                fontWeight: 600,
-                fontSize: "1rem",
-                textTransform: "none",
-                borderRadius: 2,
-                boxShadow: "none",
-                "&:hover": {
-                  bgcolor: "primary.dark",
-                  boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
-                  transform: "translateY(-1px)",
-                },
-                transition: "all 0.2s ease-in-out",
-              }}
-            >
-              {isLoading ? (
-                <CircularProgress size={24} sx={{ color: "#fff" }} />
-              ) : (
-                "Sign In"
-              )}
-            </Button>
-          </form>
-        </Paper>
-      </Container>
+        <form onSubmit={handleLogin}>
+          <TextField
+            fullWidth
+            label="Email Address"
+            variant="outlined"
+            margin="normal"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={isLoading}
+            required
+            sx={darkField}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <EmailOutlined />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <TextField
+            fullWidth
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            variant="outlined"
+            margin="normal"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
+            required
+            sx={darkField}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockOutlined />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: "rgba(15,23,42,0.7)" }}>
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <Button
+            fullWidth
+            type="submit"
+            variant="contained"
+            disabled={isLoading}
+            sx={{
+              py: 1.5,
+              mt: 3,
+              bgcolor: DARK,
+              color: "#FFFFFF",
+              fontWeight: 600,
+              fontSize: "1rem",
+              textTransform: "none",
+              borderRadius: 2,
+              boxShadow: "none",
+              "&:hover": {
+                bgcolor: DARK_HOVER,
+                boxShadow: "0 8px 20px -6px rgba(15, 23, 42, 0.5)",
+              },
+              transition: "all 0.2s ease-in-out",
+            }}
+          >
+            {isLoading ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Sign In"}
+          </Button>
+        </form>
+
+        <Typography variant="caption" sx={{ color: "rgba(15,23,42,0.7)", display: "block", textAlign: "center", mt: 4 }}>
+          © {new Date().getFullYear()} HMS SaaS · Platform Administration
+        </Typography>
+      </Box>
     </Box>
   );
 }
