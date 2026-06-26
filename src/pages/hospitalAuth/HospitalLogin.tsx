@@ -18,6 +18,22 @@ import { useToast } from "../../contexts/ToastContext";
 const GREEN = "#10b981";
 const GREEN_DARK = "#059669";
 
+// Glassmorphism input styling — light text/outlines so fields stay legible on the
+// translucent card over the photo.
+const glassField = {
+  "& .MuiInputBase-input": { color: "#fff" },
+  "& .MuiInputBase-input::placeholder": { color: "rgba(255,255,255,0.6)" },
+  "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.75)" },
+  "& .MuiInputLabel-root.Mui-focused": { color: "#fff" },
+  "& .MuiOutlinedInput-root": {
+    backgroundColor: "rgba(255,255,255,0.08)",
+    "& fieldset": { borderColor: "rgba(255,255,255,0.3)" },
+    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.55)" },
+    "&.Mui-focused fieldset": { borderColor: "#fff", boxShadow: "none" },
+  },
+  "& .MuiInputAdornment-root .MuiSvgIcon-root": { color: "rgba(255,255,255,0.7)" },
+};
+
 export default function HospitalLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -65,22 +81,21 @@ export default function HospitalLogin() {
   };
 
   return (
-    // Full-bleed family photo background (drop a photo at /public/login-family.jpg).
-    // A neutral background-colour shows if the image is missing, so it never looks broken.
+    // Full-bleed family photo; the card is pinned to the bottom-left.
     <Box
       sx={{
         minHeight: "100vh",
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        p: { xs: 2, sm: 4 },
-        backgroundColor: "#dbe4e3",
+        alignItems: "flex-end",
+        justifyContent: "flex-start",
+        p: { xs: 2.5, sm: 5, md: 7 },
+        backgroundColor: "#2b3a39",
         backgroundImage: `url('/login-family.jpg')`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
     >
-      {/* Small floating login card */}
+      {/* Transparent frosted-glass login card */}
       <Paper
         elevation={0}
         sx={{
@@ -88,8 +103,12 @@ export default function HospitalLogin() {
           maxWidth: 400,
           borderRadius: "20px",
           p: { xs: 3.5, sm: 5 },
-          bgcolor: "background.paper",
-          boxShadow: "0 24px 64px -12px rgba(0,0,0,0.35)",
+          bgcolor: "rgba(255,255,255,0.10)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          border: "1px solid rgba(255,255,255,0.22)",
+          boxShadow: "0 24px 64px -12px rgba(0,0,0,0.45)",
+          color: "#fff",
         }}
       >
         <Box sx={{ mb: 4 }}>
@@ -99,15 +118,15 @@ export default function HospitalLogin() {
               background: `linear-gradient(135deg, ${GREEN} 0%, ${GREEN_DARK} 100%)`,
               display: "flex", alignItems: "center", justifyContent: "center",
               mb: 2.5,
-              boxShadow: "0 10px 15px -3px rgba(16, 185, 129, 0.3)",
+              boxShadow: "0 10px 15px -3px rgba(16, 185, 129, 0.4)",
             }}
           >
             <LocalHospitalRounded sx={{ color: "#fff", fontSize: 30 }} />
           </Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary", letterSpacing: "-0.5px", mb: 0.5 }}>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", mb: 0.5 }}>
             Welcome back
           </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.8)" }}>
             Sign in to your hospital staff portal
           </Typography>
         </Box>
@@ -122,6 +141,7 @@ export default function HospitalLogin() {
             onChange={(e) => setEmail(e.target.value)}
             disabled={isLoading}
             required
+            sx={glassField}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -140,6 +160,7 @@ export default function HospitalLogin() {
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}
             required
+            sx={glassField}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -148,7 +169,7 @@ export default function HospitalLogin() {
               ),
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                  <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: "rgba(255,255,255,0.7)" }}>
                     {showPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
@@ -173,7 +194,7 @@ export default function HospitalLogin() {
               boxShadow: "none",
               "&:hover": {
                 background: `linear-gradient(135deg, ${GREEN_DARK} 0%, #047857 100%)`,
-                boxShadow: "0 8px 20px -6px rgba(16, 185, 129, 0.5)",
+                boxShadow: "0 8px 20px -6px rgba(16, 185, 129, 0.6)",
               },
               transition: "all 0.2s ease-in-out",
             }}
@@ -182,7 +203,7 @@ export default function HospitalLogin() {
           </Button>
         </form>
 
-        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", textAlign: "center", mt: 4 }}>
+        <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.7)", display: "block", textAlign: "center", mt: 4 }}>
           © {new Date().getFullYear()} HMS SaaS · Secure staff access
         </Typography>
       </Paper>
