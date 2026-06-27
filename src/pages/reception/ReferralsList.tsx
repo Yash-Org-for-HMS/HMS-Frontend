@@ -15,6 +15,8 @@ import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import ReferralDialog from "../../components/reception/ReferralDialog";
 import PageHeader from "../../components/layout/PageHeader";
+import { useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
 import dayjs from "dayjs";
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
@@ -54,6 +56,15 @@ export default function ReferralsList() {
       [r.patientName, r.uhid, r.destination, r.reason].filter(Boolean).some((v: string) => v.toLowerCase().includes(s))
     );
   }, [referrals, search]);
+
+  const { sorted, orderBy, order, onSort } = useTableSort(filtered, {
+    patient: (r) => r.patientName,
+    type: (r) => (r.referralType === "EXTERNAL" ? "External" : "Internal"),
+    destination: (r) => r.destination,
+    reason: (r) => r.reason,
+    status: (r) => (STATUS_META[r.status]?.label ?? r.status),
+    created: (r) => (r.createdAt ? new Date(r.createdAt) : null),
+  });
 
   const changeStatus = async (referralId: string, status: string) => {
     setMenu({ anchor: null, referral: null });
@@ -103,11 +114,13 @@ export default function ReferralsList() {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {["Patient", "Type", "Destination", "Reason", "Status", "Created", ""].map((h, i) => (
-                  <TableCell key={h || i} align={i === 6 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default" }}>
-                    {h}
-                  </TableCell>
-                ))}
+                <SortableHeadCell label="Patient" sortKey="patient" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Type" sortKey="type" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Destination" sortKey="destination" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Reason" sortKey="reason" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Created" sortKey="created" orderBy={orderBy} order={order} onSort={onSort} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default" }} />
               </TableRow>
             </TableHead>
             <TableBody>
@@ -115,10 +128,10 @@ export default function ReferralsList() {
                 <TableRowsSkeleton rows={6} columns={7} />
               ) : isError ? (
                 <TableRow><TableCell colSpan={7} sx={{ py: 4, border: 0 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
-              ) : filtered.length === 0 ? (
+              ) : sorted.length === 0 ? (
                 <TableRow><TableCell colSpan={7} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No referrals" subtitle="No referrals match your filters." /></TableCell></TableRow>
               ) : (
-                filtered.map((r) => {
+                sorted.map((r) => {
                   const sm = STATUS_META[r.status] || { label: r.status, color: "#64748b" };
                   const nexts = NEXT_STATES[r.status] || [];
                   return (

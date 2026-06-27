@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Box, Typography, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, Grid, Divider } from "@mui/material";
+import { Box, Typography, Table, TableBody, TableCell, TableHead, TableRow, Grid, Divider } from "@mui/material";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useParams } from "react-router-dom";
 
 export default function PrintLabReport() {
@@ -31,7 +32,7 @@ export default function PrintLabReport() {
     }
   }, [loading, order]);
 
-  if (loading) return <Box sx={{ display: "flex", p: 4, justifyContent: "center" }}><CircularProgress /></Box>;
+  if (loading) return <Box sx={{ display: "flex", p: 4, justifyContent: "center" }}><HeartbeatLoader size={48} /></Box>;
   if (!order) return <Typography>Order not found</Typography>;
 
   return (

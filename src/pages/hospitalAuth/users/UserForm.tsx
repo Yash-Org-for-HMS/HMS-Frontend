@@ -8,7 +8,6 @@ import {
   Button,
   Grid,
   MenuItem,
-  CircularProgress,
   Alert,
   Tabs,
   Tab,
@@ -34,6 +33,7 @@ import { axiosInstance } from "../../../api/axios";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
+import HeartbeatLoader from "../../../components/HeartbeatLoader";
 
 interface Role {
   roleId: string;
@@ -434,7 +434,7 @@ export default function UserForm() {
   if (initialLoad) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress sx={{ color: "primary.main" }} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }
@@ -703,7 +703,7 @@ export default function UserForm() {
                 type="submit"
                 variant="contained"
                 disabled={loading}
-                startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <SaveRounded />}
+                startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                 sx={{
                   bgcolor: "#6366f1",
                   "&:hover": { bgcolor: "#4f46e5" },

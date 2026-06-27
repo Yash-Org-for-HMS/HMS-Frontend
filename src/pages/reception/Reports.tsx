@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Grid, CircularProgress, TextField, Tabs, Tab, Button,
+  Box, Typography, Paper, Grid, TextField, Tabs, Tab, Button,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer, Chip,
 } from "@mui/material";
 import {
@@ -14,6 +14,7 @@ import {
   PieChart, Pie, Cell, Legend, AreaChart, Area,
 } from "recharts";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
 import dayjs from "dayjs";
@@ -372,7 +373,7 @@ function Toolbar({ children, onPrint }: { children: React.ReactNode; onPrint: ()
   );
 }
 
-function Loading() { return <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress sx={{ color: ACCENT }} /></Box>; }
+function Loading() { return <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><HeartbeatLoader size={48} /></Box>; }
 function Empty() { return <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "text.disabled" }}><Typography variant="body2">No data for this period</Typography></Box>; }
 
 function SimpleTable({ title, head, rows }: { title: string; head: string[]; rows: string[][] }) {

@@ -19,7 +19,6 @@ import {
   TextField,
   InputAdornment,
   Alert,
-  CircularProgress,
   Avatar,
   Divider,
 } from "@mui/material";
@@ -43,6 +42,12 @@ import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import { TableRowsSkeleton } from "../../../components/TableRowsSkeleton";
+import { useTableSort } from "../../../components/table/useTableSort";
+import SortableHeadCell from "../../../components/table/SortableHeadCell";
+import HeartbeatLoader from "../../../components/HeartbeatLoader";
+
+// Match the file's existing sentence-case header look (override SortableHeadCell's default uppercase/bold style).
+const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 400, fontSize: "0.875rem", py: undefined };
 
 interface User {
   userId: string;
@@ -306,7 +311,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
             variant="contained"
             onClick={handleReset}
             disabled={loading}
-            startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <LockResetRounded />}
+            startIcon={loading ? <HeartbeatLoader size={22} /> : <LockResetRounded />}
             sx={{
               bgcolor: "#d97706",
               "&:hover": { bgcolor: "#b45309" },
@@ -412,6 +417,14 @@ export default function UsersList() {
     queryFn: async () => (await axiosInstance.get("/hospital/users")).data.data,
   });
 
+  const { sorted, orderBy, order, onSort } = useTableSort(users, {
+    name: (u) => `${u.firstName} ${u.lastName}`.trim(),
+    role: (u) => u.role?.roleName ?? null,
+    department: (u) => u.department?.departmentName ?? null,
+    branch: (u) => u.branch?.branchName ?? null,
+    status: (u) => (u.isActive ? "Active" : "Inactive"),
+  });
+
   const handleToggleStatus = async (user: User) => {
     try {
       await axiosInstance.put(`/hospital/users/${user.userId}/deactivate`, { isActive: !user.isActive });
@@ -447,20 +460,17 @@ export default function UsersList() {
 
         <TableContainer
           component={Paper}
-          sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}
+          sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "calc(100vh - 300px)" }}
         >
-          <Table>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {["Staff Member", "Role", "Department", "Branch", "Status", "Actions"].map((h, i) => (
-                  <TableCell
-                    key={h}
-                    align={i === 5 ? "right" : "left"}
-                    sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}
-                  >
-                    {h}
-                  </TableCell>
-                ))}
+                <SortableHeadCell label="Staff Member" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Role" sortKey="role" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Department" sortKey="department" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Branch" sortKey="branch" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.default" }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -472,14 +482,14 @@ export default function UsersList() {
                     <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
-              ) : users.length === 0 ? (
+              ) : sorted.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
                     <Mascot pose="nothing-here-yet" subtitle="No staff members found." size={120} />
                   </TableCell>
                 </TableRow>
               ) : (
-                users.map((user) => (
+                sorted.map((user) => (
                   <TableRow key={user.userId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                     <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>

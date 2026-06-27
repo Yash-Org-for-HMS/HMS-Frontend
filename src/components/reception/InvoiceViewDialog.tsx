@@ -2,10 +2,11 @@ import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, Divider,
-  CircularProgress, Chip, TextField, MenuItem, Grid,
+  Chip, TextField, MenuItem, Grid,
 } from "@mui/material";
 import { CloseRounded, PrintRounded, PaymentRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../HeartbeatLoader";
 import ErrorState from "../ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
@@ -88,7 +89,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged 
         <Button onClick={onClose} sx={{ minWidth: 0, p: 1, color: "text.secondary" }}><CloseRounded /></Button>
       </DialogTitle>
       <DialogContent dividers>
-        {isLoading ? <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><CircularProgress sx={{ color: "#0891b2" }} /></Box>
+        {isLoading ? <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><HeartbeatLoader size={48} /></Box>
           : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
           : invoice ? (
             <>
@@ -168,7 +169,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged 
                     </Grid>
                     <Grid size={{ xs: 3 }}>
                       <Button fullWidth variant="contained" disabled={paying || !amount || Number(amount) <= 0 || Number(amount) > balance + 0.005 || !methodId} onClick={pay}
-                        startIcon={paying ? <CircularProgress size={14} color="inherit" /> : <PaymentRounded />}
+                        startIcon={paying ? <HeartbeatLoader size={22} /> : <PaymentRounded />}
                         sx={{ height: 40, bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }}>Pay</Button>
                     </Grid>
                     <Grid size={{ xs: 12 }}>

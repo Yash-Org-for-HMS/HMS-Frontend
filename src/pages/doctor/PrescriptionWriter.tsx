@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Button, TextField, IconButton, Autocomplete, CircularProgress,
+  Box, Typography, Button, TextField, IconButton, Autocomplete,
   Paper, Grid, Alert, Divider, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Switch, FormControlLabel, Chip
 } from "@mui/material";
 import { DeleteRounded, SaveRounded, AddRounded, PrintRounded, ReplayRounded, WarningAmberRounded } from "@mui/icons-material";
@@ -12,6 +12,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { assetUrl } from "../../utils/assetUrl";
 import DoseCalculator from "../../components/doctor/DoseCalculator";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 const DOCTOR_BLUE = "#3b82f6";
 
@@ -409,7 +410,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
         <Button
           size="small"
           variant="outlined"
-          startIcon={repeating ? <CircularProgress size={14} color="inherit" /> : <ReplayRounded />}
+          startIcon={repeating ? <HeartbeatLoader size={22} /> : <ReplayRounded />}
           onClick={handleRepeatLast}
           disabled={repeating || dispensingStatus === "dispensed"}
           sx={{ textTransform: "none", fontWeight: 600 }}
@@ -484,7 +485,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
                   ...params.InputProps,
                   endAdornment: (
                     <>
-                      {medicineLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                      {medicineLoading ? <HeartbeatLoader size={22} /> : null}
                       {params.InputProps.endAdornment}
                     </>
                   ),
@@ -607,7 +608,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
         </Button>
         <Button 
           variant="contained" 
-          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRounded />}
+          startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
           sx={{ bgcolor: DOCTOR_BLUE }}
           onClick={handleSave}
           disabled={saving}

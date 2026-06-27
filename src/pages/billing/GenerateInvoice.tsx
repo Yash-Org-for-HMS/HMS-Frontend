@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Autocomplete, TextField, CircularProgress,
+  Box, Typography, Paper, Autocomplete, TextField,
   Table, TableBody, TableCell, TableHead, TableRow, Checkbox,
   Button, Divider, Grid, Dialog, DialogTitle, DialogContent, DialogActions, alpha, useTheme
 } from "@mui/material";
 import { ReceiptLongRounded, PaymentRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
 import { useToast } from "../../contexts/ToastContext";
 
@@ -153,7 +154,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                 ...params.InputProps,
                 endAdornment: (
                   <>
-                    {patientLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {patientLoading ? <HeartbeatLoader size={22} /> : null}
                     {params.InputProps.endAdornment}
                   </>
                 ),
@@ -172,7 +173,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
               </Box>
               
               {itemsLoading ? (
-                <Box sx={{ p: 4, display: "flex", justifyContent: "center" }}><CircularProgress /></Box>
+                <Box sx={{ p: 4, display: "flex", justifyContent: "center" }}><HeartbeatLoader size={48} /></Box>
               ) : itemsError ? (
                 <Box sx={{ p: 2 }}>
                   <ErrorState message={(itemsErr as any)?.response?.data?.message} onRetry={() => refetchUnbilled()} />

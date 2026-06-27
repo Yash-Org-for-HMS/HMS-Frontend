@@ -164,8 +164,8 @@ export default function QueueDashboard() {
       {actionMutation.isError && <Alert severity="error" sx={{ mb: 3 }}>{actionMutation.error?.message || "Action failed"}</Alert>}
 
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", overflow: "hidden" }}>
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 320px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
                 {["Token", "Patient", "Doctor", "Status", "Wait", "Vitals", "Quick Actions", ""].map((h, i) => (

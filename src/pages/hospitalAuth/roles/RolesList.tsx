@@ -24,6 +24,11 @@ import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import { TableRowsSkeleton } from "../../../components/TableRowsSkeleton";
+import { useTableSort } from "../../../components/table/useTableSort";
+import SortableHeadCell from "../../../components/table/SortableHeadCell";
+
+// Match the file's existing sentence-case header look (override SortableHeadCell's default uppercase/bold style).
+const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 400, fontSize: "0.875rem", py: undefined };
 
 interface Role {
   roleId: string;
@@ -50,6 +55,14 @@ export default function RolesList() {
   const filtered = term
     ? roles.filter((r) => r.roleName.toLowerCase().includes(term) || r.roleCode.toLowerCase().includes(term))
     : roles;
+
+  const { sorted, orderBy, order, onSort } = useTableSort(filtered, {
+    name: (r) => r.roleName,
+    code: (r) => r.roleCode,
+    type: (r) => (r.isSystemRole ? "System Default" : "Custom Role"),
+    users: (r) => r._count?.users ?? 0,
+    status: (r) => r.status,
+  });
 
   const handleToggleStatus = async (role: Role) => {
     if (role.isSystemRole && role.status === 'active') {
@@ -100,16 +113,16 @@ export default function RolesList() {
         InputProps={{ startAdornment: <InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary" }} /></InputAdornment> }}
       />
 
-      <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
-        <Table>
+      <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "calc(100vh - 300px)" }}>
+        <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Role Name</TableCell>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Code</TableCell>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Type</TableCell>
-              <TableCell align="center" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Users Assigned</TableCell>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Status</TableCell>
-              <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Actions</TableCell>
+              <SortableHeadCell label="Role Name" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+              <SortableHeadCell label="Code" sortKey="code" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+              <SortableHeadCell label="Type" sortKey="type" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+              <SortableHeadCell label="Users Assigned" sortKey="users" orderBy={orderBy} order={order} onSort={onSort} align="center" sx={HEAD_SX} />
+              <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+              <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.default" }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -121,14 +134,14 @@ export default function RolesList() {
                   <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                 </TableCell>
               </TableRow>
-            ) : filtered.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
                   <Mascot pose="nothing-here-yet" subtitle={term ? "No roles match your search." : "No roles found."} size={120} />
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((role) => (
+              sorted.map((role) => (
                 <TableRow key={role.roleId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                   <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary", fontWeight: 500 }}>
                     {role.roleName}

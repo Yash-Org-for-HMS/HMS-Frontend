@@ -104,8 +104,8 @@ export default function DoctorQueue() {
       {error && <Alert severity="error" sx={{ mb: 3 }}>Failed to load queue</Alert>}
 
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", overflow: "hidden" }}>
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
                 {["Token", "Patient", "Vitals Status", "Queue Status", "Action"].map((h, i) => (

@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem,
-  CircularProgress, Stack, Typography,
+  Stack, Typography,
 } from "@mui/material";
 import { SwapHorizRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
+import HeartbeatLoader from "../HeartbeatLoader";
 
 interface Props {
   open: boolean;
@@ -62,7 +63,7 @@ export default function TransferDialog({ open, onClose, onDone, admission }: Pro
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={submit} disabled={saving || !toBedId}
-          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SwapHorizRounded />}
+          startIcon={saving ? <HeartbeatLoader size={22} /> : <SwapHorizRounded />}
           sx={{ bgcolor: "#0891b2", "&:hover": { bgcolor: "#0e7490" } }}>Transfer</Button>
       </DialogActions>
     </Dialog>

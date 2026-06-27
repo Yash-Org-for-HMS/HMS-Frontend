@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -33,6 +33,12 @@ import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
 import FilterBar from "../../components/layout/FilterBar";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Keep the admin list's existing sentence-case header look (the SortableHeadCell
+// default is the reception-panel uppercase style).
+const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal" } as const;
 
 export default function SuperAdminsList() {
   const { t } = useTranslation();
@@ -41,10 +47,18 @@ export default function SuperAdminsList() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
 
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
+
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
-    queryKey: ["super-admins", page, search],
-    queryFn: async () => (await axiosInstance.get("/super-admins", { params: { page, limit: 10, search } })).data,
+    queryKey: ["super-admins", page, search, orderBy, order],
+    queryFn: async () => (await axiosInstance.get("/super-admins", { params: { page, limit: 10, search, sortBy: orderBy || undefined, sortOrder: order } })).data,
   });
+
+  // Reset to the first page whenever the sort changes.
+  useEffect(() => {
+    setPage(1);
+  }, [orderBy, order]);
   const admins: any[] = data?.data ?? [];
   const totalPages: number = data?.pagination?.totalPages ?? 1;
 
@@ -93,14 +107,14 @@ export default function SuperAdminsList() {
           overflow: "hidden",
         }}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("superAdmins.name", "Admin")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("superAdmins.phone", "Phone")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("superAdmins.status", "Status")}</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
+                <SortableHeadCell label={t("superAdmins.name", "Admin")} sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={{ ...adminHeadSx, bgcolor: "background.paper" }} />
+                <SortableHeadCell label={t("superAdmins.phone", "Phone")} sortKey="phone" orderBy={orderBy} order={order} onSort={onSort} sx={{ ...adminHeadSx, bgcolor: "background.paper" }} />
+                <SortableHeadCell label={t("superAdmins.status", "Status")} sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={{ ...adminHeadSx, bgcolor: "background.paper" }} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("common.actions", "Actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

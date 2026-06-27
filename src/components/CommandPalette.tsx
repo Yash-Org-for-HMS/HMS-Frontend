@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Dialog, Box, InputBase, Typography, List, ListItemButton, ListItemIcon, ListItemText, CircularProgress, Chip } from "@mui/material";
+import { Dialog, Box, InputBase, Typography, List, ListItemButton, ListItemIcon, ListItemText, Chip } from "@mui/material";
 import {
   SearchRounded, DashboardRounded, ScienceRounded, LocalPharmacyRounded, PersonalVideoRounded,
   ArrowForwardRounded, PersonRounded, PersonAddRounded, CalendarMonthRounded, QueueRounded,
@@ -9,6 +9,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { axiosInstance } from "../api/axios";
 import { useEnabledModules } from "../hooks/useEnabledModules";
+import HeartbeatLoader from "./HeartbeatLoader";
 
 // Create-flows surfaced as one-tap actions (reception/admin).
 const QUICK_ACTIONS = [
@@ -172,7 +173,7 @@ export default function CommandPalette() {
           onChange={(e) => handleSearchChange(e.target.value)}
           sx={{ fontSize: "1.1rem", color: "text.primary" }}
         />
-        {loading && <CircularProgress size={20} sx={{ color: "#06b6d4" }} />}
+        {loading && <HeartbeatLoader size={22} />}
         <Chip label="ESC" size="small" sx={{ ml: 2, borderRadius: 1, fontSize: "0.7rem", color: "text.secondary", bgcolor: "action.hover" }} />
       </Box>
 

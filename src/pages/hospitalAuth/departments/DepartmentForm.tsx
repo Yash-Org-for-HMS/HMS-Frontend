@@ -7,7 +7,6 @@ import {
   Button,
   Grid,
   MenuItem,
-  CircularProgress,
   Alert,
 } from "@mui/material";
 import { SaveRounded } from "@mui/icons-material";
@@ -16,6 +15,7 @@ import { axiosInstance } from "../../../api/axios";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
+import HeartbeatLoader from "../../../components/HeartbeatLoader";
 
 interface DepartmentType {
   departmentTypeId: number;
@@ -103,7 +103,7 @@ export default function DepartmentForm() {
   if (initialLoad) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress sx={{ color: "primary.main" }} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }

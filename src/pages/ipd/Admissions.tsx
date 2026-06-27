@@ -19,6 +19,8 @@ import TransferDialog from "../../components/ipd/TransferDialog";
 import DischargeDialog from "../../components/ipd/DischargeDialog";
 import DepositDialog from "../../components/ipd/DepositDialog";
 import PageHeader from "../../components/layout/PageHeader";
+import { useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
 
 const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
@@ -50,6 +52,17 @@ export default function Admissions() {
     if (!s) return admissions;
     return admissions.filter((a) => [a.patientName, a.uhid, a.admissionNumber, a.admittingDiagnosis].filter(Boolean).some((v: string) => v.toLowerCase().includes(s)));
   }, [admissions, search]);
+
+  const { sorted, orderBy, order, onSort } = useTableSort(filtered, {
+    patient: (a) => a.patientName,
+    ipd: (a) => a.admissionNumber,
+    diagnosis: (a) => a.admittingDiagnosis,
+    bed: (a) => a.bed?.label,
+    doctor: (a) => a.doctorName,
+    days: (a) => (a.days != null ? Number(a.days) : null),
+    deposit: (a) => Number(a.depositBalance || 0),
+    status: (a) => (STATUS_META[a.status]?.label ?? a.status),
+  });
 
   const cancel = async (row: any) => {
     setMenu({ anchor: null, row: null });
@@ -88,9 +101,15 @@ export default function Admissions() {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {["Patient", "IPD #", "Diagnosis", "Bed", "Doctor", "Days", "Deposit", "Status", ""].map((h, i) => (
-                  <TableCell key={h || i} align={h === "Deposit" ? "right" : i === 8 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default" }}>{h}</TableCell>
-                ))}
+                <SortableHeadCell label="Patient" sortKey="patient" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="IPD #" sortKey="ipd" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Diagnosis" sortKey="diagnosis" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Bed" sortKey="bed" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Doctor" sortKey="doctor" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Days" sortKey="days" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Deposit" sortKey="deposit" orderBy={orderBy} order={order} onSort={onSort} align="right" />
+                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default" }} />
               </TableRow>
             </TableHead>
             <TableBody>
@@ -98,9 +117,9 @@ export default function Admissions() {
                 <TableRowsSkeleton rows={6} columns={9} />
               ) : isError ? (
                 <TableRow><TableCell colSpan={9} sx={{ py: 4, border: 0 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
-              ) : filtered.length === 0 ? (
+              ) : sorted.length === 0 ? (
                 <TableRow><TableCell colSpan={9} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No admissions" subtitle="Nothing here for this filter." /></TableCell></TableRow>
-              ) : filtered.map((a) => {
+              ) : sorted.map((a) => {
                 const sm = STATUS_META[a.status] || { label: a.status, color: "#64748b" };
                 return (
                   <TableRow key={a.admissionId} hover>

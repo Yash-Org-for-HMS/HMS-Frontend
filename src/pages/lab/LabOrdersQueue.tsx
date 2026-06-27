@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Chip, Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab } from "@mui/material";
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab } from "@mui/material";
 import { VisibilityRounded, BloodtypeRounded, AddRounded } from "@mui/icons-material";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
@@ -10,6 +11,8 @@ import WalkInOrderDialog from "../../components/lab/WalkInOrderDialog";
 import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
 import PageHeader from "../../components/layout/PageHeader";
+import { useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
 
 export default function LabOrdersQueue() {
   const { data: orders = [], isLoading: loading, refetch: fetchOrders } = useQuery({
@@ -92,6 +95,14 @@ export default function LabOrdersQueue() {
     return true; // All
   });
 
+  const { sorted, orderBy, order, onSort } = useTableSort(filteredOrders, {
+    barcode: (o: any) => o.sampleBarcode,
+    patient: (o: any) => `${o.patient?.firstName ?? ""} ${o.patient?.lastName ?? ""}`.trim(),
+    doctor: (o: any) => `${o.doctor?.user?.firstName ?? ""} ${o.doctor?.user?.lastName ?? ""}`.trim(),
+    date: (o: any) => (o.createdAt ? new Date(o.createdAt) : null),
+    status: (o: any) => o.status ?? "PENDING",
+  });
+
   return (
     <Box>
       <PageHeader
@@ -118,25 +129,26 @@ export default function LabOrdersQueue() {
         ) : orders.length === 0 ? (
           <Mascot pose="all-caught-up" title="No lab orders" subtitle="No lab orders found." />
         ) : (
-          <Table>
+          <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell>Barcode</TableCell>
-                <TableCell>Patient</TableCell>
-                <TableCell>Doctor</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>Status</TableCell>
+                <SortableHeadCell label="Barcode" sortKey="barcode" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Patient" sortKey="patient" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Doctor" sortKey="doctor" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Date" sortKey="date" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
                 <TableCell align="right">Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredOrders.length === 0 ? (
+              {sorted.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} sx={{ py: 3, border: 0 }}>
                     <Mascot pose="no-matches" subtitle="No orders match the selected filter." size={110} />
                   </TableCell>
                 </TableRow>
-              ) : filteredOrders.map((order: any) => (
+              ) : sorted.map((order: any) => (
                 <TableRow key={order.labOrderId} hover>
                   <TableCell sx={{ fontWeight: 600 }}>{order.sampleBarcode}</TableCell>
                   <TableCell>{order.patient?.firstName} {order.patient?.lastName}</TableCell>
@@ -171,6 +183,7 @@ export default function LabOrdersQueue() {
               ))}
             </TableBody>
           </Table>
+          </TableContainer>
         )}
       </Paper>
 
@@ -204,7 +217,7 @@ export default function LabOrdersQueue() {
           )}
           <Button onClick={() => setCollectOrder(null)} color="inherit" disabled={collecting}>Cancel</Button>
           <Button onClick={handleConfirmCollect} variant="contained" disabled={collecting || collectOrder?.billingLockActive}>
-            {collecting ? <CircularProgress size={24} color="inherit" /> : "Confirm Collection"}
+            {collecting ? <HeartbeatLoader size={22} /> : "Confirm Collection"}
           </Button>
         </DialogActions>
       </Dialog>

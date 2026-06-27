@@ -4,7 +4,6 @@ import {
   Typography,
   Paper,
   Grid,
-  CircularProgress,
   List,
   ListItem,
   ListItemIcon,
@@ -18,6 +17,7 @@ import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useNavigate } from "react-router-dom";
 import { 
   PeopleAltRounded,
@@ -117,7 +117,7 @@ export default function HospitalDashboard() {
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: theme.palette.primary.main }} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }

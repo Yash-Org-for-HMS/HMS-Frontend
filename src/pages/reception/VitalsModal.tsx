@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Box, Typography, Button, Grid, TextField, Slider,
-  CircularProgress, Alert, Divider, IconButton, Chip,
+  Alert, Divider, IconButton, Chip,
 } from "@mui/material";
 import {
   CloseRounded, FavoriteRounded, ThermostatRounded, MonitorHeartRounded,
@@ -11,6 +11,7 @@ import {
   SentimentVeryDissatisfied, SentimentSatisfied, SentimentVerySatisfied,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useToast } from "../../contexts/ToastContext";
 
 interface VitalsModalProps {
@@ -235,7 +236,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
       <DialogContent sx={{ p: 3, overflowY: "auto" }}>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress sx={{ color: "#06b6d4" }} />
+            <HeartbeatLoader size={48} />
           </Box>
         ) : (
           <>
@@ -396,7 +397,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
               onClick={handleSubmit}
               variant="contained"
               disabled={saving || success}
-              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRounded />}
+              startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
               id="vitals-save-button"
               sx={{
                 background: "linear-gradient(135deg, #06b6d4, #0891b2)",

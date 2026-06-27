@@ -1,18 +1,32 @@
 import { useState, useEffect } from "react";
 import {
-  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
-  Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
+  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Button, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha, InputAdornment
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded, MedicationRounded, SearchRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import ErrorState from "../../components/ErrorState";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Match the existing plain (non-uppercase) table-head look, overriding
+// SortableHeadCell's default uppercase/secondary styling.
+const HEAD_SX = {
+  fontWeight: 700,
+  py: 2,
+  textTransform: "none",
+  letterSpacing: "normal",
+  fontSize: "inherit",
+  color: "inherit",
+} as const;
 
 export default function MedicineCatalog() {
   const theme = useTheme();
@@ -20,6 +34,7 @@ export default function MedicineCatalog() {
   const confirm = useConfirm();
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
+  const { orderBy, order, onSort } = useServerSort();
 
   const [openDialog, setOpenDialog] = useState(false);
   const [editMed, setEditMed] = useState<any>(null);
@@ -51,11 +66,20 @@ export default function MedicineCatalog() {
     return () => clearTimeout(id);
   }, [searchTerm]);
 
+  // Reset to the first page whenever the sort column/direction changes.
+  useEffect(() => { setPage(1); }, [orderBy, order]);
+
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["pharmacy-medicines", page, debouncedSearch],
+    queryKey: ["pharmacy-medicines", page, debouncedSearch, orderBy, order],
     queryFn: async () =>
       (await axiosInstance.get("/pharmacy/medicines", {
-        params: { page, limit: ROWS_PER_PAGE, search: debouncedSearch || undefined },
+        params: {
+          page,
+          limit: ROWS_PER_PAGE,
+          search: debouncedSearch || undefined,
+          sortBy: orderBy || undefined,
+          sortOrder: order,
+        },
       })).data,
   });
   const medicines: any[] = data?.data ?? [];
@@ -214,14 +238,15 @@ export default function MedicineCatalog() {
         ) : (
           <Fade in timeout={500}>
             <Box>
-              <Table>
+              <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
-                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Code</TableCell>
-                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Brand Name</TableCell>
-                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Generic / Salt</TableCell>
-                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Manufacturer</TableCell>
-                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Selling Price</TableCell>
+                    <SortableHeadCell label="Code" sortKey="code" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Brand Name" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Generic / Salt" sortKey="generic" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Manufacturer" sortKey="manufacturer" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Selling Price" sortKey="price" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
                     <TableCell align="right" sx={{ fontWeight: 700, py: 2 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -267,6 +292,7 @@ export default function MedicineCatalog() {
                   ))}
                 </TableBody>
               </Table>
+              </TableContainer>
               <PaginationBar page={page} pageCount={pageCount} total={total} onChange={setPage} />
             </Box>
           </Fade>
@@ -395,7 +421,7 @@ export default function MedicineCatalog() {
               '&:hover': { boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)' }
             }}
           >
-            {saving ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
+            {saving ? <HeartbeatLoader size={22} /> : "Save Changes"}
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { 
-  Box, Typography, Grid, Paper, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, alpha, useTheme,
+  Box, Typography, Grid, Paper, Table, TableBody, TableCell, TableHead, TableRow, alpha, useTheme,
   Tabs, Tab, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Select, MenuItem, TextField, Chip, Tooltip
 } from "@mui/material";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import ErrorState from "../../components/ErrorState";
 import PharmacyPage from "./components/PharmacyPage";
 
@@ -64,7 +65,7 @@ export default function PharmacyDashboard() {
     >
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
-          <CircularProgress size={48} thickness={4} />
+          <HeartbeatLoader size={48} />
         </Box>
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />

@@ -1,14 +1,13 @@
 import { Box, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material";
-
-// Mascot doodles live in src/Doodle (added by the design side). One pose per
-// UI state so empty/loading/error/success screens share a single character.
-import allCaughtUp from "../Doodle/all-caught-up.png";
-import niceWork from "../Doodle/nice-work.png";
-import noMatches from "../Doodle/no-matches.png";
-import nothingHereYet from "../Doodle/nothing-here-yet.png";
-import oops from "../Doodle/oops.png";
-import thinking from "../Doodle/thinking-loading.png";
+import {
+  TaskAltRounded,
+  InboxRounded,
+  SearchOffRounded,
+  ErrorOutlineRounded,
+  CheckCircleRounded,
+} from "@mui/icons-material";
+import HeartbeatLoader from "./HeartbeatLoader";
 
 export type MascotPose =
   | "all-caught-up"   // positive empty: nothing left to do (empty queue / no appointments)
@@ -18,29 +17,31 @@ export type MascotPose =
   | "oops"            // error / failed to load
   | "nice-work";      // success / completed
 
-const POSE_SRC: Record<MascotPose, string> = {
-  "all-caught-up": allCaughtUp,
-  "nothing-here-yet": nothingHereYet,
-  "no-matches": noMatches,
-  thinking,
-  oops,
-  "nice-work": niceWork,
+// Clean, icon-based empty/error/success states (no illustrations). The
+// "thinking" pose is a loading state, so it renders the heartbeat loader.
+const POSE_META: Record<Exclude<MascotPose, "thinking">, { Icon: typeof TaskAltRounded; color: string }> = {
+  "all-caught-up": { Icon: TaskAltRounded, color: "#10b981" },
+  "nothing-here-yet": { Icon: InboxRounded, color: "text.disabled" },
+  "no-matches": { Icon: SearchOffRounded, color: "text.disabled" },
+  oops: { Icon: ErrorOutlineRounded, color: "#ef4444" },
+  "nice-work": { Icon: CheckCircleRounded, color: "#10b981" },
 };
 
 interface MascotProps {
   pose: MascotPose;
   title?: string;
   subtitle?: string;
-  /** Image width in px. Default 160. */
+  /** Icon size in px. Default 56. */
   size?: number;
   sx?: SxProps<Theme>;
 }
 
 /**
- * Renders a mascot doodle for an empty/loading/error/success state, with an
- * optional title and subtitle. Drop it anywhere a placeholder is needed.
+ * Placeholder for empty / error / success states: a single icon with an
+ * optional title and subtitle. (Loading is handled by HeartbeatLoader, used
+ * here for the "thinking" pose.) Drop it anywhere a placeholder is needed.
  */
-export default function Mascot({ pose, title, subtitle, size = 160, sx }: MascotProps) {
+export default function Mascot({ pose, title, subtitle, size = 56, sx }: MascotProps) {
   return (
     <Box
       sx={{
@@ -54,23 +55,14 @@ export default function Mascot({ pose, title, subtitle, size = 160, sx }: Mascot
         ...sx,
       }}
     >
-      <Box
-        component="img"
-        src={POSE_SRC[pose]}
-        alt={title || pose}
-        sx={{
-          width: size,
-          height: "auto",
-          maxWidth: "100%",
-          userSelect: "none",
-          pointerEvents: "none",
-          // The doodles ship with a solid light background. On a light theme,
-          // `multiply` lets that background blend into whatever surface sits
-          // behind it (white cards, the gray page, tinted panels) so the image
-          // no longer reads as a mismatched rectangle.
-          mixBlendMode: "multiply",
-        }}
-      />
+      {pose === "thinking" ? (
+        <HeartbeatLoader size={size} />
+      ) : (
+        (() => {
+          const { Icon, color } = POSE_META[pose];
+          return <Icon sx={{ fontSize: size, color }} />;
+        })()
+      )}
       {title && (
         <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary" }}>
           {title}

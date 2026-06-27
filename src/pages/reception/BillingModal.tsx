@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Box, Typography, Divider, CircularProgress, Alert,
+  Button, Box, Typography, Divider, Alert,
   Grid, TextField, MenuItem, Paper, Chip
 } from "@mui/material";
 import {
   ReceiptRounded, CheckCircleRounded, PrintRounded, PaymentRounded, CloseRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
@@ -345,7 +346,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       <DialogContent sx={{ py: 3 }}>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-            <CircularProgress sx={{ color: "#06b6d4" }} />
+            <HeartbeatLoader size={48} />
           </Box>
         ) : loadError ? (
           <ErrorState message={loadError} onRetry={fetchBillingData} />
@@ -560,7 +561,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                       variant="contained"
                       onClick={handlePayment}
                       disabled={paying || !paymentAmount || !paymentMethodId || Number(paymentAmount) <= 0}
-                      startIcon={paying ? <CircularProgress size={20} /> : <PaymentRounded />}
+                      startIcon={paying ? <HeartbeatLoader size={22} /> : <PaymentRounded />}
                       sx={{ 
                         py: 1.5, 
                         bgcolor: "#10b981", 

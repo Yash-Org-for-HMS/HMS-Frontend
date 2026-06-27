@@ -11,12 +11,12 @@ import {
   MenuItem,
   IconButton,
   Alert,
-  CircularProgress,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 
@@ -87,7 +87,7 @@ export default function SuperAdminForm() {
   if (initialLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "primary.main" }} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }
@@ -238,7 +238,7 @@ export default function SuperAdminForm() {
                   type="submit" 
                   variant="contained" 
                   disabled={loading} 
-                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />} 
+                  startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
                     background: "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)",
                     boxShadow: "0 4px 14px 0 rgba(139, 92, 246, 0.39)",

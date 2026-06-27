@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Chip, Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab } from "@mui/material";
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab } from "@mui/material";
 import { VisibilityRounded, CheckCircleRounded, InsertDriveFileRounded, EditRounded, CloudUploadRounded, AddRounded } from "@mui/icons-material";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
@@ -10,6 +11,8 @@ import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
 import { assetUrl } from "../../utils/assetUrl";
 import PageHeader from "../../components/layout/PageHeader";
+import { useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
 
 export default function RadiologyOrdersQueue() {
   const { data: orders = [], isLoading: loading, refetch: fetchOrders } = useQuery({
@@ -141,6 +144,14 @@ export default function RadiologyOrdersQueue() {
     return true; // All
   });
 
+  const { sorted, orderBy, order, onSort } = useTableSort(filteredOrders, {
+    scanType: (o: any) => o.scanType,
+    patient: (o: any) => `${o.patient?.firstName ?? ""} ${o.patient?.lastName ?? ""}`.trim(),
+    doctor: (o: any) => `${o.doctor?.user?.firstName ?? ""} ${o.doctor?.user?.lastName ?? ""}`.trim(),
+    date: (o: any) => (o.orderDate ? new Date(o.orderDate) : null),
+    status: (o: any) => o.status ?? "PENDING",
+  });
+
   return (
     <Box>
       <PageHeader
@@ -167,25 +178,26 @@ export default function RadiologyOrdersQueue() {
         ) : orders.length === 0 ? (
           <Mascot pose="all-caught-up" title="No radiology orders" subtitle="No radiology orders found." />
         ) : (
-          <Table>
+          <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell>Scan Type</TableCell>
-                <TableCell>Patient</TableCell>
-                <TableCell>Doctor</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>Status</TableCell>
+                <SortableHeadCell label="Scan Type" sortKey="scanType" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Patient" sortKey="patient" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Doctor" sortKey="doctor" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Date" sortKey="date" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
                 <TableCell align="right">Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredOrders.length === 0 ? (
+              {sorted.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} sx={{ py: 3, border: 0 }}>
                     <Mascot pose="no-matches" subtitle="No orders match the selected filter." size={110} />
                   </TableCell>
                 </TableRow>
-              ) : filteredOrders.map((order: any) => (
+              ) : sorted.map((order: any) => (
                 <TableRow key={order.radiologyOrderId} hover>
                   <TableCell sx={{ fontWeight: 600 }}>{order.scanType}</TableCell>
                   <TableCell>{order.patient?.firstName} {order.patient?.lastName}</TableCell>
@@ -208,6 +220,7 @@ export default function RadiologyOrdersQueue() {
               ))}
             </TableBody>
           </Table>
+          </TableContainer>
         )}
       </Paper>
 
@@ -266,7 +279,7 @@ export default function RadiologyOrdersQueue() {
                   accept="application/pdf,image/jpeg,image/png"
                 />
                 {uploading ? (
-                  <CircularProgress size={24} />
+                  <HeartbeatLoader size={22} />
                 ) : reportUrl ? (
                   <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
                     <CheckCircleRounded color="success" fontSize="large" />
@@ -325,7 +338,7 @@ export default function RadiologyOrdersQueue() {
           )}
           <Button onClick={handleClose} color="inherit">Cancel</Button>
           <Button onClick={handleSave} variant="contained" disabled={saving || editOrder?.billingLockActive}>
-            {saving ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
+            {saving ? <HeartbeatLoader size={22} /> : "Save Changes"}
           </Button>
         </DialogActions>
       </Dialog>

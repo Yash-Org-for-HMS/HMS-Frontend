@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import {
   Box,
   Container,
@@ -16,7 +17,6 @@ import {
   TableRow,
   IconButton,
   Chip,
-  CircularProgress,
   TextField,
   InputAdornment,
   Pagination,
@@ -46,6 +46,12 @@ import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
 import FilterBar from "../../components/layout/FilterBar";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Keep the admin list's existing sentence-case header look (the SortableHeadCell
+// default is the reception-panel uppercase style).
+const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal" } as const;
 
 export default function HospitalsList() {
   const { t } = useTranslation();
@@ -63,19 +69,27 @@ export default function HospitalsList() {
   });
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
+
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
-    queryKey: ["hospitals", page, search, activeTab],
+    queryKey: ["hospitals", page, search, activeTab, orderBy, order],
     queryFn: async () =>
       (await axiosInstance.get("/hospitals", {
-        params: { page, limit: 10, search, ...(activeTab === 1 ? { showDeleted: "true" } : {}) },
+        params: {
+          page, limit: 10, search,
+          sortBy: orderBy || undefined, sortOrder: order,
+          ...(activeTab === 1 ? { showDeleted: "true" } : {}),
+        },
       })).data,
   });
   const hospitals: any[] = data?.data ?? [];
   const totalPages: number = data?.pagination?.totalPages ?? 1;
 
+  // Reset to the first page whenever the tab or sort changes.
   useEffect(() => {
     setPage(1);
-  }, [activeTab]);
+  }, [activeTab, orderBy, order]);
 
   const handleDelete = async () => {
     if (!deleteDialog.hospital) return;
@@ -163,15 +177,15 @@ export default function HospitalsList() {
           overflow: "hidden",
         }}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("hospitals.code", "Code")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("hospitals.name", "Hospital Name")}</TableCell>
+                <SortableHeadCell label={t("hospitals.code", "Code")} sortKey="code" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("hospitals.name", "Hospital Name")} sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
                 <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("hospitals.plan", "Plan")}</TableCell>
                 <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("hospitals.branches", "Branches")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("hospitals.status", "Status")}</TableCell>
+                <SortableHeadCell label={t("hospitals.status", "Status")} sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
                 <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
               </TableRow>
             </TableHead>
@@ -372,7 +386,7 @@ export default function HospitalsList() {
             onClick={handleDelete}
             disabled={actionLoading}
             variant="contained"
-            startIcon={actionLoading ? <CircularProgress size={16} color="inherit" /> : <DeleteOutlineRounded />}
+            startIcon={actionLoading ? <HeartbeatLoader size={22} /> : <DeleteOutlineRounded />}
             sx={{
               bgcolor: "#ef4444",
               textTransform: "none",

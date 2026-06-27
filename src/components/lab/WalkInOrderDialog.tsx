@@ -1,8 +1,9 @@
 import { useState } from "react";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
-  Autocomplete, MenuItem, CircularProgress, Box, Typography,
+  Autocomplete, MenuItem, Box, Typography,
 } from "@mui/material";
+import HeartbeatLoader from "../HeartbeatLoader";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
@@ -139,7 +140,7 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
                   ...params.InputProps,
                   endAdornment: (
                     <>
-                      {searchingPatients ? <CircularProgress color="inherit" size={18} /> : null}
+                      {searchingPatients ? <HeartbeatLoader size={22} /> : null}
                       {params.InputProps.endAdornment}
                     </>
                   ),
@@ -199,7 +200,7 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={handleClose} color="inherit" disabled={submitting}>Cancel</Button>
         <Button onClick={handleSubmit} variant="contained" disabled={submitting}>
-          {submitting ? <CircularProgress size={22} color="inherit" /> : "Create Order"}
+          {submitting ? <HeartbeatLoader size={22} /> : "Create Order"}
         </Button>
       </DialogActions>
     </Dialog>

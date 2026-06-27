@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box,
@@ -17,7 +17,6 @@ import {
   TextField,
   InputAdornment,
   Avatar,
-  CircularProgress,
   Pagination,
   Alert,
   Dialog,
@@ -47,12 +46,15 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import Mascot from "../../components/Mascot";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import IdCardModal from "../../components/reception/IdCardModal";
 import AdmitDialog from "../../components/ipd/AdmitDialog";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
 
 interface Patient {
   patientId: string;
@@ -97,11 +99,19 @@ export default function PatientsList() {
 
   const searchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
+
+  // Jump back to the first page whenever the sort changes.
+  useEffect(() => {
+    setPage(1);
+  }, [orderBy, order]);
+
   const { data, isLoading: loading, error } = useQuery({
-    queryKey: ["patients", search, page],
+    queryKey: ["patients", search, page, orderBy, order],
     queryFn: async () => {
       const res = await axiosInstance.get("/reception/patients", {
-        params: { search, page, limit: 20 },
+        params: { search, page, limit: 20, sortBy: orderBy || undefined, sortOrder: order },
       });
       return res.data;
     },
@@ -201,7 +211,7 @@ export default function PatientsList() {
               ),
               endAdornment: loading ? (
                 <InputAdornment position="end">
-                  <CircularProgress size={18} sx={{ color: "#06b6d4" }} />
+                  <HeartbeatLoader size={22} />
                 </InputAdornment>
               ) : null,
             }}
@@ -236,28 +246,38 @@ export default function PatientsList() {
             overflow: "hidden",
           }}
         >
-          <TableContainer>
-            <Table>
+          <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  {["Patient", "MRN / UHID", "Age / DOB", "Gender", "Blood Group", "Phone", "Actions"].map((h, i) => (
+                  <SortableHeadCell label="Patient" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} />
+                  <SortableHeadCell label="MRN / UHID" sortKey="uhid" orderBy={orderBy} order={order} onSort={onSort} />
+                  <SortableHeadCell label="Age / DOB" sortKey="dob" orderBy={orderBy} order={order} onSort={onSort} />
+                  {["Gender", "Blood Group"].map((h) => (
                     <TableCell
                       key={h}
-                      align={i === 6 ? "right" : "left"}
                       sx={{
-                        color: "text.secondary",
-                        fontWeight: 700,
-                        fontSize: "0.72rem",
-                        textTransform: "uppercase",
-                        letterSpacing: 0.5,
-                        borderBottom: "1px solid", borderColor: "divider",
-                        py: 2,
+                        color: "text.secondary", fontWeight: 700, fontSize: "0.72rem",
+                        textTransform: "uppercase", letterSpacing: 0.5,
+                        borderBottom: "1px solid", borderColor: "divider", py: 2,
                         bgcolor: "background.default",
                       }}
                     >
                       {h}
                     </TableCell>
                   ))}
+                  <SortableHeadCell label="Phone" sortKey="phone" orderBy={orderBy} order={order} onSort={onSort} />
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: "text.secondary", fontWeight: 700, fontSize: "0.72rem",
+                      textTransform: "uppercase", letterSpacing: 0.5,
+                      borderBottom: "1px solid", borderColor: "divider", py: 2,
+                      bgcolor: "background.default",
+                    }}
+                  >
+                    Actions
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -472,7 +492,7 @@ export default function PatientsList() {
             Cancel
           </Button>
           <Button fullWidth variant="contained" onClick={handleDelete} disabled={deleteMutation.isPending} sx={{ bgcolor: "#ef4444", "&:hover": { bgcolor: "#dc2626" }, textTransform: "none", fontWeight: 600 }}>
-            {deleteMutation.isPending ? <CircularProgress size={18} color="inherit" /> : "Delete"}
+            {deleteMutation.isPending ? <HeartbeatLoader size={22} /> : "Delete"}
           </Button>
         </DialogActions>
       </Dialog>

@@ -11,7 +11,6 @@ import {
   TableHead,
   TableRow,
   Chip,
-  CircularProgress,
   TextField,
   InputAdornment,
   Pagination,
@@ -20,10 +19,16 @@ import {
 } from "@mui/material";
 import { EmailRounded, SmsRounded, CheckCircleRounded, SearchRounded, ScienceRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Match this list's existing sentence-case header look.
+const headSx = { bgcolor: "background.paper", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider", textTransform: "none", letterSpacing: "normal", fontSize: "0.875rem" } as const;
 
 const PAGE_SIZE = 20;
 
@@ -41,11 +46,19 @@ export default function NotificationsLog() {
     return () => clearTimeout(t);
   }, [searchInput]);
 
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
+
+  // Reset to the first page whenever the sort changes.
+  useEffect(() => {
+    setPage(1);
+  }, [orderBy, order]);
+
   const { data, isLoading: loading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["reception-notifications", search, page],
+    queryKey: ["reception-notifications", search, page, orderBy, order],
     queryFn: async () =>
       (await axiosInstance.get("/reception/notifications", {
-        params: { search, page, limit: PAGE_SIZE },
+        params: { search, page, limit: PAGE_SIZE, sortBy: orderBy || undefined, sortOrder: order },
       })).data,
     placeholderData: keepPreviousData, // keep the current page visible while the next loads
   });
@@ -87,7 +100,7 @@ export default function NotificationsLog() {
               <SearchRounded sx={{ color: "text.secondary" }} />
             </InputAdornment>
           ),
-          endAdornment: isFetching ? <CircularProgress size={16} sx={{ color: "#8b5cf6" }} /> : undefined,
+          endAdornment: isFetching ? <HeartbeatLoader size={22} /> : undefined,
         }}
       />
 
@@ -96,11 +109,11 @@ export default function NotificationsLog() {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ bgcolor: "background.paper", color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Channel</TableCell>
-                <TableCell sx={{ bgcolor: "background.paper", color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Title</TableCell>
-                <TableCell sx={{ bgcolor: "background.paper", color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Message</TableCell>
-                <TableCell sx={{ bgcolor: "background.paper", color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Status</TableCell>
-                <TableCell sx={{ bgcolor: "background.paper", color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider", textAlign: "right" }}>Sent At</TableCell>
+                <SortableHeadCell label="Channel" sortKey="channel" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
+                <SortableHeadCell label="Title" sortKey="title" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
+                <SortableHeadCell label="Message" sortKey="message" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
+                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
+                <SortableHeadCell label="Sent At" sortKey="sentAt" orderBy={orderBy} order={order} onSort={onSort} align="right" sx={headSx} />
               </TableRow>
             </TableHead>
             <TableBody>

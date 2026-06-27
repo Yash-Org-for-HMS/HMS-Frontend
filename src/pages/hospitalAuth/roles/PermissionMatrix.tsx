@@ -4,7 +4,6 @@ import {
   Typography,
   Paper,
   Button,
-  CircularProgress,
   Alert,
   Switch,
   Table,
@@ -33,6 +32,7 @@ import { axiosInstance } from "../../../api/axios";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
+import HeartbeatLoader from "../../../components/HeartbeatLoader";
 
 interface Permission {
   permissionId: string;
@@ -181,7 +181,7 @@ export default function PermissionMatrix() {
   if (initialLoad) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 10 }}>
-        <CircularProgress sx={{ color: "primary.main" }} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }
@@ -201,7 +201,7 @@ export default function PermissionMatrix() {
             variant="contained"
             onClick={handleSave}
             disabled={saving}
-            startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />}
+            startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             sx={{
               bgcolor: "#6366f1",
               "&:hover": { bgcolor: "#4f46e5" },

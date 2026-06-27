@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Box, Typography, Button, TextField, CircularProgress,
+  Box, Typography, Button, TextField,
   Paper, Grid, Alert, MenuItem, Link
 } from "@mui/material";
 import { SaveRounded, CameraAltRounded, DescriptionRounded } from "@mui/icons-material";
@@ -10,6 +10,7 @@ import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { assetUrl } from "../../utils/assetUrl";
 import { useToast } from "../../contexts/ToastContext";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 const DOCTOR_BLUE = "#3b82f6";
 
@@ -130,7 +131,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
           <Button 
             variant="contained" 
-            startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRounded />}
+            startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             sx={{ bgcolor: DOCTOR_BLUE }}
             onClick={handleSubmit}
             disabled={saving}
@@ -146,7 +147,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
           <CameraAltRounded sx={{ color: "text.secondary" }} fontSize="small" /> Previously Ordered Scans
         </Typography>
         {loading ? (
-          <CircularProgress size={24} />
+          <HeartbeatLoader size={48} />
         ) : isError ? (
           <ErrorState message={(error as any)?.response?.data?.message || "Failed to load radiology orders"} onRetry={refetch} />
         ) : existingOrders.length === 0 ? (

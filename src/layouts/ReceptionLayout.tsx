@@ -132,51 +132,68 @@ export default function ReceptionLayout() {
         color: "text.primary",
       }}
     >
-      {/* Logo / Hospital Name */}
-      <Toolbar
-        sx={{
-          px: 2.5,
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          borderBottom: "1px solid rgba(6, 182, 212, 0.15)",
-          minHeight: "70px !important",
-        }}
-      >
+      {/* Logo / Hospital Name — branded card */}
+      <Box sx={{ p: 1.5, pb: 0.5, minHeight: "70px" }}>
         <Box
           sx={{
-            width: 40,
-            height: 40,
-            borderRadius: 1.5,
-            bgcolor: hospital?.logoUrl ? "transparent" : "primary.main",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            boxShadow: hospital?.logoUrl ? "none" : "0 0 16px rgba(6, 182, 212, 0.4)",
-            flexShrink: 0,
-            overflow: "hidden"
+            gap: 1.5,
+            p: 1.25,
+            borderRadius: 3,
+            background: "linear-gradient(120deg, rgba(6,182,212,0.12), rgba(6,182,212,0.03))",
+            border: "1px solid rgba(6,182,212,0.18)",
           }}
         >
-          {hospital?.logoUrl ? (
-            <img src={assetUrl(hospital.logoUrl)} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <LocalHospitalRounded fontSize="medium" sx={{ color: "#fff" }} />
-          )}
-        </Box>
-        <Box sx={{ overflow: "hidden" }}>
-          <Typography
-            variant="subtitle1"
-            fontWeight="700"
-            noWrap
-            sx={{ maxWidth: 170, color: "text.primary" }}
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: 1.5,
+              bgcolor: hospital?.logoUrl ? "transparent" : "primary.main",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: hospital?.logoUrl ? "none" : "0 4px 14px rgba(6, 182, 212, 0.4)",
+              flexShrink: 0,
+              overflow: "hidden",
+            }}
           >
-            {hospital?.name || "Reception"}
-          </Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
-            Reception Portal
-          </Typography>
+            {hospital?.logoUrl ? (
+              <img src={assetUrl(hospital.logoUrl)} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <LocalHospitalRounded fontSize="medium" sx={{ color: "#fff" }} />
+            )}
+          </Box>
+          <Box sx={{ overflow: "hidden", flex: 1, minWidth: 0 }}>
+            <Typography variant="subtitle2" fontWeight={800} noWrap sx={{ color: "text.primary", lineHeight: 1.15 }}>
+              {hospital?.name || "Reception"}
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
+              Reception Portal
+            </Typography>
+          </Box>
+          {/* Active-session status chip */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              px: 0.9,
+              py: 0.3,
+              borderRadius: 20,
+              bgcolor: "background.paper",
+              border: "1px solid rgba(6,182,212,0.25)",
+              flexShrink: 0,
+            }}
+          >
+            <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#22c55e" }} />
+            <Typography sx={{ fontSize: "0.62rem", fontWeight: 800, color: "primary.main", letterSpacing: 0.2 }}>
+              Live
+            </Typography>
+          </Box>
         </Box>
-      </Toolbar>
+      </Box>
 
       {/* Quick search — opens the command palette (also ⌘K / Ctrl+K) */}
       <Box sx={{ px: 1.5, pt: 1.5 }}>
@@ -266,39 +283,78 @@ export default function ReceptionLayout() {
         <BranchSwitcher />
       </Box>
 
-      {/* User card at bottom */}
-      <Box sx={{ p: 2 }}>
+      {/* User card at bottom — gradient card with sign-out */}
+      <Box sx={{ p: 2, pt: 1.5 }}>
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: 1.5,
-            p: 1.5,
-            borderRadius: 2,
-            bgcolor: "background.default",
-            border: "1px solid",
-            borderColor: "divider",
+            gap: 1.25,
+            p: 1.25,
+            borderRadius: 3,
+            background: "linear-gradient(120deg, rgba(6,182,212,0.12), rgba(6,182,212,0.02))",
+            border: "1px solid rgba(6,182,212,0.16)",
           }}
         >
-          <Avatar
-            sx={{
-              width: 34,
-              height: 34,
-              bgcolor: "primary.main",
-              fontSize: "0.85rem",
-              fontWeight: 700,
-            }}
-          >
-            {user?.firstName?.charAt(0) || "R"}
-          </Avatar>
-          <Box sx={{ overflow: "hidden", flex: 1 }}>
-            <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600, display: "block" }} noWrap>
+          <Box sx={{ position: "relative", flexShrink: 0 }}>
+            <Avatar
+              sx={{
+                width: 36,
+                height: 36,
+                bgcolor: "primary.main",
+                fontSize: "0.85rem",
+                fontWeight: 700,
+              }}
+            >
+              {user?.firstName?.charAt(0) || "R"}
+            </Avatar>
+            <Box
+              sx={{
+                position: "absolute",
+                right: -2,
+                bottom: -2,
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                bgcolor: "#22c55e",
+                border: "2px solid",
+                borderColor: "background.paper",
+              }}
+            />
+          </Box>
+          <Box sx={{ overflow: "hidden", flex: 1, minWidth: 0 }}>
+            <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 700, display: "block" }} noWrap>
               {user?.firstName} {user?.lastName}
             </Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
+            <Box
+              component="span"
+              sx={{
+                display: "inline-block",
+                mt: 0.25,
+                px: 0.8,
+                py: 0.1,
+                borderRadius: 20,
+                bgcolor: "background.paper",
+                border: "1px solid rgba(6,182,212,0.25)",
+                fontSize: "0.6rem",
+                fontWeight: 800,
+                letterSpacing: 0.3,
+                textTransform: "uppercase",
+                color: "primary.main",
+              }}
+            >
               {user?.roleName || "Receptionist"}
-            </Typography>
+            </Box>
           </Box>
+          <Tooltip title="Sign out">
+            <IconButton
+              onClick={logout}
+              size="small"
+              sx={{ color: "primary.main", flexShrink: 0, "&:hover": { bgcolor: "rgba(6,182,212,0.12)" } }}
+            >
+              <LogoutRounded fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Box>
         <Typography variant="caption" sx={{ color: "#334155", display: "block", textAlign: "center", mt: 1 }}>
           © {new Date().getFullYear()} HMS SaaS

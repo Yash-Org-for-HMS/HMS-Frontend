@@ -12,7 +12,6 @@ import {
   MenuItem,
   IconButton,
   Alert,
-  CircularProgress,
   Switch,
   FormControlLabel,
   Checkbox,
@@ -24,6 +23,7 @@ import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 export default function RoleForm() {
   const { t } = useTranslation();
@@ -117,7 +117,7 @@ export default function RoleForm() {
   if (initialLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "primary.main" }} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }
@@ -303,7 +303,7 @@ export default function RoleForm() {
                   type="submit" 
                   variant="contained" 
                   disabled={loading} 
-                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />} 
+                  startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ background: "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)" }}
                 >
                   {loading ? t("common.saving", "Saving...") : t("common.save", "Save Role")}

@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, TextField, MenuItem,
-  CircularProgress, Alert, Grid, IconButton, FormControlLabel, Switch
+  Alert, Grid, IconButton, FormControlLabel, Switch
 } from "@mui/material";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import ErrorState from "../../components/ErrorState";
 import BillingModal from "./BillingModal";
 import { useToast } from "../../contexts/ToastContext";
@@ -211,7 +212,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     }
   };
 
-  if (loading) return <Box sx={{ p: 4, textAlign: "center" }}><CircularProgress sx={{ color: "#06b6d4" }}/></Box>;
+  if (loading) return <Box sx={{ p: 4, textAlign: "center" }}><HeartbeatLoader size={48} /></Box>;
 
   if (isError) return <Box sx={{ p: 4 }}><ErrorState message={(error as any)?.response?.data?.message || "Failed to initialize form"} onRetry={refetch} /></Box>;
 
@@ -363,7 +364,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
               <Button variant="outlined" onClick={() => { if (isEmbedded && onCancel) onCancel(); else navigate(-1); }} sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none" }}>
                 Cancel
               </Button>
-              <Button type="submit" variant="contained" disabled={saving || !formData.patientId} startIcon={saving ? <CircularProgress size={20} /> : <SaveRounded />} sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" }, textTransform: "none", fontWeight: 600 }}>
+              <Button type="submit" variant="contained" disabled={saving || !formData.patientId} startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />} sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" }, textTransform: "none", fontWeight: 600 }}>
                 {id ? "Update Appointment" : "Confirm Booking"}
               </Button>
             </Box>

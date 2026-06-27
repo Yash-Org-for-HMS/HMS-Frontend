@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Button, CircularProgress, Table, TableBody, TableCell,
+  Box, Typography, Paper, Button, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, TextField, IconButton, Tooltip, Divider,
 } from "@mui/material";
 import { AddRounded, DeleteOutlineRounded } from "@mui/icons-material";
@@ -12,8 +12,14 @@ import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
+import { useTableSort } from "../../../components/table/useTableSort";
+import SortableHeadCell from "../../../components/table/SortableHeadCell";
+import HeartbeatLoader from "../../../components/HeartbeatLoader";
 
 const INACTIVE = ["rejected", "cancelled", "declined"];
+
+// Match the file's existing sentence-case fontWeight-600 header look (override SortableHeadCell's default uppercase/700 style).
+const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 600, fontSize: "0.875rem", py: undefined };
 
 export default function DoctorLeaves() {
   const navigate = useNavigate();
@@ -36,6 +42,12 @@ export default function DoctorLeaves() {
     queryKey: ["doctor-leaves", id],
     queryFn: async () => (await axiosInstance.get(`/hospital/doctors/${id}/leaves`)).data.data as any[],
     enabled: !!id,
+  });
+
+  const { sorted, orderBy, order, onSort } = useTableSort(leaves, {
+    date: (l) => l.leaveDate ? new Date(l.leaveDate) : null,
+    reason: (l) => l.leaveReason ?? null,
+    status: (l) => l.status ?? null,
   });
 
   const addLeave = useMutation({
@@ -94,7 +106,7 @@ export default function DoctorLeaves() {
           />
           <Button
             variant="contained"
-            startIcon={addLeave.isPending ? <CircularProgress size={16} color="inherit" /> : <AddRounded />}
+            startIcon={addLeave.isPending ? <HeartbeatLoader size={22} /> : <AddRounded />}
             onClick={() => addLeave.mutate()}
             disabled={addLeave.isPending || !fromDate}
             sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, textTransform: "none", fontWeight: 600 }}
@@ -107,28 +119,29 @@ export default function DoctorLeaves() {
       <Divider sx={{ mb: 2 }} />
 
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><CircularProgress sx={{ color: "primary.main" }} /></Box>
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><HeartbeatLoader size={48} /></Box>
       ) : isError ? (
         <ErrorState title="Couldn't load leaves" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (
-        <TableContainer component={Paper} elevation={0} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
-          <Table>
+        <TableContainer component={Paper} elevation={0} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, border: "1px solid", borderColor: "divider", maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {["Leave Date", "Reason", "Status", ""].map((h, i) => (
-                  <TableCell key={i} sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>{h}</TableCell>
-                ))}
+                <SortableHeadCell label="Leave Date" sortKey="date" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Reason" sortKey="reason" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.default" }} />
               </TableRow>
             </TableHead>
             <TableBody>
-              {leaves.length === 0 ? (
+              {sorted.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} sx={{ py: 3, borderBottom: "none" }}>
                     <Mascot pose="nothing-here-yet" subtitle="No leaves recorded for this doctor." size={110} />
                   </TableCell>
                 </TableRow>
               ) : (
-                leaves.map((leave) => {
+                sorted.map((leave) => {
                   const inactive = INACTIVE.includes((leave.status || "").toLowerCase());
                   return (
                     <TableRow key={leave.doctorLeaveId} hover sx={{ "&:last-child td": { border: 0 } }}>

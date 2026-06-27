@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -38,6 +38,12 @@ import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
 import FilterBar from "../../components/layout/FilterBar";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Keep the admin list's existing sentence-case header look (the SortableHeadCell
+// default is the reception-panel uppercase style).
+const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", bgcolor: "background.paper", color: "text.secondary" } as const;
 
 export default function TrialsList() {
   const { t } = useTranslation();
@@ -53,13 +59,21 @@ export default function TrialsList() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTrialId, setSelectedTrialId] = useState<string | null>(null);
 
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
+
   const { data: trialsData, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["trials", page, search, statusFilter],
+    queryKey: ["trials", page, search, statusFilter, orderBy, order],
     queryFn: async () =>
-      (await axiosInstance.get("/trials", { params: { page, limit: 10, search, status: statusFilter } })).data,
+      (await axiosInstance.get("/trials", { params: { page, limit: 10, search, status: statusFilter, sortBy: orderBy || undefined, sortOrder: order } })).data,
   });
   const trials: any[] = trialsData?.data ?? [];
   const totalPages: number = trialsData?.pagination?.totalPages ?? 1;
+
+  // Reset to the first page whenever the sort changes.
+  useEffect(() => {
+    setPage(1);
+  }, [orderBy, order]);
 
   const openActionMenu = (e: React.MouseEvent<HTMLElement>, trialId: string) => {
     e.stopPropagation();
@@ -173,16 +187,16 @@ export default function TrialsList() {
           overflow: "hidden",
         }}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("trials.hospitalName")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("trials.startDate")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("trials.endDate")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("trials.daysRemaining")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("trials.status")}</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("trials.hospitalName")}</TableCell>
+                <SortableHeadCell label={t("trials.startDate")} sortKey="startDate" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("trials.endDate")} sortKey="endDate" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("trials.daysRemaining")}</TableCell>
+                <SortableHeadCell label={t("trials.status")} sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("common.actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

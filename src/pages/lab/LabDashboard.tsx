@@ -1,5 +1,6 @@
-import { Box, Typography, Grid, Paper, CircularProgress, Chip, Table, TableBody, TableCell, TableHead, TableRow, Button, alpha } from "@mui/material";
+import { Box, Typography, Grid, Paper, Chip, Table, TableBody, TableCell, TableHead, TableRow, Button, alpha } from "@mui/material";
 import { ScienceRounded, CheckCircleRounded, PendingActionsRounded, BiotechRounded, AttachMoneyRounded, TrendingUpRounded } from "@mui/icons-material";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
@@ -91,7 +92,7 @@ export default function LabDashboard() {
   );
 
   if (loading) {
-    return <Box sx={{ display: "flex", justifyContent: "center", p: 10 }}><CircularProgress /></Box>;
+    return <Box sx={{ display: "flex", justifyContent: "center", p: 10 }}><HeartbeatLoader size={48} /></Box>;
   }
 
   if (isError) {

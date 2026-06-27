@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, CircularProgress, Avatar, Chip, Divider, IconButton, Button,
+  Box, Typography, Paper, Avatar, Chip, Divider, IconButton, Button,
 } from "@mui/material";
 import {
   ArrowBackRounded, PersonRounded, HistoryRounded, WarningAmberRounded,
@@ -10,6 +10,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 const DOCTOR_BLUE = "#3b82f6";
 
@@ -118,7 +119,7 @@ export default function DoctorPatientProfile() {
 
           {historyQ.isLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-              <CircularProgress size={24} sx={{ color: DOCTOR_BLUE }} />
+              <HeartbeatLoader size={48} />
             </Box>
           ) : history.length === 0 ? (
             <Mascot pose="nothing-here-yet" subtitle="No past consultations on record." size={120} />

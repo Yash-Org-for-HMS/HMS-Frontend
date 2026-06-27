@@ -2,10 +2,11 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography,
-  TextField, Chip, CircularProgress, Alert,
+  TextField, Chip, Alert,
 } from "@mui/material";
 import { LogoutRounded, PaymentRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../HeartbeatLoader";
 import { useToast } from "../../contexts/ToastContext";
 import BillingModal from "../../pages/reception/BillingModal";
 
@@ -78,7 +79,7 @@ export default function CheckoutDialog({ open, onClose, token, onDone }: Checkou
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>Billing:</Typography>
               {isFetching && !invoice ? (
-                <CircularProgress size={16} sx={{ color: "#06b6d4" }} />
+                <HeartbeatLoader size={22} />
               ) : !apptId ? (
                 <Chip label="No invoice (walk-in)" size="small" sx={{ bgcolor: "action.hover", color: "text.secondary", fontWeight: 600 }} />
               ) : hasDues ? (
@@ -114,7 +115,7 @@ export default function CheckoutDialog({ open, onClose, token, onDone }: Checkou
             onClick={handleCheckout}
             variant="contained"
             disabled={submitting}
-            startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <LogoutRounded />}
+            startIcon={submitting ? <HeartbeatLoader size={22} /> : <LogoutRounded />}
             sx={{ bgcolor: hasDues ? "#f59e0b" : "#10b981", "&:hover": { bgcolor: hasDues ? "#d97706" : "#059669" } }}
           >
             {hasDues ? "Check out with dues" : "Complete check-out"}

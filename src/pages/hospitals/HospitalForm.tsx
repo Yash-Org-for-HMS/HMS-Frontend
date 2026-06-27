@@ -12,7 +12,6 @@ import {
   MenuItem,
   IconButton,
   Alert,
-  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -24,6 +23,7 @@ import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 
@@ -167,7 +167,7 @@ export default function HospitalForm() {
   if (initialLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "primary.main" }} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }
@@ -343,7 +343,7 @@ export default function HospitalForm() {
                   type="submit" 
                   variant="contained" 
                   disabled={loading} 
-                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />} 
+                  startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
                     background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
                     boxShadow: "0 4px 14px 0 rgba(59, 130, 246, 0.39)",

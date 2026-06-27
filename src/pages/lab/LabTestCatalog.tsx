@@ -1,17 +1,20 @@
 import { useState } from "react";
 import {
-  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, 
-  Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, 
+  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Button, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, IconButton, Tooltip, Switch, FormControlLabel, Chip, useTheme,
   Fade, Zoom, alpha
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded } from "@mui/icons-material";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
+import { useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
 
 export default function LabTestCatalog() {
   const theme = useTheme();
@@ -32,6 +35,14 @@ export default function LabTestCatalog() {
   const { data: tests = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
     queryKey: ["lab-tests"],
     queryFn: async () => (await axiosInstance.get("/lab/tests")).data.data || [],
+  });
+
+  const { sorted, orderBy, order, onSort } = useTableSort(tests, {
+    type: (t) => (t.isProfile ? "Profile" : "Parameter"),
+    testCode: (t) => t.testCode,
+    testName: (t) => t.testName,
+    price: (t) => Number(t.price),
+    normalRange: (t) => t.defaultNormalRange ?? null,
   });
 
   const handleOpenNew = () => {
@@ -157,19 +168,20 @@ export default function LabTestCatalog() {
           <Mascot pose="nothing-here-yet" title="No lab tests found" subtitle="Get started by creating your first lab test." />
         ) : (
           <Fade in timeout={500}>
-            <Table>
+            <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Type</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Test Code</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Test Name</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Price</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Normal Range</TableCell>
+                  <SortableHeadCell label="Type" sortKey="type" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
+                  <SortableHeadCell label="Test Code" sortKey="testCode" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
+                  <SortableHeadCell label="Test Name" sortKey="testName" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
+                  <SortableHeadCell label="Price" sortKey="price" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
+                  <SortableHeadCell label="Normal Range" sortKey="normalRange" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
                   <TableCell align="right" sx={{ fontWeight: 700, py: 2 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {tests.map((test, index) => (
+                {sorted.map((test, index) => (
                   <TableRow 
                     key={test.labTestId} 
                     hover
@@ -224,6 +236,7 @@ export default function LabTestCatalog() {
                 ))}
               </TableBody>
             </Table>
+            </TableContainer>
           </Fade>
         )}
       </Paper>
@@ -326,7 +339,7 @@ export default function LabTestCatalog() {
               '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }
             }}
           >
-            {saving ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
+            {saving ? <HeartbeatLoader size={22} /> : "Save Changes"}
           </Button>
         </DialogActions>
       </Dialog>

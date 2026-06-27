@@ -2,12 +2,13 @@ import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { 
   Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
-  Button, CircularProgress, TextField, IconButton, useTheme, Autocomplete, Divider, alpha,
+  Button, TextField, IconButton, useTheme, Autocomplete, Divider, alpha,
   List, ListItem, ListItemButton, Chip, Pagination, Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, Tooltip, Alert
 } from "@mui/material";
 import { PointOfSaleRounded, AddCircleRounded, RemoveCircleRounded, DeleteRounded, PaymentRounded, LocalPharmacyRounded, DownloadRounded, EditRounded, CancelRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
 import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
@@ -381,7 +382,7 @@ export default function DispensaryPOS() {
     >
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
-          <CircularProgress size={48} thickness={4} />
+          <HeartbeatLoader size={48} />
         </Box>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

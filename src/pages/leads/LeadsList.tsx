@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -19,7 +19,6 @@ import {
   InputAdornment,
   Menu,
   MenuItem,
-  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -40,6 +39,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
@@ -47,6 +47,12 @@ import FilterBar from "../../components/layout/FilterBar";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Keep the admin list's existing sentence-case header look (the SortableHeadCell
+// default is the reception-panel uppercase style).
+const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", bgcolor: "background.paper", color: "text.secondary" } as const;
 
 export default function LeadsList() {
   const { t } = useTranslation();
@@ -58,6 +64,9 @@ export default function LeadsList() {
   const [myLeadsOnly, setMyLeadsOnly] = useState(false);
   const { user } = useAuth();
   const toast = useToast();
+
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
 
   // Dialogs & Menus
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -85,15 +94,20 @@ export default function LeadsList() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["leads", page, search, statusFilter, myLeadsOnly, user?.id],
+    queryKey: ["leads", page, search, statusFilter, myLeadsOnly, user?.id, orderBy, order],
     queryFn: async () => {
-      const params: any = { page, limit: 10, search, status: statusFilter };
+      const params: any = { page, limit: 10, search, status: statusFilter, sortBy: orderBy || undefined, sortOrder: order };
       if (myLeadsOnly && user?.id) params.assignedTo = user.id;
       return (await axiosInstance.get("/leads", { params })).data; // { data, pagination }
     },
   });
   const leads: any[] = leadsData?.data ?? [];
   const totalPages: number = leadsData?.pagination?.totalPages ?? 1;
+
+  // Reset to the first page whenever the sort changes.
+  useEffect(() => {
+    setPage(1);
+  }, [orderBy, order]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -270,15 +284,15 @@ export default function LeadsList() {
           overflow: "hidden",
         }}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("leads.hospitalName")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("leads.contactDetails")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("leads.assignedTo")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("leads.status")}</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions")}</TableCell>
+                <SortableHeadCell label={t("leads.hospitalName")} sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("leads.contactDetails")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("leads.assignedTo")}</TableCell>
+                <SortableHeadCell label={t("leads.status")} sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("common.actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -451,7 +465,7 @@ export default function LeadsList() {
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setConvertId(null)} disabled={converting} sx={{ color: "text.secondary" }}>{t("common.cancel")}</Button>
           <Button onClick={handleConvert} variant="contained" disabled={converting || !convertForm.planId} sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }}>
-            {converting ? <CircularProgress size={22} sx={{ color: "#fff" }} /> : "Convert to Hospital"}
+            {converting ? <HeartbeatLoader size={22} /> : "Convert to Hospital"}
           </Button>
         </DialogActions>
       </Dialog>

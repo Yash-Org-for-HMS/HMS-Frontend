@@ -11,7 +11,6 @@ import {
   Button,
   Grid,
   MenuItem,
-  CircularProgress,
   Alert,
   Switch,
   FormControlLabel,
@@ -29,6 +28,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -145,7 +145,7 @@ export default function HospitalSettings() {
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
-        <CircularProgress sx={{ color: "primary.main" }} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }
@@ -533,7 +533,7 @@ export default function HospitalSettings() {
             type="submit"
             variant="contained"
             disabled={saving}
-            startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />}
+            startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             sx={{
               bgcolor: "#10b981",
               "&:hover": { bgcolor: "#059669" },

@@ -37,6 +37,10 @@ import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
 import FilterBar from "../../components/layout/FilterBar";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+const headSx = { color: "text.secondary", fontWeight: 600, textTransform: "none", letterSpacing: "normal", fontSize: "0.875rem", bgcolor: "background.paper" } as const;
 
 export default function PlansList() {
   const { t } = useTranslation();
@@ -62,6 +66,13 @@ export default function PlansList() {
       qc.invalidateQueries({ queryKey: ["plans"] });
     },
     onError: (err: any) => toast.error(err?.response?.data?.message || "Failed to delete plan"),
+  });
+
+  const { sorted, orderBy, order, onSort } = useTableSort(plans, {
+    planName: (p) => p.planName,
+    monthlyPrice: (p) => p.monthlyPrice,
+    maxDoctors: (p) => p.maxDoctors,
+    activeHospitals: (p) => p._count?.branches ?? 0,
   });
 
   const handleDelete = () => {
@@ -101,16 +112,16 @@ export default function PlansList() {
           overflow: "hidden",
         }}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("plans.planName", "Plan Name")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("plans.price", "Price (Mo/Yr)")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("plans.limits", "Limits (Doc/Br/GB)")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("plans.features", "Features")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("plans.activeHospitals", "Active Hospitals")}</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
+                <SortableHeadCell label={t("plans.planName", "Plan Name")} sortKey="planName" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
+                <SortableHeadCell label={t("plans.price", "Price (Mo/Yr)")} sortKey="monthlyPrice" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
+                <SortableHeadCell label={t("plans.limits", "Limits (Doc/Br/GB)")} sortKey="maxDoctors" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("plans.features", "Features")}</TableCell>
+                <SortableHeadCell label={t("plans.activeHospitals", "Active Hospitals")} sortKey="activeHospitals" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("common.actions", "Actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -122,14 +133,14 @@ export default function PlansList() {
                     <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
-              ) : plans.length === 0 ? (
+              ) : sorted.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 8, color: "text.secondary" }}>
                     {t("common.noData")}
                   </TableCell>
                 </TableRow>
               ) : (
-                plans.map((plan) => (
+                sorted.map((plan) => (
                   <TableRow key={plan.planId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
                     <TableCell sx={{ color: "text.primary", fontWeight: 600 }}>
                       {plan.planName}

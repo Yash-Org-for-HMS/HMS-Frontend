@@ -1,18 +1,32 @@
 import { useState, useEffect } from "react";
 import {
-  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
-  Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
+  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Button, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha, InputAdornment
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded, LocalShippingRounded, SearchRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import ErrorState from "../../components/ErrorState";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Match the existing plain (non-uppercase) table-head look, overriding
+// SortableHeadCell's default uppercase/secondary styling.
+const HEAD_SX = {
+  fontWeight: 700,
+  py: 2,
+  textTransform: "none",
+  letterSpacing: "normal",
+  fontSize: "inherit",
+  color: "inherit",
+} as const;
 
 export default function SupplierDirectory() {
   const theme = useTheme();
@@ -20,6 +34,7 @@ export default function SupplierDirectory() {
   const confirm = useConfirm();
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
+  const { orderBy, order, onSort } = useServerSort();
 
   const [openDialog, setOpenDialog] = useState(false);
   const [editSupplier, setEditSupplier] = useState<any>(null);
@@ -47,11 +62,20 @@ export default function SupplierDirectory() {
     return () => clearTimeout(id);
   }, [searchTerm]);
 
+  // Reset to the first page whenever the sort column/direction changes.
+  useEffect(() => { setPage(1); }, [orderBy, order]);
+
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["pharmacy-suppliers", page, debouncedSearch],
+    queryKey: ["pharmacy-suppliers", page, debouncedSearch, orderBy, order],
     queryFn: async () =>
       (await axiosInstance.get("/pharmacy/suppliers", {
-        params: { page, limit: ROWS_PER_PAGE, search: debouncedSearch || undefined },
+        params: {
+          page,
+          limit: ROWS_PER_PAGE,
+          search: debouncedSearch || undefined,
+          sortBy: orderBy || undefined,
+          sortOrder: order,
+        },
       })).data,
   });
   const suppliers: any[] = data?.data ?? [];
@@ -216,14 +240,15 @@ export default function SupplierDirectory() {
         ) : (
           <Fade in timeout={500}>
             <Box>
-              <Table>
+              <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
-                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Code</TableCell>
-                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Company Name</TableCell>
-                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Contact Person</TableCell>
-                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Phone</TableCell>
-                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Email</TableCell>
+                    <SortableHeadCell label="Code" sortKey="code" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Company Name" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Contact Person" sortKey="contact" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Phone" sortKey="phone" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Email" sortKey="email" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
                     <TableCell align="right" sx={{ fontWeight: 700, py: 2 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -269,6 +294,7 @@ export default function SupplierDirectory() {
                   ))}
                 </TableBody>
               </Table>
+              </TableContainer>
               <PaginationBar page={page} pageCount={pageCount} total={total} onChange={setPage} />
             </Box>
           </Fade>
@@ -393,7 +419,7 @@ export default function SupplierDirectory() {
               '&:hover': { boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)' }
             }}
           >
-            {saving ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
+            {saving ? <HeartbeatLoader size={22} /> : "Save Changes"}
           </Button>
         </DialogActions>
       </Dialog>

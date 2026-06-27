@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -35,6 +35,12 @@ import ActionButton from "../../components/layout/ActionButton";
 import FilterBar from "../../components/layout/FilterBar";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import { useAuth } from "../../contexts/AuthContext";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Keep the admin list's existing sentence-case header look (the SortableHeadCell
+// default is the reception-panel uppercase style).
+const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", bgcolor: "background.paper" } as const;
 
 export default function AuditLogsList() {
   const { t } = useTranslation();
@@ -46,10 +52,18 @@ export default function AuditLogsList() {
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const [showMyActions, setShowMyActions] = useState(false);
 
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
+
+  // Reset to the first page whenever the sort changes.
+  useEffect(() => {
+    setPage(1);
+  }, [orderBy, order]);
+
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
-    queryKey: ["audit-logs", page, search, showMyActions, user?.id],
+    queryKey: ["audit-logs", page, search, showMyActions, user?.id, orderBy, order],
     queryFn: async () => {
-      const params: any = { page, limit: 15, search };
+      const params: any = { page, limit: 15, search, sortBy: orderBy || undefined, sortOrder: order };
       if (showMyActions && user?.id) params.userId = user.id;
       return (await axiosInstance.get("/audit-logs", { params })).data;
     },
@@ -115,17 +129,17 @@ export default function AuditLogsList() {
           overflow: "hidden",
         }}
       >
-        <TableContainer>
-          <Table size="small">
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table size="small" stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.timestamp", "Timestamp")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.hospital", "Hospital")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.user", "User ID")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.action", "Action")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.module", "Module")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.ip", "IP Address")}</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.details", "Details")}</TableCell>
+                <SortableHeadCell label={t("auditLogs.timestamp", "Timestamp")} sortKey="created" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("auditLogs.hospital", "Hospital")}</TableCell>
+                <SortableHeadCell label={t("auditLogs.user", "User ID")} sortKey="user" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("auditLogs.action", "Action")} sortKey="action" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("auditLogs.module", "Module")} sortKey="module" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("auditLogs.ip", "IP Address")} sortKey="ip" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("common.details", "Details")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

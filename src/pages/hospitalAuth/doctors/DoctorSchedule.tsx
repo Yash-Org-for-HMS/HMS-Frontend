@@ -7,7 +7,6 @@ import {
   TextField,
   Button,
   Grid,
-  CircularProgress,
   Alert,
   IconButton,
 } from "@mui/material";
@@ -16,6 +15,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
+import HeartbeatLoader from "../../../components/HeartbeatLoader";
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -72,7 +72,7 @@ export default function DoctorSchedule() {
   if (initialLoad) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress sx={{ color: "primary.main" }} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, IconButton, TextField, MenuItem,
-  CircularProgress, ToggleButton, ToggleButtonGroup, Tooltip, Chip,
+  ToggleButton, ToggleButtonGroup, Tooltip, Chip,
 } from "@mui/material";
 import {
   ChevronLeftRounded, ChevronRightRounded, TodayRounded, AddRounded,
@@ -10,6 +10,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
 import dayjs, { Dayjs } from "dayjs";
@@ -164,7 +165,7 @@ export default function AppointmentCalendar() {
           <Box sx={{ overflowX: "auto", position: "relative" }}>
             {isLoading && (
               <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "rgba(255,255,255,0.5)", zIndex: 5 }}>
-                <CircularProgress size={28} sx={{ color: ACCENT }} />
+                <HeartbeatLoader size={48} />
               </Box>
             )}
 

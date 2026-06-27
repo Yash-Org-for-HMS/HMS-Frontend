@@ -7,7 +7,6 @@ import {
   TextField,
   Button,
   Grid,
-  CircularProgress,
   Alert,
   IconButton,
   Switch,
@@ -22,6 +21,7 @@ import ErrorState from "../../../components/ErrorState";
 import Mascot from "../../../components/Mascot";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
+import HeartbeatLoader from "../../../components/HeartbeatLoader";
 
 const FIELD_TYPES = [
   { value: "text", label: "Text Input" },
@@ -136,7 +136,7 @@ export default function FormBuilder() {
   if (initialLoad) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress sx={{ color: "primary.main" }} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }

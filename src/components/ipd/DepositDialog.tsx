@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem,
-  CircularProgress, Stack, Typography, Box,
+  Stack, Typography, Box,
 } from "@mui/material";
 import { SavingsRounded, UndoRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
+import HeartbeatLoader from "../HeartbeatLoader";
 
 const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -81,7 +82,7 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={submit} disabled={saving || !canSubmit}
-          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : (isRefund ? <UndoRounded /> : <SavingsRounded />)}
+          startIcon={saving ? <HeartbeatLoader size={22} /> : (isRefund ? <UndoRounded /> : <SavingsRounded />)}
           sx={{ bgcolor: isRefund ? "#8b5cf6" : "#0891b2", "&:hover": { bgcolor: isRefund ? "#7c3aed" : "#0e7490" } }}>
           {isRefund ? "Refund" : "Collect"}
         </Button>

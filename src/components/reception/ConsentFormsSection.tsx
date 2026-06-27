@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, CircularProgress, Chip, Button, Divider, MenuItem,
+  Box, Typography, Paper, Chip, Button, Divider, MenuItem,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, ToggleButton,
   ToggleButtonGroup, Stack,
 } from "@mui/material";
@@ -10,6 +10,7 @@ import {
   OpenInNewRounded, CloseRounded, DoNotDisturbRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../HeartbeatLoader";
 import ErrorState from "../ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import { assetUrl } from "../../utils/assetUrl";
@@ -59,7 +60,7 @@ export default function ConsentFormsSection({ patientId, patientName }: { patien
       </Box>
 
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress size={26} sx={{ color: ACCENT }} /></Box>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><HeartbeatLoader size={48} /></Box>
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : forms.length === 0 ? (
@@ -356,7 +357,7 @@ function SignConsentDialog({ form, patientName, onClose, onSigned }: { form: any
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={submit} disabled={saving || !canSubmit}
-          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
+          startIcon={saving ? <HeartbeatLoader size={22} /> : undefined}
           sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: "#0e7490" } }}>
           Sign & File
         </Button>

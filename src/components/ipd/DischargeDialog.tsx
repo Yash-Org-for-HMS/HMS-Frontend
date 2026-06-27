@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, CircularProgress,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
   Stack, Typography, Box, IconButton, Divider,
 } from "@mui/material";
 import { LogoutRounded, AddRounded, DeleteOutlineRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
+import HeartbeatLoader from "../HeartbeatLoader";
 
 interface Props {
   open: boolean;
@@ -116,7 +117,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={submit} disabled={saving}
-          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <LogoutRounded />}
+          startIcon={saving ? <HeartbeatLoader size={22} /> : <LogoutRounded />}
           sx={{ bgcolor: "#ef4444", "&:hover": { bgcolor: "#dc2626" } }}>
           Discharge & Bill
         </Button>

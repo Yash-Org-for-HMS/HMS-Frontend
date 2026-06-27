@@ -6,7 +6,6 @@ import {
   Container,
   Typography,
   Paper,
-  CircularProgress,
   Avatar,
   Chip,
   Button,
@@ -47,6 +46,7 @@ import {
 import { axiosInstance } from "../api/axios";
 import { useAuth } from "../contexts/AuthContext";
 import ErrorState from "../components/ErrorState";
+import HeartbeatLoader from "../components/HeartbeatLoader";
 
 interface DashboardStats {
   totalHospitals: number;
@@ -95,7 +95,7 @@ export default function Dashboard() {
   if (isLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "80vh" }}>
-        <CircularProgress sx={{ color: "primary.main" }} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }

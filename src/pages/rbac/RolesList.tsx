@@ -16,7 +16,6 @@ import {
   TableRow,
   IconButton,
   Chip,
-  CircularProgress,
   TextField,
   InputAdornment,
   Pagination,
@@ -40,6 +39,11 @@ import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
 import FilterBar from "../../components/layout/FilterBar";
+import { useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+
+const headSx = { color: "text.secondary", fontWeight: 600, textTransform: "none", letterSpacing: "normal", fontSize: "0.875rem", bgcolor: "background.paper" } as const;
 
 // Mirrors backend/src/lib/roleCatalog.ts — the standard set seeded into every
 // hospital. Anything outside this list is treated as a custom (tenant) role.
@@ -101,6 +105,13 @@ export default function RolesList() {
       };
     })
     .filter((row) => matches(row.code, row.name));
+
+  const { sorted: sortedSystemRows, orderBy, order, onSort } = useTableSort(systemRows, {
+    code: (r) => r.code,
+    name: (r) => r.name,
+    hospitals: (r) => r.hospitals,
+    users: (r) => r.users,
+  });
 
   // Custom roles: anything not in the standard set, grouped by hospital.
   const customRoles = roles.filter(
@@ -168,7 +179,7 @@ export default function RolesList() {
 
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-          <CircularProgress sx={{ color: "primary.main" }} />
+          <HeartbeatLoader size={48} />
         </Box>
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
@@ -182,21 +193,21 @@ export default function RolesList() {
             elevation={2}
             sx={{ bgcolor: "background.paper", backgroundImage: "none", border: "1px solid", borderColor: "divider", borderRadius: 3, overflow: "hidden", mb: 4 }}
           >
-            <TableContainer>
-              <Table>
+            <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ bgcolor: "background.paper" }}>
-                    <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Code</TableCell>
-                    <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Role Name</TableCell>
-                    <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Type</TableCell>
-                    <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Hospitals</TableCell>
-                    <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Total Users</TableCell>
+                    <SortableHeadCell label="Code" sortKey="code" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
+                    <SortableHeadCell label="Role Name" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
+                    <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>Type</TableCell>
+                    <SortableHeadCell label="Hospitals" sortKey="hospitals" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
+                    <SortableHeadCell label="Total Users" sortKey="users" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {systemRows.length === 0 ? (
+                  {sortedSystemRows.length === 0 ? (
                     <TableRow><TableCell colSpan={5} align="center" sx={{ py: 6, color: "text.secondary" }}>No matching standard roles</TableCell></TableRow>
-                  ) : systemRows.map((row) => (
+                  ) : sortedSystemRows.map((row) => (
                     <TableRow key={row.code} hover>
                       <TableCell sx={{ color: "text.primary", fontFamily: "monospace", fontWeight: 600 }}>{row.code}</TableCell>
                       <TableCell sx={{ color: "text.primary", fontWeight: 500 }}>{row.name}</TableCell>
@@ -230,14 +241,14 @@ export default function RolesList() {
                 <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.default" }}>
                   <Typography sx={{ fontWeight: 700, color: "text.primary" }}>{group.hospitalName}</Typography>
                 </Box>
-                <TableContainer>
-                  <Table>
+                <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+                  <Table stickyHeader>
                     <TableHead>
                       <TableRow sx={{ bgcolor: "background.paper" }}>
-                        <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Code</TableCell>
-                        <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Role Name</TableCell>
-                        <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Users</TableCell>
-                        <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>Actions</TableCell>
+                        <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>Code</TableCell>
+                        <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>Role Name</TableCell>
+                        <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>Users</TableCell>
+                        <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>Actions</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -277,7 +288,7 @@ export default function RolesList() {
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setCleanupOpen(false)} disabled={cleaning} sx={{ color: "text.secondary" }}>Cancel</Button>
           <Button onClick={handleCleanup} variant="contained" disabled={cleaning} sx={{ bgcolor: "#14b8a6", "&:hover": { bgcolor: "#0d9488" } }}>
-            {cleaning ? <CircularProgress size={22} sx={{ color: "#fff" }} /> : "Clean up"}
+            {cleaning ? <HeartbeatLoader size={22} /> : "Clean up"}
           </Button>
         </DialogActions>
       </Dialog>

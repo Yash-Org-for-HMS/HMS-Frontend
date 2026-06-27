@@ -29,6 +29,8 @@ import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import { ListSkeleton } from "../../../components/TableRowsSkeleton";
+import { useTableSort } from "../../../components/table/useTableSort";
+import SortableHeadCell from "../../../components/table/SortableHeadCell";
 
 const LOOKUP_CONFIGS: Record<string, any> = {
   specialization: {
@@ -81,6 +83,14 @@ export default function LookupManager() {
     queryKey: ["hospital-lookups", selectedType],
     queryFn: async () => (await axiosInstance.get(`/hospital/lookups?type=${selectedType}`)).data.data,
   });
+
+  const sortAccessors: Record<string, (item: any) => any> = {
+    status: (item) => (item.isActive ? "Active" : "Inactive"),
+  };
+  for (const col of config.columns) {
+    sortAccessors[col.field] = (item: any) => item[col.field];
+  }
+  const { sorted, orderBy, order, onSort } = useTableSort(data, sortAccessors);
 
   const handleOpenAdd = () => {
     setFormData({});
@@ -179,32 +189,43 @@ export default function LookupManager() {
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (
-        <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
-          <Table>
+        <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "calc(100vh - 320px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
                 {config.columns.map((col: any) => (
-                  <TableCell key={col.field} sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>
-                    {col.label}
-                  </TableCell>
+                  <SortableHeadCell
+                    key={col.field}
+                    label={col.label}
+                    sortKey={col.field}
+                    orderBy={orderBy}
+                    order={order}
+                    onSort={onSort}
+                    sx={{ color: "text.secondary", textTransform: "none", letterSpacing: 0, fontSize: "0.875rem", fontWeight: 600, py: 2, bgcolor: "background.paper" }}
+                  />
                 ))}
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>
-                  Status
-                </TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>
+                <SortableHeadCell
+                  label="Status"
+                  sortKey="status"
+                  orderBy={orderBy}
+                  order={order}
+                  onSort={onSort}
+                  sx={{ color: "text.secondary", textTransform: "none", letterSpacing: 0, fontSize: "0.875rem", fontWeight: 600, py: 2, bgcolor: "background.paper" }}
+                />
+                <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600, bgcolor: "background.paper" }}>
                   Actions
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.length === 0 ? (
+              {sorted.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={config.columns.length + 2} sx={{ py: 3, borderBottom: "none" }}>
                     <Mascot pose="nothing-here-yet" subtitle={`No records found for ${config.label}.`} size={120} />
                   </TableCell>
                 </TableRow>
               ) : (
-                data.map((item) => (
+                sorted.map((item) => (
                   <TableRow key={item[config.idField]} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                     {config.columns.map((col: any) => (
                       <TableCell key={col.field} sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>

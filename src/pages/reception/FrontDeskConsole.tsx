@@ -2,12 +2,13 @@ import { useState, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, TextField, InputAdornment,
-  CircularProgress, Button, Avatar, Dialog, DialogContent, IconButton, Alert, Chip
+  Button, Avatar, Dialog, DialogContent, IconButton, Alert, Chip
 } from "@mui/material";
 import {
   SearchRounded, PersonAddRounded, CloseRounded, ChevronRightRounded, ContentCopyRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import Mascot from "../../components/Mascot";
 import PatientForm from "./PatientForm";
 import AppointmentForm from "./AppointmentForm";
@@ -159,7 +160,7 @@ export default function FrontDeskConsole() {
                 onChange={handleSearchChange}
                 InputProps={{
                   startAdornment: <InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary" }} /></InputAdornment>,
-                  endAdornment: loading ? <InputAdornment position="end"><CircularProgress size={18} sx={{ color: "#06b6d4" }} /></InputAdornment> : null,
+                  endAdornment: loading ? <InputAdornment position="end"><HeartbeatLoader size={22} /></InputAdornment> : null,
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {

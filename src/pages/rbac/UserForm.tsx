@@ -9,7 +9,6 @@ import {
   TextField,
   Typography,
   MenuItem,
-  CircularProgress,
   Alert,
   IconButton,
   InputAdornment,
@@ -26,6 +25,7 @@ import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 interface Branch {
   branchId: string;
@@ -182,7 +182,7 @@ export default function UserForm() {
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
-        <CircularProgress sx={{ color: "primary.main" }} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }
@@ -503,7 +503,7 @@ export default function UserForm() {
                     minWidth: 120,
                   }}
                 >
-                  {saving ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Save"}
+                  {saving ? <HeartbeatLoader size={22} /> : "Save"}
                 </Button>
               </Box>
             </Grid>

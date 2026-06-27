@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  Box, Grid, Typography, Paper, CircularProgress,
+  Box, Grid, Typography, Paper,
   Button, TextField, Divider, Avatar, IconButton, Chip, Tab, Tabs, Autocomplete
 } from "@mui/material";
 import {
@@ -17,6 +17,7 @@ import SoapTemplateBar, { type SoapTemplate } from "../../components/doctor/Soap
 import LabOrderForm from "./LabOrderForm";
 import RadiologyOrderForm from "./RadiologyOrderForm";
 import RichTextEditor from "../../components/RichTextEditor";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useToast } from "../../contexts/ToastContext";
 
 const DOCTOR_BLUE = "#3b82f6";
@@ -274,7 +275,7 @@ export default function ConsultationWorkspace() {
             variant="outlined"
             onClick={() => handleSave(false)}
             disabled={saving || completing}
-            startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRounded />}
+            startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             sx={{ borderColor: "divider", color: "text.primary", textTransform: "none", fontWeight: 600 }}
           >
             Save Draft
@@ -283,7 +284,7 @@ export default function ConsultationWorkspace() {
             variant="contained"
             onClick={handleComplete}
             disabled={saving || completing}
-            startIcon={completing ? <CircularProgress size={16} color="inherit" /> : <CheckCircleRounded />}
+            startIcon={completing ? <HeartbeatLoader size={22} /> : <CheckCircleRounded />}
             sx={{ bgcolor: DOCTOR_BLUE, "&:hover": { bgcolor: "#2563eb" }, textTransform: "none", fontWeight: 600, boxShadow: "0 4px 12px rgba(59,130,246,0.3)" }}
           >
             Complete Consultation
@@ -484,7 +485,7 @@ export default function ConsultationWorkspace() {
                             ...params.InputProps,
                             endAdornment: (
                               <>
-                                {icd10Loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                {icd10Loading ? <HeartbeatLoader size={22} /> : null}
                                 {params.InputProps.endAdornment}
                               </>
                             ),

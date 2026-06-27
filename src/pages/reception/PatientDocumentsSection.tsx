@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Button, Paper, Grid, CircularProgress, Alert,
+  Box, Typography, Button, Paper, Grid, Alert,
   Card, CardContent, CardActions, IconButton, Chip, Dialog,
   DialogTitle, DialogContent, DialogActions, TextField, MenuItem
 } from "@mui/material";
@@ -9,6 +9,7 @@ import {
   CloudUploadRounded, DeleteRounded, VisibilityRounded, InsertDriveFileRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
@@ -102,7 +103,7 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
       </Box>
 {loading ? (
         <Box sx={{ textAlign: "center", py: 5 }}>
-          <CircularProgress sx={{ color: "#06b6d4" }} />
+          <HeartbeatLoader size={48} />
         </Box>
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message || "Failed to load documents"} onRetry={fetchDocuments} />
@@ -203,7 +204,7 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
             variant="contained" 
             onClick={handleUpload} 
             disabled={!file || !selectedType || uploading}
-            startIcon={uploading ? <CircularProgress size={20} /> : <CloudUploadRounded />}
+            startIcon={uploading ? <HeartbeatLoader size={22} /> : <CloudUploadRounded />}
             sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" }, fontWeight: 600 }}
           >
             Upload

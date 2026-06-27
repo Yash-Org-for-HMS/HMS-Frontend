@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Button, CircularProgress, Grid, Chip, MenuItem, TextField, Tooltip,
+  Box, Typography, Paper, Button, Grid, Chip, MenuItem, TextField, Tooltip,
 } from "@mui/material";
 import { ArrowBackRounded, SaveRounded, WidgetsRounded, CheckCircleRounded, AddCircleOutlineRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 
@@ -89,7 +90,7 @@ export default function HospitalModules() {
         actions={
           <Button
             variant="contained"
-            startIcon={save.isPending ? <CircularProgress size={16} color="inherit" /> : <SaveRounded />}
+            startIcon={save.isPending ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             disabled={!dirty || save.isPending}
             onClick={() => save.mutate()}
             sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, textTransform: "none", fontWeight: 600 }}
@@ -100,7 +101,7 @@ export default function HospitalModules() {
       />
 
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress sx={{ color: "primary.main" }} /></Box>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><HeartbeatLoader size={48} /></Box>
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (

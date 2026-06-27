@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import {
-  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
+  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, useTheme, alpha, Tabs, Tab, MenuItem, Select
 } from "@mui/material";
@@ -12,6 +12,18 @@ import { useToast } from "../../contexts/ToastContext";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
+import { useServerSort, useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Match the existing plain (non-uppercase) table-head look, overriding
+// SortableHeadCell's default uppercase/secondary styling.
+const HEAD_SX = {
+  fontWeight: 700,
+  textTransform: "none",
+  letterSpacing: "normal",
+  fontSize: "inherit",
+  color: "inherit",
+} as const;
 
 export default function InventoryManagement() {
   const theme = useTheme();
@@ -31,6 +43,10 @@ export default function InventoryManagement() {
   const [stockPage, setStockPage] = useState(1);
   const [poPage, setPoPage] = useState(1);
   const [alertPage, setAlertPage] = useState(1);
+
+  // Server-side sort for the two genuinely server-paginated tabs.
+  const stockSort = useServerSort();
+  const poSort = useServerSort();
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -62,13 +78,27 @@ export default function InventoryManagement() {
   };
 
   const fetchInventory = async (p = stockPage) => {
-    const res = await axiosInstance.get("/pharmacy/inventory", { params: { page: p, limit: ROWS_PER_PAGE } });
+    const res = await axiosInstance.get("/pharmacy/inventory", {
+      params: {
+        page: p,
+        limit: ROWS_PER_PAGE,
+        sortBy: stockSort.orderBy || undefined,
+        sortOrder: stockSort.order,
+      },
+    });
     setInventory(res.data.data || []);
     setStockTotal(res.data.pagination?.total ?? (res.data.data || []).length);
   };
 
   const fetchPurchaseOrders = async (p = poPage) => {
-    const res = await axiosInstance.get("/pharmacy/purchase-orders", { params: { page: p, limit: ROWS_PER_PAGE } });
+    const res = await axiosInstance.get("/pharmacy/purchase-orders", {
+      params: {
+        page: p,
+        limit: ROWS_PER_PAGE,
+        sortBy: poSort.orderBy || undefined,
+        sortOrder: poSort.order,
+      },
+    });
     setPurchaseOrders(res.data.data || []);
     setPoTotal(res.data.pagination?.total ?? (res.data.data || []).length);
   };
@@ -112,13 +142,43 @@ export default function InventoryManagement() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [poPage]);
 
+  // Sort changes reset to page 1 and refetch the affected list. We fetch page 1
+  // directly here (rather than relying on the page-change effect) because setPage
+  // is a no-op when already on page 1.
+  useEffect(() => {
+    if (!didMount.current) return;
+    setStockPage(1);
+    fetchInventory(1).catch(err => console.error(err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stockSort.orderBy, stockSort.order]);
+
+  useEffect(() => {
+    if (!didMount.current) return;
+    setPoPage(1);
+    fetchPurchaseOrders(1).catch(err => console.error(err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [poSort.orderBy, poSort.order]);
+
   const getMedicineName = (id: string) => medicines.find(m => m.medicineId === id)?.medicineName || 'Unknown';
   const getSupplierName = (id: string) => suppliers.find(s => s.supplierId === id)?.supplierName || 'Unknown';
 
   const stockPageCount = Math.ceil(stockTotal / ROWS_PER_PAGE);
   const poPageCount = Math.ceil(poTotal / ROWS_PER_PAGE);
-  const alertPageCount = Math.ceil(lowStockAlerts.length / ROWS_PER_PAGE);
-  const paginatedAlerts = lowStockAlerts.slice((alertPage - 1) * ROWS_PER_PAGE, alertPage * ROWS_PER_PAGE);
+
+  // Low Stock Alerts are computed by a full scan and paginated client-side, so
+  // we sort the full list in memory (client-side) before slicing the page.
+  const { sorted: sortedAlerts, orderBy: alertOrderBy, order: alertOrder, onSort: onAlertSort } =
+    useTableSort<any>(lowStockAlerts, {
+      medicine: (a) => a.medicineName,
+      minStock: (a) => a.minStockLevel,
+      currentStock: (a) => a.currentStock,
+      pendingStock: (a) => a.pendingStock || 0,
+    });
+  const alertPageCount = Math.ceil(sortedAlerts.length / ROWS_PER_PAGE);
+  const paginatedAlerts = sortedAlerts.slice((alertPage - 1) * ROWS_PER_PAGE, alertPage * ROWS_PER_PAGE);
+
+  // Client-side alert sort just reorders in memory; reset to the first page.
+  useEffect(() => { setAlertPage(1); }, [alertOrderBy, alertOrder]);
 
   const handleCreatePo = async () => {
     if (!poSupplierId || poItems.some(item => !item.medicineId || item.orderedQuantity <= 0)) {
@@ -281,13 +341,14 @@ export default function InventoryManagement() {
           <Box sx={{ minHeight: 400 }}>
             {/* Tab 0: Current Stock */}
             <Box role="tabpanel" hidden={tabValue !== 0}>
-              <Table>
+              <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
                     <TableCell sx={{ fontWeight: 700 }}>Medicine</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Batch No.</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Expiry Date</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Available Qty</TableCell>
+                    <SortableHeadCell label="Batch No." sortKey="batch" orderBy={stockSort.orderBy} order={stockSort.order} onSort={stockSort.onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Expiry Date" sortKey="expiry" orderBy={stockSort.orderBy} order={stockSort.order} onSort={stockSort.onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Available Qty" sortKey="quantity" orderBy={stockSort.orderBy} order={stockSort.order} onSort={stockSort.onSort} sx={HEAD_SX} />
                     <TableCell sx={{ fontWeight: 700 }}>Supplier</TableCell>
                   </TableRow>
                 </TableHead>
@@ -309,18 +370,20 @@ export default function InventoryManagement() {
                   ))}
                 </TableBody>
               </Table>
+              </TableContainer>
               <PaginationBar page={stockPage} pageCount={stockPageCount} total={stockTotal} onChange={setStockPage} />
             </Box>
 
             {/* Tab 1: Purchase Orders */}
             <Box role="tabpanel" hidden={tabValue !== 1}>
-              <Table>
+              <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
                     <TableCell sx={{ fontWeight: 700 }}>PO Number</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Supplier</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                    <SortableHeadCell label="Date" sortKey="date" orderBy={poSort.orderBy} order={poSort.order} onSort={poSort.onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Status" sortKey="status" orderBy={poSort.orderBy} order={poSort.order} onSort={poSort.onSort} sx={HEAD_SX} />
                     <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -357,18 +420,20 @@ export default function InventoryManagement() {
                   ))}
                 </TableBody>
               </Table>
+              </TableContainer>
               <PaginationBar page={poPage} pageCount={poPageCount} total={poTotal} onChange={setPoPage} />
             </Box>
 
             {/* Tab 2: Low Stock Alerts */}
             <Box role="tabpanel" hidden={tabValue !== 2}>
-              <Table>
+              <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
-                    <TableCell sx={{ fontWeight: 700 }}>Medicine</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Min Stock Level</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Current Stock</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Pending (On the way)</TableCell>
+                    <SortableHeadCell label="Medicine" sortKey="medicine" orderBy={alertOrderBy} order={alertOrder} onSort={onAlertSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Min Stock Level" sortKey="minStock" orderBy={alertOrderBy} order={alertOrder} onSort={onAlertSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Current Stock" sortKey="currentStock" orderBy={alertOrderBy} order={alertOrder} onSort={onAlertSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Pending (On the way)" sortKey="pendingStock" orderBy={alertOrderBy} order={alertOrder} onSort={onAlertSort} sx={HEAD_SX} />
                     <TableCell sx={{ fontWeight: 700 }}>Default Supplier</TableCell>
                   </TableRow>
                 </TableHead>
@@ -414,6 +479,7 @@ export default function InventoryManagement() {
                   ))}
                 </TableBody>
               </Table>
+              </TableContainer>
               <PaginationBar page={alertPage} pageCount={alertPageCount} total={lowStockAlerts.length} onChange={setAlertPage} />
             </Box>
           </Box>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Button, Menu, MenuItem, ListItemText, IconButton, Divider, CircularProgress,
+  Button, Menu, MenuItem, ListItemText, IconButton, Divider,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Box, Typography, Tooltip,
 } from "@mui/material";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
+import HeartbeatLoader from "../HeartbeatLoader";
 
 const DOCTOR_BLUE = "#3b82f6";
 
@@ -114,7 +115,7 @@ export default function SoapTemplateBar({ current, onApply }: Props) {
       <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={() => setAnchorEl(null)} PaperProps={{ sx: { minWidth: 260, maxHeight: 380 } }}>
         {isLoading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-            <CircularProgress size={20} sx={{ color: DOCTOR_BLUE }} />
+            <HeartbeatLoader size={48} />
           </Box>
         ) : templates.length === 0 ? (
           <Box sx={{ px: 2, py: 1.5 }}>
@@ -167,7 +168,7 @@ export default function SoapTemplateBar({ current, onApply }: Props) {
             variant="contained"
             onClick={handleSave}
             disabled={saving}
-            startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <AddRounded />}
+            startIcon={saving ? <HeartbeatLoader size={22} /> : <AddRounded />}
             sx={{ bgcolor: DOCTOR_BLUE }}
           >
             Save template

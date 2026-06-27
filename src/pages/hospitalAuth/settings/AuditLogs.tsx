@@ -29,6 +29,8 @@ import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import PageHeader from "../../../components/layout/PageHeader";
 import { ListSkeleton } from "../../../components/TableRowsSkeleton";
+import { useTableSort } from "../../../components/table/useTableSort";
+import SortableHeadCell from "../../../components/table/SortableHeadCell";
 
 const EMPTY_FILTERS = { moduleName: "", actionType: "", startDate: "", endDate: "" };
 
@@ -66,6 +68,13 @@ export default function AuditLogs() {
     e.preventDefault();
     setAppliedFilters(filters);
   };
+
+  const { sorted, orderBy, order, onSort } = useTableSort(logs, {
+    timestamp: (l) => (l.createdAt ? new Date(l.createdAt) : null),
+    user: (l) => (l.user ? `${l.user.firstName} ${l.user.lastName}` : l.userId),
+    module: (l) => l.moduleName,
+    action: (l) => l.actionType,
+  });
 
   const getActionColor = (action: string) => {
     switch (action) {
@@ -176,26 +185,33 @@ export default function AuditLogs() {
         ) : isError ? (
           <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
         ) : (
-          <TableContainer>
-            <Table>
+          <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Timestamp</TableCell>
-                  <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>User</TableCell>
-                  <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Module</TableCell>
-                  <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Action</TableCell>
-                  <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Details</TableCell>
+                  {(() => {
+                    const hSx = { color: "text.secondary", textTransform: "none", letterSpacing: 0, fontSize: "0.875rem", fontWeight: 600, py: 1, bgcolor: "background.paper" } as const;
+                    return (
+                      <>
+                        <SortableHeadCell label="Timestamp" sortKey="timestamp" orderBy={orderBy} order={order} onSort={onSort} sx={hSx} />
+                        <SortableHeadCell label="User" sortKey="user" orderBy={orderBy} order={order} onSort={onSort} sx={hSx} />
+                        <SortableHeadCell label="Module" sortKey="module" orderBy={orderBy} order={order} onSort={onSort} sx={hSx} />
+                        <SortableHeadCell label="Action" sortKey="action" orderBy={orderBy} order={order} onSort={onSort} sx={hSx} />
+                        <TableCell align="right" sx={{ ...hSx, fontSize: "0.875rem" }}>Details</TableCell>
+                      </>
+                    );
+                  })()}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {logs.length === 0 ? (
+                {sorted.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} sx={{ py: 3, borderBottom: "none" }}>
                       <Mascot pose="no-matches" subtitle="No audit logs found matching criteria." size={120} />
                     </TableCell>
                   </TableRow>
                 ) : (
-                  logs.map((log) => {
+                  sorted.map((log) => {
                     const actionColors = getActionColor(log.actionType);
                     return (
                       <TableRow key={log.auditLogId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>

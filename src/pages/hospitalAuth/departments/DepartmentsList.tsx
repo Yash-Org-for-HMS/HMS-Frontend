@@ -22,6 +22,11 @@ import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import { TableRowsSkeleton } from "../../../components/TableRowsSkeleton";
+import { useTableSort } from "../../../components/table/useTableSort";
+import SortableHeadCell from "../../../components/table/SortableHeadCell";
+
+// Match the file's existing sentence-case header look (override SortableHeadCell's default uppercase/bold style).
+const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 400, fontSize: "0.875rem", py: undefined };
 
 interface Department {
   departmentId: string;
@@ -39,6 +44,14 @@ export default function DepartmentsList() {
   const { data: departments = [], isLoading, isError, error, refetch } = useQuery<Department[]>({
     queryKey: ["hospital-departments"],
     queryFn: async () => (await axiosInstance.get("/hospital/departments")).data.data,
+  });
+
+  const { sorted, orderBy, order, onSort } = useTableSort(departments, {
+    name: (d) => d.departmentName,
+    code: (d) => d.departmentCode,
+    type: (d) => d.departmentType?.typeName ?? null,
+    head: (d) => d.headOfDepartment ? `${d.headOfDepartment.firstName} ${d.headOfDepartment.lastName}` : null,
+    status: (d) => d.status,
   });
 
   const handleToggleStatus = async (department: Department) => {
@@ -76,16 +89,16 @@ export default function DepartmentsList() {
         }
       />
 
-      <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
-        <Table>
+      <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "calc(100vh - 300px)" }}>
+        <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Name</TableCell>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Code</TableCell>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Type</TableCell>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Head of Department</TableCell>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Status</TableCell>
-              <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Actions</TableCell>
+              <SortableHeadCell label="Name" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+              <SortableHeadCell label="Code" sortKey="code" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+              <SortableHeadCell label="Type" sortKey="type" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+              <SortableHeadCell label="Head of Department" sortKey="head" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+              <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+              <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.default" }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -97,14 +110,14 @@ export default function DepartmentsList() {
                   <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                 </TableCell>
               </TableRow>
-            ) : departments.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
                   <Mascot pose="nothing-here-yet" title="No departments yet" subtitle="Create one to get started." size={120} />
                 </TableCell>
               </TableRow>
             ) : (
-              departments.map((dept) => (
+              sorted.map((dept) => (
                 <TableRow key={dept.departmentId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                   <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                     {dept.departmentName}

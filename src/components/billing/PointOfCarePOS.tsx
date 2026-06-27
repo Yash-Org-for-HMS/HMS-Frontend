@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { 
   Dialog, DialogTitle, DialogContent, DialogActions, 
-  Button, Typography, Box, CircularProgress, Alert, 
+  Button, Typography, Box, Alert,
   Divider, TextField, MenuItem, useTheme, alpha 
 } from "@mui/material";
 import { CheckCircleRounded, PointOfSaleRounded, ReceiptLongRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../HeartbeatLoader";
 import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
 
 interface PointOfCarePOSProps {
@@ -178,7 +179,7 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
           variant="contained" 
           onClick={handleProcessPayment} 
           disabled={loading || netAmount < 0}
-          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <ReceiptLongRounded />}
+          startIcon={loading ? <HeartbeatLoader size={22} /> : <ReceiptLongRounded />}
         >
           Confirm & Collect ₹{netAmount.toFixed(2)}
         </Button>

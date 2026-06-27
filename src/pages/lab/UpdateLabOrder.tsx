@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "../../components/ErrorState";
-import { Box, Typography, Paper, Grid, TextField, Button, CircularProgress, Alert, Chip, Divider } from "@mui/material";
+import { Box, Typography, Paper, Grid, TextField, Button, Alert, Chip, Divider } from "@mui/material";
 import { SaveRounded, ArrowBackRounded, ScienceRounded, AccessTimeRounded, PrintRounded } from "@mui/icons-material";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { axiosInstance } from "../../api/axios";
 import { useParams, useNavigate } from "react-router-dom";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
@@ -72,7 +73,7 @@ export default function UpdateLabOrder() {
     }
   };
 
-  if (loading) return <Box sx={{ display: "flex", p: 4, justifyContent: "center" }}><CircularProgress /></Box>;
+  if (loading) return <Box sx={{ display: "flex", p: 4, justifyContent: "center" }}><HeartbeatLoader size={48} /></Box>;
   if (isError || !order) {
     return <ErrorState title="Couldn't load lab order" message={(error as any)?.response?.data?.message || "Order not found"} onRetry={() => refetch()} />;
   }
@@ -225,7 +226,7 @@ export default function UpdateLabOrder() {
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
           <Button 
             variant="contained" 
-            startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRounded />} 
+            startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             onClick={handleSave}
             disabled={saving || order.billingLockActive || (order.status === "PENDING" && !order.sampleCollectedAt)}
           >

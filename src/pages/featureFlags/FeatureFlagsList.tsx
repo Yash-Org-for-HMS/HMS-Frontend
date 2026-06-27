@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -41,6 +41,12 @@ import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
 import FilterBar from "../../components/layout/FilterBar";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Keep the admin list's existing sentence-case header look (the SortableHeadCell
+// default is the reception-panel uppercase style).
+const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", bgcolor: "background.paper", color: "text.secondary" } as const;
 
 export default function FeatureFlagsList() {
   const { t } = useTranslation();
@@ -56,13 +62,21 @@ export default function FeatureFlagsList() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
 
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
+
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["feature-flags", page, search],
+    queryKey: ["feature-flags", page, search, orderBy, order],
     queryFn: async () =>
-      (await axiosInstance.get("/feature-flags", { params: { page, limit: 10, search } })).data,
+      (await axiosInstance.get("/feature-flags", { params: { page, limit: 10, search, sortBy: orderBy || undefined, sortOrder: order } })).data,
   });
   const flags: any[] = data?.data ?? [];
   const totalPages: number = data?.pagination?.totalPages ?? 1;
+
+  // Reset to the first page whenever the sort changes.
+  useEffect(() => {
+    setPage(1);
+  }, [orderBy, order]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -126,16 +140,16 @@ export default function FeatureFlagsList() {
           overflow: "hidden",
         }}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("flags.hospitalName", "Hospital")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("flags.featureName", "Feature")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("flags.featureKey", "Key")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("flags.scope", "Scope")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("flags.status", "Status")}</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("flags.hospitalName", "Hospital")}</TableCell>
+                <SortableHeadCell label={t("flags.featureName", "Feature")} sortKey="featureName" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("flags.featureKey", "Key")} sortKey="featureKey" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("flags.scope", "Scope")} sortKey="scope" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("flags.status", "Status")} sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("common.actions", "Actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

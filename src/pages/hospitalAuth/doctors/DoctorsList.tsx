@@ -13,7 +13,6 @@ import {
   Chip,
   IconButton,
   Tooltip,
-  CircularProgress,
   TextField,
   InputAdornment,
   Pagination,
@@ -25,8 +24,14 @@ import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import PageHeader from "../../../components/layout/PageHeader";
 import { ListSkeleton } from "../../../components/TableRowsSkeleton";
+import HeartbeatLoader from "../../../components/HeartbeatLoader";
+import { useServerSort } from "../../../components/table/useTableSort";
+import SortableHeadCell from "../../../components/table/SortableHeadCell";
 
 const PAGE_SIZE = 20;
+
+// Match this page's existing table-head styling so SortableHeadCell blends in.
+const HEAD_SX = { color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" } as const;
 
 export default function DoctorsList() {
   const navigate = useNavigate();
@@ -34,16 +39,22 @@ export default function DoctorsList() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
+  // Server-side column sorting (the list is paginated, so sorting happens server-side).
+  const { orderBy, order, onSort } = useServerSort();
+
   // Debounce the search box; reset to page 1 whenever the term changes.
   useEffect(() => {
     const t = setTimeout(() => { setSearch(searchInput.trim()); setPage(1); }, 350);
     return () => clearTimeout(t);
   }, [searchInput]);
 
+  // Jump back to the first page whenever the sort changes.
+  useEffect(() => { setPage(1); }, [orderBy, order]);
+
   const { data, isLoading: loading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["hospital-doctors", search, page],
+    queryKey: ["hospital-doctors", search, page, orderBy, order],
     queryFn: async () =>
-      (await axiosInstance.get("/hospital/doctors", { params: { search, page, limit: PAGE_SIZE } })).data,
+      (await axiosInstance.get("/hospital/doctors", { params: { search, page, limit: PAGE_SIZE, sortBy: orderBy || undefined, sortOrder: order } })).data,
     placeholderData: keepPreviousData,
   });
   const doctors: any[] = data?.data || [];
@@ -64,7 +75,7 @@ export default function DoctorsList() {
         sx={{ mb: 2, width: "100%", maxWidth: 460 }}
         InputProps={{
           startAdornment: <InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary" }} /></InputAdornment>,
-          endAdornment: isFetching ? <CircularProgress size={16} sx={{ color: "primary.main" }} /> : undefined,
+          endAdornment: isFetching ? <HeartbeatLoader size={22} /> : undefined,
         }}
       />
 
@@ -73,16 +84,16 @@ export default function DoctorsList() {
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (
-        <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
-          <Table>
+        <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Name</TableCell>
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Department</TableCell>
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Specialization</TableCell>
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>License No.</TableCell>
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Fee</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Actions</TableCell>
+                <TableCell sx={HEAD_SX}>Name</TableCell>
+                <TableCell sx={HEAD_SX}>Department</TableCell>
+                <TableCell sx={HEAD_SX}>Specialization</TableCell>
+                <SortableHeadCell label="License No." sortKey="license" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Fee" sortKey="fee" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <TableCell align="right" sx={HEAD_SX}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

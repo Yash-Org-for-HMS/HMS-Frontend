@@ -8,7 +8,6 @@ import {
   Button,
   Grid,
   MenuItem,
-  CircularProgress,
   Alert,
   Divider,
   InputAdornment,
@@ -25,6 +24,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
@@ -161,7 +161,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
   if (initialLoad) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300 }}>
-        <CircularProgress sx={{ color: "#06b6d4" }} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }
@@ -463,7 +463,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
                 type="submit"
                 variant="contained"
                 disabled={loading}
-                startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <SaveRounded />}
+                startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                 sx={{
                   background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
                   fontWeight: 700,

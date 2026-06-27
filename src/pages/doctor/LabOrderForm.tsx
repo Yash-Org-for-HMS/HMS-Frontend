@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Box, Typography, Button, TextField, IconButton, Autocomplete, CircularProgress,
+  Box, Typography, Button, TextField, IconButton, Autocomplete,
   Paper, Grid, Alert, Table, TableBody, TableCell, TableHead, TableRow, MenuItem
 } from "@mui/material";
 import { DeleteRounded, SaveRounded, AddRounded, ScienceRounded } from "@mui/icons-material";
@@ -9,6 +9,7 @@ import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 const DOCTOR_BLUE = "#3b82f6";
 
@@ -146,7 +147,7 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
                   ...params.InputProps,
                   endAdornment: (
                     <>
-                      {testLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                      {testLoading ? <HeartbeatLoader size={22} /> : null}
                       {params.InputProps.endAdornment}
                     </>
                   ),
@@ -203,7 +204,7 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
             <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
               <Button 
                 variant="contained" 
-                startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRounded />}
+                startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                 sx={{ bgcolor: DOCTOR_BLUE }}
                 onClick={handleSubmit}
                 disabled={saving}
@@ -221,7 +222,7 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
           <ScienceRounded sx={{ color: "text.secondary" }} fontSize="small" /> Previously Ordered Tests
         </Typography>
         {loading ? (
-          <CircularProgress size={24} />
+          <HeartbeatLoader size={48} />
         ) : isError ? (
           <ErrorState message={(error as any)?.response?.data?.message || "Failed to load lab orders"} onRetry={refetch} />
         ) : existingOrders.length === 0 ? (

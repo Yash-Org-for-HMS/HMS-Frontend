@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { Box, CircularProgress } from "@mui/material";
+import { Box } from "@mui/material";
+import HeartbeatLoader from "./HeartbeatLoader";
 
 export function ProtectedRoute() {
   const { isAuthenticated, loading } = useAuth();
@@ -16,7 +17,7 @@ export function ProtectedRoute() {
           justifyContent: "center",
         }}
       >
-        <CircularProgress />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }

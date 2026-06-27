@@ -8,7 +8,6 @@ import {
   Paper,
   Grid,
   Button,
-  CircularProgress,
   Chip,
   Divider,
   Card,
@@ -31,6 +30,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import PageHeader from "../../components/layout/PageHeader";
 
 export default function HospitalOverview() {
@@ -47,7 +47,7 @@ export default function HospitalOverview() {
   if (loading) {
     return (
       <Container maxWidth="xl" sx={{ py: 4, display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
-        <CircularProgress sx={{ color: "primary.main" }} />
+        <HeartbeatLoader size={48} />
       </Container>
     );
   }

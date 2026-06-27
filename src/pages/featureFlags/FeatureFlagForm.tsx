@@ -12,7 +12,6 @@ import {
   MenuItem,
   IconButton,
   Alert,
-  CircularProgress,
   Switch,
   FormControlLabel,
 } from "@mui/material";
@@ -20,6 +19,7 @@ import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 
@@ -99,7 +99,7 @@ export default function FeatureFlagForm() {
   if (initialLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "primary.main" }} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }
@@ -286,7 +286,7 @@ export default function FeatureFlagForm() {
                   type="submit" 
                   variant="contained" 
                   disabled={loading} 
-                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />} 
+                  startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
                     background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
                     boxShadow: "0 4px 14px 0 rgba(245, 158, 11, 0.39)",

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, CircularProgress, alpha, useTheme, Grid
+  Box, Typography, Paper, alpha, useTheme, Grid
 } from "@mui/material";
 import {
   AccountBalanceRounded, TrendingUpRounded, ReceiptRounded, WarningRounded
@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"];
 const PAYMENT_COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b"];
@@ -25,7 +26,7 @@ export default function FinancialDashboard() {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', height: '80vh', alignItems: 'center', justifyContent: 'center' }}>
-        <CircularProgress size={60} thickness={4} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }

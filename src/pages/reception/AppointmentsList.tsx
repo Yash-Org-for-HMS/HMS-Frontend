@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Tooltip,
-  TextField, InputAdornment, CircularProgress, Alert,
+  TextField, InputAdornment, Alert,
   Dialog, DialogContent, Grid, Tabs, Tab, Avatar, Stack, Popover
 } from "@mui/material";
 import {
@@ -14,6 +14,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import BillingModal from "./BillingModal";
@@ -21,6 +22,8 @@ import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import ReferralDialog from "../../components/reception/ReferralDialog";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
+import { useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
 import dayjs, { Dayjs } from "dayjs";
 
 const getAppointmentType = (reason: string | null | undefined) => {
@@ -201,6 +204,17 @@ export default function AppointmentsList() {
     return filtered;
   }, [appointments, search, tabValue, selectedDate]);
 
+  // Client-side column sorting (the full appointment set is already in memory).
+  const { sorted: sortedAppointments, orderBy, order, onSort } = useTableSort(
+    filteredAppointments,
+    {
+      time: (a) => (a.appointmentDate ? new Date(a.appointmentDate) : null),
+      patient: (a) => a.patientName,
+      doctor: (a) => a.doctorName,
+      status: (a) => a.statusLabel,
+    },
+  );
+
   const highlightedDays = useMemo(() => {
     return appointments.map(a => dayjs(a.appointmentDate).format("YYYY-MM-DD"));
   }, [appointments]);
@@ -321,14 +335,16 @@ export default function AppointmentsList() {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {["Time & Type", "Patient", "Doctor", "Status", "Actions"].map((h, i) => (
-                  <TableCell key={h} align={i === 4 ? "right" : "left"} sx={{ 
-                    color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", 
-                    py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider"
-                  }}>
-                    {h}
-                  </TableCell>
-                ))}
+                <SortableHeadCell label="Time & Type" sortKey="time" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Patient" sortKey="patient" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Doctor" sortKey="doctor" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} />
+                <TableCell align="right" sx={{
+                  color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase",
+                  letterSpacing: 0.5, py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider"
+                }}>
+                  Actions
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -336,10 +352,10 @@ export default function AppointmentsList() {
                 <TableRowsSkeleton rows={6} columns={5} />
               ) : isError ? (
                 <TableRow><TableCell colSpan={5} sx={{ py: 4, border: 0 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
-              ) : filteredAppointments.length === 0 ? (
+              ) : sortedAppointments.length === 0 ? (
                 <TableRow><TableCell colSpan={5} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No appointments" subtitle="No appointments found." /></TableCell></TableRow>
               ) : (
-                filteredAppointments.map(appt => {
+                sortedAppointments.map(appt => {
                   const typeInfo = getAppointmentType(appt.reason);
                   return (
                     <TableRow key={appt.appointmentId} sx={{ "&:hover": { bgcolor: "background.default" }, transition: "background 0.15s ease" }}>
@@ -447,7 +463,7 @@ export default function AppointmentsList() {
               Go Back
             </Button>
             <Button variant="contained" onClick={handleAction} disabled={processing} sx={{ bgcolor: actionDialog.type === 'cancel' ? '#ef4444' : '#10b981', "&:hover": { bgcolor: actionDialog.type === 'cancel' ? '#dc2626' : '#059669' }, textTransform: "none" }}>
-              {processing ? <CircularProgress size={20} color="inherit" /> : 'Confirm'}
+              {processing ? <HeartbeatLoader size={22} /> : 'Confirm'}
             </Button>
           </Box>
         </DialogContent>

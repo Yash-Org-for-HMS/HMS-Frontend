@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, TextField,
-  MenuItem, ToggleButton, ToggleButtonGroup, CircularProgress, Typography,
+  MenuItem, ToggleButton, ToggleButtonGroup, Typography,
 } from "@mui/material";
 import { AddRounded, CallSplitRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../HeartbeatLoader";
 import { useToast } from "../../contexts/ToastContext";
 
 interface ReferralDialogProps {
@@ -162,7 +163,7 @@ export default function ReferralDialog({
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={submit} disabled={saving || !canSubmit}
-          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <AddRounded />}
+          startIcon={saving ? <HeartbeatLoader size={22} /> : <AddRounded />}
           sx={{ bgcolor: "#0891b2", "&:hover": { bgcolor: "#0e7490" } }}>
           Create Referral
         </Button>

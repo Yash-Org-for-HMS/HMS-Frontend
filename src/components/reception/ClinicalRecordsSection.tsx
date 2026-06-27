@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, CircularProgress, Chip, Button, Divider, Tabs, Tab,
+  Box, Typography, Paper, Chip, Button, Divider, Tabs, Tab,
   Dialog, DialogTitle, DialogContent, DialogActions,
 } from "@mui/material";
 import {
@@ -9,6 +9,7 @@ import {
   OpenInNewRounded, VisibilityRounded, CloseRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../HeartbeatLoader";
 import ErrorState from "../ErrorState";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { assetUrl } from "../../utils/assetUrl";
@@ -60,7 +61,7 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
       </Box>
 
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress size={26} sx={{ color: ACCENT }} /></Box>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><HeartbeatLoader size={48} /></Box>
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (

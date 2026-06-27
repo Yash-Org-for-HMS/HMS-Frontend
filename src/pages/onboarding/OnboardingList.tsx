@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -29,6 +29,12 @@ import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
 import FilterBar from "../../components/layout/FilterBar";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Keep the admin list's existing sentence-case header look (the SortableHeadCell
+// default is the reception-panel uppercase style).
+const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", bgcolor: "background.paper", color: "text.secondary" } as const;
 
 export default function OnboardingList() {
   const { t } = useTranslation();
@@ -38,13 +44,21 @@ export default function OnboardingList() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
 
-  const queryKey = ["onboarding", page, search];
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
+
+  const queryKey = ["onboarding", page, search, orderBy, order];
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey,
-    queryFn: async () => (await axiosInstance.get("/onboarding", { params: { page, limit: 10, search } })).data,
+    queryFn: async () => (await axiosInstance.get("/onboarding", { params: { page, limit: 10, search, sortBy: orderBy || undefined, sortOrder: order } })).data,
   });
   const onboardings: any[] = data?.data ?? [];
   const totalPages: number = data?.pagination?.totalPages ?? 1;
+
+  // Reset to the first page whenever the sort changes.
+  useEffect(() => {
+    setPage(1);
+  }, [orderBy, order]);
 
   const handleInlineUpdate = async (onboardingId: string, updatedFields: any) => {
     const record = onboardings.find(o => o.hospitalOnboardingId === onboardingId);
@@ -129,15 +143,15 @@ export default function OnboardingList() {
           overflow: "hidden",
         }}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("onboarding.hospital", "Hospital")}</TableCell>
-                <TableCell align="center" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("onboarding.tenantSetup", "Tenant Setup")}</TableCell>
-                <TableCell align="center" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("onboarding.rolesSeeded", "Roles Seeded")}</TableCell>
-                <TableCell align="center" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("onboarding.paymentVerified", "Payment Verified")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("onboarding.status", "Overall Status")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("onboarding.hospital", "Hospital")}</TableCell>
+                <SortableHeadCell align="center" label={t("onboarding.tenantSetup", "Tenant Setup")} sortKey="tenantSetup" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell align="center" label={t("onboarding.rolesSeeded", "Roles Seeded")} sortKey="rolesSeeded" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell align="center" label={t("onboarding.paymentVerified", "Payment Verified")} sortKey="paymentVerified" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("onboarding.status", "Overall Status")} sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
               </TableRow>
             </TableHead>
             <TableBody>

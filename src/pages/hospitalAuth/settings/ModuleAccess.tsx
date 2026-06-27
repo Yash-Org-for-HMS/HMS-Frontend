@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ErrorState from "../../../components/ErrorState";
 import {
-  Box, Typography, Paper, CircularProgress, List, ListItem, ListItemText,
+  Box, Typography, Paper, List, ListItem, ListItemText,
   Chip, Switch, Divider, Tooltip,
 } from "@mui/material";
 import { LockRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
+import HeartbeatLoader from "../../../components/HeartbeatLoader";
 
 interface ModuleAccessData {
   enabledModules: string[];
@@ -37,7 +38,7 @@ export default function ModuleAccess() {
   });
 
   if (loading) {
-    return <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><CircularProgress sx={{ color: "primary.main" }} /></Box>;
+    return <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><HeartbeatLoader size={48} /></Box>;
   }
   if (isError) {
     return <ErrorState title="Couldn't load module access" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;

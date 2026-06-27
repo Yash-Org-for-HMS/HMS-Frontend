@@ -11,7 +11,6 @@ import {
   Button,
   Grid,
   MenuItem,
-  CircularProgress,
   Alert,
   Divider,
 } from "@mui/material";
@@ -21,6 +20,7 @@ import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useToast } from "../../contexts/ToastContext";
 import { assetUrl } from "../../utils/assetUrl";
 import PageHeader from "../../components/layout/PageHeader";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -158,7 +158,7 @@ export default function HospitalProfile() {
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
-        <CircularProgress sx={{ color: "primary.main" }} />
+        <HeartbeatLoader size={48} />
       </Box>
     );
   }
@@ -364,7 +364,7 @@ export default function HospitalProfile() {
                     <Button
                       variant="outlined"
                       component="label"
-                      startIcon={uploadingLogo ? <CircularProgress size={20} /> : <CloudUploadRounded />}
+                      startIcon={uploadingLogo ? <HeartbeatLoader size={22} /> : <CloudUploadRounded />}
                       disabled={uploadingLogo}
                     >
                       {uploadingLogo ? "Uploading..." : "Upload Logo"}
@@ -459,7 +459,7 @@ export default function HospitalProfile() {
             type="submit"
             variant="contained"
             disabled={saving}
-            startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />}
+            startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             sx={{
               bgcolor: "#10b981",
               "&:hover": { bgcolor: "#059669" },

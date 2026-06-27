@@ -18,7 +18,6 @@ import {
   TextField,
   Typography,
   Tooltip,
-  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -39,6 +38,13 @@ import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
 import FilterBar from "../../components/layout/FilterBar";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+
+// Keep the admin list's existing sentence-case header look (the SortableHeadCell
+// default is the reception-panel uppercase style).
+const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.paper" } as const;
 
 interface User {
   userId: string;
@@ -73,11 +79,19 @@ export default function UsersList() {
     return () => clearTimeout(t);
   }, [search]);
 
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
+
+  // Reset to the first page whenever the sort changes (TablePagination is 0-based).
+  useEffect(() => {
+    setPage(0);
+  }, [orderBy, order]);
+
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["rbac-users", page, rowsPerPage, debouncedSearch],
+    queryKey: ["rbac-users", page, rowsPerPage, debouncedSearch, orderBy, order],
     queryFn: async () =>
       (await axiosInstance.get("/rbac/users", {
-        params: { page: page + 1, limit: rowsPerPage, search: debouncedSearch || undefined },
+        params: { page: page + 1, limit: rowsPerPage, search: debouncedSearch || undefined, sortBy: orderBy || undefined, sortOrder: order },
       })).data,
   });
   const users: User[] = data?.data ?? [];
@@ -153,23 +167,23 @@ export default function UsersList() {
           overflow: "hidden",
         }}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Name</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Hospital</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Role</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Contact</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Status</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>Actions</TableCell>
+                <SortableHeadCell label="Name" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>Hospital</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>Role</TableCell>
+                <SortableHeadCell label="Contact" sortKey="email" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 8, borderBottom: "none" }}>
-                    <CircularProgress sx={{ color: "primary.main" }} />
+                    <HeartbeatLoader size={48} />
                   </TableCell>
                 </TableRow>
               ) : isError ? (
@@ -308,7 +322,7 @@ export default function UsersList() {
             variant="contained"
             disabled={deleteLoading}
           >
-            {deleteLoading ? <CircularProgress size={24} color="inherit" /> : "Delete"}
+            {deleteLoading ? <HeartbeatLoader size={22} /> : "Delete"}
           </Button>
         </DialogActions>
       </Dialog>

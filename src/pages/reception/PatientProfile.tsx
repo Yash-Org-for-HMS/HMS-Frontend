@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Chip, Avatar, Button, CircularProgress, Alert,
+  Box, Typography, Paper, Chip, Avatar, Button, Alert,
   Divider, Skeleton, Tabs, Tab, Table, TableHead, TableBody, TableRow, TableCell,
   TableContainer, TablePagination, Menu, MenuItem, IconButton, Stack, Tooltip,
   ListItemIcon, ListItemText,
@@ -16,6 +16,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import PatientDocumentsSection from "./PatientDocumentsSection";
@@ -261,7 +262,7 @@ export default function PatientProfile() {
             )}
             {canEdit && (
               <MenuItem onClick={handleSendWelcome} disabled={notifProcessing}>
-                <ListItemIcon>{notifProcessing ? <CircularProgress size={18} /> : <NotificationsActiveRounded fontSize="small" />}</ListItemIcon>
+                <ListItemIcon>{notifProcessing ? <HeartbeatLoader size={22} /> : <NotificationsActiveRounded fontSize="small" />}</ListItemIcon>
                 <ListItemText>Send Welcome SMS</ListItemText>
               </MenuItem>
             )}
@@ -425,7 +426,7 @@ export default function PatientProfile() {
                           </TableCell>
                           <TableCell align="right" sx={{ borderColor: "divider" }}>
                             {canCheckIn && (
-                              <Button size="small" variant="contained" startIcon={checkinId === appt.appointmentId ? <CircularProgress size={16} color="inherit" /> : <LoginRounded />}
+                              <Button size="small" variant="contained" startIcon={checkinId === appt.appointmentId ? <HeartbeatLoader size={22} /> : <LoginRounded />}
                                 disabled={checkinId === appt.appointmentId} onClick={() => handleCheckIn(appt.appointmentId)}
                                 sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" }, textTransform: "none" }}>Check in</Button>
                             )}

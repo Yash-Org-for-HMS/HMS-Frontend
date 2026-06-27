@@ -6,13 +6,13 @@ import {
   Typography,
   InputAdornment,
   IconButton,
-  CircularProgress,
 } from "@mui/material";
 import { Visibility, VisibilityOff, LockOutlined, EmailOutlined, LocalHospitalRounded } from "@mui/icons-material";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { axiosInstance } from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../../contexts/ToastContext";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 const DARK = "#0f172a";
 const DARK_HOVER = "#1e293b";
@@ -189,7 +189,7 @@ export default function HospitalLogin() {
               transition: "all 0.2s ease-in-out",
             }}
           >
-            {isLoading ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Sign In"}
+            {isLoading ? <HeartbeatLoader size={22} /> : "Sign In"}
           </Button>
         </form>
 

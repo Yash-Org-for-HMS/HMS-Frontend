@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
-  Box, Typography, Paper, CircularProgress, TextField, Button, ButtonGroup,
+  Box, Typography, Paper, TextField, Button, ButtonGroup,
 } from "@mui/material";
 import {
   GroupRounded, EventAvailableRounded, MedicationRounded,
@@ -16,6 +16,7 @@ import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import PageHeader from "../../components/layout/PageHeader";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 const DOCTOR_BLUE = "#3b82f6";
 const PIE_COLORS = ["#3b82f6", "#ec4899", "#f59e0b", "#10b981", "#8b5cf6", "#64748b"];
@@ -76,7 +77,7 @@ export default function DoctorReports() {
       <PageHeader
         title="My Reports"
         subtitle="Your practice analytics — consultations, diagnoses, and orders over a date range."
-        actions={isFetching ? <CircularProgress size={20} sx={{ color: DOCTOR_BLUE }} /> : undefined}
+        actions={isFetching ? <HeartbeatLoader size={22} /> : undefined}
       />
 
       {/* Date range */}

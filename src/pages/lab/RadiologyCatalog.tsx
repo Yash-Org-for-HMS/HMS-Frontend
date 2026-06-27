@@ -1,16 +1,19 @@
 import { useState } from "react";
 import {
-  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
-  Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
+  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Button, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded } from "@mui/icons-material";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
+import { useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
 
 export default function RadiologyCatalog() {
   const theme = useTheme();
@@ -28,6 +31,12 @@ export default function RadiologyCatalog() {
   const { data: scans = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
     queryKey: ["radiology-catalog"],
     queryFn: async () => (await axiosInstance.get("/lab/radiology-catalog")).data.data || [],
+  });
+
+  const { sorted, orderBy, order, onSort } = useTableSort(scans, {
+    testCode: (s) => s.testCode,
+    testName: (s) => s.testName,
+    price: (s) => Number(s.price),
   });
 
   const handleOpenNew = () => {
@@ -140,17 +149,18 @@ export default function RadiologyCatalog() {
           <Mascot pose="nothing-here-yet" title="No radiology scans found" subtitle="Get started by creating your first scan." />
         ) : (
           <Fade in timeout={500}>
-            <Table>
+            <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Scan Code</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Scan Name</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Price</TableCell>
+                  <SortableHeadCell label="Scan Code" sortKey="testCode" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
+                  <SortableHeadCell label="Scan Name" sortKey="testName" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
+                  <SortableHeadCell label="Price" sortKey="price" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
                   <TableCell align="right" sx={{ fontWeight: 700, py: 2 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {scans.map((scan) => (
+                {sorted.map((scan) => (
                   <TableRow 
                     key={scan.radiologyTestId} 
                     hover
@@ -189,6 +199,7 @@ export default function RadiologyCatalog() {
                 ))}
               </TableBody>
             </Table>
+            </TableContainer>
           </Fade>
         )}
       </Paper>
@@ -263,7 +274,7 @@ export default function RadiologyCatalog() {
               '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }
             }}
           >
-            {saving ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
+            {saving ? <HeartbeatLoader size={22} /> : "Save Changes"}
           </Button>
         </DialogActions>
       </Dialog>

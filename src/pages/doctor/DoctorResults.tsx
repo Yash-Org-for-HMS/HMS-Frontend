@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Chip, CircularProgress, TextField, InputAdornment, Pagination, Tabs, Tab,
+  TableRow, Chip, TextField, InputAdornment, Pagination, Tabs, Tab,
   IconButton, Collapse, Button, Tooltip,
 } from "@mui/material";
 import {
@@ -16,6 +16,12 @@ import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+
+// Match this page's existing table-head styling so SortableHeadCell blends in.
+const HEAD_SX = { bgcolor: "background.paper", color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" } as const;
 
 const DOCTOR_BLUE = "#3b82f6";
 const PAGE_SIZE = 20;
@@ -44,6 +50,9 @@ export default function DoctorResults() {
   const [page, setPage] = useState(1);
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  // Server-side column sorting (the list is paginated, so sorting happens server-side).
+  const { orderBy, order, onSort } = useServerSort();
+
   const status = TABS[tab].key;
 
   useEffect(() => {
@@ -56,11 +65,14 @@ export default function DoctorResults() {
 
   useEffect(() => { setPage(1); setExpanded(null); }, [tab]);
 
+  // Jump back to the first page whenever the sort changes.
+  useEffect(() => { setPage(1); }, [orderBy, order]);
+
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["doctor-results", status, search, page],
+    queryKey: ["doctor-results", status, search, page, orderBy, order],
     queryFn: async () =>
       (await axiosInstance.get("/doctor/results", {
-        params: { status, search, page, limit: PAGE_SIZE },
+        params: { status, search, page, limit: PAGE_SIZE, sortBy: orderBy || undefined, sortOrder: order },
       })).data,
     placeholderData: keepPreviousData,
   });
@@ -115,7 +127,7 @@ export default function DoctorResults() {
                   <SearchRounded sx={{ color: "text.secondary" }} />
                 </InputAdornment>
               ),
-              endAdornment: isFetching ? <CircularProgress size={16} sx={{ color: DOCTOR_BLUE }} /> : undefined,
+              endAdornment: isFetching ? <HeartbeatLoader size={22} /> : undefined,
             }}
           />
         </Box>
@@ -124,11 +136,13 @@ export default function DoctorResults() {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {["", "Type", "Patient", "Test / Scan", "Ordered", "Status", ""].map((h, i) => (
-                  <TableCell key={i} sx={{ bgcolor: "background.paper", color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" }}>
-                    {h}
-                  </TableCell>
-                ))}
+                <TableCell sx={HEAD_SX} />
+                <SortableHeadCell label="Type" sortKey="type" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Patient" sortKey="patient" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Test / Scan" sortKey="title" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Ordered" sortKey="ordered" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <TableCell sx={HEAD_SX} />
               </TableRow>
             </TableHead>
             <TableBody>

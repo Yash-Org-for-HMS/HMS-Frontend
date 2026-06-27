@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, TextField,
-  MenuItem, CircularProgress,
+  MenuItem,
 } from "@mui/material";
 import { LocalHotelRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
+import HeartbeatLoader from "../HeartbeatLoader";
 
 interface Props {
   open: boolean;
@@ -104,7 +105,7 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={submit} disabled={saving || !canSubmit}
-          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <LocalHotelRounded />}
+          startIcon={saving ? <HeartbeatLoader size={22} /> : <LocalHotelRounded />}
           sx={{ bgcolor: "#0891b2", "&:hover": { bgcolor: "#0e7490" } }}>Admit</Button>
       </DialogActions>
     </Dialog>
