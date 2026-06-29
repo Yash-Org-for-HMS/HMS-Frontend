@@ -20,6 +20,8 @@ import {
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import { assetUrl } from "../utils/assetUrl";
 import BranchSwitcher from "../components/BranchSwitcher";
+import SidebarHeader from "../components/layout/SidebarHeader";
+import SidebarUserCard from "../components/layout/SidebarUserCard";
 import { axiosInstance } from "../api/axios";
 import { useSocket } from "../hooks/useSocket";
 
@@ -71,41 +73,11 @@ export default function DoctorLayout() {
       }}
     >
       {/* Logo / Header */}
-      <Toolbar
-        sx={{
-          px: 2.5,
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          borderBottom: `1px solid rgba(59,130,246,0.15)`,
-          minHeight: "70px !important",
-        }}
-      >
-        <Box
-          sx={{
-            width: 40, height: 40, borderRadius: 1.5,
-            background: hospital?.logoUrl ? "transparent" : `linear-gradient(135deg, ${DOCTOR_BLUE_DARK}, ${DOCTOR_BLUE})`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: hospital?.logoUrl ? "none" : `0 0 16px rgba(59,130,246,0.35)`,
-            flexShrink: 0,
-            overflow: "hidden"
-          }}
-        >
-          {hospital?.logoUrl ? (
-            <img src={assetUrl(hospital.logoUrl)} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <LocalHospitalRounded fontSize="small" sx={{ color: "#fff" }} />
-          )}
-        </Box>
-        <Box sx={{ overflow: "hidden" }}>
-          <Typography variant="subtitle1" fontWeight="700" noWrap sx={{ maxWidth: 170, color: "text.primary" }}>
-            {hospital?.name || "Doctor Panel"}
-          </Typography>
-          <Typography variant="caption" sx={{ color: DOCTOR_BLUE, fontWeight: 600 }}>
-            Doctor Workspace
-          </Typography>
-        </Box>
-      </Toolbar>
+      <SidebarHeader
+        logoUrl={hospital?.logoUrl}
+        title={hospital?.name || "Doctor"}
+        subtitle="Doctor Workspace"
+      />
 
       {/* Navigation */}
       <List sx={{ px: 1.5, pt: 2, flex: 1, overflowY: "auto" }}>
@@ -166,39 +138,12 @@ export default function DoctorLayout() {
       </Box>
 
       {/* User card at bottom */}
-      <Box sx={{ p: 2 }}>
-        <Box
-          sx={{
-            display: "flex", alignItems: "center", gap: 1.5, p: 1.5,
-            borderRadius: 2, bgcolor: "background.default",
-            border: "1px solid", borderColor: "divider",
-          }}
-        >
-          <Avatar
-            sx={{
-              width: 34, height: 34,
-              background: `linear-gradient(135deg, ${DOCTOR_BLUE_DARK}, ${DOCTOR_BLUE})`,
-              fontSize: "0.85rem", fontWeight: 700,
-            }}
-          >
-            {user?.firstName?.charAt(0) || "D"}
-          </Avatar>
-          <Box sx={{ overflow: "hidden", flex: 1 }}>
-            <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600, display: "block" }} noWrap>
-              Dr. {user?.firstName} {user?.lastName}
-            </Typography>
-            <Typography variant="caption" sx={{ color: DOCTOR_BLUE, fontSize: "0.7rem", fontWeight: 600 }}>
-              {user?.roleName || "Doctor"}
-            </Typography>
-          </Box>
-          <IconButton size="small" onClick={logout} sx={{ color: "text.secondary", "&:hover": { color: "#ef4444" } }}>
-            <LogoutRounded fontSize="small" />
-          </IconButton>
-        </Box>
-        <Typography variant="caption" sx={{ color: "#334155", display: "block", textAlign: "center", mt: 1 }}>
-          © {new Date().getFullYear()} HMS SaaS
-        </Typography>
-      </Box>
+      <SidebarUserCard
+        name={`Dr. ${user?.firstName || ""} ${user?.lastName || ""}`.trim()}
+        role={user?.roleName || "Doctor"}
+        avatarText={user?.firstName?.charAt(0) || "D"}
+        onLogout={logout}
+      />
     </Box>
   );
 

@@ -40,8 +40,9 @@ import {
   AccountBalanceRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
-import { assetUrl } from "../utils/assetUrl";
 import BranchSwitcher from "../components/BranchSwitcher";
+import SidebarHeader from "../components/layout/SidebarHeader";
+import SidebarUserCard from "../components/layout/SidebarUserCard";
 
 const drawerWidth = 260;
 
@@ -118,39 +119,11 @@ export default function HospitalLayout() {
         color: "text.primary",
       }}
     >
-      <Toolbar
-        sx={{
-          px: 2,
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          borderBottom: "1px solid", borderColor: "divider",
-        }}
-      >
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: 1.5,
-            bgcolor: hospital?.logoUrl ? "transparent" : "primary.main",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden"
-          }}
-        >
-          {hospital?.logoUrl ? (
-            <img src={assetUrl(hospital.logoUrl)} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <LocalHospitalRounded fontSize="medium" sx={{ color: "#fff" }} />
-          )}
-        </Box>
-        <Box>
-          <Typography variant="subtitle1" fontWeight="700" noWrap sx={{ maxWidth: 180 }}>
-            {hospital?.name || "Hospital Admin"}
-          </Typography>
-        </Box>
-      </Toolbar>
+      <SidebarHeader
+        logoUrl={hospital?.logoUrl}
+        title={hospital?.name || "Hospital Admin"}
+        subtitle="Admin Portal"
+      />
       
       <List sx={{ px: 2, pt: 2, flex: 1, overflowY: "auto" }}>
         {visibleMenuItems.map((item) => {
@@ -192,103 +165,21 @@ export default function HospitalLayout() {
         })}
       </List>
       
-      <Box sx={{ height: 16 }} />
-      
-      
-      <Box sx={{ p: 2, borderTop: "1px solid", borderColor: "divider" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            
-        <ListItem disablePadding>
-          <ListItemButton
-            onClick={handleMenuOpen}
-            sx={{
-              borderRadius: 2,
-              "&:hover": { bgcolor: "action.hover" },
-              px: 1,
-            }}
-          >
-            <Avatar
-              sx={{
-                bgcolor: "primary.main",
-                width: 32,
-                height: 32,
-                fontSize: "0.9rem",
-                mr: 1.5,
-              }}
-            >
-              {user?.firstName?.charAt(0) || "U"}
-            </Avatar>
-            <ListItemText 
-              primary={user?.firstName ? `${user.firstName} ${user.lastName || ''}` : "Admin"} 
-              primaryTypographyProps={{ fontWeight: 600, fontSize: "0.9rem" }}
-            />
-          </ListItemButton>
-        </ListItem>
-    
-            
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-              transformOrigin={{ horizontal: "right", vertical: "top" }}
-              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-              PaperProps={{
-                elevation: 0,
-                sx: {
-                  mt: 1.5,
-                  bgcolor: "background.paper",
-                  color: "text.primary",
-                  border: "1px solid", borderColor: "divider",
-                  overflow: "visible",
-                  "&:before": {
-                    content: '""',
-                    display: "block",
-                    position: "absolute",
-                    top: 0,
-                    right: 14,
-                    width: 10,
-                    height: 10,
-                    bgcolor: "background.paper",
-                    transform: "translateY(-50%) rotate(45deg)",
-                    zIndex: 0,
-                    borderLeft: "1px solid",
-                    borderTop: "1px solid", borderColor: "divider",
-                  },
-                }
-              }}
-            >
-              <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider", mb: 1 }}>
-                <Typography variant="subtitle2" fontWeight="600">
-                  {user?.firstName} {user?.lastName}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  {user?.email}
-                </Typography>
-                <Typography variant="caption" sx={{ color: "#10b981", mt: 0.5, display: "block", fontWeight: 600 }}>
-                  {user?.roleName}
-                </Typography>
-              </Box>
-              <MenuItem onClick={() => { handleMenuClose(); navigate("/hospital/profile"); }} sx={{ gap: 1.5, py: 1 }}>
-                <AccountCircleRounded fontSize="small" sx={{ color: "text.secondary" }} />
-                Profile Settings
-              </MenuItem>
-              <MenuItem onClick={handleLogout} sx={{ gap: 1.5, py: 1, color: "#f87171" }}>
-                <LogoutRounded fontSize="small" />
-                Logout
-              </MenuItem>
-            </Menu>
-          </Box>
-      </Box>
-    
-      <Box sx={{ px: 2, pb: 1 }}>
+      <Divider sx={{ borderColor: "divider" }} />
+
+      {/* Branch switcher (only shown to multi-branch users) */}
+      <Box sx={{ px: 2, pt: 2 }}>
         <BranchSwitcher />
       </Box>
 
-      <Box sx={{ p: 2 }}>
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
-          © {new Date().getFullYear()} HMS SaaS
-        </Typography>
-      </Box>
+      {/* User card at bottom */}
+      <SidebarUserCard
+        name={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Administrator"}
+        role={user?.roleName || "Administrator"}
+        avatarText={user?.firstName?.charAt(0) || "A"}
+        onLogout={logout}
+        onProfile={() => navigate("/hospital/profile")}
+      />
     </Box>
   );
 

@@ -37,6 +37,8 @@ import {
   HistoryRounded,
 } from "@mui/icons-material";
 import { useAuth } from "../contexts/AuthContext";
+import SidebarHeader from "../components/layout/SidebarHeader";
+import SidebarUserCard from "../components/layout/SidebarUserCard";
 
 const drawerWidth = 260;
 
@@ -130,32 +132,10 @@ export default function AdminLayout() {
         color: "text.primary",
       }}
     >
-      <Toolbar
-        sx={{
-          px: 2,
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          borderBottom: "1px solid", borderColor: "divider",
-        }}
-      >
-        <Box
-          sx={{
-            width: 32,
-            height: 32,
-            borderRadius: 1.5,
-            bgcolor: "primary.main",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Typography variant="subtitle1" fontWeight="bold">H</Typography>
-        </Box>
-        <Typography variant="h6" fontWeight="700" noWrap>
-          HMS Admin
-        </Typography>
-      </Toolbar>
+      <SidebarHeader
+        title="HMS Admin"
+        subtitle="Platform Console"
+      />
       
       <List sx={{ px: 2, pt: 1.5, flex: 1, overflowY: "auto" }}>
         {navGroups.map((group, gi) => (
@@ -219,96 +199,15 @@ export default function AdminLayout() {
         ))}
       </List>
       
-      <Box sx={{ height: 16 }} />
-      
-      
-      <Box sx={{ p: 2, borderTop: "1px solid", borderColor: "divider" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            
-        <ListItem disablePadding>
-          <ListItemButton
-            onClick={handleMenuOpen}
-            sx={{
-              borderRadius: 2,
-              "&:hover": { bgcolor: "action.hover" },
-              px: 1,
-            }}
-          >
-            <Avatar
-              sx={{
-                bgcolor: "primary.main",
-                width: 32,
-                height: 32,
-                fontSize: "0.9rem",
-                mr: 1.5,
-              }}
-            >
-              {user?.firstName?.charAt(0) || "U"}
-            </Avatar>
-            <ListItemText 
-              primary={user?.firstName ? `${user.firstName} ${user.lastName || ''}` : "Admin"} 
-              primaryTypographyProps={{ fontWeight: 600, fontSize: "0.9rem" }}
-            />
-          </ListItemButton>
-        </ListItem>
-    
-            
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-              transformOrigin={{ horizontal: "right", vertical: "top" }}
-              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-              PaperProps={{
-                elevation: 0,
-                sx: {
-                  mt: 1.5,
-                  bgcolor: "background.paper",
-                  color: "text.primary",
-                  border: "1px solid", borderColor: "divider",
-                  overflow: "visible",
-                  "&:before": {
-                    content: '""',
-                    display: "block",
-                    position: "absolute",
-                    top: 0,
-                    right: 14,
-                    width: 10,
-                    height: 10,
-                    bgcolor: "background.paper",
-                    transform: "translateY(-50%) rotate(45deg)",
-                    zIndex: 0,
-                    borderLeft: "1px solid",
-                    borderTop: "1px solid", borderColor: "divider",
-                  },
-                }
-              }}
-            >
-              <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider", mb: 1 }}>
-                <Typography variant="subtitle2" fontWeight="600">
-                  {user?.firstName} {user?.lastName}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  {user?.email}
-                </Typography>
-              </Box>
-              <MenuItem onClick={handleMenuClose} sx={{ gap: 1.5, py: 1 }}>
-                <AccountCircleRounded fontSize="small" sx={{ color: "text.secondary" }} />
-                Profile
-              </MenuItem>
-              <MenuItem onClick={handleLogout} sx={{ gap: 1.5, py: 1, color: "#f87171" }}>
-                <LogoutRounded fontSize="small" />
-                Logout
-              </MenuItem>
-            </Menu>
-          </Box>
-      </Box>
-    
-      <Box sx={{ p: 2 }}>
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
-          © {new Date().getFullYear()} HMS SaaS
-        </Typography>
-      </Box>
+      <Divider sx={{ borderColor: "divider" }} />
+
+      {/* User card at bottom */}
+      <SidebarUserCard
+        name={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Super Admin"}
+        role={user?.roleName || "Super Admin"}
+        avatarText={user?.firstName?.charAt(0) || "A"}
+        onLogout={logout}
+      />
     </Box>
   );
 
