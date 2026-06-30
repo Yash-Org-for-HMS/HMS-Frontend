@@ -190,7 +190,9 @@ export default function LeadsList() {
       case "contacted": return "#fbbf24";
       case "qualified": return "#c084fc";
       case "demo_done": return "#60a5fa";
+      case "trialing": return "#f472b6";
       case "converted": return "#34d399";
+      case "lost": return "#f87171";
       default: return "#cbd5e1";
     }
   };
@@ -201,7 +203,9 @@ export default function LeadsList() {
       case "contacted": return "rgba(251, 191, 36, 0.15)";
       case "qualified": return "rgba(192, 132, 252, 0.15)";
       case "demo_done": return "rgba(96, 165, 250, 0.15)";
+      case "trialing": return "rgba(244, 114, 182, 0.15)";
       case "converted": return "rgba(52, 211, 153, 0.15)";
+      case "lost": return "rgba(248, 113, 113, 0.15)";
       default: return "rgba(255, 255, 255, 0.05)";
     }
   };
@@ -258,7 +262,9 @@ export default function LeadsList() {
           <MenuItem value="contacted">{t("leads.statusContacted")}</MenuItem>
           <MenuItem value="qualified">{t("leads.statusQualified")}</MenuItem>
           <MenuItem value="demo_done">{t("leads.statusDemoDone")}</MenuItem>
+          <MenuItem value="trialing">In Trial</MenuItem>
           <MenuItem value="converted">{t("leads.statusConverted")}</MenuItem>
+          <MenuItem value="lost">Lost</MenuItem>
         </TextField>
         
         <FormControlLabel
@@ -360,7 +366,9 @@ export default function LeadsList() {
                         <MenuItem value="contacted" sx={{ fontWeight: 600, color: "#fbbf24" }}>{t("leads.statusContacted")}</MenuItem>
                         <MenuItem value="qualified" sx={{ fontWeight: 600, color: "#c084fc" }}>{t("leads.statusQualified")}</MenuItem>
                         <MenuItem value="demo_done" sx={{ fontWeight: 600, color: "#60a5fa" }}>{t("leads.statusDemoDone")}</MenuItem>
+                        <MenuItem value="trialing" sx={{ fontWeight: 600, color: "#f472b6" }}>In Trial</MenuItem>
                         <MenuItem value="converted" sx={{ fontWeight: 600, color: "#34d399" }}>{t("leads.statusConverted")}</MenuItem>
+                        <MenuItem value="lost" sx={{ fontWeight: 600, color: "#f87171" }}>Lost</MenuItem>
                       </TextField>
                     </TableCell>
                     <TableCell align="right">

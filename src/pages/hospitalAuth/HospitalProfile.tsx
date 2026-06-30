@@ -179,6 +179,12 @@ export default function HospitalProfile() {
         title="Hospital Profile"
         subtitle="Manage your hospital's details, branding, and compliance information."
       />
+      {(!formData.officialPhone || !formData.addressLine1 || !formData.registrationNumber) && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Finish setting up your hospital to unlock the rest of the panel. Required (marked *):
+          official phone &amp; address line 1 (General Information), and registration number (Compliance).
+        </Alert>
+      )}
 <Paper
         component="form"
         onSubmit={handleSubmit}
@@ -274,6 +280,7 @@ export default function HospitalProfile() {
                   name="officialPhone"
                   value={formData.officialPhone}
                   onChange={handleChange}
+                  required
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
@@ -298,6 +305,7 @@ export default function HospitalProfile() {
                   name="addressLine1"
                   value={formData.addressLine1}
                   onChange={handleChange}
+                  required
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
@@ -418,6 +426,7 @@ export default function HospitalProfile() {
                   name="registrationNumber"
                   value={formData.registrationNumber}
                   onChange={handleChange}
+                  required
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>

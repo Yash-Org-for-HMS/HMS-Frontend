@@ -35,6 +35,7 @@ import {
   AccountCircleRounded,
   SecurityRounded,
   HistoryRounded,
+  NotificationsActiveRounded,
 } from "@mui/icons-material";
 import { useAuth } from "../contexts/AuthContext";
 import SidebarHeader from "../components/layout/SidebarHeader";
@@ -60,14 +61,16 @@ export default function AdminLayout() {
   const navGroups: { heading: string | null; items: { text: string; icon: ReactNode; path: string }[] }[] = [
     {
       heading: t("nav.group.overview", "Overview"),
-      items: [{ text: t("nav.dashboard"), icon: <DashboardRounded />, path: "/" }],
+      items: [
+        { text: t("nav.dashboard"), icon: <DashboardRounded />, path: "/" },
+        { text: "Action Needed", icon: <NotificationsActiveRounded />, path: "/onboarding" },
+      ],
     },
     {
       heading: t("nav.group.salesPipeline", "Sales Pipeline"),
       items: [
         { text: t("nav.leads"), icon: <PeopleAltRounded />, path: "/leads" },
         { text: t("nav.trials"), icon: <TimerRounded />, path: "/trials" },
-        { text: t("nav.onboarding"), icon: <HandshakeRounded />, path: "/onboarding" },
       ],
     },
     {

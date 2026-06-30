@@ -21,7 +21,13 @@ import {
   Menu,
   MenuItem,
   Pagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
 } from "@mui/material";
+import Grid from "@mui/material/Grid";
 import {
   AddRounded,
   SearchRounded,
@@ -29,9 +35,12 @@ import {
   FilterAltRounded,
   CalendarMonthRounded,
   TimerOffRounded,
+  RocketLaunchRounded,
+  CancelRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
+import { useConfirm } from "../../contexts/ConfirmContext";
 import { useToast } from "../../contexts/ToastContext";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
@@ -57,7 +66,8 @@ export default function TrialsList() {
 
   // Action Menu
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedTrialId, setSelectedTrialId] = useState<string | null>(null);
+  const [selectedTrial, setSelectedTrial] = useState<any | null>(null);
+  const confirm = useConfirm();
 
   // Server-side column sorting (the list is paginated, so sorting happens in the DB).
   const { orderBy, order, onSort } = useServerSort();
@@ -75,17 +85,20 @@ export default function TrialsList() {
     setPage(1);
   }, [orderBy, order]);
 
-  const openActionMenu = (e: React.MouseEvent<HTMLElement>, trialId: string) => {
+  const openActionMenu = (e: React.MouseEvent<HTMLElement>, trial: any) => {
     e.stopPropagation();
     setAnchorEl(e.currentTarget);
-    setSelectedTrialId(trialId);
+    setSelectedTrial(trial);
   };
 
   const handleExpireTrial = async () => {
-    if (!selectedTrialId) return;
+    const trial = selectedTrial;
+    setAnchorEl(null);
+    if (!trial) return;
+    if (!(await confirm({ title: "Expire trial?", message: `End the trial for ${trial.lead?.hospitalName || "this prospect"} now?`, confirmText: "Expire" }))) return;
     try {
-      await axiosInstance.patch(`/trials/${selectedTrialId}/expire`);
-      setAnchorEl(null);
+      await axiosInstance.patch(`/trials/${trial.hospitalTrialId}/expire`);
+      toast.success("Trial expired");
       refetch();
     } catch (error) {
       toast.error((error as any)?.response?.data?.message || "Failed to expire trial");
@@ -93,17 +106,44 @@ export default function TrialsList() {
   };
 
   const handleExtendTrial = async () => {
-    if (!selectedTrialId) return;
-    const trial = trials.find(t => t.hospitalTrialId === selectedTrialId);
+    const trial = selectedTrial;
+    setAnchorEl(null);
     if (!trial) return;
     const newEndDate = new Date(new Date(trial.trialEndDate).getTime() + 14 * 24 * 60 * 60 * 1000).toISOString();
     try {
-      await axiosInstance.patch(`/trials/${selectedTrialId}/extend`, { newEndDate });
-      setAnchorEl(null);
+      await axiosInstance.patch(`/trials/${trial.hospitalTrialId}/extend`, { newEndDate });
+      toast.success("Trial extended by 14 days");
       refetch();
     } catch (error) {
       toast.error((error as any)?.response?.data?.message || "Failed to extend trial");
     }
+  };
+
+  // Cancel the trial and move the lead to "Lost".
+  const handleMarkLost = async () => {
+    const trial = selectedTrial;
+    setAnchorEl(null);
+    if (!trial?.hospitalLeadId) return;
+    if (!(await confirm({ title: "Cancel this trial?", message: `Mark ${trial.lead?.hospitalName || "this prospect"} as Lost? The trial ends and the lead moves to Lost.`, confirmText: "Mark as lost" }))) return;
+    try {
+      await axiosInstance.patch(`/leads/${trial.hospitalLeadId}/status`, { status: "lost" });
+      if (trial.trialStatus === "active") {
+        await axiosInstance.patch(`/trials/${trial.hospitalTrialId}/expire`).catch(() => {});
+      }
+      toast.success("Marked as lost");
+      refetch();
+    } catch (error) {
+      toast.error((error as any)?.response?.data?.message || "Failed to update");
+    }
+  };
+
+  // Convert through the single "Add Organization" flow, in trial-convert mode —
+  // the hospital form opens prefilled from this trial and finalizes the convert.
+  const openConvert = () => {
+    const trial = selectedTrial;
+    setAnchorEl(null);
+    if (!trial) return;
+    navigate(`/hospitals/new?trialId=${trial.hospitalTrialId}`);
   };
 
   const getStatusColor = (status: string) => {
@@ -238,7 +278,7 @@ export default function TrialsList() {
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton onClick={(e) => openActionMenu(e, trial.hospitalTrialId)} sx={{ color: "text.secondary" }}>
+                      <IconButton onClick={(e) => openActionMenu(e, trial)} sx={{ color: "text.secondary" }}>
                         <MoreVertRounded />
                       </IconButton>
                     </TableCell>
@@ -273,12 +313,24 @@ export default function TrialsList() {
         onClose={() => setAnchorEl(null)}
         PaperProps={{ sx: { bgcolor: "background.paper", border: "1px solid", borderColor: "divider", color: "text.primary" } }}
       >
-        <MenuItem onClick={handleExtendTrial}>
-          <CalendarMonthRounded sx={{ mr: 1.5, fontSize: 20, color: "#60a5fa" }} /> {t("trials.extendTrial")} (14 Days)
-        </MenuItem>
-        <MenuItem onClick={handleExpireTrial}>
-          <TimerOffRounded sx={{ mr: 1.5, fontSize: 20, color: "#ef4444" }} /> {t("trials.expireTrial")}
-        </MenuItem>
+        {selectedTrial?.trialStatus === "converted"
+          ? [<MenuItem key="done" disabled>Already converted to a hospital</MenuItem>]
+          : [
+              <MenuItem key="convert" onClick={openConvert}>
+                <RocketLaunchRounded sx={{ mr: 1.5, fontSize: 20, color: "#34d399" }} /> Convert to hospital &amp; assign plan
+              </MenuItem>,
+              <MenuItem key="extend" onClick={handleExtendTrial}>
+                <CalendarMonthRounded sx={{ mr: 1.5, fontSize: 20, color: "#60a5fa" }} /> {t("trials.extendTrial")} (14 Days)
+              </MenuItem>,
+              selectedTrial?.trialStatus === "active" ? (
+                <MenuItem key="expire" onClick={handleExpireTrial}>
+                  <TimerOffRounded sx={{ mr: 1.5, fontSize: 20, color: "#f59e0b" }} /> {t("trials.expireTrial")}
+                </MenuItem>
+              ) : null,
+              <MenuItem key="lost" onClick={handleMarkLost} sx={{ color: "#f87171" }}>
+                <CancelRounded sx={{ mr: 1.5, fontSize: 20 }} /> Cancel (mark as lost)
+              </MenuItem>,
+            ]}
       </Menu>
 
     </PageContainer>

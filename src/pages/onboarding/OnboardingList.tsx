@@ -1,278 +1,207 @@
-import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
-  Container,
   Typography,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  InputAdornment,
-  Pagination,
-  Switch,
-  MenuItem,
+  Grid,
+  Card,
+  CardContent,
+  Chip,
+  Button,
 } from "@mui/material";
 import {
-  SearchRounded,
+  HourglassBottomRounded,
+  TimerOffRounded,
+  BlockRounded,
+  EditNoteRounded,
+  RocketLaunchRounded,
+  VisibilityRounded,
+  CheckCircleRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
-import { useToast } from "../../contexts/ToastContext";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
-import ActionButton from "../../components/layout/ActionButton";
-import FilterBar from "../../components/layout/FilterBar";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
-import { useServerSort } from "../../components/table/useTableSort";
-import SortableHeadCell from "../../components/table/SortableHeadCell";
 
-// Keep the admin list's existing sentence-case header look (the SortableHeadCell
-// default is the reception-panel uppercase style).
-const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", bgcolor: "background.paper", color: "text.secondary" } as const;
+// How soon (in days) an active trial counts as "expiring soon".
+const EXPIRY_WINDOW_DAYS = 7;
+
+function Section({
+  icon, title, color, items, children,
+}: { icon: any; title: string; color: string; items: number; children: any }) {
+  if (items === 0) return null;
+  return (
+    <Paper elevation={2} sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, overflow: "hidden", mb: 3 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2.5, py: 2, borderBottom: "1px solid", borderColor: "divider" }}>
+        <Box sx={{ width: 36, height: 36, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: `${color}22`, color }}>{icon}</Box>
+        <Typography variant="subtitle1" fontWeight={700} sx={{ color: "text.primary" }}>{title}</Typography>
+        <Chip size="small" label={items} sx={{ ml: "auto", fontWeight: 700, bgcolor: `${color}22`, color }} />
+      </Box>
+      <Box>{children}</Box>
+    </Paper>
+  );
+}
+
+function Row({ primary, secondary, actions }: { primary: any; secondary?: any; actions: any }) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 2.5, py: 1.5, borderBottom: "1px solid", borderColor: "divider", "&:last-of-type": { borderBottom: "none" } }}>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body2" fontWeight={600} noWrap sx={{ color: "text.primary" }}>{primary}</Typography>
+        {secondary && <Typography variant="caption" noWrap sx={{ color: "text.secondary", display: "block" }}>{secondary}</Typography>}
+      </Box>
+      <Box sx={{ display: "flex", gap: 1, flexShrink: 0 }}>{actions}</Box>
+    </Box>
+  );
+}
 
 export default function OnboardingList() {
-  const { t } = useTranslation();
-  const qc = useQueryClient();
-  const toast = useToast();
+  const navigate = useNavigate();
 
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-
-  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
-  const { orderBy, order, onSort } = useServerSort();
-
-  const queryKey = ["onboarding", page, search, orderBy, order];
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey,
-    queryFn: async () => (await axiosInstance.get("/onboarding", { params: { page, limit: 10, search, sortBy: orderBy || undefined, sortOrder: order } })).data,
+  const hq = useQuery({
+    queryKey: ["action-hospitals"],
+    queryFn: async () => (await axiosInstance.get("/hospitals", { params: { limit: 1000 } })).data,
   });
-  const onboardings: any[] = data?.data ?? [];
-  const totalPages: number = data?.pagination?.totalPages ?? 1;
+  const tq = useQuery({
+    queryKey: ["action-trials"],
+    queryFn: async () => (await axiosInstance.get("/trials", { params: { limit: 1000 } })).data,
+  });
 
-  // Reset to the first page whenever the sort changes.
-  useEffect(() => {
-    setPage(1);
-  }, [orderBy, order]);
+  const loading = hq.isLoading || tq.isLoading;
+  const isError = hq.isError || tq.isError;
 
-  const handleInlineUpdate = async (onboardingId: string, updatedFields: any) => {
-    const record = onboardings.find(o => o.hospitalOnboardingId === onboardingId);
-    if (!record) return;
+  const hospitals: any[] = hq.data?.data ?? [];
+  const trials: any[] = tq.data?.data ?? [];
 
-    const payload = {
-      tenantSetupCompleted: record.tenantSetupCompleted,
-      defaultRolesSeeded: record.defaultRolesSeeded,
-      paymentVerified: record.paymentVerified,
-      onboardingStatus: record.onboardingStatus,
-      ...updatedFields
-    };
+  const daysUntil = (d: string) => Math.ceil((new Date(d).getTime() - Date.now()) / 86_400_000);
 
-    // Optimistic update in the query cache so the toggle responds instantly.
-    qc.setQueryData(queryKey, (old: any) =>
-      old
-        ? { ...old, data: old.data.map((o: any) => (o.hospitalOnboardingId === onboardingId ? { ...o, ...payload } : o)) }
-        : old
+  // ── The buckets that actually need a human to act ──
+  const expiring = trials
+    .filter((t) => t.trialStatus === "active" && daysUntil(t.trialEndDate) <= EXPIRY_WINDOW_DAYS)
+    .sort((a, b) => daysUntil(a.trialEndDate) - daysUntil(b.trialEndDate));
+  const expired = trials.filter((t) => t.trialStatus === "expired");
+  const suspended = hospitals.filter((h) => h.status === "suspended");
+  const incomplete = hospitals.filter(
+    (h) => h.status === "active" && (!h.officialPhone || !h.addressLine1 || !h.registrationNumber),
+  );
+
+  const total = expiring.length + expired.length + suspended.length + incomplete.length;
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
+          <HeartbeatLoader size={48} />
+        </Box>
+      </PageContainer>
     );
+  }
 
-    try {
-      await axiosInstance.put(`/onboarding/${onboardingId}`, payload);
-      qc.invalidateQueries({ queryKey });
-    } catch (error) {
-      toast.error((error as any)?.response?.data?.message || "Failed to update onboarding");
-      refetch(); // roll back to server truth
-    }
-  };
+  if (isError) {
+    return (
+      <PageContainer>
+        <ErrorState
+          message={(hq.error as any)?.response?.data?.message || (tq.error as any)?.response?.data?.message}
+          onRetry={() => { hq.refetch(); tq.refetch(); }}
+        />
+      </PageContainer>
+    );
+  }
 
-  const getStatusTextColor = (status: string) => {
-    switch (status) {
-      case "completed": return "#34d399";
-      case "in_progress": return "#60a5fa";
-      case "pending": return "#fbbf24";
-      case "stalled": return "#f87171";
-      default: return "#cbd5e1";
-    }
-  };
-
-  const getStatusBgColor = (status: string) => {
-    switch (status) {
-      case "completed": return "rgba(16, 185, 129, 0.15)";
-      case "in_progress": return "rgba(96, 165, 250, 0.15)";
-      case "pending": return "rgba(251, 191, 36, 0.15)";
-      case "stalled": return "rgba(248, 113, 113, 0.15)";
-      default: return "rgba(255, 255, 255, 0.05)";
-    }
-  };
+  const summary = [
+    { label: "Trials expiring", value: expiring.length, color: "#f59e0b" },
+    { label: "Expired trials", value: expired.length, color: "#ef4444" },
+    { label: "Suspended", value: suspended.length, color: "#ef4444" },
+    { label: "Incomplete profiles", value: incomplete.length, color: "#3b82f6" },
+  ];
 
   return (
     <PageContainer>
       <PageHeader
-        title={t("onboarding.title", "Hospital Onboarding Tracker")}
-        subtitle={t("onboarding.subtitle", "Track setup and provisioning progress for new tenants")}
+        title="Action Needed"
+        subtitle="Tenants and trials that need your attention right now."
       />
 
-      {/* Filters */}
-      <FilterBar>
-        <TextField
-          placeholder={t("onboarding.searchPlaceholder", "Search by hospital name...")}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          size="small"
-          
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchRounded sx={{ color: "text.secondary" }} />
-              </InputAdornment>
-            ),
-          }}
-        />
-      </FilterBar>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        {summary.map((s) => (
+          <Grid size={{ xs: 6, md: 3 }} key={s.label}>
+            <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
+              <CardContent sx={{ py: 2.5 }}>
+                <Typography variant="h4" fontWeight={800} sx={{ color: s.value ? s.color : "text.disabled" }}>{s.value}</Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600 }}>{s.label}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
 
-      <Paper
-        elevation={2}
-        sx={{
-          bgcolor: "background.paper",
-          backdropFilter: "blur(10px)",
-          border: "1px solid", borderColor: "divider",
-          borderRadius: 3,
-          overflow: "hidden",
-        }}
-      >
-        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("onboarding.hospital", "Hospital")}</TableCell>
-                <SortableHeadCell align="center" label={t("onboarding.tenantSetup", "Tenant Setup")} sortKey="tenantSetup" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
-                <SortableHeadCell align="center" label={t("onboarding.rolesSeeded", "Roles Seeded")} sortKey="rolesSeeded" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
-                <SortableHeadCell align="center" label={t("onboarding.paymentVerified", "Payment Verified")} sortKey="paymentVerified" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
-                <SortableHeadCell label={t("onboarding.status", "Overall Status")} sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {isLoading ? (
-                <TableRowsSkeleton rows={6} columns={5} />
-              ) : isError ? (
-                <TableRow>
-                  <TableCell colSpan={5} sx={{ py: 4, border: 0 }}>
-                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
-                  </TableCell>
-                </TableRow>
-              ) : onboardings.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 8, color: "text.secondary" }}>
-                    {t("common.noData")}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                onboardings.map((record) => (
-                  <TableRow key={record.hospitalOnboardingId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
-                    <TableCell sx={{ color: "text.primary", fontWeight: 500 }}>
-                      {record.hospital?.hospitalName}
-                      <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontFamily: "monospace" }}>
-                        {record.hospital?.hospitalCode}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Switch
-                        checked={record.tenantSetupCompleted}
-                        onChange={(e) => handleInlineUpdate(record.hospitalOnboardingId, { tenantSetupCompleted: e.target.checked })}
-                        color="primary"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Switch
-                        checked={record.defaultRolesSeeded}
-                        onChange={(e) => handleInlineUpdate(record.hospitalOnboardingId, { defaultRolesSeeded: e.target.checked })}
-                        color="primary"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Switch
-                        checked={record.paymentVerified}
-                        onChange={(e) => handleInlineUpdate(record.hospitalOnboardingId, { paymentVerified: e.target.checked })}
-                        color="primary"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <TextField
-                        select
-                        value={record.onboardingStatus}
-                        onChange={(e) => handleInlineUpdate(record.hospitalOnboardingId, { onboardingStatus: e.target.value })}
-                        size="small"
-                        sx={{
-                          minWidth: 130,
-                          "& .MuiOutlinedInput-root": {
-                            color: getStatusTextColor(record.onboardingStatus),
-                            backgroundColor: getStatusBgColor(record.onboardingStatus),
-                            borderRadius: "8px",
-                            fontWeight: 600,
-                            fontSize: "0.8rem",
-                            "& fieldset": { borderColor: "transparent" },
-                            "&:hover fieldset": { borderColor: "divider" },
-                            "&.Mui-focused fieldset": { borderColor: "divider" },
-                          },
-                          "& .MuiSvgIcon-root": { color: getStatusTextColor(record.onboardingStatus) }
-                        }}
-                        SelectProps={{
-                          MenuProps: {
-                            sx: {
-                              "& .MuiPaper-root": {
-                                bgcolor: "background.paper",
-                                color: "text.primary",
-                                border: "1px solid", borderColor: "divider"
-                              }
-                            }
-                          }
-                        }}
-                      >
-                        <MenuItem value="pending" sx={{ fontWeight: 600, color: "#fbbf24" }}>Pending</MenuItem>
-                        <MenuItem value="in_progress" sx={{ fontWeight: 600, color: "#60a5fa" }}>In Progress</MenuItem>
-                        <MenuItem value="completed" sx={{ fontWeight: 600, color: "#34d399" }}>Completed</MenuItem>
-                        <MenuItem value="stalled" sx={{ fontWeight: 600, color: "#f87171" }}>Stalled</MenuItem>
-                      </TextField>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+      {total === 0 ? (
+        <Paper sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, p: 6, textAlign: "center" }}>
+          <CheckCircleRounded sx={{ fontSize: 56, color: "#10b981", mb: 1.5 }} />
+          <Typography variant="h6" fontWeight={700} sx={{ color: "text.primary" }}>All clear</Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>Nothing needs attention across your tenants right now.</Typography>
+        </Paper>
+      ) : (
+        <>
+          <Section icon={<HourglassBottomRounded />} title="Trials expiring soon" color="#f59e0b" items={expiring.length}>
+            {expiring.map((t) => {
+              const d = daysUntil(t.trialEndDate);
+              return (
+                <Row
+                  key={t.hospitalTrialId}
+                  primary={t.lead?.hospitalName || "Unknown"}
+                  secondary={d <= 0 ? "Expires today" : `Expires in ${d} day${d === 1 ? "" : "s"} · ${new Date(t.trialEndDate).toLocaleDateString()}`}
+                  actions={
+                    <>
+                      <Button size="small" variant="outlined" onClick={() => navigate("/trials")} sx={{ textTransform: "none" }}>Manage</Button>
+                      <Button size="small" variant="contained" startIcon={<RocketLaunchRounded />} onClick={() => navigate(`/hospitals/new?trialId=${t.hospitalTrialId}`)} sx={{ textTransform: "none", background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)" }}>Convert</Button>
+                    </>
+                  }
+                />
+              );
+            })}
+          </Section>
 
-        {totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid", borderColor: "divider" }}>
-            <Pagination 
-              count={totalPages} 
-              page={page} 
-              onChange={(_, value) => setPage(value)} 
-              color="primary"
-              sx={{
-                "& .MuiPaginationItem-root": { color: "text.primary" },
-                "& .Mui-selected": { bgcolor: "rgba(16, 185, 129, 0.2) !important", color: "#10b981" }
-              }}
-            />
-          </Box>
-        )}
-      </Paper>
+          <Section icon={<TimerOffRounded />} title="Expired trials — convert or cancel" color="#ef4444" items={expired.length}>
+            {expired.map((t) => (
+              <Row
+                key={t.hospitalTrialId}
+                primary={t.lead?.hospitalName || "Unknown"}
+                secondary={`Trial ended ${new Date(t.trialEndDate).toLocaleDateString()}`}
+                actions={
+                  <>
+                    <Button size="small" variant="outlined" onClick={() => navigate("/trials")} sx={{ textTransform: "none" }}>Manage</Button>
+                    <Button size="small" variant="contained" startIcon={<RocketLaunchRounded />} onClick={() => navigate(`/hospitals/new?trialId=${t.hospitalTrialId}`)} sx={{ textTransform: "none", background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)" }}>Convert</Button>
+                  </>
+                }
+              />
+            ))}
+          </Section>
+
+          <Section icon={<BlockRounded />} title="Suspended hospitals" color="#ef4444" items={suspended.length}>
+            {suspended.map((h) => (
+              <Row
+                key={h.hospitalId}
+                primary={h.hospitalName}
+                secondary={`Code ${h.hospitalCode} · logins blocked`}
+                actions={<Button size="small" variant="outlined" startIcon={<VisibilityRounded />} onClick={() => navigate(`/hospitals/${h.hospitalId}/overview`)} sx={{ textTransform: "none" }}>View</Button>}
+              />
+            ))}
+          </Section>
+
+          <Section icon={<EditNoteRounded />} title="Incomplete hospital profiles" color="#3b82f6" items={incomplete.length}>
+            {incomplete.map((h) => (
+              <Row
+                key={h.hospitalId}
+                primary={h.hospitalName}
+                secondary="Admin hasn't completed the required profile details yet"
+                actions={<Button size="small" variant="outlined" startIcon={<VisibilityRounded />} onClick={() => navigate(`/hospitals/${h.hospitalId}/overview`)} sx={{ textTransform: "none" }}>View</Button>}
+              />
+            ))}
+          </Section>
+        </>
+      )}
     </PageContainer>
   );
 }
-
-const textFieldSx = {
-  "& .MuiOutlinedInput-root": {
-    color: "text.primary",
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "divider" },
-    "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: "#10b981" },
-  },
-  "& .MuiInputLabel-root": { color: "text.secondary" },
-};

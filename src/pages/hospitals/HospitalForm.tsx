@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Box,
@@ -32,8 +32,12 @@ export default function HospitalForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = Boolean(id);
+  const [searchParams] = useSearchParams();
+  const trialId = searchParams.get("trialId");
+  const isConvert = Boolean(trialId);
 
   const [loading, setLoading] = useState(false);
+  const [convertResult, setConvertResult] = useState<{ email: string; temporaryPassword: string } | null>(null);
   const toast = useToast();
   const [branches, setBranches] = useState<any[]>([]);
   const [reload, setReload] = useState(0);
@@ -56,6 +60,13 @@ export default function HospitalForm() {
     enabled: isEdit,
   });
 
+  // When converting a trial, load it so we can prefill from its lead + plan.
+  const { data: trialData } = useQuery({
+    queryKey: ["trial", trialId],
+    queryFn: async () => (await axiosInstance.get(`/trials/${trialId}`)).data.data,
+    enabled: isConvert,
+  });
+
   // Branch Dialog State
   const [branchDialogOpen, setBranchDialogOpen] = useState(false);
   const [newBranch, setNewBranch] = useState({ name: "", subscriptionPlanId: "", status: "active" });
@@ -69,7 +80,20 @@ export default function HospitalForm() {
     officialPhone: "",
     legalBusinessName: "",
     status: "active",
+    planId: "",
   });
+
+  // Prefill from the trial being converted (lead contact + the trial's plan).
+  useEffect(() => {
+    if (!trialData) return;
+    setFormData(prev => ({
+      ...prev,
+      hospitalName: trialData.lead?.hospitalName || prev.hospitalName,
+      officialEmail: trialData.lead?.email || prev.officialEmail,
+      officialPhone: trialData.lead?.phone || prev.officialPhone,
+      planId: trialData.subscriptionPlanId || prev.planId,
+    }));
+  }, [trialData]);
 
   // Seed the form + branches with the existing hospital when editing.
   useEffect(() => {
@@ -93,8 +117,30 @@ export default function HospitalForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isConvert && !formData.planId) {
+      toast.error("Please choose a subscription plan for this hospital");
+      return;
+    }
     setLoading(true);
     try {
+      if (isConvert && trialId) {
+        // Single provisioning path: convert the trial → hospital + admin login.
+        const res = await axiosInstance.post(`/trials/${trialId}/convert`, {
+          hospitalName: formData.hospitalName,
+          contactPersonName: trialData?.lead?.contactPersonName || formData.hospitalName || "Admin",
+          email: formData.officialEmail,
+          phone: formData.officialPhone,
+          planId: formData.planId,
+        });
+        const admin = res.data?.data?.admin;
+        if (admin?.temporaryPassword) {
+          setConvertResult({ email: admin.email, temporaryPassword: admin.temporaryPassword });
+        } else {
+          toast.success("Hospital created");
+          navigate("/hospitals");
+        }
+        return;
+      }
       if (isEdit) {
         await axiosInstance.put(`/hospitals/${id}`, formData);
       } else {
@@ -196,7 +242,7 @@ export default function HospitalForm() {
         </IconButton>
         <Box sx={{ flexGrow: 1 }}>
           <PageHeader
-            title={isEdit ? t("hospitals.editHospital", "Edit Hospital") : t("hospitals.addHospital", "Add Hospital")}
+            title={isConvert ? "Convert Trial → New Hospital" : isEdit ? t("hospitals.editHospital", "Edit Hospital") : t("hospitals.addHospital", "Add Hospital")}
           />
         </Box>
       </Box>
@@ -213,6 +259,13 @@ export default function HospitalForm() {
       >
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
+            {isConvert && (
+              <Grid size={{ xs: 12 }}>
+                <Alert severity="info">
+                  Converting the trial for <b>{trialData?.lead?.hospitalName || "this prospect"}</b> — this provisions a live hospital on the selected plan and creates the admin login.
+                </Alert>
+              </Grid>
+            )}
             <Grid size={{ xs: 12 }}>
               <Autocomplete
                 freeSolo
@@ -296,6 +349,29 @@ export default function HospitalForm() {
                 
               />
             </Grid>
+            {isConvert && (
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  select
+                  fullWidth
+                  required
+                  label="Subscription plan"
+                  name="planId"
+                  value={formData.planId}
+                  onChange={handleChange}
+                  helperText="The hospital's first branch starts on this plan."
+                >
+                  {plans.length === 0 ? (
+                    <MenuItem value="" disabled>No plans available — create one under Plans first</MenuItem>
+                  ) : (
+                    plans.map((p: any) => (
+                      <MenuItem key={p.planId} value={p.planId}>{p.planName}</MenuItem>
+                    ))
+                  )}
+                </TextField>
+              </Grid>
+            )}
+            {!isConvert && (
             <Grid size={{ xs: 12 }}>
               <TextField
                 select
@@ -305,7 +381,7 @@ export default function HospitalForm() {
                 value={formData.status}
                 onChange={handleChange}
                 required
-                
+
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
@@ -324,6 +400,7 @@ export default function HospitalForm() {
                 <MenuItem value="inactive">Inactive</MenuItem>
               </TextField>
             </Grid>
+            )}
 
             <Grid size={{ xs: 12 }}>
               <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>
@@ -349,7 +426,7 @@ export default function HospitalForm() {
                     boxShadow: "0 4px 14px 0 rgba(59, 130, 246, 0.39)",
                   }}
                 >
-                  {loading ? t("common.saving", "Saving...") : t("common.save", "Save Hospital")}
+                  {loading ? t("common.saving", "Saving...") : isConvert ? "Convert & create hospital" : t("common.save", "Save Hospital")}
                 </Button>
               </Box>
             </Grid>
@@ -505,6 +582,24 @@ export default function HospitalForm() {
           >
             {branchLoading ? "Adding..." : "Add Branch"}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* One-time admin credentials after a trial conversion */}
+      <Dialog open={!!convertResult} onClose={() => { setConvertResult(null); navigate("/hospitals"); }} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { bgcolor: "background.paper", borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 700 }}>Hospital created</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            Share these one-time credentials with the hospital admin — they'll set a new password on first login.
+          </Typography>
+          <Alert severity="info">
+            <Box sx={{ mb: 0.5 }}><b>Email:</b> {convertResult?.email}</Box>
+            <Box><b>Temp password:</b> <Box component="code" sx={{ fontFamily: "monospace" }}>{convertResult?.temporaryPassword}</Box></Box>
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => { setConvertResult(null); navigate("/hospitals"); }} variant="contained">Done</Button>
         </DialogActions>
       </Dialog>
     </Container>

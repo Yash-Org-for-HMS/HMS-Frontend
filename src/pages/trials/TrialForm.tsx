@@ -11,7 +11,13 @@ import {
   TextField,
   MenuItem,
   IconButton,
-  Alert
+  Switch,
+  FormControlLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
@@ -26,6 +32,7 @@ export default function TrialForm() {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
+  const [trialCreds, setTrialCreds] = useState<{ email: string; temporaryPassword: string } | null>(null);
   const toast = useToast();
 
   // A trial is for a PROSPECT, so only not-yet-converted leads can start one.
@@ -33,15 +40,23 @@ export default function TrialForm() {
     queryKey: ["leads", "trial-options"],
     queryFn: async () =>
       ((await axiosInstance.get("/leads", { params: { limit: 1000 } })).data.data as any[]).filter(
-        (l: any) => l.leadStatus !== "converted"
+        (l: any) => l.leadStatus !== "converted" && l.leadStatus !== "trialing"
       ),
+  });
+
+  // Plans define what the trial includes (modules / limits).
+  const { data: plans = [] } = useQuery<any[]>({
+    queryKey: ["plans", "trial-options"],
+    queryFn: async () => (await axiosInstance.get("/plans", { params: { limit: 1000 } })).data.data ?? [],
   });
 
   const [formData, setFormData] = useState({
     leadId: "",
+    planId: "",
     startDate: new Date().toISOString().split("T")[0],
     endDate: new Date(new Date().setDate(new Date().getDate() + 14)).toISOString().split("T")[0], // 14 days from now
     notes: "",
+    autoExpire: true,
   });
 
   const [duration, setDuration] = useState<number | "custom">(14);
@@ -77,12 +92,21 @@ export default function TrialForm() {
     e.preventDefault();
     setLoading(true);
     try {
-      await axiosInstance.post("/trials", {
+      const res = await axiosInstance.post("/trials", {
         leadId: formData.leadId,
+        planId: formData.planId,
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
+        autoExpire: formData.autoExpire,
       });
-      navigate("/trials");
+      const admin = res.data?.data?.admin;
+      if (admin?.temporaryPassword) {
+        // Trial provisioned a live hospital + admin login — surface the credentials.
+        setTrialCreds({ email: admin.email, temporaryPassword: admin.temporaryPassword });
+      } else {
+        toast.success("Trial started");
+        navigate("/trials");
+      }
     } catch (err: any) {
       toast.error(err.response?.data?.message || t("common.error"));
     } finally {
@@ -178,6 +202,29 @@ export default function TrialForm() {
                 ))}
               </TextField>
             </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                select
+                fullWidth
+                label="Trial plan (defines what's included)"
+                name="planId"
+                value={formData.planId}
+                onChange={handleChange}
+                required
+                helperText="The prospect's trial includes this plan's modules and limits."
+              >
+                {plans.length === 0 ? (
+                  <MenuItem value="" disabled>No plans available — create one under Plans first</MenuItem>
+                ) : (
+                  plans.map((p: any) => (
+                    <MenuItem key={p.planId} value={p.planId}>
+                      {p.planName}
+                      {p.monthlyPrice != null ? ` — ₹${Number(p.monthlyPrice).toLocaleString("en-IN")}/mo` : ""}
+                    </MenuItem>
+                  ))
+                )}
+              </TextField>
+            </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -254,7 +301,18 @@ export default function TrialForm() {
                 </Box>
               </Box>
             </Grid>
-            
+            <Grid size={{ xs: 12 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.autoExpire}
+                    onChange={(e) => setFormData(prev => ({ ...prev, autoExpire: e.target.checked }))}
+                  />
+                }
+                label="Automatically expire this trial after its end date"
+              />
+            </Grid>
+
             <Grid size={{ xs: 12 }}>
               <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>
                 <Button 
@@ -286,6 +344,24 @@ export default function TrialForm() {
           </Grid>
         </form>
       </Paper>
+
+      {/* Trial admin credentials — the trial provisions a live hospital + login */}
+      <Dialog open={!!trialCreds} onClose={() => { setTrialCreds(null); navigate("/trials"); }} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { bgcolor: "background.paper", borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 700 }}>Trial started</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            A live hospital was created for this trial. Share these one-time login credentials with the hospital admin — they'll set a new password on first login.
+          </Typography>
+          <Alert severity="info">
+            <Box sx={{ mb: 0.5 }}><b>Login email:</b> {trialCreds?.email}</Box>
+            <Box><b>Temp password:</b> <Box component="code" sx={{ fontFamily: "monospace" }}>{trialCreds?.temporaryPassword}</Box></Box>
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => { setTrialCreds(null); navigate("/trials"); }} variant="contained">Done</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

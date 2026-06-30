@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Drawer,
@@ -43,6 +44,7 @@ import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import BranchSwitcher from "../components/BranchSwitcher";
 import SidebarHeader from "../components/layout/SidebarHeader";
 import SidebarUserCard from "../components/layout/SidebarUserCard";
+import { axiosInstance } from "../api/axios";
 
 const drawerWidth = 260;
 
@@ -60,6 +62,7 @@ export default function HospitalLayout() {
   // Map sidebar items to required permissions
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/hospital/dashboard", permission: null },
+    { text: "Hospital Profile", icon: <LocalHospitalRounded />, path: "/hospital/profile", permission: null, adminOnly: true },
     // Admin-only: its endpoint (/billing/analytics) is admin-gated, so don't show
     // a tab non-admins can't actually open.
     { text: "Financial Analytics", icon: <AccountBalanceRounded />, path: "/hospital/financials", permission: null, adminOnly: true },
@@ -88,6 +91,22 @@ export default function HospitalLayout() {
     if (isAdmin) return true;
     return user?.permissions?.includes(item.permission);
   });
+
+  // First-run gate: the hospital admin must fill a few required profile details
+  // before using the rest of the panel. Completeness is derived from the fields
+  // (no flag needed); the gate releases as soon as they're filled + saved.
+  const { data: hospitalProfile } = useQuery({
+    queryKey: ["hospital-profile"],
+    queryFn: async () => (await axiosInstance.get("/hospital/profile")).data.data,
+  });
+  const profileComplete = !!(
+    hospitalProfile &&
+    hospitalProfile.officialPhone &&
+    hospitalProfile.addressLine1 &&
+    hospitalProfile.registrationNumber
+  );
+  const mustCompleteProfile =
+    isAdmin && !!hospitalProfile && !profileComplete && location.pathname !== "/hospital/profile";
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -182,6 +201,11 @@ export default function HospitalLayout() {
       />
     </Box>
   );
+
+  // Until the required profile details are filled, keep the admin on the profile page.
+  if (mustCompleteProfile) {
+    return <Navigate to="/hospital/profile" replace />;
+  }
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
