@@ -24,7 +24,7 @@ import { ArrowBackRounded, Visibility, VisibilityOff, ContentCopyRounded } from 
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
-import PageHeader from "../../components/layout/PageHeader";
+import FormHeader from "../../components/layout/FormHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 interface Branch {
@@ -87,12 +87,13 @@ export default function UserForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
 
-  // Filter roles when hospital changes
+  // Show only the selected hospital's roles. System roles are seeded per-hospital
+  // (each tenant has its own H_ADMIN/Doctor/… with its hospitalId), so scoping by
+  // hospitalId already includes them — once each. The old `|| r.isSystemRole`
+  // pulled every tenant's system roles, duplicating the list across hospitals.
   useEffect(() => {
     if (formData.hospitalId && roles.length > 0) {
-      setFilteredRoles(
-        roles.filter(r => r.hospitalId === formData.hospitalId || r.isSystemRole) // Include system roles
-      );
+      setFilteredRoles(roles.filter(r => r.hospitalId === formData.hospitalId));
     } else {
       setFilteredRoles([]);
     }
@@ -193,14 +194,7 @@ export default function UserForm() {
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto" }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
-        <IconButton onClick={() => navigate("/rbac/users")} sx={{ color: "text.secondary" }}>
-          <ArrowBackRounded />
-        </IconButton>
-        <Box sx={{ flexGrow: 1 }}>
-          <PageHeader title={isEdit ? "Edit User" : "Add New User"} />
-        </Box>
-      </Box>
+      <FormHeader title={isEdit ? "Edit User" : "Add New User"} onBack={() => navigate("/rbac/users")} />
 <Card
         sx={{
           p: 4,

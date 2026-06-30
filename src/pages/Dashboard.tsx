@@ -114,48 +114,37 @@ export default function Dashboard() {
     );
   }
 
-  const StatCard = ({ title, value, icon, colorHex }: any) => (
+  // One card per theme, with a headline metric and related sub-metrics grouped
+  // beneath it (e.g. Total Hospitals + Active / On Trial / Expired together).
+  const GroupCard = ({ title, icon, color, primary, subs }: any) => (
     <Paper
       elevation={0}
       sx={{
-        p: 3,
-        borderRadius: 4,
+        p: 2.25,
+        borderRadius: 3,
         bgcolor: "background.paper",
         border: "1px solid", borderColor: "divider",
+        height: "100%",
         transition: "all 0.2s ease-in-out",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        height: 160,
-        "&:hover": {
-          boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
-          transform: "translateY(-2px)",
-        },
+        "&:hover": { boxShadow: "0 6px 24px rgba(0,0,0,0.06)" },
       }}
     >
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <Box
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: 3,
-            bgcolor: `${colorHex}15`,
-            color: colorHex,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.25 }}>
+        <Box sx={{ width: 30, height: 30, borderRadius: 2, bgcolor: `${color}15`, color, display: "grid", placeItems: "center", "& svg": { fontSize: 17 } }}>
           {icon}
         </Box>
+        <Typography variant="caption" fontWeight={700} sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.4 }}>{title}</Typography>
       </Box>
-      <Box>
-        <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary" }}>
-          {value}
-        </Typography>
-        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, mt: 1, display: "block" }}>
-          {title}
-        </Typography>
+      <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary", lineHeight: 1.05 }}>{primary.value}</Typography>
+      <Typography variant="caption" sx={{ color: "text.secondary" }}>{primary.label}</Typography>
+      <Box sx={{ borderTop: "1px solid", borderColor: "divider", my: 1.25 }} />
+      <Box sx={{ display: "flex", gap: 1 }}>
+        {subs.map((s: any) => (
+          <Box key={s.label} sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="subtitle1" fontWeight={800} sx={{ color: s.color || "text.primary", lineHeight: 1.2 }}>{s.value}</Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.68rem", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.label}</Typography>
+          </Box>
+        ))}
       </Box>
     </Paper>
   );
@@ -175,77 +164,52 @@ export default function Dashboard() {
         </Box>
       </Box>
 
-      {/* Tabs for Grouping Stats */}
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
-        <Tabs 
-          value={tabIndex} 
-          onChange={(_e, v) => setTabIndex(v)}
-          TabIndicatorProps={{ sx: { bgcolor: "#4F46E5", height: 3, borderRadius: "3px 3px 0 0" } }}
-          sx={{ "& .MuiTab-root": { fontWeight: 600, textTransform: "none", fontSize: "1rem" }, "& .Mui-selected": { color: "#4F46E5 !important" } }}
-        >
-          <Tab label="Business Overview" />
-          <Tab label="Platform Metrics" />
-          <Tab label="Trials & Onboarding" />
-        </Tabs>
-      </Box>
-
-      {/* Primary Stats Grid */}
-      <Box hidden={tabIndex !== 0}>
-        <Grid container spacing={3} sx={{ mb: 5 }}>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="MRR (Revenue)" value={`₹${stats.totalRevenue.toLocaleString()}`} icon={<AccountBalanceRounded />} colorHex="#10B981" />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="Total Hospitals" value={stats.totalHospitals} icon={<LocalHospitalRounded />} colorHex="#3B82F6" />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="Active Hospitals" value={stats.activeHospitals} icon={<CheckCircleRounded />} colorHex="#10B981" />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="Total Leads" value={stats.totalLeads} icon={<PeopleAltRounded />} colorHex="#8B5CF6" />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="Converted Leads" value={stats.convertedLeads} icon={<TrendingUpRounded />} colorHex="#14B8A6" />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="Active Plans" value={stats.activePlans} icon={<CardMembershipRounded />} colorHex="#F59E0B" />
-          </Grid>
+      {/* Grouped KPIs — related metrics live together */}
+      <Grid container spacing={3} sx={{ mb: 5 }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <GroupCard
+            title="Tenants" color="#3B82F6" icon={<LocalHospitalRounded />}
+            primary={{ label: "Total Hospitals", value: stats.totalHospitals }}
+            subs={[
+              { label: "Active", value: stats.activeHospitals, color: "#10B981" },
+              { label: "On Trial", value: stats.trialHospitals, color: "#F59E0B" },
+              { label: "Expired", value: stats.expiredHospitals, color: "#EF4444" },
+            ]}
+          />
         </Grid>
-      </Box>
-
-      <Box hidden={tabIndex !== 1}>
-        <Grid container spacing={3} sx={{ mb: 5 }}>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="Total Doctors" value={stats.totalDoctors} icon={<MedicalServicesRounded />} colorHex="#EC4899" />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="Total Patients" value={stats.totalPatients} icon={<HealingRounded />} colorHex="#F59E0B" />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="Total Branches" value={stats.totalBranches} icon={<BusinessRounded />} colorHex="#3B82F6" />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="Total Users" value={stats.totalUsers} icon={<AssignmentTurnedInRounded />} colorHex="#64748B" />
-          </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <GroupCard
+            title="Sales Pipeline" color="#8B5CF6" icon={<PeopleAltRounded />}
+            primary={{ label: "Total Leads", value: stats.totalLeads }}
+            subs={[
+              { label: "Converted", value: stats.convertedLeads, color: "#10B981" },
+              { label: "Active Trials", value: stats.activeTrials, color: "#F59E0B" },
+              { label: "Conversion", value: `${stats.totalLeads ? Math.round((stats.convertedLeads / stats.totalLeads) * 100) : 0}%` },
+            ]}
+          />
         </Grid>
-      </Box>
-
-      <Box hidden={tabIndex !== 2}>
-        <Grid container spacing={3} sx={{ mb: 5 }}>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="Active Trials" value={stats.activeTrials} icon={<TimerRounded />} colorHex="#EC4899" />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="Expired Trials" value={stats.expiredHospitals} icon={<TimerOffRounded />} colorHex="#EF4444" />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="Trial Hospitals" value={stats.trialHospitals} icon={<LocalHospitalRounded />} colorHex="#8B5CF6" />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="Hospital Admins" value={stats.hospitalAdminCount} icon={<AdminPanelSettingsRounded />} colorHex="#4F46E5" />
-          </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <GroupCard
+            title="Scale" color="#10B981" icon={<BusinessRounded />}
+            primary={{ label: "Patients", value: stats.totalPatients }}
+            subs={[
+              { label: "Doctors", value: stats.totalDoctors },
+              { label: "Branches", value: stats.totalBranches },
+              { label: "Users", value: stats.totalUsers },
+            ]}
+          />
         </Grid>
-      </Box>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <GroupCard
+            title="Revenue & Plans" color="#F59E0B" icon={<AccountBalanceRounded />}
+            primary={{ label: "MRR (revenue)", value: `₹${stats.totalRevenue.toLocaleString()}` }}
+            subs={[
+              { label: "Active Plans", value: stats.activePlans },
+              { label: "Hospital Admins", value: stats.hospitalAdminCount },
+            ]}
+          />
+        </Grid>
+      </Grid>
 
       {/* Charts Section */}
       <Grid container spacing={3} sx={{ mb: 5 }}>

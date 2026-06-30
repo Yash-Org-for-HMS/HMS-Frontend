@@ -25,7 +25,7 @@ import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useToast } from "../../contexts/ToastContext";
-import PageHeader from "../../components/layout/PageHeader";
+import FormHeader from "../../components/layout/FormHeader";
 
 export default function HospitalForm() {
   const { t } = useTranslation();
@@ -228,24 +228,10 @@ export default function HospitalForm() {
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 2 }}>
-        <IconButton
-          onClick={() => navigate("/hospitals")}
-          sx={{
-            bgcolor: "action.hover",
-            border: "1px solid", borderColor: "divider",
-            color: "text.primary",
-            "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-          }}
-        >
-          <ArrowBackRounded />
-        </IconButton>
-        <Box sx={{ flexGrow: 1 }}>
-          <PageHeader
-            title={isConvert ? "Convert Trial → New Hospital" : isEdit ? t("hospitals.editHospital", "Edit Hospital") : t("hospitals.addHospital", "Add Hospital")}
-          />
-        </Box>
-      </Box>
+      <FormHeader
+        title={isConvert ? "Convert Trial → New Hospital" : isEdit ? t("hospitals.editHospital", "Edit Hospital") : t("hospitals.addHospital", "Add Hospital")}
+        onBack={() => navigate("/hospitals")}
+      />
 <Paper
         elevation={2}
         sx={{

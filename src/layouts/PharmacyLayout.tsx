@@ -48,11 +48,11 @@ export default function PharmacyLayout() {
   const location = useLocation();
 
   const menuItems = [
-    { text: "Dashboard", icon: <DashboardRounded />, path: "/pharmacy/dashboard" },
-    { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/pharmacy/medicines" },
-    { text: "Suppliers", icon: <LocalShippingRounded />, path: "/pharmacy/suppliers" },
-    { text: "Inventory & POs", icon: <InventoryRounded />, path: "/pharmacy/inventory" },
-    { text: "Dispensary (POS)", icon: <PointOfSaleRounded />, path: "/pharmacy/pos" },
+    { text: "Dashboard", icon: <DashboardRounded />, path: "/pharmacy/dashboard", section: "Overview" },
+    { text: "Dispensary (POS)", icon: <PointOfSaleRounded />, path: "/pharmacy/pos", section: "Dispensary" },
+    { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/pharmacy/medicines", section: "Inventory" },
+    { text: "Suppliers", icon: <LocalShippingRounded />, path: "/pharmacy/suppliers", section: "Inventory" },
+    { text: "Inventory & POs", icon: <InventoryRounded />, path: "/pharmacy/inventory", section: "Inventory" },
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -76,10 +76,16 @@ export default function PharmacyLayout() {
       />
       
       <List sx={{ px: 2, pt: 2, flex: 1, overflowY: "auto" }}>
-        {menuItems.map((item) => {
+        {menuItems.map((item, idx, arr) => {
           const isActive = location.pathname.startsWith(item.path);
           return (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+            <Box key={item.text}>
+              {(idx === 0 || arr[idx - 1].section !== item.section) && (
+                <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", fontSize: "0.68rem", px: 1.5, pt: idx === 0 ? 0 : 1.75, pb: 0.5 }}>
+                  {item.section}
+                </Typography>
+              )}
+              <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => { navigate(item.path); if (isMobile) setMobileOpen(false); }}
                 sx={{ borderRadius: 2, bgcolor: isActive ? "rgba(79, 70, 229, 0.08)" : "transparent", "&:hover": { bgcolor: "action.hover" } }}
@@ -90,6 +96,7 @@ export default function PharmacyLayout() {
                 <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: "0.95rem", fontWeight: isActive ? 600 : 500, color: isActive ? "#4F46E5" : "#64748B" }} />
               </ListItemButton>
             </ListItem>
+            </Box>
           );
         })}
       </List>

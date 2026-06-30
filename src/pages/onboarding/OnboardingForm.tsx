@@ -21,7 +21,7 @@ import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useToast } from "../../contexts/ToastContext";
-import PageHeader from "../../components/layout/PageHeader";
+import FormHeader from "../../components/layout/FormHeader";
 
 export default function OnboardingForm() {
   const { t } = useTranslation();
@@ -93,25 +93,11 @@ export default function OnboardingForm() {
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 2 }}>
-        <IconButton
-          onClick={() => navigate("/onboarding")}
-          sx={{
-            bgcolor: "action.hover",
-            border: "1px solid", borderColor: "divider",
-            color: "text.primary",
-            "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-          }}
-        >
-          <ArrowBackRounded />
-        </IconButton>
-        <Box sx={{ flexGrow: 1 }}>
-          <PageHeader
-            title={t("onboarding.updateProgress", "Update Onboarding Progress")}
-            subtitle={hospitalName}
-          />
-        </Box>
-      </Box>
+      <FormHeader
+        title={t("onboarding.updateProgress", "Update Onboarding Progress")}
+        subtitle={hospitalName}
+        onBack={() => navigate("/onboarding")}
+      />
 
 
 

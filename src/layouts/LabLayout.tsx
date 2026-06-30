@@ -48,11 +48,11 @@ export default function LabLayout() {
   const location = useLocation();
 
   const menuItems = [
-    { text: "Dashboard", icon: <DashboardRounded />, path: "/lab/dashboard" },
-    { text: "Lab Orders", icon: <ScienceRounded />, path: "/lab/orders" },
-    { text: "Radiology Orders", icon: <SettingsAccessibilityRounded />, path: "/lab/radiology" },
-    { text: "Lab Catalog", icon: <MenuBookRounded />, path: "/lab/catalog" },
-    { text: "Radiology Catalog", icon: <MenuBookRounded />, path: "/lab/radiology-catalog" },
+    { text: "Dashboard", icon: <DashboardRounded />, path: "/lab/dashboard", section: "Overview" },
+    { text: "Lab Orders", icon: <ScienceRounded />, path: "/lab/orders", section: "Orders" },
+    { text: "Radiology Orders", icon: <SettingsAccessibilityRounded />, path: "/lab/radiology", section: "Orders" },
+    { text: "Lab Catalog", icon: <MenuBookRounded />, path: "/lab/catalog", section: "Catalogs" },
+    { text: "Radiology Catalog", icon: <MenuBookRounded />, path: "/lab/radiology-catalog", section: "Catalogs" },
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -76,10 +76,16 @@ export default function LabLayout() {
       />
       
       <List sx={{ px: 2, pt: 2, flex: 1, overflowY: "auto" }}>
-        {menuItems.map((item) => {
+        {menuItems.map((item, idx, arr) => {
           const isActive = location.pathname.startsWith(item.path);
           return (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+            <Box key={item.text}>
+              {(idx === 0 || arr[idx - 1].section !== item.section) && (
+                <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", fontSize: "0.68rem", px: 1.5, pt: idx === 0 ? 0 : 1.75, pb: 0.5 }}>
+                  {item.section}
+                </Typography>
+              )}
+              <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => { navigate(item.path); if (isMobile) setMobileOpen(false); }}
                 sx={{ borderRadius: 2, bgcolor: isActive ? "rgba(16, 185, 129, 0.08)" : "transparent", "&:hover": { bgcolor: "action.hover" } }}
@@ -90,6 +96,7 @@ export default function LabLayout() {
                 <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: "0.95rem", fontWeight: isActive ? 600 : 500, color: isActive ? "#10B981" : "#64748B" }} />
               </ListItemButton>
             </ListItem>
+            </Box>
           );
         })}
       </List>

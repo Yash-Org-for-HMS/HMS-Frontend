@@ -25,7 +25,7 @@ import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useToast } from "../../contexts/ToastContext";
-import PageHeader from "../../components/layout/PageHeader";
+import FormHeader from "../../components/layout/FormHeader";
 
 export default function TrialForm() {
   const { t } = useTranslation();
@@ -53,6 +53,8 @@ export default function TrialForm() {
   const [formData, setFormData] = useState({
     leadId: "",
     planId: "",
+    adminName: "",
+    adminEmail: "",
     startDate: new Date().toISOString().split("T")[0],
     endDate: new Date(new Date().setDate(new Date().getDate() + 14)).toISOString().split("T")[0], // 14 days from now
     notes: "",
@@ -95,6 +97,8 @@ export default function TrialForm() {
       const res = await axiosInstance.post("/trials", {
         leadId: formData.leadId,
         planId: formData.planId,
+        adminName: formData.adminName,
+        adminEmail: formData.adminEmail,
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
         autoExpire: formData.autoExpire,
@@ -132,22 +136,7 @@ export default function TrialForm() {
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 2 }}>
-        <IconButton
-          onClick={() => navigate("/trials")}
-          sx={{
-            bgcolor: "action.hover",
-            border: "1px solid", borderColor: "divider",
-            color: "text.primary",
-            "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-          }}
-        >
-          <ArrowBackRounded />
-        </IconButton>
-        <Box sx={{ flexGrow: 1 }}>
-          <PageHeader title={t("trials.addTrial")} />
-        </Box>
-      </Box>
+      <FormHeader title={t("trials.addTrial")} onBack={() => navigate("/trials")} />
 <Paper
         elevation={2}
         sx={{
@@ -165,12 +154,12 @@ export default function TrialForm() {
               <TextField
                 select
                 fullWidth
-                label={t("trials.selectLead")}
+                label={`${t("trials.selectLead")} (sales contact)`}
                 name="leadId"
                 value={formData.leadId}
                 onChange={handleChange}
                 required
-                
+
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
@@ -202,6 +191,41 @@ export default function TrialForm() {
                 ))}
               </TextField>
             </Grid>
+
+            {/* Hospital admin — a separate person at the hospital who will run the
+                system. NOT the sales contact (who may be our own salesperson). */}
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 700 }}>
+                Hospital admin
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                The person at the hospital who will administer the system. This is a separate login from the sales contact above.
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Hospital admin name"
+                name="adminName"
+                value={formData.adminName}
+                onChange={handleChange}
+                required
+                placeholder="e.g. Dr. Asha Mehta"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                type="email"
+                label="Hospital admin email (login ID)"
+                name="adminEmail"
+                value={formData.adminEmail}
+                onChange={handleChange}
+                required
+                helperText="This becomes their login ID for the hospital portal"
+              />
+            </Grid>
+
             <Grid size={{ xs: 12 }}>
               <TextField
                 select

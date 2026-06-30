@@ -53,11 +53,11 @@ export default function DoctorLayout() {
   useSocket({ QUEUE_UPDATED: () => queryClient.invalidateQueries({ queryKey: ["doctor-badges"] }) });
 
   const menuItems = [
-    { text: "Dashboard", icon: <DashboardRounded />, path: "/doctor/dashboard", badge: 0 },
-    { text: "My Queue", icon: <QueueRounded />, path: "/doctor/queue", badge: badges?.queueWaiting || 0 },
-    { text: "My Patients", icon: <PeopleAltRounded />, path: "/doctor/patients", badge: 0 },
-    { text: "Results", icon: <ScienceRounded />, path: "/doctor/results", badge: badges?.resultsReady || 0 },
-    { text: "My Reports", icon: <AssessmentRounded />, path: "/doctor/reports", badge: 0 },
+    { text: "Dashboard", icon: <DashboardRounded />, path: "/doctor/dashboard", badge: 0, section: "Overview" },
+    { text: "My Queue", icon: <QueueRounded />, path: "/doctor/queue", badge: badges?.queueWaiting || 0, section: "My Work" },
+    { text: "My Patients", icon: <PeopleAltRounded />, path: "/doctor/patients", badge: 0, section: "My Work" },
+    { text: "Results", icon: <ScienceRounded />, path: "/doctor/results", badge: badges?.resultsReady || 0, section: "My Work" },
+    { text: "My Reports", icon: <AssessmentRounded />, path: "/doctor/reports", badge: 0, section: "Insights" },
   ];
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
@@ -81,18 +81,18 @@ export default function DoctorLayout() {
 
       {/* Navigation */}
       <List sx={{ px: 1.5, pt: 2, flex: 1, overflowY: "auto" }}>
-        <Typography
-          variant="caption"
-          sx={{ color: "#475569", fontWeight: 700, px: 1.5, pb: 1, display: "block", letterSpacing: 1, textTransform: "uppercase" }}
-        >
-          My Workspace
-        </Typography>
-        {menuItems.map((item) => {
+        {menuItems.map((item, idx, arr) => {
           const isActive =
             location.pathname === item.path ||
             (item.path !== "/doctor/dashboard" && location.pathname.startsWith(item.path));
           return (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+            <Box key={item.text}>
+              {(idx === 0 || arr[idx - 1].section !== item.section) && (
+                <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", fontSize: "0.68rem", px: 1.5, pt: idx === 0 ? 0 : 1.75, pb: 0.5 }}>
+                  {item.section}
+                </Typography>
+              )}
+              <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => {
                   navigate(item.path);
@@ -126,6 +126,7 @@ export default function DoctorLayout() {
                 />
               </ListItemButton>
             </ListItem>
+            </Box>
           );
         })}
       </List>

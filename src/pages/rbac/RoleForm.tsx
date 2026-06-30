@@ -22,7 +22,7 @@ import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
-import PageHeader from "../../components/layout/PageHeader";
+import FormHeader from "../../components/layout/FormHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 export default function RoleForm() {
@@ -132,24 +132,10 @@ export default function RoleForm() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 2 }}>
-        <IconButton
-          onClick={() => navigate("/rbac/roles")}
-          sx={{
-            bgcolor: "action.hover",
-            border: "1px solid", borderColor: "divider",
-            color: "text.primary",
-            "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-          }}
-        >
-          <ArrowBackRounded />
-        </IconButton>
-        <Box sx={{ flexGrow: 1 }}>
-          <PageHeader
-            title={isEdit ? t("rbac.editRole", "Edit Role") : t("rbac.addRole", "Add Role")}
-          />
-        </Box>
-      </Box>
+      <FormHeader
+        title={isEdit ? t("rbac.editRole", "Edit Role") : t("rbac.addRole", "Add Role")}
+        onBack={() => navigate("/rbac/roles")}
+      />
 <Paper
         elevation={2}
         sx={{

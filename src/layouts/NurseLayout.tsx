@@ -34,8 +34,8 @@ export default function NurseLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const menuItems = [
-    { text: "Dashboard", icon: <DashboardRounded />, path: "/nurse/dashboard" },
-    { text: "Patient Queue", icon: <PeopleAltRounded />, path: "/nurse/queue" },
+    { text: "Dashboard", icon: <DashboardRounded />, path: "/nurse/dashboard", section: "Overview" },
+    { text: "Patient Queue", icon: <PeopleAltRounded />, path: "/nurse/queue", section: "Patient Care" },
   ];
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
@@ -59,18 +59,18 @@ export default function NurseLayout() {
 
       {/* Navigation */}
       <List sx={{ px: 1.5, pt: 2, flex: 1, overflowY: "auto" }}>
-        <Typography
-          variant="caption"
-          sx={{ color: "#475569", fontWeight: 700, px: 1.5, pb: 1, display: "block", letterSpacing: 1, textTransform: "uppercase" }}
-        >
-          Nurse Workspace
-        </Typography>
-        {menuItems.map((item) => {
+        {menuItems.map((item, idx, arr) => {
           const isActive =
             location.pathname === item.path ||
             (item.path !== "/nurse/dashboard" && location.pathname.startsWith(item.path));
           return (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+            <Box key={item.text}>
+              {(idx === 0 || arr[idx - 1].section !== item.section) && (
+                <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", fontSize: "0.68rem", px: 1.5, pt: idx === 0 ? 0 : 1.75, pb: 0.5 }}>
+                  {item.section}
+                </Typography>
+              )}
+              <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => {
                   navigate(item.path);
@@ -102,6 +102,7 @@ export default function NurseLayout() {
                 />
               </ListItemButton>
             </ListItem>
+            </Box>
           );
         })}
       </List>
