@@ -158,11 +158,11 @@ export default function PlansList() {
                       <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", maxWidth: 200 }}>
                         {Array.isArray(plan.featuresJson) ? (
                           plan.featuresJson.slice(0, 3).map((f: string) => (
-                            <Chip key={f} label={f} size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: "#34d399", height: 20, fontSize: "0.7rem" }} />
+                            <Chip key={f} label={f} size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: "#34d399", height: 20, fontSize: "0.75rem" }} />
                           ))
                         ) : null}
                         {Array.isArray(plan.featuresJson) && plan.featuresJson.length > 3 && (
-                          <Chip label={`+${plan.featuresJson.length - 3}`} size="small" sx={{ bgcolor: "rgba(255, 255, 255, 0.1)", color: "text.primary", height: 20, fontSize: "0.7rem" }} />
+                          <Chip label={`+${plan.featuresJson.length - 3}`} size="small" sx={{ bgcolor: "rgba(255, 255, 255, 0.1)", color: "text.primary", height: 20, fontSize: "0.75rem" }} />
                         )}
                       </Box>
                     </TableCell>

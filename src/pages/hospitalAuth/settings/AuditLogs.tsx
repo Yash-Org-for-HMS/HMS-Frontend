@@ -279,7 +279,7 @@ export default function AuditLogs() {
               <Typography variant="subtitle2" sx={{ color: "#f87171", mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#f87171" }} /> Old Value
               </Typography>
-              <Box component="pre" sx={{ m: 0, p: 2, bgcolor: "background.paper", borderRadius: 1, overflowX: "auto", fontSize: "0.85rem", color: "text.primary" }}>
+              <Box component="pre" sx={{ m: 0, p: 2, bgcolor: "background.paper", borderRadius: 1, overflowX: "auto", fontSize: "0.875rem", color: "text.primary" }}>
                 {JSON.stringify(selectedLog?.oldValueJson, null, 2)}
               </Box>
             </Grid>
@@ -287,7 +287,7 @@ export default function AuditLogs() {
               <Typography variant="subtitle2" sx={{ color: "#34d399", mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#34d399" }} /> New Value
               </Typography>
-              <Box component="pre" sx={{ m: 0, p: 2, bgcolor: "background.paper", borderRadius: 1, overflowX: "auto", fontSize: "0.85rem", color: "text.primary" }}>
+              <Box component="pre" sx={{ m: 0, p: 2, bgcolor: "background.paper", borderRadius: 1, overflowX: "auto", fontSize: "0.875rem", color: "text.primary" }}>
                 {JSON.stringify(selectedLog?.newValueJson, null, 2)}
               </Box>
             </Grid>

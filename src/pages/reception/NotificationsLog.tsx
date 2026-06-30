@@ -166,7 +166,7 @@ export default function NotificationsLog() {
                           label="Simulated"
                           size="small"
                           variant="outlined"
-                          sx={{ color: "#f59e0b", borderColor: "rgba(245,158,11,0.4)", fontWeight: 600, fontSize: "0.68rem", height: 20 }}
+                          sx={{ color: "#f59e0b", borderColor: "rgba(245,158,11,0.4)", fontWeight: 600, fontSize: "0.75rem", height: 20 }}
                         />
                       </Box>
                     </TableCell>

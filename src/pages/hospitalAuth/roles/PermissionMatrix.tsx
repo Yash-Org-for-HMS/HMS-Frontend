@@ -243,7 +243,7 @@ export default function PermissionMatrix() {
                   borderColor: "divider",
                   minWidth: 280,
                   fontWeight: 800,
-                  fontSize: "0.95rem",
+                  fontSize: "0.875rem",
                   zIndex: 3,
                 }}
               >
@@ -280,7 +280,7 @@ export default function PermissionMatrix() {
                       </Box>
 
                       {role.isSystemRole ? (
-                        <Chip label="System Role" size="small" sx={{ height: 22, fontSize: "0.65rem", fontWeight: 700, bgcolor: alpha("#3b82f6", 0.1), color: "#3b82f6" }} />
+                        <Chip label="System Role" size="small" sx={{ height: 22, fontSize: "0.75rem", fontWeight: 700, bgcolor: alpha("#3b82f6", 0.1), color: "#3b82f6" }} />
                       ) : (
                         <Tooltip title={`${activeCount} out of ${totalPermissionsCount} permissions granted`}>
                           <Chip
@@ -288,7 +288,7 @@ export default function PermissionMatrix() {
                             size="small"
                             sx={{
                               height: 22,
-                              fontSize: "0.65rem",
+                              fontSize: "0.75rem",
                               fontWeight: 700,
                               bgcolor: isAllActive ? alpha("#10b981", 0.1) : alpha("#6366f1", 0.1),
                               color: isAllActive ? "#10b981" : "#6366f1",
@@ -330,7 +330,7 @@ export default function PermissionMatrix() {
                         <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "text.primary" }}>
                           {moduleName} Module
                         </Typography>
-                        <Chip label={`${perms.length} actions`} size="small" sx={{ height: 20, fontSize: "0.65rem", fontWeight: 600 }} />
+                        <Chip label={`${perms.length} actions`} size="small" sx={{ height: 20, fontSize: "0.75rem", fontWeight: 600 }} />
                       </Box>
                     </TableCell>
                   </TableRow>

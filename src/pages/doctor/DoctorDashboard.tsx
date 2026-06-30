@@ -54,7 +54,7 @@ function StatCard({ title, value, icon, loading, accent, sub }: any) {
           {title}
         </Typography>
         {sub && (
-          <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.68rem", display: "block", mt: 0.5 }}>
+          <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.75rem", display: "block", mt: 0.5 }}>
             {sub}
           </Typography>
         )}
@@ -194,7 +194,7 @@ export default function DoctorDashboard() {
                           color: appt.status.color,
                           border: `1px solid ${appt.status.color}30`,
                           fontWeight: 700,
-                          fontSize: "0.65rem",
+                          fontSize: "0.75rem",
                           height: 20
                         }}
                       />

@@ -56,7 +56,7 @@ function StatCard({ title, value, icon, loading, accent, sub }: any) {
           {title}
         </Typography>
         {sub && (
-          <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.68rem", display: "block", mt: 0.5 }}>
+          <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.75rem", display: "block", mt: 0.5 }}>
             {sub}
           </Typography>
         )}
@@ -196,7 +196,7 @@ export default function NurseDashboard() {
                     {["Token", "Patient", "Doctor", "Status", ""].map((h, i) => (
                       <TableCell key={h || i}
                         align={i === 4 ? "right" : "left"}
-                        sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 1.5, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}
+                        sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", py: 1.5, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}
                       >
                         {h}
                       </TableCell>
@@ -216,20 +216,20 @@ export default function NurseDashboard() {
                     needsVitals.map(token => (
                       <TableRow key={token.queueTokenId} sx={{ "&:hover": { bgcolor: "background.default" } }}>
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                          <Avatar sx={{ bgcolor: `${NURSE_PURPLE_DARK}cc`, width: 36, height: 36, fontSize: "0.85rem", fontWeight: 800 }}>
+                          <Avatar sx={{ bgcolor: `${NURSE_PURPLE_DARK}cc`, width: 36, height: 36, fontSize: "0.875rem", fontWeight: 800 }}>
                             {token.displayNumber}
                           </Avatar>
                         </TableCell>
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                           <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{token.patientName}</Typography>
                         </TableCell>
-                        <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.85rem" }}>
+                        <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.875rem" }}>
                           {token.doctorName}
                         </TableCell>
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                           <Chip
                             label={token.statusLabel} size="small"
-                            sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}55`, fontWeight: 600, fontSize: "0.7rem" }}
+                            sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}55`, fontWeight: 600, fontSize: "0.75rem" }}
                           />
                         </TableCell>
                         <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
@@ -239,7 +239,7 @@ export default function NurseDashboard() {
                             onClick={() => navigate("/nurse/queue", { state: { token } })}
                             sx={{
                               background: `linear-gradient(135deg, ${NURSE_PURPLE_DARK}, ${NURSE_PURPLE})`,
-                              textTransform: "none", fontWeight: 600, fontSize: "0.8rem",
+                              textTransform: "none", fontWeight: 600, fontSize: "0.875rem",
                               boxShadow: "0 2px 8px rgba(124,58,237,0.25)",
                               "&:hover": { background: `linear-gradient(135deg, #6d28d9, ${NURSE_PURPLE_DARK})` },
                             }}

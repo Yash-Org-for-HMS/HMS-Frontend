@@ -120,7 +120,7 @@ export default function ReferralsList() {
                 <SortableHeadCell label="Reason" sortKey="reason" orderBy={orderBy} order={order} onSort={onSort} />
                 <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} />
                 <SortableHeadCell label="Created" sortKey="created" orderBy={orderBy} order={order} onSort={onSort} />
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default" }} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", py: 2, bgcolor: "background.default" }} />
               </TableRow>
             </TableHead>
             <TableBody>

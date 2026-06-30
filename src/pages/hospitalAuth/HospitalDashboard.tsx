@@ -292,8 +292,8 @@ export default function HospitalDashboard() {
                       <ListItemText 
                         primary={activity.action} 
                         secondary={new Date(activity.timestamp).toLocaleString()}
-                        primaryTypographyProps={{ color: "text.primary", fontWeight: 500, fontSize: "0.9rem" }}
-                        secondaryTypographyProps={{ color: "text.secondary", fontSize: "0.8rem", mt: 0.5 }}
+                        primaryTypographyProps={{ color: "text.primary", fontWeight: 500, fontSize: "0.875rem" }}
+                        secondaryTypographyProps={{ color: "text.secondary", fontSize: "0.875rem", mt: 0.5 }}
                       />
                     </ListItem>
                     {index < stats.recentActivities.length - 1 && <Divider />}

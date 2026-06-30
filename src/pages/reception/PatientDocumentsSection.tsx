@@ -127,7 +127,7 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
                   <Chip 
                     label={doc.mimeType.split("/")[1]?.toUpperCase() || "FILE"} 
                     size="small" 
-                    sx={{ mt: 1.5, bgcolor: "rgba(6,182,212,0.1)", color: "#06b6d4", fontSize: "0.65rem", fontWeight: 700 }}
+                    sx={{ mt: 1.5, bgcolor: "rgba(6,182,212,0.1)", color: "#06b6d4", fontSize: "0.75rem", fontWeight: 700 }}
                   />
                 </CardContent>
                 <CardActions sx={{ justifyContent: "center", borderTop: "1px solid", borderColor: "divider", pt: 1, pb: 1.5 }}>

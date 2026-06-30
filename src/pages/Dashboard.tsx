@@ -142,7 +142,7 @@ export default function Dashboard() {
         {subs.map((s: any) => (
           <Box key={s.label} sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="subtitle1" fontWeight={800} sx={{ color: s.color || "text.primary", lineHeight: 1.2 }}>{s.value}</Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.68rem", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.label}</Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.75rem", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.label}</Typography>
           </Box>
         ))}
       </Box>
@@ -456,7 +456,7 @@ export default function Dashboard() {
                   {activity.moduleName.charAt(0).toUpperCase()}
                 </Avatar>
                 <Box sx={{ flexGrow: 1 }}>
-                  <Typography sx={{ color: "text.primary", fontWeight: 500, fontSize: "0.95rem" }}>
+                  <Typography sx={{ color: "text.primary", fontWeight: 500, fontSize: "0.875rem" }}>
                     {activity.description}
                   </Typography>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 0.5 }}>
@@ -467,7 +467,7 @@ export default function Dashboard() {
                         bgcolor: "background.paper",
                         color: "text.secondary",
                         height: 20,
-                        fontSize: "0.7rem",
+                        fontSize: "0.75rem",
                         fontWeight: 600,
                       }}
                     />

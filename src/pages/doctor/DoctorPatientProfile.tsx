@@ -11,6 +11,7 @@ import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { typeScale } from "../../styles/typography";
 
 const DOCTOR_BLUE = "#3b82f6";
 
@@ -133,7 +134,7 @@ export default function DoctorPatientProfile() {
                       <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
                         {new Date(h.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                       </Typography>
-                      <Chip label={h.doctorName} size="small" sx={{ height: 20, fontSize: "0.65rem", fontWeight: 600, bgcolor: "rgba(59,130,246,0.1)", color: DOCTOR_BLUE }} />
+                      <Chip label={h.doctorName} size="small" sx={{ height: 20, ...typeScale.chip, bgcolor: "rgba(59,130,246,0.1)", color: DOCTOR_BLUE }} />
                     </Box>
                     <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
                       <LocalHospitalRounded sx={{ fontSize: 16, color: DOCTOR_BLUE }} />
@@ -141,7 +142,7 @@ export default function DoctorPatientProfile() {
                     </Typography>
                     {h.soapAssessment && (
                       <Box
-                        sx={{ color: "text.secondary", fontSize: "0.8rem", lineHeight: 1.5, "& p": { m: 0 } }}
+                        sx={{ color: "text.secondary", ...typeScale.body, lineHeight: 1.5, "& p": { m: 0 } }}
                         dangerouslySetInnerHTML={{ __html: h.soapAssessment }}
                       />
                     )}

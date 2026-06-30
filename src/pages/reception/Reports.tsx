@@ -386,7 +386,7 @@ function SimpleTable({ title, head, rows }: { title: string; head: string[]; row
         <TableContainer>
           <Table size="small">
             <TableHead>
-              <TableRow>{head.map((h, i) => <TableCell key={h} align={i === 0 ? "left" : "right"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", borderColor: "divider" }}>{h}</TableCell>)}</TableRow>
+              <TableRow>{head.map((h, i) => <TableCell key={h} align={i === 0 ? "left" : "right"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider" }}>{h}</TableCell>)}</TableRow>
             </TableHead>
             <TableBody>
               {rows.map((r, ri) => (

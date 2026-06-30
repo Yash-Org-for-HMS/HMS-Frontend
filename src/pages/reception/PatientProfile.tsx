@@ -403,7 +403,7 @@ export default function PatientProfile() {
                   <TableHead>
                     <TableRow>
                       {["Date & Time", "Doctor", "Status", ""].map((h, i) => (
-                        <TableCell key={h || i} align={i === 3 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", borderColor: "divider" }}>{h}</TableCell>
+                        <TableCell key={h || i} align={i === 3 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider" }}>{h}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
@@ -470,7 +470,7 @@ export default function PatientProfile() {
                   <TableHead>
                     <TableRow>
                       {["Invoice #", "Date", "Amount", "Balance", "Status", ""].map((h, i) => (
-                        <TableCell key={h || i} align={i === 5 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", borderColor: "divider" }}>{h}</TableCell>
+                        <TableCell key={h || i} align={i === 5 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider" }}>{h}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>

@@ -89,7 +89,7 @@ export default function DoctorLayout() {
           return (
             <Box key={item.text}>
               {(idx === 0 || arr[idx - 1].section !== item.section) && (
-                <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", fontSize: "0.68rem", px: 1.5, pt: idx === 0 ? 0 : 1.75, pb: 0.5 }}>
+                <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", fontSize: "0.75rem", px: 1.5, pt: idx === 0 ? 0 : 1.75, pb: 0.5 }}>
                   {item.section}
                 </Typography>
               )}
@@ -120,7 +120,7 @@ export default function DoctorLayout() {
                 <ListItemText
                   primary={item.text}
                   primaryTypographyProps={{
-                    fontSize: "0.9rem",
+                    fontSize: "0.875rem",
                     fontWeight: isActive ? 600 : 500,
                     color: isActive ? DOCTOR_BLUE : "text.secondary",
                   }}

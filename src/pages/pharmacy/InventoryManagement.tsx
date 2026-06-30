@@ -397,7 +397,7 @@ export default function InventoryManagement() {
                       <TableCell>{new Date(po.orderDate).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <Box sx={{
-                          display: 'inline-block', px: 1.5, py: 0.5, borderRadius: 2, fontSize: '0.8rem', fontWeight: 600,
+                          display: 'inline-block', px: 1.5, py: 0.5, borderRadius: 2, fontSize: '0.875rem', fontWeight: 600,
                           bgcolor: po.status === 'pending' ? alpha('#F59E0B', 0.1) : alpha('#10B981', 0.1),
                           color: po.status === 'pending' ? '#F59E0B' : '#10B981'
                         }}>

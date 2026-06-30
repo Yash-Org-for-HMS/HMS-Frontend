@@ -375,9 +375,9 @@ function CredentialSuccessDialog({ open, user, newPassword, onClose }: Credentia
 
         <Box sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(255,255,255,0.03)", border: "1px solid", borderColor: "divider", mb: 2 }}>
           <Typography variant="caption" sx={{ color: "#475569" }}>Email</Typography>
-          <Typography sx={{ color: "text.primary", fontFamily: "monospace", fontSize: "0.85rem", mb: 1 }}>{user?.email}</Typography>
+          <Typography sx={{ color: "text.primary", fontFamily: "monospace", fontSize: "0.875rem", mb: 1 }}>{user?.email}</Typography>
           <Typography variant="caption" sx={{ color: "#475569" }}>New Password</Typography>
-          <Typography sx={{ color: "#fbbf24", fontFamily: "monospace", fontSize: "0.9rem", fontWeight: 700 }}>{newPassword}</Typography>
+          <Typography sx={{ color: "#fbbf24", fontFamily: "monospace", fontSize: "0.875rem", fontWeight: 700 }}>{newPassword}</Typography>
         </Box>
 
         <Box sx={{ display: "flex", gap: 1.5 }}>
@@ -498,7 +498,7 @@ export default function UsersList() {
                             width: 34,
                             height: 34,
                             bgcolor: "#6366f1",
-                            fontSize: "0.85rem",
+                            fontSize: "0.875rem",
                             fontWeight: 700,
                           }}
                         >
@@ -516,7 +516,7 @@ export default function UsersList() {
                             <Chip
                               label="Must change password"
                               size="small"
-                              sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#fbbf24", height: 16, fontSize: "0.65rem", ml: 0.5 }}
+                              sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#fbbf24", height: 16, fontSize: "0.75rem", ml: 0.5 }}
                             />
                           )}
                         </Box>

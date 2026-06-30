@@ -368,7 +368,7 @@ export default function ConsultationWorkspace() {
                           <Typography variant="subtitle2" sx={{ fontWeight: 800, color: "text.primary" }}>
                             {new Date(h.createdAt).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}
                           </Typography>
-                          <Chip label={h.doctorName} size="small" sx={{ height: 20, fontSize: "0.65rem", fontWeight: 600, bgcolor: "rgba(59,130,246,0.1)", color: DOCTOR_BLUE }} />
+                          <Chip label={h.doctorName} size="small" sx={{ height: 20, fontSize: "0.75rem", fontWeight: 600, bgcolor: "rgba(59,130,246,0.1)", color: DOCTOR_BLUE }} />
                         </Box>
                         <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5, color: "text.primary" }}>
                           {h.diagnosis || "No Diagnosis Recorded"}
@@ -387,9 +387,9 @@ export default function ConsultationWorkspace() {
                                   • {med.medicineName || "Medicine"} - {med.dosage} ({med.frequency}) for {med.durationDays} days
                                 </Typography>
                                 {med.buyOutside ? (
-                                  <Chip label="Bought Outside" size="small" sx={{ height: 16, fontSize: "0.6rem" }} />
+                                  <Chip label="Bought Outside" size="small" sx={{ height: 16, fontSize: "0.75rem" }} />
                                 ) : (
-                                  <Chip label="Hospital Pharmacy" color="primary" variant="outlined" size="small" sx={{ height: 16, fontSize: "0.6rem" }} />
+                                  <Chip label="Hospital Pharmacy" color="primary" variant="outlined" size="small" sx={{ height: 16, fontSize: "0.75rem" }} />
                                 )}
                               </Box>
                             ))}

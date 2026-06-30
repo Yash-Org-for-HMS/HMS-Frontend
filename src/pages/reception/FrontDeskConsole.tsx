@@ -108,7 +108,7 @@ export default function FrontDeskConsole() {
           transition: "background-color 0.2s ease, border-color 0.2s ease",
         }}
       >
-        <Avatar sx={{ width: 40, height: 40, bgcolor: getAvatarColor(p.patientId), mr: 1.5, fontSize: "0.95rem", fontWeight: 600 }}>
+        <Avatar sx={{ width: 40, height: 40, bgcolor: getAvatarColor(p.patientId), mr: 1.5, fontSize: "0.875rem", fontWeight: 600 }}>
           {getInitials(p)}
         </Avatar>
         <Box sx={{ flex: 1, overflow: "hidden" }}>
@@ -118,7 +118,7 @@ export default function FrontDeskConsole() {
           <Typography variant="caption" sx={{ color: "text.secondary", display: "flex", alignItems: "center" }} noWrap>
             MRN: {p.uhidNumber}{p.phone ? ` • ${p.phone}` : ""}
             <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(p.uhidNumber); }} sx={{ p: 0.2, ml: 0.5, color: "text.secondary", "&:hover": { color: "#06b6d4" } }}>
-              <ContentCopyRounded sx={{ fontSize: "0.9rem" }} />
+              <ContentCopyRounded sx={{ fontSize: "0.875rem" }} />
             </IconButton>
           </Typography>
         </Box>
@@ -191,7 +191,7 @@ export default function FrontDeskConsole() {
               {search.length < 2 ? (
                 <>
                   <Box sx={{ display: "flex", alignItems: "center", mb: 1.5, px: 0.5 }}>
-                    <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 700, flex: 1, textTransform: "uppercase", letterSpacing: 0.5, fontSize: "0.72rem" }}>
+                    <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 700, flex: 1, textTransform: "uppercase", letterSpacing: 0.5, fontSize: "0.75rem" }}>
                       Recent Registrations
                     </Typography>
                     {recentPatients.length > 0 && (
@@ -214,7 +214,7 @@ export default function FrontDeskConsole() {
                 </Box>
               ) : (
                 <>
-                  <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 700, mb: 1.5, px: 0.5, textTransform: "uppercase", letterSpacing: 0.5, fontSize: "0.72rem" }}>
+                  <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 700, mb: 1.5, px: 0.5, textTransform: "uppercase", letterSpacing: 0.5, fontSize: "0.75rem" }}>
                     {patients.length} Result{patients.length === 1 ? "" : "s"}
                   </Typography>
                   {patients.map(renderPatientRow)}

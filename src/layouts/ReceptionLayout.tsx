@@ -153,7 +153,7 @@ export default function ReceptionLayout() {
         >
           <SearchRounded sx={{ fontSize: 18 }} />
           <Typography variant="body2" sx={{ flex: 1 }}>Search…</Typography>
-          <Chip label="⌘K" size="small" sx={{ height: 20, fontSize: "0.65rem", fontWeight: 700, bgcolor: "action.hover", color: "text.secondary" }} />
+          <Chip label="⌘K" size="small" sx={{ height: 20, fontSize: "0.75rem", fontWeight: 700, bgcolor: "action.hover", color: "text.secondary" }} />
         </Box>
       </Box>
 
@@ -167,7 +167,7 @@ export default function ReceptionLayout() {
           <Box key={section.heading} sx={{ mb: 0.5 }}>
             <Typography
               variant="caption"
-              sx={{ color: "#475569", fontWeight: 700, px: 1.5, pt: si === 0 ? 0 : 1.5, pb: 0.75, display: "block", letterSpacing: 1, textTransform: "uppercase", fontSize: "0.68rem" }}
+              sx={{ color: "#475569", fontWeight: 700, px: 1.5, pt: si === 0 ? 0 : 1.5, pb: 0.75, display: "block", letterSpacing: 1, textTransform: "uppercase", fontSize: "0.75rem" }}
             >
               {section.heading}
             </Typography>
@@ -209,7 +209,7 @@ export default function ReceptionLayout() {
                     <ListItemText
                       primary={item.text}
                       primaryTypographyProps={{
-                        fontSize: "0.9rem",
+                        fontSize: "0.875rem",
                         fontWeight: isActive ? 600 : 500,
                         color: isActive ? "primary.main" : "text.secondary",
                       }}

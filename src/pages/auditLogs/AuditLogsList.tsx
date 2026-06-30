@@ -172,21 +172,21 @@ export default function AuditLogsList() {
                           <Typography variant="body2">{log.hospital?.hospitalName || log.hospitalId}</Typography>
                         )}
                       </TableCell>
-                      <TableCell sx={{ color: "text.primary", fontFamily: "monospace", fontSize: "0.8rem" }}>
+                      <TableCell sx={{ color: "text.primary", fontFamily: "monospace", fontSize: "0.875rem" }}>
                         {log.userId.split("-")[0]}...
                       </TableCell>
                       <TableCell>
                         <Chip 
                           label={log.actionType} 
                           size="small" 
-                          sx={{ bgcolor: colors.bg, color: colors.text, fontWeight: 700, fontSize: "0.7rem" }} 
+                          sx={{ bgcolor: colors.bg, color: colors.text, fontWeight: 700, fontSize: "0.75rem" }} 
                         />
                       </TableCell>
-                      <TableCell sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
+                      <TableCell sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
                         {log.moduleName} <br />
                         <span style={{ fontFamily: "monospace", fontSize: "0.75rem", color: "text.secondary" }}>{log.tableName}</span>
                       </TableCell>
-                      <TableCell sx={{ color: "text.secondary", fontFamily: "monospace", fontSize: "0.8rem" }}>
+                      <TableCell sx={{ color: "text.secondary", fontFamily: "monospace", fontSize: "0.875rem" }}>
                         {log.ipAddress || "—"}
                       </TableCell>
                       <TableCell align="right">
@@ -252,7 +252,7 @@ export default function AuditLogsList() {
                 <Typography sx={{ mb: 2, fontFamily: "monospace", color: "text.primary" }}>{selectedLog.userId}</Typography>
                 
                 <Typography variant="overline" sx={{ color: "text.secondary" }}>Device Info</Typography>
-                <Typography sx={{ mb: 2, fontSize: "0.85rem", color: "text.secondary" }}>{selectedLog.deviceInfo || "—"}</Typography>
+                <Typography sx={{ mb: 2, fontSize: "0.875rem", color: "text.secondary" }}>{selectedLog.deviceInfo || "—"}</Typography>
               </Grid>
               
               {(selectedLog.oldValueJson || selectedLog.newValueJson) && (
@@ -262,7 +262,7 @@ export default function AuditLogsList() {
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="overline" sx={{ color: "#f87171" }}>Old Value</Typography>
                         <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 2, border: "1px solid rgba(239,68,68,0.2)", overflowX: "auto" }}>
-                          <pre style={{ margin: 0, color: "text.primary", fontSize: "0.85rem" }}>
+                          <pre style={{ margin: 0, color: "text.primary", fontSize: "0.875rem" }}>
                             {JSON.stringify(selectedLog.oldValueJson, null, 2)}
                           </pre>
                         </Box>
@@ -272,7 +272,7 @@ export default function AuditLogsList() {
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="overline" sx={{ color: "#34d399" }}>New Value</Typography>
                         <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 2, border: "1px solid rgba(16,185,129,0.2)", overflowX: "auto" }}>
-                          <pre style={{ margin: 0, color: "text.primary", fontSize: "0.85rem" }}>
+                          <pre style={{ margin: 0, color: "text.primary", fontSize: "0.875rem" }}>
                             {JSON.stringify(selectedLog.newValueJson, null, 2)}
                           </pre>
                         </Box>

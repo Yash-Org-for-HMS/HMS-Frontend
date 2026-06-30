@@ -257,7 +257,7 @@ export default function PatientsList() {
                     <TableCell
                       key={h}
                       sx={{
-                        color: "text.secondary", fontWeight: 700, fontSize: "0.72rem",
+                        color: "text.secondary", fontWeight: 700, fontSize: "0.75rem",
                         textTransform: "uppercase", letterSpacing: 0.5,
                         borderBottom: "1px solid", borderColor: "divider", py: 2,
                         bgcolor: "background.default",
@@ -270,7 +270,7 @@ export default function PatientsList() {
                   <TableCell
                     align="right"
                     sx={{
-                      color: "text.secondary", fontWeight: 700, fontSize: "0.72rem",
+                      color: "text.secondary", fontWeight: 700, fontSize: "0.75rem",
                       textTransform: "uppercase", letterSpacing: 0.5,
                       borderBottom: "1px solid", borderColor: "divider", py: 2,
                       bgcolor: "background.default",
@@ -322,7 +322,7 @@ export default function PatientsList() {
                               width: 36,
                               height: 36,
                               bgcolor: getAvatarColor(patient.patientId),
-                              fontSize: "0.8rem",
+                              fontSize: "0.875rem",
                               fontWeight: 700,
                             }}
                           >
@@ -337,7 +337,7 @@ export default function PatientsList() {
                                 <Chip
                                   label={`Dues ₹${Number(patient.outstandingDues).toFixed(0)}`}
                                   size="small"
-                                  sx={{ height: 18, bgcolor: "rgba(239,68,68,0.12)", color: "#ef4444", fontWeight: 700, fontSize: "0.65rem" }}
+                                  sx={{ height: 18, bgcolor: "rgba(239,68,68,0.12)", color: "#ef4444", fontWeight: 700, fontSize: "0.75rem" }}
                                 />
                               )}
                             </Box>
@@ -360,7 +360,7 @@ export default function PatientsList() {
                               border: "1px solid", borderColor: "divider",
                               fontWeight: 700,
                               fontFamily: "monospace",
-                              fontSize: "0.78rem",
+                              fontSize: "0.875rem",
                             }}
                           />
                           <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(patient.uhidNumber); }} sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4" } }}>
@@ -380,7 +380,7 @@ export default function PatientsList() {
                         </Box>
                       </TableCell>
                       {/* Gender */}
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, color: "text.secondary", fontSize: "0.85rem" }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, color: "text.secondary", fontSize: "0.875rem" }}>
                         {patient.genderLabel}
                       </TableCell>
                       {/* Blood Group */}
@@ -398,7 +398,7 @@ export default function PatientsList() {
                         />
                       </TableCell>
                       {/* Phone */}
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, color: "text.secondary", fontSize: "0.85rem" }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, color: "text.secondary", fontSize: "0.875rem" }}>
                         {patient.phone}
                       </TableCell>
                       {/* Actions — primary quick-actions + overflow menu */}

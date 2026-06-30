@@ -123,7 +123,7 @@ export default function DoctorPatients() {
                   >
                     <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                        <Avatar sx={{ width: 34, height: 34, bgcolor: `${DOCTOR_BLUE}22`, color: DOCTOR_BLUE, fontWeight: 700, fontSize: "0.85rem" }}>
+                        <Avatar sx={{ width: 34, height: 34, bgcolor: `${DOCTOR_BLUE}22`, color: DOCTOR_BLUE, fontWeight: 700, fontSize: "0.875rem" }}>
                           {p.firstName?.charAt(0) || "P"}
                         </Avatar>
                         <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
@@ -131,7 +131,7 @@ export default function DoctorPatients() {
                         </Typography>
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontFamily: "monospace", fontSize: "0.8rem" }}>
+                    <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontFamily: "monospace", fontSize: "0.875rem" }}>
                       {p.uhidNumber}
                     </TableCell>
                     <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>

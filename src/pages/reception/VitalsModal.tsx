@@ -291,11 +291,11 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
                   {bmi ? (
                     <>
                       <Typography variant="h6" sx={{ color: bmiCategory?.color, fontWeight: 800, lineHeight: 1 }}>{bmi}</Typography>
-                      <Typography variant="caption" sx={{ color: bmiCategory?.color, fontSize: "0.65rem", fontWeight: 600 }}>BMI</Typography>
-                      <Typography variant="caption" sx={{ color: bmiCategory?.color, fontSize: "0.6rem" }}>{bmiCategory?.label}</Typography>
+                      <Typography variant="caption" sx={{ color: bmiCategory?.color, fontSize: "0.75rem", fontWeight: 600 }}>BMI</Typography>
+                      <Typography variant="caption" sx={{ color: bmiCategory?.color, fontSize: "0.75rem" }}>{bmiCategory?.label}</Typography>
                     </>
                   ) : (
-                    <Typography variant="caption" sx={{ color: "text.secondary", textAlign: "center", fontSize: "0.65rem" }}>BMI auto</Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary", textAlign: "center", fontSize: "0.75rem" }}>BMI auto</Typography>
                   )}
                 </Box>
               </Grid>
@@ -330,7 +330,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
                 sx={{
                   color: painColor,
                   "& .MuiSlider-thumb": { boxShadow: `0 0 0 4px ${painColor}22` },
-                  "& .MuiSlider-markLabel": { color: "text.secondary", fontSize: "0.68rem" },
+                  "& .MuiSlider-markLabel": { color: "text.secondary", fontSize: "0.75rem" },
                 }}
               />
             </Box>
@@ -373,14 +373,14 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
             <Chip
               label={`BMI: ${bmi} — ${bmiCategory?.label}`}
               size="small"
-              sx={{ bgcolor: `${bmiCategory?.color}22`, color: bmiCategory?.color, fontWeight: 600, fontSize: "0.72rem" }}
+              sx={{ bgcolor: `${bmiCategory?.color}22`, color: bmiCategory?.color, fontWeight: 600, fontSize: "0.75rem" }}
             />
           )}
           {form.bpSystolic && form.bpDiastolic && (
             <Chip
               label={`BP: ${form.bpSystolic}/${form.bpDiastolic} mmHg`}
               size="small"
-              sx={{ bgcolor: "rgba(239,68,68,0.1)", color: "#f87171", fontWeight: 600, fontSize: "0.72rem" }}
+              sx={{ bgcolor: "rgba(239,68,68,0.1)", color: "#f87171", fontWeight: 600, fontSize: "0.75rem" }}
             />
           )}
         </Box>

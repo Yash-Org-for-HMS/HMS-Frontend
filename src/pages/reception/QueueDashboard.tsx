@@ -169,7 +169,7 @@ export default function QueueDashboard() {
             <TableHead>
               <TableRow>
                 {["Token", "Patient", "Doctor", "Status", "Wait", "Vitals", "Quick Actions", ""].map((h, i) => (
-                  <TableCell key={h} align={i >= 6 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}>
+                  <TableCell key={h} align={i >= 6 ? "right" : "left"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}>
                     {h}
                   </TableCell>
                 ))}
@@ -200,18 +200,18 @@ export default function QueueDashboard() {
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                         <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{token.patientName}</Typography>
                       </TableCell>
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.85rem" }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.875rem" }}>
                         {token.doctorName}
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                        <Chip label={token.statusLabel} size="small" sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}55`, fontWeight: 600, fontSize: "0.7rem" }} />
+                        <Chip label={token.statusLabel} size="small" sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}55`, fontWeight: 600, fontSize: "0.75rem" }} />
                       </TableCell>
                       {/* Wait time cell */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                         {(() => {
                           const m = waitMinutes(token);
                           return isWaiting ? (
-                            <Chip label={fmtWait(m)} size="small" sx={{ bgcolor: `${waitColor(m)}1f`, color: waitColor(m), fontWeight: 700, fontSize: "0.72rem" }} />
+                            <Chip label={fmtWait(m)} size="small" sx={{ bgcolor: `${waitColor(m)}1f`, color: waitColor(m), fontWeight: 700, fontSize: "0.75rem" }} />
                           ) : (
                             <Tooltip title="Time waited before being seen">
                               <Typography variant="caption" sx={{ color: "text.secondary" }}>{fmtWait(m)}</Typography>
@@ -227,7 +227,7 @@ export default function QueueDashboard() {
                               icon={<MonitorHeartRounded sx={{ fontSize: "14px !important" }} />}
                               label="Recorded"
                               size="small"
-                              sx={{ bgcolor: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600, fontSize: "0.68rem" }}
+                              sx={{ bgcolor: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600, fontSize: "0.75rem" }}
                             />
                           </Tooltip>
                         ) : (
@@ -289,13 +289,13 @@ export default function QueueDashboard() {
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '30%' }}>
                         <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{token.patientName}</Typography>
                       </TableCell>
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '25%', color: "text.secondary", fontSize: "0.85rem" }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '25%', color: "text.secondary", fontSize: "0.875rem" }}>
                         {token.doctorName}
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '15%' }}>
                         <Chip
                           label="Skipped" size="small"
-                          sx={{ bgcolor: `rgba(249,115,22,0.1)`, color: '#f97316', border: `1px solid rgba(249,115,22,0.3)`, fontWeight: 600, fontSize: "0.7rem" }}
+                          sx={{ bgcolor: `rgba(249,115,22,0.1)`, color: '#f97316', border: `1px solid rgba(249,115,22,0.3)`, fontWeight: 600, fontSize: "0.75rem" }}
                         />
                       </TableCell>
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '15%' }}>

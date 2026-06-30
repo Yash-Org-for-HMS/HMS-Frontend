@@ -202,7 +202,7 @@ export default function LabDashboard() {
                       <TableCell sx={{ fontWeight: 600 }}>{order.patient?.firstName} {order.patient?.lastName}</TableCell>
                       <TableCell>{order.sampleBarcode || "N/A"}</TableCell>
                       <TableCell align="right">
-                        <Chip label={order.status || "PENDING"} color={getStatusColor(order.status) as any} size="small" sx={{ fontSize: "0.7rem", height: 20 }} />
+                        <Chip label={order.status || "PENDING"} color={getStatusColor(order.status) as any} size="small" sx={{ fontSize: "0.75rem", height: 20 }} />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -237,7 +237,7 @@ export default function LabDashboard() {
                       <TableCell sx={{ fontWeight: 600 }}>{order.patient?.firstName} {order.patient?.lastName}</TableCell>
                       <TableCell>{order.scanType}</TableCell>
                       <TableCell align="right">
-                        <Chip label={order.status || "PENDING"} color={getStatusColor(order.status) as any} size="small" sx={{ fontSize: "0.7rem", height: 20 }} />
+                        <Chip label={order.status || "PENDING"} color={getStatusColor(order.status) as any} size="small" sx={{ fontSize: "0.75rem", height: 20 }} />
                       </TableCell>
                     </TableRow>
                   ))}

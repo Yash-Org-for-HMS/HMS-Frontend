@@ -101,10 +101,10 @@ export default function DoctorResults() {
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     {t.label}
                     {i === 0 && meta?.readyCount ? (
-                      <Chip label={meta.readyCount} size="small" color="primary" sx={{ height: 18, fontSize: "0.7rem" }} />
+                      <Chip label={meta.readyCount} size="small" color="primary" sx={{ height: 18, fontSize: "0.75rem" }} />
                     ) : null}
                     {i === 1 && meta?.pendingCount ? (
-                      <Chip label={meta.pendingCount} size="small" sx={{ height: 18, fontSize: "0.7rem" }} />
+                      <Chip label={meta.pendingCount} size="small" sx={{ height: 18, fontSize: "0.75rem" }} />
                     ) : null}
                   </Box>
                 }

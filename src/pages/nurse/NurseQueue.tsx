@@ -159,7 +159,7 @@ export default function NurseQueue() {
                     <TableCell
                       key={h}
                       align={i === 5 ? "right" : "left"}
-                      sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}
+                      sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}
                     >
                       {h}
                     </TableCell>
@@ -203,7 +203,7 @@ export default function NurseQueue() {
                         </TableCell>
 
                         {/* Doctor */}
-                        <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.85rem" }}>
+                        <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.875rem" }}>
                           {token.doctorName}
                         </TableCell>
 
@@ -211,7 +211,7 @@ export default function NurseQueue() {
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                           <Chip
                             label={token.statusLabel} size="small"
-                            sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}55`, fontWeight: 600, fontSize: "0.7rem" }}
+                            sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}55`, fontWeight: 600, fontSize: "0.75rem" }}
                           />
                         </TableCell>
 
@@ -223,7 +223,7 @@ export default function NurseQueue() {
                                 icon={<MonitorHeartRounded sx={{ fontSize: "14px !important" }} />}
                                 label="Recorded ✓"
                                 size="small"
-                                sx={{ bgcolor: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600, fontSize: "0.7rem", cursor: "pointer" }}
+                                sx={{ bgcolor: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600, fontSize: "0.75rem", cursor: "pointer" }}
                                 onClick={() => setVitalsDialog({ open: true, token })}
                               />
                             </Tooltip>
@@ -233,7 +233,7 @@ export default function NurseQueue() {
                             <Chip
                               label="Pending"
                               size="small"
-                              sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)", fontWeight: 600, fontSize: "0.7rem" }}
+                              sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)", fontWeight: 600, fontSize: "0.75rem" }}
                             />
                           )}
                         </TableCell>
@@ -346,7 +346,7 @@ export default function NurseQueue() {
                             {token.patientName}
                           </Typography>
                           {index === 0 && (
-                            <Chip label="Next" size="small" sx={{ bgcolor: `rgba(167,139,250,0.15)`, color: NURSE_PURPLE, fontWeight: 700, fontSize: "0.65rem", height: 18 }} />
+                            <Chip label="Next" size="small" sx={{ bgcolor: `rgba(167,139,250,0.15)`, color: NURSE_PURPLE, fontWeight: 700, fontSize: "0.75rem", height: 18 }} />
                           )}
                         </Box>
                         <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>
@@ -356,7 +356,7 @@ export default function NurseQueue() {
 
                       <Chip
                         label={token.statusLabel} size="small"
-                        sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}44`, fontWeight: 600, fontSize: "0.68rem" }}
+                        sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}44`, fontWeight: 600, fontSize: "0.75rem" }}
                       />
 
                       <Button
@@ -417,16 +417,16 @@ export default function NurseQueue() {
                       }}
                       onClick={() => setVitalsDialog({ open: true, token })}
                     >
-                      <Avatar sx={{ width: 34, height: 34, bgcolor: "rgba(16,185,129,0.15)", color: "#10b981", fontSize: "0.78rem", fontWeight: 800 }}>
+                      <Avatar sx={{ width: 34, height: 34, bgcolor: "rgba(16,185,129,0.15)", color: "#10b981", fontSize: "0.875rem", fontWeight: 800 }}>
                         {token.displayNumber}
                       </Avatar>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }} noWrap>{token.patientName}</Typography>
-                        <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem" }} noWrap>{token.doctorName}</Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.75rem" }} noWrap>{token.doctorName}</Typography>
                       </Box>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                         <CheckCircleRounded sx={{ color: "#10b981", fontSize: 18 }} />
-                        <Typography variant="caption" sx={{ color: "#10b981", fontWeight: 600, fontSize: "0.7rem" }}>Update</Typography>
+                        <Typography variant="caption" sx={{ color: "#10b981", fontWeight: 600, fontSize: "0.75rem" }}>Update</Typography>
                       </Box>
                     </Box>
                   ))}

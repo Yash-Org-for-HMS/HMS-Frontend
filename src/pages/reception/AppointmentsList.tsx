@@ -267,7 +267,7 @@ export default function AppointmentsList() {
             onChange={(e, v) => { setTabValue(v); if(v === "today") setSelectedDate(dayjs()); }}
             variant="scrollable"
             scrollButtons="auto"
-            sx={{ "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.95rem" } }}
+            sx={{ "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.875rem" } }}
           >
             <Tab label="Today" value="today" />
             <Tab label="Next 7 Days" value="this_week" />
@@ -340,7 +340,7 @@ export default function AppointmentsList() {
                 <SortableHeadCell label="Doctor" sortKey="doctor" orderBy={orderBy} order={order} onSort={onSort} />
                 <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} />
                 <TableCell align="right" sx={{
-                  color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase",
+                  color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase",
                   letterSpacing: 0.5, py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider"
                 }}>
                   Actions
@@ -366,11 +366,11 @@ export default function AppointmentsList() {
                         <Typography variant="caption" sx={{ color: "text.secondary", display: 'block', mb: 0.5 }}>
                           {new Date(appt.appointmentDate).toLocaleDateString("en-IN")}
                         </Typography>
-                        <Chip label={typeInfo.label} size="small" sx={{ bgcolor: typeInfo.bgcolor, color: typeInfo.color, fontWeight: 700, fontSize: "0.65rem", height: 20 }} />
+                        <Chip label={typeInfo.label} size="small" sx={{ bgcolor: typeInfo.bgcolor, color: typeInfo.color, fontWeight: 700, fontSize: "0.75rem", height: 20 }} />
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar sx={{ width: 36, height: 36, bgcolor: getAvatarColor(appt.patientId || appt.patientName), fontSize: "0.8rem", fontWeight: 700 }}>
+                          <Avatar sx={{ width: 36, height: 36, bgcolor: getAvatarColor(appt.patientId || appt.patientName), fontSize: "0.875rem", fontWeight: 700 }}>
                             {appt.patientName.charAt(0).toUpperCase()}
                           </Avatar>
                           <Box>
@@ -379,11 +379,11 @@ export default function AppointmentsList() {
                           </Box>
                         </Box>
                       </TableCell>
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.85rem", py: 1.5 }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.875rem", py: 1.5 }}>
                         {appt.doctorName}
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
-                        <Chip label={appt.statusLabel} size="small" sx={{ bgcolor: `${appt.statusColor}22`, color: appt.statusColor, border: `1px solid ${appt.statusColor}55`, fontWeight: 600, fontSize: "0.7rem" }} />
+                        <Chip label={appt.statusLabel} size="small" sx={{ bgcolor: `${appt.statusColor}22`, color: appt.statusColor, border: `1px solid ${appt.statusColor}55`, fontWeight: 600, fontSize: "0.75rem" }} />
                       </TableCell>
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
                         <Tooltip title="Refer Patient">

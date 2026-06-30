@@ -465,7 +465,7 @@ export default function HospitalForm() {
                         size="small"
                         sx={{
                           height: 18,
-                          fontSize: "0.7rem",
+                          fontSize: "0.75rem",
                           bgcolor: "rgba(99, 102, 241, 0.15)",
                           color: "#a5b4fc"
                         }}

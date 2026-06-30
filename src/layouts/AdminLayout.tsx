@@ -153,7 +153,7 @@ export default function AdminLayout() {
                   pb: 0.5,
                   color: "text.secondary",
                   fontWeight: 700,
-                  fontSize: "0.68rem",
+                  fontSize: "0.75rem",
                   letterSpacing: 0.8,
                   textTransform: "uppercase",
                 }}
@@ -189,7 +189,7 @@ export default function AdminLayout() {
                     <ListItemText
                       primary={item.text}
                       primaryTypographyProps={{
-                        fontSize: "0.95rem",
+                        fontSize: "0.875rem",
                         fontWeight: isActive ? 600 : 500,
                         color: isActive ? "#4F46E5" : "#64748B",
                       }}

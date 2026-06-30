@@ -343,7 +343,7 @@ export default function LeadsList() {
                             backgroundColor: getStatusBgColor(lead.leadStatus),
                             borderRadius: "8px",
                             fontWeight: 600,
-                            fontSize: "0.85rem",
+                            fontSize: "0.875rem",
                             "& fieldset": { borderColor: "transparent" },
                             "&:hover fieldset": { borderColor: "divider" },
                             "&.Mui-focused fieldset": { borderColor: "divider" },

@@ -179,7 +179,7 @@ export default function AppointmentCalendar() {
                     <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", display: "block" }}>
                       {day.format("ddd")}
                     </Typography>
-                    <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: "50%", mt: 0.5, bgcolor: isToday ? ACCENT : "transparent", color: isToday ? "#fff" : "text.primary", fontWeight: 700, fontSize: "0.9rem" }}>
+                    <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: "50%", mt: 0.5, bgcolor: isToday ? ACCENT : "transparent", color: isToday ? "#fff" : "text.primary", fontWeight: 700, fontSize: "0.875rem" }}>
                       {day.format("D")}
                     </Box>
                   </Box>

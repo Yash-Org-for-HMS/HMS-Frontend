@@ -12,6 +12,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import PageHeader from "../../components/layout/PageHeader";
+import { typeScale } from "../../styles/typography";
 import VitalsModal from "../reception/VitalsModal";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import { useNavigate } from "react-router-dom";
@@ -112,7 +113,7 @@ export default function DoctorQueue() {
                   <TableCell
                     key={h}
                     align={i === 4 ? "right" : "left"}
-                    sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}
+                    sx={{ ...typeScale.sectionLabel, py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}
                   >
                     {h}
                   </TableCell>
@@ -167,7 +168,7 @@ export default function DoctorQueue() {
                               icon={<MonitorHeartRounded sx={{ fontSize: "14px !important" }} />}
                               label="Recorded"
                               size="small"
-                              sx={{ bgcolor: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600, fontSize: "0.7rem", cursor: "pointer" }}
+                              sx={{ bgcolor: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600, fontSize: "0.75rem", cursor: "pointer" }}
                               onClick={() => setVitalsDialog({ open: true, token, readonly: true })}
                             />
                           </Tooltip>
@@ -175,7 +176,7 @@ export default function DoctorQueue() {
                           <Chip
                             label="Not Recorded"
                             size="small"
-                            sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)", fontWeight: 600, fontSize: "0.7rem" }}
+                            sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)", fontWeight: 600, fontSize: "0.75rem" }}
                           />
                         )}
                       </TableCell>
@@ -184,7 +185,7 @@ export default function DoctorQueue() {
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                         <Chip
                           label={token.statusLabel} size="small"
-                          sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}55`, fontWeight: 600, fontSize: "0.7rem" }}
+                          sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}55`, fontWeight: 600, fontSize: "0.75rem" }}
                         />
                       </TableCell>
 
@@ -236,7 +237,7 @@ export default function DoctorQueue() {
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '25%' }}>
                         <Chip
                           label="Skipped" size="small"
-                          sx={{ bgcolor: `rgba(249,115,22,0.1)`, color: '#f97316', border: `1px solid rgba(249,115,22,0.3)`, fontWeight: 600, fontSize: "0.7rem" }}
+                          sx={{ bgcolor: `rgba(249,115,22,0.1)`, color: '#f97316', border: `1px solid rgba(249,115,22,0.3)`, fontWeight: 600, fontSize: "0.75rem" }}
                         />
                       </TableCell>
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '25%' }}>

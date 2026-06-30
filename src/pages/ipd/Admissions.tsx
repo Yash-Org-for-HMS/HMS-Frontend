@@ -109,7 +109,7 @@ export default function Admissions() {
                 <SortableHeadCell label="Days" sortKey="days" orderBy={orderBy} order={order} onSort={onSort} />
                 <SortableHeadCell label="Deposit" sortKey="deposit" orderBy={orderBy} order={order} onSort={onSort} align="right" />
                 <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} />
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default" }} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", py: 2, bgcolor: "background.default" }} />
               </TableRow>
             </TableHead>
             <TableBody>

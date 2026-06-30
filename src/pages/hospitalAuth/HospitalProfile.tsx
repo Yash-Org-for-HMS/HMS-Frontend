@@ -206,7 +206,7 @@ export default function HospitalProfile() {
                 color: "text.secondary",
                 textTransform: "none",
                 fontWeight: 600,
-                fontSize: "0.95rem",
+                fontSize: "0.875rem",
                 minHeight: 64,
               },
               "& .Mui-selected": {

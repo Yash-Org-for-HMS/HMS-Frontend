@@ -187,7 +187,7 @@ export default function HospitalSettings() {
                 color: "text.secondary",
                 textTransform: "none",
                 fontWeight: 600,
-                fontSize: "0.95rem",
+                fontSize: "0.875rem",
                 minHeight: 64,
               },
               "& .Mui-selected": {
@@ -450,7 +450,7 @@ export default function HospitalSettings() {
                     </Typography>
                     <Box sx={{ mt: 1.5, display: "flex", gap: 1, flexWrap: "wrap" }}>
                       {["Quick check-in flow", "Single-staff hospitals", "OPD clinics"].map(tag => (
-                        <Box key={tag} sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: "rgba(6,182,212,0.1)", fontSize: "0.7rem", color: "#06b6d4", fontWeight: 600 }}>{tag}</Box>
+                        <Box key={tag} sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: "rgba(6,182,212,0.1)", fontSize: "0.75rem", color: "#06b6d4", fontWeight: 600 }}>{tag}</Box>
                       ))}
                     </Box>
                   </Box>
@@ -505,7 +505,7 @@ export default function HospitalSettings() {
                     </Typography>
                     <Box sx={{ mt: 1.5, display: "flex", gap: 1, flexWrap: "wrap" }}>
                       {["Clinical-grade accuracy", "Multi-staff hospitals", "Specialized care"].map(tag => (
-                        <Box key={tag} sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: "rgba(167,139,250,0.1)", fontSize: "0.7rem", color: "#a78bfa", fontWeight: 600 }}>{tag}</Box>
+                        <Box key={tag} sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: "rgba(167,139,250,0.1)", fontSize: "0.75rem", color: "#a78bfa", fontWeight: 600 }}>{tag}</Box>
                       ))}
                     </Box>
                   </Box>

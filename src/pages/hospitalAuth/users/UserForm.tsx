@@ -176,7 +176,7 @@ function CredentialDialog({ open, email, password, name, onClose }: CredentialDi
                 sx={{
                   color: "text.primary",
                   fontFamily: "monospace",
-                  fontSize: "0.9rem",
+                  fontSize: "0.875rem",
                   wordBreak: "break-all",
                 }}
               >
@@ -215,7 +215,7 @@ function CredentialDialog({ open, email, password, name, onClose }: CredentialDi
                 sx={{
                   color: "#fbbf24",
                   fontFamily: "monospace",
-                  fontSize: "0.9rem",
+                  fontSize: "0.875rem",
                   fontWeight: 700,
                   letterSpacing: 1,
                 }}

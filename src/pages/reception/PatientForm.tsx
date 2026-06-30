@@ -220,7 +220,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
             fullWidth label="Phone Number" name="phone" value={formData.phone}
             onChange={handleChange} required sx={fieldSx}
             InputProps={{
-              startAdornment: <InputAdornment position="start"><Typography sx={{ color: "text.secondary", fontSize: "0.9rem" }}>+91</Typography></InputAdornment>,
+              startAdornment: <InputAdornment position="start"><Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>+91</Typography></InputAdornment>,
             }}
           />
         </Grid>

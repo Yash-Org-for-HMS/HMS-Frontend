@@ -194,7 +194,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
                           <Typography variant="body2" sx={{ color: "text.secondary" }}><strong>Impression:</strong> {r.impression}</Typography>
                         )}
                         {r.reportUrl && (
-                          <Link href={assetUrl(r.reportUrl)} target="_blank" rel="noopener noreferrer" underline="hover" sx={{ fontSize: "0.85rem", fontWeight: 600 }}>
+                          <Link href={assetUrl(r.reportUrl)} target="_blank" rel="noopener noreferrer" underline="hover" sx={{ fontSize: "0.875rem", fontWeight: 600 }}>
                             View Report File
                           </Link>
                         )}
