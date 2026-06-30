@@ -17,6 +17,7 @@ import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import BranchSwitcher from "../components/BranchSwitcher";
 import SidebarHeader from "../components/layout/SidebarHeader";
 import SidebarUserCard from "../components/layout/SidebarUserCard";
+import TrialBanner from "../components/layout/TrialBanner";
 
 const drawerWidth = 260;
 const NURSE_PURPLE = "#a78bfa";
@@ -185,6 +186,7 @@ export default function NurseLayout() {
         }}
       >
         <Toolbar sx={{ display: { xs: "block", md: "none" }, minHeight: "70px !important" }} />
+        <TrialBanner />
         <Outlet />
       </Box>
     </Box>

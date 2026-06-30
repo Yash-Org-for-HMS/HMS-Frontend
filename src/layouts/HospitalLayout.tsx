@@ -44,6 +44,7 @@ import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import BranchSwitcher from "../components/BranchSwitcher";
 import SidebarHeader from "../components/layout/SidebarHeader";
 import SidebarUserCard from "../components/layout/SidebarUserCard";
+import TrialBanner from "../components/layout/TrialBanner";
 import { axiosInstance } from "../api/axios";
 
 const drawerWidth = 260;
@@ -298,6 +299,7 @@ export default function HospitalLayout() {
         }}
       >
         <Toolbar sx={{ display: { xs: "block", md: "none" } }} /> {/* Spacer for fixed AppBar */}
+        <TrialBanner />
         <Outlet />
       </Box>
     </Box>

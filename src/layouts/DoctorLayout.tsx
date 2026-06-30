@@ -22,6 +22,7 @@ import { assetUrl } from "../utils/assetUrl";
 import BranchSwitcher from "../components/BranchSwitcher";
 import SidebarHeader from "../components/layout/SidebarHeader";
 import SidebarUserCard from "../components/layout/SidebarUserCard";
+import TrialBanner from "../components/layout/TrialBanner";
 import { axiosInstance } from "../api/axios";
 import { useSocket } from "../hooks/useSocket";
 
@@ -209,6 +210,7 @@ export default function DoctorLayout() {
         }}
       >
         <Toolbar sx={{ display: { xs: "block", md: "none" }, minHeight: "70px !important" }} />
+        <TrialBanner />
         <ModuleGate module="Doctor"><Outlet /></ModuleGate>
       </Box>
     </Box>

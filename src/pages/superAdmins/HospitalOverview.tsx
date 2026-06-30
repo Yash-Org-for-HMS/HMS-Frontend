@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -21,6 +21,13 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Tooltip,
+  Alert,
 } from "@mui/material";
 import {
   ArrowBackRounded,
@@ -37,6 +44,8 @@ import {
   WidgetsRounded,
   CheckCircleRounded,
   CancelRounded,
+  LockResetRounded,
+  ContentCopyRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
@@ -80,12 +89,22 @@ const cardSx = { p: { xs: 2.5, md: 4 }, borderRadius: 3, bgcolor: "background.pa
 export default function HospitalOverview() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState(0);
+  const [resetCreds, setResetCreds] = useState<{ email: string; temporaryPassword: string } | null>(null);
 
   const { data, isLoading: loading, isError, error, refetch } = useQuery<any>({
     queryKey: ["hospital-overview", id],
     queryFn: async () => (await axiosInstance.get(`/hospitals/${id}/overview`)).data.data,
     enabled: !!id,
+  });
+
+  const resetPassword = useMutation({
+    mutationFn: async () => (await axiosInstance.post(`/hospitals/${id}/reset-admin-password`)).data.data,
+    onSuccess: (creds) => {
+      setResetCreds(creds);
+      queryClient.invalidateQueries({ queryKey: ["hospital-overview", id] });
+    },
   });
 
   if (loading) {
@@ -217,9 +236,26 @@ export default function HospitalOverview() {
               <InfoRow label="Hospital Admin" value={[data.admin.firstName, data.admin.lastName].filter(Boolean).join(" ")} />
               <InfoRow label="Login Email" value={data.admin.email} />
               <Grid size={{ xs: 12 }}>
-                {data.admin.mustChangePassword
-                  ? <Chip size="small" label="Password not set yet" sx={{ bgcolor: "rgba(245,158,11,0.12)", color: "#f59e0b", fontWeight: 600 }} />
-                  : <Chip size="small" label="Active login" sx={{ bgcolor: "rgba(16,185,129,0.12)", color: "#10b981", fontWeight: 600 }} />}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                  {data.admin.mustChangePassword
+                    ? <Chip size="small" label="Password not set yet" sx={{ bgcolor: "rgba(245,158,11,0.12)", color: "#f59e0b", fontWeight: 600 }} />
+                    : <Chip size="small" label="Active login" sx={{ bgcolor: "rgba(16,185,129,0.12)", color: "#10b981", fontWeight: 600 }} />}
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<LockResetRounded />}
+                    disabled={resetPassword.isPending}
+                    onClick={() => resetPassword.mutate()}
+                    sx={{ textTransform: "none", borderColor: "divider", color: "text.primary" }}
+                  >
+                    {resetPassword.isPending ? "Resetting…" : "Reset password"}
+                  </Button>
+                </Box>
+                {resetPassword.isError && (
+                  <Typography variant="caption" sx={{ color: "error.main", display: "block", mt: 1 }}>
+                    {(resetPassword.error as any)?.response?.data?.message || "Failed to reset password."}
+                  </Typography>
+                )}
               </Grid>
             </Grid>
           ) : (
@@ -383,6 +419,41 @@ export default function HospitalOverview() {
           ) : <Typography color="text.secondary">No trials for this hospital.</Typography>}
         </Paper>
       </Panel>
+
+      {/* ── New admin credentials (shown once after a reset) ── */}
+      <Dialog open={!!resetCreds} onClose={() => setResetCreds(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>New admin credentials</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            This password is shown only once. Copy it and hand it to the hospital admin — they'll be asked to change it on first login.
+          </Alert>
+          {resetCreds && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              {[
+                { label: "Login email", value: resetCreds.email },
+                { label: "Temporary password", value: resetCreds.temporaryPassword, mono: true },
+              ].map((f) => (
+                <Box key={f.label}>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>{f.label}</Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography sx={{ fontFamily: f.mono ? "monospace" : undefined, fontWeight: 600, wordBreak: "break-all" }}>
+                      {f.value}
+                    </Typography>
+                    <Tooltip title="Copy">
+                      <IconButton size="small" onClick={() => navigator.clipboard?.writeText(f.value)}>
+                        <ContentCopyRounded sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetCreds(null)} variant="contained" sx={{ textTransform: "none" }}>Done</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

@@ -33,6 +33,7 @@ import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import BranchSwitcher from "../components/BranchSwitcher";
 import SidebarHeader from "../components/layout/SidebarHeader";
 import SidebarUserCard from "../components/layout/SidebarUserCard";
+import TrialBanner from "../components/layout/TrialBanner";
 
 const drawerWidth = 260;
 
@@ -135,6 +136,7 @@ export default function LabLayout() {
 
       <Box component="main" sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` }, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <Toolbar sx={{ display: { xs: "block", md: "none" } }} />
+        <TrialBanner />
         <ModuleGate module="Laboratory"><Outlet /></ModuleGate>
       </Box>
     </Box>
