@@ -30,17 +30,25 @@ interface TabPanelProps {
 
 function CustomTabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
+  const active = value === index;
 
+  // All panels stay mounted and stacked in the same grid cell (see the parent
+  // `display: grid`), so the card sizes to the TALLEST tab and its size stays
+  // fixed when switching tabs. Inactive panels are hidden but keep their space.
   return (
-    <div
+    <Box
       role="tabpanel"
-      hidden={value !== index}
       id={`profile-tabpanel-${index}`}
       aria-labelledby={`profile-tab-${index}`}
+      sx={{
+        gridArea: "1 / 1",
+        visibility: active ? "visible" : "hidden",
+        pointerEvents: active ? "auto" : "none",
+      }}
       {...other}
     >
-      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
-    </div>
+      <Box sx={{ pt: 3 }}>{children}</Box>
+    </Box>
   );
 }
 
@@ -226,7 +234,7 @@ export default function HospitalProfile() {
           </Tabs>
         </Box>
 
-        <Box sx={{ p: 4 }}>
+        <Box sx={{ p: 4, display: "grid" }}>
           {/* General Information Tab */}
           <CustomTabPanel value={tabValue} index={0}>
             <Grid container spacing={3}>
