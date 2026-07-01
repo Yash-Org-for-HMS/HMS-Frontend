@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Box, Grid, Typography, Paper,
-  Button, TextField, Divider, Avatar, IconButton, Chip, Tab, Tabs, Autocomplete
+  Button, TextField, Divider, Avatar, IconButton, Chip, Tab, Tabs, Autocomplete, Drawer
 } from "@mui/material";
 import {
   ArrowBackRounded, CheckCircleRounded, SaveRounded, MonitorHeartRounded,
   HistoryRounded, PersonRounded, LocalHospitalRounded, DateRangeRounded,
-  CloudDoneRounded, CloudSyncRounded, CloudOffRounded
+  CloudDoneRounded, CloudSyncRounded, CloudOffRounded, AutoAwesomeRounded, CloseRounded
 } from "@mui/icons-material";
+import AiSummaryPanel from "./AiSummaryPanel";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
@@ -58,6 +59,7 @@ export default function ConsultationWorkspace() {
   const lastSavedRef = useRef<string>("");
 
   const [tabIndex, setTabIndex] = useState(0);
+  const [aiOpen, setAiOpen] = useState(false);
   const [rightTabIndex, setRightTabIndex] = useState(0);
 
   const [icd10Options, setIcd10Options] = useState<any[]>([]);
@@ -271,6 +273,14 @@ export default function ConsultationWorkspace() {
               </Typography>
             </Box>
           )}
+          <Button
+            variant="outlined"
+            onClick={() => setAiOpen(true)}
+            startIcon={<AutoAwesomeRounded />}
+            sx={{ borderColor: `${DOCTOR_BLUE}55`, color: DOCTOR_BLUE, textTransform: "none", fontWeight: 600 }}
+          >
+            AI Summary
+          </Button>
           <Button
             variant="outlined"
             onClick={() => handleSave(false)}
@@ -568,6 +578,21 @@ export default function ConsultationWorkspace() {
           </Paper>
         </Grid>
       </Grid>
+
+      {/* AI clinical summary — right-side drawer */}
+      <Drawer
+        anchor="right"
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        PaperProps={{ sx: { width: { xs: "100%", sm: 420 }, p: 2.5, display: "flex", flexDirection: "column" } }}
+      >
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 0.5 }}>
+          <IconButton size="small" onClick={() => setAiOpen(false)}><CloseRounded /></IconButton>
+        </Box>
+        <Box sx={{ flex: 1, minHeight: 0 }}>
+          {aiOpen && <AiSummaryPanel patientId={p?.patientId} />}
+        </Box>
+      </Drawer>
     </Box>
   );
 }
