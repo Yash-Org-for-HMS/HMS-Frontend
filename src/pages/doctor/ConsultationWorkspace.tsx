@@ -584,7 +584,7 @@ export default function ConsultationWorkspace() {
         anchor="right"
         open={aiOpen}
         onClose={() => setAiOpen(false)}
-        PaperProps={{ sx: { width: { xs: "100%", sm: 420 }, p: 2.5, display: "flex", flexDirection: "column" } }}
+        PaperProps={{ sx: { width: { xs: "100%", sm: 420 }, p: 2.5, display: "flex", flexDirection: "column", borderTopLeftRadius: { sm: 20 }, borderBottomLeftRadius: { sm: 20 }, boxShadow: "-8px 0 30px rgba(0,0,0,0.08)" } }}
       >
         <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 0.5 }}>
           <IconButton size="small" onClick={() => setAiOpen(false)}><CloseRounded /></IconButton>
