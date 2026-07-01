@@ -1,10 +1,10 @@
 import { useRef, useState, useEffect } from "react";
-import { Box, Typography, Button, Chip, Alert, Fade, TextField, IconButton } from "@mui/material";
+import { Box, Typography, Button, Chip, Alert, Fade } from "@mui/material";
 import {
   AutoAwesomeRounded, ReplayRounded, StopRounded, PersonRounded,
   MedicalServicesRounded, MedicationRounded, TrendingUpRounded,
   FlagRounded, TaskAltRounded, InfoOutlined, HistoryRounded,
-  MonitorHeartRounded, DescriptionRounded, CircleRounded, SendRounded,
+  MonitorHeartRounded, DescriptionRounded, CircleRounded, HelpOutlineRounded,
 } from "@mui/icons-material";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { typeScale } from "../../styles/typography";
@@ -15,6 +15,18 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 type Status = "idle" | "streaming" | "done" | "error";
 type ChatMsg = { role: "user" | "assistant"; content: string };
+
+// Preset clinical questions — the panel is a focused decision-support tool, not
+// a general chatbot, so the doctor picks from these rather than free-typing.
+const SUGGESTED = [
+  "Summarize the active problems.",
+  "What medications is the patient on?",
+  "Any allergy or drug-interaction risks?",
+  "What's the trend in vitals / BP?",
+  "What happened at the last visit?",
+  "Any red flags to watch for?",
+  "What should I follow up on today?",
+];
 
 function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const token = sessionStorage.getItem("hospitalAccessToken");
@@ -67,7 +79,6 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
 
   // Chat state
   const [messages, setMessages] = useState<ChatMsg[]>([]);
-  const [input, setInput] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const chatAbortRef = useRef<AbortController | null>(null);
@@ -111,12 +122,12 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
     }
   };
 
-  const sendChat = async () => {
-    const q = input.trim();
+  const sendChat = async (raw: string) => {
+    const q = raw.trim();
     if (!q || chatBusy || !patientId) return;
     const history = [...messages, { role: "user", content: q } as ChatMsg];
     setMessages([...history, { role: "assistant", content: "" }]);
-    setInput(""); setChatError(null); setChatBusy(true);
+    setChatError(null); setChatBusy(true);
     const controller = new AbortController();
     chatAbortRef.current = controller;
     try {
@@ -245,24 +256,21 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
         <div ref={bottomRef} />
       </Box>
 
-      {/* ── Chat input ─────────────────────────────────── */}
-      <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1, mt: 1.5 }}>
-        <TextField
-          fullWidth size="small" multiline maxRows={4}
-          placeholder="Ask about this patient…"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); } }}
-          disabled={!patientId}
-          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
-        />
-        <IconButton
-          onClick={sendChat}
-          disabled={!input.trim() || chatBusy || !patientId}
-          sx={{ bgcolor: BLUE, color: "#fff", "&:hover": { bgcolor: BLUE_DARK }, "&.Mui-disabled": { bgcolor: "action.disabledBackground", color: "action.disabled" } }}
-        >
-          <SendRounded fontSize="small" />
-        </IconButton>
+      {/* ── Preset clinical questions ──────────────────── */}
+      <Box sx={{ mt: 1.5 }}>
+        <Typography sx={{ ...typeScale.caption, display: "flex", alignItems: "center", gap: 0.5, mb: 0.75 }}>
+          <HelpOutlineRounded sx={{ fontSize: 14 }} /> Ask about this patient
+        </Typography>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+          {SUGGESTED.map((q) => (
+            <Chip
+              key={q} label={q} size="small" variant="outlined" clickable
+              onClick={() => sendChat(q)}
+              disabled={chatBusy || !patientId}
+              sx={{ borderColor: `${BLUE}44`, color: BLUE_DARK, bgcolor: `${BLUE}0d`, fontWeight: 600, "&:hover": { bgcolor: `${BLUE}1a` } }}
+            />
+          ))}
+        </Box>
       </Box>
 
       {/* ── Disclaimer ─────────────────────────────────── */}
