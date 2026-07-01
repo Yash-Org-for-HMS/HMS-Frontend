@@ -11,7 +11,6 @@ import { typeScale } from "../../styles/typography";
 
 const BLUE = "#3b82f6";
 const BLUE_DARK = "#2563eb";
-const GRAD = `linear-gradient(135deg, ${BLUE_DARK}, #6366f1)`;
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 type Status = "idle" | "streaming" | "done" | "error";
@@ -103,29 +102,23 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* ── Header ─────────────────────────────────────── */}
-      <Box
-        sx={{
-          display: "flex", alignItems: "center", gap: 1.5, p: 1.75, mb: 2,
-          borderRadius: 3, color: "#fff", background: GRAD,
-          boxShadow: "0 8px 24px -10px rgba(37,99,235,0.6)",
-        }}
-      >
-        <Box sx={{ width: 40, height: 40, borderRadius: 2.5, display: "grid", placeItems: "center", bgcolor: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)" }}>
-          <AutoAwesomeRounded sx={{ fontSize: 22 }} />
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, pb: 1.75, mb: 2, borderBottom: "1px solid", borderColor: "divider" }}>
+        <Box sx={{ width: 34, height: 34, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: `${BLUE}14`, color: BLUE, flexShrink: 0 }}>
+          <AutoAwesomeRounded sx={{ fontSize: 19 }} />
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.2 }}>AI Clinical Summary</Typography>
-          <Typography sx={{ fontSize: "0.72rem", opacity: 0.85 }}>Generated from this patient's record</Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", lineHeight: 1.2, color: "text.primary" }}>AI Clinical Summary</Typography>
+          <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>Generated from this patient's record</Typography>
         </Box>
         {busy && (
           <Button size="small" onClick={stop} startIcon={<StopRounded />}
-            sx={{ textTransform: "none", color: "#fff", bgcolor: "rgba(255,255,255,0.16)", "&:hover": { bgcolor: "rgba(255,255,255,0.26)" } }}>
+            sx={{ textTransform: "none", color: "text.secondary", borderColor: "divider" }} variant="outlined">
             Stop
           </Button>
         )}
         {!busy && hasContent && (
           <Button size="small" onClick={generate} startIcon={<ReplayRounded />}
-            sx={{ textTransform: "none", color: "#fff", bgcolor: "rgba(255,255,255,0.16)", "&:hover": { bgcolor: "rgba(255,255,255,0.26)" } }}>
+            sx={{ textTransform: "none", color: BLUE, borderColor: `${BLUE}55` }} variant="outlined">
             Regenerate
           </Button>
         )}
@@ -158,7 +151,7 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
                 ))}
               </Box>
               <Button variant="contained" size="large" onClick={generate} disabled={!patientId} startIcon={<AutoAwesomeRounded />}
-                sx={{ textTransform: "none", fontWeight: 700, px: 3, borderRadius: 2.5, background: GRAD, boxShadow: "0 8px 20px -8px rgba(37,99,235,0.7)" }}>
+                sx={{ textTransform: "none", fontWeight: 700, px: 3, borderRadius: 2, bgcolor: BLUE, "&:hover": { bgcolor: BLUE_DARK } }}>
                 Generate summary
               </Button>
             </Box>
