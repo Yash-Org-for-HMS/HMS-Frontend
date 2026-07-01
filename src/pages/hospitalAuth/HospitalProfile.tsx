@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "../../components/ErrorState";
+import GeoAddressPicker from "../../components/GeoAddressPicker";
 import {
   Box,
   Typography,
@@ -316,33 +317,15 @@ export default function HospitalProfile() {
                   required
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="City (ID for now)"
-                  name="cityId"
-                  value={formData.cityId}
-                  onChange={handleChange}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="State (ID for now)"
-                  name="stateId"
-                  value={formData.stateId}
-                  onChange={handleChange}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="Postal Code"
-                  name="postalCode"
-                  value={formData.postalCode}
-                  onChange={handleChange}
-                />
-              </Grid>
+              <GeoAddressPicker
+                value={{ stateId: formData.stateId as any, districtId: formData.cityId as any, pincode: formData.postalCode }}
+                onChange={(patch) => setFormData((prev) => ({
+                  ...prev,
+                  ...(patch.stateId !== undefined ? { stateId: (patch.stateId ?? "") as any } : {}),
+                  ...(patch.districtId !== undefined ? { cityId: (patch.districtId ?? "") as any } : {}),
+                  ...(patch.pincode !== undefined ? { postalCode: patch.pincode } : {}),
+                }))}
+              />
             </Grid>
           </CustomTabPanel>
 
