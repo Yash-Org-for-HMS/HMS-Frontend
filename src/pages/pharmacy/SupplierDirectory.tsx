@@ -47,6 +47,7 @@ export default function SupplierDirectory() {
   const [email, setEmail] = useState("");
   const [gstNumber, setGstNumber] = useState("");
   const [city, setCity] = useState("");
+  const [districtLoc, setDistrictLoc] = useState("");
   const [stateLoc, setStateLoc] = useState("");
   const [country, setCountry] = useState("India");
   const [saving, setSaving] = useState(false);
@@ -92,6 +93,7 @@ export default function SupplierDirectory() {
     setEmail("");
     setGstNumber("");
     setCity("");
+    setDistrictLoc("");
     setStateLoc("");
     setCountry("India");
     setErrorMsg("");
@@ -107,6 +109,7 @@ export default function SupplierDirectory() {
     setEmail(sup.email || "");
     setGstNumber(sup.gstNumber || "");
     setCity(sup.city || "");
+    setDistrictLoc(sup.district || "");
     setStateLoc(sup.state || "");
     setCountry(sup.country || "India");
     setErrorMsg("");
@@ -134,6 +137,7 @@ export default function SupplierDirectory() {
         email,
         gstNumber,
         city,
+        district: districtLoc,
         state: stateLoc,
         country
       };
@@ -387,9 +391,10 @@ export default function SupplierDirectory() {
                 <Grid container spacing={2}>
                   <GeoAddressPicker
                     showPincode={false} colSpan={6}
-                    value={{ stateName: stateLoc, city }}
+                    value={{ stateName: stateLoc, districtName: districtLoc, city }}
                     onChange={(patch) => {
                       if (patch.stateName !== undefined) setStateLoc(patch.stateName);
+                      if (patch.districtName !== undefined) setDistrictLoc(patch.districtName);
                       if (patch.city !== undefined) setCity(patch.city);
                     }}
                   />

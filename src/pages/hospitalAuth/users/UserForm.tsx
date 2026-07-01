@@ -337,6 +337,7 @@ export default function UserForm() {
     addressLine1: "",
     addressLine2: "",
     city: "",
+    district: "",
     state: "",
     postalCode: "",
     emergencyContactName: "",
@@ -373,6 +374,7 @@ export default function UserForm() {
       addressLine1: user.addressLine1 || "",
       addressLine2: user.addressLine2 || "",
       city: user.city || "",
+      district: user.district || "",
       state: user.state || "",
       postalCode: user.postalCode || "",
       emergencyContactName: user.emergencyContactName || "",
@@ -577,10 +579,11 @@ export default function UserForm() {
                 <Grid size={{ xs: 12 }}><TextField label="Address Line 1" name="addressLine1" value={formData.addressLine1} onChange={handleChange} {...textFieldProps} /></Grid>
                 <Grid size={{ xs: 12 }}><TextField label="Address Line 2" name="addressLine2" value={formData.addressLine2} onChange={handleChange} {...textFieldProps} /></Grid>
                 <GeoAddressPicker
-                  value={{ stateName: formData.state, city: formData.city, pincode: formData.postalCode }}
+                  value={{ stateName: formData.state, districtName: formData.district, city: formData.city, pincode: formData.postalCode }}
                   onChange={(patch) => setFormData((prev) => ({
                     ...prev,
                     ...(patch.stateName !== undefined ? { state: patch.stateName } : {}),
+                    ...(patch.districtName !== undefined ? { district: patch.districtName } : {}),
                     ...(patch.city !== undefined ? { city: patch.city } : {}),
                     ...(patch.pincode !== undefined ? { postalCode: patch.pincode } : {}),
                   }))}
