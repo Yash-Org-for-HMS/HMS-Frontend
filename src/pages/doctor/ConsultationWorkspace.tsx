@@ -23,6 +23,22 @@ import { useToast } from "../../contexts/ToastContext";
 
 const DOCTOR_BLUE = "#3b82f6";
 
+// SOAP notes are stored as rich-text HTML; strip tags/entities for the compact
+// history preview so the doctor sees plain text, not literal <p> markup.
+function stripHtml(html?: string): string {
+  if (!html) return "";
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function TabPanel(props: any) {
   const { children, value, index, ...other } = props;
   return (
@@ -384,7 +400,7 @@ export default function ConsultationWorkspace() {
                           {h.diagnosis || "No Diagnosis Recorded"}
                         </Typography>
                         <Typography variant="caption" sx={{ color: "text.secondary", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.5 }}>
-                          {h.soapAssessment || "No notes available for this consultation."}
+                          {stripHtml(h.soapAssessment) || "No notes available for this consultation."}
                         </Typography>
                         {h.prescribedMedicines && h.prescribedMedicines.length > 0 && (
                           <Box sx={{ mt: 1.5, pt: 1.5, borderTop: "1px dashed", borderColor: "divider" }}>
