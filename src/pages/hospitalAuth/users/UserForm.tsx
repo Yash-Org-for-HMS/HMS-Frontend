@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import GeoAddressPicker from "../../../components/GeoAddressPicker";
 import {
   Box,
   Typography,
@@ -575,9 +576,15 @@ export default function UserForm() {
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12 }}><TextField label="Address Line 1" name="addressLine1" value={formData.addressLine1} onChange={handleChange} {...textFieldProps} /></Grid>
                 <Grid size={{ xs: 12 }}><TextField label="Address Line 2" name="addressLine2" value={formData.addressLine2} onChange={handleChange} {...textFieldProps} /></Grid>
-                <Grid size={{ xs: 12, md: 4 }}><TextField label="City" name="city" value={formData.city} onChange={handleChange} {...textFieldProps} /></Grid>
-                <Grid size={{ xs: 12, md: 4 }}><TextField label="State/Province" name="state" value={formData.state} onChange={handleChange} {...textFieldProps} /></Grid>
-                <Grid size={{ xs: 12, md: 4 }}><TextField label="Postal Code" name="postalCode" value={formData.postalCode} onChange={handleChange} {...textFieldProps} /></Grid>
+                <GeoAddressPicker
+                  value={{ stateName: formData.state, districtName: formData.city, pincode: formData.postalCode }}
+                  onChange={(patch) => setFormData((prev) => ({
+                    ...prev,
+                    ...(patch.stateName !== undefined ? { state: patch.stateName } : {}),
+                    ...(patch.districtName !== undefined ? { city: patch.districtName } : {}),
+                    ...(patch.pincode !== undefined ? { postalCode: patch.pincode } : {}),
+                  }))}
+                />
               </Grid>
               <Divider sx={{ my: 4, borderColor: "divider" }} />
               <Typography variant="h6" sx={{ color: "text.primary", mb: 2 }}>Emergency Contact</Typography>

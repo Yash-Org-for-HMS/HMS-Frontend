@@ -8,32 +8,39 @@ interface GeoOption { stateId?: number; districtId?: number; name: string }
 export interface GeoValue {
   stateId?: number | "" | null;
   districtId?: number | "" | null; // parent may map this to cityId
+  stateName?: string;
+  districtName?: string;
   pincode?: string;
 }
 
 interface Props {
   value: GeoValue;
+  /** Patch carries ids AND names — id-based forms read stateId/districtId,
+   *  name-based forms read stateName/districtName. */
   onChange: (patch: GeoValue) => void;
-  /** Grid column span for each field (out of 12). */
   colSpan?: number;
   required?: boolean;
+  /** Hide the pincode field (e.g. entities that don't store a postal code). */
+  showPincode?: boolean;
 }
 
 /**
  * State → District cascading dropdowns + pincode autofill, backed by /api/geo.
- * Renders three <Grid> items, so use it inside a <Grid container>.
- * `districtId` is generic — the parent decides which field it maps to (e.g. cityId).
+ * Works for both id-storing forms (Hospital: stateId/cityId) and name-storing
+ * forms (Patient/User/Supplier: state/city strings) — the onChange patch always
+ * includes both ids and names. Renders <Grid> items; use inside a <Grid container>.
  */
-export default function GeoAddressPicker({ value, onChange, colSpan = 4, required }: Props) {
-  const stateId = value.stateId ? Number(value.stateId) : "";
-  const districtId = value.districtId ? Number(value.districtId) : "";
-  const pincode = value.pincode ?? "";
-
+export default function GeoAddressPicker({ value, onChange, colSpan = 4, required, showPincode = true }: Props) {
   const { data: states = [] } = useQuery<GeoOption[]>({
     queryKey: ["geo-states"],
     queryFn: async () => (await axiosInstance.get("/geo/states")).data.data,
     staleTime: Infinity,
   });
+
+  // Resolve the active state: explicit id, else match a saved name once states load.
+  const stateId = value.stateId
+    ? Number(value.stateId)
+    : (value.stateName ? states.find((s) => s.name === value.stateName)?.stateId ?? "" : "");
 
   const { data: districts = [] } = useQuery<GeoOption[]>({
     queryKey: ["geo-districts", stateId],
@@ -42,7 +49,13 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 4, require
     staleTime: Infinity,
   });
 
-  // Pincode autofill: when 6 digits are entered, resolve state + district.
+  const districtId = value.districtId
+    ? Number(value.districtId)
+    : (value.districtName ? districts.find((d) => d.name === value.districtName)?.districtId ?? "" : "");
+
+  const pincode = value.pincode ?? "";
+
+  // Pincode autofill: 6 digits → resolve state + district.
   const lastLookup = useRef<string>("");
   const lookingUp = useRef(false);
   useEffect(() => {
@@ -54,9 +67,13 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 4, require
       .get(`/geo/pincode/${code}`)
       .then((r) => {
         const d = r.data?.data;
-        if (d?.state?.stateId) onChange({ stateId: d.state.stateId, districtId: d.district?.districtId ?? null, pincode: code });
+        if (d?.state?.stateId) onChange({
+          stateId: d.state.stateId, stateName: d.state.name,
+          districtId: d.district?.districtId ?? null, districtName: d.district?.name ?? "",
+          pincode: code,
+        });
       })
-      .catch(() => { /* unknown pincode — leave dropdowns as-is */ })
+      .catch(() => { /* unknown pincode — leave as-is */ })
       .finally(() => { lookingUp.current = false; });
   }, [pincode]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -66,7 +83,10 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 4, require
         <TextField
           select fullWidth label="State" required={required}
           value={stateId}
-          onChange={(e) => onChange({ stateId: Number(e.target.value), districtId: null })}
+          onChange={(e) => {
+            const id = Number(e.target.value);
+            onChange({ stateId: id, stateName: states.find((s) => s.stateId === id)?.name ?? "", districtId: null, districtName: "" });
+          }}
         >
           <MenuItem value=""><em>Select state</em></MenuItem>
           {states.map((s) => <MenuItem key={s.stateId} value={s.stateId}>{s.name}</MenuItem>)}
@@ -76,29 +96,29 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 4, require
       <Grid size={{ xs: 12, md: colSpan }}>
         <TextField
           select fullWidth label="District" required={required}
-          value={districtId}
-          disabled={!stateId}
-          onChange={(e) => onChange({ districtId: Number(e.target.value) })}
+          value={districtId} disabled={!stateId}
+          onChange={(e) => {
+            const id = Number(e.target.value);
+            onChange({ districtId: id, districtName: districts.find((d) => d.districtId === id)?.name ?? "" });
+          }}
         >
           <MenuItem value=""><em>{stateId ? "Select district" : "Select a state first"}</em></MenuItem>
           {districts.map((d) => <MenuItem key={d.districtId} value={d.districtId}>{d.name}</MenuItem>)}
         </TextField>
       </Grid>
 
-      <Grid size={{ xs: 12, md: colSpan }}>
-        <TextField
-          fullWidth label="Pincode" required={required}
-          value={pincode}
-          inputProps={{ inputMode: "numeric", maxLength: 6 }}
-          onChange={(e) => onChange({ pincode: e.target.value.replace(/\D/g, "").slice(0, 6) })}
-          helperText="Enter 6 digits to auto-fill state & district"
-          InputProps={{
-            endAdornment: lookingUp.current
-              ? <InputAdornment position="end"><CircularProgress size={16} /></InputAdornment>
-              : undefined,
-          }}
-        />
-      </Grid>
+      {showPincode && (
+        <Grid size={{ xs: 12, md: colSpan }}>
+          <TextField
+            fullWidth label="Pincode" required={required}
+            value={pincode}
+            inputProps={{ inputMode: "numeric", maxLength: 6 }}
+            onChange={(e) => onChange({ pincode: e.target.value.replace(/\D/g, "").slice(0, 6) })}
+            helperText="Enter 6 digits to auto-fill state & district"
+            InputProps={{ endAdornment: lookingUp.current ? <InputAdornment position="end"><CircularProgress size={16} /></InputAdornment> : undefined }}
+          />
+        </Grid>
+      )}
     </>
   );
 }

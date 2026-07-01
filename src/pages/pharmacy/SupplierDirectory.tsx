@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Button, Dialog, DialogTitle, DialogContent, DialogActions,
+  Button, Dialog, DialogTitle, DialogContent, DialogActions, Grid,
   TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha, InputAdornment
 } from "@mui/material";
+import GeoAddressPicker from "../../components/GeoAddressPicker";
 import { EditRounded, DeleteRounded, AddRounded, LocalShippingRounded, SearchRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
@@ -382,22 +383,18 @@ export default function SupplierDirectory() {
                 required
               />
 
-              <TextField
-                label="City"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                fullWidth
-                variant="outlined"
-                required
-              />
-              <TextField
-                label="State"
-                value={stateLoc}
-                onChange={(e) => setStateLoc(e.target.value)}
-                fullWidth
-                variant="outlined"
-                required
-              />
+              <Box sx={{ gridColumn: '1 / -1' }}>
+                <Grid container spacing={2}>
+                  <GeoAddressPicker
+                    showPincode={false} colSpan={6}
+                    value={{ stateName: stateLoc, districtName: city }}
+                    onChange={(patch) => {
+                      if (patch.stateName !== undefined) setStateLoc(patch.stateName);
+                      if (patch.districtName !== undefined) setCity(patch.districtName);
+                    }}
+                  />
+                </Grid>
+              </Box>
             </Box>
 
           </Box>

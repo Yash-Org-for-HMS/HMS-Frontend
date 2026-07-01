@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import GeoAddressPicker from "../../components/GeoAddressPicker";
 import {
   Box,
   Typography,
@@ -273,15 +274,15 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
             onChange={handleChange} sx={fieldSx} placeholder="Area, Landmark (optional)"
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <TextField fullWidth label="City" name="city" value={formData.city} onChange={handleChange} required sx={fieldSx} />
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <TextField fullWidth label="State" name="state" value={formData.state} onChange={handleChange} sx={fieldSx} />
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <TextField fullWidth label="Postal Code" name="postalCode" value={formData.postalCode} onChange={handleChange} sx={fieldSx} />
-        </Grid>
+        <GeoAddressPicker
+          value={{ stateName: formData.state, districtName: formData.city, pincode: formData.postalCode }}
+          onChange={(patch) => setFormData((prev) => ({
+            ...prev,
+            ...(patch.stateName !== undefined ? { state: patch.stateName } : {}),
+            ...(patch.districtName !== undefined ? { city: patch.districtName } : {}),
+            ...(patch.pincode !== undefined ? { postalCode: patch.pincode } : {}),
+          }))}
+        />
       </Grid>
     ),
 
