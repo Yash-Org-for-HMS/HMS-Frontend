@@ -95,14 +95,14 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 4, require
 
       <Grid size={{ xs: 12, md: colSpan }}>
         <TextField
-          select fullWidth label="District" required={required}
+          select fullWidth label="City / District" required={required}
           value={districtId} disabled={!stateId}
           onChange={(e) => {
             const id = Number(e.target.value);
             onChange({ districtId: id, districtName: districts.find((d) => d.districtId === id)?.name ?? "" });
           }}
         >
-          <MenuItem value=""><em>{stateId ? "Select district" : "Select a state first"}</em></MenuItem>
+          <MenuItem value=""><em>{stateId ? "Select city / district" : "Select a state first"}</em></MenuItem>
           {districts.map((d) => <MenuItem key={d.districtId} value={d.districtId}>{d.name}</MenuItem>)}
         </TextField>
       </Grid>
