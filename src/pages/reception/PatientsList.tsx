@@ -500,7 +500,7 @@ export default function PatientsList() {
       {/* Row overflow menu */}
       <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={() => setMenu({ anchor: null, patient: null })}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}>
-        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); navigate(`/reception/queue/new?patientId=${p.patientId}`); }}>
+        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); navigate(`/reception/appointments/new?patientId=${p.patientId}`); }}>
           <ListItemIcon><QueuePlayNextRounded fontSize="small" /></ListItemIcon>
           <ListItemText>Walk-in visit</ListItemText>
         </MenuItem>
