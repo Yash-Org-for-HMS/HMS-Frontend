@@ -275,11 +275,11 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
           />
         </Grid>
         <GeoAddressPicker
-          value={{ stateName: formData.state, districtName: formData.city, pincode: formData.postalCode }}
+          value={{ stateName: formData.state, city: formData.city, pincode: formData.postalCode }}
           onChange={(patch) => setFormData((prev) => ({
             ...prev,
             ...(patch.stateName !== undefined ? { state: patch.stateName } : {}),
-            ...(patch.districtName !== undefined ? { city: patch.districtName } : {}),
+            ...(patch.city !== undefined ? { city: patch.city } : {}),
             ...(patch.pincode !== undefined ? { postalCode: patch.pincode } : {}),
           }))}
         />

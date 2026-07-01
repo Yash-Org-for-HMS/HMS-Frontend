@@ -387,10 +387,10 @@ export default function SupplierDirectory() {
                 <Grid container spacing={2}>
                   <GeoAddressPicker
                     showPincode={false} colSpan={6}
-                    value={{ stateName: stateLoc, districtName: city }}
+                    value={{ stateName: stateLoc, city }}
                     onChange={(patch) => {
                       if (patch.stateName !== undefined) setStateLoc(patch.stateName);
-                      if (patch.districtName !== undefined) setCity(patch.districtName);
+                      if (patch.city !== undefined) setCity(patch.city);
                     }}
                   />
                 </Grid>

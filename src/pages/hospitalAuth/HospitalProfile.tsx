@@ -78,6 +78,7 @@ export default function HospitalProfile() {
     countryId: "",
     stateId: "",
     cityId: "",
+    city: "",
     postalCode: "",
     logoUrl: "",
     primaryColorHex: "",
@@ -107,6 +108,7 @@ export default function HospitalProfile() {
       countryId: data.countryId?.toString() || "",
       stateId: data.stateId?.toString() || "",
       cityId: data.cityId?.toString() || "",
+      city: data.city || "",
       postalCode: data.postalCode || "",
       logoUrl: data.logoUrl || "",
       primaryColorHex: data.primaryColorHex || "",
@@ -318,11 +320,11 @@ export default function HospitalProfile() {
                 />
               </Grid>
               <GeoAddressPicker
-                value={{ stateId: formData.stateId as any, districtId: formData.cityId as any, pincode: formData.postalCode }}
+                value={{ stateId: formData.stateId as any, city: formData.city, pincode: formData.postalCode }}
                 onChange={(patch) => setFormData((prev) => ({
                   ...prev,
                   ...(patch.stateId !== undefined ? { stateId: (patch.stateId ?? "") as any } : {}),
-                  ...(patch.districtId !== undefined ? { cityId: (patch.districtId ?? "") as any } : {}),
+                  ...(patch.city !== undefined ? { city: patch.city } : {}),
                   ...(patch.pincode !== undefined ? { postalCode: patch.pincode } : {}),
                 }))}
               />
