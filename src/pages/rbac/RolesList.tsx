@@ -179,7 +179,7 @@ export default function RolesList() {
 
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-          <HeartbeatLoader size={48} />
+          <HeartbeatLoader size={96} />
         </Box>
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />

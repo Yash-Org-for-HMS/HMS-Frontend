@@ -183,7 +183,7 @@ export default function UsersList() {
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 8, borderBottom: "none" }}>
-                    <HeartbeatLoader size={48} />
+                    <HeartbeatLoader size={96} />
                   </TableCell>
                 </TableRow>
               ) : isError ? (

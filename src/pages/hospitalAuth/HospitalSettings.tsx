@@ -145,7 +145,7 @@ export default function HospitalSettings() {
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
-        <HeartbeatLoader size={48} />
+        <HeartbeatLoader size={96} />
       </Box>
     );
   }

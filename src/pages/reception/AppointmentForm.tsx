@@ -212,7 +212,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     }
   };
 
-  if (loading) return <Box sx={{ p: 4, textAlign: "center" }}><HeartbeatLoader size={48} /></Box>;
+  if (loading) return <Box sx={{ p: 4, textAlign: "center" }}><HeartbeatLoader size={96} /></Box>;
 
   if (isError) return <Box sx={{ p: 4 }}><ErrorState message={(error as any)?.response?.data?.message || "Failed to initialize form"} onRetry={refetch} /></Box>;
 

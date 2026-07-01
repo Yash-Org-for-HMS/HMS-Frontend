@@ -57,16 +57,9 @@ const LOOKUP_CONFIGS: Record<string, any> = {
       { field: "typeName", label: "Type Name" }
     ],
   },
-  appointmentStatus: {
-    label: "Appointment Statuses",
-    idField: "appointmentStatusId",
-    columns: [
-      { field: "statusCode", label: "Status Code" },
-      { field: "statusLabel", label: "Status Label" },
-      { field: "colorHex", label: "Color Hex" },
-      { field: "allowReschedule", label: "Allow Reschedule (Yes/No)" }
-    ],
-  }
+  // NOTE: Appointment Statuses were removed here — they are a SYSTEM state
+  // machine (code depends on globally-unique status codes), not per-hospital
+  // master data, so they are no longer hospital-editable.
 };
 
 export default function LookupManager() {

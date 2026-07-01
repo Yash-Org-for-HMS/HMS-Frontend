@@ -65,7 +65,7 @@ export default function PharmacyDashboard() {
     >
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
-          <HeartbeatLoader size={48} />
+          <HeartbeatLoader size={96} />
         </Box>
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />

@@ -119,7 +119,7 @@ export default function DoctorLeaves() {
       <Divider sx={{ mb: 2 }} />
 
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><HeartbeatLoader size={48} /></Box>
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><HeartbeatLoader size={96} /></Box>
       ) : isError ? (
         <ErrorState title="Couldn't load leaves" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (

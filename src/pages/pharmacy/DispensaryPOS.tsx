@@ -382,7 +382,7 @@ export default function DispensaryPOS() {
     >
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
-          <HeartbeatLoader size={48} />
+          <HeartbeatLoader size={96} />
         </Box>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

@@ -89,7 +89,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged 
         <Button onClick={onClose} sx={{ minWidth: 0, p: 1, color: "text.secondary" }}><CloseRounded /></Button>
       </DialogTitle>
       <DialogContent dividers>
-        {isLoading ? <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><HeartbeatLoader size={48} /></Box>
+        {isLoading ? <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><HeartbeatLoader size={96} /></Box>
           : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
           : invoice ? (
             <>

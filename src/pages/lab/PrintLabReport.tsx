@@ -32,7 +32,7 @@ export default function PrintLabReport() {
     }
   }, [loading, order]);
 
-  if (loading) return <Box sx={{ display: "flex", p: 4, justifyContent: "center" }}><HeartbeatLoader size={48} /></Box>;
+  if (loading) return <Box sx={{ display: "flex", p: 4, justifyContent: "center" }}><HeartbeatLoader size={96} /></Box>;
   if (!order) return <Typography>Order not found</Typography>;
 
   return (

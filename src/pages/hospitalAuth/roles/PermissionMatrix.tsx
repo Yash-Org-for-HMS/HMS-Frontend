@@ -181,7 +181,7 @@ export default function PermissionMatrix() {
   if (initialLoad) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 10 }}>
-        <HeartbeatLoader size={48} />
+        <HeartbeatLoader size={96} />
       </Box>
     );
   }

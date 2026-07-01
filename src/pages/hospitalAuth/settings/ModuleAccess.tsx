@@ -38,7 +38,7 @@ export default function ModuleAccess() {
   });
 
   if (loading) {
-    return <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><HeartbeatLoader size={48} /></Box>;
+    return <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><HeartbeatLoader size={96} /></Box>;
   }
   if (isError) {
     return <ErrorState title="Couldn't load module access" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;

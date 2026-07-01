@@ -60,7 +60,7 @@ export default function ConsentFormsSection({ patientId, patientName }: { patien
       </Box>
 
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><HeartbeatLoader size={48} /></Box>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><HeartbeatLoader size={96} /></Box>
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : forms.length === 0 ? (

@@ -10,7 +10,7 @@ DotLottie.setWasmUrl("/dotlottie-player.wasm");
 DotLottieWorker.setWasmUrl("/dotlottie-player.wasm");
 
 interface HeartbeatLoaderProps {
-  /** Animation size in px. ~22 inside buttons, ~48–72 for page/section loaders. */
+  /** Animation size in px. ~22 inside buttons, ~96 for page/section loaders. */
   size?: number;
   /** Center the animation in a min-height box (use for full page / section / table loaders). */
   center?: boolean;
@@ -30,7 +30,7 @@ interface HeartbeatLoaderProps {
  * The .lottie is served statically from /heartbeat.lottie (public/).
  */
 export default function HeartbeatLoader({
-  size = 56,
+  size = 88,
   center = false,
   minHeight = 240,
   label,

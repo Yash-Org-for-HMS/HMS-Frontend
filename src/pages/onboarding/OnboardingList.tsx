@@ -92,7 +92,7 @@ export default function OnboardingList() {
     return (
       <PageContainer>
         <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
-          <HeartbeatLoader size={48} />
+          <HeartbeatLoader size={96} />
         </Box>
       </PageContainer>
     );

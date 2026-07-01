@@ -17,7 +17,7 @@ export function ProtectedRoute() {
           justifyContent: "center",
         }}
       >
-        <HeartbeatLoader size={48} />
+        <HeartbeatLoader size={96} />
       </Box>
     );
   }

@@ -183,7 +183,7 @@ export default function UserForm() {
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
-        <HeartbeatLoader size={48} />
+        <HeartbeatLoader size={96} />
       </Box>
     );
   }

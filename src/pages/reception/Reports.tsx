@@ -373,7 +373,7 @@ function Toolbar({ children, onPrint }: { children: React.ReactNode; onPrint: ()
   );
 }
 
-function Loading() { return <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><HeartbeatLoader size={48} /></Box>; }
+function Loading() { return <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><HeartbeatLoader size={96} /></Box>; }
 function Empty() { return <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "text.disabled" }}><Typography variant="body2">No data for this period</Typography></Box>; }
 
 function SimpleTable({ title, head, rows }: { title: string; head: string[]; rows: string[][] }) {

@@ -173,7 +173,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
               </Box>
               
               {itemsLoading ? (
-                <Box sx={{ p: 4, display: "flex", justifyContent: "center" }}><HeartbeatLoader size={48} /></Box>
+                <Box sx={{ p: 4, display: "flex", justifyContent: "center" }}><HeartbeatLoader size={96} /></Box>
               ) : itemsError ? (
                 <Box sx={{ p: 2 }}>
                   <ErrorState message={(itemsErr as any)?.response?.data?.message} onRetry={() => refetchUnbilled()} />

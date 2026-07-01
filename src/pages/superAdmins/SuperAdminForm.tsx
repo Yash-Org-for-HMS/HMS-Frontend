@@ -87,7 +87,7 @@ export default function SuperAdminForm() {
   if (initialLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <HeartbeatLoader size={48} />
+        <HeartbeatLoader size={96} />
       </Box>
     );
   }

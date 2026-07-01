@@ -115,7 +115,7 @@ export default function SoapTemplateBar({ current, onApply }: Props) {
       <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={() => setAnchorEl(null)} PaperProps={{ sx: { minWidth: 260, maxHeight: 380 } }}>
         {isLoading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-            <HeartbeatLoader size={48} />
+            <HeartbeatLoader size={96} />
           </Box>
         ) : templates.length === 0 ? (
           <Box sx={{ px: 2, py: 1.5 }}>

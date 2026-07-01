@@ -346,7 +346,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       <DialogContent sx={{ py: 3 }}>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-            <HeartbeatLoader size={48} />
+            <HeartbeatLoader size={96} />
           </Box>
         ) : loadError ? (
           <ErrorState message={loadError} onRetry={fetchBillingData} />

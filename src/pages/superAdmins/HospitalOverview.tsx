@@ -110,7 +110,7 @@ export default function HospitalOverview() {
   if (loading) {
     return (
       <Container maxWidth="xl" sx={{ py: 4, display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
-        <HeartbeatLoader size={48} />
+        <HeartbeatLoader size={96} />
       </Container>
     );
   }

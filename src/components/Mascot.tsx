@@ -56,7 +56,7 @@ export default function Mascot({ pose, title, subtitle, size = 56, sx }: MascotP
       }}
     >
       {pose === "thinking" ? (
-        <HeartbeatLoader size={size} />
+        <HeartbeatLoader size={Math.max(size, 88)} />
       ) : (
         (() => {
           const { Icon, color } = POSE_META[pose];

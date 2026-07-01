@@ -73,7 +73,7 @@ export default function UpdateLabOrder() {
     }
   };
 
-  if (loading) return <Box sx={{ display: "flex", p: 4, justifyContent: "center" }}><HeartbeatLoader size={48} /></Box>;
+  if (loading) return <Box sx={{ display: "flex", p: 4, justifyContent: "center" }}><HeartbeatLoader size={96} /></Box>;
   if (isError || !order) {
     return <ErrorState title="Couldn't load lab order" message={(error as any)?.response?.data?.message || "Order not found"} onRetry={() => refetch()} />;
   }

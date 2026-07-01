@@ -165,7 +165,7 @@ export default function AppointmentCalendar() {
           <Box sx={{ overflowX: "auto", position: "relative" }}>
             {isLoading && (
               <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "rgba(255,255,255,0.5)", zIndex: 5 }}>
-                <HeartbeatLoader size={48} />
+                <HeartbeatLoader size={96} />
               </Box>
             )}
 

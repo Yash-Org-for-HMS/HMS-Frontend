@@ -18,7 +18,7 @@ export function HospitalProtectedRoute() {
           bgcolor: "#0f172a",
         }}
       >
-        <HeartbeatLoader size={48} />
+        <HeartbeatLoader size={96} />
       </Box>
     );
   }

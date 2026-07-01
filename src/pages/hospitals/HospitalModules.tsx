@@ -101,7 +101,7 @@ export default function HospitalModules() {
       />
 
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><HeartbeatLoader size={48} /></Box>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><HeartbeatLoader size={96} /></Box>
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (

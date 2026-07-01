@@ -157,7 +157,7 @@ export default function DoctorDashboard() {
             </Box>
 
             {loading ? (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><HeartbeatLoader size={48} /></Box>
+              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><HeartbeatLoader size={96} /></Box>
             ) : !stats?.upcomingAppointments || stats.upcomingAppointments.length === 0 ? (
               <Mascot pose="all-caught-up" title="All caught up!" subtitle="No upcoming appointments found for today." />
             ) : (

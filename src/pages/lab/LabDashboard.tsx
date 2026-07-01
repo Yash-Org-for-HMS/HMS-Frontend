@@ -92,7 +92,7 @@ export default function LabDashboard() {
   );
 
   if (loading) {
-    return <Box sx={{ display: "flex", justifyContent: "center", p: 10 }}><HeartbeatLoader size={48} /></Box>;
+    return <Box sx={{ display: "flex", justifyContent: "center", p: 10 }}><HeartbeatLoader size={96} /></Box>;
   }
 
   if (isError) {

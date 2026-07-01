@@ -103,7 +103,7 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
       </Box>
 {loading ? (
         <Box sx={{ textAlign: "center", py: 5 }}>
-          <HeartbeatLoader size={48} />
+          <HeartbeatLoader size={96} />
         </Box>
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message || "Failed to load documents"} onRetry={fetchDocuments} />

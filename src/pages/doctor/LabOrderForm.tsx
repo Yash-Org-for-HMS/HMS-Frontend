@@ -222,7 +222,7 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
           <ScienceRounded sx={{ color: "text.secondary" }} fontSize="small" /> Previously Ordered Tests
         </Typography>
         {loading ? (
-          <HeartbeatLoader size={48} />
+          <HeartbeatLoader size={96} />
         ) : isError ? (
           <ErrorState message={(error as any)?.response?.data?.message || "Failed to load lab orders"} onRetry={refetch} />
         ) : existingOrders.length === 0 ? (

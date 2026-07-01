@@ -26,7 +26,7 @@ export default function FinancialDashboard() {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', height: '80vh', alignItems: 'center', justifyContent: 'center' }}>
-        <HeartbeatLoader size={48} />
+        <HeartbeatLoader size={96} />
       </Box>
     );
   }

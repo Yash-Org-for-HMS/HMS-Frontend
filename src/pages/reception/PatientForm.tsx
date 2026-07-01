@@ -161,7 +161,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
   if (initialLoad) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300 }}>
-        <HeartbeatLoader size={48} />
+        <HeartbeatLoader size={96} />
       </Box>
     );
   }

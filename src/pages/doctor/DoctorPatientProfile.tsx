@@ -120,7 +120,7 @@ export default function DoctorPatientProfile() {
 
           {historyQ.isLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-              <HeartbeatLoader size={48} />
+              <HeartbeatLoader size={96} />
             </Box>
           ) : history.length === 0 ? (
             <Mascot pose="nothing-here-yet" subtitle="No past consultations on record." size={120} />

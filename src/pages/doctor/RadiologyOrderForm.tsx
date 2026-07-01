@@ -147,7 +147,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
           <CameraAltRounded sx={{ color: "text.secondary" }} fontSize="small" /> Previously Ordered Scans
         </Typography>
         {loading ? (
-          <HeartbeatLoader size={48} />
+          <HeartbeatLoader size={96} />
         ) : isError ? (
           <ErrorState message={(error as any)?.response?.data?.message || "Failed to load radiology orders"} onRetry={refetch} />
         ) : existingOrders.length === 0 ? (
