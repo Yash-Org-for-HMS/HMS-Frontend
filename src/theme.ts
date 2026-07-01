@@ -76,6 +76,12 @@ const themeOptions: ThemeOptions = {
   components: {
     MuiCssBaseline: {
       styleOverrides: {
+        // Always reserve space for the page scrollbar so switching tabs (which
+        // changes content height, toggling the scrollbar) doesn't shift the
+        // whole layout horizontally by the scrollbar width.
+        html: {
+          scrollbarGutter: "stable",
+        },
         body: {
           backgroundcolor: "text.primary",
           color: "#0F172A",
