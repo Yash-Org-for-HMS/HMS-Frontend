@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { orderStatusColor } from "../../utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab } from "@mui/material";
 import { VisibilityRounded, BloodtypeRounded, AddRounded } from "@mui/icons-material";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
@@ -40,15 +41,6 @@ export default function LabOrdersQueue() {
     connect: () => fetchOrders(), // Refetch on socket reconnect
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "COMPLETED": return "success";
-      case "SAMPLE_COLLECTED": return "info";
-      case "IN_PROGRESS": return "warning";
-      case "PENDING": return "default";
-      default: return "default";
-    }
-  };
 
   const handleCollectClick = (order: any) => {
     setCollectOrder(order);
@@ -155,7 +147,7 @@ export default function LabOrdersQueue() {
                   <TableCell>{order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</TableCell>
                   <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Chip label={order.status || "PENDING"} color={getStatusColor(order.status) as any} size="small" />
+                    <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status) as any} size="small" />
                   </TableCell>
                   <TableCell align="right">
                     {order.status === "PENDING" ? (

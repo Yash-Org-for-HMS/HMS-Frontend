@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatINR } from "../../utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
@@ -16,7 +17,6 @@ interface Props {
   admissionId: string;
 }
 
-const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function DischargeDialog({ open, onClose, onDone, admissionId }: Props) {
   const toast = useToast();
@@ -47,7 +47,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
         extraCharges: extras.filter((e) => e.description.trim() && Number(e.amount) > 0).map((e) => ({ description: e.description.trim(), amount: Number(e.amount) })),
       });
       const inv = res.data?.data?.invoice;
-      toast.success(inv ? `Discharged — invoice ${inv.invoiceNumber} (${inr(inv.netAmount)})` : "Patient discharged");
+      toast.success(inv ? `Discharged — invoice ${inv.invoiceNumber} (${formatINR(inv.netAmount)})` : "Patient discharged");
       onDone();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to discharge");
@@ -66,7 +66,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
           <Box sx={{ p: 2, borderRadius: 2, bgcolor: "action.hover" }}>
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>Bed charges ({detail?.days ?? "—"} day{detail?.days === 1 ? "" : "s"})</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 700 }}>{inr(bedCharge)}</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(bedCharge)}</Typography>
             </Box>
           </Box>
 
@@ -87,27 +87,27 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
           <Divider />
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>Bill total</Typography>
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>{inr(total)}</Typography>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(total)}</Typography>
           </Box>
           {deposit > 0 && (
             <>
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>Deposit held</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: "#0891b2" }}>{inr(deposit)}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: "#0891b2" }}>{formatINR(deposit)}</Typography>
               </Box>
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>Deposit applied</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: "#8b5cf6" }}>- {inr(depositApplied)}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: "#8b5cf6" }}>- {formatINR(depositApplied)}</Typography>
               </Box>
             </>
           )}
           <Box sx={{ display: "flex", justifyContent: "space-between", pt: 0.5, borderTop: deposit > 0 ? "1px dashed" : "none", borderColor: "divider" }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>{deposit > 0 ? "Payable now" : "Final bill total"}</Typography>
-            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: payable > 0 ? "#ef4444" : "#10b981" }}>{inr(payable)}</Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: payable > 0 ? "#ef4444" : "#10b981" }}>{formatINR(payable)}</Typography>
           </Box>
           {depositRefundable > 0 && (
             <Typography variant="caption" sx={{ color: "#8b5cf6" }}>
-              {inr(depositRefundable)} deposit will remain after this bill — refund it from the admission's ⋮ menu.
+              {formatINR(depositRefundable)} deposit will remain after this bill — refund it from the admission's ⋮ menu.
             </Typography>
           )}
 

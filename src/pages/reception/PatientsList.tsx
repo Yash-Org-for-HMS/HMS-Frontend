@@ -48,6 +48,7 @@ import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import Mascot from "../../components/Mascot";
+import { getInitials } from "../../utils/format";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import IdCardModal from "../../components/reception/IdCardModal";
 import AdmitDialog from "../../components/ipd/AdmitDialog";
@@ -56,20 +57,12 @@ import PageHeader from "../../components/layout/PageHeader";
 import { useServerSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
 
-interface Patient {
-  patientId: string;
-  uhidNumber: string;
-  firstName: string | null;
-  lastName: string | null;
-  dateOfBirth: string;
-  phone: string;
-  email: string;
+import type { Patient as PatientBase } from "../../types";
+
+interface Patient extends PatientBase {
   city: string;
   genderId: number;
   bloodGroupId: number;
-  genderLabel: string;
-  bloodGroupLabel: string;
-  age: number | null;
   createdAt: string;
   outstandingDues?: number;
 }
@@ -148,11 +141,6 @@ export default function PatientsList() {
     deleteMutation.mutate(deleteDialog.patient.patientId);
   };
 
-  const getInitials = (p: Patient) => {
-    const f = p.firstName?.charAt(0) || "";
-    const l = p.lastName?.charAt(0) || "";
-    return (f + l).toUpperCase() || "P";
-  };
 
   const avatarColors = [
     "#0891b2", "#7c3aed", "#059669", "#dc2626", "#d97706",
@@ -326,7 +314,7 @@ export default function PatientsList() {
                               fontWeight: 700,
                             }}
                           >
-                            {getInitials(patient)}
+                            {getInitials(patient.firstName, patient.lastName)}
                           </Avatar>
                           <Box>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

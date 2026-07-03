@@ -1,3 +1,4 @@
+import { ACCENTS } from "../../styles/accents";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -10,10 +11,10 @@ import {
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import { typeScale } from "../../styles/typography";
 
-const DOCTOR_BLUE = "#3b82f6";
+const DOCTOR_BLUE = ACCENTS.doctor;
 
 function InfoRow({ label, value }: { label: string; value: any }) {
   return (
@@ -119,9 +120,7 @@ export default function DoctorPatientProfile() {
           </Typography>
 
           {historyQ.isLoading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-              <HeartbeatLoader size={96} />
-            </Box>
+            <PageLoader />
           ) : history.length === 0 ? (
             <Mascot pose="nothing-here-yet" subtitle="No past consultations on record." size={120} />
           ) : (

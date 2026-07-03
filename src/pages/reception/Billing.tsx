@@ -1,8 +1,10 @@
+import { ACCENTS } from "../../styles/accents";
+import { formatINR } from "../../utils/format";
 import { useEffect, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Tabs, Tab, TextField, InputAdornment, MenuItem, Table,
-  TableHead, TableBody, TableRow, TableCell, TableContainer, Chip,
+  TableHead, TableBody, TableRow, TableCell, TableContainer,
   Button, Pagination, Stack,
 } from "@mui/material";
 import {
@@ -11,14 +13,14 @@ import {
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
+import StatusChip from "../../components/StatusChip";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import GenerateInvoice from "../billing/GenerateInvoice";
 import InvoiceViewDialog from "../../components/reception/InvoiceViewDialog";
 import PageHeader from "../../components/layout/PageHeader";
 import { useSearchParams } from "react-router-dom";
 
-const ACCENT = "#0891b2";
-const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const ACCENT = ACCENTS.reception;
 const STATUSES = [
   { code: "", label: "All statuses" },
   { code: "PENDING", label: "Pending" },
@@ -111,10 +113,10 @@ function BillsList() {
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>{r.uhid}</Typography>
                   </TableCell>
                   <TableCell sx={{ color: "text.secondary" }}>{new Date(r.invoiceDate).toLocaleDateString("en-IN")}</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 600 }}>{inr(r.netAmount)}</TableCell>
-                  <TableCell align="right" sx={{ color: "text.secondary" }}>{inr(r.paidAmount)}</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700, color: Number(r.balance) > 0.005 ? "#ef4444" : "#10b981" }}>{inr(r.balance)}</TableCell>
-                  <TableCell><Chip label={r.statusLabel} size="small" sx={{ bgcolor: `${r.statusColor}22`, color: r.statusColor, fontWeight: 700 }} /></TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(r.netAmount)}</TableCell>
+                  <TableCell align="right" sx={{ color: "text.secondary" }}>{formatINR(r.paidAmount)}</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, color: Number(r.balance) > 0.005 ? "#ef4444" : "#10b981" }}>{formatINR(r.balance)}</TableCell>
+                  <TableCell><StatusChip label={r.statusLabel} color={r.statusColor} /></TableCell>
                   <TableCell align="right"><Button size="small" startIcon={<VisibilityRounded />} onClick={(e) => { e.stopPropagation(); setViewId(r.invoiceId); }} sx={{ textTransform: "none", color: ACCENT }}>View</Button></TableCell>
                 </TableRow>
               ))}

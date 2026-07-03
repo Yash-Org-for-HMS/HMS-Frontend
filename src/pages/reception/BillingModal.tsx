@@ -9,6 +9,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
@@ -345,9 +346,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
 
       <DialogContent sx={{ py: 3 }}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-            <HeartbeatLoader size={96} />
-          </Box>
+          <PageLoader />
         ) : loadError ? (
           <ErrorState message={loadError} onRetry={fetchBillingData} />
         ) : invoice ? (

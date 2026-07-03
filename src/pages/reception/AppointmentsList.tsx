@@ -17,6 +17,7 @@ import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
+import StatusChip from "../../components/StatusChip";
 import BillingModal from "./BillingModal";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import ReferralDialog from "../../components/reception/ReferralDialog";
@@ -383,7 +384,7 @@ export default function AppointmentsList() {
                         {appt.doctorName}
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
-                        <Chip label={appt.statusLabel} size="small" sx={{ bgcolor: `${appt.statusColor}22`, color: appt.statusColor, border: `1px solid ${appt.statusColor}55`, fontWeight: 600, fontSize: "0.75rem" }} />
+                        <StatusChip label={appt.statusLabel} color={appt.statusColor} />
                       </TableCell>
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
                         <Tooltip title="Refer Patient">

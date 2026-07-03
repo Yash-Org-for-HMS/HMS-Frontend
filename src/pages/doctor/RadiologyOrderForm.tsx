@@ -1,3 +1,4 @@
+import { ACCENTS } from "../../styles/accents";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -12,7 +13,7 @@ import { assetUrl } from "../../utils/assetUrl";
 import { useToast } from "../../contexts/ToastContext";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 
-const DOCTOR_BLUE = "#3b82f6";
+const DOCTOR_BLUE = ACCENTS.doctor;
 
 interface RadiologyOrderFormProps {
   consultationId?: string | null;

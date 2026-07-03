@@ -1,7 +1,8 @@
+import { ACCENTS } from "../../styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Grid, Typography, Paper, Alert,
-  Skeleton, Chip, Avatar, Button, Divider
+  Chip, Avatar, Button, Divider
 } from "@mui/material";
 import {
   MonitorHeartRounded, CheckCircleRounded, HourglassTopRounded,
@@ -11,57 +12,12 @@ import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
+import StatCard from "../../components/StatCard";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
 
-const DOCTOR_BLUE = "#3b82f6";
-
-function StatCard({ title, value, icon, loading, accent, sub }: any) {
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 3, borderRadius: 4,
-        bgcolor: "background.paper",
-        border: "1px solid", borderColor: "divider",
-        transition: "all 0.2s ease-in-out",
-        display: "flex", flexDirection: "column", justifyContent: "space-between",
-        minHeight: 170, height: "auto",
-        "&:hover": { boxShadow: `0 8px 30px rgba(0,0,0,0.06)`, transform: "translateY(-2px)" },
-      }}
-    >
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <Box
-          sx={{
-            width: 48, height: 48, borderRadius: 3,
-            bgcolor: accent ? `${accent}18` : "rgba(59,130,246,0.1)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
-        >
-          {icon}
-        </Box>
-      </Box>
-      <Box>
-        {loading ? (
-          <Skeleton width={80} height={40} />
-        ) : (
-          <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary" }}>
-            {typeof value === "number" ? value.toLocaleString() : value}
-          </Typography>
-        )}
-        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, display: "block", mt: 0.5 }}>
-          {title}
-        </Typography>
-        {sub && (
-          <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.75rem", display: "block", mt: 0.5 }}>
-            {sub}
-          </Typography>
-        )}
-      </Box>
-    </Paper>
-  );
-}
+const DOCTOR_BLUE = ACCENTS.doctor;
 
 export default function DoctorDashboard() {
   const { hospital, user } = useHospitalAuth();
@@ -95,40 +51,40 @@ export default function DoctorDashboard() {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Today's Appointments"
+            label="Today's Appointments"
             value={stats?.todaysAppointments || 0}
             icon={<PeopleAltRounded sx={{ color: DOCTOR_BLUE }} />}
             loading={loading}
-            accent={DOCTOR_BLUE}
+            color={DOCTOR_BLUE}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Waiting Patients"
+            label="Waiting Patients"
             value={stats?.waitingPatients || 0}
             icon={<HourglassTopRounded sx={{ color: "#f59e0b" }} />}
             loading={loading}
-            accent="#f59e0b"
+            color="#f59e0b"
             sub="Checked in, ready to be seen"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Vitals Recorded"
+            label="Vitals Recorded"
             value={stats?.vitalsRecorded || 0}
             icon={<MonitorHeartRounded sx={{ color: "#10b981" }} />}
             loading={loading}
-            accent="#10b981"
+            color="#10b981"
             sub="Pre-consultation complete"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Completed Consultations"
+            label="Completed Consultations"
             value={stats?.completedVisits || 0}
             icon={<CheckCircleRounded sx={{ color: "#8b5cf6" }} />}
             loading={loading}
-            accent="#8b5cf6"
+            color="#8b5cf6"
             sub="Finished today"
           />
         </Grid>
@@ -157,7 +113,7 @@ export default function DoctorDashboard() {
             </Box>
 
             {loading ? (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><HeartbeatLoader size={96} /></Box>
+              <PageLoader />
             ) : !stats?.upcomingAppointments || stats.upcomingAppointments.length === 0 ? (
               <Mascot pose="all-caught-up" title="All caught up!" subtitle="No upcoming appointments found for today." />
             ) : (

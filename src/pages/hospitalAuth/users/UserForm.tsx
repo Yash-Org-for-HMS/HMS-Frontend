@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import GeoAddressPicker from "../../../components/GeoAddressPicker";
+import CredentialDialog from "../../../components/CredentialDialog";
 import {
   Box,
   Typography,
@@ -15,18 +16,12 @@ import {
   Divider,
   InputAdornment,
   IconButton,
-  Dialog,
-  DialogContent,
-  Tooltip,
 } from "@mui/material";
 import {
   SaveRounded,
   Visibility,
   VisibilityOff,
   LockRounded,
-  ContentCopyRounded,
-  CheckCircleRounded,
-  InfoOutlined,
   PersonRounded,
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
@@ -35,6 +30,7 @@ import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import HeartbeatLoader from "../../../components/HeartbeatLoader";
+import PageLoader from "../../../components/PageLoader";
 
 interface Role {
   roleId: string;
@@ -69,229 +65,6 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-// ── Credentials Dialog ──────────────────────────────────────────────────────
-interface CredentialDialogProps {
-  open: boolean;
-  email: string;
-  password: string;
-  name: string;
-  onClose: () => void;
-}
-
-function CredentialDialog({ open, email, password, name, onClose }: CredentialDialogProps) {
-  const [copiedEmail, setCopiedEmail] = useState(false);
-  const [copiedPassword, setCopiedPassword] = useState(false);
-  const [copiedAll, setCopiedAll] = useState(false);
-
-  const copy = async (text: string, which: "email" | "password" | "all") => {
-    await navigator.clipboard.writeText(text);
-    if (which === "email") { setCopiedEmail(true); setTimeout(() => setCopiedEmail(false), 2000); }
-    if (which === "password") { setCopiedPassword(true); setTimeout(() => setCopiedPassword(false), 2000); }
-    if (which === "all") { setCopiedAll(true); setTimeout(() => setCopiedAll(false), 2000); }
-  };
-
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: "background.paper",
-          border: "1px solid rgba(99, 102, 241, 0.3)",
-          borderRadius: 3,
-          backgroundImage: "none",
-          overflow: "hidden",
-        },
-      }}
-    >
-      {/* Top accent bar */}
-      <Box sx={{ height: 4, background: "linear-gradient(90deg, #6366f1, #10b981, #06b6d4)" }} />
-
-      <DialogContent sx={{ p: 4 }}>
-        {/* Success Header */}
-        <Box sx={{ textAlign: "center", mb: 4 }}>
-          <Box
-            sx={{
-              width: 64,
-              height: 64,
-              borderRadius: "50%",
-              bgcolor: "rgba(16, 185, 129, 0.1)",
-              border: "2px solid rgba(16, 185, 129, 0.4)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              mx: "auto",
-              mb: 2,
-            }}
-          >
-            <CheckCircleRounded sx={{ color: "#10b981", fontSize: 32 }} />
-          </Box>
-          <Typography variant="h5" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
-            Staff Account Created!
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Share these login credentials with{" "}
-            <Box component="span" sx={{ color: "#a5b4fc", fontWeight: 600 }}>
-              {name}
-            </Box>
-          </Typography>
-        </Box>
-
-        {/* Credentials Box */}
-        <Box
-          sx={{
-            p: 3,
-            borderRadius: 2,
-            bgcolor: "rgba(99, 102, 241, 0.05)",
-            border: "1px solid rgba(99, 102, 241, 0.2)",
-            mb: 3,
-          }}
-        >
-          <Typography
-            variant="caption"
-            sx={{ color: "#6366f1", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", mb: 2, display: "block" }}
-          >
-            Login Credentials
-          </Typography>
-
-          {/* Email row */}
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="caption" sx={{ color: "#475569", fontWeight: 600 }}>
-              Email / Username
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                mt: 0.5,
-                p: 1.5,
-                borderRadius: 1.5,
-                bgcolor: "background.paper",
-                border: "1px solid", borderColor: "divider",
-              }}
-            >
-              <Typography
-                sx={{
-                  color: "text.primary",
-                  fontFamily: "monospace",
-                  fontSize: "0.875rem",
-                  wordBreak: "break-all",
-                }}
-              >
-                {email}
-              </Typography>
-              <Tooltip title={copiedEmail ? "Copied!" : "Copy email"}>
-                <IconButton
-                  size="small"
-                  onClick={() => copy(email, "email")}
-                  sx={{ color: copiedEmail ? "#10b981" : "#475569", ml: 1 }}
-                >
-                  {copiedEmail ? <CheckCircleRounded fontSize="small" /> : <ContentCopyRounded fontSize="small" />}
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Box>
-
-          {/* Password row */}
-          <Box>
-            <Typography variant="caption" sx={{ color: "#475569", fontWeight: 600 }}>
-              Temporary Password
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                mt: 0.5,
-                p: 1.5,
-                borderRadius: 1.5,
-                bgcolor: "background.paper",
-                border: "1px solid rgba(245, 158, 11, 0.2)",
-              }}
-            >
-              <Typography
-                sx={{
-                  color: "#fbbf24",
-                  fontFamily: "monospace",
-                  fontSize: "0.875rem",
-                  fontWeight: 700,
-                  letterSpacing: 1,
-                }}
-              >
-                {password}
-              </Typography>
-              <Tooltip title={copiedPassword ? "Copied!" : "Copy password"}>
-                <IconButton
-                  size="small"
-                  onClick={() => copy(password, "password")}
-                  sx={{ color: copiedPassword ? "#10b981" : "#475569", ml: 1 }}
-                >
-                  {copiedPassword ? <CheckCircleRounded fontSize="small" /> : <ContentCopyRounded fontSize="small" />}
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Info Banner */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: 1.5,
-            p: 2,
-            borderRadius: 2,
-            bgcolor: "rgba(6, 182, 212, 0.05)",
-            border: "1px solid rgba(6, 182, 212, 0.15)",
-            mb: 3,
-          }}
-        >
-          <InfoOutlined sx={{ color: "#06b6d4", fontSize: 18, mt: 0.1, flexShrink: 0 }} />
-          <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.6 }}>
-            The staff member will be required to <strong style={{ color: "text.primary" }}>change this password</strong> on first login.
-            Make sure to share these credentials securely.
-          </Typography>
-        </Box>
-
-        {/* Action Buttons */}
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={copiedAll ? <CheckCircleRounded /> : <ContentCopyRounded />}
-            onClick={() =>
-              copy(`Login: ${email}\nPassword: ${password}\n\nNote: You will be asked to change your password on first login.`, "all")
-            }
-            sx={{
-              color: copiedAll ? "#10b981" : "#94a3b8",
-              borderColor: copiedAll ? "#10b981" : "rgba(255,255,255,0.15)",
-              textTransform: "none",
-              fontWeight: 600,
-            }}
-          >
-            {copiedAll ? "Copied!" : "Copy All"}
-          </Button>
-          <Button
-            fullWidth
-            variant="contained"
-            onClick={onClose}
-            sx={{
-              bgcolor: "#6366f1",
-              "&:hover": { bgcolor: "#4f46e5" },
-              textTransform: "none",
-              fontWeight: 600,
-            }}
-          >
-            Done
-          </Button>
-        </Box>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 // ── Main UserForm ───────────────────────────────────────────────────────────
 export default function UserForm() {
@@ -436,9 +209,7 @@ export default function UserForm() {
 
   if (initialLoad) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <HeartbeatLoader size={96} />
-      </Box>
+      <PageLoader />
     );
   }
 
@@ -733,6 +504,7 @@ export default function UserForm() {
       {/* Credentials Dialog */}
       <CredentialDialog
         open={credentialDialog.open}
+        title="Staff Account Created!"
         email={credentialDialog.email}
         password={credentialDialog.password}
         name={credentialDialog.name}

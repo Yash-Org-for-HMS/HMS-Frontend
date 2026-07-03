@@ -1,3 +1,4 @@
+import { ACCENTS } from "../../styles/accents";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -14,7 +15,7 @@ import { assetUrl } from "../../utils/assetUrl";
 import DoseCalculator from "../../components/doctor/DoseCalculator";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 
-const DOCTOR_BLUE = "#3b82f6";
+const DOCTOR_BLUE = ACCENTS.doctor;
 
 interface PatientPrintInfo {
   name?: string;

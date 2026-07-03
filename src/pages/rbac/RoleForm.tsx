@@ -24,6 +24,7 @@ import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 
 export default function RoleForm() {
   const { t } = useTranslation();
@@ -116,9 +117,7 @@ export default function RoleForm() {
 
   if (initialLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <HeartbeatLoader size={96} />
-      </Box>
+      <PageLoader />
     );
   }
 

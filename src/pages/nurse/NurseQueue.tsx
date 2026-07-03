@@ -1,3 +1,4 @@
+import { ACCENTS } from "../../styles/accents";
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -12,6 +13,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import StatusChip from "../../components/StatusChip";
 import { TableRowsSkeleton, CardGridSkeleton } from "../../components/TableRowsSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 import VitalsModal from "../reception/VitalsModal";
@@ -26,8 +28,8 @@ const getDoctorInitials = (doctorName?: string) => {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 };
 
-const NURSE_PURPLE = "#a78bfa";
-const NURSE_PURPLE_DARK = "#7c3aed";
+const NURSE_PURPLE = ACCENTS.nurse;
+const NURSE_PURPLE_DARK = ACCENTS.nurseDark;
 
 type ViewMode = "queue" | "station";
 
@@ -209,10 +211,7 @@ export default function NurseQueue() {
 
                         {/* Queue Status */}
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                          <Chip
-                            label={token.statusLabel} size="small"
-                            sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}55`, fontWeight: 600, fontSize: "0.75rem" }}
-                          />
+                          <StatusChip label={token.statusLabel} color={token.statusColor} />
                         </TableCell>
 
                         {/* Vitals Status */}
@@ -354,10 +353,7 @@ export default function NurseQueue() {
                         </Typography>
                       </Box>
 
-                      <Chip
-                        label={token.statusLabel} size="small"
-                        sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}44`, fontWeight: 600, fontSize: "0.75rem" }}
-                      />
+                      <StatusChip label={token.statusLabel} color={token.statusColor} />
 
                       <Button
                         size="small"

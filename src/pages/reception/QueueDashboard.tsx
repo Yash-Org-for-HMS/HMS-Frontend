@@ -12,6 +12,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import StatusChip from "../../components/StatusChip";
 import BillingModal from "./BillingModal";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import VitalsModal from "./VitalsModal";
@@ -204,7 +205,7 @@ export default function QueueDashboard() {
                         {token.doctorName}
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                        <Chip label={token.statusLabel} size="small" sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}55`, fontWeight: 600, fontSize: "0.75rem" }} />
+                        <StatusChip label={token.statusLabel} color={token.statusColor} />
                       </TableCell>
                       {/* Wait time cell */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>

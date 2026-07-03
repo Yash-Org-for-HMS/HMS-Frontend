@@ -40,6 +40,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import CredentialDialog from "../../components/CredentialDialog";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
@@ -479,29 +480,15 @@ export default function LeadsList() {
       </Dialog>
 
       {/* Credentials Dialog — shown once after conversion */}
-      <Dialog open={Boolean(credentials)} onClose={() => setCredentials(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>
-        <DialogTitle sx={{ fontWeight: 700, color: "#10b981" }}>Hospital Provisioned</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-            <strong>{credentials?.hospitalName}</strong> was created. Share these one-time admin credentials securely — the password is shown only now and must be changed on first login. The hospital becomes active once you complete its onboarding.
-          </Typography>
-          <Box sx={{ p: 2, borderRadius: 2, border: "1px solid", borderColor: "divider", bgcolor: "background.default" }}>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>Login Email</Typography>
-            <Typography variant="body1" sx={{ fontWeight: 600, mb: 1.5 }}>{credentials?.email}</Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>Temporary Password</Typography>
-            <Typography variant="h6" sx={{ fontFamily: "monospace", letterSpacing: 1 }}>{credentials?.temporaryPassword}</Typography>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button
-            onClick={() => { navigator.clipboard?.writeText(`${credentials?.email} / ${credentials?.temporaryPassword}`); }}
-            sx={{ color: "text.secondary" }}
-          >
-            Copy
-          </Button>
-          <Button onClick={() => setCredentials(null)} variant="contained" sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" } }}>Done</Button>
-        </DialogActions>
-      </Dialog>
+      <CredentialDialog
+        open={Boolean(credentials)}
+        title="Hospital Provisioned"
+        name={credentials?.hospitalName}
+        email={credentials?.email}
+        password={credentials?.temporaryPassword || ""}
+        note="The password is shown only now and must be changed on first login. The hospital becomes active once you complete its onboarding."
+        onClose={() => setCredentials(null)}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={Boolean(deleteId)} onClose={() => setDeleteId(null)} PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>

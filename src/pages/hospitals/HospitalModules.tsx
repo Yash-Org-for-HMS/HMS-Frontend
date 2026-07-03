@@ -8,6 +8,7 @@ import { ArrowBackRounded, SaveRounded, WidgetsRounded, CheckCircleRounded, AddC
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 
@@ -101,7 +102,7 @@ export default function HospitalModules() {
       />
 
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><HeartbeatLoader size={96} /></Box>
+        <PageLoader />
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (

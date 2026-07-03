@@ -12,6 +12,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import { useToast } from "../../contexts/ToastContext";
 
 interface VitalsModalProps {
@@ -235,9 +236,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
 
       <DialogContent sx={{ p: 3, overflowY: "auto" }}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <HeartbeatLoader size={96} />
-          </Box>
+          <PageLoader />
         ) : (
           <>
 {/* ── Section 1: Blood Pressure & Pulse ── */}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { orderStatusColor } from "../../utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab } from "@mui/material";
 import { VisibilityRounded, CheckCircleRounded, InsertDriveFileRounded, EditRounded, CloudUploadRounded, AddRounded } from "@mui/icons-material";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
@@ -58,13 +59,6 @@ export default function RadiologyOrdersQueue() {
   };
 
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "COMPLETED": return "success";
-      case "IN_PROGRESS": return "warning";
-      default: return "default";
-    }
-  };
 
   const handleEditClick = (order: any) => {
     setEditOrder(order);
@@ -204,7 +198,7 @@ export default function RadiologyOrdersQueue() {
                   <TableCell>{order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</TableCell>
                   <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Chip label={order.status || "PENDING"} color={getStatusColor(order.status) as any} size="small" />
+                    <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status) as any} size="small" />
                   </TableCell>
                   <TableCell align="right">
                     <Button 

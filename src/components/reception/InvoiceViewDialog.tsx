@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { formatINR } from "../../utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, Divider,
@@ -7,10 +8,10 @@ import {
 import { CloseRounded, PrintRounded, PaymentRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
+import PageLoader from "../PageLoader";
 import ErrorState from "../ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
-const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 interface Props {
   open: boolean;
@@ -89,7 +90,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged 
         <Button onClick={onClose} sx={{ minWidth: 0, p: 1, color: "text.secondary" }}><CloseRounded /></Button>
       </DialogTitle>
       <DialogContent dividers>
-        {isLoading ? <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><HeartbeatLoader size={96} /></Box>
+        {isLoading ? <PageLoader />
           : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
           : invoice ? (
             <>
@@ -122,20 +123,20 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged 
                       <tr key={i}>
                         <td style={cell}>{it.description}</td>
                         <td style={{ ...cell, textAlign: "center" }}>{it.quantity}</td>
-                        <td style={{ ...cell, textAlign: "right" }}>{inr(it.totalPrice)}</td>
+                        <td style={{ ...cell, textAlign: "right" }}>{formatINR(it.totalPrice)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
 
                 <Box sx={{ borderTop: "2px solid #1f2937", pt: 1 }}>
-                  <Row label="Subtotal" value={inr(invoice.grossAmount)} />
-                  {Number(invoice.discountAmount) > 0 && <Row label="Discount" value={`- ${inr(invoice.discountAmount)}`} color="#059669" />}
-                  {Number(invoice.taxAmount) > 0 && <Row label="Tax (CGST+SGST)" value={`+ ${inr(invoice.taxAmount)}`} />}
-                  <Row label="Total" value={inr(invoice.netAmount)} bold />
-                  <Row label="Paid" value={inr(totalPaid)} />
-                  {totalRefunded > 0 && <Row label="Refunded" value={`- ${inr(totalRefunded)}`} color="#8b5cf6" />}
-                  <Row label="Balance" value={inr(balance)} bold color={balance > 0.005 ? "#ef4444" : "#10b981"} />
+                  <Row label="Subtotal" value={formatINR(invoice.grossAmount)} />
+                  {Number(invoice.discountAmount) > 0 && <Row label="Discount" value={`- ${formatINR(invoice.discountAmount)}`} color="#059669" />}
+                  {Number(invoice.taxAmount) > 0 && <Row label="Tax (CGST+SGST)" value={`+ ${formatINR(invoice.taxAmount)}`} />}
+                  <Row label="Total" value={formatINR(invoice.netAmount)} bold />
+                  <Row label="Paid" value={formatINR(totalPaid)} />
+                  {totalRefunded > 0 && <Row label="Refunded" value={`- ${formatINR(totalRefunded)}`} color="#8b5cf6" />}
+                  <Row label="Balance" value={formatINR(balance)} bold color={balance > 0.005 ? "#ef4444" : "#10b981"} />
                 </Box>
 
                 {invoice.Payment?.length > 0 && (
@@ -144,7 +145,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged 
                     {invoice.Payment.map((p: any, i: number) => (
                       <Box key={i} sx={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#4b5563", mt: 0.5 }}>
                         <span>{new Date(p.createdAt).toLocaleDateString("en-IN")} · {p.paymentMethod?.methodName || "—"}</span>
-                        <span>{inr(p.paidAmount)}</span>
+                        <span>{formatINR(p.paidAmount)}</span>
                       </Box>
                     ))}
                   </Box>
@@ -173,7 +174,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged 
                         sx={{ height: 40, bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }}>Pay</Button>
                     </Grid>
                     <Grid size={{ xs: 12 }}>
-                      <Button size="small" onClick={() => setAmount(balance.toFixed(2))} sx={{ textTransform: "none", color: "#10b981", p: 0, minWidth: 0 }}>Pay full balance ({inr(balance)})</Button>
+                      <Button size="small" onClick={() => setAmount(balance.toFixed(2))} sx={{ textTransform: "none", color: "#10b981", p: 0, minWidth: 0 }}>Pay full balance ({formatINR(balance)})</Button>
                     </Grid>
                   </Grid>
                 </Box>

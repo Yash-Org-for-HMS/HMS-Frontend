@@ -1,3 +1,4 @@
+import { ACCENTS } from "../../styles/accents";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
@@ -10,8 +11,6 @@ import {
   Button,
   Chip,
   Divider,
-  Card,
-  CardContent,
   Avatar,
   Tabs,
   Tab,
@@ -49,22 +48,11 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
+import StatCard from "../../components/StatCard";
 import { assetUrl } from "../../utils/assetUrl";
 
-const ACCENT = "#6366f1";
-
-const StatTile = ({ icon, label, value, color }: { icon: any; label: string; value: any; color: string }) => (
-  <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, height: "100%" }}>
-    <CardContent sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 2 }}>
-      <Box sx={{ width: 44, height: 44, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: `${color}1f`, color }}>{icon}</Box>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="h6" fontWeight={800} sx={{ color: "text.primary", lineHeight: 1.1 }}>{value}</Typography>
-        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>{label}</Typography>
-      </Box>
-    </CardContent>
-  </Card>
-);
+const ACCENT = ACCENTS.admin;
 
 const InfoRow = ({ label, value }: { label: string; value: any }) => (
   <Grid size={{ xs: 12, sm: 6 }}>
@@ -108,11 +96,7 @@ export default function HospitalOverview() {
   });
 
   if (loading) {
-    return (
-      <Container maxWidth="xl" sx={{ py: 4, display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
-        <HeartbeatLoader size={96} />
-      </Container>
-    );
+    return <PageLoader />;
   }
   if (isError || !data) {
     return (
@@ -169,10 +153,10 @@ export default function HospitalOverview() {
 
         {/* Stat tiles */}
         <Grid container spacing={2} sx={{ mt: 2 }}>
-          <Grid size={{ xs: 6, md: 3 }}><StatTile icon={<ApartmentRounded />} label="Branches" value={data.branches?.length || 0} color={ACCENT} /></Grid>
-          <Grid size={{ xs: 6, md: 3 }}><StatTile icon={<MedicalServicesRounded />} label="Doctors" value={data._count?.doctors || 0} color="#10b981" /></Grid>
-          <Grid size={{ xs: 6, md: 3 }}><StatTile icon={<PeopleRounded />} label="Patients" value={data._count?.patients || 0} color="#f59e0b" /></Grid>
-          <Grid size={{ xs: 6, md: 3 }}><StatTile icon={<AccountCircleRounded />} label="Users" value={data._count?.users || 0} color="#3b82f6" /></Grid>
+          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<ApartmentRounded />} label="Branches" value={data.branches?.length || 0} color={ACCENT} /></Grid>
+          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<MedicalServicesRounded />} label="Doctors" value={data._count?.doctors || 0} color="#10b981" /></Grid>
+          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<PeopleRounded />} label="Patients" value={data._count?.patients || 0} color="#f59e0b" /></Grid>
+          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<AccountCircleRounded />} label="Users" value={data._count?.users || 0} color="#3b82f6" /></Grid>
         </Grid>
       </Paper>
 

@@ -1,3 +1,4 @@
+import { ACCENTS } from "../../styles/accents";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -11,13 +12,14 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
+import PageLoader from "../PageLoader";
 import ErrorState from "../ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import { assetUrl } from "../../utils/assetUrl";
 import dayjs from "dayjs";
 import DynamicFormRenderer, { validateFormResponses, type FormValues } from "../DynamicFormRenderer";
 
-const ACCENT = "#0891b2";
+const ACCENT = ACCENTS.reception;
 const STATUS_META: Record<string, { label: string; color: string }> = {
   ISSUED: { label: "Issued", color: "#f59e0b" },
   SIGNED: { label: "Signed", color: "#10b981" },
@@ -60,7 +62,7 @@ export default function ConsentFormsSection({ patientId, patientName }: { patien
       </Box>
 
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><HeartbeatLoader size={96} /></Box>
+        <PageLoader />
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : forms.length === 0 ? (

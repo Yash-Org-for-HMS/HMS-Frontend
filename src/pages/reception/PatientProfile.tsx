@@ -1,3 +1,5 @@
+import { ACCENTS } from "../../styles/accents";
+import { formatINR, getInitials } from "../../utils/format";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -19,6 +21,8 @@ import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
+import StatCard from "../../components/StatCard";
+import StatusChip from "../../components/StatusChip";
 import PatientDocumentsSection from "./PatientDocumentsSection";
 import IdCardModal from "../../components/reception/IdCardModal";
 import ReferralDialog from "../../components/reception/ReferralDialog";
@@ -27,16 +31,11 @@ import ConsentFormsSection from "../../components/reception/ConsentFormsSection"
 import InvoiceViewDialog from "../../components/reception/InvoiceViewDialog";
 import { useToast } from "../../contexts/ToastContext";
 
-const ACCENT = "#0891b2";
+const ACCENT = ACCENTS.reception;
 
-interface Patient {
-  patientId: string;
-  uhidNumber: string;
-  firstName: string | null;
-  lastName: string | null;
-  dateOfBirth: string;
-  phone: string;
-  email: string;
+import type { Patient as PatientBase } from "../../types";
+
+interface Patient extends PatientBase {
   addressLine1: string | null;
   addressLine2: string | null;
   city: string;
@@ -44,17 +43,13 @@ interface Patient {
   postalCode: string | null;
   genderId: number;
   bloodGroupId: number;
-  genderLabel: string;
-  bloodGroupLabel: string;
   allergies: string | null;
   emergencyContactName: string | null;
   emergencyContactPhone: string | null;
   emergencyContactRelation: string | null;
-  age: number | null;
   createdAt: string;
 }
 
-const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 // ── Info row inside the overview cards ───────────────────────────────────────
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | null }) {
@@ -85,21 +80,6 @@ function SectionCard({ title, icon, action, children }: { title: string; icon: R
       </Box>
       <Divider sx={{ borderColor: "divider", mb: 0.5 }} />
       {children}
-    </Paper>
-  );
-}
-
-function StatTile({ icon, label, value, color, sub }: { icon: React.ReactNode; label: string; value: string; color: string; sub?: string }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", display: "flex", alignItems: "center", gap: 2, height: "100%" }}>
-      <Box sx={{ width: 42, height: 42, borderRadius: 2.5, bgcolor: `${color}1a`, color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        {icon}
-      </Box>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="h6" sx={{ fontWeight: 800, color: "text.primary", lineHeight: 1.2 }} noWrap>{value}</Typography>
-        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>{label}</Typography>
-        {sub && <Typography variant="caption" sx={{ color: "text.disabled", display: "block" }}>{sub}</Typography>}
-      </Box>
     </Paper>
   );
 }
@@ -190,7 +170,6 @@ export default function PatientProfile() {
 
   const avatarColors = ["#0891b2", "#7c3aed", "#059669", "#dc2626", "#d97706", "#2563eb"];
   const getColor = (pid: string) => avatarColors[pid.charCodeAt(0) % avatarColors.length];
-  const getInitials = (p: Patient) => ((p.firstName?.charAt(0) || "") + (p.lastName?.charAt(0) || "")).toUpperCase() || "P";
   const formatAddress = (p: Patient) => [p.addressLine1, p.addressLine2, p.city, p.state, p.postalCode].filter(Boolean).join(", ") || null;
 
   if (loading) {
@@ -278,7 +257,7 @@ export default function PatientProfile() {
         "&::before": { content: '""', position: "absolute", top: 0, left: 0, right: 0, height: "4px", background: "linear-gradient(90deg, #0891b2, #06b6d4, #38bdf8)" } }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2.5, flexWrap: "wrap" }}>
           <Avatar sx={{ width: 68, height: 68, bgcolor: getColor(patient.patientId), fontSize: "1.6rem", fontWeight: 800, boxShadow: "0 8px 24px rgba(6,182,212,0.25)" }}>
-            {getInitials(patient)}
+            {getInitials(patient.firstName, patient.lastName)}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 220 }}>
             <Typography variant="h5" sx={{ color: "text.primary", fontWeight: 800, mb: 0.75 }}>
@@ -311,14 +290,14 @@ export default function PatientProfile() {
 
       {/* ── Stat tiles ── */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
-        <StatTile icon={<EventRounded />} label="Appointments" value={String(stats.total)} color={ACCENT}
+        <StatCard layout="horizontal" icon={<EventRounded />} label="Appointments" value={String(stats.total)} color={ACCENT}
           sub={stats.upcoming ? `${stats.upcoming} upcoming` : "none upcoming"} />
-        <StatTile icon={<CalendarTodayRounded />} label="Last visit" color="#8b5cf6"
+        <StatCard layout="horizontal" icon={<CalendarTodayRounded />} label="Last visit" color="#8b5cf6"
           value={stats.lastVisit ? stats.lastVisit.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—"}
           sub={stats.lastVisit ? stats.lastVisit.getFullYear().toString() : "no visits yet"} />
-        <StatTile icon={<PaymentsRounded />} label="Total billed" value={inr(billing?.totals?.totalBilled)} color="#10b981"
+        <StatCard layout="horizontal" icon={<PaymentsRounded />} label="Total billed" value={formatINR(billing?.totals?.totalBilled)} color="#10b981"
           sub={`${billing?.totals?.invoiceCount || 0} invoices`} />
-        <StatTile icon={<AccountBalanceWalletRounded />} label="Outstanding dues" value={inr(billing?.totals?.totalDues)}
+        <StatCard layout="horizontal" icon={<AccountBalanceWalletRounded />} label="Outstanding dues" value={formatINR(billing?.totals?.totalDues)}
           color={Number(billing?.totals?.totalDues || 0) > 0 ? "#ef4444" : "#10b981"}
           sub={Number(billing?.totals?.totalDues || 0) > 0 ? "due now" : "all settled"} />
       </Box>
@@ -422,7 +401,7 @@ export default function PatientProfile() {
                           </TableCell>
                           <TableCell sx={{ borderColor: "divider", color: "text.secondary" }}>{appt.doctorName || "Unassigned"}</TableCell>
                           <TableCell sx={{ borderColor: "divider" }}>
-                            <Chip label={appt.statusLabel || "—"} size="small" sx={{ bgcolor: `${appt.statusColor || "#64748b"}22`, color: appt.statusColor || "#64748b", fontWeight: 700 }} />
+                            <StatusChip label={appt.statusLabel} color={appt.statusColor} />
                           </TableCell>
                           <TableCell align="right" sx={{ borderColor: "divider" }}>
                             {canCheckIn && (
@@ -454,11 +433,11 @@ export default function PatientProfile() {
       {tab === 2 && (
         <SectionCard title="Billing & Invoices" icon={<ReceiptLongRounded fontSize="small" />}>
           <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap", gap: 1, mb: 2 }}>
-            <Chip label={`Billed: ${inr(billing?.totals?.totalBilled)}`} sx={{ bgcolor: "action.hover", color: "text.primary", fontWeight: 700 }} />
-            <Chip label={`Paid: ${inr(billing?.totals?.totalPaid)}`} sx={{ bgcolor: "rgba(16,185,129,0.12)", color: "#10b981", fontWeight: 700 }} />
-            <Chip label={`Dues: ${inr(billing?.totals?.totalDues)}`}
+            <Chip label={`Billed: ${formatINR(billing?.totals?.totalBilled)}`} sx={{ bgcolor: "action.hover", color: "text.primary", fontWeight: 700 }} />
+            <Chip label={`Paid: ${formatINR(billing?.totals?.totalPaid)}`} sx={{ bgcolor: "rgba(16,185,129,0.12)", color: "#10b981", fontWeight: 700 }} />
+            <Chip label={`Dues: ${formatINR(billing?.totals?.totalDues)}`}
               sx={{ bgcolor: Number(billing?.totals?.totalDues || 0) > 0 ? "rgba(239,68,68,0.12)" : "rgba(16,185,129,0.12)", color: Number(billing?.totals?.totalDues || 0) > 0 ? "#ef4444" : "#10b981", fontWeight: 700 }} />
-            <Chip label={`Deposits: ${inr(billing?.totals?.totalDeposit)}`}
+            <Chip label={`Deposits: ${formatINR(billing?.totals?.totalDeposit)}`}
               sx={{ bgcolor: "rgba(8,145,178,0.12)", color: "#0891b2", fontWeight: 700 }} />
           </Stack>
           {invoices.length === 0 ? (
@@ -479,12 +458,12 @@ export default function PatientProfile() {
                       <TableRow key={inv.invoiceId} hover>
                         <TableCell sx={{ borderColor: "divider", fontFamily: "monospace", fontWeight: 600, color: "text.primary" }}>{inv.invoiceNumber}</TableCell>
                         <TableCell sx={{ borderColor: "divider", color: "text.secondary" }}>{new Date(inv.invoiceDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</TableCell>
-                        <TableCell sx={{ borderColor: "divider", color: "text.primary", fontWeight: 600 }}>{inr(inv.netAmount)}</TableCell>
+                        <TableCell sx={{ borderColor: "divider", color: "text.primary", fontWeight: 600 }}>{formatINR(inv.netAmount)}</TableCell>
                         <TableCell sx={{ borderColor: "divider" }}>
-                          {Number(inv.balance) > 0 ? <Typography variant="body2" sx={{ color: "#ef4444", fontWeight: 700 }}>{inr(inv.balance)}</Typography> : <Typography variant="body2" sx={{ color: "#10b981" }}>—</Typography>}
+                          {Number(inv.balance) > 0 ? <Typography variant="body2" sx={{ color: "#ef4444", fontWeight: 700 }}>{formatINR(inv.balance)}</Typography> : <Typography variant="body2" sx={{ color: "#10b981" }}>—</Typography>}
                         </TableCell>
                         <TableCell sx={{ borderColor: "divider" }}>
-                          <Chip label={inv.statusLabel || "—"} size="small" sx={{ bgcolor: `${inv.statusColor || "#64748b"}22`, color: inv.statusColor || "#64748b", fontWeight: 700 }} />
+                          <StatusChip label={inv.statusLabel} color={inv.statusColor} />
                         </TableCell>
                         <TableCell align="right" sx={{ borderColor: "divider" }}>
                           <Button size="small" variant={Number(inv.balance) > 0 ? "contained" : "text"}

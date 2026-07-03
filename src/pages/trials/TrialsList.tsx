@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { trialStatusColor } from "../../utils/statusColors";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -146,14 +147,6 @@ export default function TrialsList() {
     navigate(`/hospitals/new?trialId=${trial.hospitalTrialId}`);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active": return "primary";
-      case "expired": return "error";
-      case "converted": return "success";
-      default: return "default";
-    }
-  };
 
   const calculateDaysRemaining = (endDateStr: string) => {
     const end = new Date(endDateStr);
@@ -272,7 +265,7 @@ export default function TrialsList() {
                     <TableCell>
                       <Chip
                         label={t(`trials.status${trial.trialStatus.charAt(0).toUpperCase() + trial.trialStatus.slice(1)}`)}
-                        color={getStatusColor(trial.trialStatus) as any}
+                        color={trialStatusColor(trial.trialStatus) as any}
                         size="small"
                         sx={{ fontWeight: 600 }}
                       />

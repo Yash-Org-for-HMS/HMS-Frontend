@@ -12,20 +12,16 @@ import {
   Alert,
   IconButton,
   InputAdornment,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Tooltip,
   Chip,
 } from "@mui/material";
-import { ArrowBackRounded, Visibility, VisibilityOff, ContentCopyRounded } from "@mui/icons-material";
+import { ArrowBackRounded, Visibility, VisibilityOff } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
+import CredentialDialog from "../../components/CredentialDialog";
 
 interface Branch {
   branchId: string;
@@ -174,17 +170,9 @@ export default function UserForm() {
     }
   };
 
-  const handleCopyPassword = () => {
-    if (generatedPassword) {
-      navigator.clipboard.writeText(generatedPassword);
-    }
-  };
-
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
-        <HeartbeatLoader size={96} />
-      </Box>
+      <PageLoader />
     );
   }
 
@@ -506,58 +494,16 @@ export default function UserForm() {
       </Card>
 
       {/* Generated Password Dialog */}
-      <Dialog
+      <CredentialDialog
         open={!!generatedPassword}
+        password={generatedPassword || ""}
+        title="User Created Successfully"
+        note="A temporary password was automatically generated for this user. They will be forced to change it on their first login."
         onClose={() => {
           setGeneratedPassword(null);
           navigate("/rbac/users");
         }}
-        PaperProps={{
-          sx: {
-            bgcolor: "background.paper",
-            color: "text.primary",
-            borderRadius: 3,
-            border: "1px solid", borderColor: "divider",
-          }
-        }}
-      >
-        <DialogTitle sx={{ color: "#10b981", fontWeight: 700 }}>User Created Successfully</DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ color: "text.secondary", mb: 2 }}>
-            A temporary password was automatically generated for this user. Please securely share these credentials with them. They will be forced to change it on their first login.
-          </DialogContentText>
-          <Box sx={{ 
-            p: 2, 
-            bgcolor: "background.paper", 
-            borderRadius: 2, 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "space-between",
-            border: "1px solid", borderColor: "divider"
-          }}>
-            <Typography variant="h6" sx={{ fontFamily: "monospace", letterSpacing: 2 }}>
-              {generatedPassword}
-            </Typography>
-            <Tooltip title="Copy to clipboard">
-              <IconButton onClick={handleCopyPassword} sx={{ color: "#6366f1" }}>
-                <ContentCopyRounded />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2, pt: 0 }}>
-          <Button 
-            onClick={() => {
-              setGeneratedPassword(null);
-              navigate("/rbac/users");
-            }} 
-            variant="contained"
-            sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" } }}
-          >
-            Done
-          </Button>
-        </DialogActions>
-      </Dialog>
+      />
     </Box>
   );
 }

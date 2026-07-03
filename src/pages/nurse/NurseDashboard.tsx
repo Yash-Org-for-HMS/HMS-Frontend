@@ -1,7 +1,8 @@
+import { ACCENTS } from "../../styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Grid, Typography, Paper, Alert,
-  Skeleton, Chip, Table, TableBody, TableCell, TableContainer,
+  Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Avatar, Button,
 } from "@mui/material";
 import {
@@ -10,60 +11,16 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import StatusChip from "../../components/StatusChip";
 import { TableRowsSkeleton, CardGridSkeleton } from "../../components/TableRowsSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 import ErrorState from "../../components/ErrorState";
+import StatCard from "../../components/StatCard";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
 
-const NURSE_PURPLE = "#a78bfa";
-const NURSE_PURPLE_DARK = "#7c3aed";
-
-function StatCard({ title, value, icon, loading, accent, sub }: any) {
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 3, borderRadius: 4,
-        bgcolor: "background.paper",
-        border: "1px solid", borderColor: "divider",
-        transition: "all 0.2s ease-in-out",
-        display: "flex", flexDirection: "column", justifyContent: "space-between",
-        minHeight: 170, height: "auto",
-        "&:hover": { boxShadow: `0 8px 30px rgba(0,0,0,0.06)`, transform: "translateY(-2px)" },
-      }}
-    >
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <Box
-          sx={{
-            width: 48, height: 48, borderRadius: 3,
-            bgcolor: accent ? `${accent}18` : "rgba(167,139,250,0.1)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
-        >
-          {icon}
-        </Box>
-      </Box>
-      <Box>
-        {loading ? (
-          <Skeleton width={80} height={40} />
-        ) : (
-          <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary" }}>
-            {typeof value === "number" ? value.toLocaleString() : value}
-          </Typography>
-        )}
-        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, display: "block", mt: 0.5 }}>
-          {title}
-        </Typography>
-        {sub && (
-          <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.75rem", display: "block", mt: 0.5 }}>
-            {sub}
-          </Typography>
-        )}
-      </Box>
-    </Paper>
-  );
-}
+const NURSE_PURPLE = ACCENTS.nurse;
+const NURSE_PURPLE_DARK = ACCENTS.nurseDark;
 
 export default function NurseDashboard() {
   const { hospital, user } = useHospitalAuth();
@@ -127,40 +84,40 @@ export default function NurseDashboard() {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Total Patients Today"
+            label="Total Patients Today"
             value={totalPatients}
             icon={<PeopleAltRounded sx={{ color: NURSE_PURPLE }} />}
             loading={loading}
-            accent={NURSE_PURPLE}
+            color={NURSE_PURPLE}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Vitals Pending"
+            label="Vitals Pending"
             value={vitalsPending}
             icon={<HourglassTopRounded sx={{ color: "#f59e0b" }} />}
             loading={loading}
-            accent="#f59e0b"
+            color="#f59e0b"
             sub="Patients awaiting vitals"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Vitals Recorded"
+            label="Vitals Recorded"
             value={vitalsCompleted}
             icon={<MonitorHeartRounded sx={{ color: "#10b981" }} />}
             loading={loading}
-            accent="#10b981"
+            color="#10b981"
             sub="Completed today"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="In Consultation"
+            label="In Consultation"
             value={inProgress}
             icon={<CheckCircleRounded sx={{ color: "#3b82f6" }} />}
             loading={loading}
-            accent="#3b82f6"
+            color="#3b82f6"
             sub="With doctor now"
           />
         </Grid>
@@ -227,10 +184,7 @@ export default function NurseDashboard() {
                           {token.doctorName}
                         </TableCell>
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                          <Chip
-                            label={token.statusLabel} size="small"
-                            sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}55`, fontWeight: 600, fontSize: "0.75rem" }}
-                          />
+                          <StatusChip label={token.statusLabel} color={token.statusColor} />
                         </TableCell>
                         <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                           <Button

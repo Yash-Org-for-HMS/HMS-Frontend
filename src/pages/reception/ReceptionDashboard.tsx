@@ -1,3 +1,5 @@
+import { ACCENTS } from "../../styles/accents";
+import { formatINR } from "../../utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Skeleton, Chip, Button, Table, TableBody, TableCell,
@@ -34,8 +36,8 @@ interface DashboardStats {
   upcomingAppointments: AppointmentEntry[];
 }
 
-const ACCENT = "#0891b2";
-const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+const ACCENT = ACCENTS.reception;
+const inr = (n: any) => formatINR(n, 0);
 const fmtWait = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`);
 
 // Clickable "needs attention" card.

@@ -15,7 +15,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
-import HeartbeatLoader from "../../../components/HeartbeatLoader";
+import PageLoader from "../../../components/PageLoader";
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -71,9 +71,7 @@ export default function DoctorSchedule() {
 
   if (initialLoad) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <HeartbeatLoader size={96} />
-      </Box>
+      <PageLoader />
     );
   }
 

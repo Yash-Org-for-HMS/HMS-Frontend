@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatINR } from "../../utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem,
@@ -9,7 +10,6 @@ import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 
-const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 interface Props {
   open: boolean;
@@ -65,10 +65,10 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", p: 1.5, borderRadius: 2, bgcolor: "action.hover" }}>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>{admission?.patientName}</Typography>
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>Held: {inr(held)}</Typography>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>Held: {formatINR(held)}</Typography>
           </Box>
           <TextField fullWidth required type="number" label={`Amount (₹)`} value={amount} onChange={(e) => setAmount(e.target.value)}
-            helperText={isRefund ? `Max refundable: ${inr(held)}` : undefined}
+            helperText={isRefund ? `Max refundable: ${formatINR(held)}` : undefined}
             error={isRefund && Number(amount) > held + 0.005} />
           {!isRefund && (
             <TextField select fullWidth label="Payment method" value={methodId} onChange={(e) => setMethodId(e.target.value)}>

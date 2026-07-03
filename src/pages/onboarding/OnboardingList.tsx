@@ -21,7 +21,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 
@@ -91,9 +91,7 @@ export default function OnboardingList() {
   if (loading) {
     return (
       <PageContainer>
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
-          <HeartbeatLoader size={96} />
-        </Box>
+        <PageLoader />
       </PageContainer>
     );
   }

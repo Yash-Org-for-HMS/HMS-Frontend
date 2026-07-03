@@ -1,3 +1,4 @@
+import { ACCENTS } from "../styles/accents";
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import ModuleGate from "../components/ModuleGate";
@@ -27,8 +28,8 @@ import { axiosInstance } from "../api/axios";
 import { useSocket } from "../hooks/useSocket";
 
 const drawerWidth = 260;
-const DOCTOR_BLUE = "#3b82f6";
-const DOCTOR_BLUE_DARK = "#2563eb";
+const DOCTOR_BLUE = ACCENTS.doctor;
+const DOCTOR_BLUE_DARK = ACCENTS.doctorDark;
 
 export default function DoctorLayout() {
   useEffect(() => {

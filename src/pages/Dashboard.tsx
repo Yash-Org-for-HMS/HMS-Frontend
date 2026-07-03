@@ -46,7 +46,7 @@ import {
 import { axiosInstance } from "../api/axios";
 import { useAuth } from "../contexts/AuthContext";
 import ErrorState from "../components/ErrorState";
-import HeartbeatLoader from "../components/HeartbeatLoader";
+import PageLoader from "../components/PageLoader";
 
 interface DashboardStats {
   totalHospitals: number;
@@ -94,9 +94,7 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "80vh" }}>
-        <HeartbeatLoader size={96} />
-      </Box>
+      <PageLoader />
     );
   }
 

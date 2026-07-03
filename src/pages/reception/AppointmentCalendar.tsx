@@ -1,3 +1,4 @@
+import { ACCENTS } from "../../styles/accents";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -10,7 +11,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
 import dayjs, { Dayjs } from "dayjs";
@@ -23,7 +24,7 @@ const SLOTS_PER_HOUR = 60 / SLOT_MINUTES;
 const TOTAL_SLOTS = (END_HOUR - START_HOUR) * SLOTS_PER_HOUR;
 const ROW_H = 52; // px per slot row
 
-const ACCENT = "#0891b2";
+const ACCENT = ACCENTS.reception;
 
 type View = "day" | "week";
 
@@ -164,9 +165,7 @@ export default function AppointmentCalendar() {
         ) : (
           <Box sx={{ overflowX: "auto", position: "relative" }}>
             {isLoading && (
-              <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "rgba(255,255,255,0.5)", zIndex: 5 }}>
-                <HeartbeatLoader size={96} />
-              </Box>
+              <PageLoader />
             )}
 
             {/* Day headers */}

@@ -9,9 +9,11 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import ErrorState from "../../components/ErrorState";
+import StatCard from "../../components/StatCard";
 import PharmacyPage from "./components/PharmacyPage";
+import type { Medicine, LowStockAlert, PharmacyOrder, PurchaseOrder } from "../../types";
 
 export default function PharmacyDashboard() {
   const theme = useTheme();
@@ -34,28 +36,15 @@ export default function PharmacyDashboard() {
       };
     },
   });
-  const medicines: any[] = data?.medicines ?? [];
-  const inventory: any[] = data?.inventory ?? [];
-  const purchaseOrders: any[] = data?.purchaseOrders ?? [];
-  const sales: any[] = data?.sales ?? [];
-  const lowStockAlerts: any[] = data?.lowStockAlerts ?? [];
+  const medicines: Medicine[] = data?.medicines ?? [];
+  const purchaseOrders: PurchaseOrder[] = data?.purchaseOrders ?? [];
+  const sales: PharmacyOrder[] = data?.sales ?? [];
+  const lowStockAlerts: LowStockAlert[] = data?.lowStockAlerts ?? [];
 
   const pendingPOs = purchaseOrders.filter(po => po.status === 'pending');
-  const totalSalesValue = sales.reduce((sum, order) => sum + parseFloat(order.totalAmount || 0), 0);
+  const totalSalesValue = sales.reduce((sum, order) => sum + parseFloat(String(order.totalAmount || 0)), 0);
 
   const getMedicineName = (id: string) => medicines.find(m => m.medicineId === id)?.medicineName || 'Unknown';
-
-  const StatCard = ({ title, value, icon, color }: any) => (
-    <Paper sx={{ p: 3, borderRadius: 4, display: 'flex', alignItems: 'center', gap: 3, border: '1px solid', borderColor: 'divider' }}>
-      <Box sx={{ width: 64, height: 64, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: alpha(color, 0.1) }}>
-        {icon}
-      </Box>
-      <Box>
-        <Typography variant="body2" color="text.secondary" fontWeight={600} mb={0.5}>{title}</Typography>
-        <Typography variant="h4" fontWeight={800} color={color}>{value}</Typography>
-      </Box>
-    </Paper>
-  );
 
   return (
     <PharmacyPage
@@ -64,9 +53,7 @@ export default function PharmacyDashboard() {
       icon={<DashboardRounded fontSize="large" sx={{ color: '#4F46E5' }} />}
     >
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
-          <HeartbeatLoader size={96} />
-        </Box>
+        <PageLoader />
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (
@@ -74,7 +61,7 @@ export default function PharmacyDashboard() {
           <Grid container spacing={3} mb={4}>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
-                    title="Total Medicines" 
+                    label="Total Medicines"
                     value={medicines.length} 
                     icon={<MedicationRounded sx={{ fontSize: 32, color: '#4F46E5' }} />} 
                     color="#4F46E5"
@@ -82,7 +69,7 @@ export default function PharmacyDashboard() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
-                    title="Low Stock Alerts" 
+                    label="Low Stock Alerts"
                     value={lowStockAlerts.length} 
                     icon={<WarningRounded sx={{ fontSize: 32, color: '#EF4444' }} />} 
                     color="#EF4444"
@@ -90,7 +77,7 @@ export default function PharmacyDashboard() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
-                    title="Pending POs" 
+                    label="Pending POs"
                     value={pendingPOs.length} 
                     icon={<LocalShippingRounded sx={{ fontSize: 32, color: '#F59E0B' }} />} 
                     color="#F59E0B"
@@ -98,7 +85,7 @@ export default function PharmacyDashboard() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
-                    title="Total Sales" 
+                    label="Total Sales"
                     value={`₹${totalSalesValue.toFixed(2)}`}
                     icon={<PointOfSaleRounded sx={{ fontSize: 32, color: '#10B981' }} />} 
                     color="#10B981"

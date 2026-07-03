@@ -1,13 +1,10 @@
 import { Box, Typography } from "@mui/material";
-import { DotLottieReact } from "@lottiefiles/dotlottie-react";
-import { DotLottie, DotLottieWorker } from "@lottiefiles/dotlottie-web";
+import { Suspense, lazy } from "react";
 
-// Serve the player's wasm from our own /public instead of the default CDN
-// (jsdelivr/unpkg). The app runs locally/offline, so a CDN fetch would leave the
-// loader blank. Set once at module load — before any instance mounts.
-// DotLottieReact uses the worker variant; set both to be safe.
-DotLottie.setWasmUrl("/dotlottie-player.wasm");
-DotLottieWorker.setWasmUrl("/dotlottie-player.wasm");
+// The dotLottie player is heavy (player lib + wasm binding); load it lazily so
+// it never lands in the first-paint bundle. A tiny CSS pulse stands in until the
+// chunk arrives — which for brief loaders is often all the user ever sees.
+const HeartbeatLottie = lazy(() => import("./HeartbeatLottie"));
 
 interface HeartbeatLoaderProps {
   /** Animation size in px. ~22 inside buttons, ~96 for page/section loaders. */
@@ -20,9 +17,29 @@ interface HeartbeatLoaderProps {
   label?: string;
 }
 
+/** Lightweight CSS heartbeat shown while the Lottie chunk loads. */
+function Pulse({ size }: { size: number }) {
+  return (
+    <Box
+      sx={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        bgcolor: "primary.main",
+        animation: "hbPulse 1s ease-in-out infinite",
+        "@keyframes hbPulse": {
+          "0%, 100%": { transform: "scale(0.6)", opacity: 0.35 },
+          "50%": { transform: "scale(1)", opacity: 0.85 },
+        },
+      }}
+    />
+  );
+}
+
 /**
- * The single, app-wide loading indicator: a looping heartbeat (dotLottie).
- * Replaces MUI's CircularProgress everywhere.
+ * The single, app-wide loading indicator: a looping heartbeat (dotLottie),
+ * lazy-loaded with a CSS-pulse fallback. Replaces MUI's CircularProgress
+ * everywhere.
  *
  * - Inline (e.g. inside a button): `<HeartbeatLoader size={22} />`
  * - Page / section / table loader: `<HeartbeatLoader center />`
@@ -46,12 +63,11 @@ export default function HeartbeatLoader({
         lineHeight: 0,
       }}
     >
-      <DotLottieReact
-        src="/heartbeat.lottie"
-        loop
-        autoplay
-        style={{ width: size, height: size }}
-      />
+      <Box sx={{ width: size, height: size, display: "grid", placeItems: "center" }}>
+        <Suspense fallback={<Pulse size={size} />}>
+          <HeartbeatLottie size={size} />
+        </Suspense>
+      </Box>
       {label && (
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           {label}

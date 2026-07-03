@@ -1,3 +1,4 @@
+import { ACCENTS } from "../../styles/accents";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -14,12 +15,12 @@ import {
   PieChart, Pie, Cell, Legend, AreaChart, Area,
 } from "recharts";
 import { axiosInstance } from "../../api/axios";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
 import dayjs from "dayjs";
 
-const ACCENT = "#0891b2";
+const ACCENT = ACCENTS.reception;
 const PIE = ["#0891b2", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#3b82f6", "#ec4899"];
 const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 0 })}`;
 
@@ -373,7 +374,7 @@ function Toolbar({ children, onPrint }: { children: React.ReactNode; onPrint: ()
   );
 }
 
-function Loading() { return <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><HeartbeatLoader size={96} /></Box>; }
+function Loading() { return <PageLoader />; }
 function Empty() { return <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "text.disabled" }}><Typography variant="body2">No data for this period</Typography></Box>; }
 
 function SimpleTable({ title, head, rows }: { title: string; head: string[]; rows: string[][] }) {

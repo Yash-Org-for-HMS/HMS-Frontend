@@ -1,3 +1,4 @@
+import { ACCENTS } from "../../styles/accents";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -9,7 +10,7 @@ import {
   OpenInNewRounded, VisibilityRounded, CloseRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
-import HeartbeatLoader from "../HeartbeatLoader";
+import PageLoader from "../PageLoader";
 import ErrorState from "../ErrorState";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { assetUrl } from "../../utils/assetUrl";
@@ -17,7 +18,7 @@ import dayjs from "dayjs";
 
 type DocKind = "prescription" | "lab" | "radiology";
 
-const ACCENT = "#0891b2";
+const ACCENT = ACCENTS.reception;
 
 export default function ClinicalRecordsSection({ patientId }: { patientId: string }) {
   const { hospital } = useHospitalAuth();
@@ -61,7 +62,7 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
       </Box>
 
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><HeartbeatLoader size={96} /></Box>
+        <PageLoader />
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (

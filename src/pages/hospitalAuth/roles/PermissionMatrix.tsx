@@ -33,6 +33,7 @@ import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import HeartbeatLoader from "../../../components/HeartbeatLoader";
+import PageLoader from "../../../components/PageLoader";
 
 interface Permission {
   permissionId: string;
@@ -180,9 +181,7 @@ export default function PermissionMatrix() {
 
   if (initialLoad) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 10 }}>
-        <HeartbeatLoader size={96} />
-      </Box>
+      <PageLoader />
     );
   }
 

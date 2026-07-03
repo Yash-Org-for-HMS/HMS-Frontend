@@ -1,3 +1,4 @@
+import { ACCENTS } from "../../styles/accents";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -20,24 +21,9 @@ import RadiologyOrderForm from "./RadiologyOrderForm";
 import RichTextEditor from "../../components/RichTextEditor";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useToast } from "../../contexts/ToastContext";
+import { stripHtml } from "../../utils/format";
 
-const DOCTOR_BLUE = "#3b82f6";
-
-// SOAP notes are stored as rich-text HTML; strip tags/entities for the compact
-// history preview so the doctor sees plain text, not literal <p> markup.
-function stripHtml(html?: string): string {
-  if (!html) return "";
-  return html
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/\s+/g, " ")
-    .trim();
-}
+const DOCTOR_BLUE = ACCENTS.doctor;
 
 function TabPanel(props: any) {
   const { children, value, index, ...other } = props;
@@ -295,7 +281,7 @@ export default function ConsultationWorkspace() {
             startIcon={<AutoAwesomeRounded />}
             sx={{ borderColor: `${DOCTOR_BLUE}55`, color: DOCTOR_BLUE, textTransform: "none", fontWeight: 600 }}
           >
-            AI Summary
+            Ask Dr. Dex
           </Button>
           <Button
             variant="outlined"

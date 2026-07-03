@@ -1,3 +1,4 @@
+import { ACCENTS } from "../../styles/accents";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -11,6 +12,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import StatusChip from "../../components/StatusChip";
 import PageHeader from "../../components/layout/PageHeader";
 import { typeScale } from "../../styles/typography";
 import VitalsModal from "../reception/VitalsModal";
@@ -27,8 +29,8 @@ const getDoctorInitials = (doctorName?: string) => {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 };
 
-const DOCTOR_BLUE = "#3b82f6";
-const DOCTOR_BLUE_DARK = "#2563eb";
+const DOCTOR_BLUE = ACCENTS.doctor;
+const DOCTOR_BLUE_DARK = ACCENTS.doctorDark;
 
 export default function DoctorQueue() {
   const navigate = useNavigate();
@@ -183,10 +185,7 @@ export default function DoctorQueue() {
 
                       {/* Queue Status */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                        <Chip
-                          label={token.statusLabel} size="small"
-                          sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}55`, fontWeight: 600, fontSize: "0.75rem" }}
-                        />
+                        <StatusChip label={token.statusLabel} color={token.statusColor} />
                       </TableCell>
 
                       {/* Action */}

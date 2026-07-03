@@ -42,6 +42,10 @@ export default defineConfig(async () => {
           // Rich-text editor — only the form builder / consultation notes use it,
           // so keep it out of the login-critical catch-all vendor chunk.
           if (id.includes("@tiptap") || id.includes("prosemirror")) return "vendor-editor";
+          // Lottie player + wasm binding — only the (lazy) HeartbeatLottie needs it.
+          if (id.includes("@lottiefiles")) return "vendor-lottie";
+          // Real-time client — only used inside queue/POS screens (all lazy), not at login.
+          if (id.includes("socket.io") || id.includes("engine.io")) return "vendor-socket";
           if (id.includes("@mui") || id.includes("@emotion")) return "vendor-mui";
           if (id.includes("react-router") || id.includes("@remix-run")) return "vendor-router";
           if (id.includes("/react/") || id.includes("/react-dom/") || id.includes("/scheduler/")) return "vendor-react";

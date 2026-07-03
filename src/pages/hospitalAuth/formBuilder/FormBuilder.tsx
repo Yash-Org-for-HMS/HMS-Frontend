@@ -21,7 +21,7 @@ import ErrorState from "../../../components/ErrorState";
 import Mascot from "../../../components/Mascot";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
-import HeartbeatLoader from "../../../components/HeartbeatLoader";
+import PageLoader from "../../../components/PageLoader";
 
 const FIELD_TYPES = [
   { value: "text", label: "Text Input" },
@@ -135,9 +135,7 @@ export default function FormBuilder() {
 
   if (initialLoad) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <HeartbeatLoader size={96} />
-      </Box>
+      <PageLoader />
     );
   }
 

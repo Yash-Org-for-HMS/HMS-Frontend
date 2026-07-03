@@ -10,6 +10,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
@@ -102,9 +103,7 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
         </Button>
       </Box>
 {loading ? (
-        <Box sx={{ textAlign: "center", py: 5 }}>
-          <HeartbeatLoader size={96} />
-        </Box>
+        <PageLoader />
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message || "Failed to load documents"} onRetry={fetchDocuments} />
       ) : documents.length === 0 ? (

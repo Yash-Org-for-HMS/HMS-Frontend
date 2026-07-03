@@ -15,19 +15,14 @@ import { axiosInstance } from "../../../api/axios";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
-import HeartbeatLoader from "../../../components/HeartbeatLoader";
+import PageLoader from "../../../components/PageLoader";
 
 interface DepartmentType {
   departmentTypeId: number;
   typeName: string;
 }
 
-interface User {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
+import type { StaffUser as User } from "../../../types";
 
 export default function DepartmentForm() {
   const navigate = useNavigate();
@@ -102,9 +97,7 @@ export default function DepartmentForm() {
 
   if (initialLoad) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <HeartbeatLoader size={96} />
-      </Box>
+      <PageLoader />
     );
   }
 

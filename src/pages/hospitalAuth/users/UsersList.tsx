@@ -49,11 +49,9 @@ import HeartbeatLoader from "../../../components/HeartbeatLoader";
 // Match the file's existing sentence-case header look (override SortableHeadCell's default uppercase/bold style).
 const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 400, fontSize: "0.875rem", py: undefined };
 
-interface User {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+import type { StaffUser } from "../../../types";
+
+interface User extends StaffUser {
   employeeCode: string;
   isActive: boolean;
   mustChangePassword?: boolean;

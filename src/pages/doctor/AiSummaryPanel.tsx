@@ -1,23 +1,27 @@
+import { ACCENTS } from "../../styles/accents";
 import { useRef, useState, useEffect } from "react";
-import { Box, Typography, Button, Chip, Alert, Fade } from "@mui/material";
+import { Box, Typography, Button, Chip, Alert, Fade, TextField, IconButton } from "@mui/material";
 import {
   AutoAwesomeRounded, ReplayRounded, StopRounded, PersonRounded,
   MedicalServicesRounded, MedicationRounded, TrendingUpRounded,
   FlagRounded, TaskAltRounded, InfoOutlined, HistoryRounded,
-  MonitorHeartRounded, DescriptionRounded, CircleRounded, HelpOutlineRounded,
+  MonitorHeartRounded, DescriptionRounded, CircleRounded, SendRounded,
 } from "@mui/icons-material";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { typeScale } from "../../styles/typography";
 
-const BLUE = "#3b82f6";
-const BLUE_DARK = "#2563eb";
+const BLUE = ACCENTS.doctor;
+const BLUE_DARK = ACCENTS.doctorDark;
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+const DEX_NAME = "Dr. Dex";
+const DEX_TAGLINE = "AI clinical assistant";
 
 type Status = "idle" | "streaming" | "done" | "error";
 type ChatMsg = { role: "user" | "assistant"; content: string };
 
-// Preset clinical questions — the panel is a focused decision-support tool, not
-// a general chatbot, so the doctor picks from these rather than free-typing.
+// Preset clinical questions — quick one-tap prompts. The doctor can also type
+// their own question in the input below.
 const SUGGESTED = [
   "Summarize the active problems.",
   "What medications is the patient on?",
@@ -32,6 +36,36 @@ function authHeaders(extra: Record<string, string> = {}): Record<string, string>
   const token = sessionStorage.getItem("hospitalAccessToken");
   const branch = sessionStorage.getItem("activeBranchId");
   return { Authorization: `Bearer ${token || ""}`, ...(branch ? { "X-Branch-Id": branch } : {}), ...extra };
+}
+
+/**
+ * Dr. Dex's avatar mark — a rounded-square monogram used in the header, the
+ * welcome state and beside each of Dex's chat replies. `online` adds the small
+ * status dot shown in the header.
+ */
+function DexAvatar({ size = 38, online = false }: { size?: number; online?: boolean }) {
+  return (
+    <Box sx={{ position: "relative", flexShrink: 0, width: size, height: size }}>
+      <Box
+        sx={{
+          width: size, height: size,
+          borderRadius: `${Math.round(size * 0.32)}px`,
+          display: "grid", placeItems: "center",
+          bgcolor: BLUE, color: "#fff",
+          boxShadow: `0 4px 12px ${BLUE}55`,
+        }}
+      >
+        <AutoAwesomeRounded sx={{ fontSize: size * 0.52 }} />
+      </Box>
+      {online && (
+        <Box sx={{
+          position: "absolute", right: -1, bottom: -1,
+          width: size * 0.3, height: size * 0.3, borderRadius: "50%",
+          bgcolor: "#22c55e", border: "2px solid", borderColor: "background.paper",
+        }} />
+      )}
+    </Box>
+  );
 }
 
 // Read our SSE stream (event: delta|done|error; frames delimited by \n\n).
@@ -66,9 +100,9 @@ async function readSse(
 }
 
 /**
- * AI clinical assistant sidebar: a pre-consultation summary + a grounded
- * follow-up chat, both streamed (SSE) from the backend and scoped to this
- * patient's own record.
+ * Dr. Dex — AI clinical assistant sidebar: a pre-consultation summary + a
+ * grounded follow-up chat, both streamed (SSE) from the backend and scoped to
+ * this patient's own record.
  */
 export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
   // Summary state
@@ -81,6 +115,7 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [chatBusy, setChatBusy] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
+  const [input, setInput] = useState("");
   const chatAbortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -162,6 +197,14 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
     }
   };
 
+  const submitInput = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const q = input.trim();
+    if (!q || chatBusy || !patientId) return;
+    setInput("");
+    sendChat(q);
+  };
+
   const busy = status === "streaming";
   const hasContent = !!text;
 
@@ -169,12 +212,12 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* ── Header ─────────────────────────────────────── */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, pb: 1.75, mb: 2, borderBottom: "1px solid", borderColor: "divider" }}>
-        <Box sx={{ width: 34, height: 34, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: `${BLUE}14`, color: BLUE, flexShrink: 0 }}>
-          <AutoAwesomeRounded sx={{ fontSize: 19 }} />
-        </Box>
+        <DexAvatar size={40} online />
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", lineHeight: 1.2, color: "text.primary" }}>AI Clinical Assistant</Typography>
-          <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>Grounded in this patient's record</Typography>
+          <Typography sx={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.2, color: "text.primary", display: "flex", alignItems: "center", gap: 0.5 }}>
+            {DEX_NAME}
+          </Typography>
+          <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>{DEX_TAGLINE}</Typography>
         </Box>
         {busy && (
           <Button size="small" variant="outlined" onClick={stop} startIcon={<StopRounded />} sx={{ textTransform: "none", color: "text.secondary", borderColor: "divider" }}>Stop</Button>
@@ -188,15 +231,17 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
       <Box sx={{ flex: 1, overflowY: "auto", pr: 0.5 }}>
         {error && <Alert severity="error" variant="outlined" sx={{ mb: 1.5, borderRadius: 2 }}>{error}</Alert>}
 
-        {status === "idle" && !hasContent && (
+        {status === "idle" && !hasContent && messages.length === 0 && (
           <Fade in>
             <Box sx={{ textAlign: "center", py: 4, px: 2 }}>
-              <Box sx={{ width: 72, height: 72, mx: "auto", mb: 2, borderRadius: "50%", display: "grid", placeItems: "center", background: `${BLUE}14`, boxShadow: `0 0 0 10px ${BLUE}0a` }}>
-                <AutoAwesomeRounded sx={{ fontSize: 36, color: BLUE }} />
+              <Box sx={{ display: "grid", placeItems: "center", mb: 2 }}>
+                <Box sx={{ p: 1.25, borderRadius: "50%", bgcolor: `${BLUE}0a` }}>
+                  <DexAvatar size={60} />
+                </Box>
               </Box>
-              <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", mb: 0.75 }}>Get an instant briefing</Typography>
+              <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", mb: 0.5 }}>Hi, I'm {DEX_NAME}</Typography>
               <Typography sx={{ ...typeScale.body, color: "text.secondary", maxWidth: 300, mx: "auto", mb: 2.5 }}>
-                Summarize this patient's past visits, diagnoses, medications and vitals — or just ask a question below.
+                I'll review this patient's history, vitals, medications and documents and brief you in seconds — or answer any clinical question you have.
               </Typography>
               <Box sx={{ display: "flex", justifyContent: "center", gap: 0.75, flexWrap: "wrap", mb: 3 }}>
                 {[
@@ -210,7 +255,7 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
               </Box>
               <Button variant="contained" size="large" onClick={generate} disabled={!patientId} startIcon={<AutoAwesomeRounded />}
                 sx={{ textTransform: "none", fontWeight: 700, px: 3, borderRadius: 2, bgcolor: BLUE, "&:hover": { bgcolor: BLUE_DARK } }}>
-                Generate summary
+                Generate briefing
               </Button>
             </Box>
           </Fade>
@@ -219,14 +264,17 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
         {busy && !hasContent && (
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 5 }}>
             <HeartbeatLoader size={80} />
-            <Typography sx={{ ...typeScale.body, color: "text.secondary", mt: 1 }}>Reviewing the record…</Typography>
+            <Typography sx={{ ...typeScale.body, color: "text.secondary", mt: 1 }}>{DEX_NAME} is reviewing the record…</Typography>
           </Box>
         )}
 
         {hasContent && (
-          <Box>
-            <SummaryContent text={text} />
-            {busy && <StreamCursor />}
+          <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+            <DexAvatar size={26} />
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <SummaryContent text={text} />
+              {busy && <StreamCursor />}
+            </Box>
           </Box>
         )}
 
@@ -234,9 +282,10 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
         {messages.length > 0 && (
           <Box sx={{ mt: hasContent ? 2.5 : 0, pt: hasContent ? 2 : 0, borderTop: hasContent ? "1px dashed" : "none", borderColor: "divider" }}>
             {messages.map((m, i) => (
-              <Box key={i} sx={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start", mb: 1.25 }}>
+              <Box key={i} sx={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start", alignItems: "flex-start", gap: 1, mb: 1.5 }}>
+                {m.role === "assistant" && <DexAvatar size={26} />}
                 <Box sx={{
-                  maxWidth: "88%", px: 1.5, py: 1, borderRadius: 2.5,
+                  maxWidth: "84%", px: 1.5, py: 1, borderRadius: 2.5,
                   ...(m.role === "user"
                     ? { bgcolor: BLUE, color: "#fff", borderBottomRightRadius: 6 }
                     : { bgcolor: "action.hover", color: "text.primary", borderBottomLeftRadius: 6 }),
@@ -256,20 +305,41 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
         <div ref={bottomRef} />
       </Box>
 
-      {/* ── Preset clinical questions ──────────────────── */}
+      {/* ── Quick prompts + free-form question ─────────── */}
       <Box sx={{ mt: 1.5 }}>
-        <Typography sx={{ ...typeScale.caption, display: "flex", alignItems: "center", gap: 0.5, mb: 0.75 }}>
-          <HelpOutlineRounded sx={{ fontSize: 14 }} /> Ask about this patient
-        </Typography>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+        <Box sx={{ display: "flex", gap: 0.75, overflowX: "auto", pb: 0.75, mb: 1, "&::-webkit-scrollbar": { height: 4 } }}>
           {SUGGESTED.map((q) => (
             <Chip
               key={q} label={q} size="small" variant="outlined" clickable
               onClick={() => sendChat(q)}
               disabled={chatBusy || !patientId}
-              sx={{ borderColor: `${BLUE}44`, color: BLUE_DARK, bgcolor: `${BLUE}0d`, fontWeight: 600, "&:hover": { bgcolor: `${BLUE}1a` } }}
+              sx={{ flexShrink: 0, borderColor: `${BLUE}44`, color: BLUE_DARK, bgcolor: `${BLUE}0d`, fontWeight: 600, "&:hover": { bgcolor: `${BLUE}1a` } }}
             />
           ))}
+        </Box>
+        <Box component="form" onSubmit={submitInput} sx={{ display: "flex", alignItems: "flex-end", gap: 0.75 }}>
+          <TextField
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              // Enter sends; Shift+Enter inserts a newline.
+              if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitInput(); }
+            }}
+            placeholder={patientId ? `Ask ${DEX_NAME} anything…` : "Select a patient first"}
+            disabled={chatBusy || !patientId}
+            size="small"
+            fullWidth
+            multiline
+            maxRows={4}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.default", ...typeScale.body } }}
+          />
+          <IconButton
+            type="submit"
+            disabled={chatBusy || !patientId || !input.trim()}
+            sx={{ bgcolor: BLUE, color: "#fff", borderRadius: 2.5, width: 40, height: 40, "&:hover": { bgcolor: BLUE_DARK }, "&.Mui-disabled": { bgcolor: "action.disabledBackground", color: "action.disabled" } }}
+          >
+            <SendRounded sx={{ fontSize: 20 }} />
+          </IconButton>
         </Box>
       </Box>
 
@@ -277,7 +347,7 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
       <Box sx={{ mt: 1.25, display: "flex", gap: 1, alignItems: "flex-start", p: 1, borderRadius: 2, bgcolor: "action.hover" }}>
         <InfoOutlined sx={{ fontSize: 15, color: "text.secondary", mt: "1px" }} />
         <Typography sx={{ ...typeScale.caption }}>
-          AI decision support — verify against the record. Not a diagnosis or treatment order.
+          {DEX_NAME} is AI decision support — verify against the record. Not a diagnosis or treatment order.
         </Typography>
       </Box>
     </Box>

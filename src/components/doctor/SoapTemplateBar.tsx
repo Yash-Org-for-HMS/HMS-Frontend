@@ -1,3 +1,4 @@
+import { ACCENTS } from "../../styles/accents";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -10,8 +11,10 @@ import {
 import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
+import PageLoader from "../PageLoader";
+import { stripHtml } from "../../utils/format";
 
-const DOCTOR_BLUE = "#3b82f6";
+const DOCTOR_BLUE = ACCENTS.doctor;
 
 export interface SoapTemplate {
   templateId: string;
@@ -34,7 +37,6 @@ interface Props {
   onApply: (t: SoapTemplate) => void;
 }
 
-const stripHtml = (v?: string | null) => (v || "").replace(/<[^>]*>/g, "").trim();
 
 export default function SoapTemplateBar({ current, onApply }: Props) {
   const toast = useToast();
@@ -114,9 +116,7 @@ export default function SoapTemplateBar({ current, onApply }: Props) {
 
       <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={() => setAnchorEl(null)} PaperProps={{ sx: { minWidth: 260, maxHeight: 380 } }}>
         {isLoading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-            <HeartbeatLoader size={96} />
-          </Box>
+          <PageLoader />
         ) : templates.length === 0 ? (
           <Box sx={{ px: 2, py: 1.5 }}>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>

@@ -4,6 +4,7 @@ import ErrorState from "../../components/ErrorState";
 import { Box, Typography, Paper, Grid, TextField, Button, Alert, Chip, Divider } from "@mui/material";
 import { SaveRounded, ArrowBackRounded, ScienceRounded, AccessTimeRounded, PrintRounded } from "@mui/icons-material";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import { axiosInstance } from "../../api/axios";
 import { useParams, useNavigate } from "react-router-dom";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
@@ -73,7 +74,7 @@ export default function UpdateLabOrder() {
     }
   };
 
-  if (loading) return <Box sx={{ display: "flex", p: 4, justifyContent: "center" }}><HeartbeatLoader size={96} /></Box>;
+  if (loading) return <PageLoader />;
   if (isError || !order) {
     return <ErrorState title="Couldn't load lab order" message={(error as any)?.response?.data?.message || "Order not found"} onRetry={() => refetch()} />;
   }

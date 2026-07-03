@@ -46,11 +46,9 @@ import HeartbeatLoader from "../../components/HeartbeatLoader";
 // default is the reception-panel uppercase style).
 const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.paper" } as const;
 
-interface User {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+import type { StaffUser } from "../../types";
+
+interface User extends StaffUser {
   phone: string | null;
   employeeCode: string | null;
   status: string;

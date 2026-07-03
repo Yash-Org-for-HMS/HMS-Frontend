@@ -17,7 +17,8 @@ import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
+import StatCard from "../../components/StatCard";
 import { useNavigate } from "react-router-dom";
 import { 
   PeopleAltRounded,
@@ -56,54 +57,6 @@ interface DashboardStats {
 
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ec4899", "#8b5cf6", "#06b6d4"];
 
-// Minimalist Square Stat Card
-function StatCard({ title, value, icon, color }: any) {
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 3,
-        borderRadius: 4,
-        bgcolor: "background.paper",
-        border: "1px solid", borderColor: "divider",
-        transition: "all 0.2s ease-in-out",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        height: 160,
-        "&:hover": {
-          boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
-          transform: "translateY(-2px)",
-        },
-      }}
-    >
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <Box
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: 3,
-            bgcolor: `${color}15`,
-            color: color,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {icon}
-        </Box>
-      </Box>
-      <Box>
-        <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary" }}>
-          {value}
-        </Typography>
-        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, mt: 1, display: "block" }}>
-          {title}
-        </Typography>
-      </Box>
-    </Paper>
-  );
-}
 
 export default function HospitalDashboard() {
   const { user } = useHospitalAuth();
@@ -116,9 +69,7 @@ export default function HospitalDashboard() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <HeartbeatLoader size={96} />
-      </Box>
+      <PageLoader />
     );
   }
 
@@ -153,7 +104,7 @@ export default function HospitalDashboard() {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6 }} sx={{ flexBasis: { md: "20%" }, maxWidth: { md: "20%" } }}>
           <StatCard 
-            title="Total Staff" 
+            label="Total Staff"
             value={stats?.totalStaff || 0} 
             icon={<PeopleAltRounded />} 
             color="#818cf8" 
@@ -161,7 +112,7 @@ export default function HospitalDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }} sx={{ flexBasis: { md: "20%" }, maxWidth: { md: "20%" } }}>
           <StatCard 
-            title="Total Doctors" 
+            label="Total Doctors"
             value={stats?.totalDoctors || 0} 
             icon={<MedicalServicesRounded />} 
             color="#34d399" 
@@ -169,7 +120,7 @@ export default function HospitalDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }} sx={{ flexBasis: { md: "20%" }, maxWidth: { md: "20%" } }}>
           <StatCard 
-            title="Departments" 
+            label="Departments"
             value={stats?.totalDepartments || 0} 
             icon={<DomainRounded />} 
             color="#fbbf24" 
@@ -177,7 +128,7 @@ export default function HospitalDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }} sx={{ flexBasis: { md: "20%" }, maxWidth: { md: "20%" } }}>
           <StatCard 
-            title="Active Users" 
+            label="Active Users"
             value={stats?.activeUsers || 0} 
             icon={<VerifiedUserRounded />} 
             color="#f472b6" 

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatINR } from "../../utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableHead, TableBody, TableRow, TableCell,
@@ -22,7 +23,7 @@ import PageHeader from "../../components/layout/PageHeader";
 import { useTableSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
 
-const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+const inr = (n: any) => formatINR(n, 0);
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
   ADMITTED: { label: "Admitted", color: "#0891b2" },

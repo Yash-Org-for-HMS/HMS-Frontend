@@ -1,3 +1,4 @@
+import { ACCENTS } from "../../styles/accents";
 import { useState, useEffect, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, keepPreviousData, useQueryClient } from "@tanstack/react-query";
@@ -23,7 +24,7 @@ import HeartbeatLoader from "../../components/HeartbeatLoader";
 // Match this page's existing table-head styling so SortableHeadCell blends in.
 const HEAD_SX = { bgcolor: "background.paper", color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" } as const;
 
-const DOCTOR_BLUE = "#3b82f6";
+const DOCTOR_BLUE = ACCENTS.doctor;
 const PAGE_SIZE = 20;
 
 const TABS = [

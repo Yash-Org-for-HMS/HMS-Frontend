@@ -8,13 +8,17 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { HospitalProtectedRoute } from "./components/HospitalProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 import { HospitalAuthProvider } from "./contexts/HospitalAuthContext";
-import AdminLayout from "./layouts/AdminLayout";
-import HospitalLayout from "./layouts/HospitalLayout";
-import ReceptionLayout from "./layouts/ReceptionLayout";
-import NurseLayout from "./layouts/NurseLayout";
-import DoctorLayout from "./layouts/DoctorLayout";
-import LabLayout from "./layouts/LabLayout";
-import PharmacyLayout from "./layouts/PharmacyLayout";
+// Layouts are lazy: only one realm's shell is ever used per session, and
+// deferring them keeps their deps (e.g. socket.io in DoctorLayout) out of the
+// login-critical first paint. Each is rendered via el() so it gets a Suspense
+// boundary + the standard PageSkeleton fallback.
+const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
+const HospitalLayout = lazy(() => import("./layouts/HospitalLayout"));
+const ReceptionLayout = lazy(() => import("./layouts/ReceptionLayout"));
+const NurseLayout = lazy(() => import("./layouts/NurseLayout"));
+const DoctorLayout = lazy(() => import("./layouts/DoctorLayout"));
+const LabLayout = lazy(() => import("./layouts/LabLayout"));
+const PharmacyLayout = lazy(() => import("./layouts/PharmacyLayout"));
 import CommandPalette from "./components/CommandPalette";
 import PageSkeleton from "./components/PageSkeleton";
 import Login from "./pages/Login";
@@ -136,7 +140,7 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         <Route element={<ProtectedRoute />}>
-          <Route element={<AdminLayout />}>
+          <Route element={el(AdminLayout)}>
             <Route path="/" element={el(Dashboard)} />
             <Route path="/plans" element={el(PlansList)} />
             <Route path="/plans/new" element={el(PlanForm)} />
@@ -179,7 +183,7 @@ function App() {
         <Route path="/hospital/change-password" element={el(HospitalChangePassword)} />
 
         <Route element={<HospitalProtectedRoute />}>
-          <Route element={<HospitalLayout />}>
+          <Route element={el(HospitalLayout)}>
             <Route path="/hospital/dashboard" element={el(HospitalDashboard)} />
             <Route path="/hospital/profile" element={el(HospitalProfile)} />
             <Route path="/hospital/settings" element={el(HospitalSettings)} />
@@ -211,7 +215,7 @@ function App() {
 
         {/* ── Reception Panel Routes ─────────────────────── */}
         <Route element={<HospitalProtectedRoute />}>
-          <Route element={<ReceptionLayout />}>
+          <Route element={el(ReceptionLayout)}>
             <Route path="/reception/dashboard" element={el(ReceptionDashboard)} />
             <Route path="/reception/console" element={el(FrontDeskConsole)} />
             {/* ── Module 2: Patient Registration ── */}
@@ -238,7 +242,7 @@ function App() {
         </Route>
         {/* ── Nurse Panel Routes ────────────────────────────────────── */}
         <Route element={<HospitalProtectedRoute />}>
-          <Route element={<NurseLayout />}>
+          <Route element={el(NurseLayout)}>
             <Route path="/nurse/dashboard" element={el(NurseDashboard)} />
             <Route path="/nurse/queue" element={el(NurseQueue)} />
             {/* Vitals Station merged into the Patient Queue page (view toggle). */}
@@ -248,7 +252,7 @@ function App() {
 
         {/* ── Doctor Panel Routes ───────────────────────────────────── */}
         <Route element={<HospitalProtectedRoute />}>
-          <Route element={<DoctorLayout />}>
+          <Route element={el(DoctorLayout)}>
             <Route path="/doctor/dashboard" element={el(DoctorDashboard)} />
             <Route path="/doctor/queue" element={el(DoctorQueue)} />
             <Route path="/doctor/consultation/:appointmentId" element={el(ConsultationWorkspace)} />
@@ -262,7 +266,7 @@ function App() {
         {/* ── Lab Panel Routes ──────────────────────────────────────── */}
         <Route element={<HospitalProtectedRoute />}>
           <Route path="/lab/orders/:id/print" element={el(PrintLabReport)} />
-          <Route element={<LabLayout />}>
+          <Route element={el(LabLayout)}>
             <Route path="/lab/dashboard" element={el(LabDashboard)} />
             <Route path="/lab/orders" element={el(LabOrdersQueue)} />
             <Route path="/lab/orders/:id" element={el(UpdateLabOrder)} />
@@ -274,7 +278,7 @@ function App() {
 
         {/* ── Pharmacy Panel Routes ─────────────────────────────────── */}
         <Route element={<HospitalProtectedRoute />}>
-          <Route element={<PharmacyLayout />}>
+          <Route element={el(PharmacyLayout)}>
             <Route path="/pharmacy/dashboard" element={el(PharmacyDashboard)} />
             <Route path="/pharmacy/medicines" element={el(MedicineCatalog)} />
             <Route path="/pharmacy/suppliers" element={el(SupplierDirectory)} />

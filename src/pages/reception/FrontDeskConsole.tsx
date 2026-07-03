@@ -10,24 +10,14 @@ import {
 import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import Mascot from "../../components/Mascot";
+import { getInitials } from "../../utils/format";
 import PatientForm from "./PatientForm";
 import AppointmentForm from "./AppointmentForm";
 import BillingModal from "./BillingModal";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 
-interface Patient {
-  patientId: string;
-  uhidNumber: string;
-  firstName: string | null;
-  lastName: string | null;
-  dateOfBirth: string;
-  phone: string;
-  email: string;
-  genderLabel: string;
-  bloodGroupLabel: string;
-  age: number | null;
-}
+import type { Patient } from "../../types";
 
 export default function FrontDeskConsole() {
   const [search, setSearch] = useState("");
@@ -75,11 +65,6 @@ export default function FrontDeskConsole() {
     }
   };
 
-  const getInitials = (p: Patient) => {
-    const f = p.firstName?.charAt(0) || "";
-    const l = p.lastName?.charAt(0) || "";
-    return (f + l).toUpperCase() || "P";
-  };
   const getAvatarColor = (id: string) => {
     const avatarColors = ["#0891b2", "#7c3aed", "#059669", "#dc2626", "#d97706", "#2563eb", "#db2777", "#65a30d"];
     return avatarColors[id.charCodeAt(0) % avatarColors.length];
@@ -109,7 +94,7 @@ export default function FrontDeskConsole() {
         }}
       >
         <Avatar sx={{ width: 40, height: 40, bgcolor: getAvatarColor(p.patientId), mr: 1.5, fontSize: "0.875rem", fontWeight: 600 }}>
-          {getInitials(p)}
+          {getInitials(p.firstName, p.lastName)}
         </Avatar>
         <Box sx={{ flex: 1, overflow: "hidden" }}>
           <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }} noWrap>

@@ -8,7 +8,7 @@ import { LockRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
-import HeartbeatLoader from "../../../components/HeartbeatLoader";
+import PageLoader from "../../../components/PageLoader";
 
 interface ModuleAccessData {
   enabledModules: string[];
@@ -38,7 +38,7 @@ export default function ModuleAccess() {
   });
 
   if (loading) {
-    return <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><HeartbeatLoader size={96} /></Box>;
+    return <PageLoader />;
   }
   if (isError) {
     return <ErrorState title="Couldn't load module access" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
