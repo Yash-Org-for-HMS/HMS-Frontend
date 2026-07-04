@@ -82,7 +82,6 @@ export default function HospitalProfile() {
     city: "",
     postalCode: "",
     logoUrl: "",
-    primaryColorHex: "",
     gstNumber: "",
     licenseExpiryDate: "",
     accreditationType: "",
@@ -112,7 +111,6 @@ export default function HospitalProfile() {
       city: data.city || "",
       postalCode: data.postalCode || "",
       logoUrl: data.logoUrl || "",
-      primaryColorHex: data.primaryColorHex || "",
       gstNumber: data.gstNumber || "",
       licenseExpiryDate: data.licenseExpiryDate ? new Date(data.licenseExpiryDate).toISOString().split('T')[0] : "",
       accreditationType: data.accreditationType || "",
@@ -381,30 +379,6 @@ export default function HospitalProfile() {
                     </Typography>
                   </Box>
                 </Box>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Primary Color Hex"
-                  name="primaryColorHex"
-                  value={formData.primaryColorHex}
-                  onChange={handleChange}
-                  placeholder="#003087"
-                  InputProps={{
-                    startAdornment: (
-                      <Box
-                        sx={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: 1,
-                          bgcolor: formData.primaryColorHex || "transparent",
-                          border: "1px solid", borderColor: "divider",
-                          mr: 1,
-                        }}
-                      />
-                    ),
-                  }}
-                />
               </Grid>
             </Grid>
           </CustomTabPanel>

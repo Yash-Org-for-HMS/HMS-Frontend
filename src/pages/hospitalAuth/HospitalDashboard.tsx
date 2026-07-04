@@ -6,6 +6,7 @@ import {
   Grid,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Divider,
@@ -48,7 +49,7 @@ interface DashboardStats {
   totalDoctors: number;
   totalDepartments: number;
   enabledModules: number;
-  pendingTasks: { id: string; title: string; completed: boolean }[];
+  pendingTasks: { id: string; title: string; completed: boolean; description?: string; path?: string }[];
   recentActivities: { activityLogId: string; action: string; timestamp: string }[];
   recentNotifications: { id: string; message: string; timestamp: string }[];
   staffGrowth: { month: string; count: number }[];
@@ -194,30 +195,46 @@ export default function HospitalDashboard() {
       <Grid container spacing={4}>
         <Grid size={{ xs: 12, md: 8 }} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <Paper elevation={0} sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 4, overflow: "hidden" }}>
-            <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 1.5 }}>
-              <AssignmentRounded sx={{ color: "text.secondary" }} />
-              <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600 }}>Pending Setup Tasks</Typography>
+            <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <AssignmentRounded sx={{ color: "text.secondary" }} />
+                <Box>
+                  <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600 }}>Setup Guide</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>Complete these steps in order to get your hospital running.</Typography>
+                </Box>
+              </Box>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, whiteSpace: "nowrap" }}>
+                {stats?.pendingTasks.filter((t) => t.completed).length ?? 0} of {stats?.pendingTasks.length ?? 0} done
+              </Typography>
             </Box>
             <List disablePadding>
               {stats?.pendingTasks.map((task, index) => (
                 <Box key={task.id}>
-                  <ListItem sx={{ py: 2 }}>
-                    <ListItemIcon sx={{ minWidth: 40 }}>
+                  <ListItemButton
+                    onClick={() => task.path && navigate(task.path)}
+                    sx={{ py: 2, alignItems: "flex-start" }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 40, mt: 0.25 }}>
                       {task.completed ? (
                         <CheckCircleOutlineRounded sx={{ color: "success.main" }} />
                       ) : (
                         <RadioButtonUncheckedRounded sx={{ color: "text.disabled" }} />
                       )}
                     </ListItemIcon>
-                    <ListItemText 
-                      primary={task.title} 
-                      primaryTypographyProps={{ 
+                    <ListItemText
+                      primary={`${index + 1}. ${task.title}`}
+                      secondary={task.description}
+                      primaryTypographyProps={{
                         color: task.completed ? "text.disabled" : "text.primary",
-                        fontWeight: task.completed ? 400 : 500,
+                        fontWeight: task.completed ? 500 : 700,
                         sx: { textDecoration: task.completed ? "line-through" : "none" }
-                      }} 
+                      }}
+                      secondaryTypographyProps={{ color: "text.secondary", sx: { mt: 0.25 } }}
                     />
-                  </ListItem>
+                    {!task.completed && (
+                      <ArrowForwardIosRounded sx={{ fontSize: 14, color: "text.disabled", mt: 1, ml: 1, flexShrink: 0 }} />
+                    )}
+                  </ListItemButton>
                   {index < stats.pendingTasks.length - 1 && <Divider />}
                 </Box>
               ))}

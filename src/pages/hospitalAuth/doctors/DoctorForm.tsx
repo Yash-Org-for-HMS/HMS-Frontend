@@ -20,15 +20,18 @@ import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import PageLoader from "../../../components/PageLoader";
+import CredentialDialog from "../../../components/CredentialDialog";
 
 export default function DoctorForm() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const isEditing = Boolean(id);
 
   const [loading, setLoading] = useState(false);
   const toast = useToast();
   const [tabIndex, setTabIndex] = useState(0);
   const [branchIds, setBranchIds] = useState<string[]>([]);
+  const [createdCreds, setCreatedCreds] = useState<{ email: string; temporaryPassword: string; name: string } | null>(null);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -104,11 +107,25 @@ export default function DoctorForm() {
     e.preventDefault();
     setLoading(true);
     try {
-      if (!id) throw new Error("Invalid Doctor ID");
-      await axiosInstance.put(`/hospital/doctors/${id}`, formData);
-      // Persist branch availability (which branches this doctor can be booked at).
-      await axiosInstance.put(`/hospital/doctors/${id}/branches`, { branchIds });
-      navigate("/hospital/doctors");
+      if (isEditing) {
+        await axiosInstance.put(`/hospital/doctors/${id}`, formData);
+        // Persist branch availability (which branches this doctor can be booked at).
+        await axiosInstance.put(`/hospital/doctors/${id}/branches`, { branchIds });
+        navigate("/hospital/doctors");
+      } else {
+        // Create the login + clinical profile in one step; show the one-time credentials.
+        const res = await axiosInstance.post(`/hospital/doctors`, formData);
+        const newDoctorId = res.data?.data?.doctorId;
+        if (newDoctorId && branchIds.length) {
+          await axiosInstance.put(`/hospital/doctors/${newDoctorId}/branches`, { branchIds });
+        }
+        setCreatedCreds({
+          email: formData.email,
+          temporaryPassword: res.data?.credentials?.temporaryPassword || "",
+          name: `${formData.firstName} ${formData.lastName}`.trim(),
+        });
+        setLoading(false);
+      }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "An error occurred");
       setLoading(false);
@@ -142,7 +159,7 @@ export default function DoctorForm() {
   return (
     <Box sx={{ maxWidth: 900, mx: "auto" }}>
       <PageHeader
-        title="Edit Doctor Profile"
+        title={isEditing ? "Edit Doctor Profile" : "Add Doctor"}
         subtitle="Configure personal details and medical qualifications."
         actions={
           <Button
@@ -201,7 +218,8 @@ export default function DoctorForm() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  disabled={true}
+                  disabled={isEditing}
+                  helperText={isEditing ? "Login email can't be changed here" : "Used as the doctor's login"}
                   {...textFieldProps}
                 />
               </Grid>
@@ -351,6 +369,15 @@ export default function DoctorForm() {
           </Box>
         </Box>
       </Paper>
+
+      <CredentialDialog
+        open={!!createdCreds}
+        title="Doctor Account Created!"
+        name={createdCreds?.name}
+        email={createdCreds?.email}
+        password={createdCreds?.temporaryPassword || ""}
+        onClose={() => { setCreatedCreds(null); navigate("/hospital/doctors"); }}
+      />
     </Box>
   );
 }

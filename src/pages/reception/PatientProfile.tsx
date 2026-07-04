@@ -47,6 +47,8 @@ interface Patient extends PatientBase {
   emergencyContactName: string | null;
   emergencyContactPhone: string | null;
   emergencyContactRelation: string | null;
+  referredByType: string | null;
+  referredByName: string | null;
   createdAt: string;
 }
 
@@ -326,6 +328,12 @@ export default function PatientProfile() {
             <InfoRow icon={<WcRounded sx={{ fontSize: 18 }} />} label="Gender" value={patient.genderLabel} />
             <Divider sx={{ borderColor: "divider" }} />
             <InfoRow icon={<BloodtypeRounded sx={{ fontSize: 18 }} />} label="Blood Group" value={patient.bloodGroupLabel} />
+            <Divider sx={{ borderColor: "divider" }} />
+            <InfoRow
+              icon={<CallSplitRounded sx={{ fontSize: 18 }} />}
+              label="Referred By"
+              value={patient.referredByName ? `${patient.referredByName}${patient.referredByType === "INTERNAL" ? " (Internal)" : patient.referredByType === "EXTERNAL" ? " (External)" : ""}` : null}
+            />
           </SectionCard>
 
           <SectionCard title="Contact Details" icon={<LocalPhoneRounded fontSize="small" />}>

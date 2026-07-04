@@ -201,6 +201,7 @@ function App() {
             <Route path="/hospital/module-access" element={el(ModuleAccess)} />
             <Route path="/hospital/doctors" element={el(DoctorsList)} />
 
+            <Route path="/hospital/doctors/new" element={el(DoctorForm)} />
             <Route path="/hospital/doctors/:id/edit" element={el(DoctorForm)} />
             <Route path="/hospital/doctors/:id/schedule" element={el(DoctorSchedule)} />
             <Route path="/hospital/doctors/:id/leaves" element={el(DoctorLeaves)} />

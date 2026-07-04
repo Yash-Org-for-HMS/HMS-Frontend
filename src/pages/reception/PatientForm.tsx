@@ -13,6 +13,8 @@ import {
   Divider,
   InputAdornment,
   Chip,
+  ToggleButtonGroup,
+  ToggleButton,
 } from "@mui/material";
 import {
   SaveRounded,
@@ -40,6 +42,10 @@ interface BloodGroup {
   bloodGroupId: number;
   groupLabel: string;
   groupCode: string;
+}
+interface InternalDoctor {
+  doctorId: string;
+  name: string;
 }
 
 const SECTIONS = [
@@ -70,6 +76,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
   });
   const genders: Gender[] = dd?.genders ?? [];
   const bloodGroups: BloodGroup[] = dd?.bloodGroups ?? [];
+  const internalDoctors: InternalDoctor[] = dd?.internalDoctors ?? [];
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -89,6 +96,11 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
     emergencyContactName: "",
     emergencyContactPhone: "",
     emergencyContactRelation: "",
+    referredByType: "",
+    referredByInternalDoctorId: "",
+    referredByExternalName: "",
+    referredByExternalSpecialty: "",
+    referredByExternalClinic: "",
   });
 
   const { data: patientData, isLoading: patientLoading, isError: patientIsError, error: patientError, refetch: refetchPatient } = useQuery({
@@ -119,6 +131,11 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
       emergencyContactName: p.emergencyContactName || "",
       emergencyContactPhone: p.emergencyContactPhone || "",
       emergencyContactRelation: p.emergencyContactRelation || "",
+      referredByType: p.referredByType || "",
+      referredByInternalDoctorId: p.referredByInternalDoctorId || "",
+      referredByExternalName: p.referredByExternalName || "",
+      referredByExternalSpecialty: p.referredByExternalSpecialty || "",
+      referredByExternalClinic: p.referredByExternalClinic || "",
     });
   }, [patientData]);
 
@@ -250,6 +267,71 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
               </MenuItem>
             ))}
           </TextField>
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600, mb: 1 }}>
+            Referred By (Optional)
+          </Typography>
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={formData.referredByType || null}
+            onChange={(_, val) => setFormData((prev) => ({
+              ...prev,
+              referredByType: val || "",
+              // Clear the other mode's inputs when switching.
+              ...(val === "INTERNAL" ? { referredByExternalName: "", referredByExternalSpecialty: "", referredByExternalClinic: "" } : {}),
+              ...(val === "EXTERNAL" ? { referredByInternalDoctorId: "" } : {}),
+              ...(!val ? { referredByInternalDoctorId: "", referredByExternalName: "", referredByExternalSpecialty: "", referredByExternalClinic: "" } : {}),
+            }))}
+            sx={{
+              mb: formData.referredByType ? 2 : 0,
+              "& .MuiToggleButton-root": { textTransform: "none", px: 2, borderColor: "divider" },
+              "& .Mui-selected": { bgcolor: "rgba(6,182,212,0.12) !important", color: "#0891b2 !important" },
+            }}
+          >
+            <ToggleButton value="INTERNAL">Internal Doctor</ToggleButton>
+            <ToggleButton value="EXTERNAL">External / Outside</ToggleButton>
+          </ToggleButtonGroup>
+
+          {formData.referredByType === "INTERNAL" && (
+            <TextField
+              select fullWidth label="Select Doctor" name="referredByInternalDoctorId"
+              value={formData.referredByInternalDoctorId} onChange={handleChange} sx={fieldSx}
+              helperText="One of your hospital's doctors who referred this patient."
+            >
+              <MenuItem value=""><em>None</em></MenuItem>
+              {internalDoctors.map((d) => (
+                <MenuItem key={d.doctorId} value={d.doctorId}>{d.name}</MenuItem>
+              ))}
+            </TextField>
+          )}
+
+          {formData.referredByType === "EXTERNAL" && (
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth label="Doctor Name" name="referredByExternalName"
+                  value={formData.referredByExternalName} onChange={handleChange} sx={fieldSx}
+                  placeholder="e.g. Dr. Anjali Rao"
+                  helperText="Name of the outside doctor who referred this patient."
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth label="Specialty (Optional)" name="referredByExternalSpecialty"
+                  value={formData.referredByExternalSpecialty} onChange={handleChange} sx={fieldSx}
+                  placeholder="e.g. Cardiology"
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth label="Clinic / Hospital (Optional)" name="referredByExternalClinic"
+                  value={formData.referredByExternalClinic} onChange={handleChange} sx={fieldSx}
+                />
+              </Grid>
+            </Grid>
+          )}
         </Grid>
         <Grid size={{ xs: 12 }}>
           <TextField

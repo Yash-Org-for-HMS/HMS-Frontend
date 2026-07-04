@@ -214,11 +214,11 @@ export default function PlanForm() {
                     const { key, ...tagProps } = getTagProps({ index });
                     return (
                       <Chip 
-                        variant="outlined" 
-                        label={option} 
-                        key={key} 
-                        {...tagProps} 
-                        sx={{ color: "#34d399", borderColor: "rgba(16, 185, 129, 0.4)", bgcolor: "rgba(16, 185, 129, 0.1)" }}
+                        variant="outlined"
+                        label={option}
+                        key={key}
+                        {...tagProps}
+                        sx={{ color: "#059669", borderColor: "rgba(16, 185, 129, 0.4)", bgcolor: "rgba(16, 185, 129, 0.1)" }}
                       />
                     );
                   })
@@ -239,7 +239,7 @@ export default function PlanForm() {
                       border: "1px solid", borderColor: "divider",
                       borderRadius: "12px",
                       mt: 1,
-                      boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5)"
+                      boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.15)"
                     }
                   }
                 }}
@@ -252,17 +252,14 @@ export default function PlanForm() {
                       py: 1.2,
                       px: 2,
                       '&[aria-selected="true"]': {
-                        backgroundColor: "rgba(16, 185, 129, 0.25) !important",
-                        color: "#34d399",
+                        backgroundColor: "rgba(16, 185, 129, 0.15) !important",
+                        color: "#059669",
                       },
                       '&.Mui-focused': {
-                        backgroundColor: "rgba(255, 255, 255, 0.05)",
+                        backgroundColor: "action.hover",
                       }
                     }
                   }
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": { backgroundColor: "rgba(15, 23, 42, 0.4)" }
                 }}
               />
             </Grid>

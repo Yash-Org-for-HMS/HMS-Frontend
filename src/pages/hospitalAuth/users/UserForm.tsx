@@ -35,6 +35,7 @@ import PageLoader from "../../../components/PageLoader";
 interface Role {
   roleId: string;
   roleName: string;
+  roleCode?: string;
 }
 interface Department {
   departmentId: string;
@@ -306,11 +307,16 @@ export default function UserForm() {
                     required
                     {...textFieldProps}
                   >
-                    {roles.map((role) => (
-                      <MenuItem key={role.roleId} value={role.roleId}>
-                        {role.roleName}
-                      </MenuItem>
-                    ))}
+                    {/* Doctors are created on the Doctors page (which also captures
+                        their clinical profile), so the Doctor role isn't offered here
+                        when adding new staff. Existing doctor-users still edit normally. */}
+                    {roles
+                      .filter((role) => isEditing || role.roleCode !== "DOCTOR")
+                      .map((role) => (
+                        <MenuItem key={role.roleId} value={role.roleId}>
+                          {role.roleName}
+                        </MenuItem>
+                      ))}
                   </TextField>
                 </Grid>
               </Grid>

@@ -8,7 +8,7 @@ import {
 import {
   PrintRounded, EventRounded, CheckCircleRounded, CancelRounded, PaymentsRounded,
   PersonAddRounded, TrendingUpRounded, AccessTimeRounded, ReplayRounded, AccountBalanceWalletRounded,
-  HotelRounded, LocalHotelRounded, MeetingRoomRounded,
+  HotelRounded, LocalHotelRounded, MeetingRoomRounded, CallSplitRounded, MedicalInformationRounded,
 } from "@mui/icons-material";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
@@ -80,6 +80,7 @@ export default function Reports() {
           <Tab icon={<TrendingUpRounded fontSize="small" />} iconPosition="start" label="Appointment Analytics" />
           <Tab icon={<PaymentsRounded fontSize="small" />} iconPosition="start" label="Collection Report" />
           <Tab icon={<HotelRounded fontSize="small" />} iconPosition="start" label="IPD Census" />
+          <Tab icon={<CallSplitRounded fontSize="small" />} iconPosition="start" label="Referrals by Doctor" />
         </Tabs>
       </Paper>
 
@@ -87,6 +88,58 @@ export default function Reports() {
       {tab === 1 && <Analytics />}
       {tab === 2 && <Collection />}
       {tab === 3 && <Census />}
+      {tab === 4 && <ReferralsByDoctor />}
+    </Box>
+  );
+}
+
+// ── Referrals by Doctor ──────────────────────────────────────────────────────
+function ReferralsByDoctor() {
+  const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
+  const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
+  const ref = useRef<HTMLDivElement>(null);
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["report-referrals", from, to],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/referrals", { params: { from, to } })).data.data,
+  });
+  const s = data?.summary;
+  const rows: any[] = data?.rows ?? [];
+
+  return (
+    <Box>
+      <Toolbar onPrint={() => printRegion(ref.current, `Referrals by Doctor — ${from} to ${to}`)}>
+        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
+        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
+      </Toolbar>
+
+      {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+        <Box ref={ref}>
+          <Grid container spacing={2} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<MedicalInformationRounded />} label="Referring doctors" value={String(s.referringDoctors)} color={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="Referred patients" value={String(s.referredPatients)} color="#10b981" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CallSplitRounded />} label="Internal / External" value={`${s.internal ?? 0} / ${s.external ?? 0}`} color="#3b82f6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<EventRounded />} label="Total visits" value={String(s.totalVisits)} color="#8b5cf6" /></Grid>
+          </Grid>
+
+          <Grid container spacing={2.5}>
+            <Grid size={{ xs: 12, md: 7 }}>
+              <ChartCard title="Patients referred by doctor">
+                {rows.length ? (
+                  <BarChart data={rows} layout="vertical" margin={{ left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+                    <XAxis type="number" {...axisProps} allowDecimals={false} /><YAxis type="category" dataKey="name" width={140} {...axisProps} />
+                    <RTooltip /><Bar dataKey="patientCount" name="Patients" fill={ACCENT} radius={[0, 6, 6, 0]} />
+                  </BarChart>
+                ) : <Empty />}
+              </ChartCard>
+            </Grid>
+            <Grid size={{ xs: 12, md: 5 }}>
+              <SimpleTable title="Referrer detail" head={["Doctor", "Type", "Patients", "Visits"]}
+                rows={rows.map((r) => [`${r.name}${r.specialty ? ` (${r.specialty})` : ""}`, r.type, String(r.patientCount), String(r.visitCount)])} />
+            </Grid>
+          </Grid>
+        </Box>
+      )}
     </Box>
   );
 }

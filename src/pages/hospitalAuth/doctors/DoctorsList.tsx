@@ -16,8 +16,9 @@ import {
   TextField,
   InputAdornment,
   Pagination,
+  Button,
 } from "@mui/material";
-import { EditRounded, EventAvailableRounded, CalendarTodayRounded, SearchRounded } from "@mui/icons-material";
+import { EditRounded, EventAvailableRounded, CalendarTodayRounded, SearchRounded, AddRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
@@ -64,7 +65,17 @@ export default function DoctorsList() {
     <Box>
       <PageHeader
         title="Doctor Management"
-        subtitle="Manage doctor profiles, schedules, and leaves. Doctors are auto-synced from Staff & Users."
+        subtitle="Add doctors and manage their profiles, schedules, and leaves."
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/hospital/doctors/new")}
+            sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, textTransform: "none", fontWeight: 600, px: 3 }}
+          >
+            Add Doctor
+          </Button>
+        }
       />
 
       <TextField

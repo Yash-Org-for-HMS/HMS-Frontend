@@ -13,5 +13,6 @@ export const ACCENTS = {
   nurse: "#a78bfa",
   nurseDark: "#7c3aed",
   reception: "#0891b2",
+  receptionDark: "#0e7490",
   admin: "#6366f1",
 } as const;

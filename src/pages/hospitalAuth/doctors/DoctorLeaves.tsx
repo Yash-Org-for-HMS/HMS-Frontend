@@ -100,6 +100,8 @@ export default function DoctorLeaves() {
             size="small" type="date" label="To (optional)" InputLabelProps={{ shrink: true }}
             value={toDate} onChange={(e) => setToDate(e.target.value)}
             helperText="Leave empty for a single day"
+            sx={{ position: "relative" }}
+            slotProps={{ formHelperText: { sx: { position: "absolute", top: "100%", left: 0, mt: 0.25, whiteSpace: "nowrap" } } }}
           />
           <TextField
             size="small" label="Reason (optional)" value={reason} onChange={(e) => setReason(e.target.value)}

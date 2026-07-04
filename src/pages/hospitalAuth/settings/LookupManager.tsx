@@ -178,12 +178,12 @@ export default function LookupManager() {
         </Grid>
       </Paper>
 {loading ? (
-        <ListSkeleton rows={6} />
+        <Box sx={{ height: "calc(100vh - 320px)" }}><ListSkeleton rows={6} /></Box>
       ) : isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <Box sx={{ height: "calc(100vh - 320px)" }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></Box>
       ) : (
-        <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "calc(100vh - 320px)" }}>
-          <Table stickyHeader>
+        <TableContainer component={Paper} sx={{ width: "100%", bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, height: "calc(100vh - 320px)" }}>
+          <Table stickyHeader sx={{ width: "100%", tableLayout: "fixed" }}>
             <TableHead>
               <TableRow>
                 {config.columns.map((col: any) => (
