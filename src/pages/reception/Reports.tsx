@@ -36,12 +36,14 @@ function KpiTile({ icon, label, value, color }: { icon: React.ReactNode; label: 
   );
 }
 
-function ChartCard({ title, children, height = 280 }: { title: string; children: React.ReactElement; height?: number }) {
+function ChartCard({ title, children, height = 280, empty = false }: { title: string; children: React.ReactElement; height?: number; empty?: boolean }) {
   return (
     <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
       <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.primary", mb: 2 }}>{title}</Typography>
       <Box sx={{ width: "100%", height }}>
-        <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer>
+        {/* Empty renders outside ResponsiveContainer — it clones its child expecting
+            a chart component, and doesn't size/center arbitrary elements reliably. */}
+        {empty ? <Empty /> : <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer>}
       </Box>
     </Paper>
   );
@@ -123,14 +125,12 @@ function ReferralsByDoctor() {
 
           <Grid container spacing={2.5}>
             <Grid size={{ xs: 12, md: 7 }}>
-              <ChartCard title="Patients referred by doctor">
-                {rows.length ? (
-                  <BarChart data={rows} layout="vertical" margin={{ left: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
-                    <XAxis type="number" {...axisProps} allowDecimals={false} /><YAxis type="category" dataKey="name" width={140} {...axisProps} />
-                    <RTooltip /><Bar dataKey="patientCount" name="Patients" fill={ACCENT} radius={[0, 6, 6, 0]} />
-                  </BarChart>
-                ) : <Empty />}
+              <ChartCard title="Patients referred by doctor" empty={!rows.length}>
+                <BarChart data={rows} layout="vertical" margin={{ left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+                  <XAxis type="number" {...axisProps} allowDecimals={false} /><YAxis type="category" dataKey="name" width={140} {...axisProps} />
+                  <RTooltip /><Bar dataKey="patientCount" name="Patients" fill={ACCENT} radius={[0, 6, 6, 0]} />
+                </BarChart>
               </ChartCard>
             </Grid>
             <Grid size={{ xs: 12, md: 5 }}>
@@ -173,29 +173,25 @@ function Census() {
 
           <Grid container spacing={2.5}>
             <Grid size={{ xs: 12, md: 5 }}>
-              <ChartCard title="Beds by status" height={260}>
-                {beds.total ? (
-                  <PieChart>
-                    <Pie dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label
-                      data={[
-                        { name: "Occupied", value: beds.occupied }, { name: "Available", value: beds.available },
-                        { name: "Reserved", value: beds.reserved }, { name: "Maintenance", value: beds.maintenance },
-                      ].filter((d) => d.value > 0)}>
-                      {["#ef4444", "#10b981", "#f59e0b", "#64748b"].map((c, i) => <Cell key={i} fill={c} />)}
-                    </Pie><Legend /><RTooltip />
-                  </PieChart>
-                ) : <Empty />}
+              <ChartCard title="Beds by status" height={260} empty={!beds.total}>
+                <PieChart>
+                  <Pie dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label
+                    data={[
+                      { name: "Occupied", value: beds.occupied }, { name: "Available", value: beds.available },
+                      { name: "Reserved", value: beds.reserved }, { name: "Maintenance", value: beds.maintenance },
+                    ].filter((d) => d.value > 0)}>
+                    {["#ef4444", "#10b981", "#f59e0b", "#64748b"].map((c, i) => <Cell key={i} fill={c} />)}
+                  </Pie><Legend /><RTooltip />
+                </PieChart>
               </ChartCard>
             </Grid>
             <Grid size={{ xs: 12, md: 7 }}>
-              <ChartCard title="Occupancy by ward (%)" height={260}>
-                {data.byWard.length ? (
-                  <BarChart data={data.byWard} layout="vertical" margin={{ left: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
-                    <XAxis type="number" domain={[0, 100]} {...axisProps} /><YAxis type="category" dataKey="wardName" width={120} {...axisProps} />
-                    <RTooltip formatter={(v: any) => `${v}%`} /><Bar dataKey="occupancyRate" name="Occupancy" fill={ACCENT} radius={[0, 6, 6, 0]} />
-                  </BarChart>
-                ) : <Empty />}
+              <ChartCard title="Occupancy by ward (%)" height={260} empty={!data.byWard.length}>
+                <BarChart data={data.byWard} layout="vertical" margin={{ left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+                  <XAxis type="number" domain={[0, 100]} {...axisProps} /><YAxis type="category" dataKey="wardName" width={120} {...axisProps} />
+                  <RTooltip formatter={(v: any) => `${v}%`} /><Bar dataKey="occupancyRate" name="Occupancy" fill={ACCENT} radius={[0, 6, 6, 0]} />
+                </BarChart>
               </ChartCard>
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -240,26 +236,22 @@ function DailyOpd() {
 
           <Grid container spacing={2.5}>
             <Grid size={{ xs: 12, md: 5 }}>
-              <ChartCard title="By status">
-                {data.byStatus.length ? (
-                  <PieChart>
-                    <Pie data={data.byStatus} dataKey="count" nameKey="label" cx="50%" cy="50%" outerRadius={90} label>
-                      {data.byStatus.map((s: any, i: number) => <Cell key={i} fill={s.color || PIE[i % PIE.length]} />)}
-                    </Pie>
-                    <Legend /><RTooltip />
-                  </PieChart>
-                ) : <Empty />}
+              <ChartCard title="By status" empty={!data.byStatus.length}>
+                <PieChart>
+                  <Pie data={data.byStatus} dataKey="count" nameKey="label" cx="50%" cy="50%" outerRadius={90} label>
+                    {data.byStatus.map((s: any, i: number) => <Cell key={i} fill={s.color || PIE[i % PIE.length]} />)}
+                  </Pie>
+                  <Legend /><RTooltip />
+                </PieChart>
               </ChartCard>
             </Grid>
             <Grid size={{ xs: 12, md: 7 }}>
-              <ChartCard title="Appointments by doctor">
-                {data.byDoctor.length ? (
-                  <BarChart data={data.byDoctor} layout="vertical" margin={{ left: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
-                    <XAxis type="number" {...axisProps} /><YAxis type="category" dataKey="doctorName" width={120} {...axisProps} />
-                    <RTooltip /><Bar dataKey="total" name="Total" fill={ACCENT} radius={[0, 6, 6, 0]} />
-                  </BarChart>
-                ) : <Empty />}
+              <ChartCard title="Appointments by doctor" empty={!data.byDoctor.length}>
+                <BarChart data={data.byDoctor} layout="vertical" margin={{ left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+                  <XAxis type="number" {...axisProps} /><YAxis type="category" dataKey="doctorName" width={120} {...axisProps} />
+                  <RTooltip /><Bar dataKey="total" name="Total" fill={ACCENT} radius={[0, 6, 6, 0]} />
+                </BarChart>
               </ChartCard>
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -301,15 +293,13 @@ function Analytics() {
 
           <Grid container spacing={2.5}>
             <Grid size={{ xs: 12 }}>
-              <ChartCard title="Daily trend">
-                {data.trend.length ? (
-                  <AreaChart data={data.trend}>
-                    <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={ACCENT} stopOpacity={0.4} /><stop offset="95%" stopColor={ACCENT} stopOpacity={0} /></linearGradient></defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="date" {...axisProps} tickFormatter={(d) => dayjs(d).format("DD MMM")} /><YAxis {...axisProps} allowDecimals={false} />
-                    <RTooltip /><Area type="monotone" dataKey="total" name="Appointments" stroke={ACCENT} fill="url(#g)" strokeWidth={2} />
-                  </AreaChart>
-                ) : <Empty />}
+              <ChartCard title="Daily trend" empty={!data.trend.length}>
+                <AreaChart data={data.trend}>
+                  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={ACCENT} stopOpacity={0.4} /><stop offset="95%" stopColor={ACCENT} stopOpacity={0} /></linearGradient></defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="date" {...axisProps} tickFormatter={(d) => dayjs(d).format("DD MMM")} /><YAxis {...axisProps} allowDecimals={false} />
+                  <RTooltip /><Area type="monotone" dataKey="total" name="Appointments" stroke={ACCENT} fill="url(#g)" strokeWidth={2} />
+                </AreaChart>
               </ChartCard>
             </Grid>
             <Grid size={{ xs: 12, md: 7 }}>
@@ -321,14 +311,12 @@ function Analytics() {
               </ChartCard>
             </Grid>
             <Grid size={{ xs: 12, md: 5 }}>
-              <ChartCard title="By status">
-                {data.byStatus.length ? (
-                  <PieChart>
-                    <Pie data={data.byStatus} dataKey="count" nameKey="label" cx="50%" cy="50%" outerRadius={90} label>
-                      {data.byStatus.map((s: any, i: number) => <Cell key={i} fill={s.color || PIE[i % PIE.length]} />)}
-                    </Pie><Legend /><RTooltip />
-                  </PieChart>
-                ) : <Empty />}
+              <ChartCard title="By status" empty={!data.byStatus.length}>
+                <PieChart>
+                  <Pie data={data.byStatus} dataKey="count" nameKey="label" cx="50%" cy="50%" outerRadius={90} label>
+                    {data.byStatus.map((s: any, i: number) => <Cell key={i} fill={s.color || PIE[i % PIE.length]} />)}
+                  </Pie><Legend /><RTooltip />
+                </PieChart>
               </ChartCard>
             </Grid>
             <Grid size={{ xs: 12, md: 7 }}>
@@ -378,24 +366,20 @@ function Collection() {
 
           <Grid container spacing={2.5}>
             <Grid size={{ xs: 12, md: 7 }}>
-              <ChartCard title="Collected by day">
-                {data.byDay.length ? (
-                  <BarChart data={data.byDay}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" /><XAxis dataKey="date" {...axisProps} tickFormatter={(d) => dayjs(d).format("DD MMM")} /><YAxis {...axisProps} />
-                    <RTooltip formatter={(v: any) => inr(v)} /><Bar dataKey="amount" name="Collected" fill="#10b981" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                ) : <Empty />}
+              <ChartCard title="Collected by day" empty={!data.byDay.length}>
+                <BarChart data={data.byDay}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" /><XAxis dataKey="date" {...axisProps} tickFormatter={(d) => dayjs(d).format("DD MMM")} /><YAxis {...axisProps} />
+                  <RTooltip formatter={(v: any) => inr(v)} /><Bar dataKey="amount" name="Collected" fill="#10b981" radius={[6, 6, 0, 0]} />
+                </BarChart>
               </ChartCard>
             </Grid>
             <Grid size={{ xs: 12, md: 5 }}>
-              <ChartCard title="By payment method">
-                {data.byMethod.length ? (
-                  <PieChart>
-                    <Pie data={data.byMethod} dataKey="amount" nameKey="method" cx="50%" cy="50%" outerRadius={90} label>
-                      {data.byMethod.map((_: any, i: number) => <Cell key={i} fill={PIE[i % PIE.length]} />)}
-                    </Pie><Legend /><RTooltip formatter={(v: any) => inr(v)} />
-                  </PieChart>
-                ) : <Empty />}
+              <ChartCard title="By payment method" empty={!data.byMethod.length}>
+                <PieChart>
+                  <Pie data={data.byMethod} dataKey="amount" nameKey="method" cx="50%" cy="50%" outerRadius={90} label>
+                    {data.byMethod.map((_: any, i: number) => <Cell key={i} fill={PIE[i % PIE.length]} />)}
+                  </Pie><Legend /><RTooltip formatter={(v: any) => inr(v)} />
+                </PieChart>
               </ChartCard>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
