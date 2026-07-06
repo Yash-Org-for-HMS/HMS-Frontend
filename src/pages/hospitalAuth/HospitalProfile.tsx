@@ -62,7 +62,10 @@ function a11yProps(index: number) {
 }
 
 export default function HospitalProfile() {
-  const { hospital, updateHospital } = useHospitalAuth();
+  const { user, hospital, updateHospital } = useHospitalAuth();
+  // The backend only lets H_ADMIN edit the hospital profile — mirror that here
+  // so staff see a read-only view instead of filling out a form that 403s on save.
+  const canEdit = user?.role === "H_ADMIN";
   const [tabValue, setTabValue] = useState(0);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -187,7 +190,12 @@ export default function HospitalProfile() {
         title="Hospital Profile"
         subtitle="Manage your hospital's details, branding, and compliance information."
       />
-      {(!formData.officialPhone || !formData.addressLine1 || !formData.registrationNumber) && (
+      {!canEdit && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          You're viewing this in read-only mode — only a hospital admin can edit these details.
+        </Alert>
+      )}
+      {canEdit && (!formData.officialPhone || !formData.addressLine1 || !formData.registrationNumber) && (
         <Alert severity="warning" sx={{ mb: 2 }}>
           Finish setting up your hospital to unlock the rest of the panel. Required (marked *):
           official phone &amp; address line 1 (General Information), and registration number (Compliance).
@@ -245,6 +253,7 @@ export default function HospitalProfile() {
                   name="hospitalName"
                   value={formData.hospitalName}
                   onChange={handleChange}
+                  disabled={!canEdit}
                   required
                 />
               </Grid>
@@ -256,6 +265,7 @@ export default function HospitalProfile() {
                   name="ownershipType"
                   value={formData.ownershipType}
                   onChange={handleChange}
+                  disabled={!canEdit}
                 >
                   <MenuItem value="">Select Type</MenuItem>
                   <MenuItem value="private">Private</MenuItem>
@@ -279,6 +289,7 @@ export default function HospitalProfile() {
                   type="email"
                   value={formData.officialEmail}
                   onChange={handleChange}
+                  disabled={!canEdit}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
@@ -288,6 +299,7 @@ export default function HospitalProfile() {
                   name="officialPhone"
                   value={formData.officialPhone}
                   onChange={handleChange}
+                  disabled={!canEdit}
                   required
                 />
               </Grid>
@@ -298,6 +310,7 @@ export default function HospitalProfile() {
                   name="websiteUrl"
                   value={formData.websiteUrl}
                   onChange={handleChange}
+                  disabled={!canEdit}
                 />
               </Grid>
 
@@ -313,10 +326,12 @@ export default function HospitalProfile() {
                   name="addressLine1"
                   value={formData.addressLine1}
                   onChange={handleChange}
+                  disabled={!canEdit}
                   required
                 />
               </Grid>
               <GeoAddressPicker
+                disabled={!canEdit}
                 value={{ stateId: formData.stateId as any, districtId: formData.cityId as any, city: formData.city, pincode: formData.postalCode }}
                 onChange={(patch) => setFormData((prev) => ({
                   ...prev,
@@ -364,7 +379,7 @@ export default function HospitalProfile() {
                       variant="outlined"
                       component="label"
                       startIcon={uploadingLogo ? <HeartbeatLoader size={22} /> : <CloudUploadRounded />}
-                      disabled={uploadingLogo}
+                      disabled={uploadingLogo || !canEdit}
                     >
                       {uploadingLogo ? "Uploading..." : "Upload Logo"}
                       <input
@@ -393,6 +408,7 @@ export default function HospitalProfile() {
                   name="registrationNumber"
                   value={formData.registrationNumber}
                   onChange={handleChange}
+                  disabled={!canEdit}
                   required
                 />
               </Grid>
@@ -403,6 +419,7 @@ export default function HospitalProfile() {
                   name="gstNumber"
                   value={formData.gstNumber}
                   onChange={handleChange}
+                  disabled={!canEdit}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
@@ -413,6 +430,7 @@ export default function HospitalProfile() {
                   type="date"
                   value={formData.licenseExpiryDate}
                   onChange={handleChange}
+                  disabled={!canEdit}
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
@@ -423,6 +441,7 @@ export default function HospitalProfile() {
                   name="accreditationType"
                   value={formData.accreditationType}
                   onChange={handleChange}
+                  disabled={!canEdit}
                   placeholder="e.g. NABH, JCI, ISO 9001"
                 />
               </Grid>
@@ -430,21 +449,23 @@ export default function HospitalProfile() {
           </CustomTabPanel>
         </Box>
 
-        <Box sx={{ p: 3, borderTop: "1px solid", borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={saving}
-            startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
-            sx={{
-              bgcolor: "#10b981",
-              "&:hover": { bgcolor: "#059669" },
-              px: 4,
-            }}
-          >
-            {saving ? "Saving..." : "Save Profile"}
-          </Button>
-        </Box>
+        {canEdit && (
+          <Box sx={{ p: 3, borderTop: "1px solid", borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={saving}
+              startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
+              sx={{
+                bgcolor: "#10b981",
+                "&:hover": { bgcolor: "#059669" },
+                px: 4,
+              }}
+            >
+              {saving ? "Saving..." : "Save Profile"}
+            </Button>
+          </Box>
+        )}
       </Paper>
     </Box>
   );

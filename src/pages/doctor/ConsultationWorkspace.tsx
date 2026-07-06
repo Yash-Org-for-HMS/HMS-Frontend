@@ -54,6 +54,7 @@ export default function ConsultationWorkspace() {
   const toast = useToast();
   const [context, setContext] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   // Auto-save: track the last-persisted form so we only save real changes, and
   // surface a quiet status indicator instead of a toast on every keystroke.
@@ -116,10 +117,13 @@ export default function ConsultationWorkspace() {
 
   const fetchHistory = async (patientId: string) => {
     try {
+      setHistoryError(null);
       const res = await axiosInstance.get(`/doctor/consultation/patients/${patientId}/history`);
       setHistory(res.data.data);
-    } catch (err) {
-      console.error("Failed to load history", err);
+    } catch (err: any) {
+      // Surfaced distinctly from "no history" below — a fetch failure must not
+      // look identical to a patient who genuinely has no past consultations.
+      setHistoryError(err.response?.data?.message || "Failed to load consultation history");
     }
   };
 
@@ -366,7 +370,12 @@ export default function ConsultationWorkspace() {
             </TabPanel>
 
             <TabPanel value={tabIndex} index={1}>
-              {history.length === 0 ? (
+              {historyError ? (
+                <Box sx={{ textAlign: "center", mt: 4 }}>
+                  <Typography variant="body2" sx={{ color: "error.main", mb: 1 }}>{historyError}</Typography>
+                  <Button size="small" onClick={() => p?.patientId && fetchHistory(p.patientId)}>Retry</Button>
+                </Box>
+              ) : history.length === 0 ? (
                 <Typography variant="body2" sx={{ color: "text.secondary", textAlign: "center", mt: 4 }}>
                   No past consultation history.
                 </Typography>

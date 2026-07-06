@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { orderStatusColor } from "../../utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab } from "@mui/material";
 import { VisibilityRounded, BloodtypeRounded, AddRounded } from "@mui/icons-material";
@@ -77,15 +77,18 @@ export default function LabOrdersQueue() {
            date.getFullYear() === today.getFullYear();
   };
 
-  const filteredOrders = orders.filter((order: any) => {
+  // Memoized so useTableSort's own memo (keyed on this array's identity) isn't
+  // defeated by a fresh array on every render — without this, sorting silently
+  // re-ran on every unrelated re-render regardless of whether orders/tabValue changed.
+  const filteredOrders = useMemo(() => orders.filter((order: any) => {
     const today = isToday(order.createdAt);
     const completed = order.status === "COMPLETED";
-    
+
     if (tabValue === 0) return today && !completed; // Today's Pending
     if (tabValue === 1) return !today && !completed; // Past Pending
     if (tabValue === 2) return completed; // Completed
     return true; // All
-  });
+  }), [orders, tabValue]);
 
   const { sorted, orderBy, order, onSort } = useTableSort(filteredOrders, {
     barcode: (o: any) => o.sampleBarcode,

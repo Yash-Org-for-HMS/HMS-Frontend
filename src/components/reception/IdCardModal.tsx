@@ -85,7 +85,15 @@ export default function IdCardModal({ open, onClose, patient }: IdCardModalProps
   const dob = patient.dateOfBirth
     ? new Date(patient.dateOfBirth).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
     : "—";
-  const label = (t: string) => `<b style="color:#0f172a">${t}</b>`;
+  // Built as real elements (not an HTML string) so React escapes every value —
+  // patient.phone in particular is free text and must never be interpolated
+  // into markup directly.
+  const infoItems: { label: string; value: string }[] = [
+    { label: "DOB:", value: `${dob}${patient.age != null ? ` (${patient.age}y)` : ""}` },
+    { label: "Sex:", value: patient.genderLabel || "—" },
+    { label: "Blood:", value: patient.bloodGroupLabel || "—" },
+    ...(patient.phone ? [{ label: "Ph:", value: patient.phone }] : []),
+  ];
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
@@ -103,17 +111,13 @@ export default function IdCardModal({ open, onClose, patient }: IdCardModalProps
           </div>
           <div style={{ padding: "16px" }}>
             <div style={{ fontSize: "18px", fontWeight: 800, marginBottom: "8px" }}>{fullName}</div>
-            <div
-              style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", fontSize: "12px", color: "#475569", marginBottom: "14px" }}
-              dangerouslySetInnerHTML={{
-                __html: [
-                  `<span>${label("DOB:")} ${dob}${patient.age != null ? ` (${patient.age}y)` : ""}</span>`,
-                  `<span>${label("Sex:")} ${patient.genderLabel || "—"}</span>`,
-                  `<span>${label("Blood:")} ${patient.bloodGroupLabel || "—"}</span>`,
-                  patient.phone ? `<span>${label("Ph:")} ${patient.phone}</span>` : "",
-                ].join(""),
-              }}
-            />
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", fontSize: "12px", color: "#475569", marginBottom: "14px" }}>
+              {infoItems.map((item) => (
+                <span key={item.label}>
+                  <b style={{ color: "#0f172a" }}>{item.label}</b> {item.value}
+                </span>
+              ))}
+            </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", borderTop: "1px dashed #cbd5e1", paddingTop: "12px" }}>
               <svg ref={barcodeRef} />
               <div style={{ fontFamily: "monospace", fontWeight: 700, fontSize: "13px", letterSpacing: "1px", marginTop: "2px" }}>{patient.uhidNumber}</div>

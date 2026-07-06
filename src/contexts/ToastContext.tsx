@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useMemo } from "react";
 import type { ReactNode } from "react";
 import { Snackbar, Alert } from "@mui/material";
 
@@ -52,8 +52,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const info = useCallback((msg: string) => showToast(msg, "info"), [showToast]);
   const warning = useCallback((msg: string) => showToast(msg, "warning"), [showToast]);
 
+  // The methods are already useCallback-stable — without this, every one of
+  // this provider's ~67 consumers re-rendered whenever a toast was shown,
+  // since a fresh object literal was passed as the context value every render.
+  const value = useMemo(() => ({ success, error, info, warning }), [success, error, info, warning]);
+
   return (
-    <ToastContext.Provider value={{ success, error, info, warning }}>
+    <ToastContext.Provider value={value}>
       {children}
       <Snackbar
         key={currentToast ? currentToast.id : undefined}

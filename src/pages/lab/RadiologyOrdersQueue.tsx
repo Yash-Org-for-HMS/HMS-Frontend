@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { orderStatusColor } from "../../utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab } from "@mui/material";
 import { VisibilityRounded, CheckCircleRounded, InsertDriveFileRounded, EditRounded, CloudUploadRounded, AddRounded } from "@mui/icons-material";
@@ -14,8 +14,10 @@ import { assetUrl } from "../../utils/assetUrl";
 import PageHeader from "../../components/layout/PageHeader";
 import { useTableSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { useToast } from "../../contexts/ToastContext";
 
 export default function RadiologyOrdersQueue() {
+  const toast = useToast();
   const { data: orders = [], isLoading: loading, refetch: fetchOrders } = useQuery({
     queryKey: ["radiology-orders-queue"],
     queryFn: async () => {
@@ -53,8 +55,8 @@ export default function RadiologyOrdersQueue() {
     try {
       const res = await axiosInstance.get("/lab/radiology-macros");
       setMacros(res.data.data || []);
-    } catch (err) {
-      console.error("Failed to fetch macros", err);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to load report macros");
     }
   };
 
@@ -128,15 +130,18 @@ export default function RadiologyOrdersQueue() {
            date.getFullYear() === today.getFullYear();
   };
 
-  const filteredOrders = orders.filter((order: any) => {
+  // Memoized so useTableSort's own memo (keyed on this array's identity) isn't
+  // defeated by a fresh array on every render — without this, sorting silently
+  // re-ran on every unrelated re-render regardless of whether orders/tabValue changed.
+  const filteredOrders = useMemo(() => orders.filter((order: any) => {
     const today = isToday(order.orderDate);
     const completed = order.status === "COMPLETED";
-    
+
     if (tabValue === 0) return today && !completed; // Today's Pending
     if (tabValue === 1) return !today && !completed; // Past Pending
     if (tabValue === 2) return completed; // Completed
     return true; // All
-  });
+  }), [orders, tabValue]);
 
   const { sorted, orderBy, order, onSort } = useTableSort(filteredOrders, {
     scanType: (o: any) => o.scanType,

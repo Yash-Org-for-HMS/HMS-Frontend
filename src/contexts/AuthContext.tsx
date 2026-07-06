@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { axiosInstance } from "../api/axios";
 import { useNavigate } from "react-router-dom";
 
@@ -39,15 +39,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  const login = (token: string, refresh: string, userData: User) => {
+  const login = useCallback((token: string, refresh: string, userData: User) => {
     sessionStorage.setItem("accessToken", token);
     sessionStorage.setItem("refreshToken", refresh);
     sessionStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
     navigate("/");
-  };
+  }, [navigate]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       // Optional: Call backend logout API to invalidate tokens if tracking state server-side
       await axiosInstance.post("/auth/logout");
@@ -60,12 +60,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       navigate("/login");
     }
-  };
+  }, [navigate]);
+
+  // Without this, every one of this provider's consumers re-rendered on any
+  // provider re-render (e.g. the loading flip on mount), since a fresh object
+  // literal was passed as the context value every time.
+  const value = useMemo(
+    () => ({ user, isAuthenticated: !!user, login, logout, loading }),
+    [user, loading, login, logout]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{ user, isAuthenticated: !!user, login, logout, loading }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,7 +1,10 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
-// Access Vite env variable
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+// Access Vite env variable — the single source of truth for the backend's
+// base URL. Other modules that need it (asset URLs, the socket connection,
+// the AI summary stream) should import this rather than hardcoding their own
+// fallback, which can silently drift from this one.
+export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export const axiosInstance = axios.create({
   baseURL: API_URL,

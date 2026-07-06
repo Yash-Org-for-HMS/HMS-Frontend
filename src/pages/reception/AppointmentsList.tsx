@@ -130,10 +130,15 @@ export default function AppointmentsList() {
   const [billingDialog, setBillingDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
   const [referralDialog, setReferralDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
 
-  const { data: appointments = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+  // The backend caps this at 500 rows per call (it used to return a hospital's
+  // entire history unbounded). This page still filters/sorts client-side, so we
+  // ask for the largest allowed page and warn if there's more than that.
+  const { data: listResponse, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ["reception-appointments"],
-    queryFn: async () => (await axiosInstance.get("/reception/appointments")).data.data,
+    queryFn: async () => (await axiosInstance.get("/reception/appointments", { params: { limit: 500 } })).data,
   });
+  const appointments: any[] = listResponse?.data ?? [];
+  const isTruncated = (listResponse?.meta?.total ?? 0) > (listResponse?.meta?.limit ?? Infinity);
 
   const handleAction = async () => {
     if (!actionDialog.appt || !actionDialog.type) return;
@@ -257,6 +262,13 @@ export default function AppointmentsList() {
       {successMsg && (
         <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMsg(null)}>
           {successMsg}
+        </Alert>
+      )}
+
+      {isTruncated && (tabValue === "all" || search) && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Showing the {listResponse?.meta?.limit} most recent appointments out of {listResponse?.meta?.total} total.
+          Filter by date to see older ones, or narrow your search.
         </Alert>
       )}
 

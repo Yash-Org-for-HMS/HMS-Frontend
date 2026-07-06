@@ -1,5 +1,5 @@
 import { ACCENTS } from "../../styles/accents";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -64,18 +64,22 @@ export default function NurseQueue() {
     }
   }, [location.state]);
 
-  const waiting = tokens.filter((t: any) => t.statusCode === "WAITING_FOR_VITALS" || t.statusCode === "READY_FOR_DOCTOR" || t.statusCode === "SKIPPED").length;
-  const inProgress = tokens.filter((t: any) => t.statusCode === "IN_CONSULTATION").length;
-  const completed = tokens.filter((t: any) => t.statusCode === "COMPLETED").length;
-  const vitalsRecordedCount = tokens.filter((t: any) => t.vitalsRecorded).length;
-
-  // Station view buckets
-  const pending = tokens.filter(
-    (t: any) => t.appointmentId &&
-      !t.vitalsRecorded &&
-      !["COMPLETED", "CANCELLED"].includes(t.statusCode)
-  );
-  const done = tokens.filter((t: any) => t.appointmentId && t.vitalsRecorded);
+  // Memoized on `tokens` — this page re-renders on unrelated local state (view
+  // toggle, vitals dialog open/close), which would otherwise re-run all 6 of
+  // these full-array passes for no reason.
+  const { waiting, inProgress, completed, vitalsRecordedCount, pending, done } = useMemo(() => ({
+    waiting: tokens.filter((t: any) => t.statusCode === "WAITING_FOR_VITALS" || t.statusCode === "READY_FOR_DOCTOR" || t.statusCode === "SKIPPED").length,
+    inProgress: tokens.filter((t: any) => t.statusCode === "IN_CONSULTATION").length,
+    completed: tokens.filter((t: any) => t.statusCode === "COMPLETED").length,
+    vitalsRecordedCount: tokens.filter((t: any) => t.vitalsRecorded).length,
+    // Station view buckets
+    pending: tokens.filter(
+      (t: any) => t.appointmentId &&
+        !t.vitalsRecorded &&
+        !["COMPLETED", "CANCELLED"].includes(t.statusCode)
+    ),
+    done: tokens.filter((t: any) => t.appointmentId && t.vitalsRecorded),
+  }), [tokens]);
 
   return (
     <Box>

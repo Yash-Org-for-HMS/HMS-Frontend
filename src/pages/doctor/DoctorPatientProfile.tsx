@@ -13,6 +13,7 @@ import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import PageLoader from "../../components/PageLoader";
 import { typeScale } from "../../styles/typography";
+import { sanitizeRichText } from "../../utils/sanitizeHtml";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
 
@@ -142,7 +143,7 @@ export default function DoctorPatientProfile() {
                     {h.soapAssessment && (
                       <Box
                         sx={{ color: "text.secondary", ...typeScale.body, lineHeight: 1.5, "& p": { m: 0 } }}
-                        dangerouslySetInnerHTML={{ __html: h.soapAssessment }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeRichText(h.soapAssessment) }}
                       />
                     )}
                     {h.prescribedMedicines && h.prescribedMedicines.length > 0 && (

@@ -1,5 +1,5 @@
 import { ACCENTS } from "../../styles/accents";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
@@ -50,13 +50,21 @@ export default function DoctorQueue() {
     QUEUE_UPDATED: fetchQueue
   });
 
-  const waiting = tokens.filter((t: any) => t.statusCode === "WAITING_FOR_VITALS" || t.statusCode === "READY_FOR_DOCTOR").length;
-  const inProgress = tokens.filter((t: any) => t.statusCode === "IN_CONSULTATION").length;
-  const completed = tokens.filter((t: any) => t.statusCode === "COMPLETED" || t.statusCode === "CANCELLED").length;
-  const skipped = tokens.filter((t: any) => t.statusCode === "SKIPPED").length;
-
-  const activeTokens = tokens.filter((t: any) => t.statusCode !== "SKIPPED" && t.statusCode !== "COMPLETED" && t.statusCode !== "CANCELLED");
-  const skippedTokens = tokens.filter((t: any) => t.statusCode === "SKIPPED");
+  // Memoized on `tokens` — this page re-renders on unrelated local state (the
+  // vitals dialog opening/closing), which would otherwise re-run all 6 of
+  // these full-array passes for no reason.
+  const { waiting, inProgress, completed, skipped, activeTokens, skippedTokens } = useMemo(() => {
+    const activeTokens = tokens.filter((t: any) => t.statusCode !== "SKIPPED" && t.statusCode !== "COMPLETED" && t.statusCode !== "CANCELLED");
+    const skippedTokens = tokens.filter((t: any) => t.statusCode === "SKIPPED");
+    return {
+      waiting: tokens.filter((t: any) => t.statusCode === "WAITING_FOR_VITALS" || t.statusCode === "READY_FOR_DOCTOR").length,
+      inProgress: tokens.filter((t: any) => t.statusCode === "IN_CONSULTATION").length,
+      completed: tokens.filter((t: any) => t.statusCode === "COMPLETED" || t.statusCode === "CANCELLED").length,
+      skipped: skippedTokens.length,
+      activeTokens,
+      skippedTokens,
+    };
+  }, [tokens]);
 
   return (
     <Box sx={{ pb: 6 }}>

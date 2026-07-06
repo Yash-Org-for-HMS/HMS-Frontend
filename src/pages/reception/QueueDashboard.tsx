@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
@@ -58,26 +58,35 @@ export default function QueueDashboard() {
 
   const error = queryError ? "Failed to load queue" : null;
 
-  const activeTokens = tokens.filter((t: any) => t.statusCode !== "SKIPPED" && t.statusCode !== "COMPLETED" && t.statusCode !== "CANCELLED");
-  const skippedTokens = tokens.filter((t: any) => t.statusCode === "SKIPPED");
+  // Filters/derived stats are memoized on `tokens` — this page re-renders on
+  // every unrelated local-state change (menu open/close, dialog toggles), and
+  // without memoization each of those re-runs 4+ full-array passes for no reason.
+  const activeTokens = useMemo(
+    () => tokens.filter((t: any) => t.statusCode !== "SKIPPED" && t.statusCode !== "COMPLETED" && t.statusCode !== "CANCELLED"),
+    [tokens]
+  );
+  const skippedTokens = useMemo(() => tokens.filter((t: any) => t.statusCode === "SKIPPED"), [tokens]);
 
   // ── Waiting-time monitor ──────────────────────────────────────────────
   // Minutes from joining the queue until seen by the doctor (or until now if
-  // still waiting). Recomputed each render; the 30s refetch keeps it fresh.
-  const now = Date.now();
+  // still waiting). Recomputed when tokens change; the 30s refetch keeps it fresh.
   const isWaitingStatus = (t: any) => t.statusCode === "WAITING_FOR_VITALS" || t.statusCode === "READY_FOR_DOCTOR";
   const waitMinutes = (t: any) => {
     if (!t.createdAt) return 0;
-    const end = t.consultationStartedAt ? new Date(t.consultationStartedAt).getTime() : now;
+    const end = t.consultationStartedAt ? new Date(t.consultationStartedAt).getTime() : Date.now();
     return Math.max(0, Math.round((end - new Date(t.createdAt).getTime()) / 60000));
   };
   const waitColor = (m: number) => (m >= 30 ? "#ef4444" : m >= 15 ? "#f59e0b" : "#10b981");
   const fmtWait = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`);
 
-  const waitingTokens = activeTokens.filter(isWaitingStatus);
-  const waits = waitingTokens.map(waitMinutes);
-  const avgWait = waits.length ? Math.round(waits.reduce((a: number, b: number) => a + b, 0) / waits.length) : 0;
-  const maxWait = waits.length ? Math.max(...waits) : 0;
+  const waitingTokens = useMemo(() => activeTokens.filter(isWaitingStatus), [activeTokens]);
+  const { avgWait, maxWait } = useMemo(() => {
+    const waits = waitingTokens.map(waitMinutes);
+    return {
+      avgWait: waits.length ? Math.round(waits.reduce((a: number, b: number) => a + b, 0) / waits.length) : 0,
+      maxWait: waits.length ? Math.max(...waits) : 0,
+    };
+  }, [waitingTokens]);
 
   // Listen for real-time queue updates
   const invalidateQueue = useCallback(() => queryClient.invalidateQueries({ queryKey: ['queue'] }), [queryClient]);

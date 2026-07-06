@@ -21,6 +21,7 @@ interface Props {
   colSpan?: number;
   required?: boolean;
   showPincode?: boolean;
+  disabled?: boolean;
 }
 
 /**
@@ -30,7 +31,7 @@ interface Props {
  * strings) — the onChange patch always includes both ids and names.
  * Renders <Grid> items; use inside a <Grid container>.
  */
-export default function GeoAddressPicker({ value, onChange, colSpan = 3, required, showPincode = true }: Props) {
+export default function GeoAddressPicker({ value, onChange, colSpan = 3, required, showPincode = true, disabled = false }: Props) {
   const { data: states = [] } = useQuery<GeoOption[]>({
     queryKey: ["geo-states"],
     queryFn: async () => (await axiosInstance.get("/geo/states")).data.data,
@@ -81,7 +82,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
     <>
       <Grid size={{ xs: 12, md: colSpan }}>
         <TextField
-          select fullWidth label="State" required={required}
+          select fullWidth label="State" required={required} disabled={disabled}
           value={stateId}
           onChange={(e) => {
             const id = Number(e.target.value);
@@ -96,7 +97,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
       <Grid size={{ xs: 12, md: colSpan }}>
         <TextField
           select fullWidth label="District" required={required}
-          value={districtId} disabled={!stateId}
+          value={districtId} disabled={disabled || !stateId}
           onChange={(e) => {
             const id = Number(e.target.value);
             onChange({ districtId: id, districtName: districts.find((d) => d.districtId === id)?.name ?? "" });
@@ -109,7 +110,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
 
       <Grid size={{ xs: 12, md: colSpan }}>
         <TextField
-          fullWidth label="City / Town" required={required}
+          fullWidth label="City / Town" required={required} disabled={disabled}
           value={city}
           onChange={(e) => onChange({ city: e.target.value })}
           placeholder="e.g. Hyderabad"
@@ -119,7 +120,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
       {showPincode && (
         <Grid size={{ xs: 12, md: colSpan }}>
           <TextField
-            fullWidth label="Pincode" required={required}
+            fullWidth label="Pincode" required={required} disabled={disabled}
             value={pincode}
             inputProps={{ inputMode: "numeric", maxLength: 6 }}
             onChange={(e) => onChange({ pincode: e.target.value.replace(/\D/g, "").slice(0, 6) })}

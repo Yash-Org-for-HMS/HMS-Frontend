@@ -81,6 +81,13 @@ export default function CommandPalette() {
     }
   }, [open]);
 
+  // This component is mounted unconditionally at the top of the hospital tree,
+  // so it re-renders on every navigation/state change everywhere in the app —
+  // including the super-admin portal and every non-clinical page. Bail out
+  // before doing any of the sessionStorage parsing or list filtering below;
+  // only the keydown listener above needs to always be alive.
+  if (!isClinicalRoute) return null;
+
   const handleSearchChange = (val: string) => {
     setSearch(val);
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
@@ -140,10 +147,10 @@ export default function CommandPalette() {
   const matches = (name: string, section: string) =>
     name.toLowerCase().includes(search.toLowerCase()) || section.toLowerCase().includes(search.toLowerCase());
 
-  const filteredActions = QUICK_ACTIONS.filter((a) => allowSection(a.section) && isModuleEnabled((a as any).module) && matches(a.name, a.section));
-  const filteredRoutes = STATIC_ROUTES.filter((r) => allowSection(r.section) && isModuleEnabled((r as any).module) && matches(r.name, r.section));
-
-  if (!isClinicalRoute) return null;
+  // Skip the filtering passes entirely while the palette is closed — they only
+  // matter for what gets rendered in the (unmounted) list below.
+  const filteredActions = open ? QUICK_ACTIONS.filter((a) => allowSection(a.section) && isModuleEnabled((a as any).module) && matches(a.name, a.section)) : [];
+  const filteredRoutes = open ? STATIC_ROUTES.filter((r) => allowSection(r.section) && isModuleEnabled((r as any).module) && matches(r.name, r.section)) : [];
 
   return (
     <Dialog 

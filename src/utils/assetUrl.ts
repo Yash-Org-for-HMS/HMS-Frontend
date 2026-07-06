@@ -1,7 +1,8 @@
+import { API_URL } from "../api/axios";
+
 // Base URL for server-hosted assets (uploaded logos, documents, reports).
 // Derived from the API URL by stripping the trailing "/api" so it works in any
 // deployment instead of a hardcoded localhost host.
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 const ASSET_BASE = API_URL.replace(/\/api\/?$/, "");
 
 /**

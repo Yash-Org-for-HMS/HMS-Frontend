@@ -8,14 +8,17 @@ export default function PrintLabReport() {
   const { id } = useParams();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrder = async () => {
       try {
         const res = await axiosInstance.get(`/lab/orders/${id}`);
         setOrder(res.data.data);
-      } catch (err) {
-        console.error("Failed to fetch lab order", err);
+      } catch (err: any) {
+        // Distinct from "order not found" — a network/permission error isn't
+        // the same thing and shouldn't be reported as one.
+        setError(err.response?.data?.message || "Failed to load this lab order");
       } finally {
         setLoading(false);
       }
@@ -33,6 +36,7 @@ export default function PrintLabReport() {
   }, [loading, order]);
 
   if (loading) return <PageLoader />;
+  if (error) return <Typography color="error">{error}</Typography>;
   if (!order) return <Typography>Order not found</Typography>;
 
   return (

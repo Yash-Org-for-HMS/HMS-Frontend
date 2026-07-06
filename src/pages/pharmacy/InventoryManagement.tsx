@@ -133,12 +133,12 @@ export default function InventoryManagement() {
 
   // Page changes fetch only the affected list (skipped on the initial mount).
   useEffect(() => {
-    if (didMount.current) fetchInventory(stockPage).catch(err => console.error(err));
+    if (didMount.current) fetchInventory(stockPage).catch(err => toast.error(err.response?.data?.message || "Failed to load that page of inventory"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stockPage]);
 
   useEffect(() => {
-    if (didMount.current) fetchPurchaseOrders(poPage).catch(err => console.error(err));
+    if (didMount.current) fetchPurchaseOrders(poPage).catch(err => toast.error(err.response?.data?.message || "Failed to load that page of purchase orders"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [poPage]);
 
@@ -148,14 +148,14 @@ export default function InventoryManagement() {
   useEffect(() => {
     if (!didMount.current) return;
     setStockPage(1);
-    fetchInventory(1).catch(err => console.error(err));
+    fetchInventory(1).catch(err => toast.error(err.response?.data?.message || "Failed to sort inventory"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stockSort.orderBy, stockSort.order]);
 
   useEffect(() => {
     if (!didMount.current) return;
     setPoPage(1);
-    fetchPurchaseOrders(1).catch(err => console.error(err));
+    fetchPurchaseOrders(1).catch(err => toast.error(err.response?.data?.message || "Failed to sort purchase orders"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [poSort.orderBy, poSort.order]);
 

@@ -9,10 +9,10 @@ import {
 } from "@mui/icons-material";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { typeScale } from "../../styles/typography";
+import { API_URL } from "../../api/axios";
 
 const BLUE = ACCENTS.doctor;
 const BLUE_DARK = ACCENTS.doctorDark;
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const DEX_NAME = "Dr. Dex";
 const DEX_TAGLINE = "AI clinical assistant";
