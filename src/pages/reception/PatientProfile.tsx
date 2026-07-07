@@ -14,7 +14,7 @@ import {
   WarningAmberRounded, CalendarTodayRounded, PersonRounded, NotificationsActiveRounded,
   EventAvailableRounded, EventRepeatRounded, CallSplitRounded, LoginRounded,
   QrCode2Rounded, ReceiptLongRounded, MoreVertRounded, EventRounded,
-  PaymentsRounded, AccountBalanceWalletRounded,
+  PaymentsRounded, AccountBalanceWalletRounded, VaccinesRounded, MedicalServicesRounded,
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
@@ -28,6 +28,8 @@ import IdCardModal from "../../components/reception/IdCardModal";
 import ReferralDialog from "../../components/reception/ReferralDialog";
 import ClinicalRecordsSection from "../../components/reception/ClinicalRecordsSection";
 import ConsentFormsSection from "../../components/reception/ConsentFormsSection";
+import VaccinationsSection from "../../components/reception/VaccinationsSection";
+import SurgeriesSection from "../../components/reception/SurgeriesSection";
 import InvoiceViewDialog from "../../components/reception/InvoiceViewDialog";
 import { useToast } from "../../contexts/ToastContext";
 
@@ -315,6 +317,8 @@ export default function PatientProfile() {
           <Tab icon={<ReceiptLongRounded fontSize="small" />} iconPosition="start" label={`Billing${invoices.length ? ` (${invoices.length})` : ""}`} />
           <Tab icon={<EventRepeatRounded fontSize="small" />} iconPosition="start" label="Records" />
           <Tab icon={<BadgeRounded fontSize="small" />} iconPosition="start" label="Consent" />
+          <Tab icon={<VaccinesRounded fontSize="small" />} iconPosition="start" label="Vaccinations" />
+          <Tab icon={<MedicalServicesRounded fontSize="small" />} iconPosition="start" label="Surgeries" />
           <Tab icon={<ContactPhoneRounded fontSize="small" />} iconPosition="start" label="Documents" />
         </Tabs>
       </Paper>
@@ -501,8 +505,21 @@ export default function PatientProfile() {
       {/* ── Tab: Consent ── */}
       {tab === 4 && <ConsentFormsSection patientId={patient.patientId} patientName={`${patient.firstName || ""} ${patient.lastName || ""}`.trim()} />}
 
+      {/* ── Tab: Vaccinations ── */}
+      {tab === 5 && (
+        <VaccinationsSection
+          patientId={patient.patientId}
+          patientName={`${patient.firstName || ""} ${patient.lastName || ""}`.trim()}
+          patientUhid={patient.uhidNumber}
+          patientDob={patient.dateOfBirth}
+        />
+      )}
+
+      {/* ── Tab: Surgeries ── */}
+      {tab === 6 && <SurgeriesSection patientId={patient.patientId} />}
+
       {/* ── Tab: Documents ── */}
-      {tab === 5 && <PatientDocumentsSection patientId={patient.patientId} />}
+      {tab === 7 && <PatientDocumentsSection patientId={patient.patientId} />}
 
       <IdCardModal open={idCardOpen} onClose={() => setIdCardOpen(false)} patient={patient} />
 

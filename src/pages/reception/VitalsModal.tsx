@@ -23,6 +23,12 @@ interface VitalsModalProps {
   patientName: string;
   onSaved?: () => void;
   readonly?: boolean;
+  // Where to READ vitals from. Defaults to the reception endpoint (used by the
+  // reception + nurse panels). The doctor panel can't reach /reception/* — it
+  // passes its own /doctor/... read path so "View Vitals" doesn't 403 into a
+  // blank form. The save endpoint is unaffected (only used when !readonly, i.e.
+  // never in the doctor's read-only view).
+  readUrl?: string;
 }
 
 const defaultVitals = {
@@ -88,7 +94,8 @@ function VitalInput({
   );
 }
 
-export default function VitalsModal({ open, onClose, appointmentId, patientId, patientName, onSaved, readonly = false }: VitalsModalProps) {
+export default function VitalsModal({ open, onClose, appointmentId, patientId, patientName, onSaved, readonly = false, readUrl }: VitalsModalProps) {
+  const vitalsReadUrl = readUrl || `/reception/appointments/${appointmentId}/vitals`;
   const [form, setForm] = useState(defaultVitals);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -98,8 +105,8 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
   // state (patient has no vitals yet), so query errors are intentionally not
   // surfaced — the form just falls back to defaults.
   const { data: existingVitals, isLoading: loading } = useQuery({
-    queryKey: ["vitals", appointmentId],
-    queryFn: async () => (await axiosInstance.get(`/reception/appointments/${appointmentId}/vitals`)).data.data,
+    queryKey: ["vitals", appointmentId, vitalsReadUrl],
+    queryFn: async () => (await axiosInstance.get(vitalsReadUrl)).data.data,
     enabled: open && !!appointmentId,
   });
   // BMI calculation

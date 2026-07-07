@@ -57,6 +57,14 @@ const LOOKUP_CONFIGS: Record<string, any> = {
       { field: "typeName", label: "Type Name" }
     ],
   },
+  surgeryGrade: {
+    label: "Surgery Grades",
+    idField: "surgeryGradeId",
+    columns: [
+      { field: "gradeCode", label: "Grade Code" },
+      { field: "gradeName", label: "Grade Name" }
+    ],
+  },
   // NOTE: Appointment Statuses were removed here — they are a SYSTEM state
   // machine (code depends on globally-unique status codes), not per-hospital
   // master data, so they are no longer hospital-editable.

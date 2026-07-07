@@ -6,7 +6,7 @@ import {
 } from "@mui/material";
 import {
   ArrowBackRounded, PersonRounded, HistoryRounded, WarningAmberRounded,
-  LocalHospitalRounded, MedicationRounded,
+  LocalHospitalRounded, MedicationRounded, VaccinesRounded, MedicalServicesRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
@@ -42,8 +42,24 @@ export default function DoctorPatientProfile() {
     enabled: !!id,
   });
 
+  const vaccinationQ = useQuery({
+    queryKey: ["doctor-patient-vaccination-schedule", id],
+    queryFn: async () => (await axiosInstance.get(`/vaccination/patients/${id}/schedule`)).data.data,
+    enabled: !!id,
+  });
+
+  const surgeriesQ = useQuery({
+    queryKey: ["patient-surgeries", id],
+    queryFn: async () => (await axiosInstance.get(`/ipd/patients/${id}/surgeries`)).data.data,
+    enabled: !!id,
+  });
+
   const p = patientQ.data;
   const history: any[] = historyQ.data || [];
+  const dueRows: any[] = (vaccinationQ.data?.rows || []).filter((r: any) => r.state === "OVERDUE" || r.state === "DUE_SOON");
+  const VAX_STATE_COLOR: Record<string, string> = { OVERDUE: "#ef4444", DUE_SOON: "#f59e0b" };
+  const surgeries: any[] = surgeriesQ.data || [];
+  const SURGERY_STATE_COLOR: Record<string, string> = { SCHEDULED: "#f59e0b", COMPLETED: "#10b981", CANCELLED: "#64748b" };
 
   if (patientQ.isLoading) {
     return (
@@ -111,6 +127,56 @@ export default function DoctorPatientProfile() {
             <Typography variant="body2" sx={{ color: p.allergies && p.allergies !== "None reported" ? "#ef4444" : "text.secondary", fontWeight: p.allergies && p.allergies !== "None reported" ? 600 : 400 }}>
               {p.allergies}
             </Typography>
+          </Paper>
+
+          {/* Read-only immunization snapshot — full schedule + administer/skip
+              actions live on the Reception patient profile; this view only
+              surfaces what's due/overdue so it doesn't act during consultation. */}
+          <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, display: "flex", alignItems: "center", gap: 1 }}>
+              <VaccinesRounded sx={{ color: DOCTOR_BLUE, fontSize: 18 }} /> Immunization
+            </Typography>
+            {vaccinationQ.isLoading ? (
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>Loading…</Typography>
+            ) : dueRows.length === 0 ? (
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>No doses due or overdue.</Typography>
+            ) : (
+              dueRows.slice(0, 5).map((r) => (
+                <Box key={r.patientVaccinationId} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", py: 0.75, borderBottom: "1px dashed", borderColor: "divider", gap: 1 }}>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>{r.vaccineName} — {r.doseLabel}</Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>Due {new Date(r.dueDate).toLocaleDateString("en-GB")}</Typography>
+                  </Box>
+                  <Chip size="small" label={r.state === "OVERDUE" ? "Overdue" : "Due soon"} sx={{ bgcolor: `${VAX_STATE_COLOR[r.state]}1f`, color: VAX_STATE_COLOR[r.state], fontWeight: 700, flexShrink: 0 }} />
+                </Box>
+              ))
+            )}
+          </Paper>
+
+          {/* Read-only surgery history — added/edited from the IPD Admissions
+              page (Surgery Details), scoped to a specific admission; this is
+              just the patient-wide read view for consultation reference. */}
+          <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, display: "flex", alignItems: "center", gap: 1 }}>
+              <MedicalServicesRounded sx={{ color: DOCTOR_BLUE, fontSize: 18 }} /> Surgeries
+            </Typography>
+            {surgeriesQ.isLoading ? (
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>Loading…</Typography>
+            ) : surgeries.length === 0 ? (
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>No surgeries on record.</Typography>
+            ) : (
+              surgeries.slice(0, 5).map((s) => (
+                <Box key={s.surgeryId} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", py: 0.75, borderBottom: "1px dashed", borderColor: "divider", gap: 1 }}>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>{s.procedureName}</Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      {s.surgeryType === "MAJOR" ? "Major" : "Minor"}{s.gradeName ? ` · ${s.gradeName}` : ""}{s.surgeonName ? ` · Dr. ${s.surgeonName}` : ""}
+                    </Typography>
+                  </Box>
+                  <Chip size="small" label={s.status.charAt(0) + s.status.slice(1).toLowerCase()} sx={{ bgcolor: `${SURGERY_STATE_COLOR[s.status]}1f`, color: SURGERY_STATE_COLOR[s.status], fontWeight: 700, flexShrink: 0 }} />
+                </Box>
+              ))
+            )}
           </Paper>
         </Box>
 

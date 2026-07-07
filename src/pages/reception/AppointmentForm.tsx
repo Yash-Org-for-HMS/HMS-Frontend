@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import {
   Box, Typography, Button, Paper, TextField, MenuItem,
   Alert, Grid, IconButton, FormControlLabel, Switch
@@ -21,6 +22,16 @@ export interface AppointmentFormProps {
   onCancel?: () => void;
 }
 
+// Stable reference (module scope, not re-created per render) so it doesn't
+// change identity while the dropdowns query is loading — an inline object
+// literal here would make the slot-generation effect below (which depends on
+// `dropdowns`) re-run and re-render every tick until the query resolves.
+const EMPTY_DROPDOWNS = { departments: [], doctors: [], patients: [], statuses: [], doctorSchedules: [] };
+
+// The underlying slot value stays 24h "HH:mm" (used for sorting, comparisons,
+// and the submitted datetime) — this only formats it for display.
+const fmt12h = (hhmm: string) => dayjs(`2000-01-01T${hhmm}`).format("h:mm A");
+
 export default function AppointmentForm({ isEmbedded = false, prefilledPatientId, onSuccess, onCancel }: AppointmentFormProps = {}) {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -36,7 +47,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   const [checkInImmediately, setCheckInImmediately] = useState(true);
   const [postBooking, setPostBooking] = useState<{ apptId?: string; patientName: string; apptDate: string } | null>(null);
 
-  const { data: dropdowns = { departments: [], doctors: [], patients: [], statuses: [], doctorSchedules: [] }, isLoading: ddLoading, isError: ddIsError, error: ddError, refetch: refetchDd } = useQuery({
+  const { data: dropdowns = EMPTY_DROPDOWNS, isLoading: ddLoading, isError: ddIsError, error: ddError, refetch: refetchDd } = useQuery({
     queryKey: ["appointment-dropdowns"],
     queryFn: async () => (await axiosInstance.get("/reception/appointments/dropdowns")).data.data,
   });
@@ -52,6 +63,15 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   });
 
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+
+  // Ticks every 30s so today's slot list keeps dropping times as they pass
+  // (e.g. a 9:00 AM slot disappears once it's afternoon) without needing a
+  // page refresh. Doesn't affect other dates, which aren't time-filtered.
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNowTick(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
 
   // Doctor availability for the chosen date: whether they're on leave, and the
   // times already booked (doctor-wide). Drives slot filtering below.
@@ -136,6 +156,17 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
       rawSlots = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "14:00", "14:30", "15:00", "15:30"];
     }
 
+    // For today, drop slots that have already passed — booking a 9:00 AM slot
+    // at 2:00 PM makes no sense. Other dates are unaffected. A currently-
+    // selected slot stays selectable regardless (see the render-time fallback
+    // below), so editing an existing today-dated appointment never breaks.
+    const today = new Date().toISOString().split('T')[0];
+    if (formData.appointmentDate === today) {
+      const now = new Date();
+      const nowHM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      rawSlots = rawSlots.filter((s) => s > nowHM);
+    }
+
     // Remove times already booked for this doctor (formatted the same way the
     // slots are). The appointment being edited is excluded server-side, so its
     // own slot stays selectable.
@@ -145,7 +176,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
       )
     );
     setAvailableSlots(rawSlots.filter((s) => !bookedTimes.has(s)));
-  }, [formData.doctorId, formData.appointmentDate, dropdowns, availability]);
+  }, [formData.doctorId, formData.appointmentDate, dropdowns, availability, nowTick]);
 
   useEffect(() => {
     // Default checkInImmediately to true only if appointment is for today
@@ -322,7 +353,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
                 ? [formData.timeSlot, ...availableSlots]
                 : availableSlots
               ).map(slot => (
-                <MenuItem key={slot} value={slot}>{slot}</MenuItem>
+                <MenuItem key={slot} value={slot}>{fmt12h(slot)}</MenuItem>
               ))}
             </TextField>
           </Grid>

@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Grid, Button, Chip, Menu, MenuItem,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, Divider, Tooltip,
+  Box, Typography, Paper, Grid, Chip, Menu, MenuItem, Tooltip,
 } from "@mui/material";
 import {
-  HotelRounded, AddRounded, EventSeatRounded, BuildRounded, CheckCircleRounded,
-  PersonRounded, MeetingRoomRounded, ApartmentRounded,
+  EventSeatRounded, BuildRounded, CheckCircleRounded,
+  PersonRounded, ApartmentRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
@@ -15,18 +14,15 @@ import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 
-const WARD_TYPES = ["general", "surgical", "maternity", "pediatric", "ICU"];
-const ROOM_TYPES = ["general", "semi_private", "private_room", "ICU", "NICU"];
-const BED_TYPES = ["regular", "ICU", "HDU", "NICU", "isolation"];
-
 const STATUS_COLOR: Record<string, string> = {
   AVAILABLE: "#10b981", OCCUPIED: "#ef4444", RESERVED: "#f59e0b", MAINTENANCE: "#64748b",
 };
 
+// Read-only structure + day-to-day bed STATUS changes only. Adding/editing
+// wards, rooms, and beds is hospital configuration, managed from the Hospital
+// Admin panel (Ward & Bed Setup) — not from Reception.
 export default function BedBoard() {
   const toast = useToast();
-  const [setupAnchor, setSetupAnchor] = useState<null | HTMLElement>(null);
-  const [dialog, setDialog] = useState<null | "ward" | "room" | "bed">(null);
   const [bedMenu, setBedMenu] = useState<{ anchor: HTMLElement | null; bed: any }>({ anchor: null, bed: null });
 
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -58,18 +54,7 @@ export default function BedBoard() {
     <Box>
       <PageHeader
         title="Bed Management"
-        subtitle="Ward occupancy, bed availability, and reservations"
-        actions={
-          <>
-            <Button variant="outlined" startIcon={<AddRounded />} onClick={(e) => setSetupAnchor(e.currentTarget)}
-              sx={{ textTransform: "none", borderRadius: 2, color: "#0891b2", borderColor: "rgba(8,145,178,0.4)" }}>Setup</Button>
-            <Menu anchorEl={setupAnchor} open={Boolean(setupAnchor)} onClose={() => setSetupAnchor(null)}>
-              <MenuItem onClick={() => { setSetupAnchor(null); setDialog("ward"); }}><ApartmentRounded fontSize="small" sx={{ mr: 1 }} /> Add ward</MenuItem>
-              <MenuItem onClick={() => { setSetupAnchor(null); setDialog("room"); }}><MeetingRoomRounded fontSize="small" sx={{ mr: 1 }} /> Add room</MenuItem>
-              <MenuItem onClick={() => { setSetupAnchor(null); setDialog("bed"); }}><HotelRounded fontSize="small" sx={{ mr: 1 }} /> Add bed</MenuItem>
-            </Menu>
-          </>
-        }
+        subtitle="Ward occupancy, bed availability, and reservations. To add or edit wards, rooms, or beds, contact your hospital administrator."
       />
 
       {summary && (
@@ -84,9 +69,9 @@ export default function BedBoard() {
 
       {isLoading ? <ListSkeleton />
         : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
-        : wards.length === 0 ? <Mascot pose="all-caught-up" title="No wards yet" subtitle="Use Setup to add a ward, room, and beds." />
+        : wards.length === 0 ? <Mascot pose="all-caught-up" title="No wards yet" subtitle="Ask your hospital administrator to set up wards, rooms, and beds." />
         : (
-          <Stack spacing={2.5}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
             {wards.map((w) => (
               <Paper key={w.wardId} elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
@@ -124,7 +109,7 @@ export default function BedBoard() {
                 ))}
               </Paper>
             ))}
-          </Stack>
+          </Box>
         )}
 
       {/* Bed status menu */}
@@ -137,66 +122,6 @@ export default function BedBoard() {
             <MenuItem key="m" disabled={bedMenu.bed?.status === "MAINTENANCE"} onClick={() => setBedStatus(bedMenu.bed.bedId, "MAINTENANCE")}><BuildRounded fontSize="small" sx={{ mr: 1, color: STATUS_COLOR.MAINTENANCE }} /> Maintenance</MenuItem>,
           ]}
       </Menu>
-
-      {dialog && <SetupDialog kind={dialog} wards={wards} onClose={() => setDialog(null)} onDone={() => { setDialog(null); refetch(); }} />}
     </Box>
-  );
-}
-
-function SetupDialog({ kind, wards, onClose, onDone }: { kind: "ward" | "room" | "bed"; wards: any[]; onClose: () => void; onDone: () => void }) {
-  const toast = useToast();
-  const [saving, setSaving] = useState(false);
-  const [f, setF] = useState<any>({ wardType: "general", roomType: "general", bedType: "regular", floorNumber: "1" });
-  const set = (k: string, v: any) => setF((p: any) => ({ ...p, [k]: v }));
-
-  const rooms = (wards.find((w) => w.wardId === f.wardId)?.rooms) || [];
-
-  const submit = async () => {
-    setSaving(true);
-    try {
-      if (kind === "ward") await axiosInstance.post("/ipd/wards", { wardName: f.wardName, wardType: f.wardType, floorNumber: Number(f.floorNumber) });
-      else if (kind === "room") await axiosInstance.post("/ipd/rooms", { wardId: f.wardId, roomNumber: f.roomNumber, roomType: f.roomType });
-      else await axiosInstance.post("/ipd/beds", { roomId: f.roomId, bedNumber: f.bedNumber, bedType: f.bedType, dailyCharge: f.dailyCharge ? Number(f.dailyCharge) : undefined });
-      toast.success(`${kind[0].toUpperCase() + kind.slice(1)} added`);
-      onDone();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const valid = kind === "ward" ? f.wardName && f.floorNumber : kind === "room" ? f.wardId && f.roomNumber : f.roomId && f.bedNumber;
-
-  return (
-    <Dialog open onClose={saving ? undefined : onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Add {kind}</DialogTitle>
-      <DialogContent dividers>
-        <Stack spacing={2.5} sx={{ pt: 0.5 }}>
-          {kind === "ward" && (<>
-            <TextField fullWidth required label="Ward name" value={f.wardName || ""} onChange={(e) => set("wardName", e.target.value)} />
-            <TextField select fullWidth label="Ward type" value={f.wardType} onChange={(e) => set("wardType", e.target.value)}>{WARD_TYPES.map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField>
-            <TextField fullWidth required type="number" label="Floor number" value={f.floorNumber} onChange={(e) => set("floorNumber", e.target.value)} />
-          </>)}
-          {kind === "room" && (<>
-            <TextField select fullWidth required label="Ward" value={f.wardId || ""} onChange={(e) => set("wardId", e.target.value)}>{wards.map((w) => <MenuItem key={w.wardId} value={w.wardId}>{w.wardName}</MenuItem>)}</TextField>
-            <TextField fullWidth required label="Room number" value={f.roomNumber || ""} onChange={(e) => set("roomNumber", e.target.value)} />
-            <TextField select fullWidth label="Room type" value={f.roomType} onChange={(e) => set("roomType", e.target.value)}>{ROOM_TYPES.map((t) => <MenuItem key={t} value={t}>{t.replace("_", " ")}</MenuItem>)}</TextField>
-          </>)}
-          {kind === "bed" && (<>
-            <TextField select fullWidth required label="Ward" value={f.wardId || ""} onChange={(e) => { set("wardId", e.target.value); set("roomId", ""); }}>{wards.map((w) => <MenuItem key={w.wardId} value={w.wardId}>{w.wardName}</MenuItem>)}</TextField>
-            <TextField select fullWidth required label="Room" value={f.roomId || ""} onChange={(e) => set("roomId", e.target.value)} disabled={!f.wardId} helperText={f.wardId && rooms.length === 0 ? "Add a room to this ward first" : undefined}>{rooms.map((r: any) => <MenuItem key={r.roomId} value={r.roomId}>Room {r.roomNumber}</MenuItem>)}</TextField>
-            <TextField fullWidth required label="Bed number" value={f.bedNumber || ""} onChange={(e) => set("bedNumber", e.target.value)} />
-            <TextField select fullWidth label="Bed type" value={f.bedType} onChange={(e) => set("bedType", e.target.value)}>{BED_TYPES.map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField>
-            <TextField fullWidth type="number" label="Daily charge (₹)" value={f.dailyCharge || ""} onChange={(e) => set("dailyCharge", e.target.value)} />
-          </>)}
-          <Divider />
-        </Stack>
-      </DialogContent>
-      <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
-        <Button variant="contained" onClick={submit} disabled={saving || !valid} sx={{ bgcolor: "#0891b2", "&:hover": { bgcolor: "#0e7490" } }}>Save</Button>
-      </DialogActions>
-    </Dialog>
   );
 }

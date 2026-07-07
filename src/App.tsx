@@ -68,6 +68,8 @@ const DoctorForm = lazy(() => import("./pages/hospitalAuth/doctors/DoctorForm"))
 const DoctorSchedule = lazy(() => import("./pages/hospitalAuth/doctors/DoctorSchedule"));
 const DoctorLeaves = lazy(() => import("./pages/hospitalAuth/doctors/DoctorLeaves"));
 const LookupManager = lazy(() => import("./pages/hospitalAuth/settings/LookupManager"));
+const FacilitySetup = lazy(() => import("./pages/hospitalAuth/settings/FacilitySetup"));
+const VaccineCatalog = lazy(() => import("./pages/hospitalAuth/settings/VaccineCatalog"));
 const FormTemplatesList = lazy(() => import("./pages/hospitalAuth/formBuilder/FormTemplatesList"));
 const FormBuilder = lazy(() => import("./pages/hospitalAuth/formBuilder/FormBuilder"));
 const AuditLogs = lazy(() => import("./pages/hospitalAuth/settings/AuditLogs"));
@@ -84,7 +86,7 @@ const AppointmentForm = lazy(() => import("./pages/reception/AppointmentForm"));
 const DoctorAvailability = lazy(() => import("./pages/reception/DoctorAvailability"));
 const DepartmentDirectory = lazy(() => import("./pages/reception/DepartmentDirectory"));
 const ReferralsList = lazy(() => import("./pages/reception/ReferralsList"));
-const Reports = lazy(() => import("./pages/reception/Reports"));
+const Reports = lazy(() => import("./pages/reception/ReportsHub"));
 const Admissions = lazy(() => import("./pages/ipd/Admissions"));
 const BedBoard = lazy(() => import("./pages/ipd/BedBoard"));
 const QueueDashboard = lazy(() => import("./pages/reception/QueueDashboard"));
@@ -113,6 +115,7 @@ const RadiologyOrdersQueue = lazy(() => import("./pages/lab/RadiologyOrdersQueue
 const LabTestCatalog = lazy(() => import("./pages/lab/LabTestCatalog"));
 const PrintLabReport = lazy(() => import("./pages/lab/PrintLabReport"));
 const RadiologyCatalog = lazy(() => import("./pages/lab/RadiologyCatalog"));
+const LabReports = lazy(() => import("./pages/lab/LabReports"));
 
 // Pharmacy
 const PharmacyDashboard = lazy(() => import("./pages/pharmacy/PharmacyDashboard"));
@@ -120,6 +123,7 @@ const MedicineCatalog = lazy(() => import("./pages/pharmacy/MedicineCatalog"));
 const SupplierDirectory = lazy(() => import("./pages/pharmacy/SupplierDirectory"));
 const InventoryManagement = lazy(() => import("./pages/pharmacy/InventoryManagement"));
 const DispensaryPOS = lazy(() => import("./pages/pharmacy/DispensaryPOS"));
+const PharmacyReports = lazy(() => import("./pages/pharmacy/PharmacyReports"));
 
 // Wrap a lazy page in a Suspense boundary with the skeleton fallback. The
 // boundary sits at the page-content level (inside each layout's <Outlet/>), so
@@ -197,6 +201,7 @@ function App() {
             <Route path="/hospital/roles/new" element={el(HospitalRoleForm)} />
             <Route path="/hospital/roles/:id/edit" element={el(HospitalRoleForm)} />
             <Route path="/hospital/financials" element={el(FinancialDashboard)} />
+            <Route path="/hospital/reports" element={el(Reports)} />
             <Route path="/hospital/permissions-matrix" element={el(PermissionMatrix)} />
             <Route path="/hospital/module-access" element={el(ModuleAccess)} />
             <Route path="/hospital/doctors" element={el(DoctorsList)} />
@@ -206,6 +211,8 @@ function App() {
             <Route path="/hospital/doctors/:id/schedule" element={el(DoctorSchedule)} />
             <Route path="/hospital/doctors/:id/leaves" element={el(DoctorLeaves)} />
             <Route path="/hospital/lookups" element={el(LookupManager)} />
+            <Route path="/hospital/facility-setup" element={el(FacilitySetup)} />
+            <Route path="/hospital/vaccines" element={el(VaccineCatalog)} />
             <Route path="/hospital/form-builder" element={el(FormTemplatesList)} />
             <Route path="/hospital/form-builder/new" element={el(FormBuilder)} />
             <Route path="/hospital/form-builder/:id/edit" element={el(FormBuilder)} />
@@ -274,6 +281,7 @@ function App() {
             <Route path="/lab/radiology" element={el(RadiologyOrdersQueue)} />
             <Route path="/lab/catalog" element={el(LabTestCatalog)} />
             <Route path="/lab/radiology-catalog" element={el(RadiologyCatalog)} />
+            <Route path="/lab/reports" element={el(LabReports)} />
           </Route>
         </Route>
 
@@ -285,6 +293,7 @@ function App() {
             <Route path="/pharmacy/suppliers" element={el(SupplierDirectory)} />
             <Route path="/pharmacy/inventory" element={el(InventoryManagement)} />
             <Route path="/pharmacy/pos" element={el(DispensaryPOS)} />
+            <Route path="/pharmacy/reports" element={el(PharmacyReports)} />
           </Route>
         </Route>
       </Routes>

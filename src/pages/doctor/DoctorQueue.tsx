@@ -281,6 +281,8 @@ export default function DoctorQueue() {
           patientName={vitalsDialog.token.patientName}
           onSaved={() => {}} // Read-only for doctor in this view, though they could update if needed
           readonly={vitalsDialog.readonly}
+          // Doctors can't reach /reception/*; read vitals from the doctor panel's own endpoint.
+          readUrl={`/doctor/appointments/${vitalsDialog.token.appointmentId}/vitals`}
         />
       )}
     </Box>

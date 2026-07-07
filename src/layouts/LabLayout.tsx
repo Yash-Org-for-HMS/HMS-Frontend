@@ -28,6 +28,7 @@ import {
   AccountCircleRounded,
   LocalHospitalRounded,
   MenuBookRounded,
+  AssessmentRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import BranchSwitcher from "../components/BranchSwitcher";
@@ -54,6 +55,7 @@ export default function LabLayout() {
     { text: "Radiology Orders", icon: <SettingsAccessibilityRounded />, path: "/lab/radiology", section: "Orders" },
     { text: "Lab Catalog", icon: <MenuBookRounded />, path: "/lab/catalog", section: "Catalogs" },
     { text: "Radiology Catalog", icon: <MenuBookRounded />, path: "/lab/radiology-catalog", section: "Catalogs" },
+    { text: "Reports", icon: <AssessmentRounded />, path: "/lab/reports", section: "Reports" },
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);

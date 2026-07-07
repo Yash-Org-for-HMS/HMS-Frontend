@@ -39,6 +39,9 @@ import {
   DynamicFormRounded,
   SecurityRounded,
   AccountBalanceRounded,
+  AssessmentRounded,
+  HotelRounded,
+  VaccinesRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import BranchSwitcher from "../components/BranchSwitcher";
@@ -67,6 +70,7 @@ export default function HospitalLayout() {
     // Admin-only: its endpoint (/billing/analytics) is admin-gated, so don't show
     // a tab non-admins can't actually open.
     { text: "Financial Analytics", icon: <AccountBalanceRounded />, path: "/hospital/financials", permission: null, adminOnly: true, section: "Overview" },
+    { text: "Reports", icon: <AssessmentRounded />, path: "/hospital/reports", permission: null, section: "Overview" },
     { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", permission: "DEPARTMENT_MANAGE", section: "Organization" },
     { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", permission: "USER_MANAGE", section: "Organization" },
     { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", permission: "USER_MANAGE", section: "Organization" },
@@ -76,6 +80,11 @@ export default function HospitalLayout() {
     // { text: "Role Management", icon: <ShieldRounded />, path: "/hospital/roles", permission: "ROLE_MANAGE" },
     // { text: "Permission Matrix", icon: <RuleRounded />, path: "/hospital/permissions-matrix", permission: "ROLE_MANAGE" },
     { text: "Master Data", icon: <DatasetRounded />, path: "/hospital/lookups", permission: "SETTINGS_MANAGE", section: "Configuration" },
+    // Backend restricts these strictly to H_ADMIN/B_ADMIN (requireRole, no
+    // permission-code bypass) — adminOnly here matches that exactly so a
+    // custom role never sees a link that would just 403.
+    { text: "Ward & Bed Setup", icon: <HotelRounded />, path: "/hospital/facility-setup", permission: null, adminOnly: true, section: "Configuration" },
+    { text: "Vaccine Catalog", icon: <VaccinesRounded />, path: "/hospital/vaccines", permission: null, adminOnly: true, section: "Configuration" },
     { text: "Form Builder", icon: <DynamicFormRounded />, path: "/hospital/form-builder", permission: "SETTINGS_MANAGE", section: "Configuration" },
     { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", permission: "SETTINGS_MANAGE", section: "Configuration" },
     { text: "Audit Logs", icon: <SecurityRounded />, path: "/hospital/audit-logs", permission: "SETTINGS_MANAGE", section: "System" },

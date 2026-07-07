@@ -35,7 +35,7 @@ const REALMS: Record<Realm, { access: string; refresh: string; refreshUrl: strin
 // Hospital-portal API prefixes use the hospital token; everything else uses the
 // super-admin token. (Same rule the request interceptor has always used.)
 function realmForUrl(url?: string): Realm {
-  if (url && /^\/(hospital|reception|doctor|nurse|lab|pharmacy|billing|ipd)/.test(url)) {
+  if (url && /^\/(hospital|reception|doctor|nurse|lab|pharmacy|billing|ipd|vaccination)/.test(url)) {
     return "hospital";
   }
   return "admin";

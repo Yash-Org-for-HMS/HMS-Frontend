@@ -3,12 +3,12 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Box, Grid, Typography, Paper,
-  Button, TextField, Divider, Avatar, IconButton, Chip, Tab, Tabs, Autocomplete, Drawer
+  Button, TextField, Divider, Avatar, IconButton, Chip, Tab, Tabs, Autocomplete
 } from "@mui/material";
 import {
   ArrowBackRounded, CheckCircleRounded, SaveRounded, MonitorHeartRounded,
   HistoryRounded, PersonRounded, LocalHospitalRounded, DateRangeRounded,
-  CloudDoneRounded, CloudSyncRounded, CloudOffRounded, AutoAwesomeRounded, CloseRounded
+  CloudDoneRounded, CloudSyncRounded, CloudOffRounded, AutoAwesomeRounded
 } from "@mui/icons-material";
 import AiSummaryPanel from "./AiSummaryPanel";
 import { axiosInstance } from "../../api/axios";
@@ -280,10 +280,12 @@ export default function ConsultationWorkspace() {
             </Box>
           )}
           <Button
-            variant="outlined"
-            onClick={() => setAiOpen(true)}
+            variant={aiOpen ? "contained" : "outlined"}
+            onClick={() => setAiOpen((v) => !v)}
             startIcon={<AutoAwesomeRounded />}
-            sx={{ borderColor: `${DOCTOR_BLUE}55`, color: DOCTOR_BLUE, textTransform: "none", fontWeight: 600 }}
+            sx={aiOpen
+              ? { textTransform: "none", fontWeight: 700, color: "#fff", background: `linear-gradient(135deg, ${DOCTOR_BLUE}, #8b5cf6)`, boxShadow: `0 4px 12px ${DOCTOR_BLUE}44`, "&:hover": { background: `linear-gradient(135deg, #2563eb, #7c3aed)` } }
+              : { textTransform: "none", fontWeight: 700, color: DOCTOR_BLUE, borderColor: `${DOCTOR_BLUE}55`, background: `linear-gradient(135deg, ${DOCTOR_BLUE}0d, #8b5cf60d)`, "&:hover": { borderColor: DOCTOR_BLUE, background: `linear-gradient(135deg, ${DOCTOR_BLUE}1a, #8b5cf61a)` } }}
           >
             Ask Dr. Dex
           </Button>
@@ -428,7 +430,7 @@ export default function ConsultationWorkspace() {
         {/* Right Panel: SOAP Notes */}
         <Grid size={{ xs: 12, md: 8.5 }} sx={{ height: "100%" }}>
           <Paper elevation={0} sx={{ height: "100%", borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-            
+
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
               <Tabs value={rightTabIndex} onChange={(e, val) => setRightTabIndex(val)} variant="scrollable" scrollButtons="auto">
                 <Tab icon={<LocalHospitalRounded fontSize="small" />} iconPosition="start" label="Clinical Notes (SOAP)" sx={{ textTransform: "none", fontWeight: 600, minHeight: 48 }} />
@@ -590,20 +592,38 @@ export default function ConsultationWorkspace() {
         </Grid>
       </Grid>
 
-      {/* AI clinical summary — right-side drawer */}
-      <Drawer
-        anchor="right"
-        open={aiOpen}
-        onClose={() => setAiOpen(false)}
-        PaperProps={{ sx: { width: { xs: "100%", sm: 420 }, p: 2.5, display: "flex", flexDirection: "column", borderTopLeftRadius: { sm: 20 }, borderBottomLeftRadius: { sm: 20 }, boxShadow: "-8px 0 30px rgba(0,0,0,0.08)" } }}
+      {/* Dr. Dex — non-modal slide-over. No backdrop/dimming, so the notes stay
+          visible + interactive beside it. Kept ALWAYS mounted (slid off-screen
+          when closed) so the briefing + chat persist for the whole visit. */}
+      {aiOpen && (
+        <Box
+          onClick={() => setAiOpen(false)}
+          sx={{ display: { xs: "block", md: "none" }, position: "fixed", inset: 0, zIndex: 1200, bgcolor: "rgba(15,23,42,0.35)" }}
+        />
+      )}
+      <Box
+        sx={{
+          position: "fixed", top: { xs: 0, md: 84 }, right: 0, bottom: { xs: 0, md: 16 },
+          width: { xs: "100%", sm: 460 },
+          zIndex: 1250,
+          px: { xs: 0, md: 2 },
+          transform: aiOpen ? "translateX(0)" : "translateX(calc(100% + 40px))",
+          transition: "transform .3s cubic-bezier(.4,0,.2,1)",
+          pointerEvents: aiOpen ? "auto" : "none",
+        }}
       >
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 0.5 }}>
-          <IconButton size="small" onClick={() => setAiOpen(false)}><CloseRounded /></IconButton>
-        </Box>
-        <Box sx={{ flex: 1, minHeight: 0 }}>
-          {aiOpen && <AiSummaryPanel patientId={p?.patientId} />}
-        </Box>
-      </Drawer>
+        <Paper
+          elevation={0}
+          sx={{
+            height: "100%", display: "flex", flexDirection: "column", overflow: "hidden",
+            borderRadius: { xs: 0, md: 4 },
+            border: "1px solid", borderColor: "divider",
+            boxShadow: "-16px 0 48px rgba(30,41,59,0.18)",
+          }}
+        >
+          <AiSummaryPanel patientId={p?.patientId} onCollapse={() => setAiOpen(false)} />
+        </Paper>
+      </Box>
     </Box>
   );
 }

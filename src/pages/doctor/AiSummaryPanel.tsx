@@ -1,11 +1,12 @@
 import { ACCENTS } from "../../styles/accents";
 import { useRef, useState, useEffect } from "react";
-import { Box, Typography, Button, Chip, Alert, Fade, TextField, IconButton } from "@mui/material";
+import { Box, Typography, Button, Chip, Alert, Fade, TextField, IconButton, Tooltip } from "@mui/material";
 import {
   AutoAwesomeRounded, ReplayRounded, StopRounded, PersonRounded,
   MedicalServicesRounded, MedicationRounded, TrendingUpRounded,
   FlagRounded, TaskAltRounded, InfoOutlined, HistoryRounded,
   MonitorHeartRounded, DescriptionRounded, CircleRounded, SendRounded,
+  KeyboardTabRounded,
 } from "@mui/icons-material";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { typeScale } from "../../styles/typography";
@@ -13,6 +14,10 @@ import { API_URL } from "../../api/axios";
 
 const BLUE = ACCENTS.doctor;
 const BLUE_DARK = ACCENTS.doctorDark;
+
+// Signature gradients — the whole "premium AI" look hangs off these two.
+const GRAD = "linear-gradient(135deg, #3b82f6 0%, #6366f1 55%, #8b5cf6 100%)";
+const GRAD_HEADER = "linear-gradient(120deg, #1e40af 0%, #4338ca 52%, #6d28d9 100%)";
 
 const DEX_NAME = "Dr. Dex";
 const DEX_TAGLINE = "AI clinical assistant";
@@ -32,6 +37,13 @@ const SUGGESTED = [
   "What should I follow up on today?",
 ];
 
+const CAPABILITIES = [
+  { icon: <HistoryRounded sx={{ fontSize: 15 }} />, label: "History" },
+  { icon: <MonitorHeartRounded sx={{ fontSize: 15 }} />, label: "Vitals" },
+  { icon: <MedicationRounded sx={{ fontSize: 15 }} />, label: "Medications" },
+  { icon: <DescriptionRounded sx={{ fontSize: 15 }} />, label: "Documents" },
+];
+
 function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const token = sessionStorage.getItem("hospitalAccessToken");
   const branch = sessionStorage.getItem("activeBranchId");
@@ -39,31 +51,22 @@ function authHeaders(extra: Record<string, string> = {}): Record<string, string>
 }
 
 /**
- * Dr. Dex's avatar mark — a rounded-square monogram used in the header, the
- * welcome state and beside each of Dex's chat replies. `online` adds the small
- * status dot shown in the header.
+ * Dr. Dex's orb — a circular gradient mark. `glow` adds a soft blurred halo
+ * behind it for the hero/empty state; the small variants sit beside replies.
  */
-function DexAvatar({ size = 38, online = false }: { size?: number; online?: boolean }) {
+function DexOrb({ size = 40, glow = false }: { size?: number; glow?: boolean }) {
   return (
-    <Box sx={{ position: "relative", flexShrink: 0, width: size, height: size }}>
-      <Box
-        sx={{
-          width: size, height: size,
-          borderRadius: `${Math.round(size * 0.32)}px`,
-          display: "grid", placeItems: "center",
-          bgcolor: BLUE, color: "#fff",
-          boxShadow: `0 4px 12px ${BLUE}55`,
-        }}
-      >
-        <AutoAwesomeRounded sx={{ fontSize: size * 0.52 }} />
-      </Box>
-      {online && (
-        <Box sx={{
-          position: "absolute", right: -1, bottom: -1,
-          width: size * 0.3, height: size * 0.3, borderRadius: "50%",
-          bgcolor: "#22c55e", border: "2px solid", borderColor: "background.paper",
-        }} />
+    <Box sx={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      {glow && (
+        <Box sx={{ position: "absolute", inset: -size * 0.38, borderRadius: "50%", background: GRAD, filter: "blur(18px)", opacity: 0.55 }} />
       )}
+      <Box sx={{
+        position: "relative", width: size, height: size, borderRadius: "50%",
+        display: "grid", placeItems: "center", background: GRAD, color: "#fff",
+        boxShadow: "0 6px 18px rgba(99,102,241,0.45)",
+      }}>
+        <AutoAwesomeRounded sx={{ fontSize: size * 0.5 }} />
+      </Box>
     </Box>
   );
 }
@@ -100,11 +103,11 @@ async function readSse(
 }
 
 /**
- * Dr. Dex — AI clinical assistant sidebar: a pre-consultation summary + a
- * grounded follow-up chat, both streamed (SSE) from the backend and scoped to
- * this patient's own record.
+ * Dr. Dex — AI clinical assistant: a pre-consultation summary + a grounded
+ * follow-up chat, both streamed (SSE) from the backend and scoped to this
+ * patient's own record. Rendered inside a slide-over on the consultation page.
  */
-export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
+export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: string; onCollapse?: () => void }) {
   // Summary state
   const [text, setText] = useState("");
   const [status, setStatus] = useState<Status>("idle");
@@ -207,71 +210,93 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
 
   const busy = status === "streaming";
   const hasContent = !!text;
+  const isEmpty = status === "idle" && !hasContent && messages.length === 0;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {/* ── Header ─────────────────────────────────────── */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, pb: 1.75, mb: 2, borderBottom: "1px solid", borderColor: "divider" }}>
-        <DexAvatar size={40} online />
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.paper" }}>
+      {/* ── Gradient header banner ─────────────────────── */}
+      <Box sx={{ background: GRAD_HEADER, color: "#fff", px: 2, py: 1.75, display: "flex", alignItems: "center", gap: 1.25 }}>
+        <Box sx={{ position: "relative", width: 38, height: 38, flexShrink: 0 }}>
+          <Box sx={{
+            width: 38, height: 38, borderRadius: "50%", display: "grid", placeItems: "center",
+            bgcolor: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.35)",
+          }}>
+            <AutoAwesomeRounded sx={{ fontSize: 20 }} />
+          </Box>
+          <Box sx={{ position: "absolute", right: -1, bottom: -1, width: 11, height: 11, borderRadius: "50%", bgcolor: "#22c55e", border: "2px solid #4338ca" }} />
+        </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.2, color: "text.primary", display: "flex", alignItems: "center", gap: 0.5 }}>
-            {DEX_NAME}
-          </Typography>
-          <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>{DEX_TAGLINE}</Typography>
+          <Typography sx={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.15 }}>{DEX_NAME}</Typography>
+          <Typography sx={{ fontSize: "0.72rem", opacity: 0.85 }}>{DEX_TAGLINE}</Typography>
         </Box>
         {busy && (
-          <Button size="small" variant="outlined" onClick={stop} startIcon={<StopRounded />} sx={{ textTransform: "none", color: "text.secondary", borderColor: "divider" }}>Stop</Button>
+          <Tooltip title="Stop">
+            <IconButton size="small" onClick={stop} aria-label="Stop" sx={{ color: "#fff", bgcolor: "rgba(255,255,255,0.15)", "&:hover": { bgcolor: "rgba(255,255,255,0.28)" } }}>
+              <StopRounded sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
         )}
         {!busy && hasContent && (
-          <Button size="small" variant="outlined" onClick={generate} startIcon={<ReplayRounded />} sx={{ textTransform: "none", color: BLUE, borderColor: `${BLUE}55` }}>Regenerate</Button>
+          <Tooltip title="Regenerate briefing">
+            <IconButton size="small" onClick={generate} aria-label="Regenerate" sx={{ color: "#fff", bgcolor: "rgba(255,255,255,0.15)", "&:hover": { bgcolor: "rgba(255,255,255,0.28)" } }}>
+              <ReplayRounded sx={{ fontSize: 19 }} />
+            </IconButton>
+          </Tooltip>
+        )}
+        {onCollapse && (
+          <Tooltip title="Close">
+            <IconButton size="small" onClick={onCollapse} aria-label="Close Dr. Dex" sx={{ color: "#fff", bgcolor: "rgba(255,255,255,0.15)", "&:hover": { bgcolor: "rgba(255,255,255,0.28)" } }}>
+              <KeyboardTabRounded sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
         )}
       </Box>
 
       {/* ── Scrollable content: summary + chat ─────────── */}
-      <Box sx={{ flex: 1, overflowY: "auto", pr: 0.5 }}>
+      <Box sx={{ flex: 1, overflowY: "auto", px: 2, py: 2 }}>
         {error && <Alert severity="error" variant="outlined" sx={{ mb: 1.5, borderRadius: 2 }}>{error}</Alert>}
 
-        {status === "idle" && !hasContent && messages.length === 0 && (
+        {isEmpty && (
           <Fade in>
-            <Box sx={{ textAlign: "center", py: 4, px: 2 }}>
-              <Box sx={{ display: "grid", placeItems: "center", mb: 2 }}>
-                <Box sx={{ p: 1.25, borderRadius: "50%", bgcolor: `${BLUE}0a` }}>
-                  <DexAvatar size={60} />
-                </Box>
-              </Box>
-              <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", mb: 0.5 }}>Hi, I'm {DEX_NAME}</Typography>
-              <Typography sx={{ ...typeScale.body, color: "text.secondary", maxWidth: 300, mx: "auto", mb: 2.5 }}>
-                I'll review this patient's history, vitals, medications and documents and brief you in seconds — or answer any clinical question you have.
+            <Box sx={{ textAlign: "center", px: 1, minHeight: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+              <DexOrb size={74} glow />
+              <Typography sx={{ fontWeight: 800, fontSize: "1.2rem", mt: 3, mb: 0.75 }}>Hi, I'm {DEX_NAME}</Typography>
+              <Typography sx={{ ...typeScale.body, color: "text.secondary", maxWidth: 320, mb: 3 }}>
+                Your clinical co-pilot. I'll review this patient's history, vitals, medications and documents and brief you in seconds — or answer any question you have.
               </Typography>
-              <Box sx={{ display: "flex", justifyContent: "center", gap: 0.75, flexWrap: "wrap", mb: 3 }}>
-                {[
-                  { icon: <HistoryRounded sx={{ fontSize: 15 }} />, label: "History" },
-                  { icon: <MonitorHeartRounded sx={{ fontSize: 15 }} />, label: "Vitals" },
-                  { icon: <MedicationRounded sx={{ fontSize: 15 }} />, label: "Medications" },
-                  { icon: <DescriptionRounded sx={{ fontSize: 15 }} />, label: "Documents" },
-                ].map((c) => (
-                  <Chip key={c.label} icon={c.icon} label={c.label} size="small" sx={{ bgcolor: `${BLUE}12`, color: BLUE_DARK, fontWeight: 600, "& .MuiChip-icon": { color: BLUE } }} />
-                ))}
-              </Box>
-              <Button variant="contained" size="large" onClick={generate} disabled={!patientId} startIcon={<AutoAwesomeRounded />}
-                sx={{ textTransform: "none", fontWeight: 700, px: 3, borderRadius: 2, bgcolor: BLUE, "&:hover": { bgcolor: BLUE_DARK } }}>
+              <Button
+                variant="contained" size="large" onClick={generate} disabled={!patientId} startIcon={<AutoAwesomeRounded />}
+                sx={{
+                  textTransform: "none", fontWeight: 700, fontSize: "0.95rem", px: 3.5, py: 1.15, borderRadius: 99,
+                  background: GRAD, boxShadow: "0 10px 24px rgba(99,102,241,0.4)",
+                  "&:hover": { background: GRAD, filter: "brightness(1.06)", boxShadow: "0 12px 28px rgba(99,102,241,0.5)" },
+                  "&.Mui-disabled": { background: "action.disabledBackground", color: "action.disabled", boxShadow: "none" },
+                }}
+              >
                 Generate briefing
               </Button>
+              <Box sx={{ display: "flex", justifyContent: "center", gap: 0.75, flexWrap: "wrap", mt: 3, maxWidth: 320 }}>
+                {CAPABILITIES.map((c) => (
+                  <Chip key={c.label} icon={c.icon} label={c.label} size="small"
+                    sx={{ bgcolor: `${BLUE}12`, color: BLUE_DARK, fontWeight: 600, "& .MuiChip-icon": { color: BLUE } }} />
+                ))}
+              </Box>
             </Box>
           </Fade>
         )}
 
         {busy && !hasContent && (
-          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 5 }}>
-            <HeartbeatLoader size={80} />
+          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100%" }}>
+            <DexOrb size={56} glow />
+            <HeartbeatLoader size={60} />
             <Typography sx={{ ...typeScale.body, color: "text.secondary", mt: 1 }}>{DEX_NAME} is reviewing the record…</Typography>
           </Box>
         )}
 
         {hasContent && (
           <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
-            <DexAvatar size={26} />
-            <Box sx={{ flex: 1, minWidth: 0 }}>
+            <DexOrb size={28} />
+            <Box sx={{ flex: 1, minWidth: 0, p: 1.5, borderRadius: 3, borderTopLeftRadius: 6, bgcolor: "action.hover" }}>
               <SummaryContent text={text} />
               {busy && <StreamCursor />}
             </Box>
@@ -280,15 +305,15 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
 
         {/* Chat transcript */}
         {messages.length > 0 && (
-          <Box sx={{ mt: hasContent ? 2.5 : 0, pt: hasContent ? 2 : 0, borderTop: hasContent ? "1px dashed" : "none", borderColor: "divider" }}>
+          <Box sx={{ mt: hasContent ? 2.5 : 0 }}>
             {messages.map((m, i) => (
               <Box key={i} sx={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start", alignItems: "flex-start", gap: 1, mb: 1.5 }}>
-                {m.role === "assistant" && <DexAvatar size={26} />}
+                {m.role === "assistant" && <DexOrb size={28} />}
                 <Box sx={{
-                  maxWidth: "84%", px: 1.5, py: 1, borderRadius: 2.5,
+                  maxWidth: "82%", px: 1.5, py: 1.15, borderRadius: 3,
                   ...(m.role === "user"
-                    ? { bgcolor: BLUE, color: "#fff", borderBottomRightRadius: 6 }
-                    : { bgcolor: "action.hover", color: "text.primary", borderBottomLeftRadius: 6 }),
+                    ? { background: GRAD, color: "#fff", borderBottomRightRadius: 6, boxShadow: "0 4px 12px rgba(99,102,241,0.3)" }
+                    : { bgcolor: "action.hover", color: "text.primary", borderTopLeftRadius: 6 }),
                 }}>
                   {m.role === "user"
                     ? <Typography sx={{ ...typeScale.body, color: "#fff", whiteSpace: "pre-wrap" }}>{m.content}</Typography>
@@ -306,14 +331,14 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
       </Box>
 
       {/* ── Quick prompts + free-form question ─────────── */}
-      <Box sx={{ mt: 1.5 }}>
-        <Box sx={{ display: "flex", gap: 0.75, overflowX: "auto", pb: 0.75, mb: 1, "&::-webkit-scrollbar": { height: 4 } }}>
+      <Box sx={{ px: 2, pt: 1 }}>
+        <Box sx={{ display: "flex", gap: 0.75, overflowX: "auto", pb: 1, "&::-webkit-scrollbar": { height: 4 }, "&::-webkit-scrollbar-thumb": { bgcolor: "divider", borderRadius: 4 } }}>
           {SUGGESTED.map((q) => (
             <Chip
-              key={q} label={q} size="small" variant="outlined" clickable
+              key={q} label={q} size="small" clickable
               onClick={() => sendChat(q)}
               disabled={chatBusy || !patientId}
-              sx={{ flexShrink: 0, borderColor: `${BLUE}44`, color: BLUE_DARK, bgcolor: `${BLUE}0d`, fontWeight: 600, "&:hover": { bgcolor: `${BLUE}1a` } }}
+              sx={{ flexShrink: 0, border: "1px solid", borderColor: `${BLUE}33`, color: BLUE_DARK, bgcolor: `${BLUE}0d`, fontWeight: 600, "&:hover": { bgcolor: `${BLUE}1a`, borderColor: `${BLUE}66` } }}
             />
           ))}
         </Box>
@@ -331,24 +356,25 @@ export default function AiSummaryPanel({ patientId }: { patientId?: string }) {
             fullWidth
             multiline
             maxRows={4}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.default", ...typeScale.body } }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.default", ...typeScale.body, "& fieldset": { borderColor: "divider" }, "&.Mui-focused fieldset": { borderColor: BLUE } } }}
           />
           <IconButton
             type="submit"
             disabled={chatBusy || !patientId || !input.trim()}
-            sx={{ bgcolor: BLUE, color: "#fff", borderRadius: 2.5, width: 40, height: 40, "&:hover": { bgcolor: BLUE_DARK }, "&.Mui-disabled": { bgcolor: "action.disabledBackground", color: "action.disabled" } }}
+            aria-label="Send"
+            sx={{ background: GRAD, color: "#fff", borderRadius: "50%", width: 42, height: 42, flexShrink: 0, boxShadow: "0 4px 12px rgba(99,102,241,0.35)", "&:hover": { background: GRAD, filter: "brightness(1.06)" }, "&.Mui-disabled": { background: "action.disabledBackground", color: "action.disabled", boxShadow: "none" } }}
           >
             <SendRounded sx={{ fontSize: 20 }} />
           </IconButton>
         </Box>
-      </Box>
 
-      {/* ── Disclaimer ─────────────────────────────────── */}
-      <Box sx={{ mt: 1.25, display: "flex", gap: 1, alignItems: "flex-start", p: 1, borderRadius: 2, bgcolor: "action.hover" }}>
-        <InfoOutlined sx={{ fontSize: 15, color: "text.secondary", mt: "1px" }} />
-        <Typography sx={{ ...typeScale.caption }}>
-          {DEX_NAME} is AI decision support — verify against the record. Not a diagnosis or treatment order.
-        </Typography>
+        {/* ── Disclaimer ─────────────────────────────────── */}
+        <Box sx={{ mt: 1.25, mb: 2, display: "flex", gap: 1, alignItems: "flex-start", p: 1, borderRadius: 2, bgcolor: "action.hover" }}>
+          <InfoOutlined sx={{ fontSize: 15, color: "text.secondary", mt: "1px" }} />
+          <Typography sx={{ ...typeScale.caption }}>
+            {DEX_NAME} is AI decision support — verify against the record. Not a diagnosis or treatment order.
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );

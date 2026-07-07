@@ -2,13 +2,14 @@ import { ACCENTS } from "../../styles/accents";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Grid, TextField, Tabs, Tab, Button,
+  Box, Typography, Paper, Grid, TextField, Tabs, Tab, Button, MenuItem,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer, Chip,
 } from "@mui/material";
 import {
-  PrintRounded, EventRounded, CheckCircleRounded, CancelRounded, PaymentsRounded,
+  EventRounded, CheckCircleRounded, CancelRounded, PaymentsRounded,
   PersonAddRounded, TrendingUpRounded, AccessTimeRounded, ReplayRounded, AccountBalanceWalletRounded,
   HotelRounded, LocalHotelRounded, MeetingRoomRounded, CallSplitRounded, MedicalInformationRounded,
+  FileDownloadRounded,
 } from "@mui/icons-material";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
@@ -18,6 +19,7 @@ import { axiosInstance } from "../../api/axios";
 import PageLoader from "../../components/PageLoader";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
+import { exportTableToExcel } from "../../utils/exportExcel";
 import dayjs from "dayjs";
 
 const ACCENT = ACCENTS.reception;
@@ -51,24 +53,6 @@ function ChartCard({ title, children, height = 280, empty = false }: { title: st
 
 const axisProps = { tick: { fontSize: 12, fill: "#94a3b8" }, stroke: "#cbd5e1" } as any;
 
-function printRegion(node: HTMLElement | null, title: string) {
-  if (!node) return;
-  const headStyles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map((el) => el.outerHTML).join("");
-  const iframe = document.createElement("iframe");
-  iframe.setAttribute("aria-hidden", "true");
-  Object.assign(iframe.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" });
-  document.body.appendChild(iframe);
-  const doc = iframe.contentWindow?.document;
-  if (!doc) { document.body.removeChild(iframe); return; }
-  doc.open();
-  doc.write(`<!doctype html><html><head><title>${title}</title>${headStyles}<style>@media print{@page{margin:1cm}body{font-family:Inter,Arial,sans-serif}}</style></head><body><h2 style="font-family:Inter,Arial,sans-serif">${title}</h2>${node.innerHTML}</body></html>`);
-  doc.close();
-  const win = iframe.contentWindow!;
-  const cleanup = () => { if (iframe.parentNode) document.body.removeChild(iframe); };
-  win.onafterprint = cleanup;
-  setTimeout(() => { win.focus(); win.print(); setTimeout(cleanup, 1000); }, 350);
-}
-
 export default function Reports() {
   const [tab, setTab] = useState(0);
   return (
@@ -83,6 +67,9 @@ export default function Reports() {
           <Tab icon={<PaymentsRounded fontSize="small" />} iconPosition="start" label="Collection Report" />
           <Tab icon={<HotelRounded fontSize="small" />} iconPosition="start" label="IPD Census" />
           <Tab icon={<CallSplitRounded fontSize="small" />} iconPosition="start" label="Referrals by Doctor" />
+          <Tab icon={<PersonAddRounded fontSize="small" />} iconPosition="start" label="OP Registration" />
+          <Tab icon={<AccountBalanceWalletRounded fontSize="small" />} iconPosition="start" label="OP Bills" />
+          <Tab icon={<MedicalInformationRounded fontSize="small" />} iconPosition="start" label="Diagnosis-Wise" />
         </Tabs>
       </Paper>
 
@@ -91,27 +78,128 @@ export default function Reports() {
       {tab === 2 && <Collection />}
       {tab === 3 && <Census />}
       {tab === 4 && <ReferralsByDoctor />}
+      {tab === 5 && <OpRegistration />}
+      {tab === 6 && <OpBills />}
+      {tab === 7 && <DiagnosisWise />}
+    </Box>
+  );
+}
+
+// ── OP Registration ──────────────────────────────────────────────────────────
+export function OpRegistration() {
+  const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
+  const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
+  const ref = useRef<HTMLDivElement>(null);
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["report-op-registration", from, to],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/op-registration", { params: { from, to } })).data.data,
+  });
+  const rows: any[] = data?.rows ?? [];
+  return (
+    <Box>
+      <Toolbar>
+        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
+        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
+      </Toolbar>
+      {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+        <Box ref={ref}>
+          <Grid container spacing={2} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="Registrations" value={String(data.totals.registrations)} color={ACCENT} /></Grid>
+          </Grid>
+          <SimpleTable title="Registered patients" head={["UHID", "Name", "Phone", "Registered", "Referral"]}
+            rows={rows.map((r) => [r.uhid, r.name, r.phone, dayjs(r.registeredOn).format("DD MMM YYYY"), r.referral])} />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ── OP Bills ─────────────────────────────────────────────────────────────────
+export function OpBills() {
+  const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
+  const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
+  const ref = useRef<HTMLDivElement>(null);
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["report-op-bills", from, to],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/op-bills", { params: { from, to } })).data.data,
+  });
+  const rows: any[] = data?.rows ?? [];
+  return (
+    <Box>
+      <Toolbar>
+        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
+        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
+      </Toolbar>
+      {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+        <Box ref={ref}>
+          <Grid container spacing={2} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PaymentsRounded />} label="Invoices" value={String(data.totals.invoices)} color={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Billed" value={inr(data.totals.billed)} color="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PaymentsRounded />} label="Collected" value={inr(data.totals.collected)} color="#10b981" /></Grid>
+          </Grid>
+          <SimpleTable title="OPD invoices" head={["Invoice", "Patient", "UHID", "Date", "Net", "Paid", "Balance", "Status"]}
+            rows={rows.map((r) => [r.invoiceNumber, r.patientName, r.uhid, dayjs(r.invoiceDate).format("DD MMM YYYY"), inr(r.netAmount), inr(r.paidAmount), inr(r.balance), r.statusLabel])} />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ── Diagnosis-Wise ───────────────────────────────────────────────────────────
+export function DiagnosisWise() {
+  const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
+  const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
+  const ref = useRef<HTMLDivElement>(null);
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["report-diagnosis-wise", from, to],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/diagnosis-wise", { params: { from, to } })).data.data,
+  });
+  const rows: any[] = data?.rows ?? [];
+  return (
+    <Box>
+      <Toolbar>
+        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
+        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
+      </Toolbar>
+      {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+        <Box ref={ref}>
+          <Grid container spacing={2} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<MedicalInformationRounded />} label="Consultations" value={String(data.totals.consultations)} color={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<TrendingUpRounded />} label="Distinct diagnoses" value={String(data.totals.distinctDiagnoses)} color="#8b5cf6" /></Grid>
+          </Grid>
+          <SimpleTable title="Diagnoses" head={["Diagnosis", "Consultations"]} rows={rows.map((r) => [r.diagnosis, String(r.count)])} />
+        </Box>
+      )}
     </Box>
   );
 }
 
 // ── Referrals by Doctor ──────────────────────────────────────────────────────
-function ReferralsByDoctor() {
+export function ReferralsByDoctor() {
   const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
   const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
+  const [type, setType] = useState("");
+  const [referrerId, setReferrerId] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+  const { data: opts } = useFilterOptions();
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["report-referrals", from, to],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/referrals", { params: { from, to } })).data.data,
+    queryKey: ["report-referrals", from, to, type, referrerId],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/referrals", {
+      params: { from, to, type: type || undefined, referrerId: referrerId || undefined },
+    })).data.data,
   });
   const s = data?.summary;
   const rows: any[] = data?.rows ?? [];
+  const clear = () => { setType(""); setReferrerId(""); };
+  const hasFilters = !!(type || referrerId);
 
   return (
     <Box>
-      <Toolbar onPrint={() => printRegion(ref.current, `Referrals by Doctor — ${from} to ${to}`)}>
+      <Toolbar onClear={hasFilters ? clear : undefined}>
         <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
         <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
+        <FilterSelect label="Type" value={type} onChange={(v) => { setType(v); if (v === "EXTERNAL") setReferrerId(""); }} options={opts?.referralTypes} width={150} />
+        <FilterSelect label="Referring doctor" value={referrerId} onChange={setReferrerId} options={opts?.doctors} width={200} />
       </Toolbar>
 
       {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
@@ -145,21 +233,24 @@ function ReferralsByDoctor() {
 }
 
 // ── IPD Census ───────────────────────────────────────────────────────────────
-function Census() {
+export function Census() {
   const [from, setFrom] = useState(dayjs().format("YYYY-MM-DD"));
   const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
+  const [wardId, setWardId] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+  const { data: opts } = useFilterOptions();
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["report-census", from, to],
-    queryFn: async () => (await axiosInstance.get("/ipd/census", { params: { from, to } })).data.data,
+    queryKey: ["report-census", from, to, wardId],
+    queryFn: async () => (await axiosInstance.get("/ipd/census", { params: { from, to, wardId: wardId || undefined } })).data.data,
   });
   const beds = data?.beds;
 
   return (
     <Box>
-      <Toolbar onPrint={() => printRegion(ref.current, `IPD Census — ${from} to ${to}`)}>
+      <Toolbar onClear={wardId ? () => setWardId("") : undefined}>
         <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
         <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
+        <FilterSelect label="Ward" value={wardId} onChange={setWardId} options={opts?.wards} />
       </Toolbar>
 
       {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
@@ -206,19 +297,30 @@ function Census() {
 }
 
 // ── Daily OPD ────────────────────────────────────────────────────────────────
-function DailyOpd() {
+export function DailyOpd() {
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const [doctorId, setDoctorId] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [statusId, setStatusId] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+  const { data: opts } = useFilterOptions();
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["report-daily-opd", date],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/daily-opd", { params: { date } })).data.data,
+    queryKey: ["report-daily-opd", date, doctorId, departmentId, statusId],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/daily-opd", {
+      params: { date, doctorId: doctorId || undefined, departmentId: departmentId || undefined, statusId: statusId || undefined },
+    })).data.data,
   });
   const t = data?.totals;
+  const clear = () => { setDoctorId(""); setDepartmentId(""); setStatusId(""); };
+  const hasFilters = !!(doctorId || departmentId || statusId);
 
   return (
     <Box>
-      <Toolbar onPrint={() => printRegion(ref.current, `Daily OPD Summary — ${dayjs(date).format("DD MMM YYYY")}`)}>
+      <Toolbar onClear={hasFilters ? clear : undefined}>
         <TextField type="date" size="small" label="Date" InputLabelProps={{ shrink: true }} value={date} onChange={(e) => setDate(e.target.value)} sx={{ minWidth: 180 }} />
+        <FilterSelect label="Doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
+        <FilterSelect label="Department" value={departmentId} onChange={setDepartmentId} options={opts?.departments} />
+        <FilterSelect label="Status" value={statusId} onChange={setStatusId} options={opts?.appointmentStatuses} />
       </Toolbar>
 
       {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
@@ -265,21 +367,32 @@ function DailyOpd() {
 }
 
 // ── Appointment Analytics ────────────────────────────────────────────────────
-function Analytics() {
+export function Analytics() {
   const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
   const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
+  const [doctorId, setDoctorId] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [statusId, setStatusId] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+  const { data: opts } = useFilterOptions();
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["report-analytics", from, to],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/appointment-analytics", { params: { from, to } })).data.data,
+    queryKey: ["report-analytics", from, to, doctorId, departmentId, statusId],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/appointment-analytics", {
+      params: { from, to, doctorId: doctorId || undefined, departmentId: departmentId || undefined, statusId: statusId || undefined },
+    })).data.data,
   });
   const t = data?.totals;
+  const clear = () => { setDoctorId(""); setDepartmentId(""); setStatusId(""); };
+  const hasFilters = !!(doctorId || departmentId || statusId);
 
   return (
     <Box>
-      <Toolbar onPrint={() => printRegion(ref.current, `Appointment Analytics — ${from} to ${to}`)}>
+      <Toolbar onClear={hasFilters ? clear : undefined}>
         <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
         <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
+        <FilterSelect label="Doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
+        <FilterSelect label="Department" value={departmentId} onChange={setDepartmentId} options={opts?.departments} />
+        <FilterSelect label="Status" value={statusId} onChange={setStatusId} options={opts?.appointmentStatuses} />
       </Toolbar>
 
       {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
@@ -338,21 +451,30 @@ function Analytics() {
 }
 
 // ── Collection ───────────────────────────────────────────────────────────────
-function Collection() {
+export function Collection() {
   const [from, setFrom] = useState(dayjs().format("YYYY-MM-DD"));
   const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
+  const [paymentMethodId, setPaymentMethodId] = useState("");
+  const [collectedBy, setCollectedBy] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+  const { data: opts } = useFilterOptions();
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["report-collection", from, to],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/collection", { params: { from, to } })).data.data,
+    queryKey: ["report-collection", from, to, paymentMethodId, collectedBy],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/collection", {
+      params: { from, to, paymentMethodId: paymentMethodId || undefined, collectedBy: collectedBy || undefined },
+    })).data.data,
   });
   const t = data?.totals;
+  const clear = () => { setPaymentMethodId(""); setCollectedBy(""); };
+  const hasFilters = !!(paymentMethodId || collectedBy);
 
   return (
     <Box>
-      <Toolbar onPrint={() => printRegion(ref.current, `Collection Report — ${from} to ${to}`)}>
+      <Toolbar onClear={hasFilters ? clear : undefined}>
         <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
         <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
+        <FilterSelect label="Payment method" value={paymentMethodId} onChange={setPaymentMethodId} options={opts?.paymentMethods} />
+        <FilterSelect label="Collector" value={collectedBy} onChange={setCollectedBy} options={opts?.collectors} width={200} />
       </Toolbar>
 
       {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
@@ -400,13 +522,38 @@ function Collection() {
   );
 }
 
+// ── Filters ──────────────────────────────────────────────────────────────────
+type Opt = { id: string | number; name: string };
+type FilterOptions = {
+  doctors: Opt[]; departments: Opt[]; appointmentStatuses: Opt[];
+  paymentMethods: Opt[]; collectors: Opt[]; wards: Opt[]; referralTypes: Opt[];
+};
+
+// Shared across tabs — react-query dedupes by key, so it's fetched once.
+function useFilterOptions() {
+  return useQuery<FilterOptions>({
+    queryKey: ["report-filter-options"],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/filter-options")).data.data,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+function FilterSelect({ label, value, onChange, options, width = 180 }: { label: string; value: string; onChange: (v: string) => void; options?: Opt[]; width?: number }) {
+  return (
+    <TextField select size="small" label={label} value={value} onChange={(e) => onChange(e.target.value)} sx={{ minWidth: width }}>
+      <MenuItem value=""><em>All</em></MenuItem>
+      {(options ?? []).map((o) => <MenuItem key={String(o.id)} value={String(o.id)}>{o.name}</MenuItem>)}
+    </TextField>
+  );
+}
+
 // ── Small shared bits ────────────────────────────────────────────────────────
-function Toolbar({ children, onPrint }: { children: React.ReactNode; onPrint: () => void }) {
+function Toolbar({ children, onClear }: { children: React.ReactNode; onClear?: () => void }) {
   return (
     <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, flexWrap: "wrap", alignItems: "center" }}>
       {children}
       <Box sx={{ flex: 1 }} />
-      <Button variant="outlined" startIcon={<PrintRounded />} onClick={onPrint} sx={{ textTransform: "none", borderColor: "divider", color: "text.secondary" }}>Print</Button>
+      {onClear && <Button variant="text" onClick={onClear} sx={{ textTransform: "none", color: "text.secondary" }}>Clear</Button>}
     </Box>
   );
 }
@@ -417,7 +564,14 @@ function Empty() { return <Box sx={{ display: "flex", alignItems: "center", just
 function SimpleTable({ title, head, rows }: { title: string; head: string[]; rows: string[][] }) {
   return (
     <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.primary", mb: 1.5 }}>{title}</Typography>
+      <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.primary" }}>{title}</Typography>
+        <Box sx={{ flex: 1 }} />
+        {rows.length > 0 && (
+          <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />} onClick={() => exportTableToExcel(title, head, rows)}
+            sx={{ textTransform: "none", color: "#0891b2" }}>Excel</Button>
+        )}
+      </Box>
       {rows.length === 0 ? (
         <Typography variant="body2" sx={{ color: "text.secondary", py: 2, textAlign: "center" }}>No data</Typography>
       ) : (

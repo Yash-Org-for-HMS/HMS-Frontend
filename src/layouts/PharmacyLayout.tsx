@@ -28,6 +28,7 @@ import {
   PointOfSaleRounded,
   LogoutRounded,
   LocalHospitalRounded,
+  AssessmentRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import BranchSwitcher from "../components/BranchSwitcher";
@@ -54,6 +55,7 @@ export default function PharmacyLayout() {
     { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/pharmacy/medicines", section: "Inventory" },
     { text: "Suppliers", icon: <LocalShippingRounded />, path: "/pharmacy/suppliers", section: "Inventory" },
     { text: "Inventory & POs", icon: <InventoryRounded />, path: "/pharmacy/inventory", section: "Inventory" },
+    { text: "Reports", icon: <AssessmentRounded />, path: "/pharmacy/reports", section: "Reports" },
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);

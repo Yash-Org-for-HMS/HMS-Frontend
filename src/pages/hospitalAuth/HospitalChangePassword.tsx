@@ -26,7 +26,7 @@ export default function HospitalChangePassword() {
 
   const { login } = useHospitalAuth();
   const navigate = useNavigate();
-  const tempToken = localStorage.getItem("hospitalTempToken");
+  const tempToken = sessionStorage.getItem("hospitalTempToken");
 
   useEffect(() => {
     if (!tempToken) {
@@ -52,7 +52,7 @@ export default function HospitalChangePassword() {
       });
 
       const data = response.data.data;
-      localStorage.removeItem("hospitalTempToken");
+      sessionStorage.removeItem("hospitalTempToken");
 
       // Login success
       login(
