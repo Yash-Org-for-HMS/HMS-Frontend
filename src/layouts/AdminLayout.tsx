@@ -36,6 +36,7 @@ import {
   SecurityRounded,
   HistoryRounded,
   NotificationsActiveRounded,
+  AssessmentRounded,
 } from "@mui/icons-material";
 import { useAuth } from "../contexts/AuthContext";
 import SidebarHeader from "../components/layout/SidebarHeader";
@@ -63,6 +64,7 @@ export default function AdminLayout() {
       heading: t("nav.group.overview", "Overview"),
       items: [
         { text: t("nav.dashboard"), icon: <DashboardRounded />, path: "/" },
+        { text: t("nav.reports", "Reports"), icon: <AssessmentRounded />, path: "/reports" },
         { text: "Action Needed", icon: <NotificationsActiveRounded />, path: "/onboarding" },
       ],
     },

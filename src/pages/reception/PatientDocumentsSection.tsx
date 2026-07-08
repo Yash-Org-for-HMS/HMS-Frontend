@@ -15,7 +15,7 @@ import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
 
-export default function PatientDocumentsSection({ patientId }: { patientId: string }) {
+export default function PatientDocumentsSection({ patientId, readOnly = false }: { patientId: string; readOnly?: boolean }) {
   const toast = useToast();
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -93,14 +93,16 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
         <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>
           Patient Documents
         </Typography>
-        <Button 
-          variant="contained" 
-          startIcon={<CloudUploadRounded />}
-          onClick={() => setUploadOpen(true)}
-          sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" }, textTransform: "none", fontWeight: 600 }}
-        >
-          Upload Document
-        </Button>
+        {!readOnly && (
+          <Button
+            variant="contained"
+            startIcon={<CloudUploadRounded />}
+            onClick={() => setUploadOpen(true)}
+            sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" }, textTransform: "none", fontWeight: 600 }}
+          >
+            Upload Document
+          </Button>
+        )}
       </Box>
 {loading ? (
         <PageLoader />
@@ -140,13 +142,15 @@ export default function PatientDocumentsSection({ patientId }: { patientId: stri
                   >
                     <VisibilityRounded fontSize="small" />
                   </IconButton>
-                  <IconButton 
-                    size="small" 
-                    onClick={() => handleDelete(doc.patientDocumentId)}
-                    sx={{ color: "text.secondary", "&:hover": { color: "#ef4444" } }}
-                  >
-                    <DeleteRounded fontSize="small" />
-                  </IconButton>
+                  {!readOnly && (
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDelete(doc.patientDocumentId)}
+                      sx={{ color: "text.secondary", "&:hover": { color: "#ef4444" } }}
+                    >
+                      <DeleteRounded fontSize="small" />
+                    </IconButton>
+                  )}
                 </CardActions>
               </Card>
             </Grid>

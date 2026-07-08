@@ -31,6 +31,7 @@ import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import HeartbeatLoader from "../../../components/HeartbeatLoader";
 import PageLoader from "../../../components/PageLoader";
+import { validate, hasErrors, required, isEmail, isPhone, minLen, match, type Errors } from "../../../utils/validation";
 
 interface Role {
   roleId: string;
@@ -120,6 +121,7 @@ export default function UserForm() {
     initialPassword: "",
     confirmPassword: "",
   });
+  const [errors, setErrors] = useState<Errors<typeof formData>>({});
 
   const { data: userData, isLoading: userLoading, isError: userIsError, error: userError, refetch: refetchUser } = useQuery({
     queryKey: ["hospital-user", id],
@@ -165,20 +167,31 @@ export default function UserForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => (prev[name as keyof typeof formData] ? { ...prev, [name]: undefined } : prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Validate passwords if provided during creation
+
+    // Identity fields live on tab 0; password fields on tab 3. Password rules
+    // only apply when creating with a supplied password (blank = server default).
+    const rules: Parameters<typeof validate<typeof formData>>[1] = {
+      firstName: [required("First name")],
+      lastName: [required("Last name")],
+      email: [required("Email"), isEmail],
+      phone: [isPhone],
+    };
     if (!isEditing && formData.initialPassword) {
-      if (formData.initialPassword.length < 6) {
-        toast.error("Password must be at least 6 characters.");
-        return;
-      }
-      if (formData.initialPassword !== formData.confirmPassword) {
-        toast.error("Passwords do not match.");
-        return;
-      }
+      rules.initialPassword = [minLen(6, "Password")];
+      rules.confirmPassword = [match(formData.initialPassword, "Passwords")];
+    }
+    const found = validate(formData, rules);
+    if (hasErrors(found)) {
+      setErrors(found);
+      const onTab0 = !!(found.firstName || found.lastName || found.email || found.phone);
+      setTabValue(onTab0 ? 0 : 3);
+      toast.error("Please fix the highlighted fields.");
+      return;
     }
 
     setLoading(true);
@@ -275,10 +288,10 @@ export default function UserForm() {
             <TabPanel value={tabValue} index={0}>
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField label="First Name" name="firstName" value={formData.firstName} onChange={handleChange} required {...textFieldProps} />
+                  <TextField label="First Name" name="firstName" value={formData.firstName} onChange={handleChange} required error={!!errors.firstName} helperText={errors.firstName} {...textFieldProps} />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField label="Last Name" name="lastName" value={formData.lastName} onChange={handleChange} required {...textFieldProps} />
+                  <TextField label="Last Name" name="lastName" value={formData.lastName} onChange={handleChange} required error={!!errors.lastName} helperText={errors.lastName} {...textFieldProps} />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
@@ -289,13 +302,14 @@ export default function UserForm() {
                     onChange={handleChange}
                     required
                     disabled={isEditing}
-                    helperText={!isEditing ? "This will be the login email" : "Email cannot be changed"}
+                    error={!!errors.email}
+                    helperText={errors.email || (!isEditing ? "This will be the login email" : "Email cannot be changed")}
                     {...textFieldProps}
                     FormHelperTextProps={{ style: { color: "text.secondary" } }}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField label="Phone" name="phone" value={formData.phone} onChange={handleChange} {...textFieldProps} />
+                  <TextField label="Phone" name="phone" value={formData.phone} onChange={handleChange} error={!!errors.phone} helperText={errors.phone} {...textFieldProps} />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
@@ -422,6 +436,8 @@ export default function UserForm() {
                       value={formData.initialPassword}
                       onChange={handleChange}
                       placeholder="Min 6 characters (or leave blank for default)"
+                      error={!!errors.initialPassword}
+                      helperText={errors.initialPassword}
                       InputLabelProps={{ style: { color: "text.secondary" } }}
                       InputProps={{
                         endAdornment: (
@@ -451,6 +467,8 @@ export default function UserForm() {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="Repeat the password"
+                      error={!!errors.confirmPassword}
+                      helperText={errors.confirmPassword}
                       InputLabelProps={{ style: { color: "text.secondary" } }}
                       InputProps={{
                         endAdornment: (

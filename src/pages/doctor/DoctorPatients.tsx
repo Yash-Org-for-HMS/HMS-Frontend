@@ -25,7 +25,12 @@ const HEAD_SX = { bgcolor: "background.paper", color: "text.secondary", fontWeig
 const DOCTOR_BLUE = ACCENTS.doctor;
 const PAGE_SIZE = 20;
 
-export default function DoctorPatients() {
+// `scope="mine"` (default) is this doctor's own caseload (patients they've had
+// appointments with). `scope="all"` is the whole hospital register, for
+// looking up any patient (e.g. a colleague's, for continuity of care) — both
+// hit the same read-only clinical profile at /doctor/patients/:id, which is
+// already hospital-scoped rather than caseload-scoped.
+export default function DoctorPatients({ scope = "mine" }: { scope?: "mine" | "all" } = {}) {
   const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -46,10 +51,11 @@ export default function DoctorPatients() {
   // Jump back to the first page whenever the sort changes.
   useEffect(() => { setPage(1); }, [orderBy, order]);
 
+  const endpoint = scope === "all" ? "/doctor/patients/all" : "/doctor/patients";
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["doctor-patients", search, page, orderBy, order],
+    queryKey: ["doctor-patients", scope, search, page, orderBy, order],
     queryFn: async () =>
-      (await axiosInstance.get("/doctor/patients", {
+      (await axiosInstance.get(endpoint, {
         params: { search, page, limit: PAGE_SIZE, sortBy: orderBy || undefined, sortOrder: order },
       })).data,
     placeholderData: keepPreviousData,
@@ -64,8 +70,10 @@ export default function DoctorPatients() {
   return (
     <Box sx={{ p: { xs: 0, md: 1 } }}>
       <PageHeader
-        title="My Patients"
-        subtitle="Patients you've consulted with — search and open a read-only clinical record."
+        title={scope === "all" ? "All Patients" : "My Patients"}
+        subtitle={scope === "all"
+          ? "Every patient registered at this hospital — search and open a read-only clinical record."
+          : "Patients you've consulted with — search and open a read-only clinical record."}
       />
 
       <TextField
@@ -111,7 +119,7 @@ export default function DoctorPatients() {
               ) : patients.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} sx={{ py: 4, borderBottom: "none" }}>
-                    <Mascot pose="nothing-here-yet" subtitle={search ? "No patients match your search." : "You haven't consulted any patients yet."} size={130} />
+                    <Mascot pose="nothing-here-yet" subtitle={search ? "No patients match your search." : scope === "all" ? "No patients registered yet." : "You haven't consulted any patients yet."} size={130} />
                   </TableCell>
                 </TableRow>
               ) : (

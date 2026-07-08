@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -15,6 +15,7 @@ import {
   TableHead,
   TableRow,
   IconButton,
+  Tooltip,
   Chip,
   TextField,
   InputAdornment,
@@ -25,6 +26,7 @@ import {
   AddRounded,
   EditRounded,
   SearchRounded,
+  LockResetRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
@@ -35,6 +37,9 @@ import FilterBar from "../../components/layout/FilterBar";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import { useServerSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { useToast } from "../../contexts/ToastContext";
+import { useConfirm } from "../../contexts/ConfirmContext";
+import CredentialDialog from "../../components/CredentialDialog";
 
 // Keep the admin list's existing sentence-case header look (the SortableHeadCell
 // default is the reception-panel uppercase style).
@@ -43,9 +48,12 @@ const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "non
 export default function SuperAdminsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [resetCreds, setResetCreds] = useState<{ email: string; temporaryPassword: string; name: string } | null>(null);
 
   // Server-side column sorting (the list is paginated, so sorting happens in the DB).
   const { orderBy, order, onSort } = useServerSort();
@@ -61,6 +69,26 @@ export default function SuperAdminsList() {
   }, [orderBy, order]);
   const admins: any[] = data?.data ?? [];
   const totalPages: number = data?.pagination?.totalPages ?? 1;
+
+  // Peer password recovery: any super admin can reset another's password —
+  // the platform-realm equivalent of the hospital admin resetting their own
+  // staff's passwords in Staff & Users. Immediately invalidates the current
+  // password, so confirm before firing.
+  const resetPassword = useMutation({
+    mutationFn: async (id: string) => (await axiosInstance.post(`/super-admins/${id}/reset-password`)).data.data,
+    onSuccess: (creds) => setResetCreds({ email: creds.email, temporaryPassword: creds.temporaryPassword, name: `${creds.firstName} ${creds.lastName}`.trim() }),
+    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to reset password"),
+  });
+
+  const handleResetPassword = async (admin: any) => {
+    const ok = await confirm({
+      title: "Reset password",
+      message: `Reset the password for ${admin.firstName} ${admin.lastName} (${admin.email})? Their current password stops working immediately — you'll get a new one-time password to share with them.`,
+      confirmText: "Reset password",
+      destructive: true,
+    });
+    if (ok) resetPassword.mutate(admin.superAdminId);
+  };
 
   return (
     <PageContainer>
@@ -164,6 +192,15 @@ export default function SuperAdminsList() {
                       />
                     </TableCell>
                     <TableCell align="right">
+                      <Tooltip title="Reset Password">
+                        <IconButton
+                          onClick={() => handleResetPassword(admin)}
+                          disabled={resetPassword.isPending}
+                          sx={{ color: "text.secondary", "&:hover": { color: "#fbbf24", bgcolor: "rgba(234,179,8,0.1)" } }}
+                        >
+                          <LockResetRounded />
+                        </IconButton>
+                      </Tooltip>
                       <IconButton onClick={() => navigate(`/super-admins/${admin.superAdminId}/edit`)} sx={{ color: "text.secondary" }}>
                         <EditRounded />
                       </IconButton>
@@ -190,6 +227,18 @@ export default function SuperAdminsList() {
           </Box>
         )}
       </Paper>
+
+      {resetCreds && (
+        <CredentialDialog
+          open={!!resetCreds}
+          onClose={() => setResetCreds(null)}
+          email={resetCreds.email}
+          password={resetCreds.temporaryPassword}
+          name={resetCreds.name}
+          title="Password Reset"
+          note="This password is shown only once. Copy it and share it with them securely."
+        />
+      )}
     </PageContainer>
   );
 }

@@ -21,6 +21,7 @@ import HeartbeatLoader from "../../components/HeartbeatLoader";
 import PageLoader from "../../components/PageLoader";
 import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
+import { validate, hasErrors, required, isNonNegativeNumber, min } from "../../utils/validation";
 
 export default function PlanForm() {
   const { t } = useTranslation();
@@ -39,6 +40,7 @@ export default function PlanForm() {
     maxStorageGb: "",
     featuresJson: [] as string[],
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { data: planData, isLoading: initialLoading, isError, error, refetch } = useQuery({
     queryKey: ["plan", id],
@@ -71,14 +73,30 @@ export default function PlanForm() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
-    setFormData({ 
-      ...formData, 
-      [name]: type === "number" ? (value === "" ? "" : parseFloat(value)) : value 
+    setFormData({
+      ...formData,
+      [name]: type === "number" ? (value === "" ? "" : parseFloat(value)) : value
     });
+    setErrors((prev) => (prev[name] ? { ...prev, [name]: "" } : prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const found = validate(formData, {
+      planName: [required("Plan name")],
+      monthlyPrice: [required("Monthly price"), isNonNegativeNumber],
+      annualPrice: [required("Annual price"), isNonNegativeNumber],
+      maxDoctors: [required("Max doctors"), min(1)],
+      maxBranches: [required("Max branches"), min(1)],
+      maxStorageGb: [required("Max storage"), min(0)],
+    });
+    if (hasErrors(found)) {
+      setErrors(found as Record<string, string>);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     setLoading(true);
     try {
       if (isEdit) {
@@ -135,7 +153,8 @@ export default function PlanForm() {
                 value={formData.planName}
                 onChange={handleChange}
                 required
-                
+                error={!!errors.planName}
+                helperText={errors.planName}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -148,7 +167,8 @@ export default function PlanForm() {
                 onChange={handleChange}
                 required
                 inputProps={{ step: "0.01", min: "0" }}
-                
+                error={!!errors.monthlyPrice}
+                helperText={errors.monthlyPrice}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -161,7 +181,8 @@ export default function PlanForm() {
                 onChange={handleChange}
                 required
                 inputProps={{ step: "0.01", min: "0" }}
-                
+                error={!!errors.annualPrice}
+                helperText={errors.annualPrice}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -174,7 +195,8 @@ export default function PlanForm() {
                 onChange={handleChange}
                 required
                 inputProps={{ min: "1" }}
-                
+                error={!!errors.maxDoctors}
+                helperText={errors.maxDoctors}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -187,7 +209,8 @@ export default function PlanForm() {
                 onChange={handleChange}
                 required
                 inputProps={{ min: "1" }}
-                
+                error={!!errors.maxBranches}
+                helperText={errors.maxBranches}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -196,6 +219,8 @@ export default function PlanForm() {
                 type="number"
                 label={t("plans.maxStorageGb", "Max Storage (GB)")}
                 name="maxStorageGb"
+                error={!!errors.maxStorageGb}
+                helperText={errors.maxStorageGb}
                 value={formData.maxStorageGb}
                 onChange={handleChange}
                 required

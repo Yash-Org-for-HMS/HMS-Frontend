@@ -21,6 +21,7 @@ import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import PageLoader from "../../../components/PageLoader";
 import CredentialDialog from "../../../components/CredentialDialog";
+import { validate, hasErrors, required, isEmail, isPhone, isNonNegativeNumber, type Errors } from "../../../utils/validation";
 
 export default function DoctorForm() {
   const navigate = useNavigate();
@@ -46,6 +47,7 @@ export default function DoctorForm() {
     qualification: "",
     experienceYears: "",
   });
+  const [errors, setErrors] = useState<Errors<typeof formData>>({});
 
   // Reference dropdowns (departments / specializations / branches).
   const { data: refData, isLoading: refLoading, isError: refIsError, error: refError, refetch: refetchRefs } = useQuery({
@@ -101,10 +103,33 @@ export default function DoctorForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => (prev[name as keyof typeof formData] ? { ...prev, [name]: undefined } : prev));
   };
+
+  // Personal fields live on tab 0, professional on tab 1 — jump to the first
+  // tab that has an error so the highlighted field is actually visible.
+  const TAB0_FIELDS = ["firstName", "lastName", "email", "phone"] as const;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const found = validate(formData, {
+      firstName: [required("First name")],
+      lastName: [required("Last name")],
+      email: [required("Email"), isEmail],
+      phone: [isPhone],
+      licenseNumber: [required("License number")],
+      consultationFee: [required("Consultation fee"), isNonNegativeNumber],
+      experienceYears: [isNonNegativeNumber],
+    });
+    if (hasErrors(found)) {
+      setErrors(found);
+      const onTab0 = TAB0_FIELDS.some((f) => found[f]);
+      setTabIndex(onTab0 ? 0 : 1);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     setLoading(true);
     try {
       if (isEditing) {
@@ -197,6 +222,8 @@ export default function DoctorForm() {
                   value={formData.firstName}
                   onChange={handleChange}
                   required
+                  error={!!errors.firstName}
+                  helperText={errors.firstName}
                   {...textFieldProps}
                 />
               </Grid>
@@ -207,6 +234,8 @@ export default function DoctorForm() {
                   value={formData.lastName}
                   onChange={handleChange}
                   required
+                  error={!!errors.lastName}
+                  helperText={errors.lastName}
                   {...textFieldProps}
                 />
               </Grid>
@@ -219,7 +248,8 @@ export default function DoctorForm() {
                   onChange={handleChange}
                   required
                   disabled={isEditing}
-                  helperText={isEditing ? "Login email can't be changed here" : "Used as the doctor's login"}
+                  error={!!errors.email}
+                  helperText={errors.email || (isEditing ? "Login email can't be changed here" : "Used as the doctor's login")}
                   {...textFieldProps}
                 />
               </Grid>
@@ -229,6 +259,8 @@ export default function DoctorForm() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
+                  error={!!errors.phone}
+                  helperText={errors.phone}
                   {...textFieldProps}
                 />
               </Grid>
@@ -274,6 +306,8 @@ export default function DoctorForm() {
                   value={formData.licenseNumber}
                   onChange={handleChange}
                   required
+                  error={!!errors.licenseNumber}
+                  helperText={errors.licenseNumber}
                   {...textFieldProps}
                 />
               </Grid>
@@ -285,6 +319,8 @@ export default function DoctorForm() {
                   value={formData.consultationFee}
                   onChange={handleChange}
                   required
+                  error={!!errors.consultationFee}
+                  helperText={errors.consultationFee}
                   {...textFieldProps}
                 />
               </Grid>
@@ -304,6 +340,8 @@ export default function DoctorForm() {
                   type="number"
                   value={formData.experienceYears}
                   onChange={handleChange}
+                  error={!!errors.experienceYears}
+                  helperText={errors.experienceYears}
                   {...textFieldProps}
                 />
               </Grid>

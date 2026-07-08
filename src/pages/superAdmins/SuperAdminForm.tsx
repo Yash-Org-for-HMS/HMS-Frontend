@@ -20,6 +20,7 @@ import HeartbeatLoader from "../../components/HeartbeatLoader";
 import PageLoader from "../../components/PageLoader";
 import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
+import { validate, hasErrors, required, isEmail, isPhone, minLen, type Errors } from "../../utils/validation";
 
 export default function SuperAdminForm() {
   const { t } = useTranslation();
@@ -37,6 +38,7 @@ export default function SuperAdminForm() {
     password: "",
     status: "active",
   });
+  const [errors, setErrors] = useState<Errors<typeof formData>>({});
 
   const { data: adminData, isLoading: initialLoading, isError, error, refetch } = useQuery({
     queryKey: ["super-admin", id],
@@ -61,10 +63,26 @@ export default function SuperAdminForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    setErrors((prev) => (prev[name as keyof typeof formData] ? { ...prev, [name]: undefined } : prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const found = validate(formData, {
+      firstName: [required("First name")],
+      lastName: [required("Last name")],
+      email: [required("Email"), isEmail],
+      phone: [isPhone],
+      // Password required on create (min 8); on edit, blank keeps the current one.
+      password: isEdit ? [] : [required("Password"), minLen(8, "Password")],
+    });
+    if (hasErrors(found)) {
+      setErrors(found);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     setLoading(true);
     try {
       const dataToSubmit = { ...formData };
@@ -126,7 +144,8 @@ export default function SuperAdminForm() {
                 value={formData.firstName}
                 onChange={handleChange}
                 required
-                
+                error={!!errors.firstName}
+                helperText={errors.firstName}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -137,7 +156,8 @@ export default function SuperAdminForm() {
                 value={formData.lastName}
                 onChange={handleChange}
                 required
-                
+                error={!!errors.lastName}
+                helperText={errors.lastName}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -149,7 +169,8 @@ export default function SuperAdminForm() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                
+                error={!!errors.email}
+                helperText={errors.email}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -159,7 +180,8 @@ export default function SuperAdminForm() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                
+                error={!!errors.phone}
+                helperText={errors.phone}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -171,8 +193,8 @@ export default function SuperAdminForm() {
                 value={formData.password}
                 onChange={handleChange}
                 required={!isEdit}
-                
-                helperText={isEdit ? "Leave blank to keep current password" : "At least 8 characters"}
+                error={!!errors.password}
+                helperText={errors.password || (isEdit ? "Leave blank to keep current password" : "At least 8 characters")}
                 FormHelperTextProps={{ sx: { color: "text.secondary" } }}
               />
             </Grid>

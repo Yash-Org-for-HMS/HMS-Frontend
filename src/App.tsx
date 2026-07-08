@@ -49,6 +49,7 @@ const RoleForm = lazy(() => import("./pages/rbac/RoleForm"));
 const UsersList = lazy(() => import("./pages/rbac/UsersList"));
 const UserForm = lazy(() => import("./pages/rbac/UserForm"));
 const AuditLogsList = lazy(() => import("./pages/auditLogs/AuditLogsList"));
+const AdminReports = lazy(() => import("./pages/reports/AdminReports"));
 
 // Hospital Admin
 const HospitalChangePassword = lazy(() => import("./pages/hospitalAuth/HospitalChangePassword"));
@@ -136,6 +137,14 @@ const el = (C: ComponentType<any>) => (
   </Suspense>
 );
 
+// Like el(), but passes props — used to reuse a page under a different shell
+// (e.g. the admin oversight routes render reception pages with basePath="/hospital").
+const elp = (C: ComponentType<any>, props: Record<string, unknown>) => (
+  <Suspense fallback={<PageSkeleton />}>
+    <C {...props} />
+  </Suspense>
+);
+
 function App() {
   return (
     <>
@@ -174,6 +183,7 @@ function App() {
             <Route path="/rbac/users/add" element={el(UserForm)} />
             <Route path="/rbac/users/edit/:id" element={el(UserForm)} />
 
+            <Route path="/reports" element={el(AdminReports)} />
             <Route path="/audit-logs" element={el(AuditLogsList)} />
           </Route>
         </Route>
@@ -217,6 +227,17 @@ function App() {
             <Route path="/hospital/form-builder/new" element={el(FormBuilder)} />
             <Route path="/hospital/form-builder/:id/edit" element={el(FormBuilder)} />
             <Route path="/hospital/audit-logs" element={el(AuditLogs)} />
+
+            {/* ── Admin oversight (read-only windows into hospital-wide activity) ──
+                Reuse the existing operational pages inside the admin shell. The
+                backend already serves H_ADMIN org-wide data for all of these. */}
+            <Route path="/hospital/patients" element={elp(PatientsList, { basePath: "/hospital" })} />
+            <Route path="/hospital/patients/:id" element={elp(PatientProfile, { readOnly: true })} />
+            <Route path="/hospital/appointments" element={el(AppointmentsList)} />
+            <Route path="/hospital/queue" element={el(QueueDashboard)} />
+            <Route path="/hospital/ipd/admissions" element={el(Admissions)} />
+            <Route path="/hospital/ipd/beds" element={el(BedBoard)} />
+            <Route path="/hospital/billing" element={el(Billing)} />
             {/* Add more hospital routes here as they are built */}
           </Route>
         </Route>
@@ -265,6 +286,7 @@ function App() {
             <Route path="/doctor/queue" element={el(DoctorQueue)} />
             <Route path="/doctor/consultation/:appointmentId" element={el(ConsultationWorkspace)} />
             <Route path="/doctor/patients" element={el(DoctorPatients)} />
+            <Route path="/doctor/all-patients" element={elp(DoctorPatients, { scope: "all" })} />
             <Route path="/doctor/results" element={el(DoctorResults)} />
             <Route path="/doctor/reports" element={el(DoctorReports)} />
             <Route path="/doctor/patients/:id" element={el(DoctorPatientProfile)} />

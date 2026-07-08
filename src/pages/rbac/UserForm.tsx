@@ -22,6 +22,7 @@ import FormHeader from "../../components/layout/FormHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import PageLoader from "../../components/PageLoader";
 import CredentialDialog from "../../components/CredentialDialog";
+import { validate, hasErrors, required, isEmail, isPhone, minLen, type Errors } from "../../utils/validation";
 
 interface Branch {
   branchId: string;
@@ -73,6 +74,7 @@ export default function UserForm() {
     password: "",
     status: "active",
   });
+  const [errors, setErrors] = useState<Errors<typeof formData>>({});
 
   // Branches available for the currently selected hospital
   const selectedHospital = hospitals.find((h) => h.hospitalId === formData.hospitalId);
@@ -135,6 +137,7 @@ export default function UserForm() {
       }
       return next;
     });
+    setErrors((prev) => (prev[name as keyof typeof formData] ? { ...prev, [name]: undefined } : prev));
   };
 
   const handleBranchChange = (e: { target: { value: unknown } }) => {
@@ -147,6 +150,21 @@ export default function UserForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const found = validate(formData, {
+      firstName: [required("First name")],
+      lastName: [required("Last name")],
+      email: [required("Email"), isEmail],
+      phone: [isPhone],
+      // Password optional here (blank = server generates a temp one); if given, min 6.
+      password: !isEdit && formData.password ? [minLen(6, "Password")] : [],
+    });
+    if (hasErrors(found)) {
+      setErrors(found);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     setSaving(true);
     try {
       const payload: any = { ...formData };
@@ -205,6 +223,8 @@ export default function UserForm() {
                 value={formData.firstName}
                 onChange={handleChange}
                 required
+                error={!!errors.firstName}
+                helperText={errors.firstName}
                 InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
@@ -224,6 +244,8 @@ export default function UserForm() {
                 value={formData.lastName}
                 onChange={handleChange}
                 required
+                error={!!errors.lastName}
+                helperText={errors.lastName}
                 InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
@@ -244,7 +266,8 @@ export default function UserForm() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                helperText="This is the user's login email. Changing it changes how they sign in."
+                error={!!errors.email}
+                helperText={errors.email || "This is the user's login email. Changing it changes how they sign in."}
                 InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
@@ -263,6 +286,8 @@ export default function UserForm() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
+                error={!!errors.phone}
+                helperText={errors.phone}
                 InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
@@ -411,6 +436,8 @@ export default function UserForm() {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Leave empty to auto-generate"
+                  error={!!errors.password}
+                  helperText={errors.password}
                   InputLabelProps={{ shrink: true, style: { color: "text.secondary" } }}
                   sx={{
                     "& .MuiOutlinedInput-root": {

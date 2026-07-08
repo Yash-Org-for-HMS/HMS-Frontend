@@ -74,7 +74,11 @@ interface Meta {
   totalPages: number;
 }
 
-export default function PatientsList() {
+// `basePath` lets the same page render under a different shell: the reception
+// panel uses the default "/reception", while the hospital-admin oversight route
+// passes "/hospital" so a patient row-click opens the profile inside the admin
+// shell instead of bouncing into the reception layout.
+export default function PatientsList({ basePath = "/reception" }: { basePath?: string } = {}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -300,7 +304,7 @@ export default function PatientsList() {
                         transition: "background 0.15s ease",
                         cursor: "pointer",
                       }}
-                      onClick={() => navigate(`/reception/patients/${patient.patientId}`)}
+                      onClick={() => navigate(`${basePath}/patients/${patient.patientId}`)}
                     >
                       {/* Patient name + email */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
@@ -414,7 +418,7 @@ export default function PatientsList() {
                         </Tooltip>
                         <Tooltip title="View profile">
                           <IconButton size="small"
-                            onClick={(e) => { e.stopPropagation(); navigate(`/reception/patients/${patient.patientId}`); }}
+                            onClick={(e) => { e.stopPropagation(); navigate(`${basePath}/patients/${patient.patientId}`); }}
                             sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6,182,212,0.08)" } }}>
                             <VisibilityRounded fontSize="small" />
                           </IconButton>

@@ -34,8 +34,17 @@ const REALMS: Record<Realm, { access: string; refresh: string; refreshUrl: strin
 
 // Hospital-portal API prefixes use the hospital token; everything else uses the
 // super-admin token. (Same rule the request interceptor has always used.)
+//
+// The trailing \b is required: without it, "/hospital" as a bare PREFIX match
+// also matches the super-admin's own "/hospitals" (list/CRUD) endpoint — "l"
+// and "s" are both word characters, so there's no boundary between them and
+// the match slips through. That misclassified every /hospitals call as the
+// hospital-PORTAL realm, which sent the wrong (nonexistent) token, 401'd, and
+// bounced the super-admin to the hospital-staff login page instead of their
+// own. \b forces a real path-segment boundary, so "/hospital/..." still
+// matches (boundary before "/") but "/hospitals" no longer does.
 function realmForUrl(url?: string): Realm {
-  if (url && /^\/(hospital|reception|doctor|nurse|lab|pharmacy|billing|ipd|vaccination)/.test(url)) {
+  if (url && /^\/(hospital|reception|doctor|nurse|lab|pharmacy|billing|ipd|vaccination)\b/.test(url)) {
     return "hospital";
   }
   return "admin";

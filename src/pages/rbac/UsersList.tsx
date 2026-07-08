@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -30,10 +30,13 @@ import {
   SearchRounded,
   EditRounded,
   DeleteRounded,
+  LockResetRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
+import { useConfirm } from "../../contexts/ConfirmContext";
+import CredentialDialog from "../../components/CredentialDialog";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
@@ -60,8 +63,10 @@ interface User extends StaffUser {
 export default function UsersList() {
   const navigate = useNavigate();
   const toast = useToast();
+  const confirm = useConfirm();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [resetCreds, setResetCreds] = useState<{ email: string; temporaryPassword: string; name: string } | null>(null);
 
   // Pagination
   const [page, setPage] = useState(0);
@@ -94,6 +99,26 @@ export default function UsersList() {
   });
   const users: User[] = data?.data ?? [];
   const total: number = data?.pagination?.total ?? 0;
+
+  // Cross-tenant password recovery: a super admin can reset any hospital
+  // staff member's password from here, mirroring what that hospital's own
+  // admin can already do in Staff & Users. Immediately invalidates the
+  // current password, so confirm before firing.
+  const resetPassword = useMutation({
+    mutationFn: async (id: string) => (await axiosInstance.post(`/rbac/users/${id}/reset-password`)).data.data,
+    onSuccess: (creds) => setResetCreds({ email: creds.email, temporaryPassword: creds.temporaryPassword, name: `${creds.firstName} ${creds.lastName}`.trim() }),
+    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to reset password"),
+  });
+
+  const handleResetPassword = async (user: User) => {
+    const ok = await confirm({
+      title: "Reset password",
+      message: `Reset the password for ${user.firstName} ${user.lastName} (${user.email})? Their current password stops working immediately — you'll get a new one-time password to share with them.`,
+      confirmText: "Reset password",
+      destructive: true,
+    });
+    if (ok) resetPassword.mutate(user.userId);
+  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -246,6 +271,15 @@ export default function UsersList() {
                       />
                     </TableCell>
                     <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
+                      <Tooltip title="Reset Password">
+                        <IconButton
+                          onClick={() => handleResetPassword(user)}
+                          disabled={resetPassword.isPending}
+                          sx={{ color: "text.secondary", "&:hover": { color: "#fbbf24", bgcolor: "rgba(234,179,8,0.1)" } }}
+                        >
+                          <LockResetRounded fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                       <Tooltip title="Edit">
                         <IconButton
                           onClick={() => navigate(`/rbac/users/edit/${user.userId}`)}
@@ -324,6 +358,18 @@ export default function UsersList() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {resetCreds && (
+        <CredentialDialog
+          open={!!resetCreds}
+          onClose={() => setResetCreds(null)}
+          email={resetCreds.email}
+          password={resetCreds.temporaryPassword}
+          name={resetCreds.name}
+          title="Password Reset"
+          note="This password is shown only once. Copy it and share it with them securely. They'll be asked to change it on next login."
+        />
+      )}
     </PageContainer>
   );
 }

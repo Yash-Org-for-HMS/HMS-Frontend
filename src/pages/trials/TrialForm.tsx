@@ -26,6 +26,7 @@ import ErrorState from "../../components/ErrorState";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import PageLoader from "../../components/PageLoader";
 import { useToast } from "../../contexts/ToastContext";
+import { validate, hasErrors, required, isEmail, type Errors } from "../../utils/validation";
 import FormHeader from "../../components/layout/FormHeader";
 
 export default function TrialForm() {
@@ -61,6 +62,7 @@ export default function TrialForm() {
     notes: "",
     autoExpire: true,
   });
+  const [errors, setErrors] = useState<Errors<typeof formData>>({});
 
   const [duration, setDuration] = useState<number | "custom">(14);
 
@@ -89,10 +91,22 @@ export default function TrialForm() {
 
   const handleChange = (e: any) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setErrors((prev) => (prev[e.target.name as keyof typeof formData] ? { ...prev, [e.target.name]: undefined } : prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const found = validate(formData, {
+      adminName: [required("Hospital admin name")],
+      adminEmail: [required("Hospital admin email"), isEmail],
+    });
+    if (hasErrors(found)) {
+      setErrors(found);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await axiosInstance.post("/trials", {
@@ -209,7 +223,9 @@ export default function TrialForm() {
                 value={formData.adminName}
                 onChange={handleChange}
                 required
-                placeholder="e.g. Dr. Asha Mehta"
+                placeholder="e.g. Dr. Yash Patel"
+                error={!!errors.adminName}
+                helperText={errors.adminName}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -221,7 +237,8 @@ export default function TrialForm() {
                 value={formData.adminEmail}
                 onChange={handleChange}
                 required
-                helperText="This becomes their login ID for the hospital portal"
+                error={!!errors.adminEmail}
+                helperText={errors.adminEmail || "This becomes their login ID for the hospital portal"}
               />
             </Grid>
 

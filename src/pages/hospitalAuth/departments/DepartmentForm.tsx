@@ -16,6 +16,7 @@ import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import PageLoader from "../../../components/PageLoader";
+import { validate, hasErrors, required, type Errors } from "../../../utils/validation";
 
 interface DepartmentType {
   departmentTypeId: number;
@@ -42,6 +43,7 @@ export default function DepartmentForm() {
     phoneExtension: "",
     opdHours: "",
   });
+  const [errors, setErrors] = useState<Errors<typeof formData>>({});
 
   const { data: departmentTypes = [] } = useQuery<DepartmentType[]>({
     queryKey: ["department-types"],
@@ -77,10 +79,22 @@ export default function DepartmentForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => (prev[name as keyof typeof formData] ? { ...prev, [name]: undefined } : prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const found = validate(formData, {
+      departmentName: [required("Department name")],
+      departmentCode: [required("Department code")],
+    });
+    if (hasErrors(found)) {
+      setErrors(found);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     setLoading(true);
     try {
       if (isEditing) {
@@ -131,6 +145,8 @@ export default function DepartmentForm() {
                 value={formData.departmentName}
                 onChange={handleChange}
                 required
+                error={!!errors.departmentName}
+                helperText={errors.departmentName}
                 InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
@@ -151,6 +167,8 @@ export default function DepartmentForm() {
                 value={formData.departmentCode}
                 onChange={handleChange}
                 required
+                error={!!errors.departmentCode}
+                helperText={errors.departmentCode}
                 InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {

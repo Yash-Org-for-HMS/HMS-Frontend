@@ -88,7 +88,13 @@ function SectionCard({ title, icon, action, children }: { title: string; icon: R
   );
 }
 
-export default function PatientProfile() {
+// `readOnly` lets the same page render as a pure view when opened from the
+// hospital-admin's oversight area (mounted at /hospital/patients/:id) — the
+// admin can watch what's happening without being able to act, per the
+// Operations section's "staff still do the work; the admin observes" design.
+// Every mutating affordance on the page (and the nested tab sections it
+// renders) is threaded through this single flag.
+export default function PatientProfile({ readOnly = false }: { readOnly?: boolean } = {}) {
   const navigate = useNavigate();
   const { id } = useParams();
   const toast = useToast();
@@ -98,7 +104,7 @@ export default function PatientProfile() {
     const hospitalUserStr = sessionStorage.getItem("hospitalUser");
     if (hospitalUserStr) userRole = JSON.parse(hospitalUserStr).role?.toLowerCase() || "";
   } catch (e) { /* ignore */ }
-  const canEdit = userRole.includes("reception") || userRole.includes("admin");
+  const canEdit = !readOnly && (userRole.includes("reception") || userRole.includes("admin"));
 
   const { data: patient, isLoading: loading, isError, error, refetch } = useQuery<Patient>({
     queryKey: ["patient", id],
@@ -252,6 +258,12 @@ export default function PatientProfile() {
           </Menu>
         </Stack>
       </Box>
+
+      {readOnly && (
+        <Alert severity="info" icon={false} sx={{ mb: 2.5, bgcolor: "rgba(8,145,178,0.06)", border: "1px solid rgba(8,145,178,0.2)", color: "text.secondary" }}>
+          Read-only oversight view — you're viewing this patient's record; booking, editing, billing, and other actions happen in the reception/clinical panels.
+        </Alert>
+      )}
 
       {successMsg && <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMsg(null)}>{successMsg}</Alert>}
 
@@ -478,12 +490,12 @@ export default function PatientProfile() {
                           <StatusChip label={inv.statusLabel} color={inv.statusColor} />
                         </TableCell>
                         <TableCell align="right" sx={{ borderColor: "divider" }}>
-                          <Button size="small" variant={Number(inv.balance) > 0 ? "contained" : "text"}
+                          <Button size="small" variant={!readOnly && Number(inv.balance) > 0 ? "contained" : "text"}
                             onClick={() => setInvoiceView(inv.invoiceId)}
-                            sx={Number(inv.balance) > 0
+                            sx={!readOnly && Number(inv.balance) > 0
                               ? { textTransform: "none", bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }
                               : { textTransform: "none", color: "#0891b2" }}>
-                            {Number(inv.balance) > 0 ? "Pay" : "View"}
+                            {!readOnly && Number(inv.balance) > 0 ? "Pay" : "View"}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -503,7 +515,7 @@ export default function PatientProfile() {
       {tab === 3 && <ClinicalRecordsSection patientId={patient.patientId} />}
 
       {/* ── Tab: Consent ── */}
-      {tab === 4 && <ConsentFormsSection patientId={patient.patientId} patientName={`${patient.firstName || ""} ${patient.lastName || ""}`.trim()} />}
+      {tab === 4 && <ConsentFormsSection patientId={patient.patientId} patientName={`${patient.firstName || ""} ${patient.lastName || ""}`.trim()} readOnly={readOnly} />}
 
       {/* ── Tab: Vaccinations ── */}
       {tab === 5 && (
@@ -512,6 +524,7 @@ export default function PatientProfile() {
           patientName={`${patient.firstName || ""} ${patient.lastName || ""}`.trim()}
           patientUhid={patient.uhidNumber}
           patientDob={patient.dateOfBirth}
+          readOnly={readOnly}
         />
       )}
 
@@ -519,12 +532,12 @@ export default function PatientProfile() {
       {tab === 6 && <SurgeriesSection patientId={patient.patientId} />}
 
       {/* ── Tab: Documents ── */}
-      {tab === 7 && <PatientDocumentsSection patientId={patient.patientId} />}
+      {tab === 7 && <PatientDocumentsSection patientId={patient.patientId} readOnly={readOnly} />}
 
       <IdCardModal open={idCardOpen} onClose={() => setIdCardOpen(false)} patient={patient} />
 
       {invoiceView && (
-        <InvoiceViewDialog open invoiceId={invoiceView} onClose={() => setInvoiceView(null)} onChanged={() => refetchBilling()} />
+        <InvoiceViewDialog open invoiceId={invoiceView} onClose={() => setInvoiceView(null)} onChanged={() => refetchBilling()} readOnly={readOnly} />
       )}
 
       {referralOpen && (

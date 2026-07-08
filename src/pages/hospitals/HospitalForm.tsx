@@ -27,6 +27,7 @@ import HeartbeatLoader from "../../components/HeartbeatLoader";
 import PageLoader from "../../components/PageLoader";
 import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
+import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "../../utils/validation";
 
 export default function HospitalForm() {
   const { t } = useTranslation();
@@ -83,6 +84,7 @@ export default function HospitalForm() {
     status: "active",
     planId: "",
   });
+  const [errors, setErrors] = useState<Errors<typeof formData>>({});
 
   // Prefill from the trial being converted (lead contact + the trial's plan).
   useEffect(() => {
@@ -114,6 +116,7 @@ export default function HospitalForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    setErrors((prev) => (prev[name as keyof typeof formData] ? { ...prev, [name]: undefined } : prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,6 +125,18 @@ export default function HospitalForm() {
       toast.error("Please choose a subscription plan for this hospital");
       return;
     }
+
+    const found = validate(formData, {
+      hospitalName: [required("Hospital name")],
+      officialEmail: [isEmail],
+      officialPhone: [isPhone],
+    });
+    if (hasErrors(found)) {
+      setErrors(found);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     setLoading(true);
     try {
       if (isConvert && trialId) {
@@ -321,7 +336,8 @@ export default function HospitalForm() {
                 name="officialEmail"
                 value={formData.officialEmail}
                 onChange={handleChange}
-                
+                error={!!errors.officialEmail}
+                helperText={errors.officialEmail}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -331,7 +347,8 @@ export default function HospitalForm() {
                 name="officialPhone"
                 value={formData.officialPhone}
                 onChange={handleChange}
-                
+                error={!!errors.officialPhone}
+                helperText={errors.officialPhone}
               />
             </Grid>
             {isConvert && (

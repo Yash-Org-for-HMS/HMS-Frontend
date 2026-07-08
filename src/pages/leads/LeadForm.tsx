@@ -20,6 +20,7 @@ import HeartbeatLoader from "../../components/HeartbeatLoader";
 import PageLoader from "../../components/PageLoader";
 import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
+import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "../../utils/validation";
 
 export default function LeadForm() {
   const { t } = useTranslation();
@@ -37,6 +38,7 @@ export default function LeadForm() {
     leadStatus: "new",
     assignedSalesAdminId: "",
   });
+  const [errors, setErrors] = useState<Errors<typeof formData>>({});
 
   const { data: admins = [] } = useQuery<any[]>({
     queryKey: ["super-admins", "lead-options"],
@@ -64,10 +66,24 @@ export default function LeadForm() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setErrors((prev) => (prev[e.target.name as keyof typeof formData] ? { ...prev, [e.target.name]: undefined } : prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const found = validate(formData, {
+      hospitalName: [required("Hospital name")],
+      contactPersonName: [required("Contact person")],
+      email: [required("Email"), isEmail],
+      phone: [required("Phone"), isPhone],
+    });
+    if (hasErrors(found)) {
+      setErrors(found);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     setLoading(true);
     try {
       if (isEdit) {
@@ -136,7 +152,8 @@ export default function LeadForm() {
                 value={formData.hospitalName}
                 onChange={handleChange}
                 required
-                
+                error={!!errors.hospitalName}
+                helperText={errors.hospitalName}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -147,7 +164,8 @@ export default function LeadForm() {
                 value={formData.contactPersonName}
                 onChange={handleChange}
                 required
-                
+                error={!!errors.contactPersonName}
+                helperText={errors.contactPersonName}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -159,7 +177,8 @@ export default function LeadForm() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                
+                error={!!errors.email}
+                helperText={errors.email}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -170,7 +189,8 @@ export default function LeadForm() {
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                
+                error={!!errors.phone}
+                helperText={errors.phone}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>

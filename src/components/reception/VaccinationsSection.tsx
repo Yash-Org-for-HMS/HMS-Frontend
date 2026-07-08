@@ -98,7 +98,7 @@ function printCertificate(opts: { hospitalName: string; patientName: string; pat
   setTimeout(() => { win.focus(); win.print(); setTimeout(cleanup, 1000); }, 350);
 }
 
-export default function VaccinationsSection({ patientId, patientName, patientUhid, patientDob }: { patientId: string; patientName: string; patientUhid: string; patientDob: string | null }) {
+export default function VaccinationsSection({ patientId, patientName, patientUhid, patientDob, readOnly = false }: { patientId: string; patientName: string; patientUhid: string; patientDob: string | null; readOnly?: boolean }) {
   const toast = useToast();
   const { hospital } = useHospitalAuth();
   const qc = useQueryClient();
@@ -246,10 +246,12 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
           sx={{ textTransform: "none", color: ACCENT, borderColor: `${ACCENT}66` }}>
           Print Certificate
         </Button>
-        <Button variant="contained" size="small" startIcon={<AddRounded fontSize="small" />} onClick={openAddVaccine}
-          sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>
-          Add Vaccine
-        </Button>
+        {!readOnly && (
+          <Button variant="contained" size="small" startIcon={<AddRounded fontSize="small" />} onClick={openAddVaccine}
+            sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>
+            Add Vaccine
+          </Button>
+        )}
       </Box>
 
       <Grid container spacing={2} sx={{ mb: 2.5 }}>
@@ -345,7 +347,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
                         {r.state === "SKIPPED" && (r.notes || "—")}
                       </TableCell>
                       <TableCell align="right" sx={{ borderColor: "divider" }}>
-                        {(r.state === "OVERDUE" || r.state === "DUE_SOON" || r.state === "UPCOMING") && (
+                        {!readOnly && (r.state === "OVERDUE" || r.state === "DUE_SOON" || r.state === "UPCOMING") && (
                           <>
                             <Tooltip title="Mark administered">
                               <IconButton size="small" onClick={() => openAdminister(r)} sx={{ color: "#10b981" }}><CheckCircleRounded fontSize="small" /></IconButton>
@@ -355,7 +357,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
                             </Tooltip>
                           </>
                         )}
-                        {(r.state === "DONE" || r.state === "SKIPPED") && (
+                        {!readOnly && (r.state === "DONE" || r.state === "SKIPPED") && (
                           <Tooltip title="Undo">
                             <IconButton size="small" onClick={() => undo(r)} sx={{ color: "text.secondary" }}><ReplayRounded fontSize="small" /></IconButton>
                           </Tooltip>

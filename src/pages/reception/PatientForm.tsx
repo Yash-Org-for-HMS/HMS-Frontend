@@ -32,6 +32,7 @@ import PageLoader from "../../components/PageLoader";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
+import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "../../utils/validation";
 
 interface Gender {
   genderId: number;
@@ -102,6 +103,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
     referredByExternalSpecialty: "",
     referredByExternalClinic: "",
   });
+  const [errors, setErrors] = useState<Errors<typeof formData>>({});
 
   const { data: patientData, isLoading: patientLoading, isError: patientIsError, error: patientError, refetch: refetchPatient } = useQuery({
     queryKey: ["patient-edit", id],
@@ -147,12 +149,34 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear a field's error as soon as the user edits it.
+    setErrors((prev) => (prev[name as keyof typeof formData] ? { ...prev, [name]: undefined } : prev));
   };
+
+  // Client-side validation mirrors the backend patients validator: required
+  // demographics + phone/email format, so a bad request never leaves the browser.
+  const validateForm = () =>
+    validate(formData, {
+      firstName: [required("First name")],
+      dateOfBirth: [required("Date of birth")],
+      genderId: [required("Gender")],
+      bloodGroupId: [required("Blood group")],
+      phone: [required("Phone number"), isPhone],
+      email: [isEmail],
+      emergencyContactPhone: [isPhone],
+    });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
+    const found = validateForm();
+    if (hasErrors(found)) {
+      setErrors(found);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
+    setLoading(true);
     try {
       if (isEditing && id) {
         await axiosInstance.put(`/reception/patients/${id}`, formData);
@@ -209,6 +233,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
           <TextField
             fullWidth label="First Name" name="firstName" value={formData.firstName}
             onChange={handleChange} required sx={fieldSx}
+            error={!!errors.firstName} helperText={errors.firstName}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
@@ -222,12 +247,14 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
             fullWidth label="Date of Birth" name="dateOfBirth" type="date"
             value={formData.dateOfBirth} onChange={handleChange} required sx={fieldSx}
             slotProps={{ inputLabel: { shrink: true } }}
+            error={!!errors.dateOfBirth} helperText={errors.dateOfBirth}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             select fullWidth label="Gender" name="genderId" value={formData.genderId}
             onChange={handleChange} required sx={fieldSx}
+            error={!!errors.genderId} helperText={errors.genderId}
           >
             {genders.map((g) => (
               <MenuItem key={g.genderId} value={String(g.genderId)}>{g.genderLabel}</MenuItem>
@@ -238,6 +265,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
           <TextField
             fullWidth label="Phone Number" name="phone" value={formData.phone}
             onChange={handleChange} required sx={fieldSx}
+            error={!!errors.phone} helperText={errors.phone}
             InputProps={{
               startAdornment: <InputAdornment position="start"><Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>+91</Typography></InputAdornment>,
             }}
@@ -247,7 +275,8 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
           <TextField
             fullWidth label="Email Address (Optional)" name="email" type="email" value={formData.email}
             onChange={handleChange} disabled={isEditing} sx={fieldSx}
-            helperText={isEditing ? "Email cannot be changed" : undefined}
+            error={!!errors.email}
+            helperText={errors.email || (isEditing ? "Email cannot be changed" : undefined)}
             FormHelperTextProps={{ style: { color: "text.secondary" } }}
           />
         </Grid>
@@ -313,7 +342,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
                 <TextField
                   fullWidth label="Doctor Name" name="referredByExternalName"
                   value={formData.referredByExternalName} onChange={handleChange} sx={fieldSx}
-                  placeholder="e.g. Dr. Anjali Rao"
+                  placeholder="e.g. Dr. Yash Patel"
                   helperText="Name of the outside doctor who referred this patient."
                 />
               </Grid>
@@ -390,6 +419,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
           <TextField
             fullWidth label="Contact Phone" name="emergencyContactPhone"
             value={formData.emergencyContactPhone} onChange={handleChange} sx={fieldSx}
+            error={!!errors.emergencyContactPhone} helperText={errors.emergencyContactPhone}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>

@@ -5,6 +5,7 @@ import {
 import PageHeader from "../../components/layout/PageHeader";
 import { useEnabledModules } from "../../hooks/useEnabledModules";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { isAdmin as isAdminRole } from "../../constants/roles";
 import {
   DailyOpd, Analytics, Collection, ReferralsByDoctor, OpRegistration, OpBills, DiagnosisWise, Census,
 } from "./Reports";
@@ -75,7 +76,7 @@ const GROUPS: ReportGroup[] = [
 export default function ReportsHub() {
   const { isModuleEnabled } = useEnabledModules();
   const { user } = useHospitalAuth();
-  const isAdmin = ["H_ADMIN", "B_ADMIN", "HOSPITAL_ADMIN"].includes(user?.role || "");
+  const isAdmin = isAdminRole(user?.role);
 
   // Hide the IPD group if the module is off, and the finance group for non-admins.
   const groups = useMemo(

@@ -16,6 +16,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
 import { useServerSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { validate, hasErrors, required, isNonNegativeNumber, min } from "../../utils/validation";
 
 // Match the existing plain (non-uppercase) table-head look, overriding
 // SortableHeadCell's default uppercase/secondary styling.
@@ -47,6 +48,7 @@ export default function MedicineCatalog() {
   const [minStockLevel, setMinStockLevel] = useState("10");
   const [defaultSupplierId, setDefaultSupplierId] = useState("");
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ sellingPrice?: string; minStockLevel?: string }>({});
 
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -121,6 +123,16 @@ export default function MedicineCatalog() {
       setErrorMsg("Please fill in all required fields.");
       return;
     }
+    // Numeric guards mirror the backend: price ≥ 0, min-stock a non-negative whole number.
+    const numErrors = validate(
+      { sellingPrice, minStockLevel },
+      { sellingPrice: [required("Selling price"), isNonNegativeNumber], minStockLevel: [min(0)] },
+    );
+    if (hasErrors(numErrors)) {
+      setFieldErrors(numErrors);
+      return;
+    }
+    setFieldErrors({});
 
     try {
       setSaving(true);
@@ -339,10 +351,12 @@ export default function MedicineCatalog() {
                 label="Selling Price (₹)"
                 type="number"
                 value={sellingPrice}
-                onChange={(e) => setSellingPrice(e.target.value)}
+                onChange={(e) => { setSellingPrice(e.target.value); setFieldErrors((p) => ({ ...p, sellingPrice: undefined })); }}
                 fullWidth
                 variant="outlined"
                 required
+                error={!!fieldErrors.sellingPrice}
+                helperText={fieldErrors.sellingPrice}
               />
             </Box>
 
@@ -381,10 +395,11 @@ export default function MedicineCatalog() {
                 label="Min Stock Level (Alert Threshold)"
                 type="number"
                 value={minStockLevel}
-                onChange={(e) => setMinStockLevel(e.target.value)}
+                onChange={(e) => { setMinStockLevel(e.target.value); setFieldErrors((p) => ({ ...p, minStockLevel: undefined })); }}
                 fullWidth
                 variant="outlined"
-                helperText="Triggers low stock alert"
+                error={!!fieldErrors.minStockLevel}
+                helperText={fieldErrors.minStockLevel || "Triggers low stock alert"}
               />
               <TextField
                 select

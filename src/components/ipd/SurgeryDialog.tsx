@@ -13,6 +13,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
+import { validate, hasErrors, required, isNonNegativeNumber } from "../../utils/validation";
 
 interface Props {
   open: boolean;
@@ -32,6 +33,7 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
   const toast = useToast();
   const qc = useQueryClient();
   const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState<{ procedureName?: string; price?: string }>({});
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -59,7 +61,15 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
   };
 
   const submit = async () => {
-    if (!form.procedureName.trim()) return;
+    const found = validate(form, {
+      procedureName: [required("Surgical details")],
+      price: [isNonNegativeNumber],
+    });
+    if (hasErrors(found)) {
+      setErrors(found);
+      return;
+    }
+    setErrors({});
     setSaving(true);
     try {
       await axiosInstance.post(`/ipd/admissions/${admission.admissionId}/surgeries`, {
@@ -173,7 +183,8 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
 
         <Stack spacing={2}>
           <TextField fullWidth required label="Surgical Details" placeholder="e.g. Appendectomy"
-            value={form.procedureName} onChange={(e) => setForm({ ...form, procedureName: e.target.value })} />
+            value={form.procedureName} onChange={(e) => { setForm({ ...form, procedureName: e.target.value }); setErrors((p) => ({ ...p, procedureName: undefined })); }}
+            error={!!errors.procedureName} helperText={errors.procedureName} />
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
             <TextField select fullWidth label="Major / Minor" value={form.surgeryType} onChange={(e) => setForm({ ...form, surgeryType: e.target.value })}>
               <MenuItem value="MAJOR">Major</MenuItem>
@@ -194,8 +205,10 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
             <TextField fullWidth type="date" label="Surgery date (optional)" InputLabelProps={{ shrink: true }}
               value={form.surgeryDate} onChange={(e) => setForm({ ...form, surgeryDate: e.target.value })} />
           </Box>
-          <TextField fullWidth type="number" label="Price (₹, optional)" helperText="Marking this surgery completed will raise a charge for this amount"
-            value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+          <TextField fullWidth type="number" label="Price (₹, optional)"
+            error={!!errors.price}
+            helperText={errors.price || "Marking this surgery completed will raise a charge for this amount"}
+            value={form.price} onChange={(e) => { setForm({ ...form, price: e.target.value }); setErrors((p) => ({ ...p, price: undefined })); }} />
           <TextField fullWidth multiline rows={2} label="Notes (optional)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         </Stack>
       </DialogContent>

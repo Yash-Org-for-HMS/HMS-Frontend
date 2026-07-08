@@ -27,7 +27,7 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
   CANCELLED: { label: "Cancelled", color: "#64748b" },
 };
 
-export default function ConsentFormsSection({ patientId, patientName }: { patientId: string; patientName?: string }) {
+export default function ConsentFormsSection({ patientId, patientName, readOnly = false }: { patientId: string; patientName?: string; readOnly?: boolean }) {
   const toast = useToast();
   const [issueOpen, setIssueOpen] = useState(false);
   const [signTarget, setSignTarget] = useState<any>(null);
@@ -55,10 +55,12 @@ export default function ConsentFormsSection({ patientId, patientName }: { patien
           <AssignmentTurnedInRounded sx={{ color: ACCENT }} fontSize="small" />
           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }}>Consent Forms</Typography>
         </Box>
-        <Button size="small" variant="outlined" startIcon={<AddRounded />} onClick={() => setIssueOpen(true)}
-          sx={{ textTransform: "none", color: ACCENT, borderColor: "rgba(8,145,178,0.4)" }}>
-          Issue Consent
-        </Button>
+        {!readOnly && (
+          <Button size="small" variant="outlined" startIcon={<AddRounded />} onClick={() => setIssueOpen(true)}
+            sx={{ textTransform: "none", color: ACCENT, borderColor: "rgba(8,145,178,0.4)" }}>
+            Issue Consent
+          </Button>
+        )}
       </Box>
 
       {isLoading ? (
@@ -93,7 +95,7 @@ export default function ConsentFormsSection({ patientId, patientName }: { patien
                     {f.documentUrl && (
                       <Button size="small" startIcon={<OpenInNewRounded />} onClick={() => window.open(assetUrl(f.documentUrl), "_blank")} sx={{ textTransform: "none", color: ACCENT }}>File</Button>
                     )}
-                    {f.status === "ISSUED" && (
+                    {!readOnly && f.status === "ISSUED" && (
                       <>
                         <Button size="small" variant="contained" onClick={() => setSignTarget(f)} sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: "#0e7490" } }}>Capture</Button>
                         <Button size="small" startIcon={<DoNotDisturbRounded />} onClick={() => setStatus(f.consentFormId, "CANCELLED")} sx={{ textTransform: "none", color: "text.secondary" }}>Cancel</Button>

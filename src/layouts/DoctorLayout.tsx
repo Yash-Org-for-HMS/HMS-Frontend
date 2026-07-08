@@ -12,6 +12,7 @@ import {
   Menu as MenuIcon,
   DashboardRounded,
   PeopleAltRounded,
+  GroupsRounded,
   LogoutRounded,
   LocalHospitalRounded,
   QueueRounded,
@@ -58,6 +59,7 @@ export default function DoctorLayout() {
     { text: "Dashboard", icon: <DashboardRounded />, path: "/doctor/dashboard", badge: 0, section: "Overview" },
     { text: "My Queue", icon: <QueueRounded />, path: "/doctor/queue", badge: badges?.queueWaiting || 0, section: "My Work" },
     { text: "My Patients", icon: <PeopleAltRounded />, path: "/doctor/patients", badge: 0, section: "My Work" },
+    { text: "All Patients", icon: <GroupsRounded />, path: "/doctor/all-patients", badge: 0, section: "My Work" },
     { text: "Results", icon: <ScienceRounded />, path: "/doctor/results", badge: badges?.resultsReady || 0, section: "My Work" },
     { text: "My Reports", icon: <AssessmentRounded />, path: "/doctor/reports", badge: 0, section: "Insights" },
   ];

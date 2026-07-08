@@ -18,9 +18,11 @@ interface Props {
   invoiceId: string;
   onClose: () => void;
   onChanged?: () => void;
+  /** Hide the "Collect Payment" form — used by the read-only admin oversight view. */
+  readOnly?: boolean;
 }
 
-export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged }: Props) {
+export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged, readOnly = false }: Props) {
   const toast = useToast();
   const receiptRef = useRef<HTMLDivElement>(null);
   const [amount, setAmount] = useState("");
@@ -152,8 +154,17 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged 
                 )}
               </Box>
 
-              {/* Record payment (only if balance outstanding) */}
-              {!fullyPaid ? (
+              {/* Record payment (only if balance outstanding, and not in read-only oversight mode) */}
+              {fullyPaid ? (
+                <Box sx={{ mt: 3, display: "flex", alignItems: "center", justifyContent: "center", gap: 1, color: "#10b981" }}>
+                  <CheckCircleRounded /> <Typography sx={{ fontWeight: 700 }}>Fully paid</Typography>
+                </Box>
+              ) : readOnly ? (
+                <Box sx={{ mt: 3, p: 2, borderRadius: 2, bgcolor: "rgba(239,68,68,0.06)", border: "1px dashed rgba(239,68,68,0.3)", textAlign: "center" }}>
+                  <Typography variant="body2" sx={{ color: "#ef4444", fontWeight: 700 }}>Balance due: {formatINR(balance)}</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>Collect payment from the Billing panel</Typography>
+                </Box>
+              ) : (
                 <Box sx={{ mt: 3, p: 2, borderRadius: 2, bgcolor: "rgba(16,185,129,0.06)", border: "1px dashed rgba(16,185,129,0.3)" }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#10b981", mb: 1.5 }}>Collect Payment</Typography>
                   <Grid container spacing={1.5}>
@@ -177,10 +188,6 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged 
                       <Button size="small" onClick={() => setAmount(balance.toFixed(2))} sx={{ textTransform: "none", color: "#10b981", p: 0, minWidth: 0 }}>Pay full balance ({formatINR(balance)})</Button>
                     </Grid>
                   </Grid>
-                </Box>
-              ) : (
-                <Box sx={{ mt: 3, display: "flex", alignItems: "center", justifyContent: "center", gap: 1, color: "#10b981" }}>
-                  <CheckCircleRounded /> <Typography sx={{ fontWeight: 700 }}>Fully paid</Typography>
                 </Box>
               )}
             </>

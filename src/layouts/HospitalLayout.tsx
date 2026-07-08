@@ -42,8 +42,13 @@ import {
   AssessmentRounded,
   HotelRounded,
   VaccinesRounded,
+  LocalHotelRounded,
+  ReceiptLongRounded,
+  FormatListNumberedRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
+import { isAdmin as isAdminRole } from "../constants/roles";
+import { useEnabledModules } from "../hooks/useEnabledModules";
 import BranchSwitcher from "../components/BranchSwitcher";
 import SidebarHeader from "../components/layout/SidebarHeader";
 import SidebarUserCard from "../components/layout/SidebarUserCard";
@@ -71,6 +76,15 @@ export default function HospitalLayout() {
     // a tab non-admins can't actually open.
     { text: "Financial Analytics", icon: <AccountBalanceRounded />, path: "/hospital/financials", permission: null, adminOnly: true, section: "Overview" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/hospital/reports", permission: null, section: "Overview" },
+    // Operations: hospital-wide, read-oriented windows into day-to-day activity.
+    // Admin-only (mirrors the backend org-wide data view for H_ADMIN); these
+    // reuse the existing reception/IPD pages, mounted under the admin shell.
+    { text: "All Patients", icon: <PeopleRounded />, path: "/hospital/patients", permission: null, adminOnly: true, section: "Operations" },
+    { text: "Appointments", icon: <CalendarTodayRounded />, path: "/hospital/appointments", permission: null, adminOnly: true, section: "Operations" },
+    { text: "Patient Queue", icon: <FormatListNumberedRounded />, path: "/hospital/queue", permission: null, adminOnly: true, section: "Operations" },
+    { text: "Admissions", icon: <LocalHotelRounded />, path: "/hospital/ipd/admissions", permission: null, adminOnly: true, module: "IPD", section: "Operations" },
+    { text: "Bed Board", icon: <HotelRounded />, path: "/hospital/ipd/beds", permission: null, adminOnly: true, module: "IPD", section: "Operations" },
+    { text: "Billing Overview", icon: <ReceiptLongRounded />, path: "/hospital/billing", permission: null, adminOnly: true, module: "Billing", section: "Operations" },
     { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", permission: "DEPARTMENT_MANAGE", section: "Organization" },
     { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", permission: "USER_MANAGE", section: "Organization" },
     { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", permission: "USER_MANAGE", section: "Organization" },
@@ -94,9 +108,12 @@ export default function HospitalLayout() {
   // Org AND branch admins see everything (mirrors the backend ADMIN_ROLE_CODES
   // bypass). B_ADMIN was previously omitted, which hid every permission-gated
   // tab for branch admins — leaving only the two ungated items (the "2 tabs" bug).
-  const isAdmin = ["H_ADMIN", "B_ADMIN", "HOSPITAL_ADMIN"].includes(user?.role || "");
+  const isAdmin = isAdminRole(user?.role);
+  const { isModuleEnabled } = useEnabledModules();
   const visibleMenuItems = menuItems.filter(item => {
-    if ((item as any).adminOnly) return isAdmin;   // admin-only tab (e.g. Financial)
+    // Hide items for modules the hospital hasn't licensed (fail-open while loading).
+    if (!isModuleEnabled((item as any).module)) return false;
+    if ((item as any).adminOnly) return isAdmin;   // admin-only tab (e.g. Financial, Operations)
     if (!item.permission) return true;
     if (isAdmin) return true;
     return user?.permissions?.includes(item.permission);

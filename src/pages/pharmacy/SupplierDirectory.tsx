@@ -17,6 +17,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
 import { useServerSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { validate, hasErrors, isEmail, isPhone } from "../../utils/validation";
 
 // Match the existing plain (non-uppercase) table-head look, overriding
 // SortableHeadCell's default uppercase/secondary styling.
@@ -51,6 +52,7 @@ export default function SupplierDirectory() {
   const [stateLoc, setStateLoc] = useState("");
   const [country, setCountry] = useState("India");
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string }>({});
 
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -125,6 +127,13 @@ export default function SupplierDirectory() {
       setErrorMsg("Please fill in all required fields.");
       return;
     }
+    // Format guards mirror the backend supplier validator.
+    const fmtErrors = validate({ phone, email }, { phone: [isPhone], email: [isEmail] });
+    if (hasErrors(fmtErrors)) {
+      setFieldErrors(fmtErrors);
+      return;
+    }
+    setFieldErrors({});
 
     try {
       setSaving(true);
@@ -372,19 +381,23 @@ export default function SupplierDirectory() {
               <TextField
                 label="Phone Number"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => { setPhone(e.target.value); setFieldErrors((p) => ({ ...p, phone: undefined })); }}
                 fullWidth
                 variant="outlined"
                 required
+                error={!!fieldErrors.phone}
+                helperText={fieldErrors.phone}
               />
               <TextField
                 label="Email Address"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setFieldErrors((p) => ({ ...p, email: undefined })); }}
                 fullWidth
                 variant="outlined"
                 required
+                error={!!fieldErrors.email}
+                helperText={fieldErrors.email}
               />
 
               <Box sx={{ gridColumn: '1 / -1' }}>
