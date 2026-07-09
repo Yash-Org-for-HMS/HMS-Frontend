@@ -111,6 +111,7 @@ export default function HospitalForm() {
       officialPhone: d.officialPhone || "",
       legalBusinessName: d.legalBusinessName || "",
       status: d.status || "active",
+      planId: d.subscriptionPlanId || "",
     });
     setBranches(d.branches || []);
   }, [hospitalData]);

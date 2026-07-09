@@ -164,7 +164,7 @@ export default function PharmacyReports() {
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(d) => dayjs(d).format("DD MMM")} minTickGap={24} />
                   <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                  <RTooltip labelFormatter={(d) => dayjs(d as string).format("DD MMM YYYY")} formatter={(v: any, name: string) => (name === "Sales (₹)" ? inr(v) : v)} />
+                  <RTooltip labelFormatter={(d) => dayjs(d as string).format("DD MMM YYYY")} formatter={(v: any, name: any) => (name === "Sales (₹)" ? inr(v) : v)} />
                   <Area type="monotone" dataKey="sales" name="Sales (₹)" stroke={ACCENT} strokeWidth={2} fill="url(#pharmTrend)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -183,7 +183,7 @@ export default function PharmacyReports() {
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" horizontal={false} />
                       <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
                       <YAxis type="category" dataKey="medicineName" width={160} tick={{ fontSize: 11 }} tickFormatter={(v) => (v.length > 24 ? v.slice(0, 23) + "…" : v)} />
-                      <RTooltip formatter={(v: any, name: string) => (name === "Revenue" ? inr(v) : v)} />
+                      <RTooltip formatter={(v: any, name: any) => (name === "Revenue" ? inr(v) : v)} />
                       <Legend />
                       <Bar dataKey="qty" name="Units sold" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={14} />
                       <Bar dataKey="revenue" name="Revenue" fill={ACCENT} radius={[0, 4, 4, 0]} barSize={14} />

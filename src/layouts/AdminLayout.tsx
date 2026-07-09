@@ -209,7 +209,7 @@ export default function AdminLayout() {
       {/* User card at bottom */}
       <SidebarUserCard
         name={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Super Admin"}
-        role={user?.roleName || "Super Admin"}
+        role="Super Admin"
         avatarText={user?.firstName?.charAt(0) || "A"}
         onLogout={logout}
       />
