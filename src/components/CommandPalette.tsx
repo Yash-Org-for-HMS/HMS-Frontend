@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, Box, InputBase, Typography, List, ListItemButton, ListItemIcon, ListItemText, Chip } from "@mui/material";
 import {
   SearchRounded, DashboardRounded, ScienceRounded, LocalPharmacyRounded, PersonalVideoRounded,
@@ -84,7 +84,11 @@ export default function CommandPalette() {
   const itemRefs = useRef<Record<number, HTMLElement | null>>({});
 
   // Determine if we're in a hospital/clinical route. If not, don't mount the palette at all.
-  const isClinicalRoute = /^\/(reception|doctor|nurse|lab|pharmacy|hospital)/.test(location.pathname);
+  // Note the trailing slash on `hospital/`: it matches the hospital-admin panel
+  // (/hospital/dashboard, …) but NOT the super-admin Organizations list at
+  // /hospitals — which would otherwise flip this flag and, combined with the
+  // early return below, change the hook count between renders (crash).
+  const isClinicalRoute = /^\/(reception|doctor|nurse|lab|pharmacy|hospital\/)/.test(location.pathname);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -207,12 +211,15 @@ export default function CommandPalette() {
 
   // Single flat, ordered list mirroring what's rendered below — drives
   // keyboard navigation (arrow keys select by index, Enter activates).
-  const allItems: PaletteItem[] = useMemo(() => [
+  // NOT a useMemo: this sits after the `if (!isClinicalRoute) return null`
+  // early return above, and a hook after a conditional return violates the
+  // Rules of Hooks (the crash this file previously hit). A plain const is
+  // safe here — the list is tiny and only built while the palette is open.
+  const allItems: PaletteItem[] = [
     ...filteredActions.map((a) => ({ key: `action-${a.path}`, path: a.path, name: a.name, icon: a.icon, section: a.section, kind: "action" as const })),
     ...filteredRoutes.map((r) => ({ key: `route-${r.path}`, path: r.path, name: r.name, icon: r.icon, section: r.section, kind: "route" as const })),
     ...patients.map((p) => ({ key: `patient-${p.patientId}`, path: patientPath(p), name: `${p.firstName} ${p.lastName}`, icon: <PersonRounded />, kind: "patient" as const })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [filteredActions, filteredRoutes, patients, isDoctor]);
+  ];
 
   const clampedIndex = Math.min(selectedIndex, Math.max(allItems.length - 1, 0));
 
