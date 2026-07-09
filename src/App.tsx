@@ -98,6 +98,7 @@ const FrontDeskConsole = lazy(() => import("./pages/reception/FrontDeskConsole")
 // Nurse
 const NurseDashboard = lazy(() => import("./pages/nurse/NurseDashboard"));
 const NurseQueue = lazy(() => import("./pages/nurse/NurseQueue"));
+const NurseReports = lazy(() => import("./pages/nurse/NurseReports"));
 
 // Doctor
 const DoctorDashboard = lazy(() => import("./pages/doctor/DoctorDashboard"));
@@ -274,6 +275,11 @@ function App() {
           <Route element={el(NurseLayout)}>
             <Route path="/nurse/dashboard" element={el(NurseDashboard)} />
             <Route path="/nurse/queue" element={el(NurseQueue)} />
+            <Route path="/nurse/reports" element={el(NurseReports)} />
+            {/* Read-only view under the Nurse shell — a nurse opening a patient (e.g. via
+                command-palette search) must not land inside the full Reception sidebar,
+                which would expose front desk/billing/admissions navigation they don't own. */}
+            <Route path="/nurse/patients/:id" element={elp(PatientProfile, { readOnly: true })} />
             {/* Vitals Station merged into the Patient Queue page (view toggle). */}
             <Route path="/nurse/vitals" element={<Navigate to="/nurse/queue" replace />} />
           </Route>
