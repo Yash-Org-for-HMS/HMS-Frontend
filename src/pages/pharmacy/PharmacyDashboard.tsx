@@ -9,7 +9,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
-import PageLoader from "../../components/PageLoader";
+import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
 import ErrorState from "../../components/ErrorState";
 import StatCard from "../../components/StatCard";
 import PharmacyPage from "./components/PharmacyPage";
@@ -53,7 +53,7 @@ export default function PharmacyDashboard() {
       icon={<DashboardRounded fontSize="large" sx={{ color: '#4F46E5' }} />}
     >
       {loading ? (
-        <PageLoader />
+        <DashboardSkeleton />
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (

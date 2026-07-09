@@ -8,7 +8,7 @@ import {
 import { CloseRounded, PrintRounded, PaymentRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
-import PageLoader from "../PageLoader";
+import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 
@@ -92,7 +92,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
         <Button onClick={onClose} sx={{ minWidth: 0, p: 1, color: "text.secondary" }}><CloseRounded /></Button>
       </DialogTitle>
       <DialogContent dividers>
-        {isLoading ? <PageLoader />
+        {isLoading ? <ListSkeleton />
           : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
           : invoice ? (
             <>

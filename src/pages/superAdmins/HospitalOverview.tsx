@@ -48,7 +48,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
-import PageLoader from "../../components/PageLoader";
+import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
 import StatCard from "../../components/StatCard";
 import { assetUrl } from "../../utils/assetUrl";
 
@@ -96,7 +96,7 @@ export default function HospitalOverview() {
   });
 
   if (loading) {
-    return <PageLoader />;
+    return <DetailSkeleton />;
   }
   if (isError || !data) {
     return (

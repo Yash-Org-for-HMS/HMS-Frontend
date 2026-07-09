@@ -12,7 +12,7 @@ import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
-import PageLoader from "../../components/PageLoader";
+import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
 import StatCard from "../../components/StatCard";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
@@ -113,7 +113,7 @@ export default function DoctorDashboard() {
             </Box>
 
             {loading ? (
-              <PageLoader />
+              <DashboardSkeleton />
             ) : !stats?.upcomingAppointments || stats.upcomingAppointments.length === 0 ? (
               <Mascot pose="all-caught-up" title="All caught up!" subtitle="No upcoming appointments found for today." />
             ) : (

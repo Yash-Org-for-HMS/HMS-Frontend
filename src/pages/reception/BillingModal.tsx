@@ -9,7 +9,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
-import PageLoader from "../../components/PageLoader";
+import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
@@ -346,7 +346,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
 
       <DialogContent sx={{ py: 3 }}>
         {loading ? (
-          <PageLoader />
+          <ListSkeleton />
         ) : loadError ? (
           <ErrorState message={loadError} onRetry={fetchBillingData} />
         ) : invoice ? (

@@ -28,7 +28,7 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
-import PageLoader from "../../components/PageLoader";
+import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
@@ -205,7 +205,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
 
   if (initialLoad) {
     return (
-      <PageLoader />
+      <FormSkeleton />
     );
   }
 

@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
-import PageLoader from "../../components/PageLoader";
+import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 import StatCard from "../../components/StatCard";
 
@@ -27,7 +27,7 @@ export default function FinancialDashboard() {
 
   if (loading) {
     return (
-      <PageLoader />
+      <DashboardSkeleton />
     );
   }
 

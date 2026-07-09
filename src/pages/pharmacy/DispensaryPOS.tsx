@@ -8,7 +8,7 @@ import {
 import { PointOfSaleRounded, AddCircleRounded, RemoveCircleRounded, DeleteRounded, PaymentRounded, LocalPharmacyRounded, DownloadRounded, EditRounded, CancelRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
-import PageLoader from "../../components/PageLoader";
+import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
 import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
@@ -381,7 +381,7 @@ export default function DispensaryPOS() {
       }
     >
       {loading ? (
-        <PageLoader />
+        <DashboardSkeleton />
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
 

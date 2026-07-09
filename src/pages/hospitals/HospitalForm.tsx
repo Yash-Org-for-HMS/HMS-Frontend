@@ -24,7 +24,7 @@ import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
-import PageLoader from "../../components/PageLoader";
+import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
 import FormHeader from "../../components/layout/FormHeader";
@@ -237,7 +237,7 @@ export default function HospitalForm() {
 
   if (initialLoading) {
     return (
-      <PageLoader />
+      <FormSkeleton />
     );
   }
 

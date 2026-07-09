@@ -13,7 +13,7 @@ import {
   ReceiptLongRounded, PrintRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
-import PageLoader from "../PageLoader";
+import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
 import Mascot from "../Mascot";
 import { useToast } from "../../contexts/ToastContext";
@@ -233,7 +233,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
     }
   };
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading) return <ListSkeleton />;
   if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
 
   const totals = data?.totals ?? { due: 0, overdue: 0, done: 0, upcoming: 0 };

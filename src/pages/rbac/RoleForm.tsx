@@ -24,7 +24,7 @@ import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
-import PageLoader from "../../components/PageLoader";
+import FormSkeleton from "../../components/skeletons/FormSkeleton";
 
 export default function RoleForm() {
   const { t } = useTranslation();
@@ -117,7 +117,7 @@ export default function RoleForm() {
 
   if (initialLoading) {
     return (
-      <PageLoader />
+      <FormSkeleton />
     );
   }
 

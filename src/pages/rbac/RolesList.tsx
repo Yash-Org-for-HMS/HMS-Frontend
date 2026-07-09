@@ -42,7 +42,7 @@ import FilterBar from "../../components/layout/FilterBar";
 import { useTableSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
-import PageLoader from "../../components/PageLoader";
+import PageSkeleton from "../../components/PageSkeleton";
 
 const headSx = { color: "text.secondary", fontWeight: 600, textTransform: "none", letterSpacing: "normal", fontSize: "0.875rem", bgcolor: "background.paper" } as const;
 
@@ -179,7 +179,7 @@ export default function RolesList() {
       </FilterBar>
 
       {loading ? (
-        <PageLoader />
+        <PageSkeleton />
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (

@@ -7,7 +7,7 @@ import {
 import { MedicalServicesRounded, ReceiptLongRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { formatINR } from "../../utils/format";
-import PageLoader from "../PageLoader";
+import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
 import Mascot from "../Mascot";
 import dayjs from "dayjs";
@@ -29,7 +29,7 @@ export default function SurgeriesSection({ patientId }: { patientId: string }) {
     queryFn: async () => (await axiosInstance.get(`/ipd/patients/${patientId}/surgeries`)).data.data,
   });
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading) return <ListSkeleton />;
   if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
 
   return (

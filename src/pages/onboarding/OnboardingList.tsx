@@ -21,7 +21,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
-import PageLoader from "../../components/PageLoader";
+import PageSkeleton from "../../components/PageSkeleton";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 
@@ -91,7 +91,7 @@ export default function OnboardingList() {
   if (loading) {
     return (
       <PageContainer>
-        <PageLoader />
+        <PageSkeleton />
       </PageContainer>
     );
   }

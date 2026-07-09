@@ -11,7 +11,7 @@ import {
 import { axiosInstance } from "../../../api/axios";
 import ErrorState from "../../../components/ErrorState";
 import Mascot from "../../../components/Mascot";
-import PageLoader from "../../../components/PageLoader";
+import DetailSkeleton from "../../../components/skeletons/DetailSkeleton";
 import { useToast } from "../../../contexts/ToastContext";
 import { useConfirm } from "../../../contexts/ConfirmContext";
 import PageHeader from "../../../components/layout/PageHeader";
@@ -43,7 +43,7 @@ export default function VaccineCatalog() {
     qc.invalidateQueries({ queryKey: ["vaccine-catalog"] }); // the "+ Add Vaccine" picker on patient profiles
   };
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading) return <DetailSkeleton />;
   if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
 
   return (

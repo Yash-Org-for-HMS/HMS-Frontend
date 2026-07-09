@@ -19,7 +19,7 @@ import { axiosInstance } from "../../../api/axios";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
-import PageLoader from "../../../components/PageLoader";
+import FormSkeleton from "../../../components/skeletons/FormSkeleton";
 import CredentialDialog from "../../../components/CredentialDialog";
 import { validate, hasErrors, required, isEmail, isPhone, isNonNegativeNumber, type Errors } from "../../../utils/validation";
 
@@ -159,7 +159,7 @@ export default function DoctorForm() {
 
   if (initialLoad) {
     return (
-      <PageLoader />
+      <FormSkeleton />
     );
   }
 

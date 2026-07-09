@@ -16,7 +16,7 @@ import PageHeader from "../../../components/layout/PageHeader";
 import { useTableSort } from "../../../components/table/useTableSort";
 import SortableHeadCell from "../../../components/table/SortableHeadCell";
 import HeartbeatLoader from "../../../components/HeartbeatLoader";
-import PageLoader from "../../../components/PageLoader";
+import PageSkeleton from "../../../components/PageSkeleton";
 
 const INACTIVE = ["rejected", "cancelled", "declined"];
 
@@ -124,7 +124,7 @@ export default function DoctorLeaves() {
       <Divider sx={{ mb: 2 }} />
 
       {isLoading ? (
-        <PageLoader />
+        <PageSkeleton />
       ) : isError ? (
         <ErrorState title="Couldn't load leaves" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (

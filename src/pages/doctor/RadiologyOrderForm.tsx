@@ -12,6 +12,7 @@ import Mascot from "../../components/Mascot";
 import { assetUrl } from "../../utils/assetUrl";
 import { useToast } from "../../contexts/ToastContext";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { ListSkeleton } from "../../components/TableRowsSkeleton";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
 
@@ -148,7 +149,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
           <CameraAltRounded sx={{ color: "text.secondary" }} fontSize="small" /> Previously Ordered Scans
         </Typography>
         {loading ? (
-          <HeartbeatLoader size={96} />
+          <ListSkeleton rows={3} />
         ) : isError ? (
           <ErrorState message={(error as any)?.response?.data?.message || "Failed to load radiology orders"} onRetry={refetch} />
         ) : existingOrders.length === 0 ? (

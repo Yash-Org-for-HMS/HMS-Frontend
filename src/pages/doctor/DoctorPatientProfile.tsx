@@ -12,7 +12,8 @@ import {
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
-import PageLoader from "../../components/PageLoader";
+import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
+import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import StatCard from "../../components/StatCard";
 import { typeScale } from "../../styles/typography";
 import { sanitizeRichText } from "../../utils/sanitizeHtml";
@@ -89,11 +90,7 @@ export default function DoctorPatientProfile() {
   const hasAllergy = !!p?.allergies && p.allergies !== "None reported";
 
   if (patientQ.isLoading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "70vh" }}>
-        <Mascot pose="thinking" subtitle="Loading patient record…" />
-      </Box>
-    );
+    return <DetailSkeleton />;
   }
 
   if (patientQ.isError || !p) {
@@ -221,7 +218,7 @@ export default function DoctorPatientProfile() {
         {/* Consultation history */}
         <Section title="Consultation History" icon={<HistoryRounded fontSize="small" />}>
           {historyQ.isLoading ? (
-            <PageLoader />
+            <ListSkeleton rows={4} />
           ) : history.length === 0 ? (
             <Box sx={{ py: 2 }}>
               <Mascot pose="nothing-here-yet" title="No consultations yet" subtitle="No past consultations on record for this patient." size={110} />

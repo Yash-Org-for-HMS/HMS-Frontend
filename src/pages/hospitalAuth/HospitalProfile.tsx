@@ -22,7 +22,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { assetUrl } from "../../utils/assetUrl";
 import PageHeader from "../../components/layout/PageHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
-import PageLoader from "../../components/PageLoader";
+import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -170,7 +170,7 @@ export default function HospitalProfile() {
 
   if (loading) {
     return (
-      <PageLoader />
+      <DetailSkeleton />
     );
   }
 

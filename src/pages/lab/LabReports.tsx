@@ -18,6 +18,7 @@ import { axiosInstance } from "../../api/axios";
 import { exportTableToExcel } from "../../utils/exportExcel";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
+import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 
@@ -134,9 +135,7 @@ export default function LabReports() {
       </Paper>
 
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
-          <Mascot pose="thinking" subtitle="Crunching lab numbers…" />
-        </Box>
+        <ReportSkeleton />
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (

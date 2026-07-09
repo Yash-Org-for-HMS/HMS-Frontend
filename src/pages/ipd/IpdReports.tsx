@@ -7,7 +7,7 @@ import {
 import { LocalHotelRounded, ReplayRounded, AccessTimeRounded, PersonAddRounded, SavingsRounded, FileDownloadRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { exportTableToExcel } from "../../utils/exportExcel";
-import PageLoader from "../../components/PageLoader";
+import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
 import dayjs from "dayjs";
@@ -91,7 +91,7 @@ export function IpRegistrations() {
         <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
         <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
       </Box>
-      {isLoading ? <PageLoader /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<PersonAddRounded />} label="Admissions" value={String(data.totals.admissions)} color={ACCENT} /></Grid>
@@ -119,7 +119,7 @@ export function IpAdvances() {
         <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
         <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
       </Box>
-      {isLoading ? <PageLoader /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<SavingsRounded />} label="Advance collected" value={inr(data.totals.total)} color="#10b981" /></Grid>
@@ -147,7 +147,7 @@ export function InPatients() {
       <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, alignItems: "center", flexWrap: "wrap" }}>
         <TextField type="date" size="small" label="As of date" InputLabelProps={{ shrink: true }} value={asOf} onChange={(e) => setAsOf(e.target.value)} sx={{ minWidth: 180 }} />
       </Box>
-      {isLoading ? <PageLoader /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<LocalHotelRounded />} label="Current inpatients" value={String(data.totals.inpatients)} color={ACCENT} /></Grid>
@@ -176,7 +176,7 @@ export function Discharges() {
         <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
         <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
       </Box>
-      {isLoading ? <PageLoader /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<ReplayRounded />} label="Discharges" value={String(data.totals.discharges)} color={ACCENT} /></Grid>

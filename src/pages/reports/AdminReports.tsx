@@ -17,7 +17,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import { exportTableToExcel } from "../../utils/exportExcel";
 import PageHeader from "../../components/layout/PageHeader";
-import PageLoader from "../../components/PageLoader";
+import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
 import ErrorState from "../../components/ErrorState";
 
 const ACCENT = ACCENTS.admin; // indigo #6366f1
@@ -133,7 +133,7 @@ function OverviewReport() {
     queryFn: async () => (await axiosInstance.get("/dashboard/stats")).data.data,
   });
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading) return <ReportSkeleton />;
   if (isError || !data) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
 
   const byPlan: any[] = data.hospitalsByPlan || [];
@@ -231,7 +231,7 @@ function HospitalsReport() {
     queryFn: () => fetchAllRows("/hospitals"),
   });
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading) return <ReportSkeleton />;
   if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
 
   const planNames = (h: any) => {
@@ -270,7 +270,7 @@ function LeadsReport() {
     queryFn: () => fetchAllRows("/leads"),
   });
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading) return <ReportSkeleton />;
   if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
 
   const rows = data.map((l: any) => [
@@ -319,7 +319,7 @@ function TrialsReport() {
     queryFn: () => fetchAllRows("/trials"),
   });
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading) return <ReportSkeleton />;
   if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
 
   const rows = data.map((t: any) => [
@@ -352,7 +352,7 @@ function SubscriptionsReport() {
     queryFn: () => fetchAllRows("/plans"),
   });
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading) return <ReportSkeleton />;
   if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
 
   // Est. MRR per plan = monthlyPrice × branches subscribed to it (same basis as the dashboard).
@@ -410,7 +410,7 @@ function OnboardingReport() {
     queryFn: () => fetchAllRows("/onboarding"),
   });
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading) return <ReportSkeleton />;
   if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
 
   const rows = data.map((o: any) => [

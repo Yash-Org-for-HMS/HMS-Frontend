@@ -11,7 +11,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
-import PageLoader from "../../components/PageLoader";
+import PageSkeleton from "../../components/PageSkeleton";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
 import dayjs, { Dayjs } from "dayjs";
@@ -165,7 +165,7 @@ export default function AppointmentCalendar() {
         ) : (
           <Box sx={{ overflowX: "auto", position: "relative" }}>
             {isLoading && (
-              <PageLoader />
+              <PageSkeleton />
             )}
 
             {/* Day headers */}

@@ -10,7 +10,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { exportTableToExcel } from "../../utils/exportExcel";
-import PageLoader from "../../components/PageLoader";
+import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
 import dayjs from "dayjs";
@@ -102,7 +102,7 @@ export function PharmacyExpense() {
   return (
     <Box>
       <DateBar from={from} to={to} setFrom={setFrom} setTo={setTo} />
-      {isLoading ? <PageLoader /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>Purchase orders are organization-wide (not branch-specific).</Typography>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
@@ -129,7 +129,7 @@ export function Outstanding() {
   return (
     <Box>
       <DateBar from={from} to={to} setFrom={setFrom} setTo={setTo} />
-      {isLoading ? <PageLoader /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<AccountBalanceWalletRounded />} label="Total dues" value={inr(data.totals.totalDues)} color="#ef4444" /></Grid>
@@ -183,7 +183,7 @@ export function PatientStatement() {
         <Paper elevation={0} sx={{ borderRadius: 3, border: "1px dashed", borderColor: "divider", p: 6, textAlign: "center", color: "text.secondary" }}>
           Search and select a patient to view their account statement.
         </Paper>
-      ) : isLoading ? <PageLoader /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      ) : isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<ReceiptLongRounded />} label="Total billed" value={inr(data.totals.totalBilled)} color={ACCENT} /></Grid>
@@ -211,7 +211,7 @@ export function Receipts() {
   return (
     <Box>
       <DateBar from={from} to={to} setFrom={setFrom} setTo={setTo} />
-      {isLoading ? <PageLoader /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<PaymentsRounded />} label="Collected" value={inr(data.totals.gross)} color="#10b981" /></Grid>
@@ -237,7 +237,7 @@ export function ServiceWise() {
   return (
     <Box>
       <DateBar from={from} to={to} setFrom={setFrom} setTo={setTo} />
-      {isLoading ? <PageLoader /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<TrendingUpRounded />} label="Total revenue" value={inr(data.totals.total)} color="#10b981" /></Grid>

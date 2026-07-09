@@ -12,7 +12,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
-import PageLoader from "../PageLoader";
+import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import { assetUrl } from "../../utils/assetUrl";
@@ -64,7 +64,7 @@ export default function ConsentFormsSection({ patientId, patientName, readOnly =
       </Box>
 
       {isLoading ? (
-        <PageLoader />
+        <ListSkeleton />
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : forms.length === 0 ? (

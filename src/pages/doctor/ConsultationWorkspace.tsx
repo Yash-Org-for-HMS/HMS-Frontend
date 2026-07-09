@@ -13,6 +13,7 @@ import {
 import AiSummaryPanel from "./AiSummaryPanel";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
+import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
 import ErrorState from "../../components/ErrorState";
 import PrescriptionWriter from "./PrescriptionWriter";
 import SoapTemplateBar, { type SoapTemplate } from "../../components/doctor/SoapTemplateBar";
@@ -225,11 +226,7 @@ export default function ConsultationWorkspace() {
   };
 
   if (loading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80vh" }}>
-        <Mascot pose="thinking" subtitle="Loading consultation…" />
-      </Box>
-    );
+    return <DetailSkeleton />;
   }
 
   if (error && !context) {

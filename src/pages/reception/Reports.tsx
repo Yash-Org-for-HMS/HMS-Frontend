@@ -16,7 +16,7 @@ import {
   PieChart, Pie, Cell, Legend, AreaChart, Area,
 } from "recharts";
 import { axiosInstance } from "../../api/axios";
-import PageLoader from "../../components/PageLoader";
+import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
 import { exportTableToExcel } from "../../utils/exportExcel";
@@ -558,7 +558,7 @@ function Toolbar({ children, onClear }: { children: React.ReactNode; onClear?: (
   );
 }
 
-function Loading() { return <PageLoader />; }
+function Loading() { return <ReportSkeleton />; }
 function Empty() { return <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "text.disabled" }}><Typography variant="body2">No data for this period</Typography></Box>; }
 
 function SimpleTable({ title, head, rows }: { title: string; head: string[]; rows: string[][] }) {

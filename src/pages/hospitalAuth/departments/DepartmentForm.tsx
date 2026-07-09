@@ -15,7 +15,7 @@ import { axiosInstance } from "../../../api/axios";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
-import PageLoader from "../../../components/PageLoader";
+import FormSkeleton from "../../../components/skeletons/FormSkeleton";
 import { validate, hasErrors, required, type Errors } from "../../../utils/validation";
 
 interface DepartmentType {
@@ -111,7 +111,7 @@ export default function DepartmentForm() {
 
   if (initialLoad) {
     return (
-      <PageLoader />
+      <FormSkeleton />
     );
   }
 

@@ -9,7 +9,7 @@ import { ReceiptLongRounded, PaymentRounded, CheckCircleRounded } from "@mui/ico
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
-import PageLoader from "../../components/PageLoader";
+import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
 import { useToast } from "../../contexts/ToastContext";
 
@@ -174,7 +174,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
               </Box>
               
               {itemsLoading ? (
-                <PageLoader />
+                <ListSkeleton />
               ) : itemsError ? (
                 <Box sx={{ p: 2 }}>
                   <ErrorState message={(itemsErr as any)?.response?.data?.message} onRetry={() => refetchUnbilled()} />

@@ -8,7 +8,7 @@ import { LockRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
-import PageLoader from "../../../components/PageLoader";
+import DetailSkeleton from "../../../components/skeletons/DetailSkeleton";
 
 interface ModuleAccessData {
   enabledModules: string[];
@@ -38,7 +38,7 @@ export default function ModuleAccess() {
   });
 
   if (loading) {
-    return <PageLoader />;
+    return <DetailSkeleton />;
   }
   if (isError) {
     return <ErrorState title="Couldn't load module access" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;

@@ -46,7 +46,7 @@ import {
 import { axiosInstance } from "../api/axios";
 import { useAuth } from "../contexts/AuthContext";
 import ErrorState from "../components/ErrorState";
-import PageLoader from "../components/PageLoader";
+import DashboardSkeleton from "../components/skeletons/DashboardSkeleton";
 
 interface DashboardStats {
   totalHospitals: number;
@@ -94,7 +94,7 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <PageLoader />
+      <DashboardSkeleton />
     );
   }
 

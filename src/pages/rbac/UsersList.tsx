@@ -44,6 +44,7 @@ import FilterBar from "../../components/layout/FilterBar";
 import { useServerSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 
 // Keep the admin list's existing sentence-case header look (the SortableHeadCell
 // default is the reception-panel uppercase style).
@@ -204,11 +205,7 @@ export default function UsersList() {
             </TableHead>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8, borderBottom: "none" }}>
-                    <HeartbeatLoader size={96} />
-                  </TableCell>
-                </TableRow>
+                <TableRowsSkeleton rows={6} columns={6} />
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={6} sx={{ py: 4, borderBottom: "none" }}>

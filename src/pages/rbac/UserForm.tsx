@@ -20,7 +20,7 @@ import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
-import PageLoader from "../../components/PageLoader";
+import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import CredentialDialog from "../../components/CredentialDialog";
 import { validate, hasErrors, required, isEmail, isPhone, minLen, type Errors } from "../../utils/validation";
 
@@ -190,7 +190,7 @@ export default function UserForm() {
 
   if (loading) {
     return (
-      <PageLoader />
+      <FormSkeleton />
     );
   }
 

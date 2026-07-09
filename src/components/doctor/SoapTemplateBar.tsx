@@ -12,7 +12,7 @@ import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
-import PageLoader from "../PageLoader";
+import { ListSkeleton } from "../TableRowsSkeleton";
 import { stripHtml } from "../../utils/format";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
@@ -131,7 +131,7 @@ export default function SoapTemplateBar({ current, onApply }: Props) {
 
       <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={() => setAnchorEl(null)} PaperProps={{ sx: { minWidth: 260, maxHeight: 380 } }}>
         {isLoading ? (
-          <PageLoader />
+          <ListSkeleton />
         ) : templates.length === 0 ? (
           <Box sx={{ px: 2, py: 1.5 }}>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>

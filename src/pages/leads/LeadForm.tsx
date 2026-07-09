@@ -17,7 +17,7 @@ import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
-import PageLoader from "../../components/PageLoader";
+import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
 import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "../../utils/validation";
@@ -113,7 +113,7 @@ export default function LeadForm() {
 
   if (initialLoading) {
     return (
-      <PageLoader />
+      <FormSkeleton />
     );
   }
 

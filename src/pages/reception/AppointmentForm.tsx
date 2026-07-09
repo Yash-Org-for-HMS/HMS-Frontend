@@ -9,7 +9,7 @@ import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
-import PageLoader from "../../components/PageLoader";
+import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import ErrorState from "../../components/ErrorState";
 import BillingModal from "./BillingModal";
 import { useToast } from "../../contexts/ToastContext";
@@ -254,7 +254,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     }
   };
 
-  if (loading) return <PageLoader />;
+  if (loading) return <FormSkeleton />;
 
   if (isError) return <Box sx={{ p: 4 }}><ErrorState message={(error as any)?.response?.data?.message || "Failed to initialize form"} onRetry={refetch} /></Box>;
 

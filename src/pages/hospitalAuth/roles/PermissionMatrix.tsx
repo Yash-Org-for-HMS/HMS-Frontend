@@ -33,7 +33,7 @@ import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import HeartbeatLoader from "../../../components/HeartbeatLoader";
-import PageLoader from "../../../components/PageLoader";
+import DetailSkeleton from "../../../components/skeletons/DetailSkeleton";
 
 interface Permission {
   permissionId: string;
@@ -181,7 +181,7 @@ export default function PermissionMatrix() {
 
   if (initialLoad) {
     return (
-      <PageLoader />
+      <DetailSkeleton />
     );
   }
 

@@ -10,7 +10,7 @@ import {
   OpenInNewRounded, VisibilityRounded, CloseRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
-import PageLoader from "../PageLoader";
+import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { assetUrl } from "../../utils/assetUrl";
@@ -62,7 +62,7 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
       </Box>
 
       {isLoading ? (
-        <PageLoader />
+        <ListSkeleton />
       ) : isError ? (
         <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (

@@ -18,7 +18,7 @@ import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
-import PageLoader from "../../components/PageLoader";
+import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
 import StatCard from "../../components/StatCard";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -70,7 +70,7 @@ export default function HospitalDashboard() {
 
   if (loading) {
     return (
-      <PageLoader />
+      <DashboardSkeleton />
     );
   }
 

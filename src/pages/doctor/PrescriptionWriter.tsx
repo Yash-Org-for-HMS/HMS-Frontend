@@ -9,6 +9,7 @@ import { DeleteRounded, SaveRounded, AddRounded, PrintRounded, ReplayRounded, Wa
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
+import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { assetUrl } from "../../utils/assetUrl";
@@ -384,11 +385,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   };
 
   if (loading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", p: 4 }}>
-        <Mascot pose="thinking" subtitle="Loading prescription…" />
-      </Box>
-    );
+    return <FormSkeleton header={false} />;
   }
 
   if (isError) {

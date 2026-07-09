@@ -15,7 +15,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
-import PageLoader from "../../../components/PageLoader";
+import FormSkeleton from "../../../components/skeletons/FormSkeleton";
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -71,7 +71,7 @@ export default function DoctorSchedule() {
 
   if (initialLoad) {
     return (
-      <PageLoader />
+      <FormSkeleton />
     );
   }
 

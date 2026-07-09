@@ -30,7 +30,7 @@ import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import HeartbeatLoader from "../../../components/HeartbeatLoader";
-import PageLoader from "../../../components/PageLoader";
+import FormSkeleton from "../../../components/skeletons/FormSkeleton";
 import { validate, hasErrors, required, isEmail, isPhone, minLen, match, type Errors } from "../../../utils/validation";
 
 interface Role {
@@ -223,7 +223,7 @@ export default function UserForm() {
 
   if (initialLoad) {
     return (
-      <PageLoader />
+      <FormSkeleton />
     );
   }
 

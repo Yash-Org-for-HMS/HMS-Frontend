@@ -21,7 +21,7 @@ import ErrorState from "../../../components/ErrorState";
 import Mascot from "../../../components/Mascot";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
-import PageLoader from "../../../components/PageLoader";
+import FormSkeleton from "../../../components/skeletons/FormSkeleton";
 
 const FIELD_TYPES = [
   { value: "text", label: "Text Input" },
@@ -135,7 +135,7 @@ export default function FormBuilder() {
 
   if (initialLoad) {
     return (
-      <PageLoader />
+      <FormSkeleton />
     );
   }
 
