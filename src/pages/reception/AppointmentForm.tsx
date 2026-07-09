@@ -198,8 +198,18 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     try {
       // Combine date and time
       const datetime = new Date(`${formData.appointmentDate}T${formData.timeSlot}:00`);
-      
-      const finalReason = formData.reason 
+
+      // Block booking a past slot before the round-trip. Uses the same 2-min
+      // grace as the backend guard so the client never rejects something the
+      // server would accept. Only for new bookings — editing an existing (older)
+      // appointment must not be blocked by its own past date.
+      if (!id && datetime.getTime() < Date.now() - 2 * 60 * 1000) {
+        toast.error("Cannot book an appointment in the past. Please pick a future date and time.");
+        setSaving(false);
+        return;
+      }
+
+      const finalReason = formData.reason
         ? `[${formData.visitType}] ${formData.reason}`
         : `[${formData.visitType}]`;
 
@@ -249,6 +259,17 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   if (isError) return <Box sx={{ p: 4 }}><ErrorState message={(error as any)?.response?.data?.message || "Failed to initialize form"} onRetry={refetch} /></Box>;
 
   const filteredDoctors = (dropdowns?.doctors || []).filter((d: any) => !formData.departmentId || d.departmentId === formData.departmentId);
+
+  // Local (not UTC) "today" as YYYY-MM-DD for the date picker's min. Blocks
+  // selecting past dates on a new booking; when editing an already-past
+  // appointment, keep its own date selectable so unrelated edits still work.
+  const localTodayStr = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  })();
+  const minApptDate = id && formData.appointmentDate && formData.appointmentDate < localTodayStr
+    ? formData.appointmentDate
+    : localTodayStr;
 
   return (
     <Box sx={{ maxWidth: isEmbedded ? "100%" : 800, mx: "auto", pb: isEmbedded ? 0 : 4 }}>
@@ -327,6 +348,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
               fullWidth required type="date"
               label="Appointment Date" name="appointmentDate"
               InputLabelProps={{ shrink: true }}
+              inputProps={{ min: minApptDate }}
               value={formData.appointmentDate} onChange={handleChange}
               sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
             />
