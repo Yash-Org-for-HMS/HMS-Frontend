@@ -10,6 +10,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
+import { useConfirm } from "../../contexts/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import PageLoader from "../PageLoader";
 import { stripHtml } from "../../utils/format";
@@ -40,6 +41,7 @@ interface Props {
 
 export default function SoapTemplateBar({ current, onApply }: Props) {
   const toast = useToast();
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [saveOpen, setSaveOpen] = useState(false);
@@ -56,16 +58,29 @@ export default function SoapTemplateBar({ current, onApply }: Props) {
     [current.soapSubjective, current.soapObjective, current.soapAssessment, current.soapPlan].some((v) => stripHtml(v)) ||
     !!current.diagnosis?.trim();
 
-  const handleApply = (t: SoapTemplate) => {
+  const handleApply = async (t: SoapTemplate) => {
     setAnchorEl(null);
-    if (currentHasContent && !window.confirm(`Replace the current SOAP notes with "${t.name}"?`)) return;
+    if (currentHasContent) {
+      const ok = await confirm({
+        title: "Replace SOAP notes",
+        message: `Replace the current SOAP notes with "${t.name}"?`,
+        confirmText: "Replace",
+      });
+      if (!ok) return;
+    }
     onApply(t);
     toast.success(`Applied "${t.name}"`);
   };
 
   const handleDelete = async (e: React.MouseEvent, t: SoapTemplate) => {
     e.stopPropagation();
-    if (!window.confirm(`Delete template "${t.name}"?`)) return;
+    const ok = await confirm({
+      title: "Delete template",
+      message: `Delete template "${t.name}"?`,
+      confirmText: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await axiosInstance.delete(`/doctor/templates/${t.templateId}`);
       queryClient.invalidateQueries({ queryKey: ["doctor-templates"] });

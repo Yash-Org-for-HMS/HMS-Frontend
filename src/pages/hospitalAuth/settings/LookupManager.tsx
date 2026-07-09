@@ -27,6 +27,7 @@ import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
+import { useConfirm } from "../../../contexts/ConfirmContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import { ListSkeleton } from "../../../components/TableRowsSkeleton";
 import { useTableSort } from "../../../components/table/useTableSort";
@@ -73,6 +74,7 @@ const LOOKUP_CONFIGS: Record<string, any> = {
 export default function LookupManager() {
   const [selectedType, setSelectedType] = useState("specialization");
   const toast = useToast();
+  const confirm = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<any>({});
@@ -131,6 +133,17 @@ export default function LookupManager() {
   };
 
   const handleToggleStatus = async (item: any) => {
+    const activating = !item.isActive;
+    const label = config.label.slice(0, -1);
+    const ok = await confirm({
+      title: activating ? `Activate ${label}` : `Deactivate ${label}`,
+      message: activating
+        ? `Reactivate this ${label.toLowerCase()}? It will become available again wherever it's used.`
+        : `Deactivate this ${label.toLowerCase()}? It will be hidden from dropdowns wherever it's used.`,
+      confirmText: activating ? "Activate" : "Deactivate",
+      destructive: !activating,
+    });
+    if (!ok) return;
     try {
       const id = item[config.idField];
       await axiosInstance.put(`/hospital/lookups/${id}/status?type=${selectedType}`, {

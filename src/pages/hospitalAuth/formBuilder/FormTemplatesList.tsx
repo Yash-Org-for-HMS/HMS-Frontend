@@ -26,12 +26,14 @@ import PageHeader from "../../../components/layout/PageHeader";
 import { ListSkeleton } from "../../../components/TableRowsSkeleton";
 import { useTableSort } from "../../../components/table/useTableSort";
 import SortableHeadCell from "../../../components/table/SortableHeadCell";
+import { useConfirm } from "../../../contexts/ConfirmContext";
 
 // Match the file's existing sentence-case fontWeight-600 header look (override SortableHeadCell's default uppercase/700 style).
 const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 600, fontSize: "0.875rem", py: undefined };
 
 export default function FormTemplatesList() {
   const navigate = useNavigate();
+  const confirm = useConfirm();
   const [q, setQ] = useState("");
 
   const { data: templates = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
@@ -52,7 +54,13 @@ export default function FormTemplatesList() {
   });
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this form template?")) return;
+    const ok = await confirm({
+      title: "Delete form template",
+      message: "Are you sure you want to delete this form template? This cannot be undone.",
+      confirmText: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await axiosInstance.delete(`/hospital/form-builder/${id}`);
       refetch();

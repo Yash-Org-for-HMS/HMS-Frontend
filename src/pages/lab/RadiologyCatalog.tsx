@@ -14,9 +14,11 @@ import PageHeader from "../../components/layout/PageHeader";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import { useTableSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { useConfirm } from "../../contexts/ConfirmContext";
 
 export default function RadiologyCatalog() {
   const theme = useTheme();
+  const confirm = useConfirm();
 
   const [openDialog, setOpenDialog] = useState(false);
   const [editScan, setEditScan] = useState<any>(null);
@@ -93,7 +95,13 @@ export default function RadiologyCatalog() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this radiology scan?")) return;
+    const ok = await confirm({
+      title: "Delete radiology scan",
+      message: "Are you sure you want to delete this radiology scan? This cannot be undone.",
+      confirmText: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await axiosInstance.delete(`/lab/radiology-catalog/${id}`);
       refetch();

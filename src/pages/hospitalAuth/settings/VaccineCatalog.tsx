@@ -13,6 +13,7 @@ import ErrorState from "../../../components/ErrorState";
 import Mascot from "../../../components/Mascot";
 import PageLoader from "../../../components/PageLoader";
 import { useToast } from "../../../contexts/ToastContext";
+import { useConfirm } from "../../../contexts/ConfirmContext";
 import PageHeader from "../../../components/layout/PageHeader";
 
 const ACCENT = "#6366f1";
@@ -195,6 +196,7 @@ function EditVaccineDialog({ vaccine, onClose, onDone }: { vaccine: Vaccine; onC
 
 function DosesDialog({ vaccine, onClose, onChanged }: { vaccine: Vaccine; onClose: () => void; onChanged: () => void }) {
   const toast = useToast();
+  const confirm = useConfirm();
   const [items, setItems] = useState(vaccine.scheduleItems);
   const [adding, setAdding] = useState(false);
   const [doseLabel, setDoseLabel] = useState("");
@@ -220,6 +222,13 @@ function DosesDialog({ vaccine, onClose, onChanged }: { vaccine: Vaccine; onClos
   };
 
   const removeItem = async (item: ScheduleItem) => {
+    const ok = await confirm({
+      title: "Remove dose",
+      message: `Remove "${item.doseLabel}" from this vaccine's schedule? This cannot be undone.`,
+      confirmText: "Remove",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       await axiosInstance.delete(`/vaccination/admin/schedule-items/${item.scheduleItemId}`);

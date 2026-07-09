@@ -11,6 +11,7 @@ import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
+import { useConfirm } from "../../../contexts/ConfirmContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import { useTableSort } from "../../../components/table/useTableSort";
 import SortableHeadCell from "../../../components/table/SortableHeadCell";
@@ -26,6 +27,7 @@ export default function DoctorLeaves() {
   const navigate = useNavigate();
   const { id } = useParams();
   const toast = useToast();
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
 
   const [fromDate, setFromDate] = useState(dayjs().format("YYYY-MM-DD"));
@@ -169,7 +171,10 @@ export default function DoctorLeaves() {
                         <Tooltip title="Remove leave">
                           <IconButton
                             size="small"
-                            onClick={() => { if (window.confirm("Remove this leave?")) removeLeave.mutate(leave.doctorLeaveId); }}
+                            onClick={async () => {
+                              const ok = await confirm({ title: "Remove leave", message: "Remove this leave?", confirmText: "Remove", destructive: true });
+                              if (ok) removeLeave.mutate(leave.doctorLeaveId);
+                            }}
                             disabled={removeLeave.isPending}
                             sx={{ color: "text.secondary", "&:hover": { color: "#ef4444" } }}
                           >

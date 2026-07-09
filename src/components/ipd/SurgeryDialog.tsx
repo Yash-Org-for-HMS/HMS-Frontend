@@ -12,6 +12,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
+import { useConfirm } from "../../contexts/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { validate, hasErrors, required, isNonNegativeNumber } from "../../utils/validation";
 
@@ -31,6 +32,7 @@ const emptyForm = { procedureName: "", surgeryType: "MINOR", gradeId: "", surgeo
 
 export default function SurgeryDialog({ open, onClose, admission }: Props) {
   const toast = useToast();
+  const confirm = useConfirm();
   const qc = useQueryClient();
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<{ procedureName?: string; price?: string }>({});
@@ -92,6 +94,15 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
   };
 
   const setStatus = async (surgeryId: string, status: "COMPLETED" | "CANCELLED") => {
+    if (status === "CANCELLED") {
+      const ok = await confirm({
+        title: "Cancel surgery",
+        message: "Are you sure you want to cancel this scheduled surgery?",
+        confirmText: "Cancel surgery",
+        destructive: true,
+      });
+      if (!ok) return;
+    }
     setBusyId(surgeryId);
     try {
       const res = await axiosInstance.put(`/ipd/surgeries/${surgeryId}`, { status });

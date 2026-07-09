@@ -40,6 +40,7 @@ import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
+import { useConfirm } from "../../../contexts/ConfirmContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import { TableRowsSkeleton } from "../../../components/TableRowsSkeleton";
 import { useTableSort } from "../../../components/table/useTableSort";
@@ -401,6 +402,7 @@ function CredentialSuccessDialog({ open, user, newPassword, onClose }: Credentia
 export default function UsersList() {
   const navigate = useNavigate();
   const toast = useToast();
+  const confirm = useConfirm();
 
   // Reset password dialog
   const [resetDialog, setResetDialog] = useState<{ open: boolean; user: User | null }>({ open: false, user: null });
@@ -424,6 +426,16 @@ export default function UsersList() {
   });
 
   const handleToggleStatus = async (user: User) => {
+    const activating = !user.isActive;
+    const ok = await confirm({
+      title: activating ? "Activate user" : "Deactivate user",
+      message: activating
+        ? `Reactivate ${user.firstName} ${user.lastName}? They will be able to log in again.`
+        : `Deactivate ${user.firstName} ${user.lastName}? They will no longer be able to log in.`,
+      confirmText: activating ? "Activate" : "Deactivate",
+      destructive: !activating,
+    });
+    if (!ok) return;
     try {
       await axiosInstance.put(`/hospital/users/${user.userId}/deactivate`, { isActive: !user.isActive });
       refetch();

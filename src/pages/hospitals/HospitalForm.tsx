@@ -26,6 +26,7 @@ import ErrorState from "../../components/ErrorState";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import PageLoader from "../../components/PageLoader";
 import { useToast } from "../../contexts/ToastContext";
+import { useConfirm } from "../../contexts/ConfirmContext";
 import FormHeader from "../../components/layout/FormHeader";
 import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "../../utils/validation";
 
@@ -41,6 +42,7 @@ export default function HospitalForm() {
   const [loading, setLoading] = useState(false);
   const [convertResult, setConvertResult] = useState<{ email: string; temporaryPassword: string } | null>(null);
   const toast = useToast();
+  const confirm = useConfirm();
   const [branches, setBranches] = useState<any[]>([]);
   const [reload, setReload] = useState(0);
 
@@ -217,7 +219,13 @@ export default function HospitalForm() {
   };
 
   const handleDeleteBranch = async (branchId: string) => {
-    if (!window.confirm("Are you sure you want to delete this branch?")) return;
+    const ok = await confirm({
+      title: "Delete branch",
+      message: "Are you sure you want to delete this branch? This cannot be undone.",
+      confirmText: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await axiosInstance.delete(`/hospitals/${id}/branches/${branchId}`);
       setReload(r => r + 1);

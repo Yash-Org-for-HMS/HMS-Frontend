@@ -14,9 +14,11 @@ import PageLoader from "../../components/PageLoader";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
+import { useConfirm } from "../../contexts/ConfirmContext";
 
 export default function PatientDocumentsSection({ patientId, readOnly = false }: { patientId: string; readOnly?: boolean }) {
   const toast = useToast();
+  const confirm = useConfirm();
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -72,7 +74,13 @@ export default function PatientDocumentsSection({ patientId, readOnly = false }:
   };
 
   const handleDelete = async (documentId: string) => {
-    if (!window.confirm("Are you sure you want to delete this document?")) return;
+    const ok = await confirm({
+      title: "Delete document",
+      message: "Are you sure you want to delete this document? This cannot be undone.",
+      confirmText: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       const res = await axiosInstance.delete(`/reception/documents/${documentId}`);
       if (res.data.success) {
