@@ -1,278 +1,205 @@
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
-  Container,
   Typography,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  CircularProgress,
-  TextField,
-  InputAdornment,
-  Pagination,
-  Switch,
-  MenuItem,
+  Grid,
+  Card,
+  CardContent,
+  Chip,
+  Button,
 } from "@mui/material";
 import {
-  SearchRounded,
+  HourglassBottomRounded,
+  TimerOffRounded,
+  BlockRounded,
+  EditNoteRounded,
+  RocketLaunchRounded,
+  VisibilityRounded,
+  CheckCircleRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import PageLoader from "../../components/PageLoader";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
 
-export default function OnboardingList() {
-  const { t } = useTranslation();
-  const [onboardings, setOnboardings] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+// How soon (in days) an active trial counts as "expiring soon".
+const EXPIRY_WINDOW_DAYS = 7;
 
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState("");
-
-  const fetchOnboardings = async () => {
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get("/onboarding", {
-        params: { page, limit: 10, search }
-      });
-      setOnboardings(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch onboarding records", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchOnboardings();
-  }, [page, search]);
-
-  const handleInlineUpdate = async (onboardingId: string, updatedFields: any) => {
-    try {
-      const record = onboardings.find(o => o.hospitalOnboardingId === onboardingId);
-      if (!record) return;
-
-      const payload = {
-        tenantSetupCompleted: record.tenantSetupCompleted,
-        defaultRolesSeeded: record.defaultRolesSeeded,
-        paymentVerified: record.paymentVerified,
-        onboardingStatus: record.onboardingStatus,
-        ...updatedFields
-      };
-
-      setOnboardings(prev =>
-        prev.map(o =>
-          o.hospitalOnboardingId === onboardingId
-            ? { ...o, ...payload }
-            : o
-        )
-      );
-
-      await axiosInstance.put(`/onboarding/${onboardingId}`, payload);
-      
-      const response = await axiosInstance.get("/onboarding", {
-        params: { page, limit: 10, search }
-      });
-      setOnboardings(response.data.data);
-    } catch (error) {
-      console.error("Failed to update onboarding inline", error);
-      fetchOnboardings();
-    }
-  };
-
-  const getStatusTextColor = (status: string) => {
-    switch (status) {
-      case "completed": return "#34d399";
-      case "in_progress": return "#60a5fa";
-      case "pending": return "#fbbf24";
-      case "stalled": return "#f87171";
-      default: return "#cbd5e1";
-    }
-  };
-
-  const getStatusBgColor = (status: string) => {
-    switch (status) {
-      case "completed": return "rgba(16, 185, 129, 0.15)";
-      case "in_progress": return "rgba(96, 165, 250, 0.15)";
-      case "pending": return "rgba(251, 191, 36, 0.15)";
-      case "stalled": return "rgba(248, 113, 113, 0.15)";
-      default: return "rgba(255, 255, 255, 0.05)";
-    }
-  };
-
+function Section({
+  icon, title, color, items, children,
+}: { icon: any; title: string; color: string; items: number; children: any }) {
+  if (items === 0) return null;
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("onboarding.title", "Hospital Onboarding Tracker")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("onboarding.subtitle", "Track setup and provisioning progress for new tenants")}
-          </Typography>
-        </Box>
+    <Paper elevation={2} sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, overflow: "hidden", mb: 3 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2.5, py: 2, borderBottom: "1px solid", borderColor: "divider" }}>
+        <Box sx={{ width: 36, height: 36, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: `${color}22`, color }}>{icon}</Box>
+        <Typography variant="subtitle1" fontWeight={700} sx={{ color: "text.primary" }}>{title}</Typography>
+        <Chip size="small" label={items} sx={{ ml: "auto", fontWeight: 700, bgcolor: `${color}22`, color }} />
       </Box>
-
-      {/* Filters */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
-        <TextField
-          placeholder={t("onboarding.searchPlaceholder", "Search by hospital name...")}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          size="small"
-          
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchRounded sx={{ color: "text.secondary" }} />
-              </InputAdornment>
-            ),
-          }}
-        />
-      </Box>
-
-      <Paper
-        elevation={2}
-        sx={{
-          bgcolor: "background.paper",
-          backdropFilter: "blur(10px)",
-          border: "1px solid", borderColor: "divider",
-          borderRadius: 3,
-          overflow: "hidden",
-        }}
-      >
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("onboarding.hospital", "Hospital")}</TableCell>
-                <TableCell align="center" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("onboarding.tenantSetup", "Tenant Setup")}</TableCell>
-                <TableCell align="center" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("onboarding.rolesSeeded", "Roles Seeded")}</TableCell>
-                <TableCell align="center" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("onboarding.paymentVerified", "Payment Verified")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("onboarding.status", "Overall Status")}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "#10b981" }} />
-                  </TableCell>
-                </TableRow>
-              ) : onboardings.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 8, color: "text.secondary" }}>
-                    {t("common.noData")}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                onboardings.map((record) => (
-                  <TableRow key={record.hospitalOnboardingId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
-                    <TableCell sx={{ color: "text.primary", fontWeight: 500 }}>
-                      {record.hospital?.hospitalName}
-                      <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontFamily: "monospace" }}>
-                        {record.hospital?.hospitalCode}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Switch
-                        checked={record.tenantSetupCompleted}
-                        onChange={(e) => handleInlineUpdate(record.hospitalOnboardingId, { tenantSetupCompleted: e.target.checked })}
-                        color="primary"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Switch
-                        checked={record.defaultRolesSeeded}
-                        onChange={(e) => handleInlineUpdate(record.hospitalOnboardingId, { defaultRolesSeeded: e.target.checked })}
-                        color="primary"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Switch
-                        checked={record.paymentVerified}
-                        onChange={(e) => handleInlineUpdate(record.hospitalOnboardingId, { paymentVerified: e.target.checked })}
-                        color="primary"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <TextField
-                        select
-                        value={record.onboardingStatus}
-                        onChange={(e) => handleInlineUpdate(record.hospitalOnboardingId, { onboardingStatus: e.target.value })}
-                        size="small"
-                        sx={{
-                          minWidth: 130,
-                          "& .MuiOutlinedInput-root": {
-                            color: getStatusTextColor(record.onboardingStatus),
-                            backgroundColor: getStatusBgColor(record.onboardingStatus),
-                            borderRadius: "8px",
-                            fontWeight: 600,
-                            fontSize: "0.8rem",
-                            "& fieldset": { borderColor: "transparent" },
-                            "&:hover fieldset": { borderColor: "divider" },
-                            "&.Mui-focused fieldset": { borderColor: "divider" },
-                          },
-                          "& .MuiSvgIcon-root": { color: getStatusTextColor(record.onboardingStatus) }
-                        }}
-                        SelectProps={{
-                          MenuProps: {
-                            sx: {
-                              "& .MuiPaper-root": {
-                                bgcolor: "background.paper",
-                                color: "text.primary",
-                                border: "1px solid", borderColor: "divider"
-                              }
-                            }
-                          }
-                        }}
-                      >
-                        <MenuItem value="pending" sx={{ fontWeight: 600, color: "#fbbf24" }}>Pending</MenuItem>
-                        <MenuItem value="in_progress" sx={{ fontWeight: 600, color: "#60a5fa" }}>In Progress</MenuItem>
-                        <MenuItem value="completed" sx={{ fontWeight: 600, color: "#34d399" }}>Completed</MenuItem>
-                        <MenuItem value="stalled" sx={{ fontWeight: 600, color: "#f87171" }}>Stalled</MenuItem>
-                      </TextField>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, borderTop: "1px solid", borderColor: "divider" }}>
-            <Pagination 
-              count={totalPages} 
-              page={page} 
-              onChange={(_, value) => setPage(value)} 
-              color="primary"
-              sx={{
-                "& .MuiPaginationItem-root": { color: "text.primary" },
-                "& .Mui-selected": { bgcolor: "rgba(16, 185, 129, 0.2) !important", color: "#10b981" }
-              }}
-            />
-          </Box>
-        )}
-      </Paper>
-    </Container>
+      <Box>{children}</Box>
+    </Paper>
   );
 }
 
-const textFieldSx = {
-  "& .MuiOutlinedInput-root": {
-    color: "text.primary",
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "divider" },
-    "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: "#10b981" },
-  },
-  "& .MuiInputLabel-root": { color: "text.secondary" },
-};
+function Row({ primary, secondary, actions }: { primary: any; secondary?: any; actions: any }) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 2.5, py: 1.5, borderBottom: "1px solid", borderColor: "divider", "&:last-of-type": { borderBottom: "none" } }}>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body2" fontWeight={600} noWrap sx={{ color: "text.primary" }}>{primary}</Typography>
+        {secondary && <Typography variant="caption" noWrap sx={{ color: "text.secondary", display: "block" }}>{secondary}</Typography>}
+      </Box>
+      <Box sx={{ display: "flex", gap: 1, flexShrink: 0 }}>{actions}</Box>
+    </Box>
+  );
+}
+
+export default function OnboardingList() {
+  const navigate = useNavigate();
+
+  const hq = useQuery({
+    queryKey: ["action-hospitals"],
+    queryFn: async () => (await axiosInstance.get("/hospitals", { params: { limit: 1000 } })).data,
+  });
+  const tq = useQuery({
+    queryKey: ["action-trials"],
+    queryFn: async () => (await axiosInstance.get("/trials", { params: { limit: 1000 } })).data,
+  });
+
+  const loading = hq.isLoading || tq.isLoading;
+  const isError = hq.isError || tq.isError;
+
+  const hospitals: any[] = hq.data?.data ?? [];
+  const trials: any[] = tq.data?.data ?? [];
+
+  const daysUntil = (d: string) => Math.ceil((new Date(d).getTime() - Date.now()) / 86_400_000);
+
+  // ── The buckets that actually need a human to act ──
+  const expiring = trials
+    .filter((t) => t.trialStatus === "active" && daysUntil(t.trialEndDate) <= EXPIRY_WINDOW_DAYS)
+    .sort((a, b) => daysUntil(a.trialEndDate) - daysUntil(b.trialEndDate));
+  const expired = trials.filter((t) => t.trialStatus === "expired");
+  const suspended = hospitals.filter((h) => h.status === "suspended");
+  const incomplete = hospitals.filter(
+    (h) => h.status === "active" && (!h.officialPhone || !h.addressLine1 || !h.registrationNumber),
+  );
+
+  const total = expiring.length + expired.length + suspended.length + incomplete.length;
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <PageLoader />
+      </PageContainer>
+    );
+  }
+
+  if (isError) {
+    return (
+      <PageContainer>
+        <ErrorState
+          message={(hq.error as any)?.response?.data?.message || (tq.error as any)?.response?.data?.message}
+          onRetry={() => { hq.refetch(); tq.refetch(); }}
+        />
+      </PageContainer>
+    );
+  }
+
+  const summary = [
+    { label: "Trials expiring", value: expiring.length, color: "#f59e0b" },
+    { label: "Expired trials", value: expired.length, color: "#ef4444" },
+    { label: "Suspended", value: suspended.length, color: "#ef4444" },
+    { label: "Incomplete profiles", value: incomplete.length, color: "#3b82f6" },
+  ];
+
+  return (
+    <PageContainer>
+      <PageHeader
+        title="Action Needed"
+        subtitle="Tenants and trials that need your attention right now."
+      />
+
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        {summary.map((s) => (
+          <Grid size={{ xs: 6, md: 3 }} key={s.label}>
+            <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
+              <CardContent sx={{ py: 2.5 }}>
+                <Typography variant="h4" fontWeight={800} sx={{ color: s.value ? s.color : "text.disabled" }}>{s.value}</Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600 }}>{s.label}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {total === 0 ? (
+        <Paper sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, p: 6, textAlign: "center" }}>
+          <CheckCircleRounded sx={{ fontSize: 56, color: "#10b981", mb: 1.5 }} />
+          <Typography variant="h6" fontWeight={700} sx={{ color: "text.primary" }}>All clear</Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>Nothing needs attention across your tenants right now.</Typography>
+        </Paper>
+      ) : (
+        <>
+          <Section icon={<HourglassBottomRounded />} title="Trials expiring soon" color="#f59e0b" items={expiring.length}>
+            {expiring.map((t) => {
+              const d = daysUntil(t.trialEndDate);
+              return (
+                <Row
+                  key={t.hospitalTrialId}
+                  primary={t.lead?.hospitalName || "Unknown"}
+                  secondary={d <= 0 ? "Expires today" : `Expires in ${d} day${d === 1 ? "" : "s"} · ${new Date(t.trialEndDate).toLocaleDateString()}`}
+                  actions={
+                    <>
+                      <Button size="small" variant="outlined" onClick={() => navigate("/trials")} sx={{ textTransform: "none" }}>Manage</Button>
+                      <Button size="small" variant="contained" startIcon={<RocketLaunchRounded />} onClick={() => navigate(`/hospitals/new?trialId=${t.hospitalTrialId}`)} sx={{ textTransform: "none", background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)" }}>Convert</Button>
+                    </>
+                  }
+                />
+              );
+            })}
+          </Section>
+
+          <Section icon={<TimerOffRounded />} title="Expired trials — convert or cancel" color="#ef4444" items={expired.length}>
+            {expired.map((t) => (
+              <Row
+                key={t.hospitalTrialId}
+                primary={t.lead?.hospitalName || "Unknown"}
+                secondary={`Trial ended ${new Date(t.trialEndDate).toLocaleDateString()}`}
+                actions={
+                  <>
+                    <Button size="small" variant="outlined" onClick={() => navigate("/trials")} sx={{ textTransform: "none" }}>Manage</Button>
+                    <Button size="small" variant="contained" startIcon={<RocketLaunchRounded />} onClick={() => navigate(`/hospitals/new?trialId=${t.hospitalTrialId}`)} sx={{ textTransform: "none", background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)" }}>Convert</Button>
+                  </>
+                }
+              />
+            ))}
+          </Section>
+
+          <Section icon={<BlockRounded />} title="Suspended hospitals" color="#ef4444" items={suspended.length}>
+            {suspended.map((h) => (
+              <Row
+                key={h.hospitalId}
+                primary={h.hospitalName}
+                secondary={`Code ${h.hospitalCode} · logins blocked`}
+                actions={<Button size="small" variant="outlined" startIcon={<VisibilityRounded />} onClick={() => navigate(`/hospitals/${h.hospitalId}/overview`)} sx={{ textTransform: "none" }}>View</Button>}
+              />
+            ))}
+          </Section>
+
+          <Section icon={<EditNoteRounded />} title="Incomplete hospital profiles" color="#3b82f6" items={incomplete.length}>
+            {incomplete.map((h) => (
+              <Row
+                key={h.hospitalId}
+                primary={h.hospitalName}
+                secondary="Admin hasn't completed the required profile details yet"
+                actions={<Button size="small" variant="outlined" startIcon={<VisibilityRounded />} onClick={() => navigate(`/hospitals/${h.hospitalId}/overview`)} sx={{ textTransform: "none" }}>View</Button>}
+              />
+            ))}
+          </Section>
+        </>
+      )}
+    </PageContainer>
+  );
+}

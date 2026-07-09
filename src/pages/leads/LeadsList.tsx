@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -18,7 +19,6 @@ import {
   InputAdornment,
   Menu,
   MenuItem,
-  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -26,6 +26,7 @@ import {
   Pagination,
   FormControlLabel,
   Switch,
+  Alert,
 } from "@mui/material";
 import {
   AddRounded,
@@ -37,21 +38,36 @@ import {
   AssignmentIndRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import CredentialDialog from "../../components/CredentialDialog";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../contexts/ToastContext";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Keep the admin list's existing sentence-case header look (the SortableHeadCell
+// default is the reception-panel uppercase style).
+const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", bgcolor: "background.paper", color: "text.secondary" } as const;
 
 export default function LeadsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [leads, setLeads] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  
   // Pagination & Filtering
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [myLeadsOnly, setMyLeadsOnly] = useState(false);
   const { user } = useAuth();
+  const toast = useToast();
+
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
 
   // Dialogs & Menus
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -61,55 +77,92 @@ export default function LeadsList() {
   const [selectedLeadStatus, setSelectedLeadStatus] = useState<string | null>(null);
   const [selectedLead, setSelectedLead] = useState<any | null>(null);
 
-  const fetchLeads = async () => {
-    setLoading(true);
-    try {
-      const params: any = { page, limit: 10, search, status: statusFilter };
-      if (myLeadsOnly && user?.id) {
-        params.assignedTo = user.id;
-      }
-      const response = await axiosInstance.get("/leads", { params });
-      setLeads(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch leads", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Conversion (lead → live hospital tenant)
+  const [convertForm, setConvertForm] = useState({ planId: "", adminFirstName: "", adminLastName: "", adminEmail: "" });
+  const [converting, setConverting] = useState(false);
+  const [convertError, setConvertError] = useState<string | null>(null);
+  const [credentials, setCredentials] = useState<{ email: string; temporaryPassword: string; hospitalName: string } | null>(null);
 
+  const { data: plans = [] } = useQuery<any[]>({
+    queryKey: ["plans", "convert-options"],
+    queryFn: async () => (await axiosInstance.get("/plans", { params: { limit: 100 } })).data.data || [],
+  });
+
+  const {
+    data: leadsData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["leads", page, search, statusFilter, myLeadsOnly, user?.id, orderBy, order],
+    queryFn: async () => {
+      const params: any = { page, limit: 10, search, status: statusFilter, sortBy: orderBy || undefined, sortOrder: order };
+      if (myLeadsOnly && user?.id) params.assignedTo = user.id;
+      return (await axiosInstance.get("/leads", { params })).data; // { data, pagination }
+    },
+  });
+  const leads: any[] = leadsData?.data ?? [];
+  const totalPages: number = leadsData?.pagination?.totalPages ?? 1;
+
+  // Reset to the first page whenever the sort changes.
   useEffect(() => {
-    fetchLeads();
-  }, [page, search, statusFilter, myLeadsOnly, user]);
+    setPage(1);
+  }, [orderBy, order]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
       await axiosInstance.delete(`/leads/${deleteId}`);
       setDeleteId(null);
-      fetchLeads();
+      refetch();
     } catch (error) {
-      console.error("Failed to delete lead", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to delete lead");
     }
+  };
+
+  const openConvert = (lead: any) => {
+    const parts = (lead?.contactPersonName || "").trim().split(/\s+/).filter(Boolean);
+    setConvertForm({
+      planId: "",
+      adminFirstName: parts[0] || "",
+      adminLastName: parts.slice(1).join(" ") || "",
+      adminEmail: lead?.email || "",
+    });
+    setConvertError(null);
+    setConvertId(lead);
   };
 
   const handleConvert = async () => {
     if (!convertId) return;
+    if (!convertForm.planId) {
+      setConvertError("Please select a subscription plan.");
+      return;
+    }
+    setConverting(true);
+    setConvertError(null);
     try {
-      await axiosInstance.post(`/leads/${convertId.hospitalLeadId}/convert`);
+      const res = await axiosInstance.post(`/leads/${convertId.hospitalLeadId}/convert`, convertForm);
+      const admin = res.data?.data?.admin;
+      const convertedName = convertId.hospitalName;
       setConvertId(null);
-      fetchLeads();
-    } catch (error) {
-      console.error("Failed to convert lead", error);
+      if (admin) {
+        setCredentials({ email: admin.email, temporaryPassword: admin.temporaryPassword, hospitalName: convertedName });
+      }
+      refetch();
+    } catch (error: any) {
+      setConvertError(error.response?.data?.message || "Failed to convert lead");
+    } finally {
+      setConverting(false);
     }
   };
 
   const handleStatusChange = async (leadId: string, newStatus: string) => {
     try {
       await axiosInstance.patch(`/leads/${leadId}/status`, { status: newStatus });
-      fetchLeads();
+      refetch();
     } catch (error) {
-      console.error("Failed to update status", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to update status");
     }
   };
 
@@ -118,9 +171,9 @@ export default function LeadsList() {
     try {
       await axiosInstance.patch(`/leads/${selectedLeadId}/assign`, { assignedToUserId: user.id });
       setAnchorEl(null);
-      fetchLeads();
+      refetch();
     } catch (error) {
-      console.error("Failed to assign lead", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to assign lead");
     }
   };
 
@@ -138,7 +191,9 @@ export default function LeadsList() {
       case "contacted": return "#fbbf24";
       case "qualified": return "#c084fc";
       case "demo_done": return "#60a5fa";
+      case "trialing": return "#f472b6";
       case "converted": return "#34d399";
+      case "lost": return "#f87171";
       default: return "#cbd5e1";
     }
   };
@@ -149,38 +204,32 @@ export default function LeadsList() {
       case "contacted": return "rgba(251, 191, 36, 0.15)";
       case "qualified": return "rgba(192, 132, 252, 0.15)";
       case "demo_done": return "rgba(96, 165, 250, 0.15)";
+      case "trialing": return "rgba(244, 114, 182, 0.15)";
       case "converted": return "rgba(52, 211, 153, 0.15)";
+      case "lost": return "rgba(248, 113, 113, 0.15)";
       default: return "rgba(255, 255, 255, 0.05)";
     }
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("leads.title")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("leads.subtitle")}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/leads/new")}
-          sx={{
-            background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-            boxShadow: "0 4px 14px 0 rgba(99, 102, 241, 0.39)",
-            borderRadius: 2,
-          }}
-        >
-          {t("leads.addLead")}
-        </Button>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title={t("leads.title")}
+        subtitle={t("leads.subtitle")}
+        actions={
+          <ActionButton
+            accentFrom="#6366f1"
+            accentTo="#8b5cf6"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/leads/new")}
+          >
+            {t("leads.addLead")}
+          </ActionButton>
+        }
+      />
 
       {/* Filters */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+      <FilterBar>
         <TextField
           placeholder={t("leads.searchPlaceholder")}
           value={search}
@@ -214,7 +263,9 @@ export default function LeadsList() {
           <MenuItem value="contacted">{t("leads.statusContacted")}</MenuItem>
           <MenuItem value="qualified">{t("leads.statusQualified")}</MenuItem>
           <MenuItem value="demo_done">{t("leads.statusDemoDone")}</MenuItem>
+          <MenuItem value="trialing">In Trial</MenuItem>
           <MenuItem value="converted">{t("leads.statusConverted")}</MenuItem>
+          <MenuItem value="lost">Lost</MenuItem>
         </TextField>
         
         <FormControlLabel
@@ -228,7 +279,7 @@ export default function LeadsList() {
           label={<Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>My Leads Only</Typography>}
           sx={{ ml: 2 }}
         />
-      </Box>
+      </FilterBar>
 
       <Paper
         elevation={2}
@@ -240,22 +291,24 @@ export default function LeadsList() {
           overflow: "hidden",
         }}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("leads.hospitalName")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("leads.contactDetails")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("leads.assignedTo")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("leads.status")}</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions")}</TableCell>
+                <SortableHeadCell label={t("leads.hospitalName")} sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("leads.contactDetails")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("leads.assignedTo")}</TableCell>
+                <SortableHeadCell label={t("leads.status")} sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("common.actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {isLoading ? (
+                <TableRowsSkeleton rows={6} columns={5} />
+              ) : isError ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "#6366f1" }} />
+                  <TableCell colSpan={5} sx={{ py: 4, border: 0 }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : leads.length === 0 ? (
@@ -291,7 +344,7 @@ export default function LeadsList() {
                             backgroundColor: getStatusBgColor(lead.leadStatus),
                             borderRadius: "8px",
                             fontWeight: 600,
-                            fontSize: "0.85rem",
+                            fontSize: "0.875rem",
                             "& fieldset": { borderColor: "transparent" },
                             "&:hover fieldset": { borderColor: "divider" },
                             "&.Mui-focused fieldset": { borderColor: "divider" },
@@ -314,7 +367,9 @@ export default function LeadsList() {
                         <MenuItem value="contacted" sx={{ fontWeight: 600, color: "#fbbf24" }}>{t("leads.statusContacted")}</MenuItem>
                         <MenuItem value="qualified" sx={{ fontWeight: 600, color: "#c084fc" }}>{t("leads.statusQualified")}</MenuItem>
                         <MenuItem value="demo_done" sx={{ fontWeight: 600, color: "#60a5fa" }}>{t("leads.statusDemoDone")}</MenuItem>
+                        <MenuItem value="trialing" sx={{ fontWeight: 600, color: "#f472b6" }}>In Trial</MenuItem>
                         <MenuItem value="converted" sx={{ fontWeight: 600, color: "#34d399" }}>{t("leads.statusConverted")}</MenuItem>
+                        <MenuItem value="lost" sx={{ fontWeight: 600, color: "#f87171" }}>Lost</MenuItem>
                       </TextField>
                     </TableCell>
                     <TableCell align="right">
@@ -354,7 +409,7 @@ export default function LeadsList() {
         PaperProps={{ sx: { bgcolor: "background.paper", border: "1px solid", borderColor: "divider", color: "text.primary" } }}
       >
         {selectedLeadStatus !== "converted" && (
-          <MenuItem onClick={() => { setConvertId(selectedLead); setAnchorEl(null); }}>
+          <MenuItem onClick={() => { openConvert(selectedLead); setAnchorEl(null); }}>
             <AddRounded sx={{ mr: 1.5, fontSize: 20, color: "#10b981" }} /> Convert to Hospital
           </MenuItem>
         )}
@@ -371,18 +426,69 @@ export default function LeadsList() {
         </MenuItem>
       </Menu>
 
-      {/* Convert Confirmation Dialog */}
-      <Dialog open={Boolean(convertId)} onClose={() => setConvertId(null)} PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>
+      {/* Convert Dialog — pick a plan + the first admin */}
+      <Dialog open={Boolean(convertId)} onClose={() => !converting && setConvertId(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>
         <DialogTitle sx={{ fontWeight: 700 }}>Convert Lead to Hospital</DialogTitle>
-        <DialogContent sx={{ color: "text.secondary" }}>
-          Are you sure you want to convert <strong>{convertId?.hospitalName}</strong> into a live hospital tenant? 
-          This will automatically generate a Hospital record, a Main Branch, and start the Onboarding tracking process.
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            Provisioning <strong>{convertId?.hospitalName}</strong> creates the hospital (pending activation), a Main Branch on the chosen plan, default roles, and the first Hospital Admin login. Activate it later by completing onboarding.
+          </Typography>
+          {convertError && <Alert severity="error" sx={{ mb: 2 }}>{convertError}</Alert>}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <TextField
+              select
+              required
+              label="Subscription Plan"
+              value={convertForm.planId}
+              onChange={(e) => setConvertForm((f) => ({ ...f, planId: e.target.value }))}
+            >
+              {plans.length === 0 && <MenuItem value="" disabled>No plans available — create one first</MenuItem>}
+              {plans.map((p) => (
+                <MenuItem key={p.planId} value={p.planId}>{p.planName}</MenuItem>
+              ))}
+            </TextField>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Admin First Name"
+                value={convertForm.adminFirstName}
+                onChange={(e) => setConvertForm((f) => ({ ...f, adminFirstName: e.target.value }))}
+              />
+              <TextField
+                fullWidth
+                label="Admin Last Name"
+                value={convertForm.adminLastName}
+                onChange={(e) => setConvertForm((f) => ({ ...f, adminLastName: e.target.value }))}
+              />
+            </Box>
+            <TextField
+              fullWidth
+              type="email"
+              label="Admin Login Email"
+              helperText="This is the email the Hospital Admin will sign in with."
+              value={convertForm.adminEmail}
+              onChange={(e) => setConvertForm((f) => ({ ...f, adminEmail: e.target.value }))}
+            />
+          </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setConvertId(null)} sx={{ color: "text.secondary" }}>{t("common.cancel")}</Button>
-          <Button onClick={handleConvert} variant="contained" sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }}>Convert to Hospital</Button>
+          <Button onClick={() => setConvertId(null)} disabled={converting} sx={{ color: "text.secondary" }}>{t("common.cancel")}</Button>
+          <Button onClick={handleConvert} variant="contained" disabled={converting || !convertForm.planId} sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }}>
+            {converting ? <HeartbeatLoader size={22} /> : "Convert to Hospital"}
+          </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Credentials Dialog — shown once after conversion */}
+      <CredentialDialog
+        open={Boolean(credentials)}
+        title="Hospital Provisioned"
+        name={credentials?.hospitalName}
+        email={credentials?.email}
+        password={credentials?.temporaryPassword || ""}
+        note="The password is shown only now and must be changed on first login. The hospital becomes active once you complete its onboarding."
+        onClose={() => setCredentials(null)}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={Boolean(deleteId)} onClose={() => setDeleteId(null)} PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>
@@ -395,7 +501,7 @@ export default function LeadsList() {
           <Button onClick={handleDelete} color="error" variant="contained">{t("common.delete")}</Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </PageContainer>
   );
 }
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -11,7 +12,6 @@ import {
   MenuItem,
   IconButton,
   Alert,
-  CircularProgress,
   Switch,
   FormControlLabel,
   Checkbox,
@@ -20,7 +20,11 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
+import FormHeader from "../../components/layout/FormHeader";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 
 export default function RoleForm() {
   const { t } = useTranslation();
@@ -29,10 +33,7 @@ export default function RoleForm() {
   const isEdit = Boolean(id);
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
   const toast = useToast();
-  const [hospitals, setHospitals] = useState<any[]>([]);
-  const [allPermissions, setAllPermissions] = useState<any[]>([]);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
@@ -43,36 +44,38 @@ export default function RoleForm() {
     status: "active",
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [hospRes, permRes] = await Promise.all([
-          axiosInstance.get("/hospitals", { params: { limit: 100 } }),
-          axiosInstance.get("/rbac/permissions")
-        ]);
-        setHospitals(hospRes.data.data);
-        setAllPermissions(permRes.data.data);
+  const { data: hospitals = [], isLoading: hospLoading, isError: hospIsError, error: hospError, refetch: refetchHosp } = useQuery<any[]>({
+    queryKey: ["hospitals", "rbac-role-options"],
+    queryFn: async () => (await axiosInstance.get("/hospitals", { params: { limit: 100 } })).data.data,
+  });
+  const { data: allPermissions = [], isLoading: permLoading, isError: permIsError, error: permError, refetch: refetchPerms } = useQuery<any[]>({
+    queryKey: ["rbac-permissions"],
+    queryFn: async () => (await axiosInstance.get("/rbac/permissions")).data.data,
+  });
+  const { data: roleData, isLoading: roleLoading, isError: roleIsError, error: roleError, refetch: refetchRole } = useQuery({
+    queryKey: ["rbac-role", id],
+    queryFn: async () => (await axiosInstance.get(`/rbac/roles/${id}`)).data.data,
+    enabled: isEdit,
+  });
 
-        if (isEdit) {
-          const roleRes = await axiosInstance.get(`/rbac/roles/${id}`);
-          const d = roleRes.data.data;
-          setFormData({
-            hospitalId: d.hospitalId || "",
-            roleCode: d.roleCode || "",
-            roleName: d.roleName || "",
-            isSystemRole: d.isSystemRole || false,
-            status: d.status || "active",
-          });
-          setSelectedPermissions(d.rolePermissions.map((rp: any) => rp.permissionId));
-        }
-      } catch (err) {
-        toast.error(t("common.error"));
-      } finally {
-        setInitialLoading(false);
-      }
-    };
-    fetchData();
-  }, [id, isEdit, t]);
+  // Seed the form + selected permissions from the loaded role when editing.
+  useEffect(() => {
+    if (!roleData) return;
+    const d = roleData;
+    setFormData({
+      hospitalId: d.hospitalId || "",
+      roleCode: d.roleCode || "",
+      roleName: d.roleName || "",
+      isSystemRole: d.isSystemRole || false,
+      status: d.status || "active",
+    });
+    setSelectedPermissions(d.rolePermissions.map((rp: any) => rp.permissionId));
+  }, [roleData]);
+
+  const initialLoading = hospLoading || permLoading || (isEdit && roleLoading);
+  const isError = hospIsError || permIsError || roleIsError;
+  const error = hospError || permError || roleError;
+  const refetch = () => { refetchHosp(); refetchPerms(); if (isEdit) refetchRole(); };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, checked, type } = e.target;
@@ -114,32 +117,24 @@ export default function RoleForm() {
 
   if (initialLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "#14b8a6" }} />
-      </Box>
+      <PageLoader />
+    );
+  }
+
+  if (isError) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <ErrorState title="Couldn't load role form" message={(error as any)?.response?.data?.message} onRetry={refetch} />
+      </Container>
     );
   }
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 2 }}>
-        <IconButton
-          onClick={() => navigate("/rbac/roles")}
-          sx={{
-            bgcolor: "action.hover",
-            border: "1px solid", borderColor: "divider",
-            color: "text.primary",
-            "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-          }}
-        >
-          <ArrowBackRounded />
-        </IconButton>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
-            {isEdit ? t("rbac.editRole", "Edit Role") : t("rbac.addRole", "Add Role")}
-          </Typography>
-        </Box>
-      </Box>
+      <FormHeader
+        title={isEdit ? t("rbac.editRole", "Edit Role") : t("rbac.addRole", "Add Role")}
+        onBack={() => navigate("/rbac/roles")}
+      />
 <Paper
         elevation={2}
         sx={{
@@ -293,7 +288,7 @@ export default function RoleForm() {
                   type="submit" 
                   variant="contained" 
                   disabled={loading} 
-                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />} 
+                  startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ background: "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)" }}
                 >
                   {loading ? t("common.saving", "Saving...") : t("common.save", "Save Role")}

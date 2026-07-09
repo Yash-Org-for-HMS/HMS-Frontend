@@ -1,23 +1,36 @@
+import { ACCENTS } from "../styles/accents";
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import ModuleGate from "../components/ModuleGate";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Drawer, AppBar, Toolbar, List, Typography, Divider,
   IconButton, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  Avatar, useTheme, useMediaQuery,
+  Avatar, useTheme, useMediaQuery, Badge,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
   DashboardRounded,
   PeopleAltRounded,
+  GroupsRounded,
   LogoutRounded,
   LocalHospitalRounded,
+  QueueRounded,
+  ScienceRounded,
+  AssessmentRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import { assetUrl } from "../utils/assetUrl";
+import BranchSwitcher from "../components/BranchSwitcher";
+import SidebarHeader from "../components/layout/SidebarHeader";
+import SidebarUserCard from "../components/layout/SidebarUserCard";
+import TrialBanner from "../components/layout/TrialBanner";
+import { axiosInstance } from "../api/axios";
+import { useSocket } from "../hooks/useSocket";
 
 const drawerWidth = 260;
-const DOCTOR_BLUE = "#3b82f6";
-const DOCTOR_BLUE_DARK = "#2563eb";
+const DOCTOR_BLUE = ACCENTS.doctor;
+const DOCTOR_BLUE_DARK = ACCENTS.doctorDark;
 
 export default function DoctorLayout() {
   useEffect(() => {
@@ -29,11 +42,26 @@ export default function DoctorLayout() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Sidebar notification counts (unread results, patients waiting). Polls as a
+  // fallback and refreshes instantly on queue/order socket events.
+  const { data: badges } = useQuery({
+    queryKey: ["doctor-badges"],
+    queryFn: async () => (await axiosInstance.get("/doctor/badges")).data.data as { resultsReady: number; queueWaiting: number },
+    refetchInterval: 60000,
+    refetchOnWindowFocus: true,
+  });
+  useSocket({ QUEUE_UPDATED: () => queryClient.invalidateQueries({ queryKey: ["doctor-badges"] }) });
+
   const menuItems = [
-    { text: "Dashboard", icon: <DashboardRounded />, path: "/doctor/dashboard" },
-    { text: "My Queue", icon: <PeopleAltRounded />, path: "/doctor/queue" },
+    { text: "Dashboard", icon: <DashboardRounded />, path: "/doctor/dashboard", badge: 0, section: "Overview" },
+    { text: "My Queue", icon: <QueueRounded />, path: "/doctor/queue", badge: badges?.queueWaiting || 0, section: "My Work" },
+    { text: "My Patients", icon: <PeopleAltRounded />, path: "/doctor/patients", badge: 0, section: "My Work" },
+    { text: "All Patients", icon: <GroupsRounded />, path: "/doctor/all-patients", badge: 0, section: "My Work" },
+    { text: "Results", icon: <ScienceRounded />, path: "/doctor/results", badge: badges?.resultsReady || 0, section: "My Work" },
+    { text: "My Reports", icon: <AssessmentRounded />, path: "/doctor/reports", badge: 0, section: "Insights" },
   ];
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
@@ -49,56 +77,26 @@ export default function DoctorLayout() {
       }}
     >
       {/* Logo / Header */}
-      <Toolbar
-        sx={{
-          px: 2.5,
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          borderBottom: `1px solid rgba(59,130,246,0.15)`,
-          minHeight: "70px !important",
-        }}
-      >
-        <Box
-          sx={{
-            width: 40, height: 40, borderRadius: 1.5,
-            background: hospital?.logoUrl ? "transparent" : `linear-gradient(135deg, ${DOCTOR_BLUE_DARK}, ${DOCTOR_BLUE})`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: hospital?.logoUrl ? "none" : `0 0 16px rgba(59,130,246,0.35)`,
-            flexShrink: 0,
-            overflow: "hidden"
-          }}
-        >
-          {hospital?.logoUrl ? (
-            <img src={assetUrl(hospital.logoUrl)} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <LocalHospitalRounded fontSize="small" sx={{ color: "#fff" }} />
-          )}
-        </Box>
-        <Box sx={{ overflow: "hidden" }}>
-          <Typography variant="subtitle1" fontWeight="700" noWrap sx={{ maxWidth: 170, color: "text.primary" }}>
-            {hospital?.name || "Doctor Panel"}
-          </Typography>
-          <Typography variant="caption" sx={{ color: DOCTOR_BLUE, fontWeight: 600 }}>
-            Doctor Workspace
-          </Typography>
-        </Box>
-      </Toolbar>
+      <SidebarHeader
+        logoUrl={hospital?.logoUrl}
+        title={hospital?.name || "Doctor"}
+        subtitle="Doctor Workspace"
+      />
 
       {/* Navigation */}
       <List sx={{ px: 1.5, pt: 2, flex: 1, overflowY: "auto" }}>
-        <Typography
-          variant="caption"
-          sx={{ color: "#475569", fontWeight: 700, px: 1.5, pb: 1, display: "block", letterSpacing: 1, textTransform: "uppercase" }}
-        >
-          My Workspace
-        </Typography>
-        {menuItems.map((item) => {
+        {menuItems.map((item, idx, arr) => {
           const isActive =
             location.pathname === item.path ||
             (item.path !== "/doctor/dashboard" && location.pathname.startsWith(item.path));
           return (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+            <Box key={item.text}>
+              {(idx === 0 || arr[idx - 1].section !== item.section) && (
+                <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", fontSize: "0.75rem", px: 1.5, pt: idx === 0 ? 0 : 1.75, pb: 0.5 }}>
+                  {item.section}
+                </Typography>
+              )}
+              <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => {
                   navigate(item.path);
@@ -118,58 +116,39 @@ export default function DoctorLayout() {
                     transition: "color 0.15s ease",
                   }}
                 >
-                  {item.icon}
+                  <Badge badgeContent={item.badge} color="error" max={99} overlap="circular">
+                    {item.icon}
+                  </Badge>
                 </ListItemIcon>
                 <ListItemText
                   primary={item.text}
                   primaryTypographyProps={{
-                    fontSize: "0.9rem",
+                    fontSize: "0.875rem",
                     fontWeight: isActive ? 600 : 500,
                     color: isActive ? DOCTOR_BLUE : "text.secondary",
                   }}
                 />
               </ListItemButton>
             </ListItem>
+            </Box>
           );
         })}
       </List>
 
       <Divider sx={{ borderColor: `rgba(59,130,246,0.1)` }} />
 
-      {/* User card at bottom */}
-      <Box sx={{ p: 2 }}>
-        <Box
-          sx={{
-            display: "flex", alignItems: "center", gap: 1.5, p: 1.5,
-            borderRadius: 2, bgcolor: "background.default",
-            border: "1px solid", borderColor: "divider",
-          }}
-        >
-          <Avatar
-            sx={{
-              width: 34, height: 34,
-              background: `linear-gradient(135deg, ${DOCTOR_BLUE_DARK}, ${DOCTOR_BLUE})`,
-              fontSize: "0.85rem", fontWeight: 700,
-            }}
-          >
-            {user?.firstName?.charAt(0) || "D"}
-          </Avatar>
-          <Box sx={{ overflow: "hidden", flex: 1 }}>
-            <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600, display: "block" }} noWrap>
-              Dr. {user?.firstName} {user?.lastName}
-            </Typography>
-            <Typography variant="caption" sx={{ color: DOCTOR_BLUE, fontSize: "0.7rem", fontWeight: 600 }}>
-              {user?.roleName || "Doctor"}
-            </Typography>
-          </Box>
-          <IconButton size="small" onClick={logout} sx={{ color: "text.secondary", "&:hover": { color: "#ef4444" } }}>
-            <LogoutRounded fontSize="small" />
-          </IconButton>
-        </Box>
-        <Typography variant="caption" sx={{ color: "#334155", display: "block", textAlign: "center", mt: 1 }}>
-          © {new Date().getFullYear()} HMS SaaS
-        </Typography>
+      {/* Branch switcher (only shown to multi-branch users) */}
+      <Box sx={{ px: 2, pt: 2 }}>
+        <BranchSwitcher />
       </Box>
+
+      {/* User card at bottom */}
+      <SidebarUserCard
+        name={`Dr. ${user?.firstName || ""} ${user?.lastName || ""}`.trim()}
+        role={user?.roleName || "Doctor"}
+        avatarText={user?.firstName?.charAt(0) || "D"}
+        onLogout={logout}
+      />
     </Box>
   );
 
@@ -234,7 +213,8 @@ export default function DoctorLayout() {
         }}
       >
         <Toolbar sx={{ display: { xs: "block", md: "none" }, minHeight: "70px !important" }} />
-        <Outlet />
+        <TrialBanner />
+        <ModuleGate module="Doctor"><Outlet /></ModuleGate>
       </Box>
     </Box>
   );

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Box,
@@ -11,7 +12,6 @@ import {
   MenuItem,
   IconButton,
   Alert,
-  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -22,25 +22,58 @@ import {
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import { useToast } from "../../contexts/ToastContext";
+import { useConfirm } from "../../contexts/ConfirmContext";
+import FormHeader from "../../components/layout/FormHeader";
+import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "../../utils/validation";
 
 export default function HospitalForm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = Boolean(id);
+  const [searchParams] = useSearchParams();
+  const trialId = searchParams.get("trialId");
+  const isConvert = Boolean(trialId);
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(isEdit);
+  const [convertResult, setConvertResult] = useState<{ email: string; temporaryPassword: string } | null>(null);
   const toast = useToast();
-  const [plans, setPlans] = useState<any[]>([]);
+  const confirm = useConfirm();
   const [branches, setBranches] = useState<any[]>([]);
-  const [convertedTrials, setConvertedTrials] = useState<any[]>([]);
   const [reload, setReload] = useState(0);
+
+  const { data: plans = [] } = useQuery<any[]>({
+    queryKey: ["plans", "hospital-form-options"],
+    queryFn: async () => (await axiosInstance.get("/plans", { params: { limit: 100 } })).data.data,
+  });
+  const { data: convertedTrials = [] } = useQuery<any[]>({
+    queryKey: ["trials", "available"],
+    queryFn: async () =>
+      ((await axiosInstance.get("/trials", { params: { limit: 1000 } })).data.data as any[]).filter(
+        (t: any) => t.trialStatus !== "converted"
+      ),
+  });
+
+  const { data: hospitalData, isLoading: initialLoading, isError, error, refetch } = useQuery({
+    queryKey: ["hospital", id, reload],
+    queryFn: async () => (await axiosInstance.get(`/hospitals/${id}`)).data.data,
+    enabled: isEdit,
+  });
+
+  // When converting a trial, load it so we can prefill from its lead + plan.
+  const { data: trialData } = useQuery({
+    queryKey: ["trial", trialId],
+    queryFn: async () => (await axiosInstance.get(`/trials/${trialId}`)).data.data,
+    enabled: isConvert,
+  });
 
   // Branch Dialog State
   const [branchDialogOpen, setBranchDialogOpen] = useState(false);
-  const [newBranch, setNewBranch] = useState({ code: "", name: "", subscriptionPlanId: "", status: "active" });
+  const [newBranch, setNewBranch] = useState({ name: "", subscriptionPlanId: "", status: "active" });
   const [branchLoading, setBranchLoading] = useState(false);
   const [editingBranchId, setEditingBranchId] = useState<string | null>(null);
 
@@ -51,66 +84,82 @@ export default function HospitalForm() {
     officialPhone: "",
     legalBusinessName: "",
     status: "active",
+    planId: "",
   });
+  const [errors, setErrors] = useState<Errors<typeof formData>>({});
 
+  // Prefill from the trial being converted (lead contact + the trial's plan).
   useEffect(() => {
-    const fetchPlans = async () => {
-      try {
-        const response = await axiosInstance.get("/plans", { params: { limit: 100 } });
-        setPlans(response.data.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
+    if (!trialData) return;
+    setFormData(prev => ({
+      ...prev,
+      hospitalName: trialData.lead?.hospitalName || prev.hospitalName,
+      officialEmail: trialData.lead?.email || prev.officialEmail,
+      officialPhone: trialData.lead?.phone || prev.officialPhone,
+      planId: trialData.subscriptionPlanId || prev.planId,
+    }));
+  }, [trialData]);
 
-    const fetchConvertedTrials = async () => {
-      try {
-        // Fetch all trials that haven't been converted to a hospital yet
-        const response = await axiosInstance.get("/trials", { params: { limit: 1000 } });
-        // Filter out trials that are already 'converted' to a hospital
-        const availableTrials = response.data.data.filter((t: any) => t.trialStatus !== 'converted');
-        setConvertedTrials(availableTrials);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchPlans();
-    fetchConvertedTrials();
-
-    if (isEdit) {
-      const fetchHospital = async () => {
-        try {
-          const response = await axiosInstance.get(`/hospitals/${id}`);
-          const d = response.data.data;
-          setFormData({
-            hospitalName: d.hospitalName || "",
-            hospitalCode: d.hospitalCode || "",
-            officialEmail: d.officialEmail || "",
-            officialPhone: d.officialPhone || "",
-            legalBusinessName: d.legalBusinessName || "",
-            status: d.status || "active",
-          });
-          setBranches(d.branches || []);
-        } catch (err) {
-          toast.error(t("common.error"));
-        } finally {
-          setInitialLoading(false);
-        }
-      };
-      fetchHospital();
-    }
-  }, [id, isEdit, t, reload]);
+  // Seed the form + branches with the existing hospital when editing.
+  useEffect(() => {
+    if (!hospitalData) return;
+    const d = hospitalData;
+    setFormData({
+      hospitalName: d.hospitalName || "",
+      hospitalCode: d.hospitalCode || "",
+      officialEmail: d.officialEmail || "",
+      officialPhone: d.officialPhone || "",
+      legalBusinessName: d.legalBusinessName || "",
+      status: d.status || "active",
+      planId: d.subscriptionPlanId || "",
+    });
+    setBranches(d.branches || []);
+  }, [hospitalData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    setErrors((prev) => (prev[name as keyof typeof formData] ? { ...prev, [name]: undefined } : prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isConvert && !formData.planId) {
+      toast.error("Please choose a subscription plan for this hospital");
+      return;
+    }
+
+    const found = validate(formData, {
+      hospitalName: [required("Hospital name")],
+      officialEmail: [isEmail],
+      officialPhone: [isPhone],
+    });
+    if (hasErrors(found)) {
+      setErrors(found);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     setLoading(true);
     try {
+      if (isConvert && trialId) {
+        // Single provisioning path: convert the trial → hospital + admin login.
+        const res = await axiosInstance.post(`/trials/${trialId}/convert`, {
+          hospitalName: formData.hospitalName,
+          contactPersonName: trialData?.lead?.contactPersonName || formData.hospitalName || "Admin",
+          email: formData.officialEmail,
+          phone: formData.officialPhone,
+          planId: formData.planId,
+        });
+        const admin = res.data?.data?.admin;
+        if (admin?.temporaryPassword) {
+          setConvertResult({ email: admin.email, temporaryPassword: admin.temporaryPassword });
+        } else {
+          toast.success("Hospital created");
+          navigate("/hospitals");
+        }
+        return;
+      }
       if (isEdit) {
         await axiosInstance.put(`/hospitals/${id}`, formData);
       } else {
@@ -125,27 +174,27 @@ export default function HospitalForm() {
   };
 
   const handleAddBranchSubmit = async () => {
-    if (!newBranch.code || !newBranch.name) return;
+    if (!newBranch.name) return;
     setBranchLoading(true);
     try {
       if (editingBranchId) {
-        await axiosInstance.put(`/hospitals/${id}/branches/${editingBranchId}`, { 
-          branchCode: newBranch.code, 
-          branchName: newBranch.name, 
+        // Branch code is auto-assigned and immutable — not sent on edit.
+        await axiosInstance.put(`/hospitals/${id}/branches/${editingBranchId}`, {
+          branchName: newBranch.name,
           subscriptionPlanId: newBranch.subscriptionPlanId || undefined,
-          status: newBranch.status 
+          status: newBranch.status
         });
       } else {
-        await axiosInstance.post(`/hospitals/${id}/branches`, { 
-          branchCode: newBranch.code, 
-          branchName: newBranch.name, 
+        // No branchCode sent — the server generates a unique one.
+        await axiosInstance.post(`/hospitals/${id}/branches`, {
+          branchName: newBranch.name,
           subscriptionPlanId: newBranch.subscriptionPlanId || undefined,
-          status: newBranch.status 
+          status: newBranch.status
         });
       }
       setReload(r => r + 1);
       setBranchDialogOpen(false);
-      setNewBranch({ code: "", name: "", subscriptionPlanId: "", status: "active" });
+      setNewBranch({ name: "", subscriptionPlanId: "", status: "active" });
       setEditingBranchId(null);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to save branch");
@@ -156,14 +205,13 @@ export default function HospitalForm() {
 
   const handleAddBranch = () => {
     setEditingBranchId(null);
-    setNewBranch({ code: "", name: "", subscriptionPlanId: "", status: "active" });
+    setNewBranch({ name: "", subscriptionPlanId: "", status: "active" });
     setBranchDialogOpen(true);
   };
 
   const handleEditBranch = (branch: any) => {
     setEditingBranchId(branch.branchId);
     setNewBranch({
-      code: branch.branchCode,
       name: branch.branchName,
       subscriptionPlanId: branch.subscriptionPlanId || "",
       status: branch.status || "active"
@@ -172,7 +220,13 @@ export default function HospitalForm() {
   };
 
   const handleDeleteBranch = async (branchId: string) => {
-    if (!window.confirm("Are you sure you want to delete this branch?")) return;
+    const ok = await confirm({
+      title: "Delete branch",
+      message: "Are you sure you want to delete this branch? This cannot be undone.",
+      confirmText: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await axiosInstance.delete(`/hospitals/${id}/branches/${branchId}`);
       setReload(r => r + 1);
@@ -183,32 +237,24 @@ export default function HospitalForm() {
 
   if (initialLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "#3b82f6" }} />
-      </Box>
+      <PageLoader />
+    );
+  }
+
+  if (isError) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <ErrorState title="Couldn't load hospital" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+      </Container>
     );
   }
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 2 }}>
-        <IconButton
-          onClick={() => navigate("/hospitals")}
-          sx={{
-            bgcolor: "action.hover",
-            border: "1px solid", borderColor: "divider",
-            color: "text.primary",
-            "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-          }}
-        >
-          <ArrowBackRounded />
-        </IconButton>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
-            {isEdit ? t("hospitals.editHospital", "Edit Hospital") : t("hospitals.addHospital", "Add Hospital")}
-          </Typography>
-        </Box>
-      </Box>
+      <FormHeader
+        title={isConvert ? "Convert Trial → New Hospital" : isEdit ? t("hospitals.editHospital", "Edit Hospital") : t("hospitals.addHospital", "Add Hospital")}
+        onBack={() => navigate("/hospitals")}
+      />
 <Paper
         elevation={2}
         sx={{
@@ -222,6 +268,13 @@ export default function HospitalForm() {
       >
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
+            {isConvert && (
+              <Grid size={{ xs: 12 }}>
+                <Alert severity="info">
+                  Converting the trial for <b>{trialData?.lead?.hospitalName || "this prospect"}</b> — this provisions a live hospital on the selected plan and creates the admin login.
+                </Alert>
+              </Grid>
+            )}
             <Grid size={{ xs: 12 }}>
               <Autocomplete
                 freeSolo
@@ -292,7 +345,8 @@ export default function HospitalForm() {
                 name="officialEmail"
                 value={formData.officialEmail}
                 onChange={handleChange}
-                
+                error={!!errors.officialEmail}
+                helperText={errors.officialEmail}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -302,9 +356,33 @@ export default function HospitalForm() {
                 name="officialPhone"
                 value={formData.officialPhone}
                 onChange={handleChange}
-                
+                error={!!errors.officialPhone}
+                helperText={errors.officialPhone}
               />
             </Grid>
+            {isConvert && (
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  select
+                  fullWidth
+                  required
+                  label="Subscription plan"
+                  name="planId"
+                  value={formData.planId}
+                  onChange={handleChange}
+                  helperText="The hospital's first branch starts on this plan."
+                >
+                  {plans.length === 0 ? (
+                    <MenuItem value="" disabled>No plans available — create one under Plans first</MenuItem>
+                  ) : (
+                    plans.map((p: any) => (
+                      <MenuItem key={p.planId} value={p.planId}>{p.planName}</MenuItem>
+                    ))
+                  )}
+                </TextField>
+              </Grid>
+            )}
+            {!isConvert && (
             <Grid size={{ xs: 12 }}>
               <TextField
                 select
@@ -314,7 +392,7 @@ export default function HospitalForm() {
                 value={formData.status}
                 onChange={handleChange}
                 required
-                
+
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
@@ -333,6 +411,7 @@ export default function HospitalForm() {
                 <MenuItem value="inactive">Inactive</MenuItem>
               </TextField>
             </Grid>
+            )}
 
             <Grid size={{ xs: 12 }}>
               <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>
@@ -352,13 +431,13 @@ export default function HospitalForm() {
                   type="submit" 
                   variant="contained" 
                   disabled={loading} 
-                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />} 
+                  startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
                     background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
                     boxShadow: "0 4px 14px 0 rgba(59, 130, 246, 0.39)",
                   }}
                 >
-                  {loading ? t("common.saving", "Saving...") : t("common.save", "Save Hospital")}
+                  {loading ? t("common.saving", "Saving...") : isConvert ? "Convert & create hospital" : t("common.save", "Save Hospital")}
                 </Button>
               </Box>
             </Grid>
@@ -411,7 +490,7 @@ export default function HospitalForm() {
                         size="small"
                         sx={{
                           height: 18,
-                          fontSize: "0.7rem",
+                          fontSize: "0.75rem",
                           bgcolor: "rgba(99, 102, 241, 0.15)",
                           color: "#a5b4fc"
                         }}
@@ -444,19 +523,13 @@ export default function HospitalForm() {
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
           <TextField
             fullWidth
-            label="Branch Code"
-            value={newBranch.code}
-            onChange={(e) => setNewBranch({ ...newBranch, code: e.target.value })}
-            sx={{ mt: 1 }}
-            placeholder="e.g. CITY01"
-          />
-          <TextField
-            fullWidth
             label="Branch Name"
             value={newBranch.name}
             onChange={(e) => setNewBranch({ ...newBranch, name: e.target.value })}
-            
+            inputProps={{ maxLength: 100 }}
             placeholder="e.g. Main Hospital"
+            sx={{ mt: 1 }}
+            helperText={editingBranchId ? undefined : "A unique branch code is assigned automatically."}
           />
           <TextField
             select
@@ -515,11 +588,29 @@ export default function HospitalForm() {
           <Button 
             onClick={handleAddBranchSubmit} 
             variant="contained" 
-            disabled={!newBranch.code || !newBranch.name || branchLoading}
+            disabled={!newBranch.name || branchLoading}
             sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" }}
           >
             {branchLoading ? "Adding..." : "Add Branch"}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* One-time admin credentials after a trial conversion */}
+      <Dialog open={!!convertResult} onClose={() => { setConvertResult(null); navigate("/hospitals"); }} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { bgcolor: "background.paper", borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 700 }}>Hospital created</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            Share these one-time credentials with the hospital admin — they'll set a new password on first login.
+          </Typography>
+          <Alert severity="info">
+            <Box sx={{ mb: 0.5 }}><b>Email:</b> {convertResult?.email}</Box>
+            <Box><b>Temp password:</b> <Box component="code" sx={{ fontFamily: "monospace" }}>{convertResult?.temporaryPassword}</Box></Box>
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => { setConvertResult(null); navigate("/hospitals"); }} variant="contained">Done</Button>
         </DialogActions>
       </Dialog>
     </Container>

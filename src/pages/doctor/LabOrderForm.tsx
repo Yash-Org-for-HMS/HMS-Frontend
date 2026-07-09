@@ -1,13 +1,18 @@
+import { ACCENTS } from "../../styles/accents";
 import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Box, Typography, Button, TextField, IconButton, Autocomplete, CircularProgress,
+  Box, Typography, Button, TextField, IconButton, Autocomplete,
   Paper, Grid, Alert, Table, TableBody, TableCell, TableHead, TableRow, MenuItem
 } from "@mui/material";
 import { DeleteRounded, SaveRounded, AddRounded, ScienceRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import Mascot from "../../components/Mascot";
 import { useToast } from "../../contexts/ToastContext";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 
-const DOCTOR_BLUE = "#3b82f6";
+const DOCTOR_BLUE = ACCENTS.doctor;
 
 interface LabOrderFormProps {
   consultationId?: string | null;
@@ -22,38 +27,25 @@ const priorities = [
 ];
 
 export default function LabOrderForm({ consultationId, patientId, onRequireSave }: LabOrderFormProps) {
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
-  const [existingOrders, setExistingOrders] = useState<any[]>([]);
+  const qc = useQueryClient();
 
   // Search state
   const [testQuery, setTestQuery] = useState("");
   const [testOptions, setTestOptions] = useState<any[]>([]);
   const [testLoading, setTestLoading] = useState(false);
-  
+
   // Form state
   const [selectedTest, setSelectedTest] = useState<any | null>(null);
   const [selectedPriority, setSelectedPriority] = useState(1);
   const [items, setItems] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (consultationId) {
-      fetchExistingOrders(consultationId);
-    }
-  }, [consultationId]);
-
-  const fetchExistingOrders = async (id: string) => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get(`/doctor/lab-orders/consultations/${id}`);
-      setExistingOrders(res.data.data || []);
-    } catch (err) {
-      console.error("Failed to load lab orders", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: existingOrders = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["lab-orders", consultationId],
+    queryFn: async () => (await axiosInstance.get(`/doctor/lab-orders/consultations/${consultationId}`)).data.data || [],
+    enabled: !!consultationId,
+  });
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
@@ -124,8 +116,8 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
       toast.success("Lab order created successfully!");
       setItems([]);
       setSelectedPriority(1);
-// Refresh list
-      fetchExistingOrders(targetConsultationId);
+      // Refresh list (covers both the existing consultation and a freshly-created one)
+      qc.invalidateQueries({ queryKey: ["lab-orders"] });
     } catch (err: any) {
       toast.error(err.response?.data?.message || err.message || "Failed to create lab order");
     } finally {
@@ -142,6 +134,7 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
             options={testOptions}
             getOptionLabel={(option) => `${option.testName} (${option.testCode})`}
             loading={testLoading}
+            noOptionsText={<Mascot pose="no-matches" subtitle="No matching tests" size={72} sx={{ py: 1 }} />}
             value={selectedTest}
             onInputChange={(e, newInputValue) => setTestQuery(newInputValue)}
             onChange={(e, newValue) => setSelectedTest(newValue)}
@@ -155,7 +148,7 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
                   ...params.InputProps,
                   endAdornment: (
                     <>
-                      {testLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                      {testLoading ? <HeartbeatLoader size={22} /> : null}
                       {params.InputProps.endAdornment}
                     </>
                   ),
@@ -212,7 +205,7 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
             <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
               <Button 
                 variant="contained" 
-                startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRounded />}
+                startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                 sx={{ bgcolor: DOCTOR_BLUE }}
                 onClick={handleSubmit}
                 disabled={saving}
@@ -230,9 +223,11 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
           <ScienceRounded sx={{ color: "text.secondary" }} fontSize="small" /> Previously Ordered Tests
         </Typography>
         {loading ? (
-          <CircularProgress size={24} />
+          <HeartbeatLoader size={96} />
+        ) : isError ? (
+          <ErrorState message={(error as any)?.response?.data?.message || "Failed to load lab orders"} onRetry={refetch} />
         ) : existingOrders.length === 0 ? (
-          <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>No lab orders for this consultation.</Typography>
+          <Mascot pose="nothing-here-yet" subtitle="No lab orders for this consultation yet." size={130} />
         ) : (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {existingOrders.map((order, idx) => (

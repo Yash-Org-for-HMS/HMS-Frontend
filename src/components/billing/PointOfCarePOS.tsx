@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Dialog, DialogTitle, DialogContent, DialogActions, 
-  Button, Typography, Box, CircularProgress, Alert, 
+  Button, Typography, Box, Alert,
   Divider, TextField, MenuItem, useTheme, alpha 
 } from "@mui/material";
 import { CheckCircleRounded, PointOfSaleRounded, ReceiptLongRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../HeartbeatLoader";
+import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
 
 interface PointOfCarePOSProps {
   open: boolean;
@@ -26,7 +28,11 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
   const theme = useTheme();
   
   const [discount, setDiscount] = useState<number | "">("");
-  const [taxPercent, setTaxPercent] = useState<number | "">(0); // Optional: Could fetch from settings
+  // Default the tax to the hospital's configured GST rate (was hardcoded 0, so
+  // sales were never taxed). Staff can still override it for this collection.
+  const taxRate = useHospitalTaxRate();
+  const [taxPercent, setTaxPercent] = useState<number | "">(0);
+  useEffect(() => { setTaxPercent(taxRate); }, [taxRate]);
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   
   const [loading, setLoading] = useState(false);
@@ -109,14 +115,14 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
         <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>Service Billed</Typography>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
           <Typography variant="body1">{item?.description}</Typography>
-          <Typography variant="body1" fontWeight="600">${grossAmount.toFixed(2)}</Typography>
+          <Typography variant="body1" fontWeight="600">₹{grossAmount.toFixed(2)}</Typography>
         </Box>
         
         <Divider sx={{ my: 2 }} />
 
         <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
           <TextField
-            label="Discount Amount ($)"
+            label="Discount Amount (₹)"
             type="number"
             size="small"
             fullWidth
@@ -135,22 +141,22 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
 
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
           <Typography variant="body2" color="text.secondary">Gross Total:</Typography>
-          <Typography variant="body2">${grossAmount.toFixed(2)}</Typography>
+          <Typography variant="body2">₹{grossAmount.toFixed(2)}</Typography>
         </Box>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
           <Typography variant="body2" color="error.main">Discount:</Typography>
-          <Typography variant="body2" color="error.main">-${discountAmount.toFixed(2)}</Typography>
+          <Typography variant="body2" color="error.main">-₹{discountAmount.toFixed(2)}</Typography>
         </Box>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
           <Typography variant="body2" color="text.secondary">Tax:</Typography>
-          <Typography variant="body2">${taxAmount.toFixed(2)}</Typography>
+          <Typography variant="body2">₹{taxAmount.toFixed(2)}</Typography>
         </Box>
 
         <Divider sx={{ my: 2 }} />
 
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
           <Typography variant="h6" fontWeight="700">Net Payable:</Typography>
-          <Typography variant="h6" fontWeight="700" color="primary.main">${netAmount.toFixed(2)}</Typography>
+          <Typography variant="h6" fontWeight="700" color="primary.main">₹{netAmount.toFixed(2)}</Typography>
         </Box>
 
         <TextField
@@ -173,9 +179,9 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
           variant="contained" 
           onClick={handleProcessPayment} 
           disabled={loading || netAmount < 0}
-          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <ReceiptLongRounded />}
+          startIcon={loading ? <HeartbeatLoader size={22} /> : <ReceiptLongRounded />}
         >
-          Confirm & Collect ${netAmount.toFixed(2)}
+          Confirm & Collect ₹{netAmount.toFixed(2)}
         </Button>
       </DialogActions>
     </Dialog>

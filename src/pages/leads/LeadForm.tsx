@@ -1,22 +1,26 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Box,
   Container,
-  Typography,
   Button,
   Paper,
   TextField,
   MenuItem,
   IconButton,
-  Alert,
-  CircularProgress
+  Alert
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import { useToast } from "../../contexts/ToastContext";
+import FormHeader from "../../components/layout/FormHeader";
+import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "../../utils/validation";
 
 export default function LeadForm() {
   const { t } = useTranslation();
@@ -25,7 +29,6 @@ export default function LeadForm() {
   const isEdit = Boolean(id);
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(isEdit);
   const toast = useToast();
   const [formData, setFormData] = useState({
     hospitalName: "",
@@ -35,48 +38,52 @@ export default function LeadForm() {
     leadStatus: "new",
     assignedSalesAdminId: "",
   });
+  const [errors, setErrors] = useState<Errors<typeof formData>>({});
 
-  const [admins, setAdmins] = useState<any[]>([]);
+  const { data: admins = [] } = useQuery<any[]>({
+    queryKey: ["super-admins", "lead-options"],
+    queryFn: async () => (await axiosInstance.get("/super-admins", { params: { limit: 100 } })).data.data,
+  });
 
+  const { data: leadData, isLoading: initialLoading, isError, error, refetch } = useQuery({
+    queryKey: ["lead", id],
+    queryFn: async () => (await axiosInstance.get(`/leads/${id}`)).data.data,
+    enabled: isEdit,
+  });
+
+  // Seed the form with the existing lead when editing.
   useEffect(() => {
-    const fetchAdmins = async () => {
-      try {
-        const response = await axiosInstance.get("/super-admins", { params: { limit: 100 } });
-        setAdmins(response.data.data);
-      } catch (err) {
-        console.error("Failed to fetch super admins", err);
-      }
-    };
-    fetchAdmins();
-
-    if (isEdit) {
-      const fetchLead = async () => {
-        try {
-          const response = await axiosInstance.get(`/leads/${id}`);
-          setFormData({
-            hospitalName: response.data.data.hospitalName || "",
-            contactPersonName: response.data.data.contactPersonName || "",
-            email: response.data.data.email || "",
-            phone: response.data.data.phone || "",
-            leadStatus: response.data.data.leadStatus || "new",
-            assignedSalesAdminId: response.data.data.assignedSalesAdminId || "",
-          });
-        } catch (err) {
-          toast.error(t("common.error"));
-        } finally {
-          setInitialLoading(false);
-        }
-      };
-      fetchLead();
-    }
-  }, [id, isEdit, t]);
+    if (!leadData) return;
+    setFormData({
+      hospitalName: leadData.hospitalName || "",
+      contactPersonName: leadData.contactPersonName || "",
+      email: leadData.email || "",
+      phone: leadData.phone || "",
+      leadStatus: leadData.leadStatus || "new",
+      assignedSalesAdminId: leadData.assignedSalesAdminId || "",
+    });
+  }, [leadData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setErrors((prev) => (prev[e.target.name as keyof typeof formData] ? { ...prev, [e.target.name]: undefined } : prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const found = validate(formData, {
+      hospitalName: [required("Hospital name")],
+      contactPersonName: [required("Contact person")],
+      email: [required("Email"), isEmail],
+      phone: [required("Phone"), isPhone],
+    });
+    if (hasErrors(found)) {
+      setErrors(found);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     setLoading(true);
     try {
       if (isEdit) {
@@ -106,32 +113,24 @@ export default function LeadForm() {
 
   if (initialLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "#6366f1" }} />
-      </Box>
+      <PageLoader />
+    );
+  }
+
+  if (isError) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <ErrorState title="Couldn't load lead" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+      </Container>
     );
   }
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 2 }}>
-        <IconButton
-          onClick={() => navigate("/leads")}
-          sx={{
-            bgcolor: "action.hover",
-            border: "1px solid", borderColor: "divider",
-            color: "text.primary",
-            "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-          }}
-        >
-          <ArrowBackRounded />
-        </IconButton>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
-            {isEdit ? t("leads.editLead") : t("leads.addLead")}
-          </Typography>
-        </Box>
-      </Box>
+      <FormHeader
+        title={isEdit ? t("leads.editLead") : t("leads.addLead")}
+        onBack={() => navigate("/leads")}
+      />
 <Paper
         elevation={2}
         sx={{
@@ -153,7 +152,8 @@ export default function LeadForm() {
                 value={formData.hospitalName}
                 onChange={handleChange}
                 required
-                
+                error={!!errors.hospitalName}
+                helperText={errors.hospitalName}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -164,7 +164,8 @@ export default function LeadForm() {
                 value={formData.contactPersonName}
                 onChange={handleChange}
                 required
-                
+                error={!!errors.contactPersonName}
+                helperText={errors.contactPersonName}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -176,7 +177,8 @@ export default function LeadForm() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                
+                error={!!errors.email}
+                helperText={errors.email}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -187,7 +189,8 @@ export default function LeadForm() {
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                
+                error={!!errors.phone}
+                helperText={errors.phone}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -245,7 +248,7 @@ export default function LeadForm() {
                   type="submit" 
                   variant="contained" 
                   disabled={loading} 
-                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />} 
+                  startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
                     background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
                     boxShadow: "0 4px 14px 0 rgba(99, 102, 241, 0.39)",

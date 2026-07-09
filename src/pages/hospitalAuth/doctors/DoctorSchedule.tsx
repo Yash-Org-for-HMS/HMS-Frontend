@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import ErrorState from "../../../components/ErrorState";
 import {
   Box,
-  Typography,
   Paper,
   TextField,
   Button,
   Grid,
-  CircularProgress,
   Alert,
   IconButton,
 } from "@mui/material";
@@ -14,6 +14,8 @@ import { SaveRounded, DeleteRounded, AddRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
+import PageLoader from "../../../components/PageLoader";
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -22,26 +24,22 @@ export default function DoctorSchedule() {
   const { id } = useParams();
 
   const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
   const toast = useToast();
   const [doctorName, setDoctorName] = useState("");
   const [schedules, setSchedules] = useState<any[]>([]);
 
+  const { data: doctorData, isLoading: initialLoad, isError, error, refetch } = useQuery({
+    queryKey: ["doctor-schedule", id],
+    queryFn: async () => (await axiosInstance.get(`/hospital/doctors/${id}`)).data.data,
+    enabled: !!id,
+  });
+
+  // Seed the editable schedule rows once the doctor loads.
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const docRes = await axiosInstance.get(`/hospital/doctors/${id}`);
-        const d = docRes.data.data;
-        setDoctorName(`Dr. ${d.user?.firstName} ${d.user?.lastName}`);
-        setSchedules(d.schedules || []);
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || "Failed to load schedule");
-      } finally {
-        setInitialLoad(false);
-      }
-    };
-    loadData();
-  }, [id]);
+    if (!doctorData) return;
+    setDoctorName(`Dr. ${doctorData.user?.firstName} ${doctorData.user?.lastName}`);
+    setSchedules(doctorData.schedules || []);
+  }, [doctorData]);
 
   const handleAddSchedule = () => {
     setSchedules([...schedules, { dayOfWeek: 1, startTime: "09:00", endTime: "17:00", slotDurationMinutes: 15 }]);
@@ -73,10 +71,12 @@ export default function DoctorSchedule() {
 
   if (initialLoad) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress sx={{ color: "#6366f1" }} />
-      </Box>
+      <PageLoader />
     );
+  }
+
+  if (isError) {
+    return <ErrorState title="Couldn't load schedule" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
   }
 
   const textFieldProps = {
@@ -95,23 +95,19 @@ export default function DoctorSchedule() {
 
   return (
     <Box sx={{ maxWidth: 900, mx: "auto" }}>
-      <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            Configure Schedule
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {doctorName}
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          onClick={() => navigate("/hospital/doctors")}
-          sx={{ color: "text.secondary", borderColor: "divider" }}
-        >
-          Cancel
-        </Button>
-      </Box>
+      <PageHeader
+        title="Configure Schedule"
+        subtitle={doctorName}
+        actions={
+          <Button
+            variant="outlined"
+            onClick={() => navigate("/hospital/doctors")}
+            sx={{ color: "text.secondary", borderColor: "divider" }}
+          >
+            Cancel
+          </Button>
+        }
+      />
 <Paper sx={{ p: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
         <form onSubmit={handleSubmit}>
           {schedules.map((schedule, idx) => (

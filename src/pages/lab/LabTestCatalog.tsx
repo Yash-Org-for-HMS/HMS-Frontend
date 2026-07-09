@@ -1,18 +1,26 @@
-import { useState, useEffect } from "react";
-import { 
-  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, 
-  Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, 
+import { useState } from "react";
+import {
+  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Button, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, IconButton, Tooltip, Switch, FormControlLabel, Chip, useTheme,
   Fade, Zoom, alpha
 } from "@mui/material";
-import { EditRounded, DeleteRounded, AddRounded, ScienceRounded } from "@mui/icons-material";
+import { EditRounded, DeleteRounded, AddRounded } from "@mui/icons-material";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
+import PageHeader from "../../components/layout/PageHeader";
+import { ListSkeleton } from "../../components/TableRowsSkeleton";
+import { useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { useConfirm } from "../../contexts/ConfirmContext";
 
 export default function LabTestCatalog() {
   const theme = useTheme();
-  const [tests, setTests] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  
+  const confirm = useConfirm();
+
   const [openDialog, setOpenDialog] = useState(false);
   const [editTest, setEditTest] = useState<any>(null);
   
@@ -26,21 +34,18 @@ export default function LabTestCatalog() {
   
   const [errorMsg, setErrorMsg] = useState("");
 
-  useEffect(() => {
-    fetchTests();
-  }, []);
+  const { data: tests = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["lab-tests"],
+    queryFn: async () => (await axiosInstance.get("/lab/tests")).data.data || [],
+  });
 
-  const fetchTests = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get("/lab/tests");
-      setTests(res.data.data || []);
-    } catch (err) {
-      console.error("Failed to fetch lab tests", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { sorted, orderBy, order, onSort } = useTableSort(tests, {
+    type: (t) => (t.isProfile ? "Profile" : "Parameter"),
+    testCode: (t) => t.testCode,
+    testName: (t) => t.testName,
+    price: (t) => Number(t.price),
+    normalRange: (t) => t.defaultNormalRange ?? null,
+  });
 
   const handleOpenNew = () => {
     setEditTest(null);
@@ -99,7 +104,7 @@ export default function LabTestCatalog() {
         });
       }
       handleClose();
-      fetchTests();
+      refetch();
     } catch (err: any) {
       console.error("Failed to save lab test", err);
       setErrorMsg(err.response?.data?.message || "Failed to save the lab test.");
@@ -109,65 +114,50 @@ export default function LabTestCatalog() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this lab test?")) return;
+    const ok = await confirm({
+      title: "Delete lab test",
+      message: "Are you sure you want to delete this lab test? This cannot be undone.",
+      confirmText: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await axiosInstance.delete(`/lab/tests/${id}`);
-      fetchTests();
+      refetch();
     } catch (err: any) {
-      console.error("Failed to delete lab test", err);
       alert(err.response?.data?.message || "Failed to delete the lab test.");
     }
   };
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: "auto" }}>
-      <Box sx={{ 
-        display: "flex", 
-        flexDirection: { xs: 'column', sm: 'row' },
-        justifyContent: "space-between", 
-        alignItems: { xs: 'flex-start', sm: 'center' }, 
-        mb: 4,
-        gap: 2
-      }}>
-        <Box>
-          <Typography variant="h4" sx={{ 
-            fontWeight: 800, 
-            background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5
-          }}>
-            <ScienceRounded fontSize="large" sx={{ color: '#2563EB' }} />
-            Lab Test Catalog
-          </Typography>
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 0.5 }}>
-            Manage available lab tests, profiles, and their reference ranges.
-          </Typography>
-        </Box>
-        <Button 
-          variant="contained" 
-          startIcon={<AddRounded />}
-          onClick={handleOpenNew}
-          sx={{
-            borderRadius: '12px',
-            textTransform: 'none',
-            fontWeight: 600,
-            px: 3,
-            py: 1.2,
-            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-            boxShadow: '0 8px 16px -4px rgba(16, 185, 129, 0.4)',
-            transition: 'all 0.2s',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: '0 12px 20px -4px rgba(16, 185, 129, 0.5)',
-            }
-          }}
-        >
-          Add New Test
-        </Button>
-      </Box>
+      <PageHeader
+        title="Lab Test Catalog"
+        subtitle="Manage available lab tests, profiles, and their reference ranges."
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<AddRounded />}
+            onClick={handleOpenNew}
+            sx={{
+              borderRadius: '12px',
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 3,
+              py: 1.2,
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              boxShadow: '0 8px 16px -4px rgba(16, 185, 129, 0.4)',
+              transition: 'all 0.2s',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 12px 20px -4px rgba(16, 185, 129, 0.5)',
+              }
+            }}
+          >
+            Add New Test
+          </Button>
+        }
+      />
 
       <Paper sx={{ 
         borderRadius: 4,
@@ -179,30 +169,27 @@ export default function LabTestCatalog() {
         backdropFilter: 'blur(20px)',
       }}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
-            <CircularProgress size={48} thickness={4} sx={{ color: '#2563EB' }} />
-          </Box>
+          <ListSkeleton rows={6} />
+        ) : isError ? (
+          <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
         ) : tests.length === 0 ? (
-          <Box sx={{ p: 8, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-            <ScienceRounded sx={{ fontSize: 64, color: 'text.disabled' }} />
-            <Typography variant="h6" color="text.secondary">No lab tests found</Typography>
-            <Typography variant="body2" color="text.disabled">Get started by creating your first lab test.</Typography>
-          </Box>
+          <Mascot pose="nothing-here-yet" title="No lab tests found" subtitle="Get started by creating your first lab test." />
         ) : (
           <Fade in timeout={500}>
-            <Table>
+            <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Type</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Test Code</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Test Name</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Price</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Normal Range</TableCell>
+                  <SortableHeadCell label="Type" sortKey="type" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
+                  <SortableHeadCell label="Test Code" sortKey="testCode" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
+                  <SortableHeadCell label="Test Name" sortKey="testName" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
+                  <SortableHeadCell label="Price" sortKey="price" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
+                  <SortableHeadCell label="Normal Range" sortKey="normalRange" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
                   <TableCell align="right" sx={{ fontWeight: 700, py: 2 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {tests.map((test, index) => (
+                {sorted.map((test, index) => (
                   <TableRow 
                     key={test.labTestId} 
                     hover
@@ -257,6 +244,7 @@ export default function LabTestCatalog() {
                 ))}
               </TableBody>
             </Table>
+            </TableContainer>
           </Fade>
         )}
       </Paper>
@@ -359,7 +347,7 @@ export default function LabTestCatalog() {
               '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }
             }}
           >
-            {saving ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
+            {saving ? <HeartbeatLoader size={22} /> : "Save Changes"}
           </Button>
         </DialogActions>
       </Dialog>

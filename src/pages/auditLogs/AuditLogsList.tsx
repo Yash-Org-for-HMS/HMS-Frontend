@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
   Box,
@@ -12,7 +13,6 @@ import {
   TableHead,
   TableRow,
   Chip,
-  CircularProgress,
   TextField,
   InputAdornment,
   Pagination,
@@ -28,42 +28,48 @@ import {
 import { SearchRounded, VisibilityRounded, CloseRounded } from "@mui/icons-material";
 import Grid from "@mui/material/Grid";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import { useAuth } from "../../contexts/AuthContext";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Keep the admin list's existing sentence-case header look (the SortableHeadCell
+// default is the reception-panel uppercase style).
+const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", bgcolor: "background.paper" } as const;
 
 export default function AuditLogsList() {
   const { t } = useTranslation();
-  const [logs, setLogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
 
   const { user } = useAuth();
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const [showMyActions, setShowMyActions] = useState(false);
 
-  const fetchLogs = async () => {
-    setLoading(true);
-    try {
-      const params: any = { page, limit: 15, search };
-      if (showMyActions && user?.id) {
-        params.userId = user.id;
-      }
-      
-      const response = await axiosInstance.get("/audit-logs", { params });
-      setLogs(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch audit logs", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
 
+  // Reset to the first page whenever the sort changes.
   useEffect(() => {
-    fetchLogs();
-  }, [page, search, showMyActions, user]);
+    setPage(1);
+  }, [orderBy, order]);
+
+  const { data, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["audit-logs", page, search, showMyActions, user?.id, orderBy, order],
+    queryFn: async () => {
+      const params: any = { page, limit: 15, search, sortBy: orderBy || undefined, sortOrder: order };
+      if (showMyActions && user?.id) params.userId = user.id;
+      return (await axiosInstance.get("/audit-logs", { params })).data;
+    },
+  });
+  const logs: any[] = data?.data ?? [];
+  const totalPages: number = data?.pagination?.totalPages ?? 1;
 
   const getActionColor = (action: string) => {
     switch(action) {
@@ -77,20 +83,14 @@ export default function AuditLogsList() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("auditLogs.title", "System Audit Logs")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("auditLogs.subtitle", "Track all sensitive actions across the platform")}
-          </Typography>
-        </Box>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title={t("auditLogs.title", "System Audit Logs")}
+        subtitle={t("auditLogs.subtitle", "Track all sensitive actions across the platform")}
+      />
 
       {/* Filters */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+      <FilterBar>
         <TextField
           placeholder={t("auditLogs.searchPlaceholder", "Search by user or table...")}
           value={search}
@@ -117,7 +117,7 @@ export default function AuditLogsList() {
           label={<Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>My Actions Only</Typography>}
           sx={{ ml: 2 }}
         />
-      </Box>
+      </FilterBar>
 
       <Paper
         elevation={2}
@@ -129,24 +129,26 @@ export default function AuditLogsList() {
           overflow: "hidden",
         }}
       >
-        <TableContainer>
-          <Table size="small">
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table size="small" stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.timestamp", "Timestamp")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.hospital", "Hospital")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.user", "User ID")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.action", "Action")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.module", "Module")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("auditLogs.ip", "IP Address")}</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.details", "Details")}</TableCell>
+                <SortableHeadCell label={t("auditLogs.timestamp", "Timestamp")} sortKey="created" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("auditLogs.hospital", "Hospital")}</TableCell>
+                <SortableHeadCell label={t("auditLogs.user", "User ID")} sortKey="user" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("auditLogs.action", "Action")} sortKey="action" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("auditLogs.module", "Module")} sortKey="module" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("auditLogs.ip", "IP Address")} sortKey="ip" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("common.details", "Details")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
+                <TableRowsSkeleton rows={6} columns={7} />
+              ) : isError ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "#3b82f6" }} />
+                  <TableCell colSpan={7} sx={{ py: 4, border: 0 }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : logs.length === 0 ? (
@@ -170,21 +172,21 @@ export default function AuditLogsList() {
                           <Typography variant="body2">{log.hospital?.hospitalName || log.hospitalId}</Typography>
                         )}
                       </TableCell>
-                      <TableCell sx={{ color: "text.primary", fontFamily: "monospace", fontSize: "0.8rem" }}>
+                      <TableCell sx={{ color: "text.primary", fontFamily: "monospace", fontSize: "0.875rem" }}>
                         {log.userId.split("-")[0]}...
                       </TableCell>
                       <TableCell>
                         <Chip 
                           label={log.actionType} 
                           size="small" 
-                          sx={{ bgcolor: colors.bg, color: colors.text, fontWeight: 700, fontSize: "0.7rem" }} 
+                          sx={{ bgcolor: colors.bg, color: colors.text, fontWeight: 700, fontSize: "0.75rem" }} 
                         />
                       </TableCell>
-                      <TableCell sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
+                      <TableCell sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
                         {log.moduleName} <br />
                         <span style={{ fontFamily: "monospace", fontSize: "0.75rem", color: "text.secondary" }}>{log.tableName}</span>
                       </TableCell>
-                      <TableCell sx={{ color: "text.secondary", fontFamily: "monospace", fontSize: "0.8rem" }}>
+                      <TableCell sx={{ color: "text.secondary", fontFamily: "monospace", fontSize: "0.875rem" }}>
                         {log.ipAddress || "—"}
                       </TableCell>
                       <TableCell align="right">
@@ -250,7 +252,7 @@ export default function AuditLogsList() {
                 <Typography sx={{ mb: 2, fontFamily: "monospace", color: "text.primary" }}>{selectedLog.userId}</Typography>
                 
                 <Typography variant="overline" sx={{ color: "text.secondary" }}>Device Info</Typography>
-                <Typography sx={{ mb: 2, fontSize: "0.85rem", color: "text.secondary" }}>{selectedLog.deviceInfo || "—"}</Typography>
+                <Typography sx={{ mb: 2, fontSize: "0.875rem", color: "text.secondary" }}>{selectedLog.deviceInfo || "—"}</Typography>
               </Grid>
               
               {(selectedLog.oldValueJson || selectedLog.newValueJson) && (
@@ -260,7 +262,7 @@ export default function AuditLogsList() {
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="overline" sx={{ color: "#f87171" }}>Old Value</Typography>
                         <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 2, border: "1px solid rgba(239,68,68,0.2)", overflowX: "auto" }}>
-                          <pre style={{ margin: 0, color: "text.primary", fontSize: "0.85rem" }}>
+                          <pre style={{ margin: 0, color: "text.primary", fontSize: "0.875rem" }}>
                             {JSON.stringify(selectedLog.oldValueJson, null, 2)}
                           </pre>
                         </Box>
@@ -270,7 +272,7 @@ export default function AuditLogsList() {
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="overline" sx={{ color: "#34d399" }}>New Value</Typography>
                         <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 2, border: "1px solid rgba(16,185,129,0.2)", overflowX: "auto" }}>
-                          <pre style={{ margin: 0, color: "text.primary", fontSize: "0.85rem" }}>
+                          <pre style={{ margin: 0, color: "text.primary", fontSize: "0.875rem" }}>
                             {JSON.stringify(selectedLog.newValueJson, null, 2)}
                           </pre>
                         </Box>
@@ -286,7 +288,7 @@ export default function AuditLogsList() {
           <Button onClick={() => setSelectedLog(null)} sx={{ color: "text.primary" }}>Close</Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </PageContainer>
   );
 }
 

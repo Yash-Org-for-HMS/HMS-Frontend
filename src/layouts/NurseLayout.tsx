@@ -1,3 +1,4 @@
+import { ACCENTS } from "../styles/accents";
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -8,18 +9,20 @@ import {
 import {
   Menu as MenuIcon,
   DashboardRounded,
-  MonitorHeartRounded,
   PeopleAltRounded,
   LocalHospitalRounded,
   LogoutRounded,
   MedicalServicesRounded,
+  AssessmentRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
-import { assetUrl } from "../utils/assetUrl";
+import BranchSwitcher from "../components/BranchSwitcher";
+import SidebarHeader from "../components/layout/SidebarHeader";
+import SidebarUserCard from "../components/layout/SidebarUserCard";
+import TrialBanner from "../components/layout/TrialBanner";
 
 const drawerWidth = 260;
-const NURSE_PURPLE = "#a78bfa";
-const NURSE_PURPLE_DARK = "#7c3aed";
+const NURSE_PURPLE = ACCENTS.nurse;
 
 export default function NurseLayout() {
   useEffect(() => {
@@ -34,9 +37,9 @@ export default function NurseLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const menuItems = [
-    { text: "Dashboard", icon: <DashboardRounded />, path: "/nurse/dashboard" },
-    { text: "Patient Queue", icon: <PeopleAltRounded />, path: "/nurse/queue" },
-    { text: "Vitals Station", icon: <MonitorHeartRounded />, path: "/nurse/vitals" },
+    { text: "Dashboard", icon: <DashboardRounded />, path: "/nurse/dashboard", section: "Overview" },
+    { text: "Patient Queue", icon: <PeopleAltRounded />, path: "/nurse/queue", section: "Patient Care" },
+    { text: "Reports", icon: <AssessmentRounded />, path: "/nurse/reports", section: "Reports" },
   ];
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
@@ -52,56 +55,26 @@ export default function NurseLayout() {
       }}
     >
       {/* Logo / Header */}
-      <Toolbar
-        sx={{
-          px: 2.5,
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          borderBottom: `1px solid rgba(167,139,250,0.15)`,
-          minHeight: "70px !important",
-        }}
-      >
-        <Box
-          sx={{
-            width: 40, height: 40, borderRadius: 1.5,
-            background: hospital?.logoUrl ? "transparent" : `linear-gradient(135deg, ${NURSE_PURPLE_DARK}, ${NURSE_PURPLE})`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: hospital?.logoUrl ? "none" : `0 0 16px rgba(167,139,250,0.35)`,
-            flexShrink: 0,
-            overflow: "hidden"
-          }}
-        >
-          {hospital?.logoUrl ? (
-            <img src={assetUrl(hospital.logoUrl)} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <MedicalServicesRounded fontSize="small" sx={{ color: "#fff" }} />
-          )}
-        </Box>
-        <Box sx={{ overflow: "hidden" }}>
-          <Typography variant="subtitle1" fontWeight="700" noWrap sx={{ maxWidth: 170, color: "text.primary" }}>
-            {hospital?.name || "Nurse Panel"}
-          </Typography>
-          <Typography variant="caption" sx={{ color: NURSE_PURPLE, fontWeight: 600 }}>
-            Nursing Station
-          </Typography>
-        </Box>
-      </Toolbar>
+      <SidebarHeader
+        logoUrl={hospital?.logoUrl}
+        title={hospital?.name || "Nurse"}
+        subtitle="Nursing Station"
+      />
 
       {/* Navigation */}
       <List sx={{ px: 1.5, pt: 2, flex: 1, overflowY: "auto" }}>
-        <Typography
-          variant="caption"
-          sx={{ color: "#475569", fontWeight: 700, px: 1.5, pb: 1, display: "block", letterSpacing: 1, textTransform: "uppercase" }}
-        >
-          Nurse Workspace
-        </Typography>
-        {menuItems.map((item) => {
+        {menuItems.map((item, idx, arr) => {
           const isActive =
             location.pathname === item.path ||
             (item.path !== "/nurse/dashboard" && location.pathname.startsWith(item.path));
           return (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+            <Box key={item.text}>
+              {(idx === 0 || arr[idx - 1].section !== item.section) && (
+                <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", fontSize: "0.75rem", px: 1.5, pt: idx === 0 ? 0 : 1.75, pb: 0.5 }}>
+                  {item.section}
+                </Typography>
+              )}
+              <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => {
                   navigate(item.path);
@@ -126,53 +99,32 @@ export default function NurseLayout() {
                 <ListItemText
                   primary={item.text}
                   primaryTypographyProps={{
-                    fontSize: "0.9rem",
+                    fontSize: "0.875rem",
                     fontWeight: isActive ? 600 : 500,
                     color: isActive ? NURSE_PURPLE : "text.secondary",
                   }}
                 />
               </ListItemButton>
             </ListItem>
+            </Box>
           );
         })}
       </List>
 
       <Divider sx={{ borderColor: `rgba(167,139,250,0.1)` }} />
 
-      {/* User card at bottom */}
-      <Box sx={{ p: 2 }}>
-        <Box
-          sx={{
-            display: "flex", alignItems: "center", gap: 1.5, p: 1.5,
-            borderRadius: 2, bgcolor: "background.default",
-            border: "1px solid", borderColor: "divider",
-          }}
-        >
-          <Avatar
-            sx={{
-              width: 34, height: 34,
-              background: `linear-gradient(135deg, ${NURSE_PURPLE_DARK}, ${NURSE_PURPLE})`,
-              fontSize: "0.85rem", fontWeight: 700,
-            }}
-          >
-            {user?.firstName?.charAt(0) || "N"}
-          </Avatar>
-          <Box sx={{ overflow: "hidden", flex: 1 }}>
-            <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600, display: "block" }} noWrap>
-              {user?.firstName} {user?.lastName}
-            </Typography>
-            <Typography variant="caption" sx={{ color: NURSE_PURPLE, fontSize: "0.7rem", fontWeight: 600 }}>
-              {user?.roleName || "Nurse"}
-            </Typography>
-          </Box>
-          <IconButton size="small" onClick={logout} sx={{ color: "text.secondary", "&:hover": { color: "#ef4444" } }}>
-            <LogoutRounded fontSize="small" />
-          </IconButton>
-        </Box>
-        <Typography variant="caption" sx={{ color: "#334155", display: "block", textAlign: "center", mt: 1 }}>
-          © {new Date().getFullYear()} HMS SaaS
-        </Typography>
+      {/* Branch switcher (only shown to multi-branch users) */}
+      <Box sx={{ px: 2, pt: 2 }}>
+        <BranchSwitcher />
       </Box>
+
+      {/* User card at bottom */}
+      <SidebarUserCard
+        name={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Nurse"}
+        role={user?.roleName || "Nurse"}
+        avatarText={user?.firstName?.charAt(0) || "N"}
+        onLogout={logout}
+      />
     </Box>
   );
 
@@ -237,6 +189,7 @@ export default function NurseLayout() {
         }}
       >
         <Toolbar sx={{ display: { xs: "block", md: "none" }, minHeight: "70px !important" }} />
+        <TrialBanner />
         <Outlet />
       </Box>
     </Box>

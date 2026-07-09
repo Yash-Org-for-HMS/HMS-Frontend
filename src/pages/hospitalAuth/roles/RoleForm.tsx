@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -6,7 +7,6 @@ import {
   TextField,
   Button,
   Grid,
-  CircularProgress,
   Alert,
   Checkbox,
   FormControlLabel,
@@ -15,7 +15,10 @@ import {
 import { SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
+import PageLoader from "../../../components/PageLoader";
 
 interface Permission {
   permissionId: string;
@@ -34,54 +37,43 @@ export default function RoleForm() {
   const isCloning = Boolean(cloneId);
 
   const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
   const toast = useToast();
-  const [groupedPermissions, setGroupedPermissions] = useState<Record<string, Permission[]>>({});
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
-  
+
   const [formData, setFormData] = useState({
     roleName: "",
     roleCode: "",
   });
 
+  const { data: groupedPermissions = {}, isLoading: permLoading, isError: permIsError, error: permError, refetch: refetchPerms } =
+    useQuery<Record<string, Permission[]>>({
+      queryKey: ["role-permissions"],
+      queryFn: async () => (await axiosInstance.get("/hospital/roles/permissions")).data.data,
+    });
+
+  const roleIdToFetch = isEditing ? id : cloneId;
+  const { data: roleData, isLoading: roleLoading, isError: roleIsError, error: roleError, refetch: refetchRole } = useQuery({
+    queryKey: ["role", roleIdToFetch],
+    queryFn: async () => (await axiosInstance.get(`/hospital/roles/${roleIdToFetch}`)).data.data,
+    enabled: isEditing || isCloning,
+  });
+
+  // Seed the form + selected permissions from the loaded role (edit or clone).
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        // 1. Fetch all available permissions
-        const permRes = await axiosInstance.get("/hospital/roles/permissions");
-        setGroupedPermissions(permRes.data.data);
+    if (!roleData) return;
+    const role = roleData;
+    if (isEditing) {
+      setFormData({ roleName: role.roleName, roleCode: role.roleCode });
+    } else {
+      setFormData({ roleName: `${role.roleName} (Copy)`, roleCode: `${role.roleCode}_COPY` });
+    }
+    setSelectedPermissions(role.rolePermissions.map((rp: any) => rp.permissionId));
+  }, [roleData, isEditing]);
 
-        // 2. Fetch role data if editing or cloning
-        if (isEditing || isCloning) {
-          const roleIdToFetch = isEditing ? id : cloneId;
-          const roleRes = await axiosInstance.get(`/hospital/roles/${roleIdToFetch}`);
-          const role = roleRes.data.data;
-
-          if (isEditing) {
-            setFormData({
-              roleName: role.roleName,
-              roleCode: role.roleCode,
-            });
-          } else {
-            // When cloning, prefix the name and append something to the code
-            setFormData({
-              roleName: `${role.roleName} (Copy)`,
-              roleCode: `${role.roleCode}_COPY`,
-            });
-          }
-          
-          // Pre-select permissions
-          const pIds = role.rolePermissions.map((rp: any) => rp.permissionId);
-          setSelectedPermissions(pIds);
-        }
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || "Failed to load data");
-      } finally {
-        setInitialLoad(false);
-      }
-    };
-    loadData();
-  }, [id, cloneId, isEditing, isCloning]);
+  const initialLoad = permLoading || ((isEditing || isCloning) && roleLoading);
+  const isError = permIsError || roleIsError;
+  const error = permError || roleError;
+  const refetch = () => { refetchPerms(); if (isEditing || isCloning) refetchRole(); };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -130,10 +122,12 @@ export default function RoleForm() {
 
   if (initialLoad) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress sx={{ color: "#6366f1" }} />
-      </Box>
+      <PageLoader />
     );
+  }
+
+  if (isError) {
+    return <ErrorState title="Couldn't load role form" message={(error as any)?.response?.data?.message} onRetry={refetch} />;
   }
 
   const textFieldProps = {
@@ -151,23 +145,19 @@ export default function RoleForm() {
 
   return (
     <Box sx={{ maxWidth: 1000, mx: "auto" }}>
-      <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            {isEditing ? "Edit Role" : isCloning ? "Clone Role" : "Create New Role"}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Configure role details and module permissions.
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          onClick={() => navigate("/hospital/roles")}
-          sx={{ color: "text.secondary", borderColor: "divider" }}
-        >
-          Cancel
-        </Button>
-      </Box>
+      <PageHeader
+        title={isEditing ? "Edit Role" : isCloning ? "Clone Role" : "Create New Role"}
+        subtitle="Configure role details and module permissions."
+        actions={
+          <Button
+            variant="outlined"
+            onClick={() => navigate("/hospital/roles")}
+            sx={{ color: "text.secondary", borderColor: "divider" }}
+          >
+            Cancel
+          </Button>
+        }
+      />
 <form onSubmit={handleSubmit}>
         <Paper sx={{ p: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, mb: 4 }}>
           <Typography variant="h6" sx={{ color: "text.primary", mb: 3 }}>Role Details</Typography>

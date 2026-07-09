@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -10,29 +11,58 @@ import {
   TextField,
   MenuItem,
   IconButton,
+  Switch,
+  FormControlLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Alert,
-  CircularProgress
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import { useToast } from "../../contexts/ToastContext";
+import { validate, hasErrors, required, isEmail, type Errors } from "../../utils/validation";
+import FormHeader from "../../components/layout/FormHeader";
 
 export default function TrialForm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
+  const [trialCreds, setTrialCreds] = useState<{ email: string; temporaryPassword: string } | null>(null);
   const toast = useToast();
-  const [leads, setLeads] = useState<any[]>([]);
+
+  // A trial is for a PROSPECT, so only not-yet-converted leads can start one.
+  const { data: leads = [], isLoading: initialLoading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["leads", "trial-options"],
+    queryFn: async () =>
+      ((await axiosInstance.get("/leads", { params: { limit: 1000 } })).data.data as any[]).filter(
+        (l: any) => l.leadStatus !== "converted" && l.leadStatus !== "trialing"
+      ),
+  });
+
+  // Plans define what the trial includes (modules / limits).
+  const { data: plans = [] } = useQuery<any[]>({
+    queryKey: ["plans", "trial-options"],
+    queryFn: async () => (await axiosInstance.get("/plans", { params: { limit: 1000 } })).data.data ?? [],
+  });
 
   const [formData, setFormData] = useState({
     leadId: "",
+    planId: "",
+    adminName: "",
+    adminEmail: "",
     startDate: new Date().toISOString().split("T")[0],
     endDate: new Date(new Date().setDate(new Date().getDate() + 14)).toISOString().split("T")[0], // 14 days from now
     notes: "",
+    autoExpire: true,
   });
+  const [errors, setErrors] = useState<Errors<typeof formData>>({});
 
   const [duration, setDuration] = useState<number | "custom">(14);
 
@@ -59,37 +89,43 @@ export default function TrialForm() {
     return diffDays > 0 ? diffDays : 0;
   };
 
-  useEffect(() => {
-    // Fetch non-converted leads for the dropdown
-    const fetchLeads = async () => {
-      try {
-        const response = await axiosInstance.get("/leads", { params: { limit: 1000 } });
-        // Only include converted leads
-        setLeads(response.data.data.filter((l: any) => l.leadStatus === "converted"));
-      } catch (err) {
-        console.error(err);
-        toast.error("Failed to load leads");
-      } finally {
-        setInitialLoading(false);
-      }
-    };
-    fetchLeads();
-  }, []);
-
   const handleChange = (e: any) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setErrors((prev) => (prev[e.target.name as keyof typeof formData] ? { ...prev, [e.target.name]: undefined } : prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const found = validate(formData, {
+      adminName: [required("Hospital admin name")],
+      adminEmail: [required("Hospital admin email"), isEmail],
+    });
+    if (hasErrors(found)) {
+      setErrors(found);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     setLoading(true);
     try {
-      await axiosInstance.post("/trials", {
+      const res = await axiosInstance.post("/trials", {
         leadId: formData.leadId,
+        planId: formData.planId,
+        adminName: formData.adminName,
+        adminEmail: formData.adminEmail,
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
+        autoExpire: formData.autoExpire,
       });
-      navigate("/trials");
+      const admin = res.data?.data?.admin;
+      if (admin?.temporaryPassword) {
+        // Trial provisioned a live hospital + admin login — surface the credentials.
+        setTrialCreds({ email: admin.email, temporaryPassword: admin.temporaryPassword });
+      } else {
+        toast.success("Trial started");
+        navigate("/trials");
+      }
     } catch (err: any) {
       toast.error(err.response?.data?.message || t("common.error"));
     } finally {
@@ -99,32 +135,21 @@ export default function TrialForm() {
 
   if (initialLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "#ec4899" }} />
-      </Box>
+      <PageLoader />
+    );
+  }
+
+  if (isError) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <ErrorState title="Couldn't load leads" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+      </Container>
     );
   }
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 2 }}>
-        <IconButton
-          onClick={() => navigate("/trials")}
-          sx={{
-            bgcolor: "action.hover",
-            border: "1px solid", borderColor: "divider",
-            color: "text.primary",
-            "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-          }}
-        >
-          <ArrowBackRounded />
-        </IconButton>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
-            {t("trials.addTrial")}
-          </Typography>
-        </Box>
-      </Box>
+      <FormHeader title={t("trials.addTrial")} onBack={() => navigate("/trials")} />
 <Paper
         elevation={2}
         sx={{
@@ -142,12 +167,12 @@ export default function TrialForm() {
               <TextField
                 select
                 fullWidth
-                label={t("trials.selectLead")}
+                label={`${t("trials.selectLead")} (sales contact)`}
                 name="leadId"
                 value={formData.leadId}
                 onChange={handleChange}
                 required
-                
+
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
@@ -177,6 +202,67 @@ export default function TrialForm() {
                     {lead.hospitalName} ({lead.contactPersonName || "No Contact Person"})
                   </MenuItem>
                 ))}
+              </TextField>
+            </Grid>
+
+            {/* Hospital admin — a separate person at the hospital who will run the
+                system. NOT the sales contact (who may be our own salesperson). */}
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 700 }}>
+                Hospital admin
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                The person at the hospital who will administer the system. This is a separate login from the sales contact above.
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Hospital admin name"
+                name="adminName"
+                value={formData.adminName}
+                onChange={handleChange}
+                required
+                placeholder="e.g. Dr. Yash Patel"
+                error={!!errors.adminName}
+                helperText={errors.adminName}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                type="email"
+                label="Hospital admin email (login ID)"
+                name="adminEmail"
+                value={formData.adminEmail}
+                onChange={handleChange}
+                required
+                error={!!errors.adminEmail}
+                helperText={errors.adminEmail || "This becomes their login ID for the hospital portal"}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                select
+                fullWidth
+                label="Trial plan (defines what's included)"
+                name="planId"
+                value={formData.planId}
+                onChange={handleChange}
+                required
+                helperText="The prospect's trial includes this plan's modules and limits."
+              >
+                {plans.length === 0 ? (
+                  <MenuItem value="" disabled>No plans available — create one under Plans first</MenuItem>
+                ) : (
+                  plans.map((p: any) => (
+                    <MenuItem key={p.planId} value={p.planId}>
+                      {p.planName}
+                      {p.monthlyPrice != null ? ` — ₹${Number(p.monthlyPrice).toLocaleString("en-IN")}/mo` : ""}
+                    </MenuItem>
+                  ))
+                )}
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -255,7 +341,18 @@ export default function TrialForm() {
                 </Box>
               </Box>
             </Grid>
-            
+            <Grid size={{ xs: 12 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.autoExpire}
+                    onChange={(e) => setFormData(prev => ({ ...prev, autoExpire: e.target.checked }))}
+                  />
+                }
+                label="Automatically expire this trial after its end date"
+              />
+            </Grid>
+
             <Grid size={{ xs: 12 }}>
               <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>
                 <Button 
@@ -274,7 +371,7 @@ export default function TrialForm() {
                   type="submit" 
                   variant="contained" 
                   disabled={loading} 
-                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />} 
+                  startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
                     background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)",
                     boxShadow: "0 4px 14px 0 rgba(236, 72, 153, 0.39)",
@@ -287,6 +384,24 @@ export default function TrialForm() {
           </Grid>
         </form>
       </Paper>
+
+      {/* Trial admin credentials — the trial provisions a live hospital + login */}
+      <Dialog open={!!trialCreds} onClose={() => { setTrialCreds(null); navigate("/trials"); }} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { bgcolor: "background.paper", borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 700 }}>Trial started</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            A live hospital was created for this trial. Share these one-time login credentials with the hospital admin — they'll set a new password on first login.
+          </Typography>
+          <Alert severity="info">
+            <Box sx={{ mb: 0.5 }}><b>Login email:</b> {trialCreds?.email}</Box>
+            <Box><b>Temp password:</b> <Box component="code" sx={{ fontFamily: "monospace" }}>{trialCreds?.temporaryPassword}</Box></Box>
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => { setTrialCreds(null); navigate("/trials"); }} variant="contained">Done</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

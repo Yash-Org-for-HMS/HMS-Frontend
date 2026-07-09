@@ -1,95 +1,150 @@
-import { Routes, Route } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
-import Login from "./pages/Login";
-import PlansList from "./pages/plans/PlansList";
-import PlanForm from "./pages/plans/PlanForm";
-import FeatureFlagsList from "./pages/featureFlags/FeatureFlagsList";
-import FeatureFlagForm from "./pages/featureFlags/FeatureFlagForm";
-import LeadsList from "./pages/leads/LeadsList";
-import LeadForm from "./pages/leads/LeadForm";
-import TrialsList from "./pages/trials/TrialsList";
-import TrialForm from "./pages/trials/TrialForm";
-import HospitalsList from "./pages/hospitals/HospitalsList";
-import HospitalForm from "./pages/hospitals/HospitalForm";
-import HospitalOverview from "./pages/superAdmins/HospitalOverview";
-import OnboardingList from "./pages/onboarding/OnboardingList";
-import OnboardingForm from "./pages/onboarding/OnboardingForm";
-import SuperAdminsList from "./pages/superAdmins/SuperAdminsList";
-import SuperAdminForm from "./pages/superAdmins/SuperAdminForm";
-import RolesList from "./pages/rbac/RolesList";
-import RoleForm from "./pages/rbac/RoleForm";
-import UsersList from "./pages/rbac/UsersList";
-import UserForm from "./pages/rbac/UserForm";
-import AuditLogsList from "./pages/auditLogs/AuditLogsList";
+import { lazy, Suspense, type ComponentType } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+
+// ── Eager: app shell + auth entry ───────────────────────────────────────────
+// Kept in the initial bundle so the login screen and the authenticated shell
+// (layouts/guards) render instantly. Everything else is lazy-loaded per route.
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import AdminLayout from "./layouts/AdminLayout";
-import { AuthProvider } from "./contexts/AuthContext";
-
-// Hospital Admin Imports
-import HospitalLogin from "./pages/hospitalAuth/HospitalLogin";
-import HospitalChangePassword from "./pages/hospitalAuth/HospitalChangePassword";
-import HospitalDashboard from "./pages/hospitalAuth/HospitalDashboard";
-import HospitalProfile from "./pages/hospitalAuth/HospitalProfile";
-import HospitalSettings from "./pages/hospitalAuth/HospitalSettings";
-import DepartmentsList from "./pages/hospitalAuth/departments/DepartmentsList";
-import DepartmentForm from "./pages/hospitalAuth/departments/DepartmentForm";
-import HospitalUsersList from "./pages/hospitalAuth/users/UsersList";
-import HospitalUserForm from "./pages/hospitalAuth/users/UserForm";
-import HospitalRolesList from "./pages/hospitalAuth/roles/RolesList";
-import HospitalRoleForm from "./pages/hospitalAuth/roles/RoleForm";
-import PermissionMatrix from "./pages/hospitalAuth/roles/PermissionMatrix";
-import ModuleAccess from "./pages/hospitalAuth/settings/ModuleAccess";
-import DoctorsList from "./pages/hospitalAuth/doctors/DoctorsList";
-import DoctorForm from "./pages/hospitalAuth/doctors/DoctorForm";
-import DoctorSchedule from "./pages/hospitalAuth/doctors/DoctorSchedule";
-import DoctorLeaves from "./pages/hospitalAuth/doctors/DoctorLeaves";
-import LookupManager from "./pages/hospitalAuth/settings/LookupManager";
-import FormTemplatesList from "./pages/hospitalAuth/formBuilder/FormTemplatesList";
-import FormBuilder from "./pages/hospitalAuth/formBuilder/FormBuilder";
-import AuditLogs from "./pages/hospitalAuth/settings/AuditLogs";
-import FinancialDashboard from "./pages/billing/FinancialDashboard";
-import { HospitalAuthProvider } from "./contexts/HospitalAuthContext";
 import { HospitalProtectedRoute } from "./components/HospitalProtectedRoute";
-import HospitalLayout from "./layouts/HospitalLayout";
-import ReceptionLayout from "./layouts/ReceptionLayout";
-import NurseLayout from "./layouts/NurseLayout";
-import ReceptionDashboard from "./pages/reception/ReceptionDashboard";
-import PatientsList from "./pages/reception/PatientsList";
-import PatientForm from "./pages/reception/PatientForm";
-import PatientProfile from "./pages/reception/PatientProfile";
-import AppointmentsList from "./pages/reception/AppointmentsList";
-import AppointmentForm from "./pages/reception/AppointmentForm";
-import QueueDashboard from "./pages/reception/QueueDashboard";
-import GenerateInvoice from "./pages/billing/GenerateInvoice";
-import NotificationsLog from "./pages/reception/NotificationsLog";
-import FrontDeskConsole from "./pages/reception/FrontDeskConsole";
-
-// Nurse Imports
-import NurseDashboard from "./pages/nurse/NurseDashboard";
-import NurseQueue from "./pages/nurse/NurseQueue";
-import NurseVitalsStation from "./pages/nurse/NurseVitalsStation";
-// Doctor Imports
-import DoctorLayout from "./layouts/DoctorLayout";
-import DoctorDashboard from "./pages/doctor/DoctorDashboard";
-import DoctorQueue from "./pages/doctor/DoctorQueue";
-import ConsultationWorkspace from "./pages/doctor/ConsultationWorkspace";
-// Lab Imports
-import LabLayout from "./layouts/LabLayout";
-import LabDashboard from "./pages/lab/LabDashboard";
-import LabOrdersQueue from "./pages/lab/LabOrdersQueue";
-import UpdateLabOrder from "./pages/lab/UpdateLabOrder";
-import RadiologyOrdersQueue from "./pages/lab/RadiologyOrdersQueue";
-import LabTestCatalog from "./pages/lab/LabTestCatalog";
-import PrintLabReport from "./pages/lab/PrintLabReport";
-import RadiologyCatalog from "./pages/lab/RadiologyCatalog";
-// Pharmacy Imports
-import PharmacyLayout from "./layouts/PharmacyLayout";
-import PharmacyDashboard from "./pages/pharmacy/PharmacyDashboard";
-import MedicineCatalog from "./pages/pharmacy/MedicineCatalog";
-import SupplierDirectory from "./pages/pharmacy/SupplierDirectory";
-import InventoryManagement from "./pages/pharmacy/InventoryManagement";
-import DispensaryPOS from "./pages/pharmacy/DispensaryPOS";
+import { AuthProvider } from "./contexts/AuthContext";
+import { HospitalAuthProvider } from "./contexts/HospitalAuthContext";
+// Layouts are lazy: only one realm's shell is ever used per session, and
+// deferring them keeps their deps (e.g. socket.io in DoctorLayout) out of the
+// login-critical first paint. Each is rendered via el() so it gets a Suspense
+// boundary + the standard PageSkeleton fallback.
+const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
+const HospitalLayout = lazy(() => import("./layouts/HospitalLayout"));
+const ReceptionLayout = lazy(() => import("./layouts/ReceptionLayout"));
+const NurseLayout = lazy(() => import("./layouts/NurseLayout"));
+const DoctorLayout = lazy(() => import("./layouts/DoctorLayout"));
+const LabLayout = lazy(() => import("./layouts/LabLayout"));
+const PharmacyLayout = lazy(() => import("./layouts/PharmacyLayout"));
 import CommandPalette from "./components/CommandPalette";
+import PageSkeleton from "./components/PageSkeleton";
+import Login from "./pages/Login";
+import HospitalLogin from "./pages/hospitalAuth/HospitalLogin";
+
+// ── Lazy: every route page becomes its own on-demand chunk ───────────────────
+// Declared at module scope (NOT inside render) so React.lazy is created once.
+// Super Admin
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const PlansList = lazy(() => import("./pages/plans/PlansList"));
+const PlanForm = lazy(() => import("./pages/plans/PlanForm"));
+const FeatureFlagsList = lazy(() => import("./pages/featureFlags/FeatureFlagsList"));
+const FeatureFlagForm = lazy(() => import("./pages/featureFlags/FeatureFlagForm"));
+const LeadsList = lazy(() => import("./pages/leads/LeadsList"));
+const LeadForm = lazy(() => import("./pages/leads/LeadForm"));
+const TrialsList = lazy(() => import("./pages/trials/TrialsList"));
+const TrialForm = lazy(() => import("./pages/trials/TrialForm"));
+const HospitalsList = lazy(() => import("./pages/hospitals/HospitalsList"));
+const HospitalForm = lazy(() => import("./pages/hospitals/HospitalForm"));
+const HospitalOverview = lazy(() => import("./pages/superAdmins/HospitalOverview"));
+const HospitalModules = lazy(() => import("./pages/hospitals/HospitalModules"));
+const OnboardingList = lazy(() => import("./pages/onboarding/OnboardingList"));
+const OnboardingForm = lazy(() => import("./pages/onboarding/OnboardingForm"));
+const SuperAdminsList = lazy(() => import("./pages/superAdmins/SuperAdminsList"));
+const SuperAdminForm = lazy(() => import("./pages/superAdmins/SuperAdminForm"));
+const RolesList = lazy(() => import("./pages/rbac/RolesList"));
+const RoleForm = lazy(() => import("./pages/rbac/RoleForm"));
+const UsersList = lazy(() => import("./pages/rbac/UsersList"));
+const UserForm = lazy(() => import("./pages/rbac/UserForm"));
+const AuditLogsList = lazy(() => import("./pages/auditLogs/AuditLogsList"));
+const AdminReports = lazy(() => import("./pages/reports/AdminReports"));
+
+// Hospital Admin
+const HospitalChangePassword = lazy(() => import("./pages/hospitalAuth/HospitalChangePassword"));
+const HospitalDashboard = lazy(() => import("./pages/hospitalAuth/HospitalDashboard"));
+const HospitalProfile = lazy(() => import("./pages/hospitalAuth/HospitalProfile"));
+const HospitalSettings = lazy(() => import("./pages/hospitalAuth/HospitalSettings"));
+const DepartmentsList = lazy(() => import("./pages/hospitalAuth/departments/DepartmentsList"));
+const DepartmentForm = lazy(() => import("./pages/hospitalAuth/departments/DepartmentForm"));
+const HospitalUsersList = lazy(() => import("./pages/hospitalAuth/users/UsersList"));
+const HospitalUserForm = lazy(() => import("./pages/hospitalAuth/users/UserForm"));
+const HospitalRolesList = lazy(() => import("./pages/hospitalAuth/roles/RolesList"));
+const HospitalRoleForm = lazy(() => import("./pages/hospitalAuth/roles/RoleForm"));
+const PermissionMatrix = lazy(() => import("./pages/hospitalAuth/roles/PermissionMatrix"));
+const ModuleAccess = lazy(() => import("./pages/hospitalAuth/settings/ModuleAccess"));
+const DoctorsList = lazy(() => import("./pages/hospitalAuth/doctors/DoctorsList"));
+const DoctorForm = lazy(() => import("./pages/hospitalAuth/doctors/DoctorForm"));
+const DoctorSchedule = lazy(() => import("./pages/hospitalAuth/doctors/DoctorSchedule"));
+const DoctorLeaves = lazy(() => import("./pages/hospitalAuth/doctors/DoctorLeaves"));
+const LookupManager = lazy(() => import("./pages/hospitalAuth/settings/LookupManager"));
+const FacilitySetup = lazy(() => import("./pages/hospitalAuth/settings/FacilitySetup"));
+const VaccineCatalog = lazy(() => import("./pages/hospitalAuth/settings/VaccineCatalog"));
+const FormTemplatesList = lazy(() => import("./pages/hospitalAuth/formBuilder/FormTemplatesList"));
+const FormBuilder = lazy(() => import("./pages/hospitalAuth/formBuilder/FormBuilder"));
+const AuditLogs = lazy(() => import("./pages/hospitalAuth/settings/AuditLogs"));
+const FinancialDashboard = lazy(() => import("./pages/billing/FinancialDashboard"));
+
+// Reception
+const ReceptionDashboard = lazy(() => import("./pages/reception/ReceptionDashboard"));
+const PatientsList = lazy(() => import("./pages/reception/PatientsList"));
+const PatientForm = lazy(() => import("./pages/reception/PatientForm"));
+const PatientProfile = lazy(() => import("./pages/reception/PatientProfile"));
+const AppointmentsList = lazy(() => import("./pages/reception/AppointmentsList"));
+const AppointmentCalendar = lazy(() => import("./pages/reception/AppointmentCalendar"));
+const AppointmentForm = lazy(() => import("./pages/reception/AppointmentForm"));
+const DoctorAvailability = lazy(() => import("./pages/reception/DoctorAvailability"));
+const DepartmentDirectory = lazy(() => import("./pages/reception/DepartmentDirectory"));
+const ReferralsList = lazy(() => import("./pages/reception/ReferralsList"));
+const Reports = lazy(() => import("./pages/reception/ReportsHub"));
+const Admissions = lazy(() => import("./pages/ipd/Admissions"));
+const BedBoard = lazy(() => import("./pages/ipd/BedBoard"));
+const QueueDashboard = lazy(() => import("./pages/reception/QueueDashboard"));
+const Billing = lazy(() => import("./pages/reception/Billing"));
+const NotificationsLog = lazy(() => import("./pages/reception/NotificationsLog"));
+const FrontDeskConsole = lazy(() => import("./pages/reception/FrontDeskConsole"));
+
+// Nurse
+const NurseDashboard = lazy(() => import("./pages/nurse/NurseDashboard"));
+const NurseQueue = lazy(() => import("./pages/nurse/NurseQueue"));
+const NurseReports = lazy(() => import("./pages/nurse/NurseReports"));
+
+// Doctor
+const DoctorDashboard = lazy(() => import("./pages/doctor/DoctorDashboard"));
+const DoctorQueue = lazy(() => import("./pages/doctor/DoctorQueue"));
+const ConsultationWorkspace = lazy(() => import("./pages/doctor/ConsultationWorkspace"));
+const DoctorPatients = lazy(() => import("./pages/doctor/DoctorPatients"));
+const DoctorPatientProfile = lazy(() => import("./pages/doctor/DoctorPatientProfile"));
+const DoctorResults = lazy(() => import("./pages/doctor/DoctorResults"));
+const DoctorReports = lazy(() => import("./pages/doctor/DoctorReports"));
+
+// Lab
+const LabDashboard = lazy(() => import("./pages/lab/LabDashboard"));
+const LabOrdersQueue = lazy(() => import("./pages/lab/LabOrdersQueue"));
+const UpdateLabOrder = lazy(() => import("./pages/lab/UpdateLabOrder"));
+const RadiologyOrdersQueue = lazy(() => import("./pages/lab/RadiologyOrdersQueue"));
+const LabTestCatalog = lazy(() => import("./pages/lab/LabTestCatalog"));
+const PrintLabReport = lazy(() => import("./pages/lab/PrintLabReport"));
+const RadiologyCatalog = lazy(() => import("./pages/lab/RadiologyCatalog"));
+const LabReports = lazy(() => import("./pages/lab/LabReports"));
+
+// Pharmacy
+const PharmacyDashboard = lazy(() => import("./pages/pharmacy/PharmacyDashboard"));
+const MedicineCatalog = lazy(() => import("./pages/pharmacy/MedicineCatalog"));
+const SupplierDirectory = lazy(() => import("./pages/pharmacy/SupplierDirectory"));
+const InventoryManagement = lazy(() => import("./pages/pharmacy/InventoryManagement"));
+const DispensaryPOS = lazy(() => import("./pages/pharmacy/DispensaryPOS"));
+const PharmacyReports = lazy(() => import("./pages/pharmacy/PharmacyReports"));
+
+// Wrap a lazy page in a Suspense boundary with the skeleton fallback. The
+// boundary sits at the page-content level (inside each layout's <Outlet/>), so
+// only the content area shows the skeleton while its chunk loads — the
+// surrounding layout/sidebar stays rendered. `C` is a stable module-scope lazy
+// component, so this only builds an element (no React.lazy re-creation).
+const el = (C: ComponentType<any>) => (
+  <Suspense fallback={<PageSkeleton />}>
+    <C />
+  </Suspense>
+);
+
+// Like el(), but passes props — used to reuse a page under a different shell
+// (e.g. the admin oversight routes render reception pages with basePath="/hospital").
+const elp = (C: ComponentType<any>, props: Record<string, unknown>) => (
+  <Suspense fallback={<PageSkeleton />}>
+    <C {...props} />
+  </Suspense>
+);
 
 function App() {
   return (
@@ -97,142 +152,176 @@ function App() {
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<Login />} />
-        
+
         <Route element={<ProtectedRoute />}>
-          <Route element={<AdminLayout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/plans" element={<PlansList />} />
-            <Route path="/plans/new" element={<PlanForm />} />
-            <Route path="/plans/:id/edit" element={<PlanForm />} />
-            <Route path="/feature-flags" element={<FeatureFlagsList />} />
-            <Route path="/feature-flags/new" element={<FeatureFlagForm />} />
-            <Route path="/feature-flags/:id/edit" element={<FeatureFlagForm />} />
-            <Route path="/leads" element={<LeadsList />} />
-            <Route path="/leads/new" element={<LeadForm />} />
-            <Route path="/leads/:id/edit" element={<LeadForm />} />
-            <Route path="/trials" element={<TrialsList />} />
-            <Route path="/trials/new" element={<TrialForm />} />
-            <Route path="/hospitals" element={<HospitalsList />} />
-            <Route path="/hospitals/new" element={<HospitalForm />} />
-            <Route path="/hospitals/:id/edit" element={<HospitalForm />} />
-            <Route path="/hospitals/:id/overview" element={<HospitalOverview />} />
-            <Route path="/onboarding" element={<OnboardingList />} />
-            <Route path="/onboarding/:id/edit" element={<OnboardingForm />} />
-            <Route path="/super-admins" element={<SuperAdminsList />} />
-            <Route path="/super-admins/new" element={<SuperAdminForm />} />
-            <Route path="/super-admins/:id/edit" element={<SuperAdminForm />} />
-            <Route path="/rbac/roles" element={<RolesList />} />
-            <Route path="/rbac/roles/new" element={<RoleForm />} />
-            <Route path="/rbac/roles/:id/edit" element={<RoleForm />} />
-            <Route path="/rbac/users" element={<UsersList />} />
-            <Route path="/rbac/users/add" element={<UserForm />} />
-            <Route path="/rbac/users/edit/:id" element={<UserForm />} />
-            
-            <Route path="/audit-logs" element={<AuditLogsList />} />
+          <Route element={el(AdminLayout)}>
+            <Route path="/" element={el(Dashboard)} />
+            <Route path="/plans" element={el(PlansList)} />
+            <Route path="/plans/new" element={el(PlanForm)} />
+            <Route path="/plans/:id/edit" element={el(PlanForm)} />
+            <Route path="/feature-flags" element={el(FeatureFlagsList)} />
+            <Route path="/feature-flags/new" element={el(FeatureFlagForm)} />
+            <Route path="/feature-flags/:id/edit" element={el(FeatureFlagForm)} />
+            <Route path="/leads" element={el(LeadsList)} />
+            <Route path="/leads/new" element={el(LeadForm)} />
+            <Route path="/leads/:id/edit" element={el(LeadForm)} />
+            <Route path="/trials" element={el(TrialsList)} />
+            <Route path="/trials/new" element={el(TrialForm)} />
+            <Route path="/hospitals" element={el(HospitalsList)} />
+            <Route path="/hospitals/new" element={el(HospitalForm)} />
+            <Route path="/hospitals/:id/edit" element={el(HospitalForm)} />
+            <Route path="/hospitals/:id/overview" element={el(HospitalOverview)} />
+            <Route path="/hospitals/:id/modules" element={el(HospitalModules)} />
+            <Route path="/onboarding" element={el(OnboardingList)} />
+            <Route path="/onboarding/:id/edit" element={el(OnboardingForm)} />
+            <Route path="/super-admins" element={el(SuperAdminsList)} />
+            <Route path="/super-admins/new" element={el(SuperAdminForm)} />
+            <Route path="/super-admins/:id/edit" element={el(SuperAdminForm)} />
+            <Route path="/rbac/roles" element={el(RolesList)} />
+            <Route path="/rbac/roles/new" element={el(RoleForm)} />
+            <Route path="/rbac/roles/:id/edit" element={el(RoleForm)} />
+            <Route path="/rbac/users" element={el(UsersList)} />
+            <Route path="/rbac/users/add" element={el(UserForm)} />
+            <Route path="/rbac/users/edit/:id" element={el(UserForm)} />
+
+            <Route path="/reports" element={el(AdminReports)} />
+            <Route path="/audit-logs" element={el(AuditLogsList)} />
           </Route>
         </Route>
       </Routes>
     </AuthProvider>
-    
+
     <HospitalAuthProvider>
       <CommandPalette />
       <Routes>
         <Route path="/hospital/login" element={<HospitalLogin />} />
-        <Route path="/hospital/change-password" element={<HospitalChangePassword />} />
-        
-        <Route element={<HospitalProtectedRoute />}>
-          <Route element={<HospitalLayout />}>
-            <Route path="/hospital/dashboard" element={<HospitalDashboard />} />
-            <Route path="/hospital/profile" element={<HospitalProfile />} />
-            <Route path="/hospital/settings" element={<HospitalSettings />} />
-            <Route path="/hospital/departments" element={<DepartmentsList />} />
-            <Route path="/hospital/departments/new" element={<DepartmentForm />} />
-            <Route path="/hospital/departments/:id/edit" element={<DepartmentForm />} />
-            <Route path="/hospital/users" element={<HospitalUsersList />} />
-            <Route path="/hospital/users/new" element={<HospitalUserForm />} />
-            <Route path="/hospital/users/:id/edit" element={<HospitalUserForm />} />
-            <Route path="/hospital/roles" element={<HospitalRolesList />} />
-            <Route path="/hospital/roles/new" element={<HospitalRoleForm />} />
-            <Route path="/hospital/roles/:id/edit" element={<HospitalRoleForm />} />
-            <Route path="/hospital/financials" element={<FinancialDashboard />} />
-            <Route path="/hospital/permissions-matrix" element={<PermissionMatrix />} />
-            <Route path="/hospital/module-access" element={<ModuleAccess />} />
-            <Route path="/hospital/doctors" element={<DoctorsList />} />
+        <Route path="/hospital/change-password" element={el(HospitalChangePassword)} />
 
-            <Route path="/hospital/doctors/:id/edit" element={<DoctorForm />} />
-            <Route path="/hospital/doctors/:id/schedule" element={<DoctorSchedule />} />
-            <Route path="/hospital/doctors/:id/leaves" element={<DoctorLeaves />} />
-            <Route path="/hospital/lookups" element={<LookupManager />} />
-            <Route path="/hospital/form-builder" element={<FormTemplatesList />} />
-            <Route path="/hospital/form-builder/new" element={<FormBuilder />} />
-            <Route path="/hospital/form-builder/:id/edit" element={<FormBuilder />} />
-            <Route path="/hospital/audit-logs" element={<AuditLogs />} />
+        <Route element={<HospitalProtectedRoute />}>
+          <Route element={el(HospitalLayout)}>
+            <Route path="/hospital/dashboard" element={el(HospitalDashboard)} />
+            <Route path="/hospital/profile" element={el(HospitalProfile)} />
+            <Route path="/hospital/settings" element={el(HospitalSettings)} />
+            <Route path="/hospital/departments" element={el(DepartmentsList)} />
+            <Route path="/hospital/departments/new" element={el(DepartmentForm)} />
+            <Route path="/hospital/departments/:id/edit" element={el(DepartmentForm)} />
+            <Route path="/hospital/users" element={el(HospitalUsersList)} />
+            <Route path="/hospital/users/new" element={el(HospitalUserForm)} />
+            <Route path="/hospital/users/:id/edit" element={el(HospitalUserForm)} />
+            <Route path="/hospital/roles" element={el(HospitalRolesList)} />
+            <Route path="/hospital/roles/new" element={el(HospitalRoleForm)} />
+            <Route path="/hospital/roles/:id/edit" element={el(HospitalRoleForm)} />
+            <Route path="/hospital/financials" element={el(FinancialDashboard)} />
+            <Route path="/hospital/reports" element={el(Reports)} />
+            <Route path="/hospital/permissions-matrix" element={el(PermissionMatrix)} />
+            <Route path="/hospital/module-access" element={el(ModuleAccess)} />
+            <Route path="/hospital/doctors" element={el(DoctorsList)} />
+
+            <Route path="/hospital/doctors/new" element={el(DoctorForm)} />
+            <Route path="/hospital/doctors/:id/edit" element={el(DoctorForm)} />
+            <Route path="/hospital/doctors/:id/schedule" element={el(DoctorSchedule)} />
+            <Route path="/hospital/doctors/:id/leaves" element={el(DoctorLeaves)} />
+            <Route path="/hospital/lookups" element={el(LookupManager)} />
+            <Route path="/hospital/facility-setup" element={el(FacilitySetup)} />
+            <Route path="/hospital/vaccines" element={el(VaccineCatalog)} />
+            <Route path="/hospital/form-builder" element={el(FormTemplatesList)} />
+            <Route path="/hospital/form-builder/new" element={el(FormBuilder)} />
+            <Route path="/hospital/form-builder/:id/edit" element={el(FormBuilder)} />
+            <Route path="/hospital/audit-logs" element={el(AuditLogs)} />
+
+            {/* ── Admin oversight (read-only windows into hospital-wide activity) ──
+                Reuse the existing operational pages inside the admin shell. The
+                backend already serves H_ADMIN org-wide data for all of these. */}
+            <Route path="/hospital/patients" element={elp(PatientsList, { basePath: "/hospital" })} />
+            <Route path="/hospital/patients/:id" element={elp(PatientProfile, { readOnly: true })} />
+            <Route path="/hospital/appointments" element={el(AppointmentsList)} />
+            <Route path="/hospital/queue" element={el(QueueDashboard)} />
+            <Route path="/hospital/ipd/admissions" element={el(Admissions)} />
+            <Route path="/hospital/ipd/beds" element={el(BedBoard)} />
+            <Route path="/hospital/billing" element={el(Billing)} />
             {/* Add more hospital routes here as they are built */}
           </Route>
         </Route>
 
         {/* ── Reception Panel Routes ─────────────────────── */}
         <Route element={<HospitalProtectedRoute />}>
-          <Route element={<ReceptionLayout />}>
-            <Route path="/reception/dashboard" element={<ReceptionDashboard />} />
-            <Route path="/reception/console" element={<FrontDeskConsole />} />
+          <Route element={el(ReceptionLayout)}>
+            <Route path="/reception/dashboard" element={el(ReceptionDashboard)} />
+            <Route path="/reception/console" element={el(FrontDeskConsole)} />
             {/* ── Module 2: Patient Registration ── */}
-            <Route path="/reception/patients" element={<PatientsList />} />
-            <Route path="/reception/patients/new" element={<PatientForm />} />
-            <Route path="/reception/patients/:id" element={<PatientProfile />} />
-            <Route path="/reception/patients/:id/edit" element={<PatientForm />} />
-            
-            <Route path="/reception/appointments" element={<AppointmentsList />} />
-            <Route path="/reception/appointments/new" element={<AppointmentForm />} />
-            <Route path="/reception/appointments/:id/edit" element={<AppointmentForm />} />
-            
-            <Route path="/reception/queue" element={<QueueDashboard />} />
-            <Route path="/reception/queue/new" element={<QueueDashboard />} />
-            <Route path="/reception/billing" element={<GenerateInvoice />} />
-            <Route path="/reception/notifications" element={<NotificationsLog />} />
+            <Route path="/reception/patients" element={el(PatientsList)} />
+            <Route path="/reception/patients/new" element={el(PatientForm)} />
+            <Route path="/reception/patients/:id" element={el(PatientProfile)} />
+            <Route path="/reception/patients/:id/edit" element={el(PatientForm)} />
+
+            <Route path="/reception/appointments" element={el(AppointmentsList)} />
+            <Route path="/reception/appointments/calendar" element={el(AppointmentCalendar)} />
+            <Route path="/reception/appointments/new" element={el(AppointmentForm)} />
+            <Route path="/reception/appointments/:id/edit" element={el(AppointmentForm)} />
+            <Route path="/reception/doctors" element={el(DoctorAvailability)} />
+            <Route path="/reception/directory" element={el(DepartmentDirectory)} />
+            <Route path="/reception/referrals" element={el(ReferralsList)} />
+            <Route path="/reception/reports" element={el(Reports)} />
+            <Route path="/reception/ipd/admissions" element={el(Admissions)} />
+            <Route path="/reception/ipd/beds" element={el(BedBoard)} />
+
+            <Route path="/reception/queue" element={el(QueueDashboard)} />
+            <Route path="/reception/billing" element={el(Billing)} />
+            <Route path="/reception/notifications" element={el(NotificationsLog)} />
           </Route>
         </Route>
         {/* ── Nurse Panel Routes ────────────────────────────────────── */}
         <Route element={<HospitalProtectedRoute />}>
-          <Route element={<NurseLayout />}>
-            <Route path="/nurse/dashboard" element={<NurseDashboard />} />
-            <Route path="/nurse/queue" element={<NurseQueue />} />
-            <Route path="/nurse/vitals" element={<NurseVitalsStation />} />
-            <Route path="/nurse/patients/:id" element={<PatientProfile />} />
+          <Route element={el(NurseLayout)}>
+            <Route path="/nurse/dashboard" element={el(NurseDashboard)} />
+            <Route path="/nurse/queue" element={el(NurseQueue)} />
+            <Route path="/nurse/reports" element={el(NurseReports)} />
+            {/* Read-only view under the Nurse shell — a nurse opening a patient (e.g. via
+                command-palette search) must not land inside the full Reception sidebar,
+                which would expose front desk/billing/admissions navigation they don't own. */}
+            <Route path="/nurse/patients/:id" element={elp(PatientProfile, { readOnly: true })} />
+            {/* Vitals Station merged into the Patient Queue page (view toggle). */}
+            <Route path="/nurse/vitals" element={<Navigate to="/nurse/queue" replace />} />
           </Route>
         </Route>
 
         {/* ── Doctor Panel Routes ───────────────────────────────────── */}
         <Route element={<HospitalProtectedRoute />}>
-          <Route element={<DoctorLayout />}>
-            <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-            <Route path="/doctor/queue" element={<DoctorQueue />} />
-            <Route path="/doctor/consultation/:appointmentId" element={<ConsultationWorkspace />} />
-            <Route path="/doctor/patients/:id" element={<PatientProfile />} />
+          <Route element={el(DoctorLayout)}>
+            <Route path="/doctor/dashboard" element={el(DoctorDashboard)} />
+            <Route path="/doctor/queue" element={el(DoctorQueue)} />
+            <Route path="/doctor/consultation/:appointmentId" element={el(ConsultationWorkspace)} />
+            <Route path="/doctor/patients" element={el(DoctorPatients)} />
+            <Route path="/doctor/all-patients" element={elp(DoctorPatients, { scope: "all" })} />
+            <Route path="/doctor/results" element={el(DoctorResults)} />
+            <Route path="/doctor/reports" element={el(DoctorReports)} />
+            <Route path="/doctor/patients/:id" element={el(DoctorPatientProfile)} />
           </Route>
         </Route>
 
         {/* ── Lab Panel Routes ──────────────────────────────────────── */}
         <Route element={<HospitalProtectedRoute />}>
-          <Route path="/lab/orders/:id/print" element={<PrintLabReport />} />
-          <Route element={<LabLayout />}>
-            <Route path="/lab/dashboard" element={<LabDashboard />} />
-            <Route path="/lab/orders" element={<LabOrdersQueue />} />
-            <Route path="/lab/orders/:id" element={<UpdateLabOrder />} />
-            <Route path="/lab/radiology" element={<RadiologyOrdersQueue />} />
-            <Route path="/lab/catalog" element={<LabTestCatalog />} />
-            <Route path="/lab/radiology-catalog" element={<RadiologyCatalog />} />
+          <Route path="/lab/orders/:id/print" element={el(PrintLabReport)} />
+          <Route element={el(LabLayout)}>
+            <Route path="/lab/dashboard" element={el(LabDashboard)} />
+            <Route path="/lab/orders" element={el(LabOrdersQueue)} />
+            <Route path="/lab/orders/:id" element={el(UpdateLabOrder)} />
+            <Route path="/lab/radiology" element={el(RadiologyOrdersQueue)} />
+            <Route path="/lab/catalog" element={el(LabTestCatalog)} />
+            <Route path="/lab/radiology-catalog" element={el(RadiologyCatalog)} />
+            <Route path="/lab/reports" element={el(LabReports)} />
           </Route>
         </Route>
 
         {/* ── Pharmacy Panel Routes ─────────────────────────────────── */}
         <Route element={<HospitalProtectedRoute />}>
-          <Route element={<PharmacyLayout />}>
-            <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
-            <Route path="/pharmacy/medicines" element={<MedicineCatalog />} />
-            <Route path="/pharmacy/suppliers" element={<SupplierDirectory />} />
-            <Route path="/pharmacy/inventory" element={<InventoryManagement />} />
-            <Route path="/pharmacy/pos" element={<DispensaryPOS />} />
+          <Route element={el(PharmacyLayout)}>
+            <Route path="/pharmacy/dashboard" element={el(PharmacyDashboard)} />
+            <Route path="/pharmacy/medicines" element={el(MedicineCatalog)} />
+            <Route path="/pharmacy/suppliers" element={el(SupplierDirectory)} />
+            <Route path="/pharmacy/inventory" element={el(InventoryManagement)} />
+            <Route path="/pharmacy/pos" element={el(DispensaryPOS)} />
+            <Route path="/pharmacy/reports" element={el(PharmacyReports)} />
           </Route>
         </Route>
       </Routes>

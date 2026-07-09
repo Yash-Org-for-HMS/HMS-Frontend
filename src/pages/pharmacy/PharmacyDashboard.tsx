@@ -1,67 +1,50 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { 
-  Box, Typography, Grid, Paper, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, alpha, useTheme,
+  Box, Typography, Grid, Paper, Table, TableBody, TableCell, TableHead, TableRow, alpha, useTheme,
   Tabs, Tab, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Select, MenuItem, TextField, Chip, Tooltip
 } from "@mui/material";
 import {
   MedicationRounded, LocalShippingRounded, WarningRounded, PointOfSaleRounded, DashboardRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
+import PageLoader from "../../components/PageLoader";
+import ErrorState from "../../components/ErrorState";
+import StatCard from "../../components/StatCard";
 import PharmacyPage from "./components/PharmacyPage";
+import type { Medicine, LowStockAlert, PharmacyOrder, PurchaseOrder } from "../../types";
 
 export default function PharmacyDashboard() {
   const theme = useTheme();
-  const [loading, setLoading] = useState(true);
-  
-  const [medicines, setMedicines] = useState<any[]>([]);
-  const [inventory, setInventory] = useState<any[]>([]);
-  const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
-  const [sales, setSales] = useState<any[]>([]);
-  const [lowStockAlerts, setLowStockAlerts] = useState<any[]>([]);
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        const [medRes, invRes, poRes, salesRes, alertsRes] = await Promise.all([
-          axiosInstance.get("/pharmacy/medicines"),
-          axiosInstance.get("/pharmacy/inventory"),
-          axiosInstance.get("/pharmacy/purchase-orders"),
-          axiosInstance.get("/pharmacy/orders"),
-          axiosInstance.get("/pharmacy/low-stock-alerts")
-        ]);
-        setMedicines(medRes.data.data || []);
-        setInventory(invRes.data.data || []);
-        setPurchaseOrders(poRes.data.data || []);
-        setSales(salesRes.data.data || []);
-        setLowStockAlerts(alertsRes.data.data || []);
-      } catch (err) {
-        console.error("Failed to fetch dashboard data", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchDashboardData();
-  }, []);
+  const { data, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["pharmacy-dashboard"],
+    queryFn: async () => {
+      const [medRes, invRes, poRes, salesRes, alertsRes] = await Promise.all([
+        axiosInstance.get("/pharmacy/medicines"),
+        axiosInstance.get("/pharmacy/inventory"),
+        axiosInstance.get("/pharmacy/purchase-orders"),
+        axiosInstance.get("/pharmacy/orders"),
+        axiosInstance.get("/pharmacy/low-stock-alerts"),
+      ]);
+      return {
+        medicines: medRes.data.data || [],
+        inventory: invRes.data.data || [],
+        purchaseOrders: poRes.data.data || [],
+        sales: salesRes.data.data || [],
+        lowStockAlerts: alertsRes.data.data || [],
+      };
+    },
+  });
+  const medicines: Medicine[] = data?.medicines ?? [];
+  const purchaseOrders: PurchaseOrder[] = data?.purchaseOrders ?? [];
+  const sales: PharmacyOrder[] = data?.sales ?? [];
+  const lowStockAlerts: LowStockAlert[] = data?.lowStockAlerts ?? [];
 
   const pendingPOs = purchaseOrders.filter(po => po.status === 'pending');
-  const totalSalesValue = sales.reduce((sum, order) => sum + parseFloat(order.totalAmount || 0), 0);
+  const totalSalesValue = sales.reduce((sum, order) => sum + parseFloat(String(order.totalAmount || 0)), 0);
 
   const getMedicineName = (id: string) => medicines.find(m => m.medicineId === id)?.medicineName || 'Unknown';
-
-  const StatCard = ({ title, value, icon, color }: any) => (
-    <Paper sx={{ p: 3, borderRadius: 4, display: 'flex', alignItems: 'center', gap: 3, border: '1px solid', borderColor: 'divider' }}>
-      <Box sx={{ width: 64, height: 64, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: alpha(color, 0.1) }}>
-        {icon}
-      </Box>
-      <Box>
-        <Typography variant="body2" color="text.secondary" fontWeight={600} mb={0.5}>{title}</Typography>
-        <Typography variant="h4" fontWeight={800} color={color}>{value}</Typography>
-      </Box>
-    </Paper>
-  );
 
   return (
     <PharmacyPage
@@ -70,15 +53,15 @@ export default function PharmacyDashboard() {
       icon={<DashboardRounded fontSize="large" sx={{ color: '#4F46E5' }} />}
     >
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
-          <CircularProgress size={48} thickness={4} />
-        </Box>
+        <PageLoader />
+      ) : isError ? (
+        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (
         <>
           <Grid container spacing={3} mb={4}>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
-                    title="Total Medicines" 
+                    label="Total Medicines"
                     value={medicines.length} 
                     icon={<MedicationRounded sx={{ fontSize: 32, color: '#4F46E5' }} />} 
                     color="#4F46E5"
@@ -86,7 +69,7 @@ export default function PharmacyDashboard() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
-                    title="Low Stock Alerts" 
+                    label="Low Stock Alerts"
                     value={lowStockAlerts.length} 
                     icon={<WarningRounded sx={{ fontSize: 32, color: '#EF4444' }} />} 
                     color="#EF4444"
@@ -94,7 +77,7 @@ export default function PharmacyDashboard() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
-                    title="Pending POs" 
+                    label="Pending POs"
                     value={pendingPOs.length} 
                     icon={<LocalShippingRounded sx={{ fontSize: 32, color: '#F59E0B' }} />} 
                     color="#F59E0B"
@@ -102,7 +85,7 @@ export default function PharmacyDashboard() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
-                    title="Total Sales" 
+                    label="Total Sales"
                     value={`₹${totalSalesValue.toFixed(2)}`}
                     icon={<PointOfSaleRounded sx={{ fontSize: 32, color: '#10B981' }} />} 
                     color="#10B981"
@@ -128,7 +111,7 @@ export default function PharmacyDashboard() {
                       </TableHead>
                       <TableBody>
                         {lowStockAlerts.length === 0 ? (
-                          <TableRow><TableCell colSpan={3} align="center" sx={{ py: 3 }}>No low stock items</TableCell></TableRow>
+                          <TableRow><TableCell colSpan={3} sx={{ py: 3, border: 0 }}><Mascot pose="all-caught-up" subtitle="No low stock items — inventory looks healthy." size={110} /></TableCell></TableRow>
                         ) : lowStockAlerts.map(item => (
                           <TableRow key={item.medicineId}>
                             <TableCell sx={{ fontWeight: 600 }}>{item.medicineName}</TableCell>
@@ -158,7 +141,7 @@ export default function PharmacyDashboard() {
                       </TableHead>
                       <TableBody>
                         {sales.filter(s => s.status !== "cancelled").slice(0, 5).length === 0 ? (
-                          <TableRow><TableCell colSpan={3} align="center" sx={{ py: 3 }}>No recent sales</TableCell></TableRow>
+                          <TableRow><TableCell colSpan={3} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No recent sales." size={110} /></TableCell></TableRow>
                         ) : sales.filter(s => s.status !== "cancelled").slice(0, 5).map(sale => (
                           <TableRow key={sale.pharmacyOrderId}>
                             <TableCell sx={{ fontFamily: 'monospace' }}>{sale.pharmacyOrderId.split('-')[0].toUpperCase()}</TableCell>

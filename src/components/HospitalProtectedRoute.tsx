@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
-import { Box, CircularProgress } from "@mui/material";
+import { Box } from "@mui/material";
+import HeartbeatLoader from "./HeartbeatLoader";
 
 export function HospitalProtectedRoute() {
   const { isAuthenticated, loading } = useHospitalAuth();
@@ -17,7 +18,7 @@ export function HospitalProtectedRoute() {
           bgcolor: "#0f172a",
         }}
       >
-        <CircularProgress sx={{ color: "#10b981" }} />
+        <HeartbeatLoader size={96} />
       </Box>
     );
   }

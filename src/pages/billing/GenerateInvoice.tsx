@@ -1,29 +1,35 @@
 import { useState, useEffect } from "react";
-import { 
-  Box, Typography, Paper, Autocomplete, TextField, CircularProgress, 
-  Table, TableBody, TableCell, TableHead, TableRow, Checkbox, 
+import { useQuery } from "@tanstack/react-query";
+import {
+  Box, Typography, Paper, Autocomplete, TextField,
+  Table, TableBody, TableCell, TableHead, TableRow, Checkbox,
   Button, Divider, Grid, Dialog, DialogTitle, DialogContent, DialogActions, alpha, useTheme
 } from "@mui/material";
 import { ReceiptLongRounded, PaymentRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
+import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
+import { useToast } from "../../contexts/ToastContext";
 
-export default function GenerateInvoice() {
+export default function GenerateInvoice({ patientId: initialPatientId }: { patientId?: string } = {}) {
   const theme = useTheme();
+  const toast = useToast();
   
   // Patient Search
   const [patientQuery, setPatientQuery] = useState("");
-  const [patients, setPatients] = useState<any[]>([]);
-  const [patientLoading, setPatientLoading] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
 
   // Billing Items
-  const [unbilledItems, setUnbilledItems] = useState<any[]>([]);
-  const [itemsLoading, setItemsLoading] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
 
-  // Invoice Calculator
+  // Invoice Calculator — tax defaults to the hospital's configured GST rate.
   const [discount, setDiscount] = useState<number | "">("");
+  const taxRate = useHospitalTaxRate();
   const [taxPercent, setTaxPercent] = useState<number | "">(0);
+  useEffect(() => { setTaxPercent(taxRate); }, [taxRate]);
   
   // Modal State
   const [isGenerating, setIsGenerating] = useState(false);
@@ -32,48 +38,47 @@ export default function GenerateInvoice() {
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
+  // Debounced patient search.
   useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      if (patientQuery.length >= 2) {
-        try {
-          setPatientLoading(true);
-          const res = await axiosInstance.get(`/reception/patients?search=${patientQuery}`);
-          setPatients(Array.isArray(res.data.data) ? res.data.data : []);
-        } catch (err) {
-          console.error("Failed to fetch patients", err);
-        } finally {
-          setPatientLoading(false);
-        }
-      } else {
-        setPatients([]);
-      }
-    }, 500);
-    return () => clearTimeout(delayDebounceFn);
+    const t = setTimeout(() => setDebouncedQuery(patientQuery), 500);
+    return () => clearTimeout(t);
   }, [patientQuery]);
 
+  // Preselect a patient when launched from "Bill" on a patient row.
   useEffect(() => {
-    if (selectedPatient) {
-      fetchUnbilledItems(selectedPatient.patientId);
-    } else {
-      setUnbilledItems([]);
-      setSelectedItemIds(new Set());
-    }
-  }, [selectedPatient]);
+    if (!initialPatientId) return;
+    let cancelled = false;
+    axiosInstance.get(`/reception/patients/${initialPatientId}`)
+      .then((res) => { if (!cancelled && res.data?.data) setSelectedPatient(res.data.data); })
+      .catch(() => { /* ignore */ });
+    return () => { cancelled = true; };
+  }, [initialPatientId]);
 
-  const fetchUnbilledItems = async (patientId: string) => {
-    try {
-      setItemsLoading(true);
-      const res = await axiosInstance.get(`/billing/unbilled/${patientId}`);
-      const items = res.data.data || [];
-      setUnbilledItems(items);
-      // Auto-select all by default
-      setSelectedItemIds(new Set(items.map((i: any) => i.id)));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setItemsLoading(false);
-    }
-  };
+  const { data: patients = [], isFetching: patientLoading } = useQuery<any[]>({
+    queryKey: ["patient-search", debouncedQuery],
+    queryFn: async () =>
+      (await axiosInstance.get("/reception/patients", { params: { search: debouncedQuery } })).data.data || [],
+    enabled: debouncedQuery.trim().length >= 2,
+  });
+
+  const patientId = selectedPatient?.patientId;
+  const {
+    data: unbilledData,
+    isLoading: itemsLoading,
+    isError: itemsError,
+    error: itemsErr,
+    refetch: refetchUnbilled,
+  } = useQuery<any[]>({
+    queryKey: ["unbilled", patientId],
+    queryFn: async () => (await axiosInstance.get(`/billing/unbilled/${patientId}`)).data.data || [],
+    enabled: !!patientId,
+  });
+  const unbilledItems: any[] = unbilledData ?? [];
+
+  // Auto-select all charges when a fresh set loads (and clear on patient change).
+  useEffect(() => {
+    setSelectedItemIds(new Set((unbilledData ?? []).map((i: any) => i.id)));
+  }, [unbilledData]);
 
   const handleToggleItem = (id: string) => {
     const newSelected = new Set(selectedItemIds);
@@ -101,9 +106,9 @@ export default function GenerateInvoice() {
       const res = await axiosInstance.post(`/billing/invoices/${selectedPatient.patientId}`, payload);
       setGeneratedInvoice(res.data.data);
       setPaymentAmount(netAmount);
+      toast.success(`Invoice ${res.data.data?.invoiceNumber || ""} generated`);
     } catch (err) {
-      console.error("Failed to generate invoice", err);
-      alert("Error generating invoice");
+      toast.error((err as any)?.response?.data?.message || "Error generating invoice");
     } finally {
       setIsGenerating(false);
     }
@@ -117,38 +122,22 @@ export default function GenerateInvoice() {
         amount: Number(paymentAmount),
         paymentMethod
       });
-      alert("Payment successful!");
-      // Reset
+      toast.success("Payment collected successfully");
       setGeneratedInvoice(null);
-      fetchUnbilledItems(selectedPatient.patientId);
+      refetchUnbilled();
     } catch (err) {
-      console.error("Payment failed", err);
-      alert("Payment failed");
+      toast.error((err as any)?.response?.data?.message || "Payment failed");
     } finally {
       setIsProcessingPayment(false);
     }
   };
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: "auto" }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ 
-          fontWeight: 800, 
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.5,
-          color: 'primary.main'
-        }}>
-          <ReceiptLongRounded fontSize="large" />
-          Generate Invoice
+    <Box>
+      <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+        <Typography variant="subtitle2" fontWeight={700} mb={2}>
+          Select a patient to bill their pending charges
         </Typography>
-        <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 0.5 }}>
-          Search for a patient to view and bill their pending charges across all departments.
-        </Typography>
-      </Box>
-
-      <Paper sx={{ p: 3, mb: 4, borderRadius: 3 }}>
-        <Typography variant="subtitle2" fontWeight={700} mb={2}>Select Patient</Typography>
         <Autocomplete
           options={patients}
           getOptionLabel={(option) => `${option.firstName} ${option.lastName} (${option.uhidNumber})`}
@@ -166,7 +155,7 @@ export default function GenerateInvoice() {
                 ...params.InputProps,
                 endAdornment: (
                   <>
-                    {patientLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {patientLoading ? <HeartbeatLoader size={22} /> : null}
                     {params.InputProps.endAdornment}
                   </>
                 ),
@@ -179,13 +168,17 @@ export default function GenerateInvoice() {
       {selectedPatient && (
         <Grid container spacing={4}>
           <Grid size={{ xs: 12, md: 8 }}>
-            <Paper sx={{ borderRadius: 3, overflow: "hidden", border: '1px solid', borderColor: 'divider' }}>
+            <Paper elevation={0} sx={{ borderRadius: 3, overflow: "hidden", border: '1px solid', borderColor: 'divider' }}>
               <Box sx={{ p: 2, bgcolor: alpha(theme.palette.primary.main, 0.04), borderBottom: '1px solid', borderColor: 'divider' }}>
                 <Typography variant="h6" fontWeight="700">Unbilled Charges</Typography>
               </Box>
               
               {itemsLoading ? (
-                <Box sx={{ p: 4, display: "flex", justifyContent: "center" }}><CircularProgress /></Box>
+                <PageLoader />
+              ) : itemsError ? (
+                <Box sx={{ p: 2 }}>
+                  <ErrorState message={(itemsErr as any)?.response?.data?.message} onRetry={() => refetchUnbilled()} />
+                </Box>
               ) : unbilledItems.length === 0 ? (
                 <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
                   No pending charges found for this patient.
@@ -238,7 +231,7 @@ export default function GenerateInvoice() {
           </Grid>
 
           <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', position: 'sticky', top: 24 }}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', position: 'sticky', top: 24 }}>
               <Typography variant="h6" fontWeight="700" mb={3}>Invoice Summary</Typography>
               
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
@@ -247,7 +240,7 @@ export default function GenerateInvoice() {
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography color="text.secondary">Discount ($)</Typography>
+                <Typography color="text.secondary">Discount (₹)</Typography>
                 <TextField 
                   size="small" type="number" 
                   value={discount} onChange={e => setDiscount(e.target.value === "" ? "" : Number(e.target.value))}
@@ -305,12 +298,15 @@ export default function GenerateInvoice() {
           </Typography>
           
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField 
-              label="Amount to Pay ($)" 
-              type="number" 
-              fullWidth 
-              value={paymentAmount} 
-              onChange={e => setPaymentAmount(e.target.value === "" ? "" : Number(e.target.value))} 
+            <TextField
+              label="Amount to Pay (₹)"
+              type="number"
+              fullWidth
+              value={paymentAmount}
+              onChange={e => setPaymentAmount(e.target.value === "" ? "" : Number(e.target.value))}
+              inputProps={{ min: 0, max: netAmount, step: "0.01" }}
+              error={Number(paymentAmount || 0) > netAmount + 0.005}
+              helperText={Number(paymentAmount || 0) > netAmount + 0.005 ? `Cannot exceed the bill of ₹${netAmount.toFixed(2)}` : undefined}
             />
             <Autocomplete
               options={["Cash", "Credit Card", "Insurance", "Bank Transfer"]}
@@ -327,8 +323,8 @@ export default function GenerateInvoice() {
           <Button 
             variant="contained" 
             color="success" 
-            onClick={handleProcessPayment} 
-            disabled={isProcessingPayment || !paymentAmount}
+            onClick={handleProcessPayment}
+            disabled={isProcessingPayment || !paymentAmount || Number(paymentAmount) <= 0 || Number(paymentAmount) > netAmount + 0.005}
             startIcon={<PaymentRounded />}
           >
             {isProcessingPayment ? "Processing..." : "Collect Payment"}

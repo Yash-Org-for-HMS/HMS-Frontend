@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -6,7 +7,6 @@ import {
   TextField,
   Button,
   Grid,
-  CircularProgress,
   Alert,
   IconButton,
   Switch,
@@ -17,7 +17,11 @@ import {
 import { SaveRounded, DeleteRounded, AddCircleOutlineRounded, DragIndicatorRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import ErrorState from "../../../components/ErrorState";
+import Mascot from "../../../components/Mascot";
 import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
+import PageLoader from "../../../components/PageLoader";
 
 const FIELD_TYPES = [
   { value: "text", label: "Text Input" },
@@ -33,7 +37,6 @@ export default function FormBuilder() {
   const isEditing = Boolean(id);
 
   const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
   const toast = useToast();
   const [formData, setFormData] = useState({
     formName: "",
@@ -43,30 +46,24 @@ export default function FormBuilder() {
 
   const [fields, setFields] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (isEditing) {
-      loadTemplate();
-    } else {
-      setInitialLoad(false);
-    }
-  }, [id]);
+  const { data: template, isLoading: templateLoading, isError, error, refetch } = useQuery({
+    queryKey: ["form-template", id],
+    queryFn: async () => (await axiosInstance.get(`/hospital/form-builder/${id}`)).data.data,
+    enabled: isEditing,
+  });
 
-  const loadTemplate = async () => {
-    try {
-      const res = await axiosInstance.get(`/hospital/form-builder/${id}`);
-      const t = res.data.data;
-      setFormData({
-        formName: t.formName || "",
-        formType: t.formType || "",
-        description: t.description || "",
-      });
-      setFields(t.fields || []);
-    } catch (err: any) {
-      toast.error("Failed to load template");
-    } finally {
-      setInitialLoad(false);
-    }
-  };
+  // Seed the builder with the existing template when editing.
+  useEffect(() => {
+    if (!template) return;
+    setFormData({
+      formName: template.formName || "",
+      formType: template.formType || "",
+      description: template.description || "",
+    });
+    setFields(template.fields || []);
+  }, [template]);
+
+  const initialLoad = isEditing && templateLoading;
 
   const handleAddDataField = () => {
     setFields([
@@ -98,9 +95,21 @@ export default function FormBuilder() {
     setFields(updated);
   };
 
+  // Set/clear a single validation rule on a field (kept alongside dropdown options).
+  const setRule = (index: number, key: string, raw: string) => {
+    const rules = { ...(fields[index].validationRulesJson || {}) };
+    if (raw === "") {
+      delete rules[key];
+    } else {
+      rules[key] = key === "pattern" ? raw : Number(raw);
+    }
+    handleFieldChange(index, "validationRulesJson", rules);
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);    // Prepare fields with sort order
+    setLoading(true);
+    // Prepare fields with sort order
     const processedFields = fields.map((f, i) => ({
       ...f,
       sortOrder: String(i)
@@ -126,10 +135,12 @@ export default function FormBuilder() {
 
   if (initialLoad) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress sx={{ color: "#6366f1" }} />
-      </Box>
+      <PageLoader />
     );
+  }
+
+  if (isError) {
+    return <Box sx={{ p: 4 }}><ErrorState message={(error as any)?.response?.data?.message || "Failed to load template"} onRetry={refetch} /></Box>;
   }
 
   const textFieldProps = {
@@ -148,23 +159,19 @@ export default function FormBuilder() {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto" }}>
-      <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            {isEditing ? "Edit Form Template" : "Form Builder"}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Design your form by adding and configuring fields dynamically.
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          onClick={() => navigate("/hospital/form-builder")}
-          sx={{ color: "text.secondary", borderColor: "divider" }}
-        >
-          Cancel
-        </Button>
-      </Box>
+      <PageHeader
+        title={isEditing ? "Edit Form Template" : "Form Builder"}
+        subtitle="Design your form by adding and configuring fields dynamically."
+        actions={
+          <Button
+            variant="outlined"
+            onClick={() => navigate("/hospital/form-builder")}
+            sx={{ color: "text.secondary", borderColor: "divider" }}
+          >
+            Cancel
+          </Button>
+        }
+      />
 <form onSubmit={handleSave}>
         <Grid container spacing={4}>
           {/* Left Panel - Metadata */}
@@ -223,8 +230,9 @@ export default function FormBuilder() {
               </Box>
 
               {fields.length === 0 ? (
-                <Box sx={{ py: 8, textAlign: "center", border: "2px dashed rgba(255,255,255,0.1)", borderRadius: 2 }}>
-                  <Typography sx={{ color: "text.secondary", mb: 2 }}>No fields added yet.</Typography>
+                <Box sx={{ py: 3, textAlign: "center", border: "2px dashed rgba(255,255,255,0.1)", borderRadius: 2 }}>
+                  <Mascot pose="nothing-here-yet" subtitle="No fields added yet." size={120} sx={{ py: 1 }} />
+                  <Box sx={{ mb: 2 }} />
                   <Button variant="outlined" onClick={handleAddDataField} sx={{ color: "#38bdf8", borderColor: "rgba(56, 189, 248, 0.5)" }}>
                     Add First Field
                   </Button>
@@ -274,6 +282,24 @@ export default function FormBuilder() {
                               placeholder="e.g. Option 1, Option 2, Option 3"
                               {...textFieldProps}
                             />
+                          </Grid>
+                        )}
+
+                        {field.fieldType === "text" && (
+                          <Grid size={{xs: 12}}>
+                            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+                              <TextField size="small" type="number" label="Min length" value={field.validationRulesJson?.minLength ?? ""} onChange={(e) => setRule(idx, "minLength", e.target.value)} sx={{ width: 130 }} />
+                              <TextField size="small" type="number" label="Max length" value={field.validationRulesJson?.maxLength ?? ""} onChange={(e) => setRule(idx, "maxLength", e.target.value)} sx={{ width: 130 }} />
+                              <TextField size="small" label="Pattern (regex)" value={field.validationRulesJson?.pattern ?? ""} onChange={(e) => setRule(idx, "pattern", e.target.value)} placeholder="e.g. ^[0-9]{10}$" sx={{ flex: 1, minWidth: 180 }} />
+                            </Box>
+                          </Grid>
+                        )}
+                        {field.fieldType === "number" && (
+                          <Grid size={{xs: 12}}>
+                            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+                              <TextField size="small" type="number" label="Min value" value={field.validationRulesJson?.min ?? ""} onChange={(e) => setRule(idx, "min", e.target.value)} sx={{ width: 140 }} />
+                              <TextField size="small" type="number" label="Max value" value={field.validationRulesJson?.max ?? ""} onChange={(e) => setRule(idx, "max", e.target.value)} sx={{ width: 140 }} />
+                            </Box>
                           </Grid>
                         )}
                         

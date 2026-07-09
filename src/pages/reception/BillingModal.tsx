@@ -1,14 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Box, Typography, Divider, CircularProgress, Alert,
+  Button, Box, Typography, Divider, Alert,
   Grid, TextField, MenuItem, Paper, Chip
 } from "@mui/material";
 import {
   ReceiptRounded, CheckCircleRounded, PrintRounded, PaymentRounded, CloseRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
+import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 
 interface BillingModalProps {
   open: boolean;
@@ -20,7 +24,9 @@ interface BillingModalProps {
 
 export default function BillingModal({ open, onClose, appointmentId, patientName, appointmentDate }: BillingModalProps) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const toast = useToast();
+  const { hospital } = useHospitalAuth();
   const [invoice, setInvoice] = useState<any>(null);
   
   // Lookups
@@ -37,6 +43,22 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const [newItemQty, setNewItemQty] = useState("1");
   const [newItemPrice, setNewItemPrice] = useState("");
   const [addingItem, setAddingItem] = useState(false);
+
+  // Hospital identity for the receipt header
+  const [hospitalProfile, setHospitalProfile] = useState<any>(null);
+
+  // Discount & Tax
+  const [defaultTaxPct, setDefaultTaxPct] = useState(0);
+  const [discountInput, setDiscountInput] = useState("");
+  const [taxInput, setTaxInput] = useState("");
+  const [adjusting, setAdjusting] = useState(false);
+
+  // Refund
+  const [showRefund, setShowRefund] = useState(false);
+  const [refundPaymentId, setRefundPaymentId] = useState("");
+  const [refundAmount, setRefundAmount] = useState("");
+  const [refundReason, setRefundReason] = useState("");
+  const [refunding, setRefunding] = useState(false);
 
   // For printing
   const receiptRef = useRef<HTMLDivElement>(null);
@@ -56,10 +78,14 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const fetchBillingData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       // 1. Fetch lookups
       const lookupsRes = await axiosInstance.get("/reception/billing/lookups");
+      const hospitalTaxPct = Number(lookupsRes.data?.data?.taxPercentage || 0);
       if (lookupsRes.data.success) {
         setPaymentMethods(lookupsRes.data.data.methods);
+        setDefaultTaxPct(hospitalTaxPct);
+        setHospitalProfile(lookupsRes.data.data.hospital || null);
       }
 
       // 2. Fetch or Generate Invoice
@@ -77,19 +103,31 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       }
       
       setInvoice(currentInvoice);
-      
+
       // Pre-fill payment amount with remaining balance
       if (currentInvoice) {
         const totalPaid = currentInvoice.Payment?.reduce((sum: number, p: any) => sum + Number(p.paidAmount), 0) || 0;
-        const remaining = Number(currentInvoice.netAmount) - totalPaid;
+        const totalRefunded = currentInvoice.Refund?.reduce((sum: number, r: any) => sum + Number(r.refundAmount), 0) || 0;
+        const remaining = Number(currentInvoice.netAmount) - (totalPaid - totalRefunded);
         if (remaining > 0) {
           setPaymentAmount(remaining.toString());
         }
+
+        // Prefill the discount/tax fields: existing discount, and either the
+        // tax rate already on the invoice or the hospital's configured default.
+        const g = Number(currentInvoice.grossAmount || 0);
+        const d = Number(currentInvoice.discountAmount || 0);
+        const t = Number(currentInvoice.taxAmount || 0);
+        setDiscountInput(d > 0 ? String(d) : "");
+        const taxable = g - d;
+        const currentRate = taxable > 0 && t > 0 ? Math.round((t / taxable) * 10000) / 100 : hospitalTaxPct;
+        setTaxInput(currentRate ? String(currentRate) : "");
       }
 
     } catch (err: any) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Failed to load billing data");
+      const msg = err.response?.data?.message || "Failed to load billing data";
+      setLoadError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -107,6 +145,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       });
       
       if (res.data.success) {
+        toast.success("Payment recorded successfully");
         // Refresh invoice data
         const getInvoiceRes = await axiosInstance.get(`/reception/billing/appointments/${appointmentId}/invoice`);
         if (getInvoiceRes.data.success) {
@@ -114,7 +153,8 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
           
           const updatedInvoice = getInvoiceRes.data.data;
           const totalPaid = updatedInvoice.Payment?.reduce((sum: number, p: any) => sum + Number(p.paidAmount), 0) || 0;
-          const remaining = Number(updatedInvoice.netAmount) - totalPaid;
+          const totalRefunded = updatedInvoice.Refund?.reduce((sum: number, r: any) => sum + Number(r.refundAmount), 0) || 0;
+          const remaining = Number(updatedInvoice.netAmount) - (totalPaid - totalRefunded);
           if (remaining > 0) {
              setPaymentAmount(remaining.toString());
           } else {
@@ -140,6 +180,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         unitPrice: Number(newItemPrice)
       });
       if (res.data.success) {
+        toast.success("Line item added");
         // Refresh invoice
         await fetchBillingData();
         setNewItemDesc("");
@@ -154,13 +195,31 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     }
   };
 
+  const handleAdjust = async () => {
+    if (!invoice) return;
+    try {
+      setAdjusting(true);
+      const res = await axiosInstance.put(`/reception/billing/invoices/${invoice.invoiceId}/adjust`, {
+        discountAmount: Number(discountInput || 0),
+        taxPercent: Number(taxInput || 0),
+      });
+      if (res.data.success) {
+        toast.success("Discount & tax applied");
+        await fetchBillingData();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to update invoice");
+    } finally {
+      setAdjusting(false);
+    }
+  };
+
   const handlePrint = () => {
-    if (receiptRef.current) {
-      const printContents = receiptRef.current.innerHTML;
-      const originalContents = document.body.innerHTML;
-      
-      // Basic print styling
-      const printStyle = `
+    if (!receiptRef.current) return;
+    const printContents = receiptRef.current.innerHTML;
+
+    // Basic print styling
+    const printStyle = `
         <style>
           @media print {
             @page { margin: 0.5cm; }
@@ -184,19 +243,84 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         </style>
       `;
 
-      document.body.innerHTML = printStyle + printContents;
-      window.print();
-      document.body.innerHTML = originalContents;
-      window.location.reload(); // Reload to restore React state cleanly after DOM manipulation
+    // Print inside a hidden iframe instead of swapping document.body + reloading.
+    // The old approach destroyed the React tree and forced a full page reload
+    // (losing all SPA state). We clone the page's stylesheets so the receipt's
+    // MUI styling renders identically inside the iframe.
+    const headStyles = Array.from(
+      document.querySelectorAll('style, link[rel="stylesheet"]')
+    ).map((el) => el.outerHTML).join("");
+
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("aria-hidden", "true");
+    Object.assign(iframe.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" });
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      document.body.removeChild(iframe);
+      return;
+    }
+    doc.open();
+    doc.write(`<!doctype html><html><head><title>Receipt</title>${headStyles}${printStyle}</head><body>${printContents}</body></html>`);
+    doc.close();
+
+    const win = iframe.contentWindow!;
+    const cleanup = () => { if (iframe.parentNode) document.body.removeChild(iframe); };
+    win.onafterprint = cleanup;
+    // Give cloned styles/fonts a tick to apply before printing.
+    setTimeout(() => {
+      win.focus();
+      win.print();
+      setTimeout(cleanup, 1000); // fallback if onafterprint never fires
+    }, 250);
+  };
+
+  const handleRefund = async () => {
+    if (!invoice || !refundPaymentId || !refundAmount || refundReason.trim().length < 3) return;
+    try {
+      setRefunding(true);
+      const res = await axiosInstance.post(`/reception/billing/invoices/${invoice.invoiceId}/refund`, {
+        paymentId: refundPaymentId,
+        amount: parseFloat(refundAmount),
+        reason: refundReason.trim(),
+      });
+      if (res.data.success) {
+        toast.success("Refund processed");
+        setShowRefund(false);
+        setRefundPaymentId("");
+        setRefundAmount("");
+        setRefundReason("");
+        await fetchBillingData();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Refund failed");
+    } finally {
+      setRefunding(false);
     }
   };
 
   if (!open) return null;
 
   const totalPaid = invoice?.Payment?.reduce((sum: number, p: any) => sum + Number(p.paidAmount), 0) || 0;
+  const totalRefunded = invoice?.Refund?.reduce((sum: number, r: any) => sum + Number(r.refundAmount), 0) || 0;
+  const netPaid = totalPaid - totalRefunded;
+  const grossAmount = Number(invoice?.grossAmount || 0);
+  const discountAmount = Number(invoice?.discountAmount || 0);
+  const taxAmount = Number(invoice?.taxAmount || 0);
   const netAmount = Number(invoice?.netAmount || 0);
-  const balance = netAmount - totalPaid;
+  const balance = netAmount - netPaid;
   const isFullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || balance <= 0;
+
+  // How much of each payment is still refundable (paid − refunds against it).
+  const refundedByPayment: Record<string, number> = {};
+  (invoice?.Refund || []).forEach((r: any) => {
+    refundedByPayment[r.paymentId] = (refundedByPayment[r.paymentId] || 0) + Number(r.refundAmount);
+  });
+  const refundablePayments = (invoice?.Payment || [])
+    .map((p: any) => ({ ...p, refundable: Number(p.paidAmount) - (refundedByPayment[p.paymentId] || 0) }))
+    .filter((p: any) => p.refundable > 0.005);
+  const selectedRefundable = refundablePayments.find((p: any) => p.paymentId === refundPaymentId)?.refundable || 0;
 
   return (
     <Dialog 
@@ -222,9 +346,9 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
 
       <DialogContent sx={{ py: 3 }}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-            <CircularProgress sx={{ color: "#06b6d4" }} />
-          </Box>
+          <PageLoader />
+        ) : loadError ? (
+          <ErrorState message={loadError} onRetry={fetchBillingData} />
         ) : invoice ? (
           <Grid container spacing={4}>
             {/* LEFT: Receipt Preview */}
@@ -242,12 +366,27 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                 }}
               >
                 {/* Print Header */}
-                <Box className="header" sx={{ textAlign: "center", mb: 4, borderBottom: "2px solid #3b82f6", pb: 3 }}>
-                  <Typography className="hospital-name" variant="h4" sx={{ fontWeight: 900, color: "#1e3a8a", letterSpacing: 1 }}>HMS HOSPITAL</Typography>
-                  <Typography className="hospital-info" variant="body2" sx={{ color: "#6b7280", mt: 0.5 }}>123 Health Avenue, Medical District</Typography>
-                  <Typography className="hospital-info" variant="body2" sx={{ color: "#6b7280" }}>Phone: +1 234 567 8900 | Web: www.hmshospital.com</Typography>
-                  <Typography className="receipt-title" variant="subtitle1" sx={{ mt: 3, fontWeight: 800, letterSpacing: 3, color: "#3b82f6" }}>PAYMENT RECEIPT</Typography>
-                </Box>
+                {(() => {
+                  const addressLine = [hospitalProfile?.addressLine1, hospitalProfile?.addressLine2, hospitalProfile?.postalCode].filter(Boolean).join(", ");
+                  const contactLine = [
+                    hospitalProfile?.officialPhone ? `Phone: ${hospitalProfile.officialPhone}` : null,
+                    hospitalProfile?.officialEmail ? hospitalProfile.officialEmail : null,
+                  ].filter(Boolean).join(" | ");
+                  return (
+                    <Box className="header" sx={{ textAlign: "center", mb: 4, borderBottom: "2px solid #3b82f6", pb: 3 }}>
+                      <Typography className="hospital-name" variant="h4" sx={{ fontWeight: 900, color: "#1e3a8a", letterSpacing: 1 }}>
+                        {hospitalProfile?.hospitalName || hospital?.name || "Hospital"}
+                      </Typography>
+                      {addressLine && (
+                        <Typography className="hospital-info" variant="body2" sx={{ color: "#6b7280", mt: 0.5 }}>{addressLine}</Typography>
+                      )}
+                      {contactLine && (
+                        <Typography className="hospital-info" variant="body2" sx={{ color: "#6b7280" }}>{contactLine}</Typography>
+                      )}
+                      <Typography className="receipt-title" variant="subtitle1" sx={{ mt: 3, fontWeight: 800, letterSpacing: 3, color: "#3b82f6" }}>PAYMENT RECEIPT</Typography>
+                    </Box>
+                  );
+                })()}
 
                 {/* Info */}
                 <Box className="grid-info" sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}>
@@ -284,7 +423,23 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                 </Box>
 
                 <Box className="totals-box" sx={{ borderTop: "2px solid #1f2937", pt: 2, mb: 4 }}>
-                  <Box className="total-row bold" sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                  <Box className="total-row" sx={{ display: "flex", justifyContent: "space-between", mb: 1, color: "#4b5563" }}>
+                    <Typography variant="body2">Subtotal:</Typography>
+                    <Typography variant="body2">{grossAmount.toFixed(2)} INR</Typography>
+                  </Box>
+                  {discountAmount > 0 && (
+                    <Box className="total-row" sx={{ display: "flex", justifyContent: "space-between", mb: 1, color: "#059669" }}>
+                      <Typography variant="body2">Discount:</Typography>
+                      <Typography variant="body2">- {discountAmount.toFixed(2)} INR</Typography>
+                    </Box>
+                  )}
+                  {taxAmount > 0 && (
+                    <Box className="total-row" sx={{ display: "flex", justifyContent: "space-between", mb: 1, color: "#4b5563" }}>
+                      <Typography variant="body2">Tax (CGST + SGST):</Typography>
+                      <Typography variant="body2">+ {taxAmount.toFixed(2)} INR</Typography>
+                    </Box>
+                  )}
+                  <Box className="total-row bold" sx={{ display: "flex", justifyContent: "space-between", mt: 1, mb: 1, pt: 1, borderTop: "1px dashed #d1d5db" }}>
                     <Typography variant="body1" sx={{ fontWeight: 800 }}>Total Amount:</Typography>
                     <Typography variant="body1" sx={{ fontWeight: 800 }}>{netAmount.toFixed(2)} INR</Typography>
                   </Box>
@@ -292,6 +447,12 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                     <Typography variant="body2">Amount Paid:</Typography>
                     <Typography variant="body2">{totalPaid.toFixed(2)} INR</Typography>
                   </Box>
+                  {totalRefunded > 0 && (
+                    <Box className="total-row" sx={{ display: "flex", justifyContent: "space-between", mb: 1, color: "#8b5cf6" }}>
+                      <Typography variant="body2">Refunded:</Typography>
+                      <Typography variant="body2">- {totalRefunded.toFixed(2)} INR</Typography>
+                    </Box>
+                  )}
                   <Box className="total-row bold" sx={{ display: "flex", justifyContent: "space-between", mt: 1, pt: 1, borderTop: "1px dashed #d1d5db" }}>
                     <Typography variant="body1" sx={{ fontWeight: 800, color: balance > 0 ? "#ef4444" : "#10b981" }}>Balance Due:</Typography>
                     <Typography variant="body1" sx={{ fontWeight: 800, color: balance > 0 ? "#ef4444" : "#10b981" }}>{balance.toFixed(2)} INR</Typography>
@@ -316,7 +477,24 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                   </Box>
                 )}
 
-                {isFullyPaid && (
+                {/* Refund History */}
+                {invoice.Refund?.length > 0 && (
+                  <Box sx={{ borderTop: "1px solid #e5e7eb", pt: 3, mb: 3 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 800, display: "block", mb: 2, color: "#6b7280", letterSpacing: 1 }}>REFUNDS</Typography>
+                    {invoice.Refund.map((r: any, idx: number) => (
+                      <Box key={idx} sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                        <Typography variant="caption" sx={{ color: "#4b5563" }}>
+                          {r.processedAt ? new Date(r.processedAt).toLocaleDateString() : "—"} • {r.refundReason || "Refund"}
+                        </Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: "#8b5cf6" }}>
+                          - {Number(r.refundAmount).toFixed(2)} INR
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+
+                {isFullyPaid && totalRefunded <= 0 && (
                   <Typography className="watermark" variant="h1">PAID</Typography>
                 )}
 
@@ -382,7 +560,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                       variant="contained"
                       onClick={handlePayment}
                       disabled={paying || !paymentAmount || !paymentMethodId || Number(paymentAmount) <= 0}
-                      startIcon={paying ? <CircularProgress size={20} /> : <PaymentRounded />}
+                      startIcon={paying ? <HeartbeatLoader size={22} /> : <PaymentRounded />}
                       sx={{ 
                         py: 1.5, 
                         bgcolor: "#10b981", 
@@ -404,8 +582,122 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                   </Box>
                 )}
 
+                {/* Refund — available whenever there's collected money left to return. */}
+                {refundablePayments.length > 0 && (
+                  <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(139,92,246,0.05)", borderRadius: 2, border: "1px dashed rgba(139,92,246,0.3)" }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <Typography variant="subtitle2" sx={{ color: "#8b5cf6", fontWeight: 700 }}>
+                        Refund
+                      </Typography>
+                      {!showRefund && (
+                        <Button size="small" onClick={() => {
+                          setShowRefund(true);
+                          const first = refundablePayments[0];
+                          if (first) { setRefundPaymentId(first.paymentId); setRefundAmount(first.refundable.toFixed(2)); }
+                        }} sx={{ color: "#8b5cf6", textTransform: "none", fontWeight: 600 }}>
+                          Process a refund
+                        </Button>
+                      )}
+                    </Box>
+
+                    {showRefund && (
+                      <Box sx={{ mt: 2 }}>
+                        <TextField
+                          select fullWidth size="small"
+                          label="Refund against payment"
+                          value={refundPaymentId}
+                          onChange={(e) => {
+                            setRefundPaymentId(e.target.value);
+                            const p = refundablePayments.find((x: any) => x.paymentId === e.target.value);
+                            if (p) setRefundAmount(p.refundable.toFixed(2));
+                          }}
+                          sx={{ mb: 2 }}
+                        >
+                          {refundablePayments.map((p: any) => (
+                            <MenuItem key={p.paymentId} value={p.paymentId}>
+                              {p.paymentMethod?.methodName || "Payment"} — {Number(p.paidAmount).toFixed(2)} (refundable {p.refundable.toFixed(2)})
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                        <TextField
+                          fullWidth size="small"
+                          label="Refund amount (INR)"
+                          type="number"
+                          value={refundAmount}
+                          onChange={(e) => setRefundAmount(e.target.value)}
+                          inputProps={{ min: 0, max: selectedRefundable, step: "0.01" }}
+                          helperText={`Max refundable: ${selectedRefundable.toFixed(2)} INR`}
+                          sx={{ mb: 2 }}
+                        />
+                        <TextField
+                          fullWidth size="small"
+                          label="Reason (required)"
+                          placeholder="e.g. Service cancelled, overcharge"
+                          value={refundReason}
+                          onChange={(e) => setRefundReason(e.target.value)}
+                          multiline rows={2}
+                          sx={{ mb: 2 }}
+                        />
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          <Button fullWidth variant="outlined" onClick={() => setShowRefund(false)} disabled={refunding}
+                            sx={{ color: "text.secondary", borderColor: "divider", fontWeight: 600 }}>
+                            Cancel
+                          </Button>
+                          <Button
+                            fullWidth variant="contained"
+                            onClick={handleRefund}
+                            disabled={refunding || !refundPaymentId || !refundAmount || Number(refundAmount) <= 0 || Number(refundAmount) > selectedRefundable + 0.005 || refundReason.trim().length < 3}
+                            sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" }, fontWeight: 700 }}
+                          >
+                            {refunding ? "Processing..." : "Process Refund"}
+                          </Button>
+                        </Box>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+
                 {!isFullyPaid && (
-                  <Box sx={{ mt: 5, p: 2, bgcolor: "rgba(59,130,246,0.05)", borderRadius: 2, border: "1px dashed rgba(59,130,246,0.3)" }}>
+                  <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(16,185,129,0.05)", borderRadius: 2, border: "1px dashed rgba(16,185,129,0.3)" }}>
+                    <Typography variant="subtitle2" sx={{ color: "#10b981", fontWeight: 700, mb: 2 }}>
+                      Discount & Tax
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 6 }}>
+                        <TextField
+                          fullWidth size="small"
+                          label="Discount (INR)"
+                          type="number"
+                          value={discountInput}
+                          onChange={(e) => setDiscountInput(e.target.value)}
+                          inputProps={{ min: 0 }}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 6 }}>
+                        <TextField
+                          fullWidth size="small"
+                          label="Tax (%)"
+                          type="number"
+                          value={taxInput}
+                          onChange={(e) => setTaxInput(e.target.value)}
+                          inputProps={{ min: 0, max: 100 }}
+                          helperText={defaultTaxPct ? `Hospital default: ${defaultTaxPct}%` : undefined}
+                        />
+                      </Grid>
+                    </Grid>
+                    <Button
+                      fullWidth variant="outlined"
+                      onClick={handleAdjust}
+                      disabled={adjusting}
+                      sx={{ mt: 2, color: "#10b981", borderColor: "rgba(16,185,129,0.5)", fontWeight: 600 }}
+                    >
+                      {adjusting ? "Applying..." : "Apply Discount & Tax"}
+                    </Button>
+                  </Box>
+                )}
+
+                {!isFullyPaid && (
+                  <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(59,130,246,0.05)", borderRadius: 2, border: "1px dashed rgba(59,130,246,0.3)" }}>
                     <Typography variant="subtitle2" sx={{ color: "#3b82f6", fontWeight: 700, mb: 2 }}>
                       + Add Custom Line Item
                     </Typography>

@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import GeoAddressPicker from "../../../components/GeoAddressPicker";
+import CredentialDialog from "../../../components/CredentialDialog";
 import {
   Box,
   Typography,
@@ -7,35 +10,33 @@ import {
   Button,
   Grid,
   MenuItem,
-  CircularProgress,
   Alert,
   Tabs,
   Tab,
   Divider,
   InputAdornment,
   IconButton,
-  Dialog,
-  DialogContent,
-  Chip,
-  Tooltip,
 } from "@mui/material";
 import {
   SaveRounded,
   Visibility,
   VisibilityOff,
   LockRounded,
-  ContentCopyRounded,
-  CheckCircleRounded,
-  InfoOutlined,
   PersonRounded,
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
+import HeartbeatLoader from "../../../components/HeartbeatLoader";
+import PageLoader from "../../../components/PageLoader";
+import { validate, hasErrors, required, isEmail, isPhone, minLen, match, type Errors } from "../../../utils/validation";
 
 interface Role {
   roleId: string;
   roleName: string;
+  roleCode?: string;
 }
 interface Department {
   departmentId: string;
@@ -66,229 +67,6 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-// ── Credentials Dialog ──────────────────────────────────────────────────────
-interface CredentialDialogProps {
-  open: boolean;
-  email: string;
-  password: string;
-  name: string;
-  onClose: () => void;
-}
-
-function CredentialDialog({ open, email, password, name, onClose }: CredentialDialogProps) {
-  const [copiedEmail, setCopiedEmail] = useState(false);
-  const [copiedPassword, setCopiedPassword] = useState(false);
-  const [copiedAll, setCopiedAll] = useState(false);
-
-  const copy = async (text: string, which: "email" | "password" | "all") => {
-    await navigator.clipboard.writeText(text);
-    if (which === "email") { setCopiedEmail(true); setTimeout(() => setCopiedEmail(false), 2000); }
-    if (which === "password") { setCopiedPassword(true); setTimeout(() => setCopiedPassword(false), 2000); }
-    if (which === "all") { setCopiedAll(true); setTimeout(() => setCopiedAll(false), 2000); }
-  };
-
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: "background.paper",
-          border: "1px solid rgba(99, 102, 241, 0.3)",
-          borderRadius: 3,
-          backgroundImage: "none",
-          overflow: "hidden",
-        },
-      }}
-    >
-      {/* Top accent bar */}
-      <Box sx={{ height: 4, background: "linear-gradient(90deg, #6366f1, #10b981, #06b6d4)" }} />
-
-      <DialogContent sx={{ p: 4 }}>
-        {/* Success Header */}
-        <Box sx={{ textAlign: "center", mb: 4 }}>
-          <Box
-            sx={{
-              width: 64,
-              height: 64,
-              borderRadius: "50%",
-              bgcolor: "rgba(16, 185, 129, 0.1)",
-              border: "2px solid rgba(16, 185, 129, 0.4)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              mx: "auto",
-              mb: 2,
-            }}
-          >
-            <CheckCircleRounded sx={{ color: "#10b981", fontSize: 32 }} />
-          </Box>
-          <Typography variant="h5" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
-            Staff Account Created!
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Share these login credentials with{" "}
-            <Box component="span" sx={{ color: "#a5b4fc", fontWeight: 600 }}>
-              {name}
-            </Box>
-          </Typography>
-        </Box>
-
-        {/* Credentials Box */}
-        <Box
-          sx={{
-            p: 3,
-            borderRadius: 2,
-            bgcolor: "rgba(99, 102, 241, 0.05)",
-            border: "1px solid rgba(99, 102, 241, 0.2)",
-            mb: 3,
-          }}
-        >
-          <Typography
-            variant="caption"
-            sx={{ color: "#6366f1", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", mb: 2, display: "block" }}
-          >
-            Login Credentials
-          </Typography>
-
-          {/* Email row */}
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="caption" sx={{ color: "#475569", fontWeight: 600 }}>
-              Email / Username
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                mt: 0.5,
-                p: 1.5,
-                borderRadius: 1.5,
-                bgcolor: "background.paper",
-                border: "1px solid", borderColor: "divider",
-              }}
-            >
-              <Typography
-                sx={{
-                  color: "text.primary",
-                  fontFamily: "monospace",
-                  fontSize: "0.9rem",
-                  wordBreak: "break-all",
-                }}
-              >
-                {email}
-              </Typography>
-              <Tooltip title={copiedEmail ? "Copied!" : "Copy email"}>
-                <IconButton
-                  size="small"
-                  onClick={() => copy(email, "email")}
-                  sx={{ color: copiedEmail ? "#10b981" : "#475569", ml: 1 }}
-                >
-                  {copiedEmail ? <CheckCircleRounded fontSize="small" /> : <ContentCopyRounded fontSize="small" />}
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Box>
-
-          {/* Password row */}
-          <Box>
-            <Typography variant="caption" sx={{ color: "#475569", fontWeight: 600 }}>
-              Temporary Password
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                mt: 0.5,
-                p: 1.5,
-                borderRadius: 1.5,
-                bgcolor: "background.paper",
-                border: "1px solid rgba(245, 158, 11, 0.2)",
-              }}
-            >
-              <Typography
-                sx={{
-                  color: "#fbbf24",
-                  fontFamily: "monospace",
-                  fontSize: "0.9rem",
-                  fontWeight: 700,
-                  letterSpacing: 1,
-                }}
-              >
-                {password}
-              </Typography>
-              <Tooltip title={copiedPassword ? "Copied!" : "Copy password"}>
-                <IconButton
-                  size="small"
-                  onClick={() => copy(password, "password")}
-                  sx={{ color: copiedPassword ? "#10b981" : "#475569", ml: 1 }}
-                >
-                  {copiedPassword ? <CheckCircleRounded fontSize="small" /> : <ContentCopyRounded fontSize="small" />}
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Info Banner */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: 1.5,
-            p: 2,
-            borderRadius: 2,
-            bgcolor: "rgba(6, 182, 212, 0.05)",
-            border: "1px solid rgba(6, 182, 212, 0.15)",
-            mb: 3,
-          }}
-        >
-          <InfoOutlined sx={{ color: "#06b6d4", fontSize: 18, mt: 0.1, flexShrink: 0 }} />
-          <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.6 }}>
-            The staff member will be required to <strong style={{ color: "text.primary" }}>change this password</strong> on first login.
-            Make sure to share these credentials securely.
-          </Typography>
-        </Box>
-
-        {/* Action Buttons */}
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={copiedAll ? <CheckCircleRounded /> : <ContentCopyRounded />}
-            onClick={() =>
-              copy(`Login: ${email}\nPassword: ${password}\n\nNote: You will be asked to change your password on first login.`, "all")
-            }
-            sx={{
-              color: copiedAll ? "#10b981" : "#94a3b8",
-              borderColor: copiedAll ? "#10b981" : "rgba(255,255,255,0.15)",
-              textTransform: "none",
-              fontWeight: 600,
-            }}
-          >
-            {copiedAll ? "Copied!" : "Copy All"}
-          </Button>
-          <Button
-            fullWidth
-            variant="contained"
-            onClick={onClose}
-            sx={{
-              bgcolor: "#6366f1",
-              "&:hover": { bgcolor: "#4f46e5" },
-              textTransform: "none",
-              fontWeight: 600,
-            }}
-          >
-            Done
-          </Button>
-        </Box>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 // ── Main UserForm ───────────────────────────────────────────────────────────
 export default function UserForm() {
@@ -298,11 +76,15 @@ export default function UserForm() {
 
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
   const toast = useToast();
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [branches, setBranches] = useState<Branch[]>([]);
+
+  const { data: dd, isLoading: ddLoading, isError: ddIsError, error: ddError, refetch: refetchDd } = useQuery({
+    queryKey: ["hospital-user-dropdowns"],
+    queryFn: async () => (await axiosInstance.get("/hospital/users/dropdowns")).data.data,
+  });
+  const roles: Role[] = dd?.roles ?? [];
+  const departments: Department[] = dd?.departments ?? [];
+  const branches: Branch[] = dd?.branches ?? [];
 
   // Credential dialog state
   const [credentialDialog, setCredentialDialog] = useState<{
@@ -330,6 +112,7 @@ export default function UserForm() {
     addressLine1: "",
     addressLine2: "",
     city: "",
+    district: "",
     state: "",
     postalCode: "",
     emergencyContactName: "",
@@ -338,68 +121,77 @@ export default function UserForm() {
     initialPassword: "",
     confirmPassword: "",
   });
+  const [errors, setErrors] = useState<Errors<typeof formData>>({});
 
+  const { data: userData, isLoading: userLoading, isError: userIsError, error: userError, refetch: refetchUser } = useQuery({
+    queryKey: ["hospital-user", id],
+    queryFn: async () => (await axiosInstance.get(`/hospital/users/${id}`)).data.data,
+    enabled: isEditing,
+  });
+
+  // Seed the form with the existing user when editing.
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const ddRes = await axiosInstance.get("/hospital/users/dropdowns");
-        setRoles(ddRes.data.data.roles);
-        setDepartments(ddRes.data.data.departments);
-        setBranches(ddRes.data.data.branches);
+    if (!userData) return;
+    const user = userData;
+    setFormData((prev) => ({
+      ...prev,
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      roleId: user.roleId || "",
+      employeeCode: user.employeeCode || "",
+      departmentId: user.departmentId || "",
+      branchId: user.branchId || "",
+      dateOfJoining: user.dateOfJoining
+        ? new Date(user.dateOfJoining).toISOString().split("T")[0]
+        : "",
+      designation: user.designation || "",
+      addressLine1: user.addressLine1 || "",
+      addressLine2: user.addressLine2 || "",
+      city: user.city || "",
+      district: user.district || "",
+      state: user.state || "",
+      postalCode: user.postalCode || "",
+      emergencyContactName: user.emergencyContactName || "",
+      emergencyContactPhone: user.emergencyContactPhone || "",
+      emergencyContactRelation: user.emergencyContactRelation || "",
+    }));
+  }, [userData]);
 
-        if (isEditing) {
-          const res = await axiosInstance.get(`/hospital/users/${id}`);
-          const user = res.data.data;
-          setFormData((prev) => ({
-            ...prev,
-            firstName: user.firstName || "",
-            lastName: user.lastName || "",
-            email: user.email || "",
-            phone: user.phone || "",
-            roleId: user.roleId || "",
-            employeeCode: user.employeeCode || "",
-            departmentId: user.departmentId || "",
-            branchId: user.branchId || "",
-            dateOfJoining: user.dateOfJoining
-              ? new Date(user.dateOfJoining).toISOString().split("T")[0]
-              : "",
-            designation: user.designation || "",
-            addressLine1: user.addressLine1 || "",
-            addressLine2: user.addressLine2 || "",
-            city: user.city || "",
-            state: user.state || "",
-            postalCode: user.postalCode || "",
-            emergencyContactName: user.emergencyContactName || "",
-            emergencyContactPhone: user.emergencyContactPhone || "",
-            emergencyContactRelation: user.emergencyContactRelation || "",
-          }));
-        }
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || "Failed to load data");
-      } finally {
-        setInitialLoad(false);
-      }
-    };
-    loadData();
-  }, [id, isEditing]);
+  const initialLoad = ddLoading || (isEditing && userLoading);
+  const isError = ddIsError || userIsError;
+  const error = ddError || userError;
+  const refetch = () => { refetchDd(); if (isEditing) refetchUser(); };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => (prev[name as keyof typeof formData] ? { ...prev, [name]: undefined } : prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Validate passwords if provided during creation
+
+    // Identity fields live on tab 0; password fields on tab 3. Password rules
+    // only apply when creating with a supplied password (blank = server default).
+    const rules: Parameters<typeof validate<typeof formData>>[1] = {
+      firstName: [required("First name")],
+      lastName: [required("Last name")],
+      email: [required("Email"), isEmail],
+      phone: [isPhone],
+    };
     if (!isEditing && formData.initialPassword) {
-      if (formData.initialPassword.length < 6) {
-        toast.error("Password must be at least 6 characters.");
-        return;
-      }
-      if (formData.initialPassword !== formData.confirmPassword) {
-        toast.error("Passwords do not match.");
-        return;
-      }
+      rules.initialPassword = [minLen(6, "Password")];
+      rules.confirmPassword = [match(formData.initialPassword, "Passwords")];
+    }
+    const found = validate(formData, rules);
+    if (hasErrors(found)) {
+      setErrors(found);
+      const onTab0 = !!(found.firstName || found.lastName || found.email || found.phone);
+      setTabValue(onTab0 ? 0 : 3);
+      toast.error("Please fix the highlighted fields.");
+      return;
     }
 
     setLoading(true);
@@ -431,10 +223,12 @@ export default function UserForm() {
 
   if (initialLoad) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress sx={{ color: "#6366f1" }} />
-      </Box>
+      <PageLoader />
     );
+  }
+
+  if (isError) {
+    return <ErrorState title="Couldn't load staff form" message={(error as any)?.response?.data?.message} onRetry={refetch} />;
   }
 
   const textFieldProps = {
@@ -454,25 +248,23 @@ export default function UserForm() {
   return (
     <>
       <Box sx={{ maxWidth: 900, mx: "auto" }}>
-        <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Box>
-            <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-              {isEditing ? "Edit Staff" : "Add New Staff"}
-            </Typography>
-            <Typography variant="body1" sx={{ color: "text.secondary" }}>
-              {isEditing
-                ? "Update staff member details."
-                : "Create a new staff member profile and set their login credentials."}
-            </Typography>
-          </Box>
-          <Button
-            variant="outlined"
-            onClick={() => navigate("/hospital/users")}
-            sx={{ color: "text.secondary", borderColor: "divider" }}
-          >
-            Cancel
-          </Button>
-        </Box>
+        <PageHeader
+          title={isEditing ? "Edit Staff" : "Add New Staff"}
+          subtitle={
+            isEditing
+              ? "Update staff member details."
+              : "Create a new staff member profile and set their login credentials."
+          }
+          actions={
+            <Button
+              variant="outlined"
+              onClick={() => navigate("/hospital/users")}
+              sx={{ color: "text.secondary", borderColor: "divider" }}
+            >
+              Cancel
+            </Button>
+          }
+        />
 <Paper sx={{ p: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
           <form onSubmit={handleSubmit}>
             <Tabs
@@ -496,10 +288,10 @@ export default function UserForm() {
             <TabPanel value={tabValue} index={0}>
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField label="First Name" name="firstName" value={formData.firstName} onChange={handleChange} required {...textFieldProps} />
+                  <TextField label="First Name" name="firstName" value={formData.firstName} onChange={handleChange} required error={!!errors.firstName} helperText={errors.firstName} {...textFieldProps} />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField label="Last Name" name="lastName" value={formData.lastName} onChange={handleChange} required {...textFieldProps} />
+                  <TextField label="Last Name" name="lastName" value={formData.lastName} onChange={handleChange} required error={!!errors.lastName} helperText={errors.lastName} {...textFieldProps} />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
@@ -510,13 +302,14 @@ export default function UserForm() {
                     onChange={handleChange}
                     required
                     disabled={isEditing}
-                    helperText={!isEditing ? "This will be the login email" : "Email cannot be changed"}
+                    error={!!errors.email}
+                    helperText={errors.email || (!isEditing ? "This will be the login email" : "Email cannot be changed")}
                     {...textFieldProps}
                     FormHelperTextProps={{ style: { color: "text.secondary" } }}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField label="Phone" name="phone" value={formData.phone} onChange={handleChange} {...textFieldProps} />
+                  <TextField label="Phone" name="phone" value={formData.phone} onChange={handleChange} error={!!errors.phone} helperText={errors.phone} {...textFieldProps} />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
@@ -528,11 +321,16 @@ export default function UserForm() {
                     required
                     {...textFieldProps}
                   >
-                    {roles.map((role) => (
-                      <MenuItem key={role.roleId} value={role.roleId}>
-                        {role.roleName}
-                      </MenuItem>
-                    ))}
+                    {/* Doctors are created on the Doctors page (which also captures
+                        their clinical profile), so the Doctor role isn't offered here
+                        when adding new staff. Existing doctor-users still edit normally. */}
+                    {roles
+                      .filter((role) => isEditing || role.roleCode !== "DOCTOR")
+                      .map((role) => (
+                        <MenuItem key={role.roleId} value={role.roleId}>
+                          {role.roleName}
+                        </MenuItem>
+                      ))}
                   </TextField>
                 </Grid>
               </Grid>
@@ -571,9 +369,16 @@ export default function UserForm() {
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12 }}><TextField label="Address Line 1" name="addressLine1" value={formData.addressLine1} onChange={handleChange} {...textFieldProps} /></Grid>
                 <Grid size={{ xs: 12 }}><TextField label="Address Line 2" name="addressLine2" value={formData.addressLine2} onChange={handleChange} {...textFieldProps} /></Grid>
-                <Grid size={{ xs: 12, md: 4 }}><TextField label="City" name="city" value={formData.city} onChange={handleChange} {...textFieldProps} /></Grid>
-                <Grid size={{ xs: 12, md: 4 }}><TextField label="State/Province" name="state" value={formData.state} onChange={handleChange} {...textFieldProps} /></Grid>
-                <Grid size={{ xs: 12, md: 4 }}><TextField label="Postal Code" name="postalCode" value={formData.postalCode} onChange={handleChange} {...textFieldProps} /></Grid>
+                <GeoAddressPicker
+                  value={{ stateName: formData.state, districtName: formData.district, city: formData.city, pincode: formData.postalCode }}
+                  onChange={(patch) => setFormData((prev) => ({
+                    ...prev,
+                    ...(patch.stateName !== undefined ? { state: patch.stateName } : {}),
+                    ...(patch.districtName !== undefined ? { district: patch.districtName } : {}),
+                    ...(patch.city !== undefined ? { city: patch.city } : {}),
+                    ...(patch.pincode !== undefined ? { postalCode: patch.pincode } : {}),
+                  }))}
+                />
               </Grid>
               <Divider sx={{ my: 4, borderColor: "divider" }} />
               <Typography variant="h6" sx={{ color: "text.primary", mb: 2 }}>Emergency Contact</Typography>
@@ -608,7 +413,7 @@ export default function UserForm() {
                     <Typography variant="body2" sx={{ color: "text.secondary", lineHeight: 1.7 }}>
                       Set a temporary password for this staff member. They will be <strong style={{ color: "text.secondary" }}>required to change it</strong> on their first login.
                       <br />
-                      If you leave this blank, the system will use the default: <Chip label="Password@123" size="small" sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#fbbf24", fontFamily: "monospace", fontWeight: 700, fontSize: "0.78rem", ml: 0.5 }} />
+                      If you leave this blank, the system will generate a secure temporary password and show it to you once the user is created.
                     </Typography>
                   </Box>
                 </Box>
@@ -631,6 +436,8 @@ export default function UserForm() {
                       value={formData.initialPassword}
                       onChange={handleChange}
                       placeholder="Min 6 characters (or leave blank for default)"
+                      error={!!errors.initialPassword}
+                      helperText={errors.initialPassword}
                       InputLabelProps={{ style: { color: "text.secondary" } }}
                       InputProps={{
                         endAdornment: (
@@ -660,6 +467,8 @@ export default function UserForm() {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="Repeat the password"
+                      error={!!errors.confirmPassword}
+                      helperText={errors.confirmPassword}
                       InputLabelProps={{ style: { color: "text.secondary" } }}
                       InputProps={{
                         endAdornment: (
@@ -699,7 +508,7 @@ export default function UserForm() {
                 type="submit"
                 variant="contained"
                 disabled={loading}
-                startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <SaveRounded />}
+                startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                 sx={{
                   bgcolor: "#6366f1",
                   "&:hover": { bgcolor: "#4f46e5" },
@@ -719,6 +528,7 @@ export default function UserForm() {
       {/* Credentials Dialog */}
       <CredentialDialog
         open={credentialDialog.open}
+        title="Staff Account Created!"
         email={credentialDialog.email}
         password={credentialDialog.password}
         name={credentialDialog.name}

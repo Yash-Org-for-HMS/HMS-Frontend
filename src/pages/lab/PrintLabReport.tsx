@@ -1,20 +1,24 @@
 import { useState, useEffect } from "react";
-import { Box, Typography, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, Grid, Divider } from "@mui/material";
+import { Box, Typography, Table, TableBody, TableCell, TableHead, TableRow, Grid, Divider } from "@mui/material";
 import { axiosInstance } from "../../api/axios";
+import PageLoader from "../../components/PageLoader";
 import { useParams } from "react-router-dom";
 
 export default function PrintLabReport() {
   const { id } = useParams();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrder = async () => {
       try {
         const res = await axiosInstance.get(`/lab/orders/${id}`);
         setOrder(res.data.data);
-      } catch (err) {
-        console.error("Failed to fetch lab order", err);
+      } catch (err: any) {
+        // Distinct from "order not found" — a network/permission error isn't
+        // the same thing and shouldn't be reported as one.
+        setError(err.response?.data?.message || "Failed to load this lab order");
       } finally {
         setLoading(false);
       }
@@ -31,7 +35,8 @@ export default function PrintLabReport() {
     }
   }, [loading, order]);
 
-  if (loading) return <Box sx={{ display: "flex", p: 4, justifyContent: "center" }}><CircularProgress /></Box>;
+  if (loading) return <PageLoader />;
+  if (error) return <Typography color="error">{error}</Typography>;
   if (!order) return <Typography>Order not found</Typography>;
 
   return (

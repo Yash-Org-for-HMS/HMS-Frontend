@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -14,8 +15,8 @@ import {
   TableHead,
   TableRow,
   IconButton,
+  Tooltip,
   Chip,
-  CircularProgress,
   TextField,
   InputAdornment,
   Pagination,
@@ -25,65 +26,89 @@ import {
   AddRounded,
   EditRounded,
   SearchRounded,
+  LockResetRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { useToast } from "../../contexts/ToastContext";
+import { useConfirm } from "../../contexts/ConfirmContext";
+import CredentialDialog from "../../components/CredentialDialog";
+
+// Keep the admin list's existing sentence-case header look (the SortableHeadCell
+// default is the reception-panel uppercase style).
+const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal" } as const;
 
 export default function SuperAdminsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [admins, setAdmins] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
+  const [resetCreds, setResetCreds] = useState<{ email: string; temporaryPassword: string; name: string } | null>(null);
 
-  const fetchAdmins = async () => {
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get("/super-admins", {
-        params: { page, limit: 10, search }
-      });
-      setAdmins(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch super admins", error);
-    } finally {
-      setLoading(false);
-    }
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
+
+  const { data, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["super-admins", page, search, orderBy, order],
+    queryFn: async () => (await axiosInstance.get("/super-admins", { params: { page, limit: 10, search, sortBy: orderBy || undefined, sortOrder: order } })).data,
+  });
+
+  // Reset to the first page whenever the sort changes.
+  useEffect(() => {
+    setPage(1);
+  }, [orderBy, order]);
+  const admins: any[] = data?.data ?? [];
+  const totalPages: number = data?.pagination?.totalPages ?? 1;
+
+  // Peer password recovery: any super admin can reset another's password —
+  // the platform-realm equivalent of the hospital admin resetting their own
+  // staff's passwords in Staff & Users. Immediately invalidates the current
+  // password, so confirm before firing.
+  const resetPassword = useMutation({
+    mutationFn: async (id: string) => (await axiosInstance.post(`/super-admins/${id}/reset-password`)).data.data,
+    onSuccess: (creds) => setResetCreds({ email: creds.email, temporaryPassword: creds.temporaryPassword, name: `${creds.firstName} ${creds.lastName}`.trim() }),
+    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to reset password"),
+  });
+
+  const handleResetPassword = async (admin: any) => {
+    const ok = await confirm({
+      title: "Reset password",
+      message: `Reset the password for ${admin.firstName} ${admin.lastName} (${admin.email})? Their current password stops working immediately — you'll get a new one-time password to share with them.`,
+      confirmText: "Reset password",
+      destructive: true,
+    });
+    if (ok) resetPassword.mutate(admin.superAdminId);
   };
 
-  useEffect(() => {
-    fetchAdmins();
-  }, [page, search]);
-
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("superAdmins.title", "Super Admins")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("superAdmins.subtitle", "Manage global system administrators")}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/super-admins/new")}
-          sx={{
-            background: "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)",
-            boxShadow: "0 4px 14px 0 rgba(139, 92, 246, 0.39)",
-            borderRadius: 2,
-          }}
-        >
-          {t("superAdmins.addAdmin", "Add Admin")}
-        </Button>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title={t("superAdmins.title", "Super Admins")}
+        subtitle={t("superAdmins.subtitle", "Manage global system administrators")}
+        actions={
+          <ActionButton
+            accentFrom="#8b5cf6"
+            accentTo="#6d28d9"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/super-admins/new")}
+          >
+            {t("superAdmins.addAdmin", "Add Admin")}
+          </ActionButton>
+        }
+      />
 
       {/* Filters */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+      <FilterBar>
         <TextField
           placeholder={t("superAdmins.searchPlaceholder", "Search by name or email...")}
           value={search}
@@ -98,7 +123,7 @@ export default function SuperAdminsList() {
             ),
           }}
         />
-      </Box>
+      </FilterBar>
 
       <Paper
         elevation={2}
@@ -110,21 +135,23 @@ export default function SuperAdminsList() {
           overflow: "hidden",
         }}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("superAdmins.name", "Admin")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("superAdmins.phone", "Phone")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("superAdmins.status", "Status")}</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
+                <SortableHeadCell label={t("superAdmins.name", "Admin")} sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={{ ...adminHeadSx, bgcolor: "background.paper" }} />
+                <SortableHeadCell label={t("superAdmins.phone", "Phone")} sortKey="phone" orderBy={orderBy} order={order} onSort={onSort} sx={{ ...adminHeadSx, bgcolor: "background.paper" }} />
+                <SortableHeadCell label={t("superAdmins.status", "Status")} sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={{ ...adminHeadSx, bgcolor: "background.paper" }} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("common.actions", "Actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
+                <TableRowsSkeleton rows={6} columns={4} />
+              ) : isError ? (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "#8b5cf6" }} />
+                  <TableCell colSpan={4} sx={{ py: 4, border: 0 }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : admins.length === 0 ? (
@@ -165,6 +192,15 @@ export default function SuperAdminsList() {
                       />
                     </TableCell>
                     <TableCell align="right">
+                      <Tooltip title="Reset Password">
+                        <IconButton
+                          onClick={() => handleResetPassword(admin)}
+                          disabled={resetPassword.isPending}
+                          sx={{ color: "text.secondary", "&:hover": { color: "#fbbf24", bgcolor: "rgba(234,179,8,0.1)" } }}
+                        >
+                          <LockResetRounded />
+                        </IconButton>
+                      </Tooltip>
                       <IconButton onClick={() => navigate(`/super-admins/${admin.superAdminId}/edit`)} sx={{ color: "text.secondary" }}>
                         <EditRounded />
                       </IconButton>
@@ -191,7 +227,19 @@ export default function SuperAdminsList() {
           </Box>
         )}
       </Paper>
-    </Container>
+
+      {resetCreds && (
+        <CredentialDialog
+          open={!!resetCreds}
+          onClose={() => setResetCreds(null)}
+          email={resetCreds.email}
+          password={resetCreds.temporaryPassword}
+          name={resetCreds.name}
+          title="Password Reset"
+          note="This password is shown only once. Copy it and share it with them securely."
+        />
+      )}
+    </PageContainer>
   );
 }
 

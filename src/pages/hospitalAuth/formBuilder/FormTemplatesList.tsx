@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -13,94 +14,118 @@ import {
   Chip,
   IconButton,
   Tooltip,
-  CircularProgress,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
-import { AddRounded, EditRounded, DeleteRounded, DynamicFormRounded } from "@mui/icons-material";
+import { AddRounded, EditRounded, DeleteRounded, DynamicFormRounded, SearchRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import Mascot from "../../../components/Mascot";
+import ErrorState from "../../../components/ErrorState";
+import PageHeader from "../../../components/layout/PageHeader";
+import { ListSkeleton } from "../../../components/TableRowsSkeleton";
+import { useTableSort } from "../../../components/table/useTableSort";
+import SortableHeadCell from "../../../components/table/SortableHeadCell";
+import { useConfirm } from "../../../contexts/ConfirmContext";
+
+// Match the file's existing sentence-case fontWeight-600 header look (override SortableHeadCell's default uppercase/700 style).
+const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 600, fontSize: "0.875rem", py: undefined };
 
 export default function FormTemplatesList() {
-  const [templates, setTemplates] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const confirm = useConfirm();
+  const [q, setQ] = useState("");
 
-  useEffect(() => {
-    fetchTemplates();
-  }, []);
+  const { data: templates = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["hospital-form-templates"],
+    queryFn: async () => (await axiosInstance.get("/hospital/form-builder")).data.data,
+  });
 
-  const fetchTemplates = async () => {
-    try {
-      const response = await axiosInstance.get("/hospital/form-builder");
-      setTemplates(response.data.data);
-    } catch (error) {
-      console.error("Error fetching templates", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const term = q.trim().toLowerCase();
+  const filtered = term
+    ? templates.filter((t) => (t.formName || "").toLowerCase().includes(term) || (t.formType || "").toLowerCase().includes(term) || (t.description || "").toLowerCase().includes(term))
+    : templates;
+
+  const { sorted, orderBy, order, onSort } = useTableSort(filtered, {
+    name: (t) => t.formName ?? null,
+    category: (t) => t.formType ?? null,
+    fields: (t) => t.fieldsCount ?? null,
+    status: (t) => (t.isActive ? "Active" : "Inactive"),
+  });
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this form template?")) return;
+    const ok = await confirm({
+      title: "Delete form template",
+      message: "Are you sure you want to delete this form template? This cannot be undone.",
+      confirmText: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await axiosInstance.delete(`/hospital/form-builder/${id}`);
-      fetchTemplates();
+      refetch();
     } catch (error) {
-      alert("Failed to delete template");
+      alert((error as any)?.response?.data?.message || "Failed to delete template");
     }
   };
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            Form Builder
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Design and manage custom forms for Patient Registration, Consent, and more.
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/hospital/form-builder/new")}
-          sx={{
-            bgcolor: "#6366f1",
-            "&:hover": { bgcolor: "#4f46e5" },
-            textTransform: "none",
-            fontWeight: 600,
-            px: 3,
-          }}
-        >
-          Create Form
-        </Button>
-      </Box>
+      <PageHeader
+        title="Form Builder"
+        subtitle="Design and manage custom forms for Patient Registration, Consent, and more."
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/hospital/form-builder/new")}
+            sx={{
+              bgcolor: "#6366f1",
+              "&:hover": { bgcolor: "#4f46e5" },
+              textTransform: "none",
+              fontWeight: 600,
+              px: 3,
+            }}
+          >
+            Create Form
+          </Button>
+        }
+      />
+
+      <TextField
+        size="small"
+        placeholder="Search forms by name, type, or description…"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        sx={{ mb: 2, width: "100%", maxWidth: 400 }}
+        InputProps={{ startAdornment: <InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary" }} /></InputAdornment> }}
+      />
 
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-          <CircularProgress sx={{ color: "#6366f1" }} />
-        </Box>
+        <ListSkeleton rows={6} />
+      ) : isError ? (
+        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (
-        <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
-          <Table>
+        <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Form Name</TableCell>
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Category</TableCell>
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Total Fields</TableCell>
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Status</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Actions</TableCell>
+                <SortableHeadCell label="Form Name" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Category" sortKey="category" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Total Fields" sortKey="fields" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600, bgcolor: "background.default" }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {templates.length === 0 ? (
+              {sorted.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
-                    No custom forms found. Click "Create Form" to begin.
+                  <TableCell colSpan={5} sx={{ py: 3, borderBottom: "none" }}>
+                    <Mascot pose="nothing-here-yet" title={term ? "No matching forms" : "No custom forms yet"} subtitle={term ? "Try a different search." : 'Click "Create Form" to begin.'} size={120} />
                   </TableCell>
                 </TableRow>
               ) : (
-                templates.map((t) => (
+                sorted.map((t) => (
                   <TableRow key={t.formTemplateId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                     <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary", fontWeight: 500 }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

@@ -1,9 +1,14 @@
 import { useState, useEffect } from "react";
-import { Box, Typography, Paper, Grid, TextField, Button, CircularProgress, Alert, Chip, Divider } from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
+import ErrorState from "../../components/ErrorState";
+import { Box, Typography, Paper, Grid, TextField, Button, Alert, Chip, Divider } from "@mui/material";
 import { SaveRounded, ArrowBackRounded, ScienceRounded, AccessTimeRounded, PrintRounded } from "@mui/icons-material";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import { axiosInstance } from "../../api/axios";
 import { useParams, useNavigate } from "react-router-dom";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
+import PageHeader from "../../components/layout/PageHeader";
 
 const evaluateCriticalValue = (testCode: string, resultValue: string): boolean => {
   const val = parseFloat(resultValue);
@@ -22,39 +27,30 @@ const evaluateCriticalValue = (testCode: string, resultValue: string): boolean =
 export default function UpdateLabOrder() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [order, setOrder] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showPOS, setShowPOS] = useState(false);
   const [results, setResults] = useState<Record<string, { value: string, range: string, remarks: string }>>({});
   const [message, setMessage] = useState<{type: "success" | "error", text: string} | null>(null);
 
-  useEffect(() => {
-    fetchOrder();
-  }, [id]);
+  const { data: order, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["lab-order", id],
+    queryFn: async () => (await axiosInstance.get(`/lab/orders/${id}`)).data.data,
+    enabled: !!id,
+  });
 
-  const fetchOrder = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get(`/lab/orders/${id}`);
-      const data = res.data.data;
-      setOrder(data);
-      
-      const initialResults: any = {};
-      data.reports.forEach((r: any) => {
-        initialResults[r.labReportId] = {
-          value: r.resultValue === "PENDING" ? "" : r.resultValue,
-          range: r.normalRange === "N/A" ? "" : r.normalRange,
-          remarks: r.remarks || "",
-        };
-      });
-      setResults(initialResults);
-    } catch (err) {
-      console.error("Failed to fetch lab order", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Seed the editable result rows when the order loads (or after a refetch).
+  useEffect(() => {
+    if (!order) return;
+    const initialResults: any = {};
+    order.reports.forEach((r: any) => {
+      initialResults[r.labReportId] = {
+        value: r.resultValue === "PENDING" ? "" : r.resultValue,
+        range: r.normalRange === "N/A" ? "" : r.normalRange,
+        remarks: r.remarks || "",
+      };
+    });
+    setResults(initialResults);
+  }, [order]);
 
   const handleSave = async () => {
     try {
@@ -70,7 +66,7 @@ export default function UpdateLabOrder() {
 
       await axiosInstance.put(`/lab/orders/${id}/results`, { results: payload });
       setMessage({ type: "success", text: "Lab results updated successfully!" });
-      setTimeout(() => fetchOrder(), 1000);
+      setTimeout(() => refetch(), 1000);
     } catch (err) {
       setMessage({ type: "error", text: "Failed to update results." });
     } finally {
@@ -78,8 +74,10 @@ export default function UpdateLabOrder() {
     }
   };
 
-  if (loading) return <Box sx={{ display: "flex", p: 4, justifyContent: "center" }}><CircularProgress /></Box>;
-  if (!order) return <Typography>Order not found</Typography>;
+  if (loading) return <PageLoader />;
+  if (isError || !order) {
+    return <ErrorState title="Couldn't load lab order" message={(error as any)?.response?.data?.message || "Order not found"} onRetry={() => refetch()} />;
+  }
 
   return (
     <Box>
@@ -87,30 +85,30 @@ export default function UpdateLabOrder() {
         Back to Queue
       </Button>
       
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
-          Update Lab Order: {order.sampleBarcode}
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Chip label={order.paymentStatus === "PAID" ? "PAID" : "UNPAID"} color={order.paymentStatus === "PAID" ? "success" : "error"} />
-          {order.paymentStatus !== "PAID" && (
-            <Button size="small" variant="outlined" color="success" onClick={() => setShowPOS(true)}>
-              Collect Payment (Cash)
-            </Button>
-          )}
-          <Chip label={order.status || "PENDING"} color={order.status === "COMPLETED" ? "success" : "warning"} />
-          {order.status === "COMPLETED" && (
-            <Button 
-              variant="contained" 
-              color="primary"
-              startIcon={<PrintRounded />} 
-              onClick={() => window.open(`/lab/orders/${id}/print`, '_blank')}
-            >
-              Print Report
-            </Button>
-          )}
-        </Box>
-      </Box>
+      <PageHeader
+        title={`Update Lab Order: ${order.sampleBarcode}`}
+        actions={
+          <>
+            <Chip label={order.paymentStatus === "PAID" ? "PAID" : "UNPAID"} color={order.paymentStatus === "PAID" ? "success" : "error"} />
+            {order.paymentStatus !== "PAID" && (
+              <Button size="small" variant="outlined" color="success" onClick={() => setShowPOS(true)}>
+                Collect Payment (Cash)
+              </Button>
+            )}
+            <Chip label={order.status || "PENDING"} color={order.status === "COMPLETED" ? "success" : "warning"} />
+            {order.status === "COMPLETED" && (
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<PrintRounded />}
+                onClick={() => window.open(`/lab/orders/${id}/print`, '_blank')}
+              >
+                Print Report
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {message && <Alert severity={message.type} sx={{ mb: 3 }}>{message.text}</Alert>}
 
@@ -229,7 +227,7 @@ export default function UpdateLabOrder() {
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
           <Button 
             variant="contained" 
-            startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRounded />} 
+            startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             onClick={handleSave}
             disabled={saving || order.billingLockActive || (order.status === "PENDING" && !order.sampleCollectedAt)}
           >
@@ -244,7 +242,7 @@ export default function UpdateLabOrder() {
           onClose={() => setShowPOS(false)}
           onSuccess={() => {
             setShowPOS(false);
-            fetchOrder();
+            refetch();
           }}
           patientId={order.patientId}
           patientName={`${order.patient?.firstName || ''} ${order.patient?.lastName || ''}`}

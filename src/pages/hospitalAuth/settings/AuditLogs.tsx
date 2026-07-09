@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
   Paper,
   Grid,
-  CircularProgress,
   Alert,
   MenuItem,
   TextField,
@@ -25,51 +25,40 @@ import {
 } from "@mui/material";
 import { InfoRounded, SearchRounded, RefreshRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
-import { useToast } from "../../../contexts/ToastContext";
+import Mascot from "../../../components/Mascot";
+import ErrorState from "../../../components/ErrorState";
+import PageHeader from "../../../components/layout/PageHeader";
+import { ListSkeleton } from "../../../components/TableRowsSkeleton";
+import { useTableSort } from "../../../components/table/useTableSort";
+import SortableHeadCell from "../../../components/table/SortableHeadCell";
+
+const EMPTY_FILTERS = { moduleName: "", actionType: "", startDate: "", endDate: "" };
 
 export default function AuditLogs() {
-  const [logs, setLogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const toast = useToast();
-  const [filters, setFilters] = useState({
-    moduleName: "",
-    actionType: "",
-    startDate: "",
-    endDate: "",
-  });
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  // Filters are applied only on explicit "Search" (not as-you-type), so the
+  // query keys off a separate "applied" snapshot.
+  const [appliedFilters, setAppliedFilters] = useState(EMPTY_FILTERS);
 
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
-  useEffect(() => {
-    // Generate samples if needed, then fetch
-    const init = async () => {
-      try {
-        await axiosInstance.post("/hospital/audit-logs/generate-samples");
-        fetchLogs();
-      } catch (err) {
-        fetchLogs();
-      }
-    };
-    init();
-  }, []);
-
-  const fetchLogs = async () => {
-    setLoading(true);
-    try {
+  const { data: logs = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["hospital-audit-logs", appliedFilters],
+    queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters.moduleName) params.append("moduleName", filters.moduleName);
-      if (filters.actionType) params.append("actionType", filters.actionType);
-      if (filters.startDate) params.append("startDate", filters.startDate);
-      if (filters.endDate) params.append("endDate", filters.endDate);
+      if (appliedFilters.moduleName) params.append("moduleName", appliedFilters.moduleName);
+      if (appliedFilters.actionType) params.append("actionType", appliedFilters.actionType);
+      if (appliedFilters.startDate) params.append("startDate", appliedFilters.startDate);
+      if (appliedFilters.endDate) params.append("endDate", appliedFilters.endDate);
+      return (await axiosInstance.get(`/hospital/audit-logs?${params.toString()}`)).data.data;
+    },
+  });
 
-      const res = await axiosInstance.get(`/hospital/audit-logs?${params.toString()}`);
-      setLogs(res.data.data);
-    } catch (err: any) {
-      toast.error("Failed to fetch audit logs");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Seed sample logs once (dev convenience), then refresh.
+  useEffect(() => {
+    axiosInstance.post("/hospital/audit-logs/generate-samples").finally(() => refetch());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
@@ -77,8 +66,15 @@ export default function AuditLogs() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchLogs();
+    setAppliedFilters(filters);
   };
+
+  const { sorted, orderBy, order, onSort } = useTableSort(logs, {
+    timestamp: (l) => (l.createdAt ? new Date(l.createdAt) : null),
+    user: (l) => (l.user ? `${l.user.firstName} ${l.user.lastName}` : l.userId),
+    module: (l) => l.moduleName,
+    action: (l) => l.actionType,
+  });
 
   const getActionColor = (action: string) => {
     switch (action) {
@@ -106,14 +102,10 @@ export default function AuditLogs() {
 
   return (
     <Box>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-          Audit & Activity Logs
-        </Typography>
-        <Typography variant="body1" sx={{ color: "text.secondary" }}>
-          Monitor system events, user actions, and security changes.
-        </Typography>
-      </Box>
+      <PageHeader
+        title="Audit & Activity Logs"
+        subtitle="Monitor system events, user actions, and security changes."
+      />
 
       {/* Filters */}
       <Paper component="form" onSubmit={handleSearch} sx={{ p: 3, mb: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
@@ -184,33 +176,42 @@ export default function AuditLogs() {
       </Paper>
 <Paper sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, overflow: "hidden" }}>
         <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
-          <Button startIcon={<RefreshRounded />} onClick={fetchLogs} sx={{ color: "text.secondary" }}>Refresh</Button>
+          <Button startIcon={<RefreshRounded />} onClick={() => refetch()} sx={{ color: "text.secondary" }}>Refresh</Button>
         </Box>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-            <CircularProgress sx={{ color: "#6366f1" }} />
+          <Box sx={{ p: 2 }}>
+            <ListSkeleton rows={6} />
           </Box>
+        ) : isError ? (
+          <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
         ) : (
-          <TableContainer>
-            <Table>
+          <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Timestamp</TableCell>
-                  <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>User</TableCell>
-                  <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Module</TableCell>
-                  <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Action</TableCell>
-                  <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>Details</TableCell>
+                  {(() => {
+                    const hSx = { color: "text.secondary", textTransform: "none", letterSpacing: 0, fontSize: "0.875rem", fontWeight: 600, py: 1, bgcolor: "background.paper" } as const;
+                    return (
+                      <>
+                        <SortableHeadCell label="Timestamp" sortKey="timestamp" orderBy={orderBy} order={order} onSort={onSort} sx={hSx} />
+                        <SortableHeadCell label="User" sortKey="user" orderBy={orderBy} order={order} onSort={onSort} sx={hSx} />
+                        <SortableHeadCell label="Module" sortKey="module" orderBy={orderBy} order={order} onSort={onSort} sx={hSx} />
+                        <SortableHeadCell label="Action" sortKey="action" orderBy={orderBy} order={order} onSort={onSort} sx={hSx} />
+                        <TableCell align="right" sx={{ ...hSx, fontSize: "0.875rem" }}>Details</TableCell>
+                      </>
+                    );
+                  })()}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {logs.length === 0 ? (
+                {sorted.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
-                      No audit logs found matching criteria.
+                    <TableCell colSpan={5} sx={{ py: 3, borderBottom: "none" }}>
+                      <Mascot pose="no-matches" subtitle="No audit logs found matching criteria." size={120} />
                     </TableCell>
                   </TableRow>
                 ) : (
-                  logs.map((log) => {
+                  sorted.map((log) => {
                     const actionColors = getActionColor(log.actionType);
                     return (
                       <TableRow key={log.auditLogId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
@@ -278,7 +279,7 @@ export default function AuditLogs() {
               <Typography variant="subtitle2" sx={{ color: "#f87171", mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#f87171" }} /> Old Value
               </Typography>
-              <Box component="pre" sx={{ m: 0, p: 2, bgcolor: "background.paper", borderRadius: 1, overflowX: "auto", fontSize: "0.85rem", color: "text.primary" }}>
+              <Box component="pre" sx={{ m: 0, p: 2, bgcolor: "background.paper", borderRadius: 1, overflowX: "auto", fontSize: "0.875rem", color: "text.primary" }}>
                 {JSON.stringify(selectedLog?.oldValueJson, null, 2)}
               </Box>
             </Grid>
@@ -286,7 +287,7 @@ export default function AuditLogs() {
               <Typography variant="subtitle2" sx={{ color: "#34d399", mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#34d399" }} /> New Value
               </Typography>
-              <Box component="pre" sx={{ m: 0, p: 2, bgcolor: "background.paper", borderRadius: 1, overflowX: "auto", fontSize: "0.85rem", color: "text.primary" }}>
+              <Box component="pre" sx={{ m: 0, p: 2, bgcolor: "background.paper", borderRadius: 1, overflowX: "auto", fontSize: "0.875rem", color: "text.primary" }}>
                 {JSON.stringify(selectedLog?.newValueJson, null, 2)}
               </Box>
             </Grid>

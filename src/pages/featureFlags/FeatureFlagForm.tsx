@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -11,14 +12,17 @@ import {
   MenuItem,
   IconButton,
   Alert,
-  CircularProgress,
   Switch,
   FormControlLabel,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import { useToast } from "../../contexts/ToastContext";
+import FormHeader from "../../components/layout/FormHeader";
 
 export default function FeatureFlagForm() {
   const { t } = useTranslation();
@@ -27,9 +31,7 @@ export default function FeatureFlagForm() {
   const isEdit = Boolean(id);
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(isEdit);
   const toast = useToast();
-  const [hospitals, setHospitals] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     hospitalId: "",
@@ -39,43 +41,36 @@ export default function FeatureFlagForm() {
     isGlobal: false,
   });
 
+  const { data: hospitals = [] } = useQuery<any[]>({
+    queryKey: ["hospitals", "feature-flag-options"],
+    queryFn: async () => (await axiosInstance.get("/hospitals", { params: { limit: 100 } })).data.data,
+  });
+
+  const { data: flagData, isLoading: initialLoading, isError, error, refetch } = useQuery({
+    queryKey: ["feature-flag", id],
+    queryFn: async () => (await axiosInstance.get(`/feature-flags/${id}`)).data.data,
+    enabled: isEdit,
+  });
+
+  // Default the hospital dropdown to the first option when creating.
   useEffect(() => {
-    // Fetch hospitals for dropdown
-    const fetchHospitals = async () => {
-      try {
-        const response = await axiosInstance.get("/hospitals", { params: { limit: 100 } });
-        setHospitals(response.data.data);
-        if (!isEdit && response.data.data.length > 0) {
-          setFormData(prev => ({ ...prev, hospitalId: response.data.data[0].hospitalId }));
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchHospitals();
-
-    if (isEdit) {
-      const fetchFlag = async () => {
-        try {
-          const response = await axiosInstance.get(`/feature-flags/${id}`);
-          const d = response.data.data;
-          setFormData({
-            hospitalId: d.hospitalId || "",
-            featureKey: d.featureKey || "",
-            featureName: d.featureName || "",
-            isEnabled: d.isEnabled,
-            isGlobal: d.isGlobal || false,
-          });
-        } catch (err) {
-          toast.error(t("common.error"));
-        } finally {
-          setInitialLoading(false);
-        }
-      };
-      fetchFlag();
+    if (!isEdit && hospitals.length > 0) {
+      setFormData((prev) => (prev.hospitalId ? prev : { ...prev, hospitalId: hospitals[0].hospitalId }));
     }
-  }, [id, isEdit, t]);
+  }, [hospitals, isEdit]);
+
+  // Seed the form with the existing flag when editing.
+  useEffect(() => {
+    if (!flagData) return;
+    const d = flagData;
+    setFormData({
+      hospitalId: d.hospitalId || "",
+      featureKey: d.featureKey || "",
+      featureName: d.featureName || "",
+      isEnabled: d.isEnabled,
+      isGlobal: d.isGlobal || false,
+    });
+  }, [flagData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, checked, type } = e.target;
@@ -104,32 +99,24 @@ export default function FeatureFlagForm() {
 
   if (initialLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "#f59e0b" }} />
-      </Box>
+      <PageLoader />
+    );
+  }
+
+  if (isError) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <ErrorState title="Couldn't load feature flag" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+      </Container>
     );
   }
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 2 }}>
-        <IconButton
-          onClick={() => navigate("/feature-flags")}
-          sx={{
-            bgcolor: "action.hover",
-            border: "1px solid", borderColor: "divider",
-            color: "text.primary",
-            "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-          }}
-        >
-          <ArrowBackRounded />
-        </IconButton>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
-            {isEdit ? t("flags.editFlag", "Edit Feature Flag") : t("flags.addFlag", "Add Feature Flag")}
-          </Typography>
-        </Box>
-      </Box>
+      <FormHeader
+        title={isEdit ? t("flags.editFlag", "Edit Feature Flag") : t("flags.addFlag", "Add Feature Flag")}
+        onBack={() => navigate("/feature-flags")}
+      />
 <Paper
         elevation={2}
         sx={{
@@ -284,7 +271,7 @@ export default function FeatureFlagForm() {
                   type="submit" 
                   variant="contained" 
                   disabled={loading} 
-                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />} 
+                  startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
                     background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
                     boxShadow: "0 4px 14px 0 rgba(245, 158, 11, 0.39)",

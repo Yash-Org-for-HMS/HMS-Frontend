@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import ErrorState from "../../components/ErrorState";
+import GeoAddressPicker from "../../components/GeoAddressPicker";
 import {
   Box,
   Typography,
@@ -9,7 +12,6 @@ import {
   Button,
   Grid,
   MenuItem,
-  CircularProgress,
   Alert,
   Divider,
 } from "@mui/material";
@@ -18,6 +20,9 @@ import { axiosInstance } from "../../api/axios";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useToast } from "../../contexts/ToastContext";
 import { assetUrl } from "../../utils/assetUrl";
+import PageHeader from "../../components/layout/PageHeader";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -27,17 +32,25 @@ interface TabPanelProps {
 
 function CustomTabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
+  const active = value === index;
 
+  // All panels stay mounted and stacked in the same grid cell (see the parent
+  // `display: grid`), so the card sizes to the TALLEST tab and its size stays
+  // fixed when switching tabs. Inactive panels are hidden but keep their space.
   return (
-    <div
+    <Box
       role="tabpanel"
-      hidden={value !== index}
       id={`profile-tabpanel-${index}`}
       aria-labelledby={`profile-tab-${index}`}
+      sx={{
+        gridArea: "1 / 1",
+        visibility: active ? "visible" : "hidden",
+        pointerEvents: active ? "auto" : "none",
+      }}
       {...other}
     >
-      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
-    </div>
+      <Box sx={{ pt: 3 }}>{children}</Box>
+    </Box>
   );
 }
 
@@ -49,9 +62,11 @@ function a11yProps(index: number) {
 }
 
 export default function HospitalProfile() {
-  const { hospital, updateHospital } = useHospitalAuth();
+  const { user, hospital, updateHospital } = useHospitalAuth();
+  // The backend only lets H_ADMIN edit the hospital profile — mirror that here
+  // so staff see a read-only view instead of filling out a form that 403s on save.
+  const canEdit = user?.role === "H_ADMIN";
   const [tabValue, setTabValue] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const toast = useToast();
@@ -67,48 +82,43 @@ export default function HospitalProfile() {
     countryId: "",
     stateId: "",
     cityId: "",
+    city: "",
     postalCode: "",
     logoUrl: "",
-    primaryColorHex: "",
     gstNumber: "",
     licenseExpiryDate: "",
     accreditationType: "",
   });
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  const { data: profileData, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["hospital-profile"],
+    queryFn: async () => (await axiosInstance.get("/hospital/profile")).data.data,
+  });
 
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get("/hospital/profile");
-      const data = res.data.data;
-      setFormData({
-        hospitalName: data.hospitalName || "",
-        registrationNumber: data.registrationNumber || "",
-        ownershipType: data.ownershipType || "",
-        websiteUrl: data.websiteUrl || "",
-        officialEmail: data.officialEmail || "",
-        officialPhone: data.officialPhone || "",
-        addressLine1: data.addressLine1 || "",
-        addressLine2: data.addressLine2 || "",
-        countryId: data.countryId?.toString() || "",
-        stateId: data.stateId?.toString() || "",
-        cityId: data.cityId?.toString() || "",
-        postalCode: data.postalCode || "",
-        logoUrl: data.logoUrl || "",
-        primaryColorHex: data.primaryColorHex || "",
-        gstNumber: data.gstNumber || "",
-        licenseExpiryDate: data.licenseExpiryDate ? new Date(data.licenseExpiryDate).toISOString().split('T')[0] : "",
-        accreditationType: data.accreditationType || "",
-      });
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load profile");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Seed the editable form once the profile loads (or after a refetch).
+  useEffect(() => {
+    if (!profileData) return;
+    const data = profileData;
+    setFormData({
+      hospitalName: data.hospitalName || "",
+      registrationNumber: data.registrationNumber || "",
+      ownershipType: data.ownershipType || "",
+      websiteUrl: data.websiteUrl || "",
+      officialEmail: data.officialEmail || "",
+      officialPhone: data.officialPhone || "",
+      addressLine1: data.addressLine1 || "",
+      addressLine2: data.addressLine2 || "",
+      countryId: data.countryId?.toString() || "",
+      stateId: data.stateId?.toString() || "",
+      cityId: data.cityId?.toString() || "",
+      city: data.city || "",
+      postalCode: data.postalCode || "",
+      logoUrl: data.logoUrl || "",
+      gstNumber: data.gstNumber || "",
+      licenseExpiryDate: data.licenseExpiryDate ? new Date(data.licenseExpiryDate).toISOString().split('T')[0] : "",
+      accreditationType: data.accreditationType || "",
+    });
+  }, [profileData]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -121,7 +131,8 @@ export default function HospitalProfile() {
       formDataUpload.append("logo", file);
 
       try {
-        setUploadingLogo(true);        const res = await axiosInstance.post("/hospital/profile/logo", formDataUpload, {
+        setUploadingLogo(true);
+        const res = await axiosInstance.post("/hospital/profile/logo", formDataUpload, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
@@ -145,10 +156,11 @@ export default function HospitalProfile() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setSaving(true);      await axiosInstance.put("/hospital/profile", formData);
+      setSaving(true);
+      await axiosInstance.put("/hospital/profile", formData);
       toast.success("Profile updated successfully!");
       // Optionally re-fetch
-      await fetchProfile();
+      await refetch();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to update profile");
     } finally {
@@ -158,20 +170,37 @@ export default function HospitalProfile() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
-        <CircularProgress sx={{ color: "#10b981" }} />
-      </Box>
+      <PageLoader />
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorState
+        title="Couldn't load profile"
+        message={(error as any)?.response?.data?.message}
+        onRetry={() => refetch()}
+      />
     );
   }
 
   return (
     <Box sx={{ maxWidth: 1000, mx: "auto" }}>
-      <Typography variant="h4" fontWeight="700" sx={{ mb: 1, color: "text.primary" }}>
-        Hospital Profile
-      </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: "text.secondary" }}>
-        Manage your hospital's details, branding, and compliance information.
-      </Typography>
+      <PageHeader
+        title="Hospital Profile"
+        subtitle="Manage your hospital's details, branding, and compliance information."
+      />
+      {!canEdit && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          You're viewing this in read-only mode — only a hospital admin can edit these details.
+        </Alert>
+      )}
+      {canEdit && (!formData.officialPhone || !formData.addressLine1 || !formData.registrationNumber) && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Finish setting up your hospital to unlock the rest of the panel. Required (marked *):
+          official phone &amp; address line 1 (General Information), and registration number (Compliance).
+        </Alert>
+      )}
 <Paper
         component="form"
         onSubmit={handleSubmit}
@@ -193,7 +222,7 @@ export default function HospitalProfile() {
                 color: "text.secondary",
                 textTransform: "none",
                 fontWeight: 600,
-                fontSize: "0.95rem",
+                fontSize: "0.875rem",
                 minHeight: 64,
               },
               "& .Mui-selected": {
@@ -213,7 +242,7 @@ export default function HospitalProfile() {
           </Tabs>
         </Box>
 
-        <Box sx={{ p: 4 }}>
+        <Box sx={{ p: 4, display: "grid" }}>
           {/* General Information Tab */}
           <CustomTabPanel value={tabValue} index={0}>
             <Grid container spacing={3}>
@@ -224,6 +253,7 @@ export default function HospitalProfile() {
                   name="hospitalName"
                   value={formData.hospitalName}
                   onChange={handleChange}
+                  disabled={!canEdit}
                   required
                 />
               </Grid>
@@ -235,6 +265,7 @@ export default function HospitalProfile() {
                   name="ownershipType"
                   value={formData.ownershipType}
                   onChange={handleChange}
+                  disabled={!canEdit}
                 >
                   <MenuItem value="">Select Type</MenuItem>
                   <MenuItem value="private">Private</MenuItem>
@@ -258,6 +289,7 @@ export default function HospitalProfile() {
                   type="email"
                   value={formData.officialEmail}
                   onChange={handleChange}
+                  disabled={!canEdit}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
@@ -267,6 +299,8 @@ export default function HospitalProfile() {
                   name="officialPhone"
                   value={formData.officialPhone}
                   onChange={handleChange}
+                  disabled={!canEdit}
+                  required
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
@@ -276,6 +310,7 @@ export default function HospitalProfile() {
                   name="websiteUrl"
                   value={formData.websiteUrl}
                   onChange={handleChange}
+                  disabled={!canEdit}
                 />
               </Grid>
 
@@ -291,35 +326,21 @@ export default function HospitalProfile() {
                   name="addressLine1"
                   value={formData.addressLine1}
                   onChange={handleChange}
+                  disabled={!canEdit}
+                  required
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="City (ID for now)"
-                  name="cityId"
-                  value={formData.cityId}
-                  onChange={handleChange}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="State (ID for now)"
-                  name="stateId"
-                  value={formData.stateId}
-                  onChange={handleChange}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="Postal Code"
-                  name="postalCode"
-                  value={formData.postalCode}
-                  onChange={handleChange}
-                />
-              </Grid>
+              <GeoAddressPicker
+                disabled={!canEdit}
+                value={{ stateId: formData.stateId as any, districtId: formData.cityId as any, city: formData.city, pincode: formData.postalCode }}
+                onChange={(patch) => setFormData((prev) => ({
+                  ...prev,
+                  ...(patch.stateId !== undefined ? { stateId: (patch.stateId ?? "") as any } : {}),
+                  ...(patch.districtId !== undefined ? { cityId: (patch.districtId ?? "") as any } : {}),
+                  ...(patch.city !== undefined ? { city: patch.city } : {}),
+                  ...(patch.pincode !== undefined ? { postalCode: patch.pincode } : {}),
+                }))}
+              />
             </Grid>
           </CustomTabPanel>
 
@@ -357,8 +378,8 @@ export default function HospitalProfile() {
                     <Button
                       variant="outlined"
                       component="label"
-                      startIcon={uploadingLogo ? <CircularProgress size={20} /> : <CloudUploadRounded />}
-                      disabled={uploadingLogo}
+                      startIcon={uploadingLogo ? <HeartbeatLoader size={22} /> : <CloudUploadRounded />}
+                      disabled={uploadingLogo || !canEdit}
                     >
                       {uploadingLogo ? "Uploading..." : "Upload Logo"}
                       <input
@@ -374,30 +395,6 @@ export default function HospitalProfile() {
                   </Box>
                 </Box>
               </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Primary Color Hex"
-                  name="primaryColorHex"
-                  value={formData.primaryColorHex}
-                  onChange={handleChange}
-                  placeholder="#003087"
-                  InputProps={{
-                    startAdornment: (
-                      <Box
-                        sx={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: 1,
-                          bgcolor: formData.primaryColorHex || "transparent",
-                          border: "1px solid", borderColor: "divider",
-                          mr: 1,
-                        }}
-                      />
-                    ),
-                  }}
-                />
-              </Grid>
             </Grid>
           </CustomTabPanel>
 
@@ -411,6 +408,8 @@ export default function HospitalProfile() {
                   name="registrationNumber"
                   value={formData.registrationNumber}
                   onChange={handleChange}
+                  disabled={!canEdit}
+                  required
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
@@ -420,6 +419,7 @@ export default function HospitalProfile() {
                   name="gstNumber"
                   value={formData.gstNumber}
                   onChange={handleChange}
+                  disabled={!canEdit}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
@@ -430,6 +430,7 @@ export default function HospitalProfile() {
                   type="date"
                   value={formData.licenseExpiryDate}
                   onChange={handleChange}
+                  disabled={!canEdit}
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
@@ -440,6 +441,7 @@ export default function HospitalProfile() {
                   name="accreditationType"
                   value={formData.accreditationType}
                   onChange={handleChange}
+                  disabled={!canEdit}
                   placeholder="e.g. NABH, JCI, ISO 9001"
                 />
               </Grid>
@@ -447,21 +449,23 @@ export default function HospitalProfile() {
           </CustomTabPanel>
         </Box>
 
-        <Box sx={{ p: 3, borderTop: "1px solid", borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={saving}
-            startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />}
-            sx={{
-              bgcolor: "#10b981",
-              "&:hover": { bgcolor: "#059669" },
-              px: 4,
-            }}
-          >
-            {saving ? "Saving..." : "Save Profile"}
-          </Button>
-        </Box>
+        {canEdit && (
+          <Box sx={{ p: 3, borderTop: "1px solid", borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={saving}
+              startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
+              sx={{
+                bgcolor: "#10b981",
+                "&:hover": { bgcolor: "#059669" },
+                px: 4,
+              }}
+            >
+              {saving ? "Saving..." : "Save Profile"}
+            </Button>
+          </Box>
+        )}
       </Paper>
     </Box>
   );

@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { axiosInstance } from "../api/axios";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "./ToastContext";
 
 export interface HospitalUser {
   id: string;
@@ -26,6 +27,12 @@ export interface BranchInfo {
   code: string;
 }
 
+export interface AllowedBranch {
+  branchId: string;
+  branchName: string;
+  branchCode: string;
+}
+
 interface HospitalAuthContextType {
   user: HospitalUser | null;
   hospital: HospitalInfo | null;
@@ -33,6 +40,11 @@ interface HospitalAuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   sessionId: string | null;
+  // Multi-branch access
+  availableBranches: AllowedBranch[];
+  activeBranchId: string | null;
+  isOrgAdmin: boolean;
+  setActiveBranch: (branchId: string | null) => void;
   login: (
     token: string,
     refresh: string,
@@ -53,7 +65,45 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
   const [branch, setBranch] = useState<BranchInfo | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [availableBranches, setAvailableBranches] = useState<AllowedBranch[]>([]);
+  const [activeBranchId, setActiveBranchIdState] = useState<string | null>(
+    () => sessionStorage.getItem("activeBranchId"),
+  );
+  const [isOrgAdmin, setIsOrgAdmin] = useState(false);
   const navigate = useNavigate();
+  const toast = useToast();
+
+  // Persist the active branch to sessionStorage so the axios interceptor sends
+  // it as the X-Branch-Id header on every hospital-portal request.
+  const setActiveBranch = useCallback((branchId: string | null) => {
+    if (branchId) {
+      sessionStorage.setItem("activeBranchId", branchId);
+    } else {
+      sessionStorage.removeItem("activeBranchId");
+    }
+    setActiveBranchIdState(branchId);
+  }, []);
+
+  // Load the branches this user may access (org admin → all; others → assigned).
+  const loadBranches = useCallback(async () => {
+    try {
+      const res = await axiosInstance.get("/hospital-auth/my-branches");
+      const data = res.data?.data;
+      const branches: AllowedBranch[] = data?.branches ?? [];
+      setAvailableBranches(branches);
+      setIsOrgAdmin(Boolean(data?.isOrgAdmin));
+
+      // Default the active branch if none stored yet (or the stored one vanished).
+      const stored = sessionStorage.getItem("activeBranchId");
+      const storedValid = stored && branches.some((b) => b.branchId === stored);
+      if (!storedValid) {
+        const fallback = data?.activeBranchId ?? (branches[0]?.branchId ?? null);
+        setActiveBranch(fallback);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to load your accessible branches");
+    }
+  }, [setActiveBranch, toast]);
 
   useEffect(() => {
     // Check if token and user data exist on mount
@@ -69,15 +119,19 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
         setHospital(JSON.parse(storedHospital));
         if (storedBranch) setBranch(JSON.parse(storedBranch));
         if (storedSession) setSessionId(storedSession);
+        void loadBranches();
       } catch (err) {
         console.error("Failed to parse hospital user from local storage", err);
         logout();
       }
     }
     setLoading(false);
+    // Mount-only: reads sessionStorage once. loadBranches/logout are stable
+    // (useCallback), so omitting them here doesn't risk a stale closure.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const login = (
+  const login = useCallback((
     token: string,
     refresh: string,
     userData: HospitalUser,
@@ -99,6 +153,11 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
     setBranch(branchData);
     setSessionId(sessId);
 
+    // Seed the active branch with the user's home branch, then refine from the
+    // server's allowed-branch list.
+    setActiveBranch(branchData?.id ?? null);
+    void loadBranches();
+
     // Role-based redirect
     const receptionRoles = ["RECEPTIONIST", "RECEPTION", "receptionist", "reception"];
     const nurseRoles = ["NURSE", "nurse"];
@@ -119,18 +178,18 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
     } else {
       navigate("/hospital/dashboard");
     }
-  };
+  }, [navigate, setActiveBranch, loadBranches]);
 
-  const updateHospital = (hospitalData: Partial<HospitalInfo>) => {
+  const updateHospital = useCallback((hospitalData: Partial<HospitalInfo>) => {
     setHospital((prev) => {
       if (!prev) return prev;
       const updated = { ...prev, ...hospitalData };
       sessionStorage.setItem("hospitalInfo", JSON.stringify(updated));
       return updated;
     });
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       if (sessionId) {
         await axiosInstance.post(
@@ -152,30 +211,44 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem("hospitalInfo");
       sessionStorage.removeItem("hospitalBranch");
       sessionStorage.removeItem("hospitalSessionId");
-      
+      sessionStorage.removeItem("activeBranchId");
+
       setUser(null);
       setHospital(null);
       setBranch(null);
       setSessionId(null);
-      
+      setAvailableBranches([]);
+      setActiveBranchIdState(null);
+      setIsOrgAdmin(false);
+
       navigate("/hospital/login");
     }
-  };
+  }, [sessionId, navigate]);
+
+  // Without this, every one of this provider's 23 consumers re-rendered on any
+  // provider re-render (branch switch, loading flip, etc.), since a fresh
+  // object literal was passed as the context value every time.
+  const value = useMemo(
+    () => ({
+      user,
+      hospital,
+      branch,
+      isAuthenticated: !!user,
+      loading,
+      sessionId,
+      availableBranches,
+      activeBranchId,
+      isOrgAdmin,
+      setActiveBranch,
+      login,
+      updateHospital,
+      logout,
+    }),
+    [user, hospital, branch, loading, sessionId, availableBranches, activeBranchId, isOrgAdmin, setActiveBranch, login, updateHospital, logout]
+  );
 
   return (
-    <HospitalAuthContext.Provider
-      value={{
-        user,
-        hospital,
-        branch,
-        isAuthenticated: !!user,
-        loading,
-        sessionId,
-        login,
-        updateHospital,
-        logout,
-      }}
-    >
+    <HospitalAuthContext.Provider value={value}>
       {children}
     </HospitalAuthContext.Provider>
   );

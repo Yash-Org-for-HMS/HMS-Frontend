@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -18,7 +19,6 @@ import {
   TextField,
   InputAdornment,
   Alert,
-  CircularProgress,
   Avatar,
   Divider,
 } from "@mui/material";
@@ -37,13 +37,22 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import Mascot from "../../../components/Mascot";
+import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
+import { useConfirm } from "../../../contexts/ConfirmContext";
+import PageHeader from "../../../components/layout/PageHeader";
+import { TableRowsSkeleton } from "../../../components/TableRowsSkeleton";
+import { useTableSort } from "../../../components/table/useTableSort";
+import SortableHeadCell from "../../../components/table/SortableHeadCell";
+import HeartbeatLoader from "../../../components/HeartbeatLoader";
 
-interface User {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+// Match the file's existing sentence-case header look (override SortableHeadCell's default uppercase/bold style).
+const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 400, fontSize: "0.875rem", py: undefined };
+
+import type { StaffUser } from "../../../types";
+
+interface User extends StaffUser {
   employeeCode: string;
   isActive: boolean;
   mustChangePassword?: boolean;
@@ -187,15 +196,10 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
           </Box>
           <Box>
             <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
-              Use default password
+              Generate a temporary password
             </Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              Resets to{" "}
-              <Chip
-                label="Password@123"
-                size="small"
-                sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#fbbf24", fontFamily: "monospace", fontWeight: 700, fontSize: "0.72rem", height: 18 }}
-              />
+              A secure one-time password will be generated and shown to you next.
             </Typography>
           </Box>
         </Box>
@@ -306,7 +310,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
             variant="contained"
             onClick={handleReset}
             disabled={loading}
-            startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <LockResetRounded />}
+            startIcon={loading ? <HeartbeatLoader size={22} /> : <LockResetRounded />}
             sx={{
               bgcolor: "#d97706",
               "&:hover": { bgcolor: "#b45309" },
@@ -370,9 +374,9 @@ function CredentialSuccessDialog({ open, user, newPassword, onClose }: Credentia
 
         <Box sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(255,255,255,0.03)", border: "1px solid", borderColor: "divider", mb: 2 }}>
           <Typography variant="caption" sx={{ color: "#475569" }}>Email</Typography>
-          <Typography sx={{ color: "text.primary", fontFamily: "monospace", fontSize: "0.85rem", mb: 1 }}>{user?.email}</Typography>
+          <Typography sx={{ color: "text.primary", fontFamily: "monospace", fontSize: "0.875rem", mb: 1 }}>{user?.email}</Typography>
           <Typography variant="caption" sx={{ color: "#475569" }}>New Password</Typography>
-          <Typography sx={{ color: "#fbbf24", fontFamily: "monospace", fontSize: "0.9rem", fontWeight: 700 }}>{newPassword}</Typography>
+          <Typography sx={{ color: "#fbbf24", fontFamily: "monospace", fontSize: "0.875rem", fontWeight: 700 }}>{newPassword}</Typography>
         </Box>
 
         <Box sx={{ display: "flex", gap: 1.5 }}>
@@ -396,8 +400,9 @@ function CredentialSuccessDialog({ open, user, newPassword, onClose }: Credentia
 
 // ── Main UsersList ──────────────────────────────────────────────────────────
 export default function UsersList() {
-  const [users, setUsers] = useState<User[]>([]);
   const navigate = useNavigate();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   // Reset password dialog
   const [resetDialog, setResetDialog] = useState<{ open: boolean; user: User | null }>({ open: false, user: null });
@@ -407,83 +412,94 @@ export default function UsersList() {
     password: "",
   });
 
-  const fetchUsers = async () => {
-    try {
-      const response = await axiosInstance.get("/hospital/users");
-      setUsers(response.data.data);
-    } catch (error) {
-      console.error("Error fetching users", error);
-    }
-  };
+  const { data: users = [], isLoading, isError, error, refetch } = useQuery<User[]>({
+    queryKey: ["hospital-users-list"],
+    queryFn: async () => (await axiosInstance.get("/hospital/users")).data.data,
+  });
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const { sorted, orderBy, order, onSort } = useTableSort(users, {
+    name: (u) => `${u.firstName} ${u.lastName}`.trim(),
+    role: (u) => u.role?.roleName ?? null,
+    department: (u) => u.department?.departmentName ?? null,
+    branch: (u) => u.branch?.branchName ?? null,
+    status: (u) => (u.isActive ? "Active" : "Inactive"),
+  });
 
   const handleToggleStatus = async (user: User) => {
+    const activating = !user.isActive;
+    const ok = await confirm({
+      title: activating ? "Activate user" : "Deactivate user",
+      message: activating
+        ? `Reactivate ${user.firstName} ${user.lastName}? They will be able to log in again.`
+        : `Deactivate ${user.firstName} ${user.lastName}? They will no longer be able to log in.`,
+      confirmText: activating ? "Activate" : "Deactivate",
+      destructive: !activating,
+    });
+    if (!ok) return;
     try {
       await axiosInstance.put(`/hospital/users/${user.userId}/deactivate`, { isActive: !user.isActive });
-      fetchUsers();
+      refetch();
     } catch (error) {
-      console.error("Error toggling user status", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to update user status");
     }
   };
 
   return (
     <>
       <Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-          <Box>
-            <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-              Staff & Users
-            </Typography>
-            <Typography variant="body1" sx={{ color: "text.secondary" }}>
-              Manage your hospital's staff, roles, and assignments.
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddRounded />}
-            onClick={() => navigate("/hospital/users/new")}
-            sx={{
-              bgcolor: "#6366f1",
-              "&:hover": { bgcolor: "#4f46e5" },
-              textTransform: "none",
-              fontWeight: 600,
-              px: 3,
-            }}
-          >
-            Add Staff
-          </Button>
-        </Box>
+        <PageHeader
+          title="Staff & Users"
+          subtitle="Manage your hospital's staff, roles, and assignments."
+          actions={
+            <Button
+              variant="contained"
+              startIcon={<AddRounded />}
+              onClick={() => navigate("/hospital/users/new")}
+              sx={{
+                bgcolor: "#6366f1",
+                "&:hover": { bgcolor: "#4f46e5" },
+                textTransform: "none",
+                fontWeight: 600,
+                px: 3,
+              }}
+            >
+              Add Staff
+            </Button>
+          }
+        />
 
         <TableContainer
           component={Paper}
-          sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}
+          sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "calc(100vh - 300px)" }}
         >
-          <Table>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {["Staff Member", "Role", "Department", "Branch", "Status", "Actions"].map((h, i) => (
-                  <TableCell
-                    key={h}
-                    align={i === 5 ? "right" : "left"}
-                    sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}
-                  >
-                    {h}
-                  </TableCell>
-                ))}
+                <SortableHeadCell label="Staff Member" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Role" sortKey="role" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Department" sortKey="department" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Branch" sortKey="branch" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.default" }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {users.length === 0 ? (
+              {isLoading ? (
+                <TableRowsSkeleton rows={6} columns={6} />
+              ) : isError ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
-                    No staff members found.
+                  <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+                  </TableCell>
+                </TableRow>
+              ) : sorted.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
+                    <Mascot pose="nothing-here-yet" subtitle="No staff members found." size={120} />
                   </TableCell>
                 </TableRow>
               ) : (
-                users.map((user) => (
+                sorted.map((user) => (
                   <TableRow key={user.userId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                     <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -492,7 +508,7 @@ export default function UsersList() {
                             width: 34,
                             height: 34,
                             bgcolor: "#6366f1",
-                            fontSize: "0.85rem",
+                            fontSize: "0.875rem",
                             fontWeight: 700,
                           }}
                         >
@@ -510,7 +526,7 @@ export default function UsersList() {
                             <Chip
                               label="Must change password"
                               size="small"
-                              sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#fbbf24", height: 16, fontSize: "0.65rem", ml: 0.5 }}
+                              sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#fbbf24", height: 16, fontSize: "0.75rem", ml: 0.5 }}
                             />
                           )}
                         </Box>
@@ -587,7 +603,7 @@ export default function UsersList() {
         onSuccess={(pwd) => {
           setSuccessDialog({ open: true, user: resetDialog.user, password: pwd });
           setResetDialog({ open: false, user: null });
-          fetchUsers();
+          refetch();
         }}
       />
 

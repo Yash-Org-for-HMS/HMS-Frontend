@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -35,8 +35,12 @@ import {
   AccountCircleRounded,
   SecurityRounded,
   HistoryRounded,
+  NotificationsActiveRounded,
+  AssessmentRounded,
 } from "@mui/icons-material";
 import { useAuth } from "../contexts/AuthContext";
+import SidebarHeader from "../components/layout/SidebarHeader";
+import SidebarUserCard from "../components/layout/SidebarUserCard";
 
 const drawerWidth = 260;
 
@@ -52,19 +56,56 @@ export default function AdminLayout() {
   const location = useLocation();
   const { t } = useTranslation();
 
-  const menuItems = [
-    { text: t("nav.dashboard"), icon: <DashboardRounded />, path: "/" },
-    { text: t("nav.hospitals"), icon: <LocalHospitalRounded />, path: "/hospitals" },
-    { text: t("nav.leads"), icon: <PeopleAltRounded />, path: "/leads" },
-    { text: t("nav.trials"), icon: <TimerRounded />, path: "/trials" },
-    { text: t("nav.plans"), icon: <CardMembershipRounded />, path: "/plans" },
-    { text: t("nav.featureFlags"), icon: <ToggleOnRounded />, path: "/feature-flags" },
-    { text: t("nav.onboarding"), icon: <HandshakeRounded />, path: "/onboarding" },
-    { text: t("nav.superAdmins"), icon: <AdminPanelSettingsRounded />, path: "/super-admins" },
-    { text: t("nav.roles", "Hospital Roles"), icon: <SecurityRounded />, path: "/rbac/roles" },
-    { text: t("nav.users", "Hospital Staff"), icon: <PeopleAltRounded />, path: "/rbac/users" },
-    { text: t("nav.auditLogs"), icon: <HistoryRounded />, path: "/audit-logs" },
+  // Grouped navigation that follows the tenant lifecycle so the flow reads
+  // top-to-bottom: see the overview → work the sales pipeline → manage tenants →
+  // control access → configure the platform → audit.
+  const navGroups: { heading: string | null; items: { text: string; icon: ReactNode; path: string }[] }[] = [
+    {
+      heading: t("nav.group.overview", "Overview"),
+      items: [
+        { text: t("nav.dashboard"), icon: <DashboardRounded />, path: "/" },
+        { text: t("nav.reports", "Reports"), icon: <AssessmentRounded />, path: "/reports" },
+        { text: "Action Needed", icon: <NotificationsActiveRounded />, path: "/onboarding" },
+      ],
+    },
+    {
+      heading: t("nav.group.salesPipeline", "Sales Pipeline"),
+      items: [
+        { text: t("nav.leads"), icon: <PeopleAltRounded />, path: "/leads" },
+        { text: t("nav.trials"), icon: <TimerRounded />, path: "/trials" },
+      ],
+    },
+    {
+      heading: t("nav.group.tenants", "Tenants"),
+      items: [{ text: t("nav.hospitals"), icon: <LocalHospitalRounded />, path: "/hospitals" }],
+    },
+    {
+      heading: t("nav.group.accessControl", "Access Control"),
+      items: [
+        { text: t("nav.roles", "Hospital Roles"), icon: <SecurityRounded />, path: "/rbac/roles" },
+        { text: t("nav.users", "Hospital Staff"), icon: <PeopleAltRounded />, path: "/rbac/users" },
+        { text: t("nav.superAdmins"), icon: <AdminPanelSettingsRounded />, path: "/super-admins" },
+      ],
+    },
+    {
+      heading: t("nav.group.configuration", "Configuration"),
+      items: [
+        { text: t("nav.plans"), icon: <CardMembershipRounded />, path: "/plans" },
+        { text: t("nav.featureFlags"), icon: <ToggleOnRounded />, path: "/feature-flags" },
+      ],
+    },
+    {
+      heading: t("nav.group.system", "System"),
+      items: [{ text: t("nav.auditLogs"), icon: <HistoryRounded />, path: "/audit-logs" }],
+    },
   ];
+
+  // A nav item is active for its own route and any nested route beneath it
+  // (e.g. /leads/new keeps "Leads" highlighted). "/" only matches exactly.
+  const isActivePath = (path: string) =>
+    path === "/"
+      ? location.pathname === "/"
+      : location.pathname === path || location.pathname.startsWith(path + "/");
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -96,163 +137,82 @@ export default function AdminLayout() {
         color: "text.primary",
       }}
     >
-      <Toolbar
-        sx={{
-          px: 2,
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          borderBottom: "1px solid", borderColor: "divider",
-        }}
-      >
-        <Box
-          sx={{
-            width: 32,
-            height: 32,
-            borderRadius: 1.5,
-            bgcolor: "primary.main",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Typography variant="subtitle1" fontWeight="bold">H</Typography>
-        </Box>
-        <Typography variant="h6" fontWeight="700" noWrap>
-          HMS Admin
-        </Typography>
-      </Toolbar>
+      <SidebarHeader
+        title="HMS Admin"
+        subtitle="Platform Console"
+      />
       
-      <List sx={{ px: 2, pt: 2, flex: 1, overflowY: "auto" }}>
-        {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton
-                onClick={() => {
-                  navigate(item.path);
-                  if (isMobile) setMobileOpen(false);
-                }}
+      <List sx={{ px: 2, pt: 1.5, flex: 1, overflowY: "auto" }}>
+        {navGroups.map((group, gi) => (
+          <Box key={group.heading ?? gi} sx={{ mb: 1 }}>
+            {group.heading && (
+              <Typography
+                variant="caption"
                 sx={{
-                  borderRadius: 2,
-                  bgcolor: isActive ? "rgba(79, 70, 229, 0.08)" : "transparent",
-                  "&:hover": {
-                    bgcolor: "action.hover",
-                  },
+                  display: "block",
+                  px: 1.5,
+                  pt: gi === 0 ? 0.5 : 1.5,
+                  pb: 0.5,
+                  color: "text.secondary",
+                  fontWeight: 700,
+                  fontSize: "0.75rem",
+                  letterSpacing: 0.8,
+                  textTransform: "uppercase",
                 }}
               >
-                <ListItemIcon
-                  sx={{
-                    minWidth: 40,
-                    color: isActive ? "#4F46E5" : "#64748B",
-                  }}
-                >
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.text}
-                  primaryTypographyProps={{
-                    fontSize: "0.95rem",
-                    fontWeight: isActive ? 600 : 500,
-                    color: isActive ? "#4F46E5" : "#64748B",
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
-          );
-        })}
+                {group.heading}
+              </Typography>
+            )}
+            {group.items.map((item) => {
+              const isActive = isActivePath(item.path);
+              return (
+                <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                  <ListItemButton
+                    onClick={() => {
+                      navigate(item.path);
+                      if (isMobile) setMobileOpen(false);
+                    }}
+                    sx={{
+                      borderRadius: 2,
+                      bgcolor: isActive ? "rgba(79, 70, 229, 0.08)" : "transparent",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                      },
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 40,
+                        color: isActive ? "#4F46E5" : "#64748B",
+                      }}
+                    >
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.text}
+                      primaryTypographyProps={{
+                        fontSize: "0.875rem",
+                        fontWeight: isActive ? 600 : 500,
+                        color: isActive ? "#4F46E5" : "#64748B",
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              );
+            })}
+          </Box>
+        ))}
       </List>
       
-      <Box sx={{ height: 16 }} />
-      
-      
-      <Box sx={{ p: 2, borderTop: "1px solid", borderColor: "divider" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            
-        <ListItem disablePadding>
-          <ListItemButton
-            onClick={handleMenuOpen}
-            sx={{
-              borderRadius: 2,
-              "&:hover": { bgcolor: "action.hover" },
-              px: 1,
-            }}
-          >
-            <Avatar
-              sx={{
-                bgcolor: "primary.main",
-                width: 32,
-                height: 32,
-                fontSize: "0.9rem",
-                mr: 1.5,
-              }}
-            >
-              {user?.firstName?.charAt(0) || "U"}
-            </Avatar>
-            <ListItemText 
-              primary={user?.firstName ? `${user.firstName} ${user.lastName || ''}` : "Admin"} 
-              primaryTypographyProps={{ fontWeight: 600, fontSize: "0.9rem" }}
-            />
-          </ListItemButton>
-        </ListItem>
-    
-            
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-              transformOrigin={{ horizontal: "right", vertical: "top" }}
-              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-              PaperProps={{
-                elevation: 0,
-                sx: {
-                  mt: 1.5,
-                  bgcolor: "background.paper",
-                  color: "text.primary",
-                  border: "1px solid", borderColor: "divider",
-                  overflow: "visible",
-                  "&:before": {
-                    content: '""',
-                    display: "block",
-                    position: "absolute",
-                    top: 0,
-                    right: 14,
-                    width: 10,
-                    height: 10,
-                    bgcolor: "background.paper",
-                    transform: "translateY(-50%) rotate(45deg)",
-                    zIndex: 0,
-                    borderLeft: "1px solid",
-                    borderTop: "1px solid", borderColor: "divider",
-                  },
-                }
-              }}
-            >
-              <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider", mb: 1 }}>
-                <Typography variant="subtitle2" fontWeight="600">
-                  {user?.firstName} {user?.lastName}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  {user?.email}
-                </Typography>
-              </Box>
-              <MenuItem onClick={handleMenuClose} sx={{ gap: 1.5, py: 1 }}>
-                <AccountCircleRounded fontSize="small" sx={{ color: "text.secondary" }} />
-                Profile
-              </MenuItem>
-              <MenuItem onClick={handleLogout} sx={{ gap: 1.5, py: 1, color: "#f87171" }}>
-                <LogoutRounded fontSize="small" />
-                Logout
-              </MenuItem>
-            </Menu>
-          </Box>
-      </Box>
-    
-      <Box sx={{ p: 2 }}>
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
-          © {new Date().getFullYear()} HMS SaaS
-        </Typography>
-      </Box>
+      <Divider sx={{ borderColor: "divider" }} />
+
+      {/* User card at bottom */}
+      <SidebarUserCard
+        name={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Super Admin"}
+        role="Super Admin"
+        avatarText={user?.firstName?.charAt(0) || "A"}
+        onLogout={logout}
+      />
     </Box>
   );
 

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box,
@@ -17,12 +17,16 @@ import {
   TextField,
   InputAdornment,
   Avatar,
-  CircularProgress,
   Pagination,
   Alert,
   Dialog,
   DialogContent,
   DialogActions,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
 } from "@mui/material";
 import {
   PersonAddRounded,
@@ -30,35 +34,37 @@ import {
   SearchRounded,
   VisibilityRounded,
   DeleteRounded,
-  CloseRounded,
   WarningAmberRounded,
   BadgeRounded,
-  CakeRounded,
-  LocalPhoneRounded,
-  WcRounded,
   CalendarMonthRounded,
   QueuePlayNextRounded,
   ContentCopyRounded,
+  QrCode2Rounded,
+  ReceiptLongRounded,
+  LocalHotelRounded,
+  MoreVertRounded,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import Mascot from "../../components/Mascot";
+import { getInitials } from "../../utils/format";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import IdCardModal from "../../components/reception/IdCardModal";
+import AdmitDialog from "../../components/ipd/AdmitDialog";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
 
-interface Patient {
-  patientId: string;
-  uhidNumber: string;
-  firstName: string | null;
-  lastName: string | null;
-  dateOfBirth: string;
-  phone: string;
-  email: string;
+import type { Patient as PatientBase } from "../../types";
+
+interface Patient extends PatientBase {
   city: string;
   genderId: number;
   bloodGroupId: number;
-  genderLabel: string;
-  bloodGroupLabel: string;
-  age: number | null;
   createdAt: string;
+  outstandingDues?: number;
 }
 
 interface Meta {
@@ -68,7 +74,11 @@ interface Meta {
   totalPages: number;
 }
 
-export default function PatientsList() {
+// `basePath` lets the same page render under a different shell: the reception
+// panel uses the default "/reception", while the hospital-admin oversight route
+// passes "/hospital" so a patient row-click opens the profile inside the admin
+// shell instead of bouncing into the reception layout.
+export default function PatientsList({ basePath = "/reception" }: { basePath?: string } = {}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -80,14 +90,25 @@ export default function PatientsList() {
     open: false,
     patient: null,
   });
-  
+  const [idCardPatient, setIdCardPatient] = useState<Patient | null>(null);
+  const [admitPatient, setAdmitPatient] = useState<Patient | null>(null);
+  const [menu, setMenu] = useState<{ anchor: HTMLElement | null; patient: Patient | null }>({ anchor: null, patient: null });
+
   const searchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
+
+  // Jump back to the first page whenever the sort changes.
+  useEffect(() => {
+    setPage(1);
+  }, [orderBy, order]);
+
   const { data, isLoading: loading, error } = useQuery({
-    queryKey: ["patients", search, page],
+    queryKey: ["patients", search, page, orderBy, order],
     queryFn: async () => {
       const res = await axiosInstance.get("/reception/patients", {
-        params: { search, page, limit: 20 },
+        params: { search, page, limit: 20, sortBy: orderBy || undefined, sortOrder: order },
       });
       return res.data;
     },
@@ -124,11 +145,6 @@ export default function PatientsList() {
     deleteMutation.mutate(deleteDialog.patient.patientId);
   };
 
-  const getInitials = (p: Patient) => {
-    const f = p.firstName?.charAt(0) || "";
-    const l = p.lastName?.charAt(0) || "";
-    return (f + l).toUpperCase() || "P";
-  };
 
   const avatarColors = [
     "#0891b2", "#7c3aed", "#059669", "#dc2626", "#d97706",
@@ -142,16 +158,10 @@ export default function PatientsList() {
     <>
       <Box>
         {/* ── Header ── */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4, flexWrap: "wrap", gap: 2 }}>
-          <Box>
-            <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
-              Patient Search & Registry
-            </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              {meta.total} patient{meta.total !== 1 ? "s" : ""} registered
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
+        <PageHeader
+          title="Patient Search & Registry"
+          subtitle={`${meta.total} patient${meta.total !== 1 ? "s" : ""} registered`}
+          actions={
             <Button
               variant="contained"
               startIcon={<PersonAddRounded />}
@@ -168,8 +178,8 @@ export default function PatientsList() {
             >
               Register New Patient
             </Button>
-          </Box>
-        </Box>
+          }
+        />
 
         {errorMsg && (
           <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
@@ -193,7 +203,7 @@ export default function PatientsList() {
               ),
               endAdornment: loading ? (
                 <InputAdornment position="end">
-                  <CircularProgress size={18} sx={{ color: "#06b6d4" }} />
+                  <HeartbeatLoader size={22} />
                 </InputAdornment>
               ) : null,
             }}
@@ -212,14 +222,9 @@ export default function PatientsList() {
           />
         </Box>
 
-        {error && typeof error === "string" && (
+        {error && (
           <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5" }}>
-            {error}
-          </Alert>
-        )}
-        {error && typeof error !== "string" && (
-          <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5" }}>
-            Failed to load patients
+            {(error as any)?.response?.data?.message || "Failed to load patients"}
           </Alert>
         )}
 
@@ -233,48 +238,51 @@ export default function PatientsList() {
             overflow: "hidden",
           }}
         >
-          <TableContainer>
-            <Table>
+          <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  {["Patient", "MRN / UHID", "Age / DOB", "Gender", "Blood Group", "Phone", "Actions"].map((h, i) => (
+                  <SortableHeadCell label="Patient" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} />
+                  <SortableHeadCell label="MRN / UHID" sortKey="uhid" orderBy={orderBy} order={order} onSort={onSort} />
+                  <SortableHeadCell label="Age / DOB" sortKey="dob" orderBy={orderBy} order={order} onSort={onSort} />
+                  {["Gender", "Blood Group"].map((h) => (
                     <TableCell
                       key={h}
-                      align={i === 6 ? "right" : "left"}
                       sx={{
-                        color: "text.secondary",
-                        fontWeight: 700,
-                        fontSize: "0.72rem",
-                        textTransform: "uppercase",
-                        letterSpacing: 0.5,
-                        borderBottom: "1px solid", borderColor: "divider",
-                        py: 2,
+                        color: "text.secondary", fontWeight: 700, fontSize: "0.75rem",
+                        textTransform: "uppercase", letterSpacing: 0.5,
+                        borderBottom: "1px solid", borderColor: "divider", py: 2,
                         bgcolor: "background.default",
                       }}
                     >
                       {h}
                     </TableCell>
                   ))}
+                  <SortableHeadCell label="Phone" sortKey="phone" orderBy={orderBy} order={order} onSort={onSort} />
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: "text.secondary", fontWeight: 700, fontSize: "0.75rem",
+                      textTransform: "uppercase", letterSpacing: 0.5,
+                      borderBottom: "1px solid", borderColor: "divider", py: 2,
+                      bgcolor: "background.default",
+                    }}
+                  >
+                    Actions
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loading && patients.length === 0 ? (
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <TableRow key={i}>
-                      {Array.from({ length: 7 }).map((_, j) => (
-                        <TableCell key={j} sx={{ borderBottom: "1px solid", borderColor: "divider", py: 2 }}>
-                          <Box sx={{ height: 20, borderRadius: 1, bgcolor: "rgba(255,255,255,0.04)" }} />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
+                  <TableRowsSkeleton rows={6} columns={7} />
                 ) : patients.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} sx={{ textAlign: "center", py: 8, borderBottom: "none" }}>
-                      <PersonAddRounded sx={{ fontSize: 48, color: "#1e3a5f", mb: 2 }} />
-                      <Typography variant="body1" sx={{ color: "#334155", mb: 1 }}>
-                        {search ? "No patients found matching your search" : "No patients registered yet"}
-                      </Typography>
+                    <TableCell colSpan={7} sx={{ textAlign: "center", py: 6, borderBottom: "none" }}>
+                      <Mascot
+                        pose={search ? "no-matches" : "nothing-here-yet"}
+                        title={search ? "No matches" : "No patients yet"}
+                        subtitle={search ? "No patients found matching your search." : "No patients registered yet."}
+                      />
                       {!search && (
                         <Button
                           variant="contained"
@@ -296,7 +304,7 @@ export default function PatientsList() {
                         transition: "background 0.15s ease",
                         cursor: "pointer",
                       }}
-                      onClick={() => navigate(`/reception/patients/${patient.patientId}`)}
+                      onClick={() => navigate(`${basePath}/patients/${patient.patientId}`)}
                     >
                       {/* Patient name + email */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
@@ -306,16 +314,25 @@ export default function PatientsList() {
                               width: 36,
                               height: 36,
                               bgcolor: getAvatarColor(patient.patientId),
-                              fontSize: "0.8rem",
+                              fontSize: "0.875rem",
                               fontWeight: 700,
                             }}
                           >
-                            {getInitials(patient)}
+                            {getInitials(patient.firstName, patient.lastName)}
                           </Avatar>
                           <Box>
-                            <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
-                              {patient.firstName} {patient.lastName}
-                            </Typography>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
+                                {patient.firstName} {patient.lastName}
+                              </Typography>
+                              {(patient.outstandingDues ?? 0) > 0 && (
+                                <Chip
+                                  label={`Dues ₹${Number(patient.outstandingDues).toFixed(0)}`}
+                                  size="small"
+                                  sx={{ height: 18, bgcolor: "rgba(239,68,68,0.12)", color: "#ef4444", fontWeight: 700, fontSize: "0.75rem" }}
+                                />
+                              )}
+                            </Box>
                             <Typography variant="caption" sx={{ color: "text.secondary" }}>
                               {patient.email}
                             </Typography>
@@ -335,7 +352,7 @@ export default function PatientsList() {
                               border: "1px solid", borderColor: "divider",
                               fontWeight: 700,
                               fontFamily: "monospace",
-                              fontSize: "0.78rem",
+                              fontSize: "0.875rem",
                             }}
                           />
                           <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(patient.uhidNumber); }} sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4" } }}>
@@ -355,7 +372,7 @@ export default function PatientsList() {
                         </Box>
                       </TableCell>
                       {/* Gender */}
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, color: "text.secondary", fontSize: "0.85rem" }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, color: "text.secondary", fontSize: "0.875rem" }}>
                         {patient.genderLabel}
                       </TableCell>
                       {/* Blood Group */}
@@ -373,60 +390,44 @@ export default function PatientsList() {
                         />
                       </TableCell>
                       {/* Phone */}
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, color: "text.secondary", fontSize: "0.85rem" }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, color: "text.secondary", fontSize: "0.875rem" }}>
                         {patient.phone}
                       </TableCell>
-                      {/* Actions */}
-                      <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }} onClick={(e) => e.stopPropagation()}>
-                        <Tooltip title="View Profile">
-                          <IconButton
-                            size="small"
-                            onClick={() => navigate(`/reception/patients/${patient.patientId}`)}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6,182,212,0.08)" } }}
-                          >
-                            <VisibilityRounded fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Book Appointment">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/reception/appointments/new?patientId=${patient.patientId}`);
-                            }}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#3b82f6", bgcolor: "rgba(59,130,246,0.08)" } }}
-                          >
+                      {/* Actions — primary quick-actions + overflow menu */}
+                      <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
+                        <Tooltip title="Book appointment">
+                          <IconButton size="small"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/reception/appointments/new?patientId=${patient.patientId}`); }}
+                            sx={{ color: "text.secondary", "&:hover": { color: "#3b82f6", bgcolor: "rgba(59,130,246,0.08)" } }}>
                             <CalendarMonthRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Create Visit">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/reception/queue/new?patientId=${patient.patientId}`);
-                            }}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#10b981", bgcolor: "rgba(16,185,129,0.08)" } }}
-                          >
-                            <QueuePlayNextRounded fontSize="small" />
+                        <Tooltip title="Bill / collect payment">
+                          <IconButton size="small"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/reception/billing?patientId=${patient.patientId}`); }}
+                            sx={{ color: "text.secondary", "&:hover": { color: "#f59e0b", bgcolor: "rgba(245,158,11,0.08)" } }}>
+                            <ReceiptLongRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Edit Patient">
-                          <IconButton
-                            size="small"
-                            onClick={() => navigate(`/reception/patients/${patient.patientId}/edit`)}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#a78bfa", bgcolor: "rgba(139,92,246,0.08)" } }}
-                          >
-                            <EditRounded fontSize="small" />
+                        <Tooltip title="Admit (IPD)">
+                          <IconButton size="small"
+                            onClick={(e) => { e.stopPropagation(); setAdmitPatient(patient); }}
+                            sx={{ color: "text.secondary", "&:hover": { color: "#0891b2", bgcolor: "rgba(8,145,178,0.08)" } }}>
+                            <LocalHotelRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Delete">
-                          <IconButton
-                            size="small"
-                            onClick={() => setDeleteDialog({ open: true, patient })}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#f87171", bgcolor: "rgba(239,68,68,0.08)" } }}
-                          >
-                            <DeleteRounded fontSize="small" />
+                        <Tooltip title="View profile">
+                          <IconButton size="small"
+                            onClick={(e) => { e.stopPropagation(); navigate(`${basePath}/patients/${patient.patientId}`); }}
+                            sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6,182,212,0.08)" } }}>
+                            <VisibilityRounded fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="More">
+                          <IconButton size="small"
+                            onClick={(e) => { e.stopPropagation(); setMenu({ anchor: e.currentTarget, patient }); }}
+                            sx={{ color: "text.secondary" }}>
+                            <MoreVertRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       </TableCell>
@@ -483,10 +484,42 @@ export default function PatientsList() {
             Cancel
           </Button>
           <Button fullWidth variant="contained" onClick={handleDelete} disabled={deleteMutation.isPending} sx={{ bgcolor: "#ef4444", "&:hover": { bgcolor: "#dc2626" }, textTransform: "none", fontWeight: 600 }}>
-            {deleteMutation.isPending ? <CircularProgress size={18} color="inherit" /> : "Delete"}
+            {deleteMutation.isPending ? <HeartbeatLoader size={22} /> : "Delete"}
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Row overflow menu */}
+      <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={() => setMenu({ anchor: null, patient: null })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}>
+        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); navigate(`/reception/appointments/new?patientId=${p.patientId}`); }}>
+          <ListItemIcon><QueuePlayNextRounded fontSize="small" /></ListItemIcon>
+          <ListItemText>Walk-in visit</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); setIdCardPatient(p); }}>
+          <ListItemIcon><QrCode2Rounded fontSize="small" /></ListItemIcon>
+          <ListItemText>Print ID card</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); navigator.clipboard.writeText(p.uhidNumber); toast.success("UHID copied"); }}>
+          <ListItemIcon><ContentCopyRounded fontSize="small" /></ListItemIcon>
+          <ListItemText>Copy UHID</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); navigate(`/reception/patients/${p.patientId}/edit`); }}>
+          <ListItemIcon><EditRounded fontSize="small" /></ListItemIcon>
+          <ListItemText>Edit patient</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); setDeleteDialog({ open: true, patient: p }); }} sx={{ color: "#ef4444" }}>
+          <ListItemIcon><DeleteRounded fontSize="small" sx={{ color: "#ef4444" }} /></ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      <IdCardModal open={!!idCardPatient} onClose={() => setIdCardPatient(null)} patient={idCardPatient} />
+      {admitPatient && (
+        <AdmitDialog open onClose={() => setAdmitPatient(null)} prefilledPatientId={admitPatient.patientId}
+          onAdmitted={() => setAdmitPatient(null)} />
+      )}
     </>
   );
 }

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -15,7 +16,6 @@ import {
   TableRow,
   IconButton,
   Chip,
-  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -30,43 +30,53 @@ import {
   DeleteRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import { useToast } from "../../contexts/ToastContext";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+const headSx = { color: "text.secondary", fontWeight: 600, textTransform: "none", letterSpacing: "normal", fontSize: "0.875rem", bgcolor: "background.paper" } as const;
 
 export default function PlansList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [plans, setPlans] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
   // Dialogs & Menus
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
 
-  const fetchPlans = async () => {
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get("/plans");
-      setPlans(response.data.data);
-    } catch (error) {
-      console.error("Failed to fetch plans", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const qc = useQueryClient();
+  const toast = useToast();
 
-  useEffect(() => {
-    fetchPlans();
-  }, []);
+  const { data: plans = [], isLoading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["plans"],
+    queryFn: async () => (await axiosInstance.get("/plans")).data.data,
+  });
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    try {
-      await axiosInstance.delete(`/plans/${deleteId}`);
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => axiosInstance.delete(`/plans/${id}`),
+    onSuccess: () => {
+      toast.success("Plan deleted");
       setDeleteId(null);
-      fetchPlans();
-    } catch (error) {
-      console.error("Failed to delete plan", error);
-    }
+      qc.invalidateQueries({ queryKey: ["plans"] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || "Failed to delete plan"),
+  });
+
+  const { sorted, orderBy, order, onSort } = useTableSort(plans, {
+    planName: (p) => p.planName,
+    monthlyPrice: (p) => p.monthlyPrice,
+    maxDoctors: (p) => p.maxDoctors,
+    activeHospitals: (p) => p._count?.branches ?? 0,
+  });
+
+  const handleDelete = () => {
+    if (deleteId) deleteMutation.mutate(deleteId);
   };
 
   const openActionMenu = (e: React.MouseEvent<HTMLElement>, planId: string) => {
@@ -76,29 +86,21 @@ export default function PlansList() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("plans.title", "Subscription Plans")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("plans.subtitle", "Manage hospital subscription tiers and features")}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/plans/new")}
-          sx={{
-            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-            boxShadow: "0 4px 14px 0 rgba(16, 185, 129, 0.39)",
-            borderRadius: 2,
-          }}
-        >
-          {t("plans.addPlan", "Add Plan")}
-        </Button>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title={t("plans.title", "Subscription Plans")}
+        subtitle={t("plans.subtitle", "Manage hospital subscription tiers and features")}
+        actions={
+          <ActionButton
+            accentFrom="#10b981"
+            accentTo="#059669"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/plans/new")}
+          >
+            {t("plans.addPlan", "Add Plan")}
+          </ActionButton>
+        }
+      />
 
       <Paper
         elevation={2}
@@ -110,33 +112,35 @@ export default function PlansList() {
           overflow: "hidden",
         }}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("plans.planName", "Plan Name")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("plans.price", "Price (Mo/Yr)")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("plans.limits", "Limits (Doc/Br/GB)")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("plans.features", "Features")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("plans.activeHospitals", "Active Hospitals")}</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
+                <SortableHeadCell label={t("plans.planName", "Plan Name")} sortKey="planName" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
+                <SortableHeadCell label={t("plans.price", "Price (Mo/Yr)")} sortKey="monthlyPrice" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
+                <SortableHeadCell label={t("plans.limits", "Limits (Doc/Br/GB)")} sortKey="maxDoctors" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("plans.features", "Features")}</TableCell>
+                <SortableHeadCell label={t("plans.activeHospitals", "Active Hospitals")} sortKey="activeHospitals" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("common.actions", "Actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {isLoading ? (
+                <TableRowsSkeleton rows={6} columns={6} />
+              ) : isError ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "#10b981" }} />
+                  <TableCell colSpan={6} sx={{ py: 4, border: 0 }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
-              ) : plans.length === 0 ? (
+              ) : sorted.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 8, color: "text.secondary" }}>
                     {t("common.noData")}
                   </TableCell>
                 </TableRow>
               ) : (
-                plans.map((plan) => (
+                sorted.map((plan) => (
                   <TableRow key={plan.planId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
                     <TableCell sx={{ color: "text.primary", fontWeight: 600 }}>
                       {plan.planName}
@@ -154,11 +158,11 @@ export default function PlansList() {
                       <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", maxWidth: 200 }}>
                         {Array.isArray(plan.featuresJson) ? (
                           plan.featuresJson.slice(0, 3).map((f: string) => (
-                            <Chip key={f} label={f} size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: "#34d399", height: 20, fontSize: "0.7rem" }} />
+                            <Chip key={f} label={f} size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: "#34d399", height: 20, fontSize: "0.75rem" }} />
                           ))
                         ) : null}
                         {Array.isArray(plan.featuresJson) && plan.featuresJson.length > 3 && (
-                          <Chip label={`+${plan.featuresJson.length - 3}`} size="small" sx={{ bgcolor: "rgba(255, 255, 255, 0.1)", color: "text.primary", height: 20, fontSize: "0.7rem" }} />
+                          <Chip label={`+${plan.featuresJson.length - 3}`} size="small" sx={{ bgcolor: "rgba(255, 255, 255, 0.1)", color: "text.primary", height: 20, fontSize: "0.75rem" }} />
                         )}
                       </Box>
                     </TableCell>
@@ -204,6 +208,6 @@ export default function PlansList() {
           <Button onClick={handleDelete} color="error" variant="contained">{t("common.delete", "Delete")}</Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </PageContainer>
   );
 }

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Box, Typography, Button, Grid, TextField, Slider,
-  CircularProgress, Alert, Divider, IconButton, Chip,
+  Alert, Divider, IconButton, Chip,
 } from "@mui/material";
 import {
   CloseRounded, FavoriteRounded, ThermostatRounded, MonitorHeartRounded,
@@ -10,6 +11,8 @@ import {
   SentimentVeryDissatisfied, SentimentSatisfied, SentimentVerySatisfied,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import { useToast } from "../../contexts/ToastContext";
 
 interface VitalsModalProps {
@@ -20,6 +23,12 @@ interface VitalsModalProps {
   patientName: string;
   onSaved?: () => void;
   readonly?: boolean;
+  // Where to READ vitals from. Defaults to the reception endpoint (used by the
+  // reception + nurse panels). The doctor panel can't reach /reception/* — it
+  // passes its own /doctor/... read path so "View Vitals" doesn't 403 into a
+  // blank form. The save endpoint is unaffected (only used when !readonly, i.e.
+  // never in the doctor's read-only view).
+  readUrl?: string;
 }
 
 const defaultVitals = {
@@ -85,12 +94,21 @@ function VitalInput({
   );
 }
 
-export default function VitalsModal({ open, onClose, appointmentId, patientId, patientName, onSaved, readonly = false }: VitalsModalProps) {
+export default function VitalsModal({ open, onClose, appointmentId, patientId, patientName, onSaved, readonly = false, readUrl }: VitalsModalProps) {
+  const vitalsReadUrl = readUrl || `/reception/appointments/${appointmentId}/vitals`;
   const [form, setForm] = useState(defaultVitals);
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const toast = useToast();
+
+  // Vitals load only when the dialog is open. A missing record is a normal
+  // state (patient has no vitals yet), so query errors are intentionally not
+  // surfaced — the form just falls back to defaults.
+  const { data: existingVitals, isLoading: loading } = useQuery({
+    queryKey: ["vitals", appointmentId, vitalsReadUrl],
+    queryFn: async () => (await axiosInstance.get(vitalsReadUrl)).data.data,
+    enabled: open && !!appointmentId,
+  });
   // BMI calculation
   const bmi = form.heightCm && form.weightKg
     ? (Number(form.weightKg) / Math.pow(Number(form.heightCm) / 100, 2)).toFixed(1)
@@ -111,42 +129,31 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
 
   const painColor = form.painScale <= 3 ? "#10b981" : form.painScale <= 6 ? "#f59e0b" : "#ef4444";
 
+  // Seed the form when the dialog opens (with fetched/cached vitals), and
+  // reset to defaults when it closes.
   useEffect(() => {
-    if (open && appointmentId) {
-      fetchExistingVitals();
-    }
     if (!open) {
       setForm(defaultVitals);
       setSuccess(false);
+      return;
     }
-  }, [open, appointmentId]);
-
-  const fetchExistingVitals = async () => {
-    setLoading(true);
-    try {
-      const res = await axiosInstance.get(`/reception/appointments/${appointmentId}/vitals`);
-      if (res.data.data) {
-        const v = res.data.data;
-        setForm({
-          bpSystolic: v.bpSystolic || "",
-          bpDiastolic: v.bpDiastolic || "",
-          pulseRate: v.pulseRate || "",
-          temperatureC: v.temperatureC || "",
-          oxygenSaturation: v.oxygenSaturation || "",
-          heightCm: v.heightCm || "",
-          weightKg: v.weightKg || "",
-          bloodSugarLevel: v.bloodSugarLevel || "",
-          painScale: v.painScale || 0,
-          notes: v.notes || "",
-          ecgRequired: v.ecgRequired || false,
-        });
-      }
-    } catch {
-      // No existing vitals — that's fine
-    } finally {
-      setLoading(false);
+    if (existingVitals) {
+      const v = existingVitals;
+      setForm({
+        bpSystolic: v.bpSystolic || "",
+        bpDiastolic: v.bpDiastolic || "",
+        pulseRate: v.pulseRate || "",
+        temperatureC: v.temperatureC || "",
+        oxygenSaturation: v.oxygenSaturation || "",
+        heightCm: v.heightCm || "",
+        weightKg: v.weightKg || "",
+        bloodSugarLevel: v.bloodSugarLevel || "",
+        painScale: v.painScale || 0,
+        notes: v.notes || "",
+        ecgRequired: v.ecgRequired || false,
+      });
     }
-  };
+  }, [open, existingVitals]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -236,9 +243,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
 
       <DialogContent sx={{ p: 3, overflowY: "auto" }}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress sx={{ color: "#06b6d4" }} />
-          </Box>
+          <PageLoader />
         ) : (
           <>
 {/* ── Section 1: Blood Pressure & Pulse ── */}
@@ -292,11 +297,11 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
                   {bmi ? (
                     <>
                       <Typography variant="h6" sx={{ color: bmiCategory?.color, fontWeight: 800, lineHeight: 1 }}>{bmi}</Typography>
-                      <Typography variant="caption" sx={{ color: bmiCategory?.color, fontSize: "0.65rem", fontWeight: 600 }}>BMI</Typography>
-                      <Typography variant="caption" sx={{ color: bmiCategory?.color, fontSize: "0.6rem" }}>{bmiCategory?.label}</Typography>
+                      <Typography variant="caption" sx={{ color: bmiCategory?.color, fontSize: "0.75rem", fontWeight: 600 }}>BMI</Typography>
+                      <Typography variant="caption" sx={{ color: bmiCategory?.color, fontSize: "0.75rem" }}>{bmiCategory?.label}</Typography>
                     </>
                   ) : (
-                    <Typography variant="caption" sx={{ color: "text.secondary", textAlign: "center", fontSize: "0.65rem" }}>BMI auto</Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary", textAlign: "center", fontSize: "0.75rem" }}>BMI auto</Typography>
                   )}
                 </Box>
               </Grid>
@@ -331,7 +336,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
                 sx={{
                   color: painColor,
                   "& .MuiSlider-thumb": { boxShadow: `0 0 0 4px ${painColor}22` },
-                  "& .MuiSlider-markLabel": { color: "text.secondary", fontSize: "0.68rem" },
+                  "& .MuiSlider-markLabel": { color: "text.secondary", fontSize: "0.75rem" },
                 }}
               />
             </Box>
@@ -374,14 +379,14 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
             <Chip
               label={`BMI: ${bmi} — ${bmiCategory?.label}`}
               size="small"
-              sx={{ bgcolor: `${bmiCategory?.color}22`, color: bmiCategory?.color, fontWeight: 600, fontSize: "0.72rem" }}
+              sx={{ bgcolor: `${bmiCategory?.color}22`, color: bmiCategory?.color, fontWeight: 600, fontSize: "0.75rem" }}
             />
           )}
           {form.bpSystolic && form.bpDiastolic && (
             <Chip
               label={`BP: ${form.bpSystolic}/${form.bpDiastolic} mmHg`}
               size="small"
-              sx={{ bgcolor: "rgba(239,68,68,0.1)", color: "#f87171", fontWeight: 600, fontSize: "0.72rem" }}
+              sx={{ bgcolor: "rgba(239,68,68,0.1)", color: "#f87171", fontWeight: 600, fontSize: "0.75rem" }}
             />
           )}
         </Box>
@@ -398,7 +403,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
               onClick={handleSubmit}
               variant="contained"
               disabled={saving || success}
-              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRounded />}
+              startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
               id="vitals-save-button"
               sx={{
                 background: "linear-gradient(135deg, #06b6d4, #0891b2)",

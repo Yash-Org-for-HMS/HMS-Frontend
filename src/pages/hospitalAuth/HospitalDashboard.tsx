@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Grid, 
-  CircularProgress,
+import { useQuery } from "@tanstack/react-query";
+import {
+  Box,
+  Typography,
+  Paper,
+  Grid,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Divider,
@@ -15,6 +15,11 @@ import {
 } from "@mui/material";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
+import PageHeader from "../../components/layout/PageHeader";
+import PageLoader from "../../components/PageLoader";
+import StatCard from "../../components/StatCard";
 import { useNavigate } from "react-router-dom";
 import { 
   PeopleAltRounded,
@@ -44,7 +49,7 @@ interface DashboardStats {
   totalDoctors: number;
   totalDepartments: number;
   enabledModules: number;
-  pendingTasks: { id: string; title: string; completed: boolean }[];
+  pendingTasks: { id: string; title: string; completed: boolean; description?: string; path?: string }[];
   recentActivities: { activityLogId: string; action: string; timestamp: string }[];
   recentNotifications: { id: string; message: string; timestamp: string }[];
   staffGrowth: { month: string; count: number }[];
@@ -53,108 +58,54 @@ interface DashboardStats {
 
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ec4899", "#8b5cf6", "#06b6d4"];
 
-// Minimalist Square Stat Card
-function StatCard({ title, value, icon, color }: any) {
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 3,
-        borderRadius: 4,
-        bgcolor: "background.paper",
-        border: "1px solid", borderColor: "divider",
-        transition: "all 0.2s ease-in-out",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        height: 160,
-        "&:hover": {
-          boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
-          transform: "translateY(-2px)",
-        },
-      }}
-    >
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <Box
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: 3,
-            bgcolor: `${color}15`,
-            color: color,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {icon}
-        </Box>
-      </Box>
-      <Box>
-        <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary" }}>
-          {value}
-        </Typography>
-        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, mt: 1, display: "block" }}>
-          {title}
-        </Typography>
-      </Box>
-    </Paper>
-  );
-}
 
 export default function HospitalDashboard() {
   const { user } = useHospitalAuth();
   const theme = useTheme();
   const navigate = useNavigate();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await axiosInstance.get("/hospital/dashboard/stats");
-        setStats(res.data.data);
-      } catch (err) {
-        console.error("Failed to fetch dashboard stats", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
+  const { data: stats, isLoading: loading, isError, error, refetch } = useQuery<DashboardStats>({
+    queryKey: ["hospital-dashboard-stats"],
+    queryFn: async () => (await axiosInstance.get("/hospital/dashboard/stats")).data.data,
+  });
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: theme.palette.primary.main }} />
+      <PageLoader />
+    );
+  }
+
+  if (isError || !stats) {
+    return (
+      <Box sx={{ pb: 6 }}>
+        <ErrorState
+          title="Couldn't load the dashboard"
+          message={(error as any)?.response?.data?.message}
+          onRetry={() => refetch()}
+        />
       </Box>
     );
   }
 
   return (
     <Box sx={{ pb: 6 }}>
-      <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: "text.primary", mb: 1, letterSpacing: "-0.5px" }}>
-            Hospital Dashboard
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Welcome back, {user?.firstName} {user?.lastName}. Here's what's happening today.
-          </Typography>
-        </Box>
-        {stats?.activePlanName && (
-          <Chip
-            label={`Active Plan: ${stats.activePlanName}`}
-            sx={{ bgcolor: "background.paper", color: "text.primary", fontWeight: 600, px: 1, border: "1px solid", borderColor: "divider" }}
-          />
-        )}
-      </Box>
+      <PageHeader
+        title="Hospital Dashboard"
+        subtitle={`Welcome back, ${user?.firstName} ${user?.lastName}. Here's what's happening today.`}
+        actions={
+          stats?.activePlanName ? (
+            <Chip
+              label={`Active Plan: ${stats.activePlanName}`}
+              sx={{ bgcolor: "background.paper", color: "text.primary", fontWeight: 600, px: 1, border: "1px solid", borderColor: "divider" }}
+            />
+          ) : undefined
+        }
+      />
 
       {/* Primary Metrics Row */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6 }} sx={{ flexBasis: { md: "20%" }, maxWidth: { md: "20%" } }}>
           <StatCard 
-            title="Total Staff" 
+            label="Total Staff"
             value={stats?.totalStaff || 0} 
             icon={<PeopleAltRounded />} 
             color="#818cf8" 
@@ -162,7 +113,7 @@ export default function HospitalDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }} sx={{ flexBasis: { md: "20%" }, maxWidth: { md: "20%" } }}>
           <StatCard 
-            title="Total Doctors" 
+            label="Total Doctors"
             value={stats?.totalDoctors || 0} 
             icon={<MedicalServicesRounded />} 
             color="#34d399" 
@@ -170,7 +121,7 @@ export default function HospitalDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }} sx={{ flexBasis: { md: "20%" }, maxWidth: { md: "20%" } }}>
           <StatCard 
-            title="Departments" 
+            label="Departments"
             value={stats?.totalDepartments || 0} 
             icon={<DomainRounded />} 
             color="#fbbf24" 
@@ -178,7 +129,7 @@ export default function HospitalDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }} sx={{ flexBasis: { md: "20%" }, maxWidth: { md: "20%" } }}>
           <StatCard 
-            title="Active Users" 
+            label="Active Users"
             value={stats?.activeUsers || 0} 
             icon={<VerifiedUserRounded />} 
             color="#f472b6" 
@@ -233,7 +184,7 @@ export default function HospitalDashboard() {
               </ResponsiveContainer>
             ) : (
               <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80%" }}>
-                <Typography color="text.secondary">No department data available</Typography>
+                <Mascot pose="nothing-here-yet" subtitle="No department data available." size={120} />
               </Box>
             )}
           </Paper>
@@ -244,30 +195,46 @@ export default function HospitalDashboard() {
       <Grid container spacing={4}>
         <Grid size={{ xs: 12, md: 8 }} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <Paper elevation={0} sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 4, overflow: "hidden" }}>
-            <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 1.5 }}>
-              <AssignmentRounded sx={{ color: "text.secondary" }} />
-              <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600 }}>Pending Setup Tasks</Typography>
+            <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <AssignmentRounded sx={{ color: "text.secondary" }} />
+                <Box>
+                  <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600 }}>Setup Guide</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>Complete these steps in order to get your hospital running.</Typography>
+                </Box>
+              </Box>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, whiteSpace: "nowrap" }}>
+                {stats?.pendingTasks.filter((t) => t.completed).length ?? 0} of {stats?.pendingTasks.length ?? 0} done
+              </Typography>
             </Box>
             <List disablePadding>
               {stats?.pendingTasks.map((task, index) => (
                 <Box key={task.id}>
-                  <ListItem sx={{ py: 2 }}>
-                    <ListItemIcon sx={{ minWidth: 40 }}>
+                  <ListItemButton
+                    onClick={() => task.path && navigate(task.path)}
+                    sx={{ py: 2, alignItems: "flex-start" }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 40, mt: 0.25 }}>
                       {task.completed ? (
                         <CheckCircleOutlineRounded sx={{ color: "success.main" }} />
                       ) : (
                         <RadioButtonUncheckedRounded sx={{ color: "text.disabled" }} />
                       )}
                     </ListItemIcon>
-                    <ListItemText 
-                      primary={task.title} 
-                      primaryTypographyProps={{ 
+                    <ListItemText
+                      primary={`${index + 1}. ${task.title}`}
+                      secondary={task.description}
+                      primaryTypographyProps={{
                         color: task.completed ? "text.disabled" : "text.primary",
-                        fontWeight: task.completed ? 400 : 500,
+                        fontWeight: task.completed ? 500 : 700,
                         sx: { textDecoration: task.completed ? "line-through" : "none" }
-                      }} 
+                      }}
+                      secondaryTypographyProps={{ color: "text.secondary", sx: { mt: 0.25 } }}
                     />
-                  </ListItem>
+                    {!task.completed && (
+                      <ArrowForwardIosRounded sx={{ fontSize: 14, color: "text.disabled", mt: 1, ml: 1, flexShrink: 0 }} />
+                    )}
+                  </ListItemButton>
                   {index < stats.pendingTasks.length - 1 && <Divider />}
                 </Box>
               ))}
@@ -283,8 +250,8 @@ export default function HospitalDashboard() {
             </Box>
             <List disablePadding>
               {stats?.recentActivities.length === 0 ? (
-                <ListItem sx={{ py: 4, justifyContent: "center" }}>
-                  <Typography variant="body2" color="text.secondary">No recent activities found.</Typography>
+                <ListItem sx={{ py: 2, justifyContent: "center" }}>
+                  <Mascot pose="nothing-here-yet" subtitle="No recent activities found." size={120} />
                 </ListItem>
               ) : (
                 stats?.recentActivities.map((activity, index) => (
@@ -293,8 +260,8 @@ export default function HospitalDashboard() {
                       <ListItemText 
                         primary={activity.action} 
                         secondary={new Date(activity.timestamp).toLocaleString()}
-                        primaryTypographyProps={{ color: "text.primary", fontWeight: 500, fontSize: "0.9rem" }}
-                        secondaryTypographyProps={{ color: "text.secondary", fontSize: "0.8rem", mt: 0.5 }}
+                        primaryTypographyProps={{ color: "text.primary", fontWeight: 500, fontSize: "0.875rem" }}
+                        secondaryTypographyProps={{ color: "text.secondary", fontSize: "0.875rem", mt: 0.5 }}
                       />
                     </ListItem>
                     {index < stats.recentActivities.length - 1 && <Divider />}

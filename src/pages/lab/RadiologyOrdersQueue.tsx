@@ -1,13 +1,23 @@
-import { useState, useEffect, useRef } from "react";
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Chip, Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab } from "@mui/material";
-import { VisibilityRounded, CheckCircleRounded, InsertDriveFileRounded, EditRounded, CloudUploadRounded } from "@mui/icons-material";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { orderStatusColor } from "../../utils/statusColors";
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab } from "@mui/material";
+import { VisibilityRounded, CheckCircleRounded, InsertDriveFileRounded, EditRounded, CloudUploadRounded, AddRounded } from "@mui/icons-material";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
+import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
+import WalkInOrderDialog from "../../components/lab/WalkInOrderDialog";
 import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
 import { assetUrl } from "../../utils/assetUrl";
+import PageHeader from "../../components/layout/PageHeader";
+import { useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { useToast } from "../../contexts/ToastContext";
 
 export default function RadiologyOrdersQueue() {
+  const toast = useToast();
   const { data: orders = [], isLoading: loading, refetch: fetchOrders } = useQuery({
     queryKey: ["radiology-orders-queue"],
     queryFn: async () => {
@@ -28,6 +38,7 @@ export default function RadiologyOrdersQueue() {
   const [uploading, setUploading] = useState(false);
   const [showPOS, setShowPOS] = useState(false);
   const [tabValue, setTabValue] = useState(0);
+  const [walkInOpen, setWalkInOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Listen for real-time queue updates
@@ -44,19 +55,12 @@ export default function RadiologyOrdersQueue() {
     try {
       const res = await axiosInstance.get("/lab/radiology-macros");
       setMacros(res.data.data || []);
-    } catch (err) {
-      console.error("Failed to fetch macros", err);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to load report macros");
     }
   };
 
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "COMPLETED": return "success";
-      case "IN_PROGRESS": return "warning";
-      default: return "default";
-    }
-  };
 
   const handleEditClick = (order: any) => {
     setEditOrder(order);
@@ -126,19 +130,37 @@ export default function RadiologyOrdersQueue() {
            date.getFullYear() === today.getFullYear();
   };
 
-  const filteredOrders = orders.filter((order: any) => {
+  // Memoized so useTableSort's own memo (keyed on this array's identity) isn't
+  // defeated by a fresh array on every render — without this, sorting silently
+  // re-ran on every unrelated re-render regardless of whether orders/tabValue changed.
+  const filteredOrders = useMemo(() => orders.filter((order: any) => {
     const today = isToday(order.orderDate);
     const completed = order.status === "COMPLETED";
-    
+
     if (tabValue === 0) return today && !completed; // Today's Pending
     if (tabValue === 1) return !today && !completed; // Past Pending
     if (tabValue === 2) return completed; // Completed
     return true; // All
+  }), [orders, tabValue]);
+
+  const { sorted, orderBy, order, onSort } = useTableSort(filteredOrders, {
+    scanType: (o: any) => o.scanType,
+    patient: (o: any) => `${o.patient?.firstName ?? ""} ${o.patient?.lastName ?? ""}`.trim(),
+    doctor: (o: any) => `${o.doctor?.user?.firstName ?? ""} ${o.doctor?.user?.lastName ?? ""}`.trim(),
+    date: (o: any) => (o.orderDate ? new Date(o.orderDate) : null),
+    status: (o: any) => o.status ?? "PENDING",
   });
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>Radiology Orders</Typography>
+      <PageHeader
+        title="Radiology Orders"
+        actions={
+          <Button variant="contained" startIcon={<AddRounded />} onClick={() => setWalkInOpen(true)}>
+            New Walk-in Order
+          </Button>
+        }
+      />
 
       <Paper sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} variant="scrollable" scrollButtons="auto">
@@ -151,36 +173,37 @@ export default function RadiologyOrdersQueue() {
 
       <Paper sx={{ p: 2, borderRadius: 3 }}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}><CircularProgress /></Box>
+          <ListSkeleton rows={6} />
         ) : orders.length === 0 ? (
-          <Typography sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>No radiology orders found.</Typography>
+          <Mascot pose="all-caught-up" title="No radiology orders" subtitle="No radiology orders found." />
         ) : (
-          <Table>
+          <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell>Scan Type</TableCell>
-                <TableCell>Patient</TableCell>
-                <TableCell>Doctor</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>Status</TableCell>
+                <SortableHeadCell label="Scan Type" sortKey="scanType" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Patient" sortKey="patient" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Doctor" sortKey="doctor" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Date" sortKey="date" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
                 <TableCell align="right">Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredOrders.length === 0 ? (
+              {sorted.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 3, color: "text.secondary" }}>
-                    No orders match the selected filter.
+                  <TableCell colSpan={6} sx={{ py: 3, border: 0 }}>
+                    <Mascot pose="no-matches" subtitle="No orders match the selected filter." size={110} />
                   </TableCell>
                 </TableRow>
-              ) : filteredOrders.map((order: any) => (
+              ) : sorted.map((order: any) => (
                 <TableRow key={order.radiologyOrderId} hover>
                   <TableCell sx={{ fontWeight: 600 }}>{order.scanType}</TableCell>
                   <TableCell>{order.patient?.firstName} {order.patient?.lastName}</TableCell>
                   <TableCell>{order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</TableCell>
                   <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Chip label={order.status || "PENDING"} color={getStatusColor(order.status) as any} size="small" />
+                    <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status) as any} size="small" />
                   </TableCell>
                   <TableCell align="right">
                     <Button 
@@ -196,6 +219,7 @@ export default function RadiologyOrdersQueue() {
               ))}
             </TableBody>
           </Table>
+          </TableContainer>
         )}
       </Paper>
 
@@ -254,7 +278,7 @@ export default function RadiologyOrdersQueue() {
                   accept="application/pdf,image/jpeg,image/png"
                 />
                 {uploading ? (
-                  <CircularProgress size={24} />
+                  <HeartbeatLoader size={22} />
                 ) : reportUrl ? (
                   <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
                     <CheckCircleRounded color="success" fontSize="large" />
@@ -313,7 +337,7 @@ export default function RadiologyOrdersQueue() {
           )}
           <Button onClick={handleClose} color="inherit">Cancel</Button>
           <Button onClick={handleSave} variant="contained" disabled={saving || editOrder?.billingLockActive}>
-            {saving ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
+            {saving ? <HeartbeatLoader size={22} /> : "Save Changes"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -338,6 +362,8 @@ export default function RadiologyOrdersQueue() {
           }}
         />
       )}
+
+      <WalkInOrderDialog kind="radiology" open={walkInOpen} onClose={() => setWalkInOpen(false)} onCreated={() => fetchOrders()} />
     </Box>
   );
 }

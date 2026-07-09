@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import GeoAddressPicker from "../../components/GeoAddressPicker";
 import {
   Box,
   Typography,
@@ -7,11 +9,12 @@ import {
   Button,
   Grid,
   MenuItem,
-  CircularProgress,
   Alert,
   Divider,
   InputAdornment,
   Chip,
+  ToggleButtonGroup,
+  ToggleButton,
 } from "@mui/material";
 import {
   SaveRounded,
@@ -24,7 +27,12 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
+import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "../../utils/validation";
 
 interface Gender {
   genderId: number;
@@ -35,6 +43,10 @@ interface BloodGroup {
   bloodGroupId: number;
   groupLabel: string;
   groupCode: string;
+}
+interface InternalDoctor {
+  doctorId: string;
+  name: string;
 }
 
 const SECTIONS = [
@@ -57,11 +69,15 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
 
   const [activeSection, setActiveSection] = useState("personal");
   const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
   const toast = useToast();
 
-  const [genders, setGenders] = useState<Gender[]>([]);
-  const [bloodGroups, setBloodGroups] = useState<BloodGroup[]>([]);
+  const { data: dd, isLoading: ddLoading, isError: ddIsError, error: ddError, refetch: refetchDd } = useQuery({
+    queryKey: ["patient-dropdowns"],
+    queryFn: async () => (await axiosInstance.get("/reception/patients/dropdowns")).data.data,
+  });
+  const genders: Gender[] = dd?.genders ?? [];
+  const bloodGroups: BloodGroup[] = dd?.bloodGroups ?? [];
+  const internalDoctors: InternalDoctor[] = dd?.internalDoctors ?? [];
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -74,61 +90,93 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
     addressLine1: "",
     addressLine2: "",
     city: "",
+    district: "",
     state: "",
     postalCode: "",
     allergies: "",
     emergencyContactName: "",
     emergencyContactPhone: "",
     emergencyContactRelation: "",
+    referredByType: "",
+    referredByInternalDoctorId: "",
+    referredByExternalName: "",
+    referredByExternalSpecialty: "",
+    referredByExternalClinic: "",
+  });
+  const [errors, setErrors] = useState<Errors<typeof formData>>({});
+
+  const { data: patientData, isLoading: patientLoading, isError: patientIsError, error: patientError, refetch: refetchPatient } = useQuery({
+    queryKey: ["patient-edit", id],
+    queryFn: async () => (await axiosInstance.get(`/reception/patients/${id}`)).data.data,
+    enabled: isEditing && !!id,
   });
 
+  // Seed the form with the existing patient when editing.
   useEffect(() => {
-    const load = async () => {
-      try {
-        const ddRes = await axiosInstance.get("/reception/patients/dropdowns");
-        setGenders(ddRes.data.data.genders);
-        setBloodGroups(ddRes.data.data.bloodGroups);
+    if (!patientData) return;
+    const p = patientData;
+    setFormData({
+      firstName: p.firstName || "",
+      lastName: p.lastName || "",
+      dateOfBirth: p.dateOfBirth ? new Date(p.dateOfBirth).toISOString().split("T")[0] : "",
+      genderId: String(p.genderId || ""),
+      bloodGroupId: String(p.bloodGroupId || ""),
+      phone: p.phone || "",
+      email: p.email || "",
+      addressLine1: p.addressLine1 || "",
+      addressLine2: p.addressLine2 || "",
+      city: p.city || "",
+      district: p.district || "",
+      state: p.state || "",
+      postalCode: p.postalCode || "",
+      allergies: p.allergies || "",
+      emergencyContactName: p.emergencyContactName || "",
+      emergencyContactPhone: p.emergencyContactPhone || "",
+      emergencyContactRelation: p.emergencyContactRelation || "",
+      referredByType: p.referredByType || "",
+      referredByInternalDoctorId: p.referredByInternalDoctorId || "",
+      referredByExternalName: p.referredByExternalName || "",
+      referredByExternalSpecialty: p.referredByExternalSpecialty || "",
+      referredByExternalClinic: p.referredByExternalClinic || "",
+    });
+  }, [patientData]);
 
-        if (isEditing && id) {
-          const res = await axiosInstance.get(`/reception/patients/${id}`);
-          const p = res.data.data;
-          setFormData({
-            firstName: p.firstName || "",
-            lastName: p.lastName || "",
-            dateOfBirth: p.dateOfBirth ? new Date(p.dateOfBirth).toISOString().split("T")[0] : "",
-            genderId: String(p.genderId || ""),
-            bloodGroupId: String(p.bloodGroupId || ""),
-            phone: p.phone || "",
-            email: p.email || "",
-            addressLine1: p.addressLine1 || "",
-            addressLine2: p.addressLine2 || "",
-            city: p.city || "",
-            state: p.state || "",
-            postalCode: p.postalCode || "",
-            allergies: p.allergies || "",
-            emergencyContactName: p.emergencyContactName || "",
-            emergencyContactPhone: p.emergencyContactPhone || "",
-            emergencyContactRelation: p.emergencyContactRelation || "",
-          });
-        }
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || "Failed to load data");
-      } finally {
-        setInitialLoad(false);
-      }
-    };
-    load();
-  }, [id, isEditing]);
+  const initialLoad = ddLoading || (isEditing && patientLoading);
+  const isError = ddIsError || patientIsError;
+  const error = ddError || patientError;
+  const refetch = () => { refetchDd(); if (isEditing) refetchPatient(); };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear a field's error as soon as the user edits it.
+    setErrors((prev) => (prev[name as keyof typeof formData] ? { ...prev, [name]: undefined } : prev));
   };
+
+  // Client-side validation mirrors the backend patients validator: required
+  // demographics + phone/email format, so a bad request never leaves the browser.
+  const validateForm = () =>
+    validate(formData, {
+      firstName: [required("First name")],
+      dateOfBirth: [required("Date of birth")],
+      genderId: [required("Gender")],
+      bloodGroupId: [required("Blood group")],
+      phone: [required("Phone number"), isPhone],
+      email: [isEmail],
+      emergencyContactPhone: [isPhone],
+    });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
+    const found = validateForm();
+    if (hasErrors(found)) {
+      setErrors(found);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
+    setLoading(true);
     try {
       if (isEditing && id) {
         await axiosInstance.put(`/reception/patients/${id}`, formData);
@@ -157,10 +205,12 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
 
   if (initialLoad) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300 }}>
-        <CircularProgress sx={{ color: "#06b6d4" }} />
-      </Box>
+      <PageLoader />
     );
+  }
+
+  if (isError) {
+    return <ErrorState title="Couldn't load patient form" message={(error as any)?.response?.data?.message} onRetry={refetch} />;
   }
 
   const fieldSx = {
@@ -183,6 +233,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
           <TextField
             fullWidth label="First Name" name="firstName" value={formData.firstName}
             onChange={handleChange} required sx={fieldSx}
+            error={!!errors.firstName} helperText={errors.firstName}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
@@ -196,12 +247,14 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
             fullWidth label="Date of Birth" name="dateOfBirth" type="date"
             value={formData.dateOfBirth} onChange={handleChange} required sx={fieldSx}
             slotProps={{ inputLabel: { shrink: true } }}
+            error={!!errors.dateOfBirth} helperText={errors.dateOfBirth}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             select fullWidth label="Gender" name="genderId" value={formData.genderId}
             onChange={handleChange} required sx={fieldSx}
+            error={!!errors.genderId} helperText={errors.genderId}
           >
             {genders.map((g) => (
               <MenuItem key={g.genderId} value={String(g.genderId)}>{g.genderLabel}</MenuItem>
@@ -212,8 +265,9 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
           <TextField
             fullWidth label="Phone Number" name="phone" value={formData.phone}
             onChange={handleChange} required sx={fieldSx}
+            error={!!errors.phone} helperText={errors.phone}
             InputProps={{
-              startAdornment: <InputAdornment position="start"><Typography sx={{ color: "text.secondary", fontSize: "0.9rem" }}>+91</Typography></InputAdornment>,
+              startAdornment: <InputAdornment position="start"><Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>+91</Typography></InputAdornment>,
             }}
           />
         </Grid>
@@ -221,7 +275,8 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
           <TextField
             fullWidth label="Email Address (Optional)" name="email" type="email" value={formData.email}
             onChange={handleChange} disabled={isEditing} sx={fieldSx}
-            helperText={isEditing ? "Email cannot be changed" : undefined}
+            error={!!errors.email}
+            helperText={errors.email || (isEditing ? "Email cannot be changed" : undefined)}
             FormHelperTextProps={{ style: { color: "text.secondary" } }}
           />
         </Grid>
@@ -241,6 +296,71 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
               </MenuItem>
             ))}
           </TextField>
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600, mb: 1 }}>
+            Referred By (Optional)
+          </Typography>
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={formData.referredByType || null}
+            onChange={(_, val) => setFormData((prev) => ({
+              ...prev,
+              referredByType: val || "",
+              // Clear the other mode's inputs when switching.
+              ...(val === "INTERNAL" ? { referredByExternalName: "", referredByExternalSpecialty: "", referredByExternalClinic: "" } : {}),
+              ...(val === "EXTERNAL" ? { referredByInternalDoctorId: "" } : {}),
+              ...(!val ? { referredByInternalDoctorId: "", referredByExternalName: "", referredByExternalSpecialty: "", referredByExternalClinic: "" } : {}),
+            }))}
+            sx={{
+              mb: formData.referredByType ? 2 : 0,
+              "& .MuiToggleButton-root": { textTransform: "none", px: 2, borderColor: "divider" },
+              "& .Mui-selected": { bgcolor: "rgba(6,182,212,0.12) !important", color: "#0891b2 !important" },
+            }}
+          >
+            <ToggleButton value="INTERNAL">Internal Doctor</ToggleButton>
+            <ToggleButton value="EXTERNAL">External / Outside</ToggleButton>
+          </ToggleButtonGroup>
+
+          {formData.referredByType === "INTERNAL" && (
+            <TextField
+              select fullWidth label="Select Doctor" name="referredByInternalDoctorId"
+              value={formData.referredByInternalDoctorId} onChange={handleChange} sx={fieldSx}
+              helperText="One of your hospital's doctors who referred this patient."
+            >
+              <MenuItem value=""><em>None</em></MenuItem>
+              {internalDoctors.map((d) => (
+                <MenuItem key={d.doctorId} value={d.doctorId}>{d.name}</MenuItem>
+              ))}
+            </TextField>
+          )}
+
+          {formData.referredByType === "EXTERNAL" && (
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth label="Doctor Name" name="referredByExternalName"
+                  value={formData.referredByExternalName} onChange={handleChange} sx={fieldSx}
+                  placeholder="e.g. Dr. Yash Patel"
+                  helperText="Name of the outside doctor who referred this patient."
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth label="Specialty (Optional)" name="referredByExternalSpecialty"
+                  value={formData.referredByExternalSpecialty} onChange={handleChange} sx={fieldSx}
+                  placeholder="e.g. Cardiology"
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth label="Clinic / Hospital (Optional)" name="referredByExternalClinic"
+                  value={formData.referredByExternalClinic} onChange={handleChange} sx={fieldSx}
+                />
+              </Grid>
+            </Grid>
+          )}
         </Grid>
         <Grid size={{ xs: 12 }}>
           <TextField
@@ -266,15 +386,16 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
             onChange={handleChange} sx={fieldSx} placeholder="Area, Landmark (optional)"
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <TextField fullWidth label="City" name="city" value={formData.city} onChange={handleChange} required sx={fieldSx} />
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <TextField fullWidth label="State" name="state" value={formData.state} onChange={handleChange} sx={fieldSx} />
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <TextField fullWidth label="Postal Code" name="postalCode" value={formData.postalCode} onChange={handleChange} sx={fieldSx} />
-        </Grid>
+        <GeoAddressPicker
+          value={{ stateName: formData.state, districtName: formData.district, city: formData.city, pincode: formData.postalCode }}
+          onChange={(patch) => setFormData((prev) => ({
+            ...prev,
+            ...(patch.stateName !== undefined ? { state: patch.stateName } : {}),
+            ...(patch.districtName !== undefined ? { district: patch.districtName } : {}),
+            ...(patch.city !== undefined ? { city: patch.city } : {}),
+            ...(patch.pincode !== undefined ? { postalCode: patch.pincode } : {}),
+          }))}
+        />
       </Grid>
     ),
 
@@ -298,6 +419,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
           <TextField
             fullWidth label="Contact Phone" name="emergencyContactPhone"
             value={formData.emergencyContactPhone} onChange={handleChange} sx={fieldSx}
+            error={!!errors.emergencyContactPhone} helperText={errors.emergencyContactPhone}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
@@ -317,27 +439,21 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
   return (
     <Box sx={{ maxWidth: 1000, mx: "auto" }}>
       {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4 }}>
-        <Box>
-          {!isModal && (
-            <Button
-              startIcon={<ArrowBackRounded />}
-              onClick={() => navigate("/reception/patients")}
-              sx={{ color: "text.secondary", textTransform: "none", mb: 1, pl: 0 }}
-            >
-              Back to Patients
-            </Button>
-          )}
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
-            {isEditing ? "Edit Patient" : "Register Patient"}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {isEditing
-              ? "Update patient registration details"
-              : "Fill in the patient information to register them in the system"}
-          </Typography>
-        </Box>
-        {!isEditing && (
+      {!isModal && (
+        <Button
+          startIcon={<ArrowBackRounded />}
+          onClick={() => navigate("/reception/patients")}
+          sx={{ color: "text.secondary", textTransform: "none", mb: 1, pl: 0 }}
+        >
+          Back to Patients
+        </Button>
+      )}
+      <PageHeader
+        title={isEditing ? "Edit Patient" : "Register Patient"}
+        subtitle={isEditing
+          ? "Update patient registration details"
+          : "Fill in the patient information to register them in the system"}
+        actions={!isEditing ? (
           <Chip
             icon={<LockOpenRounded sx={{ fontSize: "16px !important" }} />}
             label="MRN will be auto-generated"
@@ -348,8 +464,8 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
               fontWeight: 600,
             }}
           />
-        )}
-      </Box>
+        ) : undefined}
+      />
 
       <form onSubmit={handleSubmit}>
         <Grid container spacing={3}>
@@ -462,7 +578,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
                 type="submit"
                 variant="contained"
                 disabled={loading}
-                startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <SaveRounded />}
+                startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                 sx={{
                   background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
                   fontWeight: 700,

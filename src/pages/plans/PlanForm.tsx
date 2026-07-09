@@ -1,29 +1,27 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Box,
   Container,
-  Typography,
   Button,
   Paper,
   TextField,
   IconButton,
   Alert,
-  CircularProgress,
   Autocomplete,
   Chip
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import { useToast } from "../../contexts/ToastContext";
-
-// Available modules in the system that can be part of a plan
-const AVAILABLE_MODULES = [
-  "OPD", "IPD", "Billing", "Pharmacy", "Laboratory", "Radiology", 
-  "Inventory", "HR", "Analytics", "Telemedicine", "PatientPortal"
-];
+import FormHeader from "../../components/layout/FormHeader";
+import { validate, hasErrors, required, isNonNegativeNumber, min } from "../../utils/validation";
 
 export default function PlanForm() {
   const { t } = useTranslation();
@@ -32,7 +30,6 @@ export default function PlanForm() {
   const isEdit = Boolean(id);
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(isEdit);
   const toast = useToast();
   const [formData, setFormData] = useState<any>({
     planName: "",
@@ -43,42 +40,63 @@ export default function PlanForm() {
     maxStorageGb: "",
     featuresJson: [] as string[],
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const { data: planData, isLoading: initialLoading, isError, error, refetch } = useQuery({
+    queryKey: ["plan", id],
+    queryFn: async () => (await axiosInstance.get(`/plans/${id}`)).data.data,
+    enabled: isEdit,
+  });
+
+  // Module options come from the backend registry (single source of truth) —
+  // not a hardcoded list — so plans only ever reference real, built modules.
+  const { data: moduleList = [] } = useQuery({
+    queryKey: ["modules-registry"],
+    queryFn: async () => (await axiosInstance.get("/modules")).data.data as { key: string; label: string }[],
+  });
+  const moduleKeys = moduleList.map((m) => m.key);
+
+  // Seed the form with the existing plan when editing.
   useEffect(() => {
-    if (isEdit) {
-      const fetchPlan = async () => {
-        try {
-          const response = await axiosInstance.get(`/plans/${id}`);
-          const d = response.data.data;
-          setFormData({
-            planName: d.planName || "",
-            monthlyPrice: d.monthlyPrice !== null ? parseFloat(d.monthlyPrice) : "",
-            annualPrice: d.annualPrice !== null ? parseFloat(d.annualPrice) : "",
-            maxDoctors: d.maxDoctors !== null ? d.maxDoctors : "",
-            maxBranches: d.maxBranches !== null ? d.maxBranches : "",
-            maxStorageGb: d.maxStorageGb !== null ? d.maxStorageGb : "",
-            featuresJson: Array.isArray(d.featuresJson) ? d.featuresJson : [],
-          });
-        } catch (err) {
-          toast.error(t("common.error"));
-        } finally {
-          setInitialLoading(false);
-        }
-      };
-      fetchPlan();
-    }
-  }, [id, isEdit, t]);
+    if (!planData) return;
+    const d = planData;
+    setFormData({
+      planName: d.planName || "",
+      monthlyPrice: d.monthlyPrice !== null ? parseFloat(d.monthlyPrice) : "",
+      annualPrice: d.annualPrice !== null ? parseFloat(d.annualPrice) : "",
+      maxDoctors: d.maxDoctors !== null ? d.maxDoctors : "",
+      maxBranches: d.maxBranches !== null ? d.maxBranches : "",
+      maxStorageGb: d.maxStorageGb !== null ? d.maxStorageGb : "",
+      featuresJson: Array.isArray(d.featuresJson) ? d.featuresJson : [],
+    });
+  }, [planData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
-    setFormData({ 
-      ...formData, 
-      [name]: type === "number" ? (value === "" ? "" : parseFloat(value)) : value 
+    setFormData({
+      ...formData,
+      [name]: type === "number" ? (value === "" ? "" : parseFloat(value)) : value
     });
+    setErrors((prev) => (prev[name] ? { ...prev, [name]: "" } : prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const found = validate(formData, {
+      planName: [required("Plan name")],
+      monthlyPrice: [required("Monthly price"), isNonNegativeNumber],
+      annualPrice: [required("Annual price"), isNonNegativeNumber],
+      maxDoctors: [required("Max doctors"), min(1)],
+      maxBranches: [required("Max branches"), min(1)],
+      maxStorageGb: [required("Max storage"), min(0)],
+    });
+    if (hasErrors(found)) {
+      setErrors(found as Record<string, string>);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     setLoading(true);
     try {
       if (isEdit) {
@@ -96,32 +114,24 @@ export default function PlanForm() {
 
   if (initialLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "#10b981" }} />
-      </Box>
+      <PageLoader />
+    );
+  }
+
+  if (isError) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <ErrorState title="Couldn't load plan" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+      </Container>
     );
   }
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 2 }}>
-        <IconButton
-          onClick={() => navigate("/plans")}
-          sx={{
-            bgcolor: "action.hover",
-            border: "1px solid", borderColor: "divider",
-            color: "text.primary",
-            "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-          }}
-        >
-          <ArrowBackRounded />
-        </IconButton>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
-            {isEdit ? t("plans.editPlan", "Edit Plan") : t("plans.addPlan", "Add Plan")}
-          </Typography>
-        </Box>
-      </Box>
+      <FormHeader
+        title={isEdit ? t("plans.editPlan", "Edit Plan") : t("plans.addPlan", "Add Plan")}
+        onBack={() => navigate("/plans")}
+      />
 <Paper
         elevation={2}
         sx={{
@@ -143,7 +153,8 @@ export default function PlanForm() {
                 value={formData.planName}
                 onChange={handleChange}
                 required
-                
+                error={!!errors.planName}
+                helperText={errors.planName}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -156,7 +167,8 @@ export default function PlanForm() {
                 onChange={handleChange}
                 required
                 inputProps={{ step: "0.01", min: "0" }}
-                
+                error={!!errors.monthlyPrice}
+                helperText={errors.monthlyPrice}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -169,7 +181,8 @@ export default function PlanForm() {
                 onChange={handleChange}
                 required
                 inputProps={{ step: "0.01", min: "0" }}
-                
+                error={!!errors.annualPrice}
+                helperText={errors.annualPrice}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -182,7 +195,8 @@ export default function PlanForm() {
                 onChange={handleChange}
                 required
                 inputProps={{ min: "1" }}
-                
+                error={!!errors.maxDoctors}
+                helperText={errors.maxDoctors}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -195,7 +209,8 @@ export default function PlanForm() {
                 onChange={handleChange}
                 required
                 inputProps={{ min: "1" }}
-                
+                error={!!errors.maxBranches}
+                helperText={errors.maxBranches}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -204,6 +219,8 @@ export default function PlanForm() {
                 type="number"
                 label={t("plans.maxStorageGb", "Max Storage (GB)")}
                 name="maxStorageGb"
+                error={!!errors.maxStorageGb}
+                helperText={errors.maxStorageGb}
                 value={formData.maxStorageGb}
                 onChange={handleChange}
                 required
@@ -214,7 +231,7 @@ export default function PlanForm() {
             <Grid size={{ xs: 12 }}>
               <Autocomplete
                 multiple
-                options={AVAILABLE_MODULES}
+                options={moduleKeys}
                 value={formData.featuresJson}
                 onChange={(_, newValue) => setFormData({ ...formData, featuresJson: newValue })}
                 renderTags={(value: readonly string[], getTagProps) =>
@@ -222,11 +239,11 @@ export default function PlanForm() {
                     const { key, ...tagProps } = getTagProps({ index });
                     return (
                       <Chip 
-                        variant="outlined" 
-                        label={option} 
-                        key={key} 
-                        {...tagProps} 
-                        sx={{ color: "#34d399", borderColor: "rgba(16, 185, 129, 0.4)", bgcolor: "rgba(16, 185, 129, 0.1)" }}
+                        variant="outlined"
+                        label={option}
+                        key={key}
+                        {...tagProps}
+                        sx={{ color: "#059669", borderColor: "rgba(16, 185, 129, 0.4)", bgcolor: "rgba(16, 185, 129, 0.1)" }}
                       />
                     );
                   })
@@ -247,7 +264,7 @@ export default function PlanForm() {
                       border: "1px solid", borderColor: "divider",
                       borderRadius: "12px",
                       mt: 1,
-                      boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5)"
+                      boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.15)"
                     }
                   }
                 }}
@@ -260,17 +277,14 @@ export default function PlanForm() {
                       py: 1.2,
                       px: 2,
                       '&[aria-selected="true"]': {
-                        backgroundColor: "rgba(16, 185, 129, 0.25) !important",
-                        color: "#34d399",
+                        backgroundColor: "rgba(16, 185, 129, 0.15) !important",
+                        color: "#059669",
                       },
                       '&.Mui-focused': {
-                        backgroundColor: "rgba(255, 255, 255, 0.05)",
+                        backgroundColor: "action.hover",
                       }
                     }
                   }
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": { backgroundColor: "rgba(15, 23, 42, 0.4)" }
                 }}
               />
             </Grid>
@@ -293,7 +307,7 @@ export default function PlanForm() {
                   type="submit" 
                   variant="contained" 
                   disabled={loading} 
-                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />} 
+                  startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
                     background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                     boxShadow: "0 4px 14px 0 rgba(16, 185, 129, 0.39)",

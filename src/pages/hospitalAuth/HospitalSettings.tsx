@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import ErrorState from "../../components/ErrorState";
 import {
   Box,
   Typography,
@@ -9,7 +11,6 @@ import {
   Button,
   Grid,
   MenuItem,
-  CircularProgress,
   Alert,
   Switch,
   FormControlLabel,
@@ -26,6 +27,9 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -58,7 +62,6 @@ function a11yProps(index: number) {
 
 export default function HospitalSettings() {
   const [tabValue, setTabValue] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
   const [formData, setFormData] = useState({
@@ -87,40 +90,33 @@ export default function HospitalSettings() {
     billingStrategy: "PRE_PAID" as "PRE_PAID" | "POST_PAID",
   });
 
+  const { data: settingsData, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["hospital-settings"],
+    queryFn: async () => (await axiosInstance.get("/hospital/settings")).data.data,
+  });
+
+  // Seed the editable form once settings load.
   useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get("/hospital/settings");
-      const data = res.data.data;
-      const hospital = data.hospital || {};
-      const settings = data.settings || {};
-
-      setFormData({
-        appointmentDuration: settings.appointmentDuration ?? 15,
-        bufferTime: settings.bufferTime ?? 5,
-        languageCode: hospital.languageCode || "en",
-        timezone: hospital.timezone || "UTC",
-        dateFormat: hospital.dateFormat || "YYYY-MM-DD",
-        queueEnabled: settings.queueEnabled ?? true,
-        smsEnabled: settings.smsEnabled ?? true,
-        emailEnabled: settings.emailEnabled ?? true,
-        whatsappEnabled: settings.whatsappEnabled ?? false,
-        currencyCode: settings.currencyCode || "INR",
-        taxPercentage: settings.taxPercentage ?? 0,
-        invoicePrefix: settings.invoicePrefix || "INV-",
-        vitalsCollector: (settings.vitalsCollector as "RECEPTIONIST" | "NURSE") || "RECEPTIONIST",
-        billingStrategy: (settings.billingStrategy as "PRE_PAID" | "POST_PAID") || "PRE_PAID",
-      });
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load settings");
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (!settingsData) return;
+    const hospital = settingsData.hospital || {};
+    const settings = settingsData.settings || {};
+    setFormData({
+      appointmentDuration: settings.appointmentDuration ?? 15,
+      bufferTime: settings.bufferTime ?? 5,
+      languageCode: hospital.languageCode || "en",
+      timezone: hospital.timezone || "UTC",
+      dateFormat: hospital.dateFormat || "YYYY-MM-DD",
+      queueEnabled: settings.queueEnabled ?? true,
+      smsEnabled: settings.smsEnabled ?? true,
+      emailEnabled: settings.emailEnabled ?? true,
+      whatsappEnabled: settings.whatsappEnabled ?? false,
+      currencyCode: settings.currencyCode || "INR",
+      taxPercentage: settings.taxPercentage ?? 0,
+      invoicePrefix: settings.invoicePrefix || "INV-",
+      vitalsCollector: (settings.vitalsCollector as "RECEPTIONIST" | "NURSE") || "RECEPTIONIST",
+      billingStrategy: (settings.billingStrategy as "PRE_PAID" | "POST_PAID") || "PRE_PAID",
+    });
+  }, [settingsData]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -137,7 +133,8 @@ export default function HospitalSettings() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setSaving(true);      await axiosInstance.put("/hospital/settings", formData);
+      setSaving(true);
+      await axiosInstance.put("/hospital/settings", formData);
       toast.success("Settings updated successfully!");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to update settings");
@@ -148,20 +145,26 @@ export default function HospitalSettings() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
-        <CircularProgress sx={{ color: "#10b981" }} />
-      </Box>
+      <PageLoader />
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorState
+        title="Couldn't load settings"
+        message={(error as any)?.response?.data?.message}
+        onRetry={() => refetch()}
+      />
     );
   }
 
   return (
     <Box sx={{ maxWidth: 1000, mx: "auto" }}>
-      <Typography variant="h4" fontWeight="700" sx={{ mb: 1, color: "text.primary" }}>
-        Hospital Settings
-      </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: "text.secondary" }}>
-        Configure appointments, localization, notifications, and billing defaults.
-      </Typography>
+      <PageHeader
+        title="Hospital Settings"
+        subtitle="Configure appointments, localization, notifications, and billing defaults."
+      />
 <Paper
         component="form"
         onSubmit={handleSubmit}
@@ -183,7 +186,7 @@ export default function HospitalSettings() {
                 color: "text.secondary",
                 textTransform: "none",
                 fontWeight: 600,
-                fontSize: "0.95rem",
+                fontSize: "0.875rem",
                 minHeight: 64,
               },
               "& .Mui-selected": {
@@ -446,7 +449,7 @@ export default function HospitalSettings() {
                     </Typography>
                     <Box sx={{ mt: 1.5, display: "flex", gap: 1, flexWrap: "wrap" }}>
                       {["Quick check-in flow", "Single-staff hospitals", "OPD clinics"].map(tag => (
-                        <Box key={tag} sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: "rgba(6,182,212,0.1)", fontSize: "0.7rem", color: "#06b6d4", fontWeight: 600 }}>{tag}</Box>
+                        <Box key={tag} sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: "rgba(6,182,212,0.1)", fontSize: "0.75rem", color: "#06b6d4", fontWeight: 600 }}>{tag}</Box>
                       ))}
                     </Box>
                   </Box>
@@ -501,7 +504,7 @@ export default function HospitalSettings() {
                     </Typography>
                     <Box sx={{ mt: 1.5, display: "flex", gap: 1, flexWrap: "wrap" }}>
                       {["Clinical-grade accuracy", "Multi-staff hospitals", "Specialized care"].map(tag => (
-                        <Box key={tag} sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: "rgba(167,139,250,0.1)", fontSize: "0.7rem", color: "#a78bfa", fontWeight: 600 }}>{tag}</Box>
+                        <Box key={tag} sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: "rgba(167,139,250,0.1)", fontSize: "0.75rem", color: "#a78bfa", fontWeight: 600 }}>{tag}</Box>
                       ))}
                     </Box>
                   </Box>
@@ -529,7 +532,7 @@ export default function HospitalSettings() {
             type="submit"
             variant="contained"
             disabled={saving}
-            startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />}
+            startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             sx={{
               bgcolor: "#10b981",
               "&:hover": { bgcolor: "#059669" },

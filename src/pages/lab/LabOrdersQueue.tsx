@@ -1,11 +1,19 @@
-import { useState, useEffect } from "react";
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Chip, Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab } from "@mui/material";
-import { VisibilityRounded, BloodtypeRounded } from "@mui/icons-material";
+import { useState, useEffect, useMemo } from "react";
+import { orderStatusColor } from "../../utils/statusColors";
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab } from "@mui/material";
+import { VisibilityRounded, BloodtypeRounded, AddRounded } from "@mui/icons-material";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
+import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import { useNavigate } from "react-router-dom";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
+import WalkInOrderDialog from "../../components/lab/WalkInOrderDialog";
 import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
+import PageHeader from "../../components/layout/PageHeader";
+import { useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
 
 export default function LabOrdersQueue() {
   const { data: orders = [], isLoading: loading, refetch: fetchOrders } = useQuery({
@@ -23,6 +31,7 @@ export default function LabOrdersQueue() {
   const [errorMsg, setErrorMsg] = useState("");
   const [showPOS, setShowPOS] = useState(false);
   const [tabValue, setTabValue] = useState(0);
+  const [walkInOpen, setWalkInOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -32,15 +41,6 @@ export default function LabOrdersQueue() {
     connect: () => fetchOrders(), // Refetch on socket reconnect
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "COMPLETED": return "success";
-      case "SAMPLE_COLLECTED": return "info";
-      case "IN_PROGRESS": return "warning";
-      case "PENDING": return "default";
-      default: return "default";
-    }
-  };
 
   const handleCollectClick = (order: any) => {
     setCollectOrder(order);
@@ -77,20 +77,38 @@ export default function LabOrdersQueue() {
            date.getFullYear() === today.getFullYear();
   };
 
-  const filteredOrders = orders.filter((order: any) => {
+  // Memoized so useTableSort's own memo (keyed on this array's identity) isn't
+  // defeated by a fresh array on every render — without this, sorting silently
+  // re-ran on every unrelated re-render regardless of whether orders/tabValue changed.
+  const filteredOrders = useMemo(() => orders.filter((order: any) => {
     const today = isToday(order.createdAt);
     const completed = order.status === "COMPLETED";
-    
+
     if (tabValue === 0) return today && !completed; // Today's Pending
     if (tabValue === 1) return !today && !completed; // Past Pending
     if (tabValue === 2) return completed; // Completed
     return true; // All
+  }), [orders, tabValue]);
+
+  const { sorted, orderBy, order, onSort } = useTableSort(filteredOrders, {
+    barcode: (o: any) => o.sampleBarcode,
+    patient: (o: any) => `${o.patient?.firstName ?? ""} ${o.patient?.lastName ?? ""}`.trim(),
+    doctor: (o: any) => `${o.doctor?.user?.firstName ?? ""} ${o.doctor?.user?.lastName ?? ""}`.trim(),
+    date: (o: any) => (o.createdAt ? new Date(o.createdAt) : null),
+    status: (o: any) => o.status ?? "PENDING",
   });
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>Lab Orders Queue</Typography>
-      
+      <PageHeader
+        title="Lab Orders Queue"
+        actions={
+          <Button variant="contained" startIcon={<AddRounded />} onClick={() => setWalkInOpen(true)}>
+            New Walk-in Order
+          </Button>
+        }
+      />
+
       <Paper sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} variant="scrollable" scrollButtons="auto">
           <Tab label="Today's Queue" />
@@ -102,36 +120,37 @@ export default function LabOrdersQueue() {
 
       <Paper sx={{ p: 2, borderRadius: 3 }}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}><CircularProgress /></Box>
+          <ListSkeleton rows={6} />
         ) : orders.length === 0 ? (
-          <Typography sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>No lab orders found.</Typography>
+          <Mascot pose="all-caught-up" title="No lab orders" subtitle="No lab orders found." />
         ) : (
-          <Table>
+          <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell>Barcode</TableCell>
-                <TableCell>Patient</TableCell>
-                <TableCell>Doctor</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>Status</TableCell>
+                <SortableHeadCell label="Barcode" sortKey="barcode" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Patient" sortKey="patient" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Doctor" sortKey="doctor" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Date" sortKey="date" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
+                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" }} />
                 <TableCell align="right">Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredOrders.length === 0 ? (
+              {sorted.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 3, color: "text.secondary" }}>
-                    No orders match the selected filter.
+                  <TableCell colSpan={6} sx={{ py: 3, border: 0 }}>
+                    <Mascot pose="no-matches" subtitle="No orders match the selected filter." size={110} />
                   </TableCell>
                 </TableRow>
-              ) : filteredOrders.map((order: any) => (
+              ) : sorted.map((order: any) => (
                 <TableRow key={order.labOrderId} hover>
                   <TableCell sx={{ fontWeight: 600 }}>{order.sampleBarcode}</TableCell>
                   <TableCell>{order.patient?.firstName} {order.patient?.lastName}</TableCell>
                   <TableCell>{order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</TableCell>
                   <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Chip label={order.status || "PENDING"} color={getStatusColor(order.status) as any} size="small" />
+                    <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status) as any} size="small" />
                   </TableCell>
                   <TableCell align="right">
                     {order.status === "PENDING" ? (
@@ -159,6 +178,7 @@ export default function LabOrdersQueue() {
               ))}
             </TableBody>
           </Table>
+          </TableContainer>
         )}
       </Paper>
 
@@ -192,7 +212,7 @@ export default function LabOrdersQueue() {
           )}
           <Button onClick={() => setCollectOrder(null)} color="inherit" disabled={collecting}>Cancel</Button>
           <Button onClick={handleConfirmCollect} variant="contained" disabled={collecting || collectOrder?.billingLockActive}>
-            {collecting ? <CircularProgress size={24} color="inherit" /> : "Confirm Collection"}
+            {collecting ? <HeartbeatLoader size={22} /> : "Confirm Collection"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -217,6 +237,8 @@ export default function LabOrdersQueue() {
           }}
         />
       )}
+
+      <WalkInOrderDialog kind="lab" open={walkInOpen} onClose={() => setWalkInOpen(false)} onCreated={() => fetchOrders()} />
     </Box>
   );
 }

@@ -1,17 +1,34 @@
 import { useState, useEffect, useRef } from "react";
 import {
-  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
-  Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
+  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Button, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, useTheme, alpha, Tabs, Tab, MenuItem, Select
 } from "@mui/material";
 import { AddRounded, InventoryRounded, ShoppingCartRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
+import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
+import { ListSkeleton } from "../../components/TableRowsSkeleton";
+import { useServerSort, useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Match the existing plain (non-uppercase) table-head look, overriding
+// SortableHeadCell's default uppercase/secondary styling.
+const HEAD_SX = {
+  fontWeight: 700,
+  textTransform: "none",
+  letterSpacing: "normal",
+  fontSize: "inherit",
+  color: "inherit",
+} as const;
 
 export default function InventoryManagement() {
   const theme = useTheme();
   const toast = useToast();
+  const { activeBranchId } = useHospitalAuth();
   const [tabValue, setTabValue] = useState(0);
 
   const [inventory, setInventory] = useState<any[]>([]);
@@ -27,7 +44,12 @@ export default function InventoryManagement() {
   const [poPage, setPoPage] = useState(1);
   const [alertPage, setAlertPage] = useState(1);
 
+  // Server-side sort for the two genuinely server-paginated tabs.
+  const stockSort = useServerSort();
+  const poSort = useServerSort();
+
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const didMount = useRef(false);
 
   const [openPoDialog, setOpenPoDialog] = useState(false);
@@ -56,51 +78,107 @@ export default function InventoryManagement() {
   };
 
   const fetchInventory = async (p = stockPage) => {
-    const res = await axiosInstance.get("/pharmacy/inventory", { params: { page: p, limit: ROWS_PER_PAGE } });
+    const res = await axiosInstance.get("/pharmacy/inventory", {
+      params: {
+        page: p,
+        limit: ROWS_PER_PAGE,
+        sortBy: stockSort.orderBy || undefined,
+        sortOrder: stockSort.order,
+      },
+    });
     setInventory(res.data.data || []);
     setStockTotal(res.data.pagination?.total ?? (res.data.data || []).length);
   };
 
   const fetchPurchaseOrders = async (p = poPage) => {
-    const res = await axiosInstance.get("/pharmacy/purchase-orders", { params: { page: p, limit: ROWS_PER_PAGE } });
+    const res = await axiosInstance.get("/pharmacy/purchase-orders", {
+      params: {
+        page: p,
+        limit: ROWS_PER_PAGE,
+        sortBy: poSort.orderBy || undefined,
+        sortOrder: poSort.order,
+      },
+    });
     setPurchaseOrders(res.data.data || []);
     setPoTotal(res.data.pagination?.total ?? (res.data.data || []).length);
   };
 
-  // Initial load.
+  // Initial load (also re-run on branch switch). Suppress the page-change
+  // effects while we reset pagination to 1, so the reset doesn't trigger a
+  // duplicate fetch.
+  const loadInitial = async () => {
+    try {
+      didMount.current = false;
+      setLoading(true);
+      setLoadError(null);
+      setStockPage(1);
+      setPoPage(1);
+      setAlertPage(1);
+      await Promise.all([fetchReference(), fetchInventory(1), fetchPurchaseOrders(1)]);
+    } catch (err: any) {
+      setLoadError(err?.response?.data?.message || "Failed to load inventory data");
+    } finally {
+      setLoading(false);
+      didMount.current = true;
+    }
+  };
+
+  // Reload when the active branch changes — this page fetches imperatively, so
+  // BranchSwitcher's react-query invalidation doesn't cover it. The axios
+  // interceptor already carries the new X-Branch-Id by the time this runs.
   useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        await Promise.all([fetchReference(), fetchInventory(1), fetchPurchaseOrders(1)]);
-      } catch (err) {
-        console.error("Failed to fetch inventory data", err);
-      } finally {
-        setLoading(false);
-        didMount.current = true;
-      }
-    })();
+    loadInitial();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeBranchId]);
 
   // Page changes fetch only the affected list (skipped on the initial mount).
   useEffect(() => {
-    if (didMount.current) fetchInventory(stockPage).catch(err => console.error(err));
+    if (didMount.current) fetchInventory(stockPage).catch(err => toast.error(err.response?.data?.message || "Failed to load that page of inventory"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stockPage]);
 
   useEffect(() => {
-    if (didMount.current) fetchPurchaseOrders(poPage).catch(err => console.error(err));
+    if (didMount.current) fetchPurchaseOrders(poPage).catch(err => toast.error(err.response?.data?.message || "Failed to load that page of purchase orders"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [poPage]);
+
+  // Sort changes reset to page 1 and refetch the affected list. We fetch page 1
+  // directly here (rather than relying on the page-change effect) because setPage
+  // is a no-op when already on page 1.
+  useEffect(() => {
+    if (!didMount.current) return;
+    setStockPage(1);
+    fetchInventory(1).catch(err => toast.error(err.response?.data?.message || "Failed to sort inventory"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stockSort.orderBy, stockSort.order]);
+
+  useEffect(() => {
+    if (!didMount.current) return;
+    setPoPage(1);
+    fetchPurchaseOrders(1).catch(err => toast.error(err.response?.data?.message || "Failed to sort purchase orders"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [poSort.orderBy, poSort.order]);
 
   const getMedicineName = (id: string) => medicines.find(m => m.medicineId === id)?.medicineName || 'Unknown';
   const getSupplierName = (id: string) => suppliers.find(s => s.supplierId === id)?.supplierName || 'Unknown';
 
   const stockPageCount = Math.ceil(stockTotal / ROWS_PER_PAGE);
   const poPageCount = Math.ceil(poTotal / ROWS_PER_PAGE);
-  const alertPageCount = Math.ceil(lowStockAlerts.length / ROWS_PER_PAGE);
-  const paginatedAlerts = lowStockAlerts.slice((alertPage - 1) * ROWS_PER_PAGE, alertPage * ROWS_PER_PAGE);
+
+  // Low Stock Alerts are computed by a full scan and paginated client-side, so
+  // we sort the full list in memory (client-side) before slicing the page.
+  const { sorted: sortedAlerts, orderBy: alertOrderBy, order: alertOrder, onSort: onAlertSort } =
+    useTableSort<any>(lowStockAlerts, {
+      medicine: (a) => a.medicineName,
+      minStock: (a) => a.minStockLevel,
+      currentStock: (a) => a.currentStock,
+      pendingStock: (a) => a.pendingStock || 0,
+    });
+  const alertPageCount = Math.ceil(sortedAlerts.length / ROWS_PER_PAGE);
+  const paginatedAlerts = sortedAlerts.slice((alertPage - 1) * ROWS_PER_PAGE, alertPage * ROWS_PER_PAGE);
+
+  // Client-side alert sort just reorders in memory; reset to the first page.
+  useEffect(() => { setAlertPage(1); }, [alertOrderBy, alertOrder]);
 
   const handleCreatePo = async () => {
     if (!poSupplierId || poItems.some(item => !item.medicineId || item.orderedQuantity <= 0)) {
@@ -125,7 +203,7 @@ export default function InventoryManagement() {
       await Promise.all([fetchPurchaseOrders(1), fetchReference()]);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to create PO");
+      toast.error((err as any)?.response?.data?.message || "Failed to create PO");
     } finally {
       setSavingPo(false);
     }
@@ -241,7 +319,7 @@ export default function InventoryManagement() {
                   setPoPage(1);
                   await Promise.all([fetchPurchaseOrders(1), fetchReference()]);
                 } catch(err) {
-                  toast.error("Failed to auto-generate POs");
+                  toast.error((err as any)?.response?.data?.message || "Failed to auto-generate POs");
                 } finally {
                   setAutoGenerating(false);
                 }
@@ -254,26 +332,29 @@ export default function InventoryManagement() {
         </Box>
 
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 8, minHeight: 400, alignItems: "center" }}>
-            <CircularProgress size={48} thickness={4} />
+          <Box sx={{ p: 2, minHeight: 400 }}>
+            <ListSkeleton rows={6} />
           </Box>
+        ) : loadError ? (
+          <ErrorState message={loadError} onRetry={loadInitial} />
         ) : (
           <Box sx={{ minHeight: 400 }}>
             {/* Tab 0: Current Stock */}
             <Box role="tabpanel" hidden={tabValue !== 0}>
-              <Table>
+              <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
                     <TableCell sx={{ fontWeight: 700 }}>Medicine</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Batch No.</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Expiry Date</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Available Qty</TableCell>
+                    <SortableHeadCell label="Batch No." sortKey="batch" orderBy={stockSort.orderBy} order={stockSort.order} onSort={stockSort.onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Expiry Date" sortKey="expiry" orderBy={stockSort.orderBy} order={stockSort.order} onSort={stockSort.onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Available Qty" sortKey="quantity" orderBy={stockSort.orderBy} order={stockSort.order} onSort={stockSort.onSort} sx={HEAD_SX} />
                     <TableCell sx={{ fontWeight: 700 }}>Supplier</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {inventory.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}>No stock available</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No stock available." size={110} /></TableCell></TableRow>
                   ) : inventory.map(inv => (
                     <TableRow key={inv.inventoryId} hover>
                       <TableCell sx={{ fontWeight: 600, color: '#4F46E5' }}>{getMedicineName(inv.medicineId)}</TableCell>
@@ -289,24 +370,26 @@ export default function InventoryManagement() {
                   ))}
                 </TableBody>
               </Table>
+              </TableContainer>
               <PaginationBar page={stockPage} pageCount={stockPageCount} total={stockTotal} onChange={setStockPage} />
             </Box>
 
             {/* Tab 1: Purchase Orders */}
             <Box role="tabpanel" hidden={tabValue !== 1}>
-              <Table>
+              <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
                     <TableCell sx={{ fontWeight: 700 }}>PO Number</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Supplier</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                    <SortableHeadCell label="Date" sortKey="date" orderBy={poSort.orderBy} order={poSort.order} onSort={poSort.onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Status" sortKey="status" orderBy={poSort.orderBy} order={poSort.order} onSort={poSort.onSort} sx={HEAD_SX} />
                     <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {purchaseOrders.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}>No purchase orders</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No purchase orders." size={110} /></TableCell></TableRow>
                   ) : purchaseOrders.map(po => (
                     <TableRow key={po.purchaseOrderId} hover>
                       <TableCell sx={{ fontFamily: 'monospace' }}>{po.purchaseOrderId.split('-')[0].toUpperCase()}</TableCell>
@@ -314,7 +397,7 @@ export default function InventoryManagement() {
                       <TableCell>{new Date(po.orderDate).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <Box sx={{
-                          display: 'inline-block', px: 1.5, py: 0.5, borderRadius: 2, fontSize: '0.8rem', fontWeight: 600,
+                          display: 'inline-block', px: 1.5, py: 0.5, borderRadius: 2, fontSize: '0.875rem', fontWeight: 600,
                           bgcolor: po.status === 'pending' ? alpha('#F59E0B', 0.1) : alpha('#10B981', 0.1),
                           color: po.status === 'pending' ? '#F59E0B' : '#10B981'
                         }}>
@@ -337,24 +420,26 @@ export default function InventoryManagement() {
                   ))}
                 </TableBody>
               </Table>
+              </TableContainer>
               <PaginationBar page={poPage} pageCount={poPageCount} total={poTotal} onChange={setPoPage} />
             </Box>
 
             {/* Tab 2: Low Stock Alerts */}
             <Box role="tabpanel" hidden={tabValue !== 2}>
-              <Table>
+              <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
-                    <TableCell sx={{ fontWeight: 700 }}>Medicine</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Min Stock Level</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Current Stock</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Pending (On the way)</TableCell>
+                    <SortableHeadCell label="Medicine" sortKey="medicine" orderBy={alertOrderBy} order={alertOrder} onSort={onAlertSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Min Stock Level" sortKey="minStock" orderBy={alertOrderBy} order={alertOrder} onSort={onAlertSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Current Stock" sortKey="currentStock" orderBy={alertOrderBy} order={alertOrder} onSort={onAlertSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Pending (On the way)" sortKey="pendingStock" orderBy={alertOrderBy} order={alertOrder} onSort={onAlertSort} sx={HEAD_SX} />
                     <TableCell sx={{ fontWeight: 700 }}>Default Supplier</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {lowStockAlerts.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}>No low stock alerts. Stock is healthy.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="all-caught-up" subtitle="No low stock alerts — stock is healthy." size={110} /></TableCell></TableRow>
                   ) : paginatedAlerts.map(alert => (
                     <TableRow key={alert.medicineId} hover>
                       <TableCell sx={{ fontWeight: 600, color: '#4F46E5' }}>{alert.medicineName}</TableCell>
@@ -377,7 +462,7 @@ export default function InventoryManagement() {
                                   });
                                   await fetchReference();
                                 } catch(err) {
-                                  toast.error("Failed to assign default supplier");
+                                  toast.error((err as any)?.response?.data?.message || "Failed to assign default supplier");
                                 }
                               }
                             }}
@@ -394,6 +479,7 @@ export default function InventoryManagement() {
                   ))}
                 </TableBody>
               </Table>
+              </TableContainer>
               <PaginationBar page={alertPage} pageCount={alertPageCount} total={lowStockAlerts.length} onChange={setAlertPage} />
             </Box>
           </Box>

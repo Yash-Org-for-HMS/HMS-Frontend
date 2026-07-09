@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
-  Typography,
   Button,
   Paper,
   Table,
@@ -13,10 +13,22 @@ import {
   Chip,
   IconButton,
   Tooltip,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
-import { AddRounded, EditRounded, BlockRounded, CheckCircleRounded, ContentCopyRounded } from "@mui/icons-material";
+import { AddRounded, EditRounded, BlockRounded, CheckCircleRounded, ContentCopyRounded, SearchRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import Mascot from "../../../components/Mascot";
+import ErrorState from "../../../components/ErrorState";
+import { useToast } from "../../../contexts/ToastContext";
+import PageHeader from "../../../components/layout/PageHeader";
+import { TableRowsSkeleton } from "../../../components/TableRowsSkeleton";
+import { useTableSort } from "../../../components/table/useTableSort";
+import SortableHeadCell from "../../../components/table/SortableHeadCell";
+
+// Match the file's existing sentence-case header look (override SortableHeadCell's default uppercase/bold style).
+const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 400, fontSize: "0.875rem", py: undefined };
 
 interface Role {
   roleId: string;
@@ -30,87 +42,106 @@ interface Role {
 }
 
 export default function RolesList() {
-  const [roles, setRoles] = useState<Role[]>([]);
   const navigate = useNavigate();
+  const toast = useToast();
+  const [q, setQ] = useState("");
 
-  const fetchRoles = async () => {
-    try {
-      const response = await axiosInstance.get("/hospital/roles");
-      setRoles(response.data.data);
-    } catch (error) {
-      console.error("Error fetching roles", error);
-    }
-  };
+  const { data: roles = [], isLoading, isError, error, refetch } = useQuery<Role[]>({
+    queryKey: ["hospital-roles"],
+    queryFn: async () => (await axiosInstance.get("/hospital/roles")).data.data,
+  });
 
-  useEffect(() => {
-    fetchRoles();
-  }, []);
+  const term = q.trim().toLowerCase();
+  const filtered = term
+    ? roles.filter((r) => r.roleName.toLowerCase().includes(term) || r.roleCode.toLowerCase().includes(term))
+    : roles;
+
+  const { sorted, orderBy, order, onSort } = useTableSort(filtered, {
+    name: (r) => r.roleName,
+    code: (r) => r.roleCode,
+    type: (r) => (r.isSystemRole ? "System Default" : "Custom Role"),
+    users: (r) => r._count?.users ?? 0,
+    status: (r) => r.status,
+  });
 
   const handleToggleStatus = async (role: Role) => {
     if (role.isSystemRole && role.status === 'active') {
-      alert("Cannot disable standard system roles.");
+      toast.error("Cannot disable standard system roles.");
       return;
     }
-    
+
     try {
       const newStatus = role.status === 'active' ? 'inactive' : 'active';
       await axiosInstance.put(`/hospital/roles/${role.roleId}/status`, {
         status: newStatus,
       });
-      fetchRoles();
+      refetch();
     } catch (error) {
-      console.error("Error toggling role status", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to update role status");
     }
   };
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            Role Management (RBAC)
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Manage hospital roles, system permissions, and view user assignments.
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/hospital/roles/new")}
-          sx={{
-            bgcolor: "#6366f1",
-            "&:hover": { bgcolor: "#4f46e5" },
-            textTransform: "none",
-            fontWeight: 600,
-            px: 3,
-          }}
-        >
-          Create Custom Role
-        </Button>
-      </Box>
+      <PageHeader
+        title="Role Management (RBAC)"
+        subtitle="Manage hospital roles, system permissions, and view user assignments."
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/hospital/roles/new")}
+            sx={{
+              bgcolor: "#6366f1",
+              "&:hover": { bgcolor: "#4f46e5" },
+              textTransform: "none",
+              fontWeight: 600,
+              px: 3,
+            }}
+          >
+            Create Custom Role
+          </Button>
+        }
+      />
 
-      <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
-        <Table>
+      <TextField
+        size="small"
+        placeholder="Search roles by name or code…"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        sx={{ mb: 2, width: "100%", maxWidth: 360 }}
+        InputProps={{ startAdornment: <InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary" }} /></InputAdornment> }}
+      />
+
+      <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "calc(100vh - 300px)" }}>
+        <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Role Name</TableCell>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Code</TableCell>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Type</TableCell>
-              <TableCell align="center" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Users Assigned</TableCell>
-              <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Status</TableCell>
-              <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Actions</TableCell>
+              <SortableHeadCell label="Role Name" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+              <SortableHeadCell label="Code" sortKey="code" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+              <SortableHeadCell label="Type" sortKey="type" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+              <SortableHeadCell label="Users Assigned" sortKey="users" orderBy={orderBy} order={order} onSort={onSort} align="center" sx={HEAD_SX} />
+              <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+              <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.default" }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {roles.length === 0 ? (
+            {isLoading ? (
+              <TableRowsSkeleton rows={6} columns={6} />
+            ) : isError ? (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
-                  No roles found.
+                <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
+                  <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+                </TableCell>
+              </TableRow>
+            ) : sorted.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
+                  <Mascot pose="nothing-here-yet" subtitle={term ? "No roles match your search." : "No roles found."} size={120} />
                 </TableCell>
               </TableRow>
             ) : (
-              roles.map((role) => (
+              sorted.map((role) => (
                 <TableRow key={role.roleId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                   <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary", fontWeight: 500 }}>
                     {role.roleName}

@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { ACCENTS } from "../../styles/accents";
+import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Grid, Typography, Paper, CircularProgress, Alert,
-  Skeleton, Chip, Table, TableBody, TableCell, TableContainer,
+  Box, Grid, Typography, Paper, Alert,
+  Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Avatar, Button,
 } from "@mui/material";
 import {
@@ -9,98 +10,56 @@ import {
   PeopleAltRounded, ArrowForwardRounded, SyncRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
+import StatusChip from "../../components/StatusChip";
+import { TableRowsSkeleton, CardGridSkeleton } from "../../components/TableRowsSkeleton";
+import PageHeader from "../../components/layout/PageHeader";
+import ErrorState from "../../components/ErrorState";
+import StatCard from "../../components/StatCard";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "../../contexts/ToastContext";
 
-const NURSE_PURPLE = "#a78bfa";
-const NURSE_PURPLE_DARK = "#7c3aed";
-
-function StatCard({ title, value, icon, loading, accent, sub }: any) {
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 3, borderRadius: 4,
-        bgcolor: "background.paper",
-        border: "1px solid", borderColor: "divider",
-        transition: "all 0.2s ease-in-out",
-        display: "flex", flexDirection: "column", justifyContent: "space-between",
-        minHeight: 170, height: "auto",
-        "&:hover": { boxShadow: `0 8px 30px rgba(0,0,0,0.06)`, transform: "translateY(-2px)" },
-      }}
-    >
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <Box
-          sx={{
-            width: 48, height: 48, borderRadius: 3,
-            bgcolor: accent ? `${accent}18` : "rgba(167,139,250,0.1)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
-        >
-          {icon}
-        </Box>
-      </Box>
-      <Box>
-        {loading ? (
-          <Skeleton width={80} height={40} />
-        ) : (
-          <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary" }}>
-            {typeof value === "number" ? value.toLocaleString() : value}
-          </Typography>
-        )}
-        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, display: "block", mt: 0.5 }}>
-          {title}
-        </Typography>
-        {sub && (
-          <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.68rem", display: "block", mt: 0.5 }}>
-            {sub}
-          </Typography>
-        )}
-      </Box>
-    </Paper>
-  );
-}
+const NURSE_PURPLE = ACCENTS.nurse;
+const NURSE_PURPLE_DARK = ACCENTS.nurseDark;
 
 export default function NurseDashboard() {
   const { hospital, user } = useHospitalAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const toast = useToast();
-  const [tokens, setTokens] = useState<any[]>([]);
-  const [vitalsRecorded, setVitalsRecorded] = useState<Set<string>>(new Set());
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+  const { data, isLoading: loading, isError, error, refetch } = useQuery({
+    // Distinct key from NurseQueue's ["nurse-queue"]: this query returns an
+    // aggregate object ({ tokens, vitalsRecorded }), not the raw token array, so
+    // sharing a cache key would feed the wrong shape to whichever page reads it.
+    queryKey: ["nurse-dashboard-queue"],
+    queryFn: async () => {
       const res = await axiosInstance.get("/reception/queue");
-      const tokenList = res.data.data;
-      setTokens(tokenList);
-
-      // Check vitals status
+      const tokenList: any[] = Array.isArray(res.data?.data) ? res.data.data : [];
+      // Resolve which appointments already have vitals recorded.
       const apptIds = tokenList.map((t: any) => t.appointmentId).filter(Boolean);
       const vitalsChecks = await Promise.allSettled(
         apptIds.map((id: string) => axiosInstance.get(`/reception/appointments/${id}/vitals`))
       );
       const recorded = new Set<string>();
       vitalsChecks.forEach((result, i) => {
-        if (result.status === "fulfilled" && result.value.data.data) {
-          recorded.add(apptIds[i]);
-        }
+        if (result.status === "fulfilled" && (result.value as any).data.data) recorded.add(apptIds[i]);
       });
-      setVitalsRecorded(recorded);
-    } catch {
-      toast.error("Failed to load queue data");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { tokens: tokenList, vitalsRecorded: recorded };
+    },
+    refetchInterval: 30000, // refresh every 30s
+  });
+  const tokens: any[] = data?.tokens ?? [];
+  const vitalsRecorded: Set<string> = data?.vitalsRecorded ?? new Set();
 
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  if (isError) {
+    return (
+      <Box sx={{ pb: 6 }}>
+        <ErrorState
+          title="Couldn't load the queue"
+          message={(error as any)?.response?.data?.message}
+          onRetry={() => refetch()}
+        />
+      </Box>
+    );
+  }
 
   const totalPatients = tokens.length;
   const waiting = tokens.filter(t => t.statusCode === "WAITING" || t.statusCode === "SKIPPED").length;
@@ -117,63 +76,48 @@ export default function NurseDashboard() {
   return (
     <Box sx={{ pb: 6 }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
-          <Box
-            sx={{
-              width: 36, height: 36, borderRadius: 1.5,
-              background: `linear-gradient(135deg, ${NURSE_PURPLE_DARK}, ${NURSE_PURPLE})`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-          >
-            <MonitorHeartRounded sx={{ color: "#fff", fontSize: 20 }} />
-          </Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary", letterSpacing: "-0.5px" }}>
-            Nursing Station
-          </Typography>
-        </Box>
-        <Typography variant="body1" sx={{ color: "text.secondary", mt: 0.5, ml: 0.5 }}>
-          Good morning, {user?.firstName}! Today's vitals overview for {hospital?.name || "the hospital"}.
-        </Typography>
-      </Box>
-{/* KPI Cards */}
+      <PageHeader
+        title="Nursing Station"
+        subtitle={`Good morning, ${user?.firstName}! Today's vitals overview for ${hospital?.name || "the hospital"}.`}
+      />
+      {/* KPI Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Total Patients Today"
+            label="Total Patients Today"
             value={totalPatients}
             icon={<PeopleAltRounded sx={{ color: NURSE_PURPLE }} />}
             loading={loading}
-            accent={NURSE_PURPLE}
+            color={NURSE_PURPLE}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Vitals Pending"
+            label="Vitals Pending"
             value={vitalsPending}
             icon={<HourglassTopRounded sx={{ color: "#f59e0b" }} />}
             loading={loading}
-            accent="#f59e0b"
+            color="#f59e0b"
             sub="Patients awaiting vitals"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Vitals Recorded"
+            label="Vitals Recorded"
             value={vitalsCompleted}
             icon={<MonitorHeartRounded sx={{ color: "#10b981" }} />}
             loading={loading}
-            accent="#10b981"
+            color="#10b981"
             sub="Completed today"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="In Consultation"
+            label="In Consultation"
             value={inProgress}
             icon={<CheckCircleRounded sx={{ color: "#3b82f6" }} />}
             loading={loading}
-            accent="#3b82f6"
+            color="#3b82f6"
             sub="With doctor now"
           />
         </Grid>
@@ -195,7 +139,7 @@ export default function NurseDashboard() {
               <Button
                 size="small" variant="outlined"
                 startIcon={<SyncRounded />}
-                onClick={fetchData}
+                onClick={() => refetch()}
                 sx={{ color: NURSE_PURPLE, borderColor: `rgba(167,139,250,0.4)`, textTransform: "none", "&:hover": { borderColor: NURSE_PURPLE, bgcolor: "rgba(167,139,250,0.06)" } }}
               >
                 Refresh
@@ -209,7 +153,7 @@ export default function NurseDashboard() {
                     {["Token", "Patient", "Doctor", "Status", ""].map((h, i) => (
                       <TableCell key={h || i}
                         align={i === 4 ? "right" : "left"}
-                        sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 1.5, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}
+                        sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", py: 1.5, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}
                       >
                         {h}
                       </TableCell>
@@ -218,44 +162,38 @@ export default function NurseDashboard() {
                 </TableHead>
                 <TableBody>
                   {loading && needsVitals.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}><CircularProgress size={28} sx={{ color: NURSE_PURPLE }} /></TableCell></TableRow>
+                    <TableRowsSkeleton rows={6} columns={5} />
                   ) : needsVitals.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
-                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                          <CheckCircleRounded sx={{ fontSize: 40, color: "#10b981", opacity: 0.6 }} />
-                          <Typography variant="body2" sx={{ color: "text.secondary" }}>All vitals recorded for today! 🎉</Typography>
-                        </Box>
+                      <TableCell colSpan={5} sx={{ py: 4, border: 0 }}>
+                        <Mascot pose="all-caught-up" title="All caught up!" subtitle="All vitals recorded for today." />
                       </TableCell>
                     </TableRow>
                   ) : (
                     needsVitals.map(token => (
                       <TableRow key={token.queueTokenId} sx={{ "&:hover": { bgcolor: "background.default" } }}>
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                          <Avatar sx={{ bgcolor: `${NURSE_PURPLE_DARK}cc`, width: 36, height: 36, fontSize: "0.85rem", fontWeight: 800 }}>
+                          <Avatar sx={{ bgcolor: `${NURSE_PURPLE_DARK}cc`, width: 36, height: 36, fontSize: "0.875rem", fontWeight: 800 }}>
                             {token.displayNumber}
                           </Avatar>
                         </TableCell>
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                           <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{token.patientName}</Typography>
                         </TableCell>
-                        <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.85rem" }}>
+                        <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.875rem" }}>
                           {token.doctorName}
                         </TableCell>
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                          <Chip
-                            label={token.statusLabel} size="small"
-                            sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}55`, fontWeight: 600, fontSize: "0.7rem" }}
-                          />
+                          <StatusChip label={token.statusLabel} color={token.statusColor} />
                         </TableCell>
                         <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                           <Button
                             size="small" variant="contained"
                             startIcon={<MonitorHeartRounded />}
-                            onClick={() => navigate("/nurse/vitals", { state: { token } })}
+                            onClick={() => navigate("/nurse/queue", { state: { token } })}
                             sx={{
                               background: `linear-gradient(135deg, ${NURSE_PURPLE_DARK}, ${NURSE_PURPLE})`,
-                              textTransform: "none", fontWeight: 600, fontSize: "0.8rem",
+                              textTransform: "none", fontWeight: 600, fontSize: "0.875rem",
                               boxShadow: "0 2px 8px rgba(124,58,237,0.25)",
                               "&:hover": { background: `linear-gradient(135deg, #6d28d9, ${NURSE_PURPLE_DARK})` },
                             }}
@@ -282,12 +220,9 @@ export default function NurseDashboard() {
               Patients whose vitals are recorded
             </Typography>
             {loading ? (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress size={24} sx={{ color: NURSE_PURPLE }} /></Box>
+              <CardGridSkeleton count={4} height={60} minWidth={220} />
             ) : tokens.filter(t => t.appointmentId && vitalsRecorded.has(t.appointmentId)).length === 0 ? (
-              <Box sx={{ bgcolor: "background.default", borderRadius: 2, p: 3, textAlign: "center", border: "1px dashed", borderColor: "divider" }}>
-                <MonitorHeartRounded sx={{ fontSize: 36, color: NURSE_PURPLE, opacity: 0.4, mb: 1 }} />
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>No vitals recorded yet today</Typography>
-              </Box>
+              <Mascot pose="nothing-here-yet" subtitle="No vitals recorded yet today." size={130} />
             ) : (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 {tokens.filter(t => t.appointmentId && vitalsRecorded.has(t.appointmentId)).map(token => (

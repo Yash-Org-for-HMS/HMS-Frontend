@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import { useToast } from "../contexts/ToastContext";
+import { API_URL } from "../api/axios";
 
 export function useSocket(eventMap: Record<string, (...args: any[]) => void>) {
   const { user, hospital } = useHospitalAuth();
@@ -16,12 +17,9 @@ export function useSocket(eventMap: Record<string, (...args: any[]) => void>) {
   useEffect(() => {
     if (!hospital?.id) return;
 
-    // Connect to the backend
-    // Assuming the backend runs on the base URL (which is usually on port 5000 in dev)
-    const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-    
-    // In many cases, VITE_API_URL includes `/api`, so we need to strip it to get the base domain
-    const baseUrl = backendUrl.replace(/\/api\/?$/, "");
+    // Connect to the backend — VITE_API_URL usually includes `/api`, so strip
+    // it to get the base domain the socket server listens on.
+    const baseUrl = API_URL.replace(/\/api\/?$/, "");
 
     socketRef.current = io(baseUrl, {
       withCredentials: true,

@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
-  Typography,
   Paper,
   Grid,
-  CircularProgress,
   Alert,
   MenuItem,
   TextField,
@@ -25,7 +24,14 @@ import {
 } from "@mui/material";
 import { AddRounded, EditRounded, PowerSettingsNewRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
+import Mascot from "../../../components/Mascot";
+import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
+import { useConfirm } from "../../../contexts/ConfirmContext";
+import PageHeader from "../../../components/layout/PageHeader";
+import { ListSkeleton } from "../../../components/TableRowsSkeleton";
+import { useTableSort } from "../../../components/table/useTableSort";
+import SortableHeadCell from "../../../components/table/SortableHeadCell";
 
 const LOOKUP_CONFIGS: Record<string, any> = {
   specialization: {
@@ -52,23 +58,23 @@ const LOOKUP_CONFIGS: Record<string, any> = {
       { field: "typeName", label: "Type Name" }
     ],
   },
-  appointmentStatus: {
-    label: "Appointment Statuses",
-    idField: "appointmentStatusId",
+  surgeryGrade: {
+    label: "Surgery Grades",
+    idField: "surgeryGradeId",
     columns: [
-      { field: "statusCode", label: "Status Code" },
-      { field: "statusLabel", label: "Status Label" },
-      { field: "colorHex", label: "Color Hex" },
-      { field: "allowReschedule", label: "Allow Reschedule (Yes/No)" }
+      { field: "gradeCode", label: "Grade Code" },
+      { field: "gradeName", label: "Grade Name" }
     ],
-  }
+  },
+  // NOTE: Appointment Statuses were removed here — they are a SYSTEM state
+  // machine (code depends on globally-unique status codes), not per-hospital
+  // master data, so they are no longer hospital-editable.
 };
 
 export default function LookupManager() {
   const [selectedType, setSelectedType] = useState("specialization");
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const toast = useToast();
+  const confirm = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<any>({});
@@ -76,21 +82,18 @@ export default function LookupManager() {
 
   const config = LOOKUP_CONFIGS[selectedType];
 
-  useEffect(() => {
-    fetchData(selectedType);
-  }, [selectedType]);
+  const { data = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["hospital-lookups", selectedType],
+    queryFn: async () => (await axiosInstance.get(`/hospital/lookups?type=${selectedType}`)).data.data,
+  });
 
-  const fetchData = async (type: string) => {
-    setLoading(true);
-    try {
-      const res = await axiosInstance.get(`/hospital/lookups?type=${type}`);
-      setData(res.data.data);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load lookup data");
-    } finally {
-      setLoading(false);
-    }
+  const sortAccessors: Record<string, (item: any) => any> = {
+    status: (item) => (item.isActive ? "Active" : "Inactive"),
   };
+  for (const col of config.columns) {
+    sortAccessors[col.field] = (item: any) => item[col.field];
+  }
+  const { sorted, orderBy, order, onSort } = useTableSort(data, sortAccessors);
 
   const handleOpenAdd = () => {
     setFormData({});
@@ -123,19 +126,30 @@ export default function LookupManager() {
         await axiosInstance.post(`/hospital/lookups?type=${selectedType}`, formData);
       }
       handleClose();
-      fetchData(selectedType);
+      refetch();
     } catch (err: any) {
       alert(err.response?.data?.message || "Failed to save");
     }
   };
 
   const handleToggleStatus = async (item: any) => {
+    const activating = !item.isActive;
+    const label = config.label.slice(0, -1);
+    const ok = await confirm({
+      title: activating ? `Activate ${label}` : `Deactivate ${label}`,
+      message: activating
+        ? `Reactivate this ${label.toLowerCase()}? It will become available again wherever it's used.`
+        : `Deactivate this ${label.toLowerCase()}? It will be hidden from dropdowns wherever it's used.`,
+      confirmText: activating ? "Activate" : "Deactivate",
+      destructive: !activating,
+    });
+    if (!ok) return;
     try {
       const id = item[config.idField];
       await axiosInstance.put(`/hospital/lookups/${id}/status?type=${selectedType}`, {
         isActive: !item.isActive
       });
-      fetchData(selectedType);
+      refetch();
     } catch (err: any) {
       alert(err.response?.data?.message || "Failed to toggle status");
     }
@@ -143,16 +157,10 @@ export default function LookupManager() {
 
   return (
     <Box sx={{ maxWidth: 1000, mx: "auto" }}>
-      <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            Master Data Management
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Configure system dropdowns and settings without code changes.
-          </Typography>
-        </Box>
-      </Box>
+      <PageHeader
+        title="Master Data Management"
+        subtitle="Configure system dropdowns and settings without code changes."
+      />
 
       <Paper sx={{ p: 3, mb: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
         <Grid container spacing={3} alignItems="center">
@@ -191,36 +199,47 @@ export default function LookupManager() {
         </Grid>
       </Paper>
 {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-          <CircularProgress sx={{ color: "#6366f1" }} />
-        </Box>
+        <Box sx={{ height: "calc(100vh - 320px)" }}><ListSkeleton rows={6} /></Box>
+      ) : isError ? (
+        <Box sx={{ height: "calc(100vh - 320px)" }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></Box>
       ) : (
-        <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
-          <Table>
+        <TableContainer component={Paper} sx={{ width: "100%", bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, height: "calc(100vh - 320px)" }}>
+          <Table stickyHeader sx={{ width: "100%", tableLayout: "fixed" }}>
             <TableHead>
               <TableRow>
                 {config.columns.map((col: any) => (
-                  <TableCell key={col.field} sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>
-                    {col.label}
-                  </TableCell>
+                  <SortableHeadCell
+                    key={col.field}
+                    label={col.label}
+                    sortKey={col.field}
+                    orderBy={orderBy}
+                    order={order}
+                    onSort={onSort}
+                    sx={{ color: "text.secondary", textTransform: "none", letterSpacing: 0, fontSize: "0.875rem", fontWeight: 600, py: 2, bgcolor: "background.paper" }}
+                  />
                 ))}
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>
-                  Status
-                </TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600 }}>
+                <SortableHeadCell
+                  label="Status"
+                  sortKey="status"
+                  orderBy={orderBy}
+                  order={order}
+                  onSort={onSort}
+                  sx={{ color: "text.secondary", textTransform: "none", letterSpacing: 0, fontSize: "0.875rem", fontWeight: 600, py: 2, bgcolor: "background.paper" }}
+                />
+                <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600, bgcolor: "background.paper" }}>
                   Actions
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.length === 0 ? (
+              {sorted.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={config.columns.length + 2} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
-                    No records found for {config.label}.
+                  <TableCell colSpan={config.columns.length + 2} sx={{ py: 3, borderBottom: "none" }}>
+                    <Mascot pose="nothing-here-yet" subtitle={`No records found for ${config.label}.`} size={120} />
                   </TableCell>
                 </TableRow>
               ) : (
-                data.map((item) => (
+                sorted.map((item) => (
                   <TableRow key={item[config.idField]} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                     {config.columns.map((col: any) => (
                       <TableCell key={col.field} sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>

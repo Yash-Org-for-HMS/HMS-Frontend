@@ -23,7 +23,7 @@ interface PharmacyPageProps {
  */
 export default function PharmacyPage({ title, subtitle, icon, action, children }: PharmacyPageProps) {
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1400, mx: "auto", width: "100%" }}>
+    <Box sx={{ maxWidth: 1400, mx: "auto", width: "100%" }}>
       <Box
         sx={{
           display: "flex",
@@ -40,9 +40,8 @@ export default function PharmacyPage({ title, subtitle, icon, action, children }
             variant="h4"
             sx={{
               fontWeight: 800,
-              background: "linear-gradient(135deg, #4F46E5 0%, #EC4899 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
+              letterSpacing: "-0.5px",
+              color: "text.primary",
               display: "flex",
               alignItems: "center",
               gap: 1.5,
@@ -52,7 +51,7 @@ export default function PharmacyPage({ title, subtitle, icon, action, children }
             {title}
           </Typography>
           {subtitle && (
-            <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 0.5 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
               {subtitle}
             </Typography>
           )}

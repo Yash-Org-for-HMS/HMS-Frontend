@@ -1,20 +1,30 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Tooltip,
-  TextField, InputAdornment, CircularProgress, Alert,
+  TextField, InputAdornment, Alert,
   Dialog, DialogContent, Grid, Tabs, Tab, Avatar, Stack, Popover
 } from "@mui/material";
 import {
   AddRounded, SearchRounded, CancelRounded, CheckCircleRounded,
   WarningAmberRounded, ReceiptRounded, NotificationsActiveRounded, ChecklistRounded,
   NotesRounded, ChevronLeftRounded, ChevronRightRounded, CalendarMonthRounded,
-  FilterAltRounded
+  FilterAltRounded, EventRepeatRounded, CallSplitRounded
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
+import StatusChip from "../../components/StatusChip";
 import BillingModal from "./BillingModal";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import ReferralDialog from "../../components/reception/ReferralDialog";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
+import { useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
 import dayjs, { Dayjs } from "dayjs";
 
 const getAppointmentType = (reason: string | null | undefined) => {
@@ -105,8 +115,6 @@ function MiniCalendar({ selectedDate, onDateChange, highlightedDays }: { selecte
 
 export default function AppointmentsList() {
   const navigate = useNavigate();
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const toast = useToast();
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -120,34 +128,31 @@ export default function AppointmentsList() {
   });
   const [processing, setProcessing] = useState(false);
   const [billingDialog, setBillingDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
+  const [referralDialog, setReferralDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
 
-  const fetchAppointments = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await axiosInstance.get(`/reception/appointments?t=${Date.now()}`);
-      setAppointments(res.data.data);
-    } catch (err: any) {
-      toast.error("Failed to load appointments");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAppointments();
-  }, [fetchAppointments]);
+  // The backend caps this at 500 rows per call (it used to return a hospital's
+  // entire history unbounded). This page still filters/sorts client-side, so we
+  // ask for the largest allowed page and warn if there's more than that.
+  const { data: listResponse, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["reception-appointments"],
+    queryFn: async () => (await axiosInstance.get("/reception/appointments", { params: { limit: 500 } })).data,
+  });
+  const appointments: any[] = listResponse?.data ?? [];
+  const isTruncated = (listResponse?.meta?.total ?? 0) > (listResponse?.meta?.limit ?? Infinity);
 
   const handleAction = async () => {
     if (!actionDialog.appt || !actionDialog.type) return;
+    const actionType = actionDialog.type;
     setProcessing(true);
     try {
-      if (actionDialog.type === 'cancel') {
+      if (actionType === 'cancel') {
         await axiosInstance.put(`/reception/appointments/${actionDialog.appt.appointmentId}/cancel`, { reason: "Cancelled by reception" });
-      } else if (actionDialog.type === 'checkin') {
+      } else if (actionType === 'checkin') {
         await axiosInstance.put(`/reception/appointments/${actionDialog.appt.appointmentId}/checkin`);
       }
       setActionDialog({ open: false, type: null, appt: null });
-      fetchAppointments();
+      refetch();
+      toast.success(actionType === 'cancel' ? "Appointment cancelled" : "Patient checked in");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to process action");
     } finally {
@@ -205,6 +210,17 @@ export default function AppointmentsList() {
     return filtered;
   }, [appointments, search, tabValue, selectedDate]);
 
+  // Client-side column sorting (the full appointment set is already in memory).
+  const { sorted: sortedAppointments, orderBy, order, onSort } = useTableSort(
+    filteredAppointments,
+    {
+      time: (a) => (a.appointmentDate ? new Date(a.appointmentDate) : null),
+      patient: (a) => a.patientName,
+      doctor: (a) => a.doctorName,
+      status: (a) => a.statusLabel,
+    },
+  );
+
   const highlightedDays = useMemo(() => {
     return appointments.map(a => dayjs(a.appointmentDate).format("YYYY-MM-DD"));
   }, [appointments]);
@@ -214,34 +230,45 @@ export default function AppointmentsList() {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4, flexWrap: "wrap", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
-            Appointments
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Manage scheduling, check-ins, and patient flow
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
-          <Button
-            variant="contained"
-            startIcon={<CalendarMonthRounded />}
-            onClick={() => navigate("/reception/appointments/new")}
-            sx={{
-              background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
-              fontWeight: 600, px: 3, py: 1.2, textTransform: "none", borderRadius: 2,
-              boxShadow: "0 4px 14px rgba(6, 182, 212, 0.4)",
-            }}
-          >
-            Book Appointment
-          </Button>
-        </Box>
-      </Box>
+      <PageHeader
+        title="Appointments"
+        subtitle="Manage scheduling, check-ins, and patient flow"
+        actions={
+          <>
+            <Button
+              variant="outlined"
+              startIcon={<CalendarMonthRounded />}
+              onClick={() => navigate("/reception/appointments/calendar")}
+              sx={{ fontWeight: 600, px: 3, py: 1.2, textTransform: "none", borderRadius: 2, borderColor: "divider", color: "text.secondary" }}
+            >
+              Calendar view
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddRounded />}
+              onClick={() => navigate("/reception/appointments/new")}
+              sx={{
+                background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
+                fontWeight: 600, px: 3, py: 1.2, textTransform: "none", borderRadius: 2,
+                boxShadow: "0 4px 14px rgba(6, 182, 212, 0.4)",
+              }}
+            >
+              Book Appointment
+            </Button>
+          </>
+        }
+      />
 
       {successMsg && (
         <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMsg(null)}>
           {successMsg}
+        </Alert>
+      )}
+
+      {isTruncated && (tabValue === "all" || search) && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Showing the {listResponse?.meta?.limit} most recent appointments out of {listResponse?.meta?.total} total.
+          Filter by date to see older ones, or narrow your search.
         </Alert>
       )}
 
@@ -253,7 +280,7 @@ export default function AppointmentsList() {
             onChange={(e, v) => { setTabValue(v); if(v === "today") setSelectedDate(dayjs()); }}
             variant="scrollable"
             scrollButtons="auto"
-            sx={{ "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.95rem" } }}
+            sx={{ "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.875rem" } }}
           >
             <Tab label="Today" value="today" />
             <Tab label="Next 7 Days" value="this_week" />
@@ -321,23 +348,27 @@ export default function AppointmentsList() {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {["Time & Type", "Patient", "Doctor", "Status", "Actions"].map((h, i) => (
-                  <TableCell key={h} align={i === 4 ? "right" : "left"} sx={{ 
-                    color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", 
-                    py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider"
-                  }}>
-                    {h}
-                  </TableCell>
-                ))}
+                <SortableHeadCell label="Time & Type" sortKey="time" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Patient" sortKey="patient" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Doctor" sortKey="doctor" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} />
+                <TableCell align="right" sx={{
+                  color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase",
+                  letterSpacing: 0.5, py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider"
+                }}>
+                  Actions
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}><CircularProgress size={30} sx={{ color: "#06b6d4" }}/></TableCell></TableRow>
-              ) : filteredAppointments.length === 0 ? (
-                <TableRow><TableCell colSpan={5} align="center" sx={{ py: 6, color: "text.secondary" }}>No appointments found</TableCell></TableRow>
+                <TableRowsSkeleton rows={6} columns={5} />
+              ) : isError ? (
+                <TableRow><TableCell colSpan={5} sx={{ py: 4, border: 0 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
+              ) : sortedAppointments.length === 0 ? (
+                <TableRow><TableCell colSpan={5} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No appointments" subtitle="No appointments found." /></TableCell></TableRow>
               ) : (
-                filteredAppointments.map(appt => {
+                sortedAppointments.map(appt => {
                   const typeInfo = getAppointmentType(appt.reason);
                   return (
                     <TableRow key={appt.appointmentId} sx={{ "&:hover": { bgcolor: "background.default" }, transition: "background 0.15s ease" }}>
@@ -348,11 +379,11 @@ export default function AppointmentsList() {
                         <Typography variant="caption" sx={{ color: "text.secondary", display: 'block', mb: 0.5 }}>
                           {new Date(appt.appointmentDate).toLocaleDateString("en-IN")}
                         </Typography>
-                        <Chip label={typeInfo.label} size="small" sx={{ bgcolor: typeInfo.bgcolor, color: typeInfo.color, fontWeight: 700, fontSize: "0.65rem", height: 20 }} />
+                        <Chip label={typeInfo.label} size="small" sx={{ bgcolor: typeInfo.bgcolor, color: typeInfo.color, fontWeight: 700, fontSize: "0.75rem", height: 20 }} />
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar sx={{ width: 36, height: 36, bgcolor: getAvatarColor(appt.patientId || appt.patientName), fontSize: "0.8rem", fontWeight: 700 }}>
+                          <Avatar sx={{ width: 36, height: 36, bgcolor: getAvatarColor(appt.patientId || appt.patientName), fontSize: "0.875rem", fontWeight: 700 }}>
                             {appt.patientName.charAt(0).toUpperCase()}
                           </Avatar>
                           <Box>
@@ -361,13 +392,18 @@ export default function AppointmentsList() {
                           </Box>
                         </Box>
                       </TableCell>
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.85rem", py: 1.5 }}>
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.875rem", py: 1.5 }}>
                         {appt.doctorName}
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
-                        <Chip label={appt.statusLabel} size="small" sx={{ bgcolor: `${appt.statusColor}22`, color: appt.statusColor, border: `1px solid ${appt.statusColor}55`, fontWeight: 600, fontSize: "0.7rem" }} />
+                        <StatusChip label={appt.statusLabel} color={appt.statusColor} />
                       </TableCell>
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
+                        <Tooltip title="Refer Patient">
+                          <IconButton size="small" onClick={() => setReferralDialog({ open: true, appt })} sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6,182,212,0.08)" } }}>
+                            <CallSplitRounded fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                         {appt.statusLabel === 'Scheduled' && (
                           <>
                             <Tooltip title="Check In">
@@ -398,11 +434,18 @@ export default function AppointmentsList() {
                           </>
                         )}
                         {appt.statusLabel === 'Completed' && (
-                          <Tooltip title="Send Visit Confirmation">
-                            <IconButton size="small" onClick={() => handleSendNotification(appt.appointmentId, 'visit-confirmation')} sx={{ color: "text.secondary", "&:hover": { color: "#10b981", bgcolor: "rgba(16,185,129,0.08)" } }}>
-                              <ChecklistRounded fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                          <>
+                            <Tooltip title="Book Follow-up">
+                              <IconButton size="small" onClick={() => navigate(`/reception/appointments/new?patientId=${appt.patientId}&doctorId=${appt.doctorId || ""}&followUpOf=${appt.appointmentId}`)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2", bgcolor: "rgba(8,145,178,0.08)" } }}>
+                                <EventRepeatRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Send Visit Confirmation">
+                              <IconButton size="small" onClick={() => handleSendNotification(appt.appointmentId, 'visit-confirmation')} sx={{ color: "text.secondary", "&:hover": { color: "#10b981", bgcolor: "rgba(16,185,129,0.08)" } }}>
+                                <ChecklistRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </>
                         )}
                       </TableCell>
                     </TableRow>
@@ -433,7 +476,7 @@ export default function AppointmentsList() {
               Go Back
             </Button>
             <Button variant="contained" onClick={handleAction} disabled={processing} sx={{ bgcolor: actionDialog.type === 'cancel' ? '#ef4444' : '#10b981', "&:hover": { bgcolor: actionDialog.type === 'cancel' ? '#dc2626' : '#059669' }, textTransform: "none" }}>
-              {processing ? <CircularProgress size={20} color="inherit" /> : 'Confirm'}
+              {processing ? <HeartbeatLoader size={22} /> : 'Confirm'}
             </Button>
           </Box>
         </DialogContent>
@@ -447,6 +490,19 @@ export default function AppointmentsList() {
           appointmentId={billingDialog.appt.appointmentId}
           patientName={billingDialog.appt.patientName}
           appointmentDate={billingDialog.appt.appointmentDate}
+        />
+      )}
+
+      {/* Referral Dialog */}
+      {referralDialog.appt && (
+        <ReferralDialog
+          open={referralDialog.open}
+          onClose={() => setReferralDialog({ open: false, appt: null })}
+          onCreated={() => setReferralDialog({ open: false, appt: null })}
+          prefilledPatientId={referralDialog.appt.patientId}
+          prefilledFromDepartmentId={referralDialog.appt.departmentId}
+          lockPatient
+          patientLabel={referralDialog.appt.patientName}
         />
       )}
     </Box>

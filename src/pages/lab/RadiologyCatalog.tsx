@@ -1,17 +1,25 @@
-import { useState, useEffect } from "react";
-import { 
-  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, 
-  Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, 
+import { useState } from "react";
+import {
+  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Button, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha
 } from "@mui/material";
-import { EditRounded, DeleteRounded, AddRounded, SettingsAccessibilityRounded } from "@mui/icons-material";
+import { EditRounded, DeleteRounded, AddRounded } from "@mui/icons-material";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
+import PageHeader from "../../components/layout/PageHeader";
+import { ListSkeleton } from "../../components/TableRowsSkeleton";
+import { useTableSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { useConfirm } from "../../contexts/ConfirmContext";
 
 export default function RadiologyCatalog() {
   const theme = useTheme();
-  const [scans, setScans] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  
+  const confirm = useConfirm();
+
   const [openDialog, setOpenDialog] = useState(false);
   const [editScan, setEditScan] = useState<any>(null);
   
@@ -22,21 +30,16 @@ export default function RadiologyCatalog() {
   
   const [errorMsg, setErrorMsg] = useState("");
 
-  useEffect(() => {
-    fetchScans();
-  }, []);
+  const { data: scans = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+    queryKey: ["radiology-catalog"],
+    queryFn: async () => (await axiosInstance.get("/lab/radiology-catalog")).data.data || [],
+  });
 
-  const fetchScans = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get("/lab/radiology-catalog");
-      setScans(res.data.data || []);
-    } catch (err) {
-      console.error("Failed to fetch radiology scans", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { sorted, orderBy, order, onSort } = useTableSort(scans, {
+    testCode: (s) => s.testCode,
+    testName: (s) => s.testName,
+    price: (s) => Number(s.price),
+  });
 
   const handleOpenNew = () => {
     setEditScan(null);
@@ -83,9 +86,8 @@ export default function RadiologyCatalog() {
         });
       }
       handleClose();
-      fetchScans();
+      refetch();
     } catch (err: any) {
-      console.error("Failed to save radiology scan", err);
       setErrorMsg(err.response?.data?.message || "Failed to save the radiology scan.");
     } finally {
       setSaving(false);
@@ -93,65 +95,50 @@ export default function RadiologyCatalog() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this radiology scan?")) return;
+    const ok = await confirm({
+      title: "Delete radiology scan",
+      message: "Are you sure you want to delete this radiology scan? This cannot be undone.",
+      confirmText: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await axiosInstance.delete(`/lab/radiology-catalog/${id}`);
-      fetchScans();
+      refetch();
     } catch (err: any) {
-      console.error("Failed to delete radiology scan", err);
       alert(err.response?.data?.message || "Failed to delete the radiology scan.");
     }
   };
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: "auto" }}>
-      <Box sx={{ 
-        display: "flex", 
-        flexDirection: { xs: 'column', sm: 'row' },
-        justifyContent: "space-between", 
-        alignItems: { xs: 'flex-start', sm: 'center' }, 
-        mb: 4,
-        gap: 2
-      }}>
-        <Box>
-          <Typography variant="h4" sx={{ 
-            fontWeight: 800, 
-            background: 'linear-gradient(135deg, #0284C7 0%, #4F46E5 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5
-          }}>
-            <SettingsAccessibilityRounded fontSize="large" sx={{ color: '#0284C7' }} />
-            Radiology Catalog
-          </Typography>
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 0.5 }}>
-            Manage available radiology scans, imaging services, and pricing.
-          </Typography>
-        </Box>
-        <Button 
-          variant="contained" 
-          startIcon={<AddRounded />}
-          onClick={handleOpenNew}
-          sx={{
-            borderRadius: '12px',
-            textTransform: 'none',
-            fontWeight: 600,
-            px: 3,
-            py: 1.2,
-            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-            boxShadow: '0 8px 16px -4px rgba(16, 185, 129, 0.4)',
-            transition: 'all 0.2s',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: '0 12px 20px -4px rgba(16, 185, 129, 0.5)',
-            }
-          }}
-        >
-          Add New Scan
-        </Button>
-      </Box>
+      <PageHeader
+        title="Radiology Catalog"
+        subtitle="Manage available radiology scans, imaging services, and pricing."
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<AddRounded />}
+            onClick={handleOpenNew}
+            sx={{
+              borderRadius: '12px',
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 3,
+              py: 1.2,
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              boxShadow: '0 8px 16px -4px rgba(16, 185, 129, 0.4)',
+              transition: 'all 0.2s',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 12px 20px -4px rgba(16, 185, 129, 0.5)',
+              }
+            }}
+          >
+            Add New Scan
+          </Button>
+        }
+      />
 
       <Paper sx={{ 
         borderRadius: 4,
@@ -163,28 +150,25 @@ export default function RadiologyCatalog() {
         backdropFilter: 'blur(20px)',
       }}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
-            <CircularProgress size={48} thickness={4} sx={{ color: '#0284C7' }} />
-          </Box>
+          <ListSkeleton rows={6} />
+        ) : isError ? (
+          <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
         ) : scans.length === 0 ? (
-          <Box sx={{ p: 8, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-            <SettingsAccessibilityRounded sx={{ fontSize: 64, color: 'text.disabled' }} />
-            <Typography variant="h6" color="text.secondary">No radiology scans found</Typography>
-            <Typography variant="body2" color="text.disabled">Get started by creating your first scan.</Typography>
-          </Box>
+          <Mascot pose="nothing-here-yet" title="No radiology scans found" subtitle="Get started by creating your first scan." />
         ) : (
           <Fade in timeout={500}>
-            <Table>
+            <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Scan Code</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Scan Name</TableCell>
-                  <TableCell sx={{ fontWeight: 700, py: 2 }}>Price</TableCell>
+                  <SortableHeadCell label="Scan Code" sortKey="testCode" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
+                  <SortableHeadCell label="Scan Name" sortKey="testName" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
+                  <SortableHeadCell label="Price" sortKey="price" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
                   <TableCell align="right" sx={{ fontWeight: 700, py: 2 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {scans.map((scan) => (
+                {sorted.map((scan) => (
                   <TableRow 
                     key={scan.radiologyTestId} 
                     hover
@@ -223,6 +207,7 @@ export default function RadiologyCatalog() {
                 ))}
               </TableBody>
             </Table>
+            </TableContainer>
           </Fade>
         )}
       </Paper>
@@ -297,7 +282,7 @@ export default function RadiologyCatalog() {
               '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }
             }}
           >
-            {saving ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
+            {saving ? <HeartbeatLoader size={22} /> : "Save Changes"}
           </Button>
         </DialogActions>
       </Dialog>

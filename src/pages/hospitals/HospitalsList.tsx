@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import {
   Box,
   Container,
@@ -15,7 +17,6 @@ import {
   TableRow,
   IconButton,
   Chip,
-  CircularProgress,
   TextField,
   InputAdornment,
   Pagination,
@@ -31,21 +32,33 @@ import {
 import {
   AddRounded,
   EditRounded,
+  WidgetsRounded,
   SearchRounded,
   DeleteOutlineRounded,
   RestoreRounded,
   VisibilityRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import { useToast } from "../../contexts/ToastContext";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Keep the admin list's existing sentence-case header look (the SortableHeadCell
+// default is the reception-panel uppercase style).
+const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal" } as const;
 
 export default function HospitalsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [hospitals, setHospitals] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const toast = useToast();
 
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState(0); // 0 = Active, 1 = Deleted
 
@@ -56,33 +69,27 @@ export default function HospitalsList() {
   });
   const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchHospitals = async () => {
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get("/hospitals", {
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
+
+  const { data, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ["hospitals", page, search, activeTab, orderBy, order],
+    queryFn: async () =>
+      (await axiosInstance.get("/hospitals", {
         params: {
-          page,
-          limit: 10,
-          search,
+          page, limit: 10, search,
+          sortBy: orderBy || undefined, sortOrder: order,
           ...(activeTab === 1 ? { showDeleted: "true" } : {}),
         },
-      });
-      setHospitals(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch hospitals", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      })).data,
+  });
+  const hospitals: any[] = data?.data ?? [];
+  const totalPages: number = data?.pagination?.totalPages ?? 1;
 
+  // Reset to the first page whenever the tab or sort changes.
   useEffect(() => {
     setPage(1);
-  }, [activeTab]);
-
-  useEffect(() => {
-    fetchHospitals();
-  }, [page, search, activeTab]);
+  }, [activeTab, orderBy, order]);
 
   const handleDelete = async () => {
     if (!deleteDialog.hospital) return;
@@ -90,9 +97,9 @@ export default function HospitalsList() {
     try {
       await axiosInstance.delete(`/hospitals/${deleteDialog.hospital.hospitalId}`);
       setDeleteDialog({ open: false, hospital: null });
-      fetchHospitals();
+      refetch();
     } catch (error) {
-      console.error("Failed to delete hospital", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to delete hospital");
     } finally {
       setActionLoading(false);
     }
@@ -102,38 +109,30 @@ export default function HospitalsList() {
     setActionLoading(true);
     try {
       await axiosInstance.put(`/hospitals/${hospitalId}/restore`);
-      fetchHospitals();
+      refetch();
     } catch (error) {
-      console.error("Failed to restore hospital", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to restore hospital");
     } finally {
       setActionLoading(false);
     }
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("hospitals.title", "Hospitals Directory")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("hospitals.subtitle", "Manage all hospital tenants and their subscriptions")}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/hospitals/new")}
-          sx={{
-            background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-            boxShadow: "0 4px 14px 0 rgba(59, 130, 246, 0.39)",
-            borderRadius: 2,
-          }}
-        >
-          {t("hospitals.addHospital", "Add Hospital")}
-        </Button>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title={t("hospitals.title", "Hospitals Directory")}
+        subtitle={t("hospitals.subtitle", "Manage all hospital tenants and their subscriptions")}
+        actions={
+          <ActionButton
+            accentFrom="#3b82f6"
+            accentTo="#2563eb"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/hospitals/new")}
+          >
+            {t("hospitals.addHospital", "Add Hospital")}
+          </ActionButton>
+        }
+      />
 
       {/* Tabs: Active / Deleted */}
       <Box sx={{ mb: 3 }}>
@@ -151,13 +150,13 @@ export default function HospitalsList() {
       </Box>
 
       {/* Filters */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+      <FilterBar>
         <TextField
           placeholder={t("hospitals.searchPlaceholder", "Search by name, code, or email...")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"
-          
+
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -166,7 +165,7 @@ export default function HospitalsList() {
             ),
           }}
         />
-      </Box>
+      </FilterBar>
 
       <Paper
         elevation={2}
@@ -178,23 +177,25 @@ export default function HospitalsList() {
           overflow: "hidden",
         }}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("hospitals.code", "Code")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("hospitals.name", "Hospital Name")}</TableCell>
+                <SortableHeadCell label={t("hospitals.code", "Code")} sortKey="code" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("hospitals.name", "Hospital Name")} sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
                 <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("hospitals.plan", "Plan")}</TableCell>
                 <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("hospitals.branches", "Branches")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("hospitals.status", "Status")}</TableCell>
+                <SortableHeadCell label={t("hospitals.status", "Status")} sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
                 <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
+                <TableRowsSkeleton rows={6} columns={6} />
+              ) : isError ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "#3b82f6" }} />
+                  <TableCell colSpan={6} sx={{ py: 4, border: 0 }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : hospitals.length === 0 ? (
@@ -276,6 +277,14 @@ export default function HospitalsList() {
                               sx={{ color: "#3b82f6" }}
                             >
                               <VisibilityRounded />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Module Access">
+                            <IconButton
+                              onClick={() => navigate(`/hospitals/${hospital.hospitalId}/modules`)}
+                              sx={{ color: "#8b5cf6" }}
+                            >
+                              <WidgetsRounded />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="Edit">
@@ -377,7 +386,7 @@ export default function HospitalsList() {
             onClick={handleDelete}
             disabled={actionLoading}
             variant="contained"
-            startIcon={actionLoading ? <CircularProgress size={16} color="inherit" /> : <DeleteOutlineRounded />}
+            startIcon={actionLoading ? <HeartbeatLoader size={22} /> : <DeleteOutlineRounded />}
             sx={{
               bgcolor: "#ef4444",
               textTransform: "none",
@@ -389,6 +398,6 @@ export default function HospitalsList() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </PageContainer>
   );
 }

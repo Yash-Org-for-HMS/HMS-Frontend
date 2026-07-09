@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { ACCENTS } from "../../styles/accents";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Chip, CircularProgress,
+  TableContainer, TableHead, TableRow, Chip,
   Alert, Avatar, Tooltip, IconButton,
 } from "@mui/material";
 import {
@@ -10,7 +11,12 @@ import {
   LocalHospitalRounded, PlayArrowRounded, VisibilityRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
+import StatusChip from "../../components/StatusChip";
+import PageHeader from "../../components/layout/PageHeader";
+import { typeScale } from "../../styles/typography";
 import VitalsModal from "../reception/VitalsModal";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import { useNavigate } from "react-router-dom";
 import { useSocket } from "../../hooks/useSocket";
 
@@ -23,8 +29,8 @@ const getDoctorInitials = (doctorName?: string) => {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 };
 
-const DOCTOR_BLUE = "#3b82f6";
-const DOCTOR_BLUE_DARK = "#2563eb";
+const DOCTOR_BLUE = ACCENTS.doctor;
+const DOCTOR_BLUE_DARK = ACCENTS.doctorDark;
 
 export default function DoctorQueue() {
   const navigate = useNavigate();
@@ -44,39 +50,42 @@ export default function DoctorQueue() {
     QUEUE_UPDATED: fetchQueue
   });
 
-  const waiting = tokens.filter((t: any) => t.statusCode === "WAITING_FOR_VITALS" || t.statusCode === "READY_FOR_DOCTOR").length;
-  const inProgress = tokens.filter((t: any) => t.statusCode === "IN_CONSULTATION").length;
-  const completed = tokens.filter((t: any) => t.statusCode === "COMPLETED" || t.statusCode === "CANCELLED").length;
-  const skipped = tokens.filter((t: any) => t.statusCode === "SKIPPED").length;
-
-  const activeTokens = tokens.filter((t: any) => t.statusCode !== "SKIPPED" && t.statusCode !== "COMPLETED" && t.statusCode !== "CANCELLED");
-  const skippedTokens = tokens.filter((t: any) => t.statusCode === "SKIPPED");
+  // Memoized on `tokens` — this page re-renders on unrelated local state (the
+  // vitals dialog opening/closing), which would otherwise re-run all 6 of
+  // these full-array passes for no reason.
+  const { waiting, inProgress, completed, skipped, activeTokens, skippedTokens } = useMemo(() => {
+    const activeTokens = tokens.filter((t: any) => t.statusCode !== "SKIPPED" && t.statusCode !== "COMPLETED" && t.statusCode !== "CANCELLED");
+    const skippedTokens = tokens.filter((t: any) => t.statusCode === "SKIPPED");
+    return {
+      waiting: tokens.filter((t: any) => t.statusCode === "WAITING_FOR_VITALS" || t.statusCode === "READY_FOR_DOCTOR").length,
+      inProgress: tokens.filter((t: any) => t.statusCode === "IN_CONSULTATION").length,
+      completed: tokens.filter((t: any) => t.statusCode === "COMPLETED" || t.statusCode === "CANCELLED").length,
+      skipped: skippedTokens.length,
+      activeTokens,
+      skippedTokens,
+    };
+  }, [tokens]);
 
   return (
     <Box sx={{ pb: 6 }}>
-      {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800, mb: 0.5 }}>
-            My Queue
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Patients waiting for consultation
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          startIcon={<SyncRounded />}
-          onClick={() => fetchQueue()}
-          sx={{
-            color: DOCTOR_BLUE, borderColor: `rgba(59,130,246,0.4)`,
-            fontWeight: 600, textTransform: "none",
-            "&:hover": { borderColor: DOCTOR_BLUE, bgcolor: "rgba(59,130,246,0.06)" },
-          }}
-        >
-          Refresh
-        </Button>
-      </Box>
+      <PageHeader
+        title="My Queue"
+        subtitle="Patients waiting for consultation"
+        actions={
+          <Button
+            variant="outlined"
+            startIcon={<SyncRounded />}
+            onClick={() => fetchQueue()}
+            sx={{
+              color: DOCTOR_BLUE, borderColor: `rgba(59,130,246,0.4)`,
+              fontWeight: 600, textTransform: "none",
+              "&:hover": { borderColor: DOCTOR_BLUE, bgcolor: "rgba(59,130,246,0.06)" },
+            }}
+          >
+            Refresh
+          </Button>
+        }
+      />
 
       {/* Summary Chips */}
       <Box sx={{ display: "flex", gap: 1.5, mb: 3, flexWrap: "wrap" }}>
@@ -106,15 +115,15 @@ export default function DoctorQueue() {
       {error && <Alert severity="error" sx={{ mb: 3 }}>Failed to load queue</Alert>}
 
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", overflow: "hidden" }}>
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
                 {["Token", "Patient", "Vitals Status", "Queue Status", "Action"].map((h, i) => (
                   <TableCell
                     key={h}
                     align={i === 4 ? "right" : "left"}
-                    sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}
+                    sx={{ ...typeScale.sectionLabel, py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}
                   >
                     {h}
                   </TableCell>
@@ -123,15 +132,11 @@ export default function DoctorQueue() {
             </TableHead>
             <TableBody>
               {loading && activeTokens.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
-                    <CircularProgress size={30} sx={{ color: DOCTOR_BLUE }} />
-                  </TableCell>
-                </TableRow>
+                <TableRowsSkeleton rows={6} columns={5} />
               ) : activeTokens.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 8, color: "text.secondary" }}>
-                    No active patients in queue
+                  <TableCell colSpan={5} sx={{ py: 4, border: 0 }}>
+                    <Mascot pose="all-caught-up" title="All caught up!" subtitle="No active patients in the queue right now." />
                   </TableCell>
                 </TableRow>
               ) : (
@@ -173,7 +178,7 @@ export default function DoctorQueue() {
                               icon={<MonitorHeartRounded sx={{ fontSize: "14px !important" }} />}
                               label="Recorded"
                               size="small"
-                              sx={{ bgcolor: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600, fontSize: "0.7rem", cursor: "pointer" }}
+                              sx={{ bgcolor: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600, fontSize: "0.75rem", cursor: "pointer" }}
                               onClick={() => setVitalsDialog({ open: true, token, readonly: true })}
                             />
                           </Tooltip>
@@ -181,17 +186,14 @@ export default function DoctorQueue() {
                           <Chip
                             label="Not Recorded"
                             size="small"
-                            sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)", fontWeight: 600, fontSize: "0.7rem" }}
+                            sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)", fontWeight: 600, fontSize: "0.75rem" }}
                           />
                         )}
                       </TableCell>
 
                       {/* Queue Status */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                        <Chip
-                          label={token.statusLabel} size="small"
-                          sx={{ bgcolor: `${token.statusColor}22`, color: token.statusColor, border: `1px solid ${token.statusColor}55`, fontWeight: 600, fontSize: "0.7rem" }}
-                        />
+                        <StatusChip label={token.statusLabel} color={token.statusColor} />
                       </TableCell>
 
                       {/* Action */}
@@ -242,7 +244,7 @@ export default function DoctorQueue() {
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '25%' }}>
                         <Chip
                           label="Skipped" size="small"
-                          sx={{ bgcolor: `rgba(249,115,22,0.1)`, color: '#f97316', border: `1px solid rgba(249,115,22,0.3)`, fontWeight: 600, fontSize: "0.7rem" }}
+                          sx={{ bgcolor: `rgba(249,115,22,0.1)`, color: '#f97316', border: `1px solid rgba(249,115,22,0.3)`, fontWeight: 600, fontSize: "0.75rem" }}
                         />
                       </TableCell>
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '25%' }}>
@@ -279,6 +281,8 @@ export default function DoctorQueue() {
           patientName={vitalsDialog.token.patientName}
           onSaved={() => {}} // Read-only for doctor in this view, though they could update if needed
           readonly={vitalsDialog.readonly}
+          // Doctors can't reach /reception/*; read vitals from the doctor panel's own endpoint.
+          readUrl={`/doctor/appointments/${vitalsDialog.token.appointmentId}/vitals`}
         />
       )}
     </Box>

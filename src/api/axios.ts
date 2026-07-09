@@ -1,7 +1,10 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
-// Access Vite env variable
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+// Access Vite env variable — the single source of truth for the backend's
+// base URL. Other modules that need it (asset URLs, the socket connection,
+// the AI summary stream) should import this rather than hardcoding their own
+// fallback, which can silently drift from this one.
+export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export const axiosInstance = axios.create({
   baseURL: API_URL,
@@ -31,8 +34,17 @@ const REALMS: Record<Realm, { access: string; refresh: string; refreshUrl: strin
 
 // Hospital-portal API prefixes use the hospital token; everything else uses the
 // super-admin token. (Same rule the request interceptor has always used.)
+//
+// The trailing \b is required: without it, "/hospital" as a bare PREFIX match
+// also matches the super-admin's own "/hospitals" (list/CRUD) endpoint — "l"
+// and "s" are both word characters, so there's no boundary between them and
+// the match slips through. That misclassified every /hospitals call as the
+// hospital-PORTAL realm, which sent the wrong (nonexistent) token, 401'd, and
+// bounced the super-admin to the hospital-staff login page instead of their
+// own. \b forces a real path-segment boundary, so "/hospital/..." still
+// matches (boundary before "/") but "/hospitals" no longer does.
 function realmForUrl(url?: string): Realm {
-  if (url && /^\/(hospital|reception|doctor|nurse|lab|pharmacy|billing)/.test(url)) {
+  if (url && /^\/(hospital|reception|doctor|nurse|lab|pharmacy|billing|ipd|vaccination)\b/.test(url)) {
     return "hospital";
   }
   return "admin";
@@ -45,6 +57,14 @@ axiosInstance.interceptors.request.use(
     const token = sessionStorage.getItem(REALMS[realm].access);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // For hospital-portal requests, tell the backend which branch this request
+    // targets. The backend validates it against the user's allowed branches.
+    if (realm === "hospital" && config.headers) {
+      const activeBranchId = sessionStorage.getItem("activeBranchId");
+      if (activeBranchId) {
+        config.headers["X-Branch-Id"] = activeBranchId;
+      }
     }
     return config;
   },
@@ -117,7 +137,13 @@ axiosInstance.interceptors.response.use(
 
     if (!newToken) {
       clearRealm(realm);
-      redirectToLogin(realm);
+      // Only bounce to a realm's login if the user is actually viewing a page in
+      // that realm. A background call from the OTHER realm (e.g. the globally-
+      // mounted command palette probing /hospital/module-access while you're on
+      // the super-admin portal) must not hijack navigation.
+      if (realmForUrl(window.location.pathname) === realm) {
+        redirectToLogin(realm);
+      }
       return Promise.reject(error);
     }
 

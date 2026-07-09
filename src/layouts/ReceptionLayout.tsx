@@ -32,12 +32,23 @@ import {
   QueueRounded,
   ReceiptRounded,
   LocalHospitalRounded,
+  MedicalServicesRounded,
+  ApartmentRounded,
+  CallSplitRounded,
+  AssessmentRounded,
+  SearchRounded,
+  LocalHotelRounded,
+  HotelRounded,
   NotificationsRounded,
   WifiRounded,
   AccessTimeRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import { assetUrl } from "../utils/assetUrl";
+import BranchSwitcher from "../components/BranchSwitcher";
+import SidebarHeader from "../components/layout/SidebarHeader";
+import SidebarUserCard from "../components/layout/SidebarUserCard";
+import { useEnabledModules } from "../hooks/useEnabledModules";
 
 const drawerWidth = 260;
 
@@ -47,19 +58,58 @@ export default function ReceptionLayout() {
   }, []);
 
   const { user, hospital, logout } = useHospitalAuth();
+  const { isModuleEnabled } = useEnabledModules();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
   const location = useLocation();
 
-  const menuItems = [
-    { text: "Dashboard", icon: <DashboardRounded />, path: "/reception/dashboard" },
-    { text: "Front Desk Console", icon: <PersonAddRounded />, path: "/reception/console" },
-    { text: "Appointments", icon: <CalendarTodayRounded />, path: "/reception/appointments" },
-    { text: "Patient Queue", icon: <QueueRounded />, path: "/reception/queue" },
-    { text: "All Patients", icon: <AccountCircleRounded />, path: "/reception/patients" },
-    { text: "Billing", icon: <ReceiptRounded />, path: "/reception/billing" },
-    { text: "Notifications", icon: <NotificationsRounded />, path: "/reception/notifications" },
+  // Grouped into sections that follow the front-desk workflow:
+  // overview → patient flow → clinical lookups → in-patient → finance → system.
+  const navSections = [
+    {
+      heading: "Overview",
+      items: [
+        { text: "Dashboard", icon: <DashboardRounded />, path: "/reception/dashboard" },
+        { text: "Front Desk Console", icon: <PersonAddRounded />, path: "/reception/console" },
+      ],
+    },
+    {
+      heading: "Patient Flow",
+      items: [
+        { text: "All Patients", icon: <AccountCircleRounded />, path: "/reception/patients" },
+        { text: "Appointments", icon: <CalendarTodayRounded />, path: "/reception/appointments" },
+        { text: "Patient Queue", icon: <QueueRounded />, path: "/reception/queue" },
+      ],
+    },
+    {
+      heading: "Clinical",
+      items: [
+        { text: "Doctor Availability", icon: <MedicalServicesRounded />, path: "/reception/doctors" },
+        { text: "Department Directory", icon: <ApartmentRounded />, path: "/reception/directory" },
+        { text: "Referrals", icon: <CallSplitRounded />, path: "/reception/referrals" },
+      ],
+    },
+    {
+      heading: "In-Patient",
+      items: [
+        { text: "Admissions", icon: <LocalHotelRounded />, path: "/reception/ipd/admissions", module: "IPD" },
+        { text: "Bed Management", icon: <HotelRounded />, path: "/reception/ipd/beds", module: "IPD" },
+      ],
+    },
+    {
+      heading: "Finance & Insights",
+      items: [
+        { text: "Billing", icon: <ReceiptRounded />, path: "/reception/billing" },
+        { text: "Reports", icon: <AssessmentRounded />, path: "/reception/reports" },
+      ],
+    },
+    {
+      heading: "System",
+      items: [
+        { text: "Notifications", icon: <NotificationsRounded />, path: "/reception/notifications" },
+      ],
+    },
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -85,150 +135,107 @@ export default function ReceptionLayout() {
       }}
     >
       {/* Logo / Hospital Name */}
-      <Toolbar
-        sx={{
-          px: 2.5,
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          borderBottom: "1px solid rgba(6, 182, 212, 0.15)",
-          minHeight: "70px !important",
-        }}
-      >
+      <SidebarHeader
+        logoUrl={hospital?.logoUrl}
+        title={hospital?.name || "Reception"}
+        subtitle="Reception Portal"
+      />
+
+      {/* Quick search — opens the command palette (also ⌘K / Ctrl+K) */}
+      <Box sx={{ px: 1.5, pt: 1.5 }}>
         <Box
+          onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
           sx={{
-            width: 40,
-            height: 40,
-            borderRadius: 1.5,
-            bgcolor: hospital?.logoUrl ? "transparent" : "primary.main",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: hospital?.logoUrl ? "none" : "0 0 16px rgba(6, 182, 212, 0.4)",
-            flexShrink: 0,
-            overflow: "hidden"
+            display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1, borderRadius: 2, cursor: "pointer",
+            border: "1px solid", borderColor: "divider", bgcolor: "background.default", color: "text.secondary",
+            "&:hover": { borderColor: "primary.main", color: "text.primary" }, transition: "all 0.15s ease",
           }}
         >
-          {hospital?.logoUrl ? (
-            <img src={assetUrl(hospital.logoUrl)} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <LocalHospitalRounded fontSize="medium" sx={{ color: "#fff" }} />
-          )}
+          <SearchRounded sx={{ fontSize: 18 }} />
+          <Typography variant="body2" sx={{ flex: 1 }}>Search…</Typography>
+          <Chip label="⌘K" size="small" sx={{ height: 20, fontSize: "0.75rem", fontWeight: 700, bgcolor: "action.hover", color: "text.secondary" }} />
         </Box>
-        <Box sx={{ overflow: "hidden" }}>
-          <Typography
-            variant="subtitle1"
-            fontWeight="700"
-            noWrap
-            sx={{ maxWidth: 170, color: "text.primary" }}
-          >
-            {hospital?.name || "Reception"}
-          </Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
-            Reception Portal
-          </Typography>
-        </Box>
-      </Toolbar>
+      </Box>
 
-      {/* Status Pill Removed for clean aesthetic */}
-
-      {/* Navigation */}
+      {/* Navigation — hide items for modules this hospital doesn't have, and
+          drop any section left empty. */}
       <List sx={{ px: 1.5, pt: 1, flex: 1, overflowY: "auto" }}>
-        <Typography
-          variant="caption"
-          sx={{ color: "#475569", fontWeight: 700, px: 1.5, pb: 1, display: "block", letterSpacing: 1, textTransform: "uppercase" }}
-        >
-          Reception
-        </Typography>
-        {menuItems.map((item) => {
-          const isActive =
-            location.pathname === item.path ||
-            (item.path !== "/reception/dashboard" && location.pathname.startsWith(item.path));
-          return (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton
-                onClick={() => {
-                  navigate(item.path);
-                  if (isMobile) setMobileOpen(false);
-                }}
-                sx={{
-                  borderRadius: 2,
-                  bgcolor: isActive ? "action.selected" : "transparent",
-                  "&:hover": {
-                    bgcolor: "action.hover",
-                  },
-                  transition: "all 0.15s ease",
-                }}
-              >
-                <ListItemIcon
-                  sx={{
-                    minWidth: 40,
-                    color: isActive ? "primary.main" : "text.secondary",
-                    transition: "color 0.15s ease",
-                  }}
-                >
-                  {(item as any).badge ? (
-                    <Badge badgeContent={(item as any).badge} color="error">
-                      {item.icon}
-                    </Badge>
-                  ) : (
-                    item.icon
-                  )}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.text}
-                  primaryTypographyProps={{
-                    fontSize: "0.9rem",
-                    fontWeight: isActive ? 600 : 500,
-                    color: isActive ? "primary.main" : "text.secondary",
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
-          );
-        })}
+        {navSections
+          .map((section) => ({ ...section, items: section.items.filter((i) => isModuleEnabled((i as any).module)) }))
+          .filter((section) => section.items.length > 0)
+          .map((section, si) => (
+          <Box key={section.heading} sx={{ mb: 0.5 }}>
+            <Typography
+              variant="caption"
+              sx={{ color: "#475569", fontWeight: 700, px: 1.5, pt: si === 0 ? 0 : 1.5, pb: 0.75, display: "block", letterSpacing: 1, textTransform: "uppercase", fontSize: "0.75rem" }}
+            >
+              {section.heading}
+            </Typography>
+            {section.items.map((item) => {
+              const isActive =
+                location.pathname === item.path ||
+                (item.path !== "/reception/dashboard" && location.pathname.startsWith(item.path));
+              return (
+                <ListItem key={item.text} disablePadding sx={{ mb: 0.25 }}>
+                  <ListItemButton
+                    onClick={() => {
+                      navigate(item.path);
+                      if (isMobile) setMobileOpen(false);
+                    }}
+                    sx={{
+                      borderRadius: 2,
+                      bgcolor: isActive ? "action.selected" : "transparent",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                      },
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 40,
+                        color: isActive ? "primary.main" : "text.secondary",
+                        transition: "color 0.15s ease",
+                      }}
+                    >
+                      {(item as any).badge ? (
+                        <Badge badgeContent={(item as any).badge} color="error">
+                          {item.icon}
+                        </Badge>
+                      ) : (
+                        item.icon
+                      )}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.text}
+                      primaryTypographyProps={{
+                        fontSize: "0.875rem",
+                        fontWeight: isActive ? 600 : 500,
+                        color: isActive ? "primary.main" : "text.secondary",
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              );
+            })}
+          </Box>
+        ))}
       </List>
 
       <Divider sx={{ borderColor: "rgba(6, 182, 212, 0.1)" }} />
 
-      {/* User card at bottom */}
-      <Box sx={{ p: 2 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            p: 1.5,
-            borderRadius: 2,
-            bgcolor: "background.default",
-            border: "1px solid",
-            borderColor: "divider",
-          }}
-        >
-          <Avatar
-            sx={{
-              width: 34,
-              height: 34,
-              bgcolor: "primary.main",
-              fontSize: "0.85rem",
-              fontWeight: 700,
-            }}
-          >
-            {user?.firstName?.charAt(0) || "R"}
-          </Avatar>
-          <Box sx={{ overflow: "hidden", flex: 1 }}>
-            <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600, display: "block" }} noWrap>
-              {user?.firstName} {user?.lastName}
-            </Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
-              {user?.roleName || "Receptionist"}
-            </Typography>
-          </Box>
-        </Box>
-        <Typography variant="caption" sx={{ color: "#334155", display: "block", textAlign: "center", mt: 1 }}>
-          © {new Date().getFullYear()} HMS SaaS
-        </Typography>
+      {/* Branch switcher (only shown to multi-branch users) */}
+      <Box sx={{ px: 2, pt: 2 }}>
+        <BranchSwitcher />
       </Box>
+
+      {/* User card at bottom */}
+      <SidebarUserCard
+        name={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Receptionist"}
+        role={user?.roleName || "Receptionist"}
+        avatarText={user?.firstName?.charAt(0) || "R"}
+        onLogout={logout}
+      />
     </Box>
   );
 

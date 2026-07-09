@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -11,14 +12,17 @@ import {
   MenuItem,
   IconButton,
   Alert,
-  CircularProgress,
   Switch,
   FormControlLabel,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
 import { useToast } from "../../contexts/ToastContext";
+import FormHeader from "../../components/layout/FormHeader";
 
 export default function OnboardingForm() {
   const { t } = useTranslation();
@@ -26,9 +30,7 @@ export default function OnboardingForm() {
   const { id } = useParams();
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
   const toast = useToast();
-  const [hospitalName, setHospitalName] = useState<string>("");
 
   const [formData, setFormData] = useState({
     onboardingStatus: "pending",
@@ -37,26 +39,24 @@ export default function OnboardingForm() {
     paymentVerified: false,
   });
 
+  const { data: onboardingData, isLoading: initialLoading, isError, error, refetch } = useQuery({
+    queryKey: ["onboarding", id],
+    queryFn: async () => (await axiosInstance.get(`/onboarding/${id}`)).data.data,
+    enabled: !!id,
+  });
+  const hospitalName = onboardingData?.hospital?.hospitalName || "Unknown Hospital";
+
+  // Seed the form with the existing onboarding record.
   useEffect(() => {
-    const fetchOnboarding = async () => {
-      try {
-        const response = await axiosInstance.get(`/onboarding/${id}`);
-        const d = response.data.data;
-        setHospitalName(d.hospital?.hospitalName || "Unknown Hospital");
-        setFormData({
-          onboardingStatus: d.onboardingStatus || "pending",
-          tenantSetupCompleted: d.tenantSetupCompleted || false,
-          defaultRolesSeeded: d.defaultRolesSeeded || false,
-          paymentVerified: d.paymentVerified || false,
-        });
-      } catch (err) {
-        toast.error(t("common.error"));
-      } finally {
-        setInitialLoading(false);
-      }
-    };
-    fetchOnboarding();
-  }, [id, t]);
+    if (!onboardingData) return;
+    const d = onboardingData;
+    setFormData({
+      onboardingStatus: d.onboardingStatus || "pending",
+      tenantSetupCompleted: d.tenantSetupCompleted || false,
+      defaultRolesSeeded: d.defaultRolesSeeded || false,
+      paymentVerified: d.paymentVerified || false,
+    });
+  }, [onboardingData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, checked, type } = e.target;
@@ -78,35 +78,25 @@ export default function OnboardingForm() {
 
   if (initialLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "#10b981" }} />
-      </Box>
+      <PageLoader />
+    );
+  }
+
+  if (isError) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <ErrorState title="Couldn't load onboarding record" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+      </Container>
     );
   }
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 2 }}>
-        <IconButton
-          onClick={() => navigate("/onboarding")}
-          sx={{
-            bgcolor: "action.hover",
-            border: "1px solid", borderColor: "divider",
-            color: "text.primary",
-            "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-          }}
-        >
-          <ArrowBackRounded />
-        </IconButton>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", letterSpacing: "-0.5px" }}>
-            {t("onboarding.updateProgress", "Update Onboarding Progress")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {hospitalName}
-          </Typography>
-        </Box>
-      </Box>
+      <FormHeader
+        title={t("onboarding.updateProgress", "Update Onboarding Progress")}
+        subtitle={hospitalName}
+        onBack={() => navigate("/onboarding")}
+      />
 
 
 
@@ -156,6 +146,7 @@ export default function OnboardingForm() {
               </TextField>
               <Typography variant="caption" sx={{ color: "text.secondary", mt: 1, display: "block" }}>
                 Setting status to "Completed" will automatically mark the hospital as "Active" if it isn't already.
+                It is only allowed once Tenant Setup, Default Roles Seeded, and Payment Verified are all checked.
               </Typography>
             </Grid>
 
@@ -173,7 +164,7 @@ export default function OnboardingForm() {
                   type="submit" 
                   variant="contained" 
                   disabled={loading} 
-                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveRounded />} 
+                  startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ background: "linear-gradient(135deg, #10b981 0%, #059669 100%)" }}
                 >
                   {loading ? t("common.saving", "Saving...") : t("common.save", "Update Status")}

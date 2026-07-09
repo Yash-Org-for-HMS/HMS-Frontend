@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import ModuleGate from "../components/ModuleGate";
 import {
   Box,
   Drawer,
@@ -27,9 +28,13 @@ import {
   AccountCircleRounded,
   LocalHospitalRounded,
   MenuBookRounded,
+  AssessmentRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
-import { assetUrl } from "../utils/assetUrl";
+import BranchSwitcher from "../components/BranchSwitcher";
+import SidebarHeader from "../components/layout/SidebarHeader";
+import SidebarUserCard from "../components/layout/SidebarUserCard";
+import TrialBanner from "../components/layout/TrialBanner";
 
 const drawerWidth = 260;
 
@@ -45,11 +50,12 @@ export default function LabLayout() {
   const location = useLocation();
 
   const menuItems = [
-    { text: "Dashboard", icon: <DashboardRounded />, path: "/lab/dashboard" },
-    { text: "Lab Orders", icon: <ScienceRounded />, path: "/lab/orders" },
-    { text: "Radiology Orders", icon: <SettingsAccessibilityRounded />, path: "/lab/radiology" },
-    { text: "Lab Catalog", icon: <MenuBookRounded />, path: "/lab/catalog" },
-    { text: "Radiology Catalog", icon: <MenuBookRounded />, path: "/lab/radiology-catalog" },
+    { text: "Dashboard", icon: <DashboardRounded />, path: "/lab/dashboard", section: "Overview" },
+    { text: "Lab Orders", icon: <ScienceRounded />, path: "/lab/orders", section: "Orders" },
+    { text: "Radiology Orders", icon: <SettingsAccessibilityRounded />, path: "/lab/radiology", section: "Orders" },
+    { text: "Lab Catalog", icon: <MenuBookRounded />, path: "/lab/catalog", section: "Catalogs" },
+    { text: "Radiology Catalog", icon: <MenuBookRounded />, path: "/lab/radiology-catalog", section: "Catalogs" },
+    { text: "Reports", icon: <AssessmentRounded />, path: "/lab/reports", section: "Reports" },
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -66,22 +72,23 @@ export default function LabLayout() {
 
   const drawerContent = (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "background.paper", color: "text.primary" }}>
-      <Toolbar sx={{ px: 2, display: "flex", alignItems: "center", gap: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
-        <Box sx={{ width: 40, height: 40, borderRadius: 1.5, bgcolor: hospital?.logoUrl ? "transparent" : "primary.main", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-          {hospital?.logoUrl ? <img src={assetUrl(hospital.logoUrl)} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <LocalHospitalRounded fontSize="medium" sx={{ color: "#fff" }} />}
-        </Box>
-        <Box>
-          <Typography variant="subtitle1" fontWeight="700" noWrap sx={{ maxWidth: 180 }}>
-            {hospital?.name || "Lab Portal"}
-          </Typography>
-        </Box>
-      </Toolbar>
+      <SidebarHeader
+        logoUrl={hospital?.logoUrl}
+        title={hospital?.name || "Lab"}
+        subtitle="Lab & Radiology"
+      />
       
       <List sx={{ px: 2, pt: 2, flex: 1, overflowY: "auto" }}>
-        {menuItems.map((item) => {
+        {menuItems.map((item, idx, arr) => {
           const isActive = location.pathname.startsWith(item.path);
           return (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+            <Box key={item.text}>
+              {(idx === 0 || arr[idx - 1].section !== item.section) && (
+                <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", fontSize: "0.75rem", px: 1.5, pt: idx === 0 ? 0 : 1.75, pb: 0.5 }}>
+                  {item.section}
+                </Typography>
+              )}
+              <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => { navigate(item.path); if (isMobile) setMobileOpen(false); }}
                 sx={{ borderRadius: 2, bgcolor: isActive ? "rgba(16, 185, 129, 0.08)" : "transparent", "&:hover": { bgcolor: "action.hover" } }}
@@ -89,43 +96,24 @@ export default function LabLayout() {
                 <ListItemIcon sx={{ minWidth: 40, color: isActive ? "#10B981" : "#64748B" }}>
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: "0.95rem", fontWeight: isActive ? 600 : 500, color: isActive ? "#10B981" : "#64748B" }} />
+                <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: isActive ? 600 : 500, color: isActive ? "#10B981" : "#64748B" }} />
               </ListItemButton>
             </ListItem>
+            </Box>
           );
         })}
       </List>
-      
-      <Box sx={{ p: 2, borderTop: "1px solid", borderColor: "divider" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <ListItem disablePadding>
-            <ListItemButton onClick={handleMenuOpen} sx={{ borderRadius: 2, "&:hover": { bgcolor: "action.hover" }, px: 1 }}>
-              <Avatar sx={{ bgcolor: "primary.main", width: 32, height: 32, fontSize: "0.9rem", mr: 1.5 }}>
-                {user?.firstName?.charAt(0) || "U"}
-              </Avatar>
-              <ListItemText primary={user?.firstName ? `${user.firstName} ${user.lastName || ''}` : "Lab Tech"} primaryTypographyProps={{ fontWeight: 600, fontSize: "0.9rem" }} />
-            </ListItemButton>
-          </ListItem>
-          
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-            transformOrigin={{ horizontal: "right", vertical: "top" }}
-            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-            PaperProps={{ elevation: 0, sx: { mt: 1.5, bgcolor: "background.paper", border: "1px solid", borderColor: "divider" } }}
-          >
-            <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider", mb: 1 }}>
-              <Typography variant="subtitle2" fontWeight="600">{user?.firstName} {user?.lastName}</Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>{user?.email}</Typography>
-              <Typography variant="caption" sx={{ color: "#10b981", mt: 0.5, display: "block", fontWeight: 600 }}>{user?.roleName}</Typography>
-            </Box>
-            <MenuItem onClick={handleLogout} sx={{ gap: 1.5, py: 1, color: "#f87171" }}>
-              <LogoutRounded fontSize="small" /> Logout
-            </MenuItem>
-          </Menu>
-        </Box>
+
+      <Box sx={{ px: 2, pb: 1 }}>
+        <BranchSwitcher />
       </Box>
+
+      <SidebarUserCard
+        name={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Lab Technician"}
+        role={user?.roleName || "Lab Technician"}
+        avatarText={user?.firstName?.charAt(0) || "L"}
+        onLogout={logout}
+      />
     </Box>
   );
 
@@ -150,7 +138,8 @@ export default function LabLayout() {
 
       <Box component="main" sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` }, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <Toolbar sx={{ display: { xs: "block", md: "none" } }} />
-        <Outlet />
+        <TrialBanner />
+        <ModuleGate module="Laboratory"><Outlet /></ModuleGate>
       </Box>
     </Box>
   );

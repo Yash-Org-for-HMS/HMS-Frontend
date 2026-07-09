@@ -9,13 +9,13 @@ import {
   InputAdornment,
   IconButton,
   Alert,
-  CircularProgress,
 } from "@mui/material";
 import { Visibility, VisibilityOff, LockOutlined, LockResetRounded } from "@mui/icons-material";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { axiosInstance } from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../../contexts/ToastContext";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 export default function HospitalChangePassword() {
   const [newPassword, setNewPassword] = useState("");
@@ -26,7 +26,7 @@ export default function HospitalChangePassword() {
 
   const { login } = useHospitalAuth();
   const navigate = useNavigate();
-  const tempToken = localStorage.getItem("hospitalTempToken");
+  const tempToken = sessionStorage.getItem("hospitalTempToken");
 
   useEffect(() => {
     if (!tempToken) {
@@ -52,7 +52,7 @@ export default function HospitalChangePassword() {
       });
 
       const data = response.data.data;
-      localStorage.removeItem("hospitalTempToken");
+      sessionStorage.removeItem("hospitalTempToken");
 
       // Login success
       login(
@@ -185,7 +185,7 @@ export default function HospitalChangePassword() {
                 transition: "all 0.2s ease-in-out",
               }}
             >
-              {isLoading ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Update Password & Continue"}
+              {isLoading ? <HeartbeatLoader size={22} /> : "Update Password & Continue"}
             </Button>
           </form>
         </Paper>

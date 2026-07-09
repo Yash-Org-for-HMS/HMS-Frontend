@@ -1,12 +1,19 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import {
   Box, Typography, Button, Paper, TextField, MenuItem,
-  CircularProgress, Alert, Grid, IconButton, FormControlLabel, Switch
+  Alert, Grid, IconButton, FormControlLabel, Switch
 } from "@mui/material";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import PageLoader from "../../components/PageLoader";
+import ErrorState from "../../components/ErrorState";
+import BillingModal from "./BillingModal";
 import { useToast } from "../../contexts/ToastContext";
+import PageHeader from "../../components/layout/PageHeader";
 
 export interface AppointmentFormProps {
   isEmbedded?: boolean;
@@ -15,32 +22,66 @@ export interface AppointmentFormProps {
   onCancel?: () => void;
 }
 
+// Stable reference (module scope, not re-created per render) so it doesn't
+// change identity while the dropdowns query is loading — an inline object
+// literal here would make the slot-generation effect below (which depends on
+// `dropdowns`) re-run and re-render every tick until the query resolves.
+const EMPTY_DROPDOWNS = { departments: [], doctors: [], patients: [], statuses: [], doctorSchedules: [] };
+
+// The underlying slot value stays 24h "HH:mm" (used for sorting, comparisons,
+// and the submitted datetime) — this only formats it for display.
+const fmt12h = (hhmm: string) => dayjs(`2000-01-01T${hhmm}`).format("h:mm A");
+
 export default function AppointmentForm({ isEmbedded = false, prefilledPatientId, onSuccess, onCancel }: AppointmentFormProps = {}) {
   const navigate = useNavigate();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const initialPatientId = searchParams.get("patientId") || "";
+  const initialDate = searchParams.get("date") || new Date().toISOString().split('T')[0];
+  const initialTime = searchParams.get("time") || "";
+  const initialDoctorId = searchParams.get("doctorId") || "";
+  const followUpOf = searchParams.get("followUpOf") || "";
 
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
   const [checkInImmediately, setCheckInImmediately] = useState(true);
+  const [postBooking, setPostBooking] = useState<{ apptId?: string; patientName: string; apptDate: string } | null>(null);
 
-  const [dropdowns, setDropdowns] = useState<any>({
-    departments: [], doctors: [], patients: [], statuses: [], doctorSchedules: []
+  const { data: dropdowns = EMPTY_DROPDOWNS, isLoading: ddLoading, isError: ddIsError, error: ddError, refetch: refetchDd } = useQuery({
+    queryKey: ["appointment-dropdowns"],
+    queryFn: async () => (await axiosInstance.get("/reception/appointments/dropdowns")).data.data,
   });
 
   const [formData, setFormData] = useState({
     patientId: prefilledPatientId || initialPatientId,
     departmentId: "",
-    doctorId: "",
-    appointmentDate: new Date().toISOString().split('T')[0],
-    timeSlot: "",
-    visitType: "Standard Visit",
+    doctorId: initialDoctorId,
+    appointmentDate: initialDate,
+    timeSlot: initialTime,
+    visitType: followUpOf ? "Follow-up" : "Standard Visit",
     reason: ""
   });
 
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+
+  // Ticks every 30s so today's slot list keeps dropping times as they pass
+  // (e.g. a 9:00 AM slot disappears once it's afternoon) without needing a
+  // page refresh. Doesn't affect other dates, which aren't time-filtered.
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNowTick(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Doctor availability for the chosen date: whether they're on leave, and the
+  // times already booked (doctor-wide). Drives slot filtering below.
+  const { data: availability } = useQuery<{ onLeave: boolean; leaveReason: string | null; bookedDateTimes: string[] }>({
+    queryKey: ["appointment-availability", formData.doctorId, formData.appointmentDate, id],
+    queryFn: async () => (await axiosInstance.get("/reception/appointments/availability", {
+      params: { doctorId: formData.doctorId, date: formData.appointmentDate, ...(id ? { excludeAppointmentId: id } : {}) },
+    })).data.data,
+    enabled: !!formData.doctorId && !!formData.appointmentDate,
+  });
 
   useEffect(() => {
     if (prefilledPatientId) {
@@ -48,81 +89,94 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     }
   }, [prefilledPatientId]);
 
+  const { data: apptData, isLoading: apptLoading, isError: apptIsError, error: apptError, refetch: refetchAppt } = useQuery({
+    queryKey: ["appointment-edit", id],
+    queryFn: async () => (await axiosInstance.get(`/reception/appointments/${id}`)).data.data,
+    enabled: !!id,
+  });
+
+  // Seed the form with the existing appointment when editing.
   useEffect(() => {
-    const init = async () => {
-      try {
-        const ddRes = await axiosInstance.get("/reception/appointments/dropdowns");
-        if (ddRes.data?.data) {
-          setDropdowns(ddRes.data.data);
-        }
+    if (!apptData) return;
+    const appt = apptData;
+    const dateObj = new Date(appt.appointmentDate);
+    const dateStr = dateObj.toISOString().split('T')[0];
+    const timeStr = dateObj.toLocaleTimeString("en-US", { hour12: false, hour: '2-digit', minute: '2-digit' });
+    const existingReason = appt.reason || "";
+    let parsedType = "Standard Visit";
+    const lower = existingReason.toLowerCase();
+    if (lower.includes("urgent") || lower.includes("emergency")) parsedType = "Urgent";
+    else if (lower.includes("follow") || lower.includes("review")) parsedType = "Follow-up";
+    const cleanReason = existingReason.replace(/\[.*?\]\s*/, "").trim();
 
-        if (id) {
-          const res = await axiosInstance.get(`/reception/appointments/${id}`);
-          const appt = res.data.data;
-          if (appt) {
-            const dateObj = new Date(appt.appointmentDate);
-            const dateStr = dateObj.toISOString().split('T')[0];
-            const timeStr = dateObj.toLocaleTimeString("en-US", { hour12: false, hour: '2-digit', minute: '2-digit' });
-            const existingReason = appt.reason || "";
-            let parsedType = "Standard Visit";
-            const lower = existingReason.toLowerCase();
-            if (lower.includes("urgent") || lower.includes("emergency")) parsedType = "Urgent";
-            else if (lower.includes("follow") || lower.includes("review")) parsedType = "Follow-up";
+    setFormData({
+      patientId: appt.patientId || "",
+      departmentId: appt.departmentId || "",
+      doctorId: appt.doctorId || "",
+      appointmentDate: dateStr,
+      timeSlot: timeStr,
+      visitType: parsedType,
+      reason: cleanReason,
+    });
+  }, [apptData]);
 
-            let cleanReason = existingReason.replace(/\[.*?\]\s*/, "").trim();
-
-            setFormData({
-              patientId: appt.patientId || "",
-              departmentId: appt.departmentId || "",
-              doctorId: appt.doctorId || "",
-              appointmentDate: dateStr,
-              timeSlot: timeStr,
-              visitType: parsedType,
-              reason: cleanReason
-            });
-          }
-        }
-      } catch (err) {
-        toast.error("Failed to initialize form");
-      } finally {
-        setLoading(false);
-      }
-    };
-    init();
-  }, [id]);
+  const loading = ddLoading || (!!id && apptLoading);
+  const isError = ddIsError || apptIsError;
+  const error = ddError || apptError;
+  const refetch = () => { refetchDd(); if (id) refetchAppt(); };
 
   useEffect(() => {
-    // Generate slots based on doctor, date, and schedule
-    if (formData.doctorId && formData.appointmentDate) {
-      const date = new Date(formData.appointmentDate);
-      const dayOfWeek = date.getDay(); // 0 (Sun) - 6 (Sat)
-      const schedules = (dropdowns?.doctorSchedules || []).filter((s: any) => s.doctorId === formData.doctorId && s.dayOfWeek === dayOfWeek);
+    // No doctor/date, or the doctor is on leave that day -> no bookable slots.
+    if (!formData.doctorId || !formData.appointmentDate || availability?.onLeave) {
+      setAvailableSlots([]);
+      return;
+    }
 
-      if (schedules.length > 0) {
-        // Generate slots from the first matching schedule
-        const sched = schedules[0];
-        const slots = [];
-        let [hour, minute] = (sched.startTime || "09:00").split(':').map(Number);
-        const [endHour, endMinute] = (sched.endTime || "17:00").split(':').map(Number);
-        
-        const endTotal = endHour * 60 + endMinute;
-        let currentTotal = hour * 60 + minute;
+    const date = new Date(formData.appointmentDate);
+    const dayOfWeek = date.getDay(); // 0 (Sun) - 6 (Sat)
+    const schedules = (dropdowns?.doctorSchedules || []).filter((s: any) => s.doctorId === formData.doctorId && s.dayOfWeek === dayOfWeek);
 
-        while (currentTotal < endTotal) {
-          const h = Math.floor(currentTotal / 60).toString().padStart(2, '0');
-          const m = (currentTotal % 60).toString().padStart(2, '0');
-          slots.push(`${h}:${m}`);
-          currentTotal += sched.slotDurationMinutes || 15;
-        }
-        setAvailableSlots(slots);
-      } else {
-        // Fallback generic slots if no strict schedule
-        setAvailableSlots(["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "14:00", "14:30", "15:00", "15:30"]);
+    let rawSlots: string[];
+    if (schedules.length > 0) {
+      // Generate slots from the first matching schedule.
+      const sched = schedules[0];
+      rawSlots = [];
+      const [hour, minute] = (sched.startTime || "09:00").split(':').map(Number);
+      const [endHour, endMinute] = (sched.endTime || "17:00").split(':').map(Number);
+      const endTotal = endHour * 60 + endMinute;
+      let currentTotal = hour * 60 + minute;
+      while (currentTotal < endTotal) {
+        const h = Math.floor(currentTotal / 60).toString().padStart(2, '0');
+        const m = (currentTotal % 60).toString().padStart(2, '0');
+        rawSlots.push(`${h}:${m}`);
+        currentTotal += sched.slotDurationMinutes || 15;
       }
     } else {
-      setAvailableSlots([]);
+      // Fallback generic slots if no strict schedule.
+      rawSlots = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "14:00", "14:30", "15:00", "15:30"];
     }
-  }, [formData.doctorId, formData.appointmentDate, dropdowns]);
+
+    // For today, drop slots that have already passed — booking a 9:00 AM slot
+    // at 2:00 PM makes no sense. Other dates are unaffected. A currently-
+    // selected slot stays selectable regardless (see the render-time fallback
+    // below), so editing an existing today-dated appointment never breaks.
+    const today = new Date().toISOString().split('T')[0];
+    if (formData.appointmentDate === today) {
+      const now = new Date();
+      const nowHM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      rawSlots = rawSlots.filter((s) => s > nowHM);
+    }
+
+    // Remove times already booked for this doctor (formatted the same way the
+    // slots are). The appointment being edited is excluded server-side, so its
+    // own slot stays selectable.
+    const bookedTimes = new Set(
+      (availability?.bookedDateTimes || []).map((iso) =>
+        new Date(iso).toLocaleTimeString("en-US", { hour12: false, hour: '2-digit', minute: '2-digit' })
+      )
+    );
+    setAvailableSlots(rawSlots.filter((s) => !bookedTimes.has(s)));
+  }, [formData.doctorId, formData.appointmentDate, dropdowns, availability, nowTick]);
 
   useEffect(() => {
     // Default checkInImmediately to true only if appointment is for today
@@ -144,8 +198,18 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     try {
       // Combine date and time
       const datetime = new Date(`${formData.appointmentDate}T${formData.timeSlot}:00`);
-      
-      const finalReason = formData.reason 
+
+      // Block booking a past slot before the round-trip. Uses the same 2-min
+      // grace as the backend guard so the client never rejects something the
+      // server would accept. Only for new bookings — editing an existing (older)
+      // appointment must not be blocked by its own past date.
+      if (!id && datetime.getTime() < Date.now() - 2 * 60 * 1000) {
+        toast.error("Cannot book an appointment in the past. Please pick a future date and time.");
+        setSaving(false);
+        return;
+      }
+
+      const finalReason = formData.reason
         ? `[${formData.visitType}] ${formData.reason}`
         : `[${formData.visitType}]`;
 
@@ -154,7 +218,8 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
         departmentId: formData.departmentId,
         doctorId: formData.doctorId,
         appointmentDate: datetime.toISOString(),
-        reason: finalReason
+        reason: finalReason,
+        ...(followUpOf && !id ? { followUpOfAppointmentId: followUpOf } : {}),
       };
 
       let apptId = id;
@@ -169,10 +234,17 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
         await axiosInstance.put(`/reception/appointments/${apptId}/checkin`);
       }
       
+      const selectedPatient = dropdowns.patients?.find((p: any) => p.patientId === formData.patientId);
+      const pName = selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : "Patient";
+
       if (isEmbedded && onSuccess) {
-        const selectedPatient = dropdowns.patients?.find((p: any) => p.patientId === formData.patientId);
-        const pName = selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : "Patient";
         onSuccess(apptId, pName, payload.appointmentDate);
+      } else if (!id && apptId) {
+        // New booking from the standalone form: open the bill (same as the
+        // Front Desk Console flow) instead of jumping straight to the list.
+        toast.success("Appointment booked");
+        setPostBooking({ apptId, patientName: pName, apptDate: payload.appointmentDate });
+        setSaving(false);
       } else {
         navigate("/reception/appointments");
       }
@@ -182,26 +254,42 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     }
   };
 
-  if (loading) return <Box sx={{ p: 4, textAlign: "center" }}><CircularProgress sx={{ color: "#06b6d4" }}/></Box>;
+  if (loading) return <PageLoader />;
+
+  if (isError) return <Box sx={{ p: 4 }}><ErrorState message={(error as any)?.response?.data?.message || "Failed to initialize form"} onRetry={refetch} /></Box>;
 
   const filteredDoctors = (dropdowns?.doctors || []).filter((d: any) => !formData.departmentId || d.departmentId === formData.departmentId);
+
+  // Local (not UTC) "today" as YYYY-MM-DD for the date picker's min. Blocks
+  // selecting past dates on a new booking; when editing an already-past
+  // appointment, keep its own date selectable so unrelated edits still work.
+  const localTodayStr = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  })();
+  const minApptDate = id && formData.appointmentDate && formData.appointmentDate < localTodayStr
+    ? formData.appointmentDate
+    : localTodayStr;
 
   return (
     <Box sx={{ maxWidth: isEmbedded ? "100%" : 800, mx: "auto", pb: isEmbedded ? 0 : 4 }}>
       {!isEmbedded && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <IconButton onClick={() => navigate(-1)} sx={{ color: "text.secondary", "&:hover": { color: "text.primary", bgcolor: "action.hover" } }}>
             <ArrowBackRounded />
           </IconButton>
-          <Box>
-            <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 800 }}>
-              {id ? "Reschedule Appointment" : "Book New Appointment"}
-            </Typography>
+          <Box sx={{ flex: 1 }}>
+            <PageHeader title={id ? "Reschedule Appointment" : "Book New Appointment"} />
           </Box>
         </Box>
       )}
 <Paper component="form" onSubmit={handleSubmit} elevation={0} sx={{ p: 4, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider" }}>
         <Grid container spacing={3}>
+          {followUpOf && !id && (
+            <Grid size={{ xs: 12 }}>
+              <Alert severity="info">Booking a follow-up visit for this patient — linked to their previous appointment.</Alert>
+            </Grid>
+          )}
           <Grid size={{ xs: 12 }}>
             <TextField
               select fullWidth required
@@ -246,11 +334,21 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
               ))}
             </TextField>
           </Grid>
+          {availability?.onLeave && (
+            <Grid size={{ xs: 12 }}>
+              <Alert severity="warning">
+                {availability.leaveReason
+                  ? `This doctor is on leave on the selected date (${availability.leaveReason}). Choose another date or doctor.`
+                  : "This doctor is on leave on the selected date. Choose another date or doctor."}
+              </Alert>
+            </Grid>
+          )}
           <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth required type="date"
               label="Appointment Date" name="appointmentDate"
               InputLabelProps={{ shrink: true }}
+              inputProps={{ min: minApptDate }}
               value={formData.appointmentDate} onChange={handleChange}
               sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
             />
@@ -260,12 +358,24 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
               select fullWidth required
               label="Time Slot" name="timeSlot"
               value={formData.timeSlot || ""} onChange={handleChange}
-              disabled={!formData.appointmentDate || !formData.doctorId}
+              disabled={!formData.appointmentDate || !formData.doctorId || !!availability?.onLeave}
+              error={!!availability?.onLeave}
+              helperText={
+                availability?.onLeave
+                  ? "Doctor is on leave on this date — pick another date or doctor."
+                  : (formData.doctorId && formData.appointmentDate && availableSlots.length === 0
+                      ? "No open slots for this doctor on this date."
+                      : "")
+              }
               sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
             >
               <MenuItem value="" disabled>Select a Time Slot</MenuItem>
-              {availableSlots.map(slot => (
-                <MenuItem key={slot} value={slot}>{slot}</MenuItem>
+              {/* Keep the currently-selected slot visible even if it's off-grid (e.g. an existing appointment being edited). */}
+              {(formData.timeSlot && !availableSlots.includes(formData.timeSlot)
+                ? [formData.timeSlot, ...availableSlots]
+                : availableSlots
+              ).map(slot => (
+                <MenuItem key={slot} value={slot}>{fmt12h(slot)}</MenuItem>
               ))}
             </TextField>
           </Grid>
@@ -308,13 +418,23 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
               <Button variant="outlined" onClick={() => { if (isEmbedded && onCancel) onCancel(); else navigate(-1); }} sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none" }}>
                 Cancel
               </Button>
-              <Button type="submit" variant="contained" disabled={saving || !formData.patientId} startIcon={saving ? <CircularProgress size={20} /> : <SaveRounded />} sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" }, textTransform: "none", fontWeight: 600 }}>
+              <Button type="submit" variant="contained" disabled={saving || !formData.patientId} startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />} sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" }, textTransform: "none", fontWeight: 600 }}>
                 {id ? "Update Appointment" : "Confirm Booking"}
               </Button>
             </Box>
           </Grid>
         </Grid>
       </Paper>
+
+      {postBooking && (
+        <BillingModal
+          open
+          onClose={() => { setPostBooking(null); navigate("/reception/appointments"); }}
+          appointmentId={postBooking.apptId || ""}
+          patientName={postBooking.patientName}
+          appointmentDate={postBooking.apptDate}
+        />
+      )}
     </Box>
   );
 }

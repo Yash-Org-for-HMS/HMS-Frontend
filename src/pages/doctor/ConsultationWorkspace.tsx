@@ -1,21 +1,29 @@
-import { useState, useEffect } from "react";
+import { ACCENTS } from "../../styles/accents";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  Box, Grid, Typography, Paper, CircularProgress, Alert,
+  Box, Grid, Typography, Paper,
   Button, TextField, Divider, Avatar, IconButton, Chip, Tab, Tabs, Autocomplete
 } from "@mui/material";
 import {
   ArrowBackRounded, CheckCircleRounded, SaveRounded, MonitorHeartRounded,
-  HistoryRounded, PersonRounded, LocalHospitalRounded, DateRangeRounded
+  HistoryRounded, PersonRounded, LocalHospitalRounded, DateRangeRounded,
+  CloudDoneRounded, CloudSyncRounded, CloudOffRounded, AutoAwesomeRounded
 } from "@mui/icons-material";
+import AiSummaryPanel from "./AiSummaryPanel";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
+import ErrorState from "../../components/ErrorState";
 import PrescriptionWriter from "./PrescriptionWriter";
+import SoapTemplateBar, { type SoapTemplate } from "../../components/doctor/SoapTemplateBar";
 import LabOrderForm from "./LabOrderForm";
 import RadiologyOrderForm from "./RadiologyOrderForm";
 import RichTextEditor from "../../components/RichTextEditor";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { useToast } from "../../contexts/ToastContext";
+import { stripHtml } from "../../utils/format";
 
-const DOCTOR_BLUE = "#3b82f6";
+const DOCTOR_BLUE = ACCENTS.doctor;
 
 function TabPanel(props: any) {
   const { children, value, index, ...other } = props;
@@ -46,8 +54,15 @@ export default function ConsultationWorkspace() {
   const toast = useToast();
   const [context, setContext] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+
+  // Auto-save: track the last-persisted form so we only save real changes, and
+  // surface a quiet status indicator instead of a toast on every keystroke.
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const lastSavedRef = useRef<string>("");
 
   const [tabIndex, setTabIndex] = useState(0);
+  const [aiOpen, setAiOpen] = useState(false);
   const [rightTabIndex, setRightTabIndex] = useState(0);
 
   const [icd10Options, setIcd10Options] = useState<any[]>([]);
@@ -74,16 +89,19 @@ export default function ConsultationWorkspace() {
       const data = res.data.data;
       setContext(data);
 
-      if (data.consultation) {
-        setForm({
-          soapSubjective: data.consultation.soapSubjective || "",
-          soapObjective: data.consultation.soapObjective || "",
-          soapAssessment: data.consultation.soapAssessment || "",
-          soapPlan: data.consultation.soapPlan || "",
-          diagnosis: data.consultation.diagnosis || "",
-          followUpDate: data.consultation.followUpDate ? new Date(data.consultation.followUpDate).toISOString().split('T')[0] : "",
-        });
-      }
+      const loadedForm = data.consultation
+        ? {
+            soapSubjective: data.consultation.soapSubjective || "",
+            soapObjective: data.consultation.soapObjective || "",
+            soapAssessment: data.consultation.soapAssessment || "",
+            soapPlan: data.consultation.soapPlan || "",
+            diagnosis: data.consultation.diagnosis || "",
+            followUpDate: data.consultation.followUpDate ? new Date(data.consultation.followUpDate).toISOString().split('T')[0] : "",
+          }
+        : { soapSubjective: "", soapObjective: "", soapAssessment: "", soapPlan: "", diagnosis: "", followUpDate: "" };
+      setForm(loadedForm);
+      // Seed the baseline so the auto-save effect doesn't fire on the initial load.
+      lastSavedRef.current = JSON.stringify(loadedForm);
 
       if (data.patient?.patientId) {
         fetchHistory(data.patient.patientId);
@@ -99,10 +117,13 @@ export default function ConsultationWorkspace() {
 
   const fetchHistory = async (patientId: string) => {
     try {
+      setHistoryError(null);
       const res = await axiosInstance.get(`/doctor/consultation/patients/${patientId}/history`);
       setHistory(res.data.data);
-    } catch (err) {
-      console.error("Failed to load history", err);
+    } catch (err: any) {
+      // Surfaced distinctly from "no history" below — a fetch failure must not
+      // look identical to a patient who genuinely has no past consultations.
+      setHistoryError(err.response?.data?.message || "Failed to load consultation history");
     }
   };
 
@@ -126,11 +147,31 @@ export default function ConsultationWorkspace() {
     return () => clearTimeout(delayDebounceFn);
   }, [icd10Query]);
 
+  // Debounced auto-save: persist SOAP edits ~2s after the doctor stops typing so
+  // closing the tab mid-note no longer loses work. Skips while loading and when
+  // nothing has changed since the last save.
+  useEffect(() => {
+    if (loading) return;
+    const serialized = JSON.stringify(form);
+    if (serialized === lastSavedRef.current) return;
+    const t = setTimeout(async () => {
+      setSaveStatus("saving");
+      const result = await handleSave(true);
+      if (result !== null) {
+        lastSavedRef.current = serialized;
+        setSaveStatus("saved");
+      } else {
+        setSaveStatus("error");
+      }
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [form, loading]);
+
   const handleSave = async (isAutoSave = false) => {
     try {
       if (!isAutoSave) setSaving(true);
       const res = await axiosInstance.post(`/doctor/consultation/appointments/${appointmentId}`, form);
-      
+
       // Update context if consultationId was generated
       if (res.data.data?.consultationId && !context?.consultation?.consultationId) {
         setContext((prev: any) => ({
@@ -140,15 +181,31 @@ export default function ConsultationWorkspace() {
       }
 
       if (!isAutoSave) {
+        // A manual save also satisfies the auto-save baseline.
+        lastSavedRef.current = JSON.stringify(form);
+        setSaveStatus("saved");
         toast.success("Consultation drafted successfully");
-}
-      return res.data.data?.consultationId;
+      }
+      // Return the id when present, but treat any non-throwing save as success
+      // (existing consultations may not echo the id back).
+      return res.data.data?.consultationId ?? true;
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save consultation");
+      if (!isAutoSave) toast.error(err.response?.data?.message || "Failed to save consultation");
       return null;
     } finally {
       if (!isAutoSave) setSaving(false);
     }
+  };
+
+  const applyTemplate = (t: SoapTemplate) => {
+    setForm((prev) => ({
+      ...prev,
+      soapSubjective: t.soapSubjective || "",
+      soapObjective: t.soapObjective || "",
+      soapAssessment: t.soapAssessment || "",
+      soapPlan: t.soapPlan || "",
+      diagnosis: t.diagnosis || prev.diagnosis,
+    }));
   };
 
   const handleComplete = async () => {
@@ -170,16 +227,16 @@ export default function ConsultationWorkspace() {
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80vh" }}>
-        <CircularProgress sx={{ color: DOCTOR_BLUE }} />
+        <Mascot pose="thinking" subtitle="Loading consultation…" />
       </Box>
     );
   }
 
   if (error && !context) {
     return (
-      <Box sx={{ p: 4 }}>
-        <Alert severity="error">{error}</Alert>
-        <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/doctor/queue")} sx={{ mt: 2 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", p: 4 }}>
+        <ErrorState title="Couldn't load the consultation" message={error} onRetry={() => fetchContext()} />
+        <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/doctor/queue")} sx={{ mt: 1 }}>
           Back to Queue
         </Button>
       </Box>
@@ -206,17 +263,37 @@ export default function ConsultationWorkspace() {
                 {p?.firstName} {p?.lastName}
               </Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {p?.gender} • {p?.dob ? `${new Date().getFullYear() - new Date(p.dob).getFullYear()} yrs` : "Age Unknown"} • {context?.appointment?.reason || "General Checkup"}
+                {p?.gender} • {(p?.dateOfBirth || p?.dob) ? `${Math.floor((Date.now() - new Date(p?.dateOfBirth || p?.dob).getTime()) / (1000 * 60 * 60 * 24 * 365.25))} yrs` : "Age Unknown"} • {context?.appointment?.reason || "General Checkup"}
               </Typography>
             </Box>
           </Box>
         </Box>
-        <Box sx={{ display: "flex", gap: 1.5 }}>
+        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+          {saveStatus !== "idle" && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mr: 0.5 }}>
+              {saveStatus === "saving" && <CloudSyncRounded sx={{ fontSize: 18, color: "text.secondary" }} />}
+              {saveStatus === "saved" && <CloudDoneRounded sx={{ fontSize: 18, color: "#16a34a" }} />}
+              {saveStatus === "error" && <CloudOffRounded sx={{ fontSize: 18, color: "#ef4444" }} />}
+              <Typography variant="caption" sx={{ color: saveStatus === "error" ? "#ef4444" : "text.secondary", fontWeight: 600 }}>
+                {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "All changes saved" : "Save failed — retrying on next edit"}
+              </Typography>
+            </Box>
+          )}
+          <Button
+            variant={aiOpen ? "contained" : "outlined"}
+            onClick={() => setAiOpen((v) => !v)}
+            startIcon={<AutoAwesomeRounded />}
+            sx={aiOpen
+              ? { textTransform: "none", fontWeight: 700, color: "#fff", background: `linear-gradient(135deg, ${DOCTOR_BLUE}, #8b5cf6)`, boxShadow: `0 4px 12px ${DOCTOR_BLUE}44`, "&:hover": { background: `linear-gradient(135deg, #2563eb, #7c3aed)` } }
+              : { textTransform: "none", fontWeight: 700, color: DOCTOR_BLUE, borderColor: `${DOCTOR_BLUE}55`, background: `linear-gradient(135deg, ${DOCTOR_BLUE}0d, #8b5cf60d)`, "&:hover": { borderColor: DOCTOR_BLUE, background: `linear-gradient(135deg, ${DOCTOR_BLUE}1a, #8b5cf61a)` } }}
+          >
+            Ask Dr. Dex
+          </Button>
           <Button
             variant="outlined"
             onClick={() => handleSave(false)}
             disabled={saving || completing}
-            startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRounded />}
+            startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             sx={{ borderColor: "divider", color: "text.primary", textTransform: "none", fontWeight: 600 }}
           >
             Save Draft
@@ -225,7 +302,7 @@ export default function ConsultationWorkspace() {
             variant="contained"
             onClick={handleComplete}
             disabled={saving || completing}
-            startIcon={completing ? <CircularProgress size={16} color="inherit" /> : <CheckCircleRounded />}
+            startIcon={completing ? <HeartbeatLoader size={22} /> : <CheckCircleRounded />}
             sx={{ bgcolor: DOCTOR_BLUE, "&:hover": { bgcolor: "#2563eb" }, textTransform: "none", fontWeight: 600, boxShadow: "0 4px 12px rgba(59,130,246,0.3)" }}
           >
             Complete Consultation
@@ -295,7 +372,12 @@ export default function ConsultationWorkspace() {
             </TabPanel>
 
             <TabPanel value={tabIndex} index={1}>
-              {history.length === 0 ? (
+              {historyError ? (
+                <Box sx={{ textAlign: "center", mt: 4 }}>
+                  <Typography variant="body2" sx={{ color: "error.main", mb: 1 }}>{historyError}</Typography>
+                  <Button size="small" onClick={() => p?.patientId && fetchHistory(p.patientId)}>Retry</Button>
+                </Box>
+              ) : history.length === 0 ? (
                 <Typography variant="body2" sx={{ color: "text.secondary", textAlign: "center", mt: 4 }}>
                   No past consultation history.
                 </Typography>
@@ -309,13 +391,13 @@ export default function ConsultationWorkspace() {
                           <Typography variant="subtitle2" sx={{ fontWeight: 800, color: "text.primary" }}>
                             {new Date(h.createdAt).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}
                           </Typography>
-                          <Chip label={h.doctorName} size="small" sx={{ height: 20, fontSize: "0.65rem", fontWeight: 600, bgcolor: "rgba(59,130,246,0.1)", color: DOCTOR_BLUE }} />
+                          <Chip label={h.doctorName} size="small" sx={{ height: 20, fontSize: "0.75rem", fontWeight: 600, bgcolor: "rgba(59,130,246,0.1)", color: DOCTOR_BLUE }} />
                         </Box>
                         <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5, color: "text.primary" }}>
                           {h.diagnosis || "No Diagnosis Recorded"}
                         </Typography>
                         <Typography variant="caption" sx={{ color: "text.secondary", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.5 }}>
-                          {h.soapAssessment || "No notes available for this consultation."}
+                          {stripHtml(h.soapAssessment) || "No notes available for this consultation."}
                         </Typography>
                         {h.prescribedMedicines && h.prescribedMedicines.length > 0 && (
                           <Box sx={{ mt: 1.5, pt: 1.5, borderTop: "1px dashed", borderColor: "divider" }}>
@@ -328,9 +410,9 @@ export default function ConsultationWorkspace() {
                                   • {med.medicineName || "Medicine"} - {med.dosage} ({med.frequency}) for {med.durationDays} days
                                 </Typography>
                                 {med.buyOutside ? (
-                                  <Chip label="Bought Outside" size="small" sx={{ height: 16, fontSize: "0.6rem" }} />
+                                  <Chip label="Bought Outside" size="small" sx={{ height: 16, fontSize: "0.75rem" }} />
                                 ) : (
-                                  <Chip label="Hospital Pharmacy" color="primary" variant="outlined" size="small" sx={{ height: 16, fontSize: "0.6rem" }} />
+                                  <Chip label="Hospital Pharmacy" color="primary" variant="outlined" size="small" sx={{ height: 16, fontSize: "0.75rem" }} />
                                 )}
                               </Box>
                             ))}
@@ -348,7 +430,7 @@ export default function ConsultationWorkspace() {
         {/* Right Panel: SOAP Notes */}
         <Grid size={{ xs: 12, md: 8.5 }} sx={{ height: "100%" }}>
           <Paper elevation={0} sx={{ height: "100%", borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-            
+
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
               <Tabs value={rightTabIndex} onChange={(e, val) => setRightTabIndex(val)} variant="scrollable" scrollButtons="auto">
                 <Tab icon={<LocalHospitalRounded fontSize="small" />} iconPosition="start" label="Clinical Notes (SOAP)" sx={{ textTransform: "none", fontWeight: 600, minHeight: 48 }} />
@@ -360,9 +442,12 @@ export default function ConsultationWorkspace() {
 
             <TabPanel value={rightTabIndex} index={0}>
               <Box sx={{ p: 1 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
-                  <LocalHospitalRounded sx={{ color: DOCTOR_BLUE }} />
-                  <Typography variant="h6" sx={{ fontWeight: 800 }}>Clinical Notes (SOAP)</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: 3, flexWrap: "wrap" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <LocalHospitalRounded sx={{ color: DOCTOR_BLUE }} />
+                    <Typography variant="h6" sx={{ fontWeight: 800 }}>Clinical Notes (SOAP)</Typography>
+                  </Box>
+                  <SoapTemplateBar current={form} onApply={applyTemplate} />
                 </Box>
 
                 <Grid container spacing={3}>
@@ -405,6 +490,7 @@ export default function ConsultationWorkspace() {
                       options={icd10Options}
                       getOptionLabel={(option) => `[${option.icd10Code}] ${option.shortDescription}`}
                       loading={icd10Loading}
+                      noOptionsText={<Mascot pose="no-matches" subtitle="No matching ICD-10 codes" size={72} sx={{ py: 1 }} />}
                       onInputChange={(e, newInputValue) => setIcd10Query(newInputValue)}
                       onChange={(e, newValue) => {
                         if (newValue) {
@@ -422,7 +508,7 @@ export default function ConsultationWorkspace() {
                             ...params.InputProps,
                             endAdornment: (
                               <>
-                                {icd10Loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                {icd10Loading ? <HeartbeatLoader size={22} /> : null}
                                 {params.InputProps.endAdornment}
                               </>
                             ),
@@ -463,9 +549,20 @@ export default function ConsultationWorkspace() {
 
             <TabPanel value={rightTabIndex} index={1}>
               <Box sx={{ p: 1 }}>
-                <PrescriptionWriter 
+                <PrescriptionWriter
                   consultationId={context?.consultation?.consultationId}
                   patientId={p?.patientId}
+                  patientAllergies={(p?.allergiesList || []).map((a: any) => a.allergen).filter(Boolean)}
+                  patientInfo={{
+                    name: `${p?.firstName || ""} ${p?.lastName || ""}`.trim(),
+                    uhid: p?.uhidNumber,
+                    age: (p?.dateOfBirth || p?.dob)
+                      ? Math.floor((Date.now() - new Date(p?.dateOfBirth || p?.dob).getTime()) / (1000 * 60 * 60 * 24 * 365.25))
+                      : null,
+                    gender: p?.gender,
+                  }}
+                  patientWeightKg={v?.weightKg != null ? Number(v.weightKg) : null}
+                  diagnosis={form.diagnosis}
                   onRequireSave={() => handleSave(true)}
                 />
               </Box>
@@ -494,6 +591,39 @@ export default function ConsultationWorkspace() {
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Dr. Dex — non-modal slide-over. No backdrop/dimming, so the notes stay
+          visible + interactive beside it. Kept ALWAYS mounted (slid off-screen
+          when closed) so the briefing + chat persist for the whole visit. */}
+      {aiOpen && (
+        <Box
+          onClick={() => setAiOpen(false)}
+          sx={{ display: { xs: "block", md: "none" }, position: "fixed", inset: 0, zIndex: 1200, bgcolor: "rgba(15,23,42,0.35)" }}
+        />
+      )}
+      <Box
+        sx={{
+          position: "fixed", top: { xs: 0, md: 84 }, right: 0, bottom: { xs: 0, md: 16 },
+          width: { xs: "100%", sm: 460 },
+          zIndex: 1250,
+          px: { xs: 0, md: 2 },
+          transform: aiOpen ? "translateX(0)" : "translateX(calc(100% + 40px))",
+          transition: "transform .3s cubic-bezier(.4,0,.2,1)",
+          pointerEvents: aiOpen ? "auto" : "none",
+        }}
+      >
+        <Paper
+          elevation={0}
+          sx={{
+            height: "100%", display: "flex", flexDirection: "column", overflow: "hidden",
+            borderRadius: { xs: 0, md: 4 },
+            border: "1px solid", borderColor: "divider",
+            boxShadow: "-16px 0 48px rgba(30,41,59,0.18)",
+          }}
+        >
+          <AiSummaryPanel patientId={p?.patientId} onCollapse={() => setAiOpen(false)} />
+        </Paper>
+      </Box>
     </Box>
   );
 }

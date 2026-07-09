@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Drawer,
@@ -32,17 +33,27 @@ import {
   SettingsRounded,
   DomainRounded,
   BadgeRounded,
-  ShieldRounded,
-  RuleRounded,
   WidgetsRounded,
   MedicalServicesRounded,
   DatasetRounded,
   DynamicFormRounded,
   SecurityRounded,
   AccountBalanceRounded,
+  AssessmentRounded,
+  HotelRounded,
+  VaccinesRounded,
+  LocalHotelRounded,
+  ReceiptLongRounded,
+  FormatListNumberedRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
-import { assetUrl } from "../utils/assetUrl";
+import { isAdmin as isAdminRole } from "../constants/roles";
+import { useEnabledModules } from "../hooks/useEnabledModules";
+import BranchSwitcher from "../components/BranchSwitcher";
+import SidebarHeader from "../components/layout/SidebarHeader";
+import SidebarUserCard from "../components/layout/SidebarUserCard";
+import TrialBanner from "../components/layout/TrialBanner";
+import { axiosInstance } from "../api/axios";
 
 const drawerWidth = 260;
 
@@ -59,26 +70,70 @@ export default function HospitalLayout() {
 
   // Map sidebar items to required permissions
   const menuItems = [
-    { text: "Dashboard", icon: <DashboardRounded />, path: "/hospital/dashboard", permission: null },
-    { text: "Financial Analytics", icon: <AccountBalanceRounded />, path: "/hospital/financials", permission: null },
-    { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", permission: "DEPARTMENT_MANAGE" },
-    { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", permission: "USER_MANAGE" },
-    { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", permission: "USER_MANAGE" },
-    { text: "Role Management", icon: <ShieldRounded />, path: "/hospital/roles", permission: "ROLE_MANAGE" },
-    { text: "Permission Matrix", icon: <RuleRounded />, path: "/hospital/permissions-matrix", permission: "ROLE_MANAGE" },
-    { text: "Master Data", icon: <DatasetRounded />, path: "/hospital/lookups", permission: "SETTINGS_MANAGE" },
-    { text: "Form Builder", icon: <DynamicFormRounded />, path: "/hospital/form-builder", permission: "SETTINGS_MANAGE" },
-    { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", permission: "SETTINGS_MANAGE" },
-    { text: "Audit Logs", icon: <SecurityRounded />, path: "/hospital/audit-logs", permission: "SETTINGS_MANAGE" },
-    { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", permission: "SETTINGS_MANAGE" },
+    { text: "Dashboard", icon: <DashboardRounded />, path: "/hospital/dashboard", permission: null, section: "Overview" },
+    { text: "Hospital Profile", icon: <LocalHospitalRounded />, path: "/hospital/profile", permission: null, adminOnly: true, section: "Overview" },
+    // Admin-only: its endpoint (/billing/analytics) is admin-gated, so don't show
+    // a tab non-admins can't actually open.
+    { text: "Financial Analytics", icon: <AccountBalanceRounded />, path: "/hospital/financials", permission: null, adminOnly: true, section: "Overview" },
+    { text: "Reports", icon: <AssessmentRounded />, path: "/hospital/reports", permission: null, section: "Overview" },
+    // Operations: hospital-wide, read-oriented windows into day-to-day activity.
+    // Admin-only (mirrors the backend org-wide data view for H_ADMIN); these
+    // reuse the existing reception/IPD pages, mounted under the admin shell.
+    { text: "All Patients", icon: <PeopleRounded />, path: "/hospital/patients", permission: null, adminOnly: true, section: "Operations" },
+    { text: "Appointments", icon: <CalendarTodayRounded />, path: "/hospital/appointments", permission: null, adminOnly: true, section: "Operations" },
+    { text: "Patient Queue", icon: <FormatListNumberedRounded />, path: "/hospital/queue", permission: null, adminOnly: true, section: "Operations" },
+    { text: "Admissions", icon: <LocalHotelRounded />, path: "/hospital/ipd/admissions", permission: null, adminOnly: true, module: "IPD", section: "Operations" },
+    { text: "Bed Board", icon: <HotelRounded />, path: "/hospital/ipd/beds", permission: null, adminOnly: true, module: "IPD", section: "Operations" },
+    { text: "Billing Overview", icon: <ReceiptLongRounded />, path: "/hospital/billing", permission: null, adminOnly: true, module: "Billing", section: "Operations" },
+    { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", permission: "DEPARTMENT_MANAGE", section: "Organization" },
+    { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", permission: "USER_MANAGE", section: "Organization" },
+    { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", permission: "USER_MANAGE", section: "Organization" },
+    // Custom roles + granular permissions are shelved until the permission model
+    // is fully wired/enforced. Routes still exist; just hidden from the nav for
+    // now (re-add these two entries to bring the feature back).
+    // { text: "Role Management", icon: <ShieldRounded />, path: "/hospital/roles", permission: "ROLE_MANAGE" },
+    // { text: "Permission Matrix", icon: <RuleRounded />, path: "/hospital/permissions-matrix", permission: "ROLE_MANAGE" },
+    { text: "Master Data", icon: <DatasetRounded />, path: "/hospital/lookups", permission: "SETTINGS_MANAGE", section: "Configuration" },
+    // Backend restricts these strictly to H_ADMIN/B_ADMIN (requireRole, no
+    // permission-code bypass) — adminOnly here matches that exactly so a
+    // custom role never sees a link that would just 403.
+    { text: "Ward & Bed Setup", icon: <HotelRounded />, path: "/hospital/facility-setup", permission: null, adminOnly: true, section: "Configuration" },
+    { text: "Vaccine Catalog", icon: <VaccinesRounded />, path: "/hospital/vaccines", permission: null, adminOnly: true, section: "Configuration" },
+    { text: "Form Builder", icon: <DynamicFormRounded />, path: "/hospital/form-builder", permission: "SETTINGS_MANAGE", section: "Configuration" },
+    { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", permission: "SETTINGS_MANAGE", section: "Configuration" },
+    { text: "Audit Logs", icon: <SecurityRounded />, path: "/hospital/audit-logs", permission: "SETTINGS_MANAGE", section: "System" },
+    { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", permission: "SETTINGS_MANAGE", section: "System" },
   ];
 
-  // Filter based on assigned permissions
+  // Org AND branch admins see everything (mirrors the backend ADMIN_ROLE_CODES
+  // bypass). B_ADMIN was previously omitted, which hid every permission-gated
+  // tab for branch admins — leaving only the two ungated items (the "2 tabs" bug).
+  const isAdmin = isAdminRole(user?.role);
+  const { isModuleEnabled } = useEnabledModules();
   const visibleMenuItems = menuItems.filter(item => {
+    // Hide items for modules the hospital hasn't licensed (fail-open while loading).
+    if (!isModuleEnabled((item as any).module)) return false;
+    if ((item as any).adminOnly) return isAdmin;   // admin-only tab (e.g. Financial, Operations)
     if (!item.permission) return true;
-    if (user?.role === "HOSPITAL_ADMIN" || user?.role === "H_ADMIN") return true;
+    if (isAdmin) return true;
     return user?.permissions?.includes(item.permission);
   });
+
+  // First-run gate: the hospital admin must fill a few required profile details
+  // before using the rest of the panel. Completeness is derived from the fields
+  // (no flag needed); the gate releases as soon as they're filled + saved.
+  const { data: hospitalProfile } = useQuery({
+    queryKey: ["hospital-profile"],
+    queryFn: async () => (await axiosInstance.get("/hospital/profile")).data.data,
+  });
+  const profileComplete = !!(
+    hospitalProfile &&
+    hospitalProfile.officialPhone &&
+    hospitalProfile.addressLine1 &&
+    hospitalProfile.registrationNumber
+  );
+  const mustCompleteProfile =
+    isAdmin && !!hospitalProfile && !profileComplete && location.pathname !== "/hospital/profile";
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -110,45 +165,23 @@ export default function HospitalLayout() {
         color: "text.primary",
       }}
     >
-      <Toolbar
-        sx={{
-          px: 2,
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          borderBottom: "1px solid", borderColor: "divider",
-        }}
-      >
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: 1.5,
-            bgcolor: hospital?.logoUrl ? "transparent" : "primary.main",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden"
-          }}
-        >
-          {hospital?.logoUrl ? (
-            <img src={assetUrl(hospital.logoUrl)} alt="Hospital Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <LocalHospitalRounded fontSize="medium" sx={{ color: "#fff" }} />
-          )}
-        </Box>
-        <Box>
-          <Typography variant="subtitle1" fontWeight="700" noWrap sx={{ maxWidth: 180 }}>
-            {hospital?.name || "Hospital Admin"}
-          </Typography>
-        </Box>
-      </Toolbar>
+      <SidebarHeader
+        logoUrl={hospital?.logoUrl}
+        title={hospital?.name || "Hospital Admin"}
+        subtitle="Admin Portal"
+      />
       
       <List sx={{ px: 2, pt: 2, flex: 1, overflowY: "auto" }}>
-        {visibleMenuItems.map((item) => {
+        {visibleMenuItems.map((item, idx, arr) => {
           const isActive = location.pathname.startsWith(item.path);
           return (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+            <Box key={item.text}>
+              {(idx === 0 || arr[idx - 1].section !== item.section) && (
+                <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", fontSize: "0.75rem", px: 1.5, pt: idx === 0 ? 0 : 1.75, pb: 0.5 }}>
+                  {item.section}
+                </Typography>
+              )}
+              <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => {
                   navigate(item.path);
@@ -173,112 +206,40 @@ export default function HospitalLayout() {
                 <ListItemText
                   primary={item.text}
                   primaryTypographyProps={{
-                    fontSize: "0.95rem",
+                    fontSize: "0.875rem",
                     fontWeight: isActive ? 600 : 500,
                     color: isActive ? "#10B981" : "#64748B",
                   }}
                 />
               </ListItemButton>
             </ListItem>
+            </Box>
           );
         })}
       </List>
       
-      <Box sx={{ height: 16 }} />
-      
-      
-      <Box sx={{ p: 2, borderTop: "1px solid", borderColor: "divider" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            
-        <ListItem disablePadding>
-          <ListItemButton
-            onClick={handleMenuOpen}
-            sx={{
-              borderRadius: 2,
-              "&:hover": { bgcolor: "action.hover" },
-              px: 1,
-            }}
-          >
-            <Avatar
-              sx={{
-                bgcolor: "primary.main",
-                width: 32,
-                height: 32,
-                fontSize: "0.9rem",
-                mr: 1.5,
-              }}
-            >
-              {user?.firstName?.charAt(0) || "U"}
-            </Avatar>
-            <ListItemText 
-              primary={user?.firstName ? `${user.firstName} ${user.lastName || ''}` : "Admin"} 
-              primaryTypographyProps={{ fontWeight: 600, fontSize: "0.9rem" }}
-            />
-          </ListItemButton>
-        </ListItem>
-    
-            
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-              transformOrigin={{ horizontal: "right", vertical: "top" }}
-              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-              PaperProps={{
-                elevation: 0,
-                sx: {
-                  mt: 1.5,
-                  bgcolor: "background.paper",
-                  color: "text.primary",
-                  border: "1px solid", borderColor: "divider",
-                  overflow: "visible",
-                  "&:before": {
-                    content: '""',
-                    display: "block",
-                    position: "absolute",
-                    top: 0,
-                    right: 14,
-                    width: 10,
-                    height: 10,
-                    bgcolor: "background.paper",
-                    transform: "translateY(-50%) rotate(45deg)",
-                    zIndex: 0,
-                    borderLeft: "1px solid",
-                    borderTop: "1px solid", borderColor: "divider",
-                  },
-                }
-              }}
-            >
-              <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider", mb: 1 }}>
-                <Typography variant="subtitle2" fontWeight="600">
-                  {user?.firstName} {user?.lastName}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  {user?.email}
-                </Typography>
-                <Typography variant="caption" sx={{ color: "#10b981", mt: 0.5, display: "block", fontWeight: 600 }}>
-                  {user?.roleName}
-                </Typography>
-              </Box>
-              <MenuItem onClick={() => { handleMenuClose(); navigate("/hospital/profile"); }} sx={{ gap: 1.5, py: 1 }}>
-                <AccountCircleRounded fontSize="small" sx={{ color: "text.secondary" }} />
-                Profile Settings
-              </MenuItem>
-              <MenuItem onClick={handleLogout} sx={{ gap: 1.5, py: 1, color: "#f87171" }}>
-                <LogoutRounded fontSize="small" />
-                Logout
-              </MenuItem>
-            </Menu>
-          </Box>
+      <Divider sx={{ borderColor: "divider" }} />
+
+      {/* Branch switcher (only shown to multi-branch users) */}
+      <Box sx={{ px: 2, pt: 2 }}>
+        <BranchSwitcher />
       </Box>
-    
-      <Box sx={{ p: 2 }}>
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
-          © {new Date().getFullYear()} HMS SaaS
-        </Typography>
-      </Box>
+
+      {/* User card at bottom */}
+      <SidebarUserCard
+        name={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Administrator"}
+        role={user?.roleName || "Administrator"}
+        avatarText={user?.firstName?.charAt(0) || "A"}
+        onLogout={logout}
+        onProfile={() => navigate("/hospital/profile")}
+      />
     </Box>
   );
+
+  // Until the required profile details are filled, keep the admin on the profile page.
+  if (mustCompleteProfile) {
+    return <Navigate to="/hospital/profile" replace />;
+  }
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
@@ -364,6 +325,7 @@ export default function HospitalLayout() {
         }}
       >
         <Toolbar sx={{ display: { xs: "block", md: "none" } }} /> {/* Spacer for fixed AppBar */}
+        <TrialBanner />
         <Outlet />
       </Box>
     </Box>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -15,7 +16,6 @@ import {
   TableRow,
   IconButton,
   Chip,
-  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -34,16 +34,27 @@ import {
   SearchRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import ErrorState from "../../components/ErrorState";
+import { useToast } from "../../contexts/ToastContext";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
+import ActionButton from "../../components/layout/ActionButton";
+import FilterBar from "../../components/layout/FilterBar";
+import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+
+// Keep the admin list's existing sentence-case header look (the SortableHeadCell
+// default is the reception-panel uppercase style).
+const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", bgcolor: "background.paper", color: "text.secondary" } as const;
 
 export default function FeatureFlagsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [flags, setFlags] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const toast = useToast();
 
   // Pagination & Filtering
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
 
   // Dialogs & Menus
@@ -51,33 +62,30 @@ export default function FeatureFlagsList() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
 
-  const fetchFlags = async () => {
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get("/feature-flags", {
-        params: { page, limit: 10, search }
-      });
-      setFlags(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch flags", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Server-side column sorting (the list is paginated, so sorting happens in the DB).
+  const { orderBy, order, onSort } = useServerSort();
 
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["feature-flags", page, search, orderBy, order],
+    queryFn: async () =>
+      (await axiosInstance.get("/feature-flags", { params: { page, limit: 10, search, sortBy: orderBy || undefined, sortOrder: order } })).data,
+  });
+  const flags: any[] = data?.data ?? [];
+  const totalPages: number = data?.pagination?.totalPages ?? 1;
+
+  // Reset to the first page whenever the sort changes.
   useEffect(() => {
-    fetchFlags();
-  }, [page, search]);
+    setPage(1);
+  }, [orderBy, order]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
       await axiosInstance.delete(`/feature-flags/${deleteId}`);
       setDeleteId(null);
-      fetchFlags();
+      refetch();
     } catch (error) {
-      console.error("Failed to delete feature flag", error);
+      toast.error((error as any)?.response?.data?.message || "Failed to delete feature flag");
     }
   };
 
@@ -88,32 +96,24 @@ export default function FeatureFlagsList() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1 }}>
-            {t("flags.title", "Feature Flags")}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            {t("flags.subtitle", "Manage hospital-specific feature toggles and overrides")}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => navigate("/feature-flags/new")}
-          sx={{
-            background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-            boxShadow: "0 4px 14px 0 rgba(245, 158, 11, 0.39)",
-            borderRadius: 2,
-          }}
-        >
-          {t("flags.addFlag", "Add Flag")}
-        </Button>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title={t("flags.title", "Feature Flags")}
+        subtitle={t("flags.subtitle", "Manage hospital-specific feature toggles and overrides")}
+        actions={
+          <ActionButton
+            accentFrom="#f59e0b"
+            accentTo="#d97706"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/feature-flags/new")}
+          >
+            {t("flags.addFlag", "Add Flag")}
+          </ActionButton>
+        }
+      />
 
       {/* Filters */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+      <FilterBar>
         <TextField
           placeholder={t("flags.searchPlaceholder", "Search flags by name or key...")}
           value={search}
@@ -128,7 +128,7 @@ export default function FeatureFlagsList() {
             ),
           }}
         />
-      </Box>
+      </FilterBar>
 
       <Paper
         elevation={2}
@@ -140,23 +140,25 @@ export default function FeatureFlagsList() {
           overflow: "hidden",
         }}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: "background.paper" }}>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("flags.hospitalName", "Hospital")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("flags.featureName", "Feature")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("flags.featureKey", "Key")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("flags.scope", "Scope")}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>{t("flags.status", "Status")}</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>{t("common.actions", "Actions")}</TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("flags.hospitalName", "Hospital")}</TableCell>
+                <SortableHeadCell label={t("flags.featureName", "Feature")} sortKey="featureName" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("flags.featureKey", "Key")} sortKey="featureKey" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("flags.scope", "Scope")} sortKey="scope" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <SortableHeadCell label={t("flags.status", "Status")} sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={adminHeadSx} />
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600, bgcolor: "background.paper" }}>{t("common.actions", "Actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {isLoading ? (
+                <TableRowsSkeleton rows={6} columns={6} />
+              ) : isError ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
-                    <CircularProgress sx={{ color: "#f59e0b" }} />
+                  <TableCell colSpan={6} sx={{ py: 4, border: 0 }}>
+                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : flags.length === 0 ? (
@@ -238,7 +240,7 @@ export default function FeatureFlagsList() {
           <Button onClick={handleDelete} color="error" variant="contained">{t("common.delete", "Delete")}</Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </PageContainer>
   );
 }
 

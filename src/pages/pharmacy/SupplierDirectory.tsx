@@ -1,26 +1,42 @@
 import { useState, useEffect } from "react";
 import {
-  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
-  Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
+  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Button, Dialog, DialogTitle, DialogContent, DialogActions, Grid,
   TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha, InputAdornment
 } from "@mui/material";
+import GeoAddressPicker from "../../components/GeoAddressPicker";
 import { EditRounded, DeleteRounded, AddRounded, LocalShippingRounded, SearchRounded } from "@mui/icons-material";
+import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
+import Mascot from "../../components/Mascot";
+import HeartbeatLoader from "../../components/HeartbeatLoader";
+import ErrorState from "../../components/ErrorState";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
+import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
+import { useServerSort } from "../../components/table/useTableSort";
+import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { validate, hasErrors, isEmail, isPhone } from "../../utils/validation";
+
+// Match the existing plain (non-uppercase) table-head look, overriding
+// SortableHeadCell's default uppercase/secondary styling.
+const HEAD_SX = {
+  fontWeight: 700,
+  py: 2,
+  textTransform: "none",
+  letterSpacing: "normal",
+  fontSize: "inherit",
+  color: "inherit",
+} as const;
 
 export default function SupplierDirectory() {
   const theme = useTheme();
   const toast = useToast();
   const confirm = useConfirm();
-  const [suppliers, setSuppliers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const pageCount = Math.ceil(total / ROWS_PER_PAGE);
+  const { orderBy, order, onSort } = useServerSort();
 
   const [openDialog, setOpenDialog] = useState(false);
   const [editSupplier, setEditSupplier] = useState<any>(null);
@@ -32,9 +48,11 @@ export default function SupplierDirectory() {
   const [email, setEmail] = useState("");
   const [gstNumber, setGstNumber] = useState("");
   const [city, setCity] = useState("");
+  const [districtLoc, setDistrictLoc] = useState("");
   const [stateLoc, setStateLoc] = useState("");
   const [country, setCountry] = useState("India");
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string }>({});
 
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -48,25 +66,25 @@ export default function SupplierDirectory() {
     return () => clearTimeout(id);
   }, [searchTerm]);
 
-  const fetchSuppliers = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get("/pharmacy/suppliers", {
-        params: { page, limit: ROWS_PER_PAGE, search: debouncedSearch || undefined },
-      });
-      setSuppliers(res.data.data || []);
-      setTotal(res.data.pagination?.total ?? (res.data.data || []).length);
-    } catch (err) {
-      console.error("Failed to fetch suppliers", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Reset to the first page whenever the sort column/direction changes.
+  useEffect(() => { setPage(1); }, [orderBy, order]);
 
-  useEffect(() => {
-    fetchSuppliers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, debouncedSearch]);
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["pharmacy-suppliers", page, debouncedSearch, orderBy, order],
+    queryFn: async () =>
+      (await axiosInstance.get("/pharmacy/suppliers", {
+        params: {
+          page,
+          limit: ROWS_PER_PAGE,
+          search: debouncedSearch || undefined,
+          sortBy: orderBy || undefined,
+          sortOrder: order,
+        },
+      })).data,
+  });
+  const suppliers: any[] = data?.data ?? [];
+  const total: number = data?.pagination?.total ?? suppliers.length;
+  const pageCount = Math.ceil(total / ROWS_PER_PAGE);
 
   const handleOpenNew = () => {
     setEditSupplier(null);
@@ -77,6 +95,7 @@ export default function SupplierDirectory() {
     setEmail("");
     setGstNumber("");
     setCity("");
+    setDistrictLoc("");
     setStateLoc("");
     setCountry("India");
     setErrorMsg("");
@@ -92,6 +111,7 @@ export default function SupplierDirectory() {
     setEmail(sup.email || "");
     setGstNumber(sup.gstNumber || "");
     setCity(sup.city || "");
+    setDistrictLoc(sup.district || "");
     setStateLoc(sup.state || "");
     setCountry(sup.country || "India");
     setErrorMsg("");
@@ -107,6 +127,13 @@ export default function SupplierDirectory() {
       setErrorMsg("Please fill in all required fields.");
       return;
     }
+    // Format guards mirror the backend supplier validator.
+    const fmtErrors = validate({ phone, email }, { phone: [isPhone], email: [isEmail] });
+    if (hasErrors(fmtErrors)) {
+      setFieldErrors(fmtErrors);
+      return;
+    }
+    setFieldErrors({});
 
     try {
       setSaving(true);
@@ -119,6 +146,7 @@ export default function SupplierDirectory() {
         email,
         gstNumber,
         city,
+        district: districtLoc,
         state: stateLoc,
         country
       };
@@ -129,9 +157,8 @@ export default function SupplierDirectory() {
         await axiosInstance.post("/pharmacy/suppliers", payload);
       }
       handleClose();
-      fetchSuppliers();
+      refetch();
     } catch (err: any) {
-      console.error("Failed to save supplier", err);
       setErrorMsg(err.response?.data?.message || "Failed to save the supplier.");
     } finally {
       setSaving(false);
@@ -152,10 +179,9 @@ export default function SupplierDirectory() {
       if (suppliers.length === 1 && page > 1) {
         setPage(page - 1);
       } else {
-        fetchSuppliers();
+        refetch();
       }
     } catch (err: any) {
-      console.error("Failed to delete supplier", err);
       toast.error(err.response?.data?.message || "Failed to delete the supplier.");
     }
   };
@@ -213,29 +239,30 @@ export default function SupplierDirectory() {
           />
         </Box>
 
-        {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
-            <CircularProgress size={48} thickness={4} sx={{ color: '#4F46E5' }} />
+        {isLoading ? (
+          <Box sx={{ p: 2 }}>
+            <ListSkeleton rows={6} />
           </Box>
+        ) : isError ? (
+          <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
         ) : suppliers.length === 0 ? (
-          <Box sx={{ p: 8, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-            <LocalShippingRounded sx={{ fontSize: 64, color: 'text.disabled' }} />
-            <Typography variant="h6" color="text.secondary">No suppliers found</Typography>
-            <Typography variant="body2" color="text.disabled">
-              {debouncedSearch ? "Try a different search term." : "Get started by adding your first supplier."}
-            </Typography>
-          </Box>
+          <Mascot
+            pose={debouncedSearch ? "no-matches" : "nothing-here-yet"}
+            title="No suppliers found"
+            subtitle={debouncedSearch ? "Try a different search term." : "Get started by adding your first supplier."}
+          />
         ) : (
           <Fade in timeout={500}>
             <Box>
-              <Table>
+              <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
-                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Code</TableCell>
-                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Company Name</TableCell>
-                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Contact Person</TableCell>
-                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Phone</TableCell>
-                    <TableCell sx={{ fontWeight: 700, py: 2 }}>Email</TableCell>
+                    <SortableHeadCell label="Code" sortKey="code" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Company Name" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Contact Person" sortKey="contact" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Phone" sortKey="phone" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Email" sortKey="email" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
                     <TableCell align="right" sx={{ fontWeight: 700, py: 2 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -281,6 +308,7 @@ export default function SupplierDirectory() {
                   ))}
                 </TableBody>
               </Table>
+              </TableContainer>
               <PaginationBar page={page} pageCount={pageCount} total={total} onChange={setPage} />
             </Box>
           </Fade>
@@ -353,37 +381,38 @@ export default function SupplierDirectory() {
               <TextField
                 label="Phone Number"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => { setPhone(e.target.value); setFieldErrors((p) => ({ ...p, phone: undefined })); }}
                 fullWidth
                 variant="outlined"
                 required
+                error={!!fieldErrors.phone}
+                helperText={fieldErrors.phone}
               />
               <TextField
                 label="Email Address"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setFieldErrors((p) => ({ ...p, email: undefined })); }}
                 fullWidth
                 variant="outlined"
                 required
+                error={!!fieldErrors.email}
+                helperText={fieldErrors.email}
               />
 
-              <TextField
-                label="City"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                fullWidth
-                variant="outlined"
-                required
-              />
-              <TextField
-                label="State"
-                value={stateLoc}
-                onChange={(e) => setStateLoc(e.target.value)}
-                fullWidth
-                variant="outlined"
-                required
-              />
+              <Box sx={{ gridColumn: '1 / -1' }}>
+                <Grid container spacing={2}>
+                  <GeoAddressPicker
+                    showPincode={false} colSpan={6}
+                    value={{ stateName: stateLoc, districtName: districtLoc, city }}
+                    onChange={(patch) => {
+                      if (patch.stateName !== undefined) setStateLoc(patch.stateName);
+                      if (patch.districtName !== undefined) setDistrictLoc(patch.districtName);
+                      if (patch.city !== undefined) setCity(patch.city);
+                    }}
+                  />
+                </Grid>
+              </Box>
             </Box>
 
           </Box>
@@ -405,7 +434,7 @@ export default function SupplierDirectory() {
               '&:hover': { boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)' }
             }}
           >
-            {saving ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
+            {saving ? <HeartbeatLoader size={22} /> : "Save Changes"}
           </Button>
         </DialogActions>
       </Dialog>

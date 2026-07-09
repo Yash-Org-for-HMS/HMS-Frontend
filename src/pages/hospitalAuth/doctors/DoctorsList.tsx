@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   Box,
   Typography,
-  Button,
   Paper,
   Table,
   TableBody,
@@ -13,67 +13,105 @@ import {
   Chip,
   IconButton,
   Tooltip,
-  CircularProgress,
+  TextField,
+  InputAdornment,
+  Pagination,
+  Button,
 } from "@mui/material";
-import { AddRounded, EditRounded, EventAvailableRounded, CalendarTodayRounded } from "@mui/icons-material";
+import { EditRounded, EventAvailableRounded, CalendarTodayRounded, SearchRounded, AddRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import Mascot from "../../../components/Mascot";
+import ErrorState from "../../../components/ErrorState";
+import PageHeader from "../../../components/layout/PageHeader";
+import { ListSkeleton } from "../../../components/TableRowsSkeleton";
+import HeartbeatLoader from "../../../components/HeartbeatLoader";
+import { useServerSort } from "../../../components/table/useTableSort";
+import SortableHeadCell from "../../../components/table/SortableHeadCell";
+
+const PAGE_SIZE = 20;
+
+// Match this page's existing table-head styling so SortableHeadCell blends in.
+const HEAD_SX = { color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" } as const;
 
 export default function DoctorsList() {
-  const [doctors, setDoctors] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
+  // Server-side column sorting (the list is paginated, so sorting happens server-side).
+  const { orderBy, order, onSort } = useServerSort();
+
+  // Debounce the search box; reset to page 1 whenever the term changes.
   useEffect(() => {
-    fetchDoctors();
-  }, []);
+    const t = setTimeout(() => { setSearch(searchInput.trim()); setPage(1); }, 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
-  const fetchDoctors = async () => {
-    try {
-      const response = await axiosInstance.get("/hospital/doctors");
-      setDoctors(response.data.data);
-    } catch (error) {
-      console.error("Error fetching doctors", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Jump back to the first page whenever the sort changes.
+  useEffect(() => { setPage(1); }, [orderBy, order]);
+
+  const { data, isLoading: loading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["hospital-doctors", search, page, orderBy, order],
+    queryFn: async () =>
+      (await axiosInstance.get("/hospital/doctors", { params: { search, page, limit: PAGE_SIZE, sortBy: orderBy || undefined, sortOrder: order } })).data,
+    placeholderData: keepPreviousData,
+  });
+  const doctors: any[] = data?.data || [];
+  const meta = data?.meta as { total: number; totalPages: number } | undefined;
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
-            Doctor Management
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Manage doctor profiles, schedules, and leaves. Doctors are auto-synced from Staff & Users.
-          </Typography>
-        </Box>
-      </Box>
+      <PageHeader
+        title="Doctor Management"
+        subtitle="Add doctors and manage their profiles, schedules, and leaves."
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<AddRounded />}
+            onClick={() => navigate("/hospital/doctors/new")}
+            sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, textTransform: "none", fontWeight: 600, px: 3 }}
+          >
+            Add Doctor
+          </Button>
+        }
+      />
+
+      <TextField
+        size="small"
+        placeholder="Search by name, email, license, specialization, department…"
+        value={searchInput}
+        onChange={(e) => setSearchInput(e.target.value)}
+        sx={{ mb: 2, width: "100%", maxWidth: 460 }}
+        InputProps={{
+          startAdornment: <InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary" }} /></InputAdornment>,
+          endAdornment: isFetching ? <HeartbeatLoader size={22} /> : undefined,
+        }}
+      />
 
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-          <CircularProgress sx={{ color: "#6366f1" }} />
-        </Box>
+        <ListSkeleton rows={6} />
+      ) : isError ? (
+        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
       ) : (
-        <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
-          <Table>
+        <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "calc(100vh - 300px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Name</TableCell>
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Department</TableCell>
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Specialization</TableCell>
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>License No.</TableCell>
-                <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Fee</TableCell>
-                <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>Actions</TableCell>
+                <TableCell sx={HEAD_SX}>Name</TableCell>
+                <TableCell sx={HEAD_SX}>Department</TableCell>
+                <TableCell sx={HEAD_SX}>Specialization</TableCell>
+                <SortableHeadCell label="License No." sortKey="license" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <SortableHeadCell label="Fee" sortKey="fee" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                <TableCell align="right" sx={HEAD_SX}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {doctors.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary", borderBottom: "none" }}>
-                    No doctors found.
+                  <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
+                    <Mascot pose="nothing-here-yet" subtitle="No doctors found." size={120} />
                   </TableCell>
                 </TableRow>
               ) : (
@@ -133,6 +171,14 @@ export default function DoctorsList() {
               )}
             </TableBody>
           </Table>
+          {meta && meta.totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", px: 2, py: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                {meta.total} doctor{meta.total === 1 ? "" : "s"}
+              </Typography>
+              <Pagination count={meta.totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" size="small" />
+            </Box>
+          )}
         </TableContainer>
       )}
     </Box>
