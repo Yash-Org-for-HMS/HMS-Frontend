@@ -32,6 +32,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   });
 
   const bedCharge = Number(detail?.estimatedBedCharge || 0);
+  const bedSegments: any[] = detail?.bedSegments || [];
   const extrasTotal = extras.reduce((s, e) => s + (Number(e.amount) || 0), 0);
   const total = bedCharge + extrasTotal;
   const deposit = Number(detail?.depositBalance || 0);
@@ -64,10 +65,30 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
       <DialogContent dividers>
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>
           <Box sx={{ p: 2, borderRadius: 2, bgcolor: "action.hover" }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>Bed charges ({detail?.days ?? "—"} day{detail?.days === 1 ? "" : "s"})</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(bedCharge)}</Typography>
-            </Box>
+            {bedSegments.length > 1 ? (
+              // Patient was transferred mid-stay — bill (and show) each bed at its own rate,
+              // instead of one line for the whole stay at just the current bed's rate.
+              <Stack spacing={0.75}>
+                {bedSegments.map((seg, i) => (
+                  <Box key={i} sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                      {seg.label} — {seg.days} day{seg.days === 1 ? "" : "s"} @ {formatINR(Number(seg.dailyCharge))}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(Number(seg.amount))}</Typography>
+                  </Box>
+                ))}
+                <Divider sx={{ my: 0.5 }} />
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>Bed charges total ({detail?.days ?? "—"} days)</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(bedCharge)}</Typography>
+                </Box>
+              </Stack>
+            ) : (
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>Bed charges ({detail?.days ?? "—"} day{detail?.days === 1 ? "" : "s"})</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(bedCharge)}</Typography>
+              </Box>
+            )}
           </Box>
 
           <Box>
