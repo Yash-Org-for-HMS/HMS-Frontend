@@ -93,6 +93,9 @@ const BedBoard = lazy(() => import("./pages/ipd/BedBoard"));
 const QueueDashboard = lazy(() => import("./pages/reception/QueueDashboard"));
 const Billing = lazy(() => import("./pages/reception/Billing"));
 const NotificationsLog = lazy(() => import("./pages/reception/NotificationsLog"));
+const ClaimsList = lazy(() => import("./pages/claims/ClaimsList"));
+const ClaimForm = lazy(() => import("./pages/claims/ClaimForm"));
+const ClaimDetail = lazy(() => import("./pages/claims/ClaimDetail"));
 const FrontDeskConsole = lazy(() => import("./pages/reception/FrontDeskConsole"));
 
 // Nurse
@@ -267,6 +270,10 @@ function App() {
 
             <Route path="/reception/queue" element={el(QueueDashboard)} />
             <Route path="/reception/billing" element={el(Billing)} />
+            <Route path="/reception/claims" element={el(ClaimsList)} />
+            <Route path="/reception/claims/new" element={el(ClaimForm)} />
+            <Route path="/reception/claims/:id" element={el(ClaimDetail)} />
+            <Route path="/reception/claims/:id/edit" element={el(ClaimForm)} />
             <Route path="/reception/notifications" element={el(NotificationsLog)} />
           </Route>
         </Route>

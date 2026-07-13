@@ -44,7 +44,7 @@ const REALMS: Record<Realm, { access: string; refresh: string; refreshUrl: strin
 // own. \b forces a real path-segment boundary, so "/hospital/..." still
 // matches (boundary before "/") but "/hospitals" no longer does.
 function realmForUrl(url?: string): Realm {
-  if (url && /^\/(hospital|reception|doctor|nurse|lab|pharmacy|billing|ipd|vaccination)\b/.test(url)) {
+  if (url && /^\/(hospital|reception|doctor|nurse|lab|pharmacy|billing|ipd|vaccination|claims)\b/.test(url)) {
     return "hospital";
   }
   return "admin";
