@@ -15,6 +15,7 @@ import PageHeader from "../../components/layout/PageHeader";
 import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
 import ErrorState from "../../components/ErrorState";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import ClaimDocumentsSection from "./ClaimDocumentsSection";
 import { statusMeta } from "./claimMeta";
 
 const ACCENT = ACCENTS.reception;
@@ -123,6 +124,8 @@ export default function ClaimDetail() {
           </Paper>
         </Grid>
       </Grid>
+
+      <ClaimDocumentsSection claimId={id!} />
 
       <AdvanceStatusDialog
         open={advOpen}

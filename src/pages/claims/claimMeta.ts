@@ -32,3 +32,25 @@ export const PAYER_TYPE_OPTIONS = [
 ];
 
 export const RELATION_OPTIONS = ["Self", "Spouse", "Child", "Parent", "Other"];
+
+// Document checklist — mirrors CLAIM_DOC_CATALOG in the backend
+// (src/modules/claims/claims.constants.ts). Keep the two in sync.
+export type DocStage = "PREAUTH" | "FINAL";
+export const CLAIM_DOC_CATALOG: { code: string; label: string; stage: DocStage; required: boolean }[] = [
+  { code: "AADHAAR", label: "Aadhaar Card", stage: "PREAUTH", required: true },
+  { code: "PAN", label: "PAN Card", stage: "PREAUTH", required: false },
+  { code: "POLICY", label: "Insurance Policy / Card", stage: "PREAUTH", required: true },
+  { code: "PREAUTH_FORM", label: "Pre-authorization Form", stage: "PREAUTH", required: true },
+  { code: "MEDICAL_REPORT", label: "Medical Reports", stage: "PREAUTH", required: false },
+  { code: "FINAL_BILL", label: "Final Bill / Invoice", stage: "FINAL", required: true },
+  { code: "DISCHARGE_SUMMARY", label: "Discharge Summary", stage: "FINAL", required: true },
+  { code: "FINAL_REPORT", label: "Final Investigation Reports", stage: "FINAL", required: false },
+  { code: "OTHER", label: "Other Supporting Document", stage: "PREAUTH", required: false },
+];
+
+export const DOC_STAGE_LABEL: Record<DocStage, string> = {
+  PREAUTH: "Pre-authorization documents",
+  FINAL: "Final claim documents",
+};
+
+export const docTypeLabel = (code: string) => CLAIM_DOC_CATALOG.find((d) => d.code === code)?.label || code;
