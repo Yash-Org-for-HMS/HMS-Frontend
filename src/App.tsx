@@ -103,6 +103,7 @@ const FrontDeskConsole = lazy(() => import("./pages/reception/FrontDeskConsole")
 const NurseDashboard = lazy(() => import("./pages/nurse/NurseDashboard"));
 const NurseQueue = lazy(() => import("./pages/nurse/NurseQueue"));
 const NurseReports = lazy(() => import("./pages/nurse/NurseReports"));
+const NurseWard = lazy(() => import("./pages/nurse/NurseWard"));
 
 // Doctor
 const DoctorDashboard = lazy(() => import("./pages/doctor/DoctorDashboard"));
@@ -120,6 +121,7 @@ const UpdateLabOrder = lazy(() => import("./pages/lab/UpdateLabOrder"));
 const RadiologyOrdersQueue = lazy(() => import("./pages/lab/RadiologyOrdersQueue"));
 const LabTestCatalog = lazy(() => import("./pages/lab/LabTestCatalog"));
 const PrintLabReport = lazy(() => import("./pages/lab/PrintLabReport"));
+const PrintIpBill = lazy(() => import("./pages/billing/PrintIpBill"));
 const RadiologyCatalog = lazy(() => import("./pages/lab/RadiologyCatalog"));
 const LabReports = lazy(() => import("./pages/lab/LabReports"));
 
@@ -278,12 +280,15 @@ function App() {
             <Route path="/reception/claims/:id/edit" element={el(ClaimForm)} />
             <Route path="/reception/notifications" element={el(NotificationsLog)} />
           </Route>
+          {/* Full-page printable IP bill (rendered outside the layout shell). */}
+          <Route path="/reception/billing/invoices/:invoiceId/ip-bill/print" element={el(PrintIpBill)} />
         </Route>
         {/* ── Nurse Panel Routes ────────────────────────────────────── */}
         <Route element={<HospitalProtectedRoute />}>
           <Route element={el(NurseLayout)}>
             <Route path="/nurse/dashboard" element={el(NurseDashboard)} />
             <Route path="/nurse/queue" element={el(NurseQueue)} />
+            <Route path="/nurse/ward" element={el(NurseWard)} />
             <Route path="/nurse/reports" element={el(NurseReports)} />
             {/* Read-only view under the Nurse shell — a nurse opening a patient (e.g. via
                 command-palette search) must not land inside the full Reception sidebar,

@@ -43,8 +43,12 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
 
   const bedCharge = Number(detail?.estimatedBedCharge || 0);
   const bedSegments: any[] = detail?.bedSegments || [];
+  // Clinical charges (doctor visits / lab / radiology) accrued during the stay
+  // that will roll onto the final bill — previewed so the total is honest.
+  const pendingCharges: any[] = detail?.pendingCharges || [];
+  const pendingTotal = Number(detail?.pendingChargesTotal || 0);
   const extrasTotal = extras.reduce((s, e) => s + (Number(e.amount) || 0), 0);
-  const total = bedCharge + extrasTotal;
+  const total = bedCharge + pendingTotal + extrasTotal;
   const deposit = Number(detail?.depositBalance || 0);
   const depositApplied = Math.min(deposit, total);
   const payable = Math.max(0, total - depositApplied);
@@ -102,6 +106,27 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
               </Box>
             )}
           </Box>
+
+          {pendingCharges.length > 0 && (
+            <Box sx={{ p: 2, borderRadius: 2, bgcolor: "action.hover" }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 0.75 }}>
+                Charges during stay (auto-added to bill)
+              </Typography>
+              <Stack spacing={0.5}>
+                {pendingCharges.map((c, i) => (
+                  <Box key={i} sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>{c.description}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(Number(c.totalPrice))}</Typography>
+                  </Box>
+                ))}
+                <Divider sx={{ my: 0.5 }} />
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>Clinical charges total</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(pendingTotal)}</Typography>
+                </Box>
+              </Stack>
+            </Box>
+          )}
 
           <Box>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>

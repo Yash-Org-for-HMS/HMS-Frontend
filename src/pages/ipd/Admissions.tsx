@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import {
   LocalHotelRounded, SearchRounded, SwapHorizRounded, LogoutRounded, MoreVertRounded,
-  CancelRounded, SavingsRounded, UndoRounded, MedicalServicesRounded,
+  CancelRounded, SavingsRounded, UndoRounded, MedicalServicesRounded, MedicationRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
@@ -20,6 +20,7 @@ import TransferDialog from "../../components/ipd/TransferDialog";
 import DischargeDialog from "../../components/ipd/DischargeDialog";
 import DepositDialog from "../../components/ipd/DepositDialog";
 import SurgeryDialog from "../../components/ipd/SurgeryDialog";
+import IpdMedicinesDialog from "../../components/ipd/IpdMedicinesDialog";
 import PageHeader from "../../components/layout/PageHeader";
 import { useTableSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
@@ -42,6 +43,7 @@ export default function Admissions() {
   const [dischargeFor, setDischargeFor] = useState<any>(null);
   const [depositFor, setDepositFor] = useState<{ row: any; mode: "collect" | "refund" } | null>(null);
   const [surgeryFor, setSurgeryFor] = useState<any>(null);
+  const [medsFor, setMedsFor] = useState<any>(null);
   const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: any }>({ anchor: null, row: null });
 
   const status = TABS[tab];
@@ -148,6 +150,7 @@ export default function Admissions() {
                     <TableCell align="right">
                       {a.status === "ADMITTED" && (
                         <>
+                          <Tooltip title="Medicines"><IconButton size="small" onClick={() => setMedsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2" } }}><MedicationRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Surgery details"><IconButton size="small" onClick={() => setSurgeryFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2" } }}><MedicalServicesRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Transfer bed"><IconButton size="small" onClick={() => setTransferFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2" } }}><SwapHorizRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Discharge"><IconButton size="small" onClick={() => setDischargeFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#ef4444" } }}><LogoutRounded fontSize="small" /></IconButton></Tooltip>
@@ -186,6 +189,7 @@ export default function Admissions() {
       {dischargeFor && <DischargeDialog open admissionId={dischargeFor.admissionId} onClose={() => setDischargeFor(null)} onDone={() => { setDischargeFor(null); refetch(); }} />}
       {depositFor && <DepositDialog open mode={depositFor.mode} admission={depositFor.row} onClose={() => setDepositFor(null)} onDone={() => { setDepositFor(null); refetch(); }} />}
       {surgeryFor && <SurgeryDialog open admission={surgeryFor} onClose={() => setSurgeryFor(null)} />}
+      {medsFor && <IpdMedicinesDialog open admission={medsFor} onClose={() => setMedsFor(null)} />}
     </Box>
   );
 }

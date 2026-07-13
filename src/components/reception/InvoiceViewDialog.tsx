@@ -195,7 +195,12 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit">Close</Button>
-        <Button variant="contained" startIcon={<PrintRounded />} disabled={!invoice} onClick={print} sx={{ bgcolor: "#0891b2", "&:hover": { bgcolor: "#0e7490" } }}>Print</Button>
+        {invoice?.admissionId && (
+          <Button variant="outlined" startIcon={<PrintRounded />} disabled={!invoice}
+            onClick={() => window.open(`/reception/billing/invoices/${invoiceId}/ip-bill/print`, "_blank")}
+            sx={{ borderColor: "#0891b2", color: "#0e7490" }}>Print IP Bill</Button>
+        )}
+        <Button variant="contained" startIcon={<PrintRounded />} disabled={!invoice} onClick={print} sx={{ bgcolor: "#0891b2", "&:hover": { bgcolor: "#0e7490" } }}>{invoice?.admissionId ? "Receipt" : "Print"}</Button>
       </DialogActions>
     </Dialog>
   );

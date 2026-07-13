@@ -14,6 +14,7 @@ import {
   LogoutRounded,
   MedicalServicesRounded,
   AssessmentRounded,
+  MedicationRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import BranchSwitcher from "../components/BranchSwitcher";
@@ -39,6 +40,7 @@ export default function NurseLayout() {
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/nurse/dashboard", section: "Overview" },
     { text: "Patient Queue", icon: <PeopleAltRounded />, path: "/nurse/queue", section: "Patient Care" },
+    { text: "Ward", icon: <MedicationRounded />, path: "/nurse/ward", section: "Patient Care" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/nurse/reports", section: "Reports" },
   ];
 
