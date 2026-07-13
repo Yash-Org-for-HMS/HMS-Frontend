@@ -31,6 +31,16 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
     enabled: open,
   });
 
+  // An open insurance/scheme claim for this admission (if any) — its approved
+  // amount tells us how much of this bill the payer covers vs the patient.
+  const { data: claims = [] } = useQuery({
+    queryKey: ["ipd-admission-claim", admissionId],
+    queryFn: async () => (await axiosInstance.get("/claims", { params: { admissionId } })).data.data as any[],
+    enabled: open,
+  });
+  const claim = claims[0];
+  const claimApproved = claim ? Number(claim.preAuthApprovedAmount || 0) : 0;
+
   const bedCharge = Number(detail?.estimatedBedCharge || 0);
   const bedSegments: any[] = detail?.bedSegments || [];
   const extrasTotal = extras.reduce((s, e) => s + (Number(e.amount) || 0), 0);
@@ -39,6 +49,8 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const depositApplied = Math.min(deposit, total);
   const payable = Math.max(0, total - depositApplied);
   const depositRefundable = Math.max(0, deposit - depositApplied);
+  // What the patient must cover after insurance approval (shortfall).
+  const patientShortfall = claim ? Math.max(0, total - claimApproved) : null;
 
   const submit = async () => {
     setSaving(true);
@@ -104,6 +116,25 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
               </Box>
             ))}
           </Box>
+
+          {claim && (
+            <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: "rgba(59,130,246,0.08)", border: "1px solid", borderColor: "rgba(59,130,246,0.25)" }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: "#3b82f6", display: "block", mb: 0.5 }}>
+                Insurance claim {claim.claimNumber}
+              </Typography>
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>Pre-auth approved</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: "#3b82f6" }}>{formatINR(claimApproved)}</Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>Patient shortfall (bill − approved)</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: patientShortfall! > 0 ? "#ef4444" : "#10b981" }}>{formatINR(patientShortfall || 0)}</Typography>
+              </Box>
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
+                The bill is auto-linked to this claim on discharge; record the payer settlement from the claim page.
+              </Typography>
+            </Box>
+          )}
 
           <Divider />
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>

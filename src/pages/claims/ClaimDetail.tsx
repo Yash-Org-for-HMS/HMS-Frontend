@@ -6,7 +6,7 @@ import {
   Box, Paper, Typography, Chip, Button, Grid, Stack, Divider,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
 } from "@mui/material";
-import { ArrowBackRounded, EditRounded, TimelineRounded, ArrowForwardRounded } from "@mui/icons-material";
+import { ArrowBackRounded, EditRounded, TimelineRounded, ArrowForwardRounded, PaymentsRounded } from "@mui/icons-material";
 import { ACCENTS } from "../../styles/accents";
 import { axiosInstance } from "../../api/axios";
 import { formatINR } from "../../utils/format";
@@ -34,6 +34,8 @@ export default function ClaimDetail() {
   const navigate = useNavigate();
   const toast = useToast();
   const [advOpen, setAdvOpen] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [settleOpen, setSettleOpen] = useState(false);
 
   const { data: claim, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["claim", id],
@@ -82,18 +84,42 @@ export default function ClaimDetail() {
           </Paper>
 
           <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5 }}>Amounts</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 1.5, flexWrap: "wrap", gap: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Financials</Typography>
+              <Box sx={{ flex: 1 }} />
+              <Button size="small" onClick={() => setLinkOpen(true)} sx={{ textTransform: "none", color: ACCENT }}>
+                {claim.invoice ? `Bill: ${claim.invoice.invoiceNumber}` : "Link bill"}
+              </Button>
+              <Button size="small" variant="outlined" startIcon={<PaymentsRounded fontSize="small" />} onClick={() => setSettleOpen(true)} sx={{ borderColor: "divider", color: "text.primary" }}>
+                Record settlement
+              </Button>
+            </Box>
+            {/* Reconciliation — what the payer owes vs what the patient must cover. */}
+            <Grid container spacing={1.5} sx={{ mb: 1 }}>
+              {[
+                ["Billed", claim.reconciliation?.billed, "#0891b2"],
+                ["Approved", claim.reconciliation?.approved, "#3b82f6"],
+                ["Settled", claim.reconciliation?.settled, "#10b981"],
+                ["Patient pays", claim.reconciliation?.patientResponsibility, "#ef4444"],
+                ["Payer balance", claim.reconciliation?.balanceFromPayer, "#f59e0b"],
+              ].map(([label, val, color]) => (
+                <Grid size={{ xs: 6, sm: 4 }} key={label as string}>
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{label as string}</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 800, color: color as string }}>{inr(val)}</Typography>
+                </Grid>
+              ))}
+            </Grid>
+            <Divider sx={{ my: 1.5 }} />
             <Grid container spacing={1}>
               {[
                 ["Estimated cost", claim.estimatedCost],
                 ["Pre-auth requested", claim.preAuthRequestedAmount],
                 ["Pre-auth approved", claim.preAuthApprovedAmount],
                 ["Final claimed", claim.finalClaimedAmount],
-                ["Settled", claim.settledAmount],
               ].map(([label, val]) => (
-                <Grid size={{ xs: 6, sm: 4 }} key={label as string}>
+                <Grid size={{ xs: 6, sm: 3 }} key={label as string}>
                   <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{label as string}</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 700 }}>{inr(val)}</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{inr(val)}</Typography>
                 </Grid>
               ))}
             </Grid>
@@ -126,6 +152,9 @@ export default function ClaimDetail() {
       </Grid>
 
       <ClaimDocumentsSection claimId={id!} />
+
+      <LinkInvoiceDialog open={linkOpen} onClose={() => setLinkOpen(false)} claimId={id!} currentInvoiceId={claim.invoiceId || ""} onDone={() => { setLinkOpen(false); refetch(); }} />
+      <RecordSettlementDialog open={settleOpen} onClose={() => setSettleOpen(false)} claimId={id!} onDone={() => { setSettleOpen(false); refetch(); }} />
 
       <AdvanceStatusDialog
         open={advOpen}
@@ -169,6 +198,80 @@ function AdvanceStatusDialog({ open, onClose, options, onDone, claimId }: { open
       <DialogActions sx={{ p: 2 }}>
         <Button color="inherit" onClick={onClose} disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={submit} disabled={saving} startIcon={saving ? <HeartbeatLoader size={22} /> : undefined} sx={{ bgcolor: ACCENT }}>Update</Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+function LinkInvoiceDialog({ open, onClose, claimId, currentInvoiceId, onDone }: { open: boolean; onClose: () => void; claimId: string; currentInvoiceId: string; onDone: () => void }) {
+  const toast = useToast();
+  const [invoiceId, setInvoiceId] = useState(currentInvoiceId);
+  const [saving, setSaving] = useState(false);
+  const { data: invoices = [] } = useQuery({
+    queryKey: ["claim-invoices", claimId],
+    queryFn: async () => (await axiosInstance.get(`/claims/${claimId}/invoices`)).data.data as any[],
+    enabled: open,
+  });
+  const save = async () => {
+    setSaving(true);
+    try {
+      await axiosInstance.put(`/claims/${claimId}`, { invoiceId: invoiceId || null });
+      toast.success(invoiceId ? "Bill linked" : "Bill unlinked");
+      onDone();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to link bill");
+    } finally { setSaving(false); }
+  };
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>Link hospital bill</DialogTitle>
+      <DialogContent>
+        <TextField select label="Invoice" value={invoiceId} onChange={(e) => setInvoiceId(e.target.value)} fullWidth sx={{ mt: 1 }}>
+          <MenuItem value="">— Not linked —</MenuItem>
+          {invoices.map((i) => (
+            <MenuItem key={i.invoiceId} value={i.invoiceId}>{i.invoiceNumber} · {formatINR(Number(i.netAmount))} · {dayjs(i.invoiceDate).format("DD MMM YYYY")}</MenuItem>
+          ))}
+        </TextField>
+        {invoices.length === 0 && <Typography variant="caption" sx={{ color: "text.secondary", mt: 1, display: "block" }}>No bills found for this patient yet.</Typography>}
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button color="inherit" onClick={onClose} disabled={saving}>Cancel</Button>
+        <Button variant="contained" onClick={save} disabled={saving} sx={{ bgcolor: ACCENT }}>Save</Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+function RecordSettlementDialog({ open, onClose, claimId, onDone }: { open: boolean; onClose: () => void; claimId: string; onDone: () => void }) {
+  const toast = useToast();
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+  const submit = async () => {
+    if (!amount || Number(amount) <= 0) { toast.error("Enter a settlement amount"); return; }
+    setSaving(true);
+    try {
+      await axiosInstance.post(`/claims/${claimId}/settlement`, { amount: Number(amount), note: note || undefined });
+      toast.success("Settlement recorded");
+      setAmount(""); setNote("");
+      onDone();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to record settlement");
+    } finally { setSaving(false); }
+  };
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>Record payer settlement</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ pt: 1 }}>
+          <TextField label="Amount received (₹)" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} fullWidth autoFocus />
+          <TextField label="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} fullWidth multiline rows={2} placeholder="e.g. NEFT ref 12345; part settlement" />
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>Recorded as a payer payment against the linked bill; the claim moves to (Partially) Settled automatically.</Typography>
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button color="inherit" onClick={onClose} disabled={saving}>Cancel</Button>
+        <Button variant="contained" onClick={submit} disabled={saving} startIcon={saving ? <HeartbeatLoader size={22} /> : <PaymentsRounded />} sx={{ bgcolor: ACCENT }}>Record</Button>
       </DialogActions>
     </Dialog>
   );
