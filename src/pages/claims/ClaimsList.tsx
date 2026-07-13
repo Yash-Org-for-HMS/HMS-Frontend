@@ -6,7 +6,7 @@ import {
   Box, Paper, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
   Chip, Button, TextField, MenuItem, InputAdornment,
 } from "@mui/material";
-import { AddRounded, SearchRounded } from "@mui/icons-material";
+import { AddRounded, SearchRounded, AssessmentRounded } from "@mui/icons-material";
 import { ACCENTS } from "../../styles/accents";
 import { axiosInstance } from "../../api/axios";
 import { formatINR } from "../../utils/format";
@@ -35,9 +35,14 @@ export default function ClaimsList() {
         title="Insurance Claims"
         subtitle="Track insurance & government-scheme (MAA / PMJAY) cases through pre-auth, treatment, and settlement."
         actions={
-          <Button variant="contained" startIcon={<AddRounded />} onClick={() => navigate("/reception/claims/new")} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>
-            New Claim
-          </Button>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button variant="outlined" startIcon={<AssessmentRounded />} onClick={() => navigate("/reception/claims/reports")} sx={{ borderColor: "divider", color: "text.primary" }}>
+              Reports
+            </Button>
+            <Button variant="contained" startIcon={<AddRounded />} onClick={() => navigate("/reception/claims/new")} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>
+              New Claim
+            </Button>
+          </Box>
         }
       />
 
