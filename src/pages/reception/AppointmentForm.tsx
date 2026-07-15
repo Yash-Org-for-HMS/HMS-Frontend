@@ -18,6 +18,10 @@ import PageHeader from "../../components/layout/PageHeader";
 export interface AppointmentFormProps {
   isEmbedded?: boolean;
   prefilledPatientId?: string;
+  /** Prefill the doctor (e.g. booking from a doctor's card) — takes precedence over the ?doctorId= URL param. */
+  initialDoctorId?: string;
+  /** Prefill the date (e.g. the date currently selected on Doctor Availability) — takes precedence over the ?date= URL param. */
+  initialDate?: string;
   onSuccess?: (apptId?: string, patientName?: string, apptDate?: string) => void;
   onCancel?: () => void;
 }
@@ -32,14 +36,14 @@ const EMPTY_DROPDOWNS = { departments: [], doctors: [], patients: [], statuses: 
 // and the submitted datetime) — this only formats it for display.
 const fmt12h = (hhmm: string) => dayjs(`2000-01-01T${hhmm}`).format("h:mm A");
 
-export default function AppointmentForm({ isEmbedded = false, prefilledPatientId, onSuccess, onCancel }: AppointmentFormProps = {}) {
+export default function AppointmentForm({ isEmbedded = false, prefilledPatientId, initialDoctorId: doctorIdProp, initialDate: dateProp, onSuccess, onCancel }: AppointmentFormProps = {}) {
   const navigate = useNavigate();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const initialPatientId = searchParams.get("patientId") || "";
-  const initialDate = searchParams.get("date") || new Date().toISOString().split('T')[0];
+  const initialDate = dateProp || searchParams.get("date") || new Date().toISOString().split('T')[0];
   const initialTime = searchParams.get("time") || "";
-  const initialDoctorId = searchParams.get("doctorId") || "";
+  const initialDoctorId = doctorIdProp || searchParams.get("doctorId") || "";
   const followUpOf = searchParams.get("followUpOf") || "";
 
   const [saving, setSaving] = useState(false);

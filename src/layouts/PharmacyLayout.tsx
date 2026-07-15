@@ -29,6 +29,8 @@ import {
   LogoutRounded,
   LocalHospitalRounded,
   AssessmentRounded,
+  WarehouseRounded,
+  LocalPharmacyRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "../contexts/HospitalAuthContext";
 import BranchSwitcher from "../components/BranchSwitcher";
@@ -52,9 +54,11 @@ export default function PharmacyLayout() {
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/pharmacy/dashboard", section: "Overview" },
     { text: "Dispensary (POS)", icon: <PointOfSaleRounded />, path: "/pharmacy/pos", section: "Dispensary" },
+    { text: "IPD Medication Requests", icon: <LocalPharmacyRounded />, path: "/pharmacy/ipd-requests", section: "Dispensary" },
     { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/pharmacy/medicines", section: "Inventory" },
     { text: "Suppliers", icon: <LocalShippingRounded />, path: "/pharmacy/suppliers", section: "Inventory" },
     { text: "Inventory & POs", icon: <InventoryRounded />, path: "/pharmacy/inventory", section: "Inventory" },
+    { text: "Ward Stock", icon: <WarehouseRounded />, path: "/pharmacy/ward-stock", section: "Inventory" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/pharmacy/reports", section: "Reports" },
   ];
 

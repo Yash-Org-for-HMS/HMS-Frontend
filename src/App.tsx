@@ -132,6 +132,8 @@ const SupplierDirectory = lazy(() => import("./pages/pharmacy/SupplierDirectory"
 const InventoryManagement = lazy(() => import("./pages/pharmacy/InventoryManagement"));
 const DispensaryPOS = lazy(() => import("./pages/pharmacy/DispensaryPOS"));
 const PharmacyReports = lazy(() => import("./pages/pharmacy/PharmacyReports"));
+const WardStock = lazy(() => import("./pages/pharmacy/WardStock"));
+const IpdMedicationRequests = lazy(() => import("./pages/pharmacy/IpdMedicationRequests"));
 
 // Wrap a lazy page in a Suspense boundary with the skeleton fallback. The
 // boundary sits at the page-content level (inside each layout's <Outlet/>), so
@@ -230,6 +232,7 @@ function App() {
             <Route path="/hospital/lookups" element={el(LookupManager)} />
             <Route path="/hospital/facility-setup" element={el(FacilitySetup)} />
             <Route path="/hospital/vaccines" element={el(VaccineCatalog)} />
+            <Route path="/hospital/medicines" element={el(MedicineCatalog)} />
             <Route path="/hospital/form-builder" element={el(FormTemplatesList)} />
             <Route path="/hospital/form-builder/new" element={el(FormBuilder)} />
             <Route path="/hospital/form-builder/:id/edit" element={el(FormBuilder)} />
@@ -334,6 +337,8 @@ function App() {
             <Route path="/pharmacy/medicines" element={el(MedicineCatalog)} />
             <Route path="/pharmacy/suppliers" element={el(SupplierDirectory)} />
             <Route path="/pharmacy/inventory" element={el(InventoryManagement)} />
+            <Route path="/pharmacy/ward-stock" element={el(WardStock)} />
+            <Route path="/pharmacy/ipd-requests" element={el(IpdMedicationRequests)} />
             <Route path="/pharmacy/pos" element={el(DispensaryPOS)} />
             <Route path="/pharmacy/reports" element={el(PharmacyReports)} />
           </Route>

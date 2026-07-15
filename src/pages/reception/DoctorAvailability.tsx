@@ -2,18 +2,20 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Grid, Chip, TextField, Avatar,
-  Button, Stack, Divider,
+  Button, Stack, Divider, Dialog, DialogTitle, DialogContent, IconButton,
 } from "@mui/material";
 import {
   EventAvailableRounded, BeachAccessRounded, DoNotDisturbRounded,
-  ScheduleRounded, AddRounded,
+  ScheduleRounded, AddRounded, CloseRounded,
 } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { CardGridSkeleton } from "../../components/TableRowsSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
+import AppointmentForm from "./AppointmentForm";
+import BillingModal from "./BillingModal";
+import { useToast } from "../../contexts/ToastContext";
 import dayjs from "dayjs";
 
 const STATUS = {
@@ -29,8 +31,14 @@ const fmtTime = (hhmm: string) => {
 };
 
 export default function DoctorAvailability() {
-  const navigate = useNavigate();
+  const toast = useToast();
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
+  // Booking from a doctor's card opens the SAME appointment form used
+  // everywhere else (Front Desk, Appointments list) inline here, instead of
+  // navigating away to a separate full-page — one consistent booking flow
+  // regardless of entry point.
+  const [bookingDoctorId, setBookingDoctorId] = useState<string | null>(null);
+  const [billingDialog, setBillingDialog] = useState({ open: false, apptId: "", patientName: "", apptDate: "" });
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["doctor-availability", date],
@@ -127,7 +135,7 @@ export default function DoctorAvailability() {
                     {!doc.onLeave && (
                       <Button
                         size="small" startIcon={<AddRounded />}
-                        onClick={() => navigate(`/reception/appointments/new?doctorId=${doc.doctorId}&date=${date}`)}
+                        onClick={() => setBookingDoctorId(doc.doctorId)}
                         sx={{ textTransform: "none", color: "#0891b2", fontWeight: 600 }}
                       >
                         Book
@@ -139,6 +147,41 @@ export default function DoctorAvailability() {
             );
           })}
         </Grid>
+      )}
+
+      <Dialog open={!!bookingDoctorId} onClose={() => setBookingDoctorId(null)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          Book Appointment
+          <IconButton onClick={() => setBookingDoctorId(null)} sx={{ color: "text.secondary" }}><CloseRounded /></IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {bookingDoctorId && (
+            <AppointmentForm
+              isEmbedded
+              initialDoctorId={bookingDoctorId}
+              initialDate={date}
+              onSuccess={(apptId, pName, apptDate) => {
+                toast.success(`Appointment booked${pName ? ` for ${pName}` : ""}`);
+                setBookingDoctorId(null);
+                refetch();
+                if (apptId) {
+                  setBillingDialog({ open: true, apptId, patientName: pName || "Patient", apptDate: apptDate || new Date().toISOString() });
+                }
+              }}
+              onCancel={() => setBookingDoctorId(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {billingDialog.open && (
+        <BillingModal
+          open={billingDialog.open}
+          onClose={() => setBillingDialog({ open: false, apptId: "", patientName: "", apptDate: "" })}
+          appointmentId={billingDialog.apptId}
+          patientName={billingDialog.patientName}
+          appointmentDate={billingDialog.apptDate}
+        />
       )}
     </Box>
   );

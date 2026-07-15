@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, useTheme, alpha, Tabs, Tab, MenuItem, Select
+  TextField, useTheme, alpha, Tabs, Tab, MenuItem, Select, IconButton, Tooltip
 } from "@mui/material";
-import { AddRounded, InventoryRounded, ShoppingCartRounded, CheckCircleRounded } from "@mui/icons-material";
+import { AddRounded, InventoryRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
@@ -62,6 +62,14 @@ export default function InventoryManagement() {
   const [receiveSupplierId, setReceiveSupplierId] = useState("");
   const [receiveItems, setReceiveItems] = useState<any[]>([]);
   const [receiving, setReceiving] = useState(false);
+
+  // Correct a mis-entered batch number / expiry date on an already-received
+  // inventory row (quantity isn't editable here — that only ever moves via a
+  // tracked stock transaction, e.g. receiving, dispensing, ward issue/return).
+  const [editInvItem, setEditInvItem] = useState<any>(null);
+  const [editBatchNumber, setEditBatchNumber] = useState("");
+  const [editExpiryDate, setEditExpiryDate] = useState("");
+  const [savingInvEdit, setSavingInvEdit] = useState(false);
 
   // Reference data (full, not paginated) — used for name lookups and the
   // Create PO / Receive dialogs' dropdowns. Also includes low-stock alerts,
@@ -212,12 +220,19 @@ export default function InventoryManagement() {
   const handleOpenReceive = (po: any) => {
     setActivePo(po);
     setReceiveSupplierId(po.supplierId || "");
-    setReceiveItems(po.items.map((item: any) => ({
-      ...item,
-      receivedQuantity: item.orderedQuantity - item.receivedQuantity,
-      batchNumber: "",
-      expiryDate: ""
-    })));
+    // Only show items that still have something outstanding — a line already
+    // fully received (in an earlier partial round) needs no further action,
+    // so it shouldn't sit in this list demanding a batch/expiry it doesn't need.
+    setReceiveItems(
+      po.items
+        .filter((item: any) => item.orderedQuantity - item.receivedQuantity > 0)
+        .map((item: any) => ({
+          ...item,
+          receivedQuantity: item.orderedQuantity - item.receivedQuantity,
+          batchNumber: "",
+          expiryDate: ""
+        }))
+    );
     setOpenReceiveDialog(true);
   };
 
@@ -226,14 +241,23 @@ export default function InventoryManagement() {
       toast.error("Please select a supplier for this PO before receiving.");
       return;
     }
-    if (receiveItems.some(i => !i.batchNumber || !i.expiryDate)) {
-      toast.error("Please enter batch number and expiry date for all items being received.");
+    // Batch/expiry are only required for items actually arriving THIS round —
+    // a line left at 0 (back-ordered / not delivered yet) is simply skipped,
+    // so it stays open on the PO for a later partial receipt instead of
+    // blocking the whole submission.
+    const itemsToReceive = receiveItems.filter(i => Number(i.receivedQuantity) > 0);
+    if (itemsToReceive.length === 0) {
+      toast.error("Enter a received quantity greater than 0 for at least one item.");
+      return;
+    }
+    if (itemsToReceive.some(i => !i.batchNumber || !i.expiryDate)) {
+      toast.error("Please enter batch number and expiry date for each item you're receiving.");
       return;
     }
     try {
       setReceiving(true);
       await axiosInstance.put(`/pharmacy/purchase-orders/${activePo.purchaseOrderId}/receive`, {
-        receivedItems: receiveItems.map(item => ({
+        receivedItems: itemsToReceive.map(item => ({
           purchaseOrderItemId: item.purchaseOrderItemId,
           medicineId: item.medicineId,
           receivedQuantity: item.receivedQuantity,
@@ -250,6 +274,33 @@ export default function InventoryManagement() {
       toast.error(err.response?.data?.message || "Failed to receive PO");
     } finally {
       setReceiving(false);
+    }
+  };
+
+  const handleOpenEditInventory = (inv: any) => {
+    setEditInvItem(inv);
+    setEditBatchNumber(inv.batchNumber || "");
+    setEditExpiryDate(inv.expiryDate ? new Date(inv.expiryDate).toISOString().slice(0, 10) : "");
+  };
+
+  const handleSaveInventoryEdit = async () => {
+    if (!editInvItem || !editBatchNumber.trim() || !editExpiryDate) {
+      toast.error("Batch number and expiry date are required.");
+      return;
+    }
+    try {
+      setSavingInvEdit(true);
+      await axiosInstance.put(`/pharmacy/inventory/${editInvItem.inventoryId}`, {
+        batchNumber: editBatchNumber.trim(),
+        expiryDate: editExpiryDate,
+      });
+      toast.success("Batch updated");
+      setEditInvItem(null);
+      await fetchInventory(stockPage);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to update this batch");
+    } finally {
+      setSavingInvEdit(false);
     }
   };
 
@@ -350,11 +401,12 @@ export default function InventoryManagement() {
                     <SortableHeadCell label="Expiry Date" sortKey="expiry" orderBy={stockSort.orderBy} order={stockSort.order} onSort={stockSort.onSort} sx={HEAD_SX} />
                     <SortableHeadCell label="Available Qty" sortKey="quantity" orderBy={stockSort.orderBy} order={stockSort.order} onSort={stockSort.onSort} sx={HEAD_SX} />
                     <TableCell sx={{ fontWeight: 700 }}>Supplier</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {inventory.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No stock available." size={110} /></TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No stock available." size={110} /></TableCell></TableRow>
                   ) : inventory.map(inv => (
                     <TableRow key={inv.inventoryId} hover>
                       <TableCell sx={{ fontWeight: 600, color: '#4F46E5' }}>{getMedicineName(inv.medicineId)}</TableCell>
@@ -366,6 +418,13 @@ export default function InventoryManagement() {
                         {inv.availableQuantity}
                       </TableCell>
                       <TableCell>{getSupplierName(inv.supplierId)}</TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Correct batch no. / expiry date">
+                          <IconButton size="small" onClick={() => handleOpenEditInventory(inv)}>
+                            <EditRounded fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -398,14 +457,14 @@ export default function InventoryManagement() {
                       <TableCell>
                         <Box sx={{
                           display: 'inline-block', px: 1.5, py: 0.5, borderRadius: 2, fontSize: '0.875rem', fontWeight: 600,
-                          bgcolor: po.status === 'pending' ? alpha('#F59E0B', 0.1) : alpha('#10B981', 0.1),
-                          color: po.status === 'pending' ? '#F59E0B' : '#10B981'
+                          bgcolor: po.status === 'pending' ? alpha('#F59E0B', 0.1) : po.status === 'partial' ? alpha('#3B82F6', 0.1) : alpha('#10B981', 0.1),
+                          color: po.status === 'pending' ? '#F59E0B' : po.status === 'partial' ? '#3B82F6' : '#10B981'
                         }}>
                           {po.status.toUpperCase()}
                         </Box>
                       </TableCell>
                       <TableCell align="right">
-                        {po.status === 'pending' && (
+                        {(po.status === 'pending' || po.status === 'partial') && (
                           <Button
                             size="small"
                             variant="outlined"
@@ -576,6 +635,38 @@ export default function InventoryManagement() {
         <DialogActions>
           <Button onClick={() => setOpenReceiveDialog(false)}>Cancel</Button>
           <Button onClick={handleReceivePo} variant="contained" color="success" disabled={receiving}>{receiving ? "Processing..." : "Confirm Receipt"}</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Inventory Batch Dialog — correct a mis-entered batch no. / expiry */}
+      <Dialog open={!!editInvItem} onClose={() => setEditInvItem(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Edit Batch — {editInvItem ? getMedicineName(editInvItem.medicineId) : ""}</DialogTitle>
+        <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 3 }}>
+          <TextField
+            label="Batch No."
+            value={editBatchNumber}
+            onChange={e => setEditBatchNumber(e.target.value)}
+            fullWidth
+            required
+          />
+          <TextField
+            type="date"
+            label="Expiry Date"
+            InputLabelProps={{ shrink: true }}
+            value={editExpiryDate}
+            onChange={e => setEditExpiryDate(e.target.value)}
+            fullWidth
+            required
+          />
+          <Typography variant="caption" color="text.secondary">
+            Quantity isn't editable here — it only changes via receiving, dispensing, or ward stock issue/return.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditInvItem(null)} disabled={savingInvEdit}>Cancel</Button>
+          <Button onClick={handleSaveInventoryEdit} variant="contained" disabled={savingInvEdit}>
+            {savingInvEdit ? "Saving..." : "Save Changes"}
+          </Button>
         </DialogActions>
       </Dialog>
     </PharmacyPage>

@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import {
   ReceiptLongRounded, CurrencyRupeeRounded, TrendingUpRounded,
-  WarningAmberRounded, EventBusyRounded, FileDownloadRounded,
+  WarningAmberRounded, EventBusyRounded, FileDownloadRounded, LocalPharmacyRounded,
 } from "@mui/icons-material";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
@@ -103,6 +103,7 @@ export default function PharmacyReports() {
   const s = data?.summary;
   const trend: any[] = data?.trend || [];
   const topMedicines: any[] = data?.topMedicines || [];
+  const topIpdMedicines: any[] = data?.topIpdMedicines || [];
   const lowStock: any[] = data?.lowStock || [];
   const expiringSoon: any[] = data?.expiringSoon || [];
   const supplierWise: any[] = data?.supplierWise || [];
@@ -141,10 +142,11 @@ export default function PharmacyReports() {
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {/* KPIs */}
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(3,1fr)", md: "repeat(5,1fr)" }, gap: 1.5 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(3,1fr)", md: "repeat(6,1fr)" }, gap: 1.5 }}>
             <Kpi icon={<ReceiptLongRounded />} label="Orders dispensed" value={s?.totalOrders || 0} color="#4F46E5" />
             <Kpi icon={<CurrencyRupeeRounded />} label="Total sales" value={inr(s?.totalSales)} color="#10b981" />
             <Kpi icon={<TrendingUpRounded />} label="Avg order value" value={inr(s?.avgOrderValue)} color="#3b82f6" />
+            <Kpi icon={<LocalPharmacyRounded />} label="IPD meds issued" value={inr(s?.ipdMedicationValue)} color="#8b5cf6" />
             <Kpi icon={<WarningAmberRounded />} label="Low stock items" value={s?.lowStockCount || 0} color="#f59e0b" />
             <Kpi icon={<EventBusyRounded />} label="Expiring in 30 days" value={s?.expiringSoonCount || 0} color="#ef4444" />
           </Box>
@@ -194,6 +196,9 @@ export default function PharmacyReports() {
 
             <DataTable title="Top-selling medicines" head={["Medicine", "Units sold", "Revenue"]} rows={topMedicines.map((m) => [m.medicineName, m.qty, inr(m.revenue)])} />
           </Box>
+
+          {/* IPD medication issues — confirmed via the ward-request queue, billed at discharge (not a Dispensary sale) */}
+          <DataTable title="IPD medication issues (confirmed, this range)" head={["Medicine", "Units issued", "Value"]} rows={topIpdMedicines.map((m) => [m.medicineName, m.qty, inr(m.revenue)])} />
 
           {/* Stock health */}
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>

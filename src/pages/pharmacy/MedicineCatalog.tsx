@@ -268,10 +268,9 @@ export default function MedicineCatalog() {
                       key={med.medicineId}
                       hover
                       sx={{
-                        transition: 'all 0.2s ease',
+                        transition: 'background-color 0.15s ease',
                         '&:hover': {
                           bgcolor: alpha(theme.palette.primary.main, 0.02),
-                          transform: 'scale(1.001)'
                         }
                       }}
                     >
