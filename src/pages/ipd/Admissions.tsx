@@ -9,6 +9,7 @@ import {
 import {
   LocalHotelRounded, SearchRounded, SwapHorizRounded, LogoutRounded, MoreVertRounded,
   CancelRounded, SavingsRounded, UndoRounded, MedicalServicesRounded, MedicationRounded,
+  ScienceRounded, MonitorHeartRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
@@ -21,6 +22,8 @@ import DischargeDialog from "../../components/ipd/DischargeDialog";
 import DepositDialog from "../../components/ipd/DepositDialog";
 import SurgeryDialog from "../../components/ipd/SurgeryDialog";
 import IpdMedicinesDialog from "../../components/ipd/IpdMedicinesDialog";
+import IpdLabOrdersDialog from "../../components/ipd/IpdLabOrdersDialog";
+import IpdRadiologyOrdersDialog from "../../components/ipd/IpdRadiologyOrdersDialog";
 import PageHeader from "../../components/layout/PageHeader";
 import { useTableSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
@@ -44,6 +47,8 @@ export default function Admissions() {
   const [depositFor, setDepositFor] = useState<{ row: any; mode: "collect" | "refund" } | null>(null);
   const [surgeryFor, setSurgeryFor] = useState<any>(null);
   const [medsFor, setMedsFor] = useState<any>(null);
+  const [labsFor, setLabsFor] = useState<any>(null);
+  const [radiologyFor, setRadiologyFor] = useState<any>(null);
   const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: any }>({ anchor: null, row: null });
 
   const status = TABS[tab];
@@ -151,6 +156,8 @@ export default function Admissions() {
                       {a.status === "ADMITTED" && (
                         <>
                           <Tooltip title="Medicines"><IconButton size="small" onClick={() => setMedsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2" } }}><MedicationRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Lab tests"><IconButton size="small" onClick={() => setLabsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2" } }}><ScienceRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Radiology / imaging"><IconButton size="small" onClick={() => setRadiologyFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2" } }}><MonitorHeartRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Surgery details"><IconButton size="small" onClick={() => setSurgeryFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2" } }}><MedicalServicesRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Transfer bed"><IconButton size="small" onClick={() => setTransferFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2" } }}><SwapHorizRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Discharge"><IconButton size="small" onClick={() => setDischargeFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#ef4444" } }}><LogoutRounded fontSize="small" /></IconButton></Tooltip>
@@ -190,6 +197,8 @@ export default function Admissions() {
       {depositFor && <DepositDialog open mode={depositFor.mode} admission={depositFor.row} onClose={() => setDepositFor(null)} onDone={() => { setDepositFor(null); refetch(); }} />}
       {surgeryFor && <SurgeryDialog open admission={surgeryFor} onClose={() => setSurgeryFor(null)} />}
       {medsFor && <IpdMedicinesDialog open admission={medsFor} onClose={() => setMedsFor(null)} />}
+      {labsFor && <IpdLabOrdersDialog open admission={labsFor} onClose={() => setLabsFor(null)} />}
+      {radiologyFor && <IpdRadiologyOrdersDialog open admission={radiologyFor} onClose={() => setRadiologyFor(null)} />}
     </Box>
   );
 }

@@ -146,7 +146,12 @@ export default function LabOrdersQueue() {
               ) : sorted.map((order: any) => (
                 <TableRow key={order.labOrderId} hover>
                   <TableCell sx={{ fontWeight: 600 }}>{order.sampleBarcode}</TableCell>
-                  <TableCell>{order.patient?.firstName} {order.patient?.lastName}</TableCell>
+                  <TableCell>
+                    {order.patient?.firstName} {order.patient?.lastName}
+                    {order.admissionNumber && (
+                      <Chip label={`IPD · ${order.admissionNumber}`} size="small" sx={{ ml: 1, height: 20, fontSize: "0.7rem", fontWeight: 700, bgcolor: "rgba(8,145,178,0.12)", color: "#0891b2" }} />
+                    )}
+                  </TableCell>
                   <TableCell>{order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</TableCell>
                   <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
