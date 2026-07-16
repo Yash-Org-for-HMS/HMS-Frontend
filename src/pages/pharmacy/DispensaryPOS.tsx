@@ -3,14 +3,15 @@ import { getApiErrorMessage } from "../../utils/apiError";
 import { useLocation } from "react-router-dom";
 import { 
   Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
-  Button, TextField, IconButton, useTheme, Autocomplete, Divider, alpha,
-  List, ListItem, ListItemButton, Chip, Pagination, Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, Tooltip, Alert
+  Button, TextField, IconButton, useTheme, Autocomplete, alpha,
+  List, ListItem, ListItemButton, Chip, Pagination, Select, MenuItem, Tooltip, Alert
 } from "@mui/material";
 import { PointOfSaleRounded, AddCircleRounded, RemoveCircleRounded, DeleteRounded, PaymentRounded, LocalPharmacyRounded, DownloadRounded, EditRounded, CancelRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
 import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
+import ReasonDialog from "../../components/ReasonDialog";
 import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
 import PharmacyPage, { ROWS_PER_PAGE } from "./components/PharmacyPage";
@@ -78,19 +79,9 @@ export default function DispensaryPOS() {
     return todaysOrders.slice(start, start + itemsPerPage);
   }, [todaysOrders, page]);
 
-  // Cancellation State
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  // Reason-dialog targets (each dialog owns its own reason form + submit state).
   const [orderToCancel, setOrderToCancel] = useState<any>(null);
-  const [cancelReasonType, setCancelReasonType] = useState("Out of stock");
-  const [cancelReasonText, setCancelReasonText] = useState("");
-  const [cancelling, setCancelling] = useState(false);
-
-  // Dismiss Prescription State
-  const [dismissDialogOpen, setDismissDialogOpen] = useState(false);
   const [prescriptionToDismiss, setPrescriptionToDismiss] = useState<any>(null);
-  const [dismissReasonType, setDismissReasonType] = useState("Patient no-show");
-  const [dismissReasonText, setDismissReasonText] = useState("");
-  const [dismissing, setDismissing] = useState(false);
 
   // Listen for real-time queue updates
   useSocket({
@@ -115,51 +106,6 @@ export default function DispensaryPOS() {
     }));
   }, [medicines, medicineStock]);
 
-  const handleCancelOrder = async () => {
-    if (!orderToCancel) return;
-    const finalReason = cancelReasonType === "Other" ? cancelReasonText : cancelReasonType;
-    if (!finalReason.trim()) {
-      toast.error("Please provide a reason");
-      return;
-    }
-    try {
-      setCancelling(true);
-      await axiosInstance.put(`/pharmacy/orders/${orderToCancel.pharmacyOrderId}/cancel`, { reason: finalReason });
-      setCancelDialogOpen(false);
-      setOrderToCancel(null);
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      toast.error(getApiErrorMessage((err as any), "Failed to cancel order"));
-    } finally {
-      setCancelling(false);
-    }
-  };
-
-  const handleDismissPrescription = async () => {
-    if (!prescriptionToDismiss) return;
-    const finalReason = dismissReasonType === "Other" ? dismissReasonText : dismissReasonType;
-    if (!finalReason.trim()) {
-      toast.error("Please provide a reason");
-      return;
-    }
-    try {
-      setDismissing(true);
-      await axiosInstance.put(`/pharmacy/prescriptions/${prescriptionToDismiss.prescriptionId}/status`, { 
-        status: 'cancelled',
-        reason: finalReason
-      });
-      setDismissDialogOpen(false);
-      setPrescriptionToDismiss(null);
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      toast.error(getApiErrorMessage((err as any), "Failed to dismiss prescription"));
-    } finally {
-      setDismissing(false);
-    }
-  };
-
   const handleEditOrder = async (order: any) => {
     const ok = await confirm({
       title: "Edit order",
@@ -168,9 +114,8 @@ export default function DispensaryPOS() {
     });
     if (ok) {
       try {
-        setCancelling(true);
         await axiosInstance.put(`/pharmacy/orders/${order.pharmacyOrderId}/cancel`, { reason: "Editing Order" });
-        
+
         // Load items into cart
         const initialCart: any[] = [];
         order.items.forEach((item: any) => {
@@ -187,7 +132,6 @@ export default function DispensaryPOS() {
       } catch (err: any) {
         toast.error(getApiErrorMessage(err, "Failed to cancel order for editing"));
       } finally {
-        setCancelling(false);
         fetchData();
       }
     }
@@ -444,12 +388,9 @@ export default function DispensaryPOS() {
                               edge="end" 
                               size="small" 
                               color="error" 
-                              onClick={async (e) => {
+                              onClick={(e) => {
                                 e.stopPropagation();
                                 setPrescriptionToDismiss(p);
-                                setDismissReasonType("Patient no-show");
-                                setDismissReasonText("");
-                                setDismissDialogOpen(true);
                               }}
                             >
                               <CancelRounded fontSize="small" />
@@ -659,11 +600,7 @@ export default function DispensaryPOS() {
                         {sale.status !== 'cancelled' && (
                           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                             <Button size="small" variant="outlined" color="primary" onClick={() => handleEditOrder(sale)}>Edit</Button>
-                            <Button size="small" variant="outlined" color="error" onClick={() => {
-                              setOrderToCancel(sale);
-                              setCancelReasonType("Out of stock");
-                              setCancelDialogOpen(true);
-                            }}>Cancel</Button>
+                            <Button size="small" variant="outlined" color="error" onClick={() => setOrderToCancel(sale)}>Cancel</Button>
                           </Box>
                         )}
                       </TableCell>
@@ -676,87 +613,49 @@ export default function DispensaryPOS() {
         </Box>
       )}
 
-      {/* Cancellation Dialog */}
-      <Dialog open={cancelDialogOpen} onClose={() => !cancelling && setCancelDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Cancel Order</DialogTitle>
-        <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            Cancelling this order will restore the deducted inventory and mark the order as cancelled.
-          </Typography>
-          
-          <Box>
-            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>Reason for cancellation</Typography>
-            <Select
-              fullWidth
-              size="small"
-              value={cancelReasonType}
-              onChange={(e) => setCancelReasonType(e.target.value)}
-            >
-              <MenuItem value="Out of stock">Out of stock</MenuItem>
-              <MenuItem value="Data entry error">Data entry error</MenuItem>
-              <MenuItem value="Patient refused">Patient refused</MenuItem>
-              <MenuItem value="Other">Other (Specify)</MenuItem>
-            </Select>
-          </Box>
+      <ReasonDialog
+        open={!!orderToCancel}
+        title="Cancel Order"
+        description="Cancelling this order will restore the deducted inventory and mark the order as cancelled."
+        reasonLabel="Reason for cancellation"
+        reasons={["Out of stock", "Data entry error", "Patient refused", "Other"]}
+        confirmLabel="Cancel Order"
+        busyLabel="Cancelling..."
+        onClose={() => setOrderToCancel(null)}
+        onConfirm={async (reason) => {
+          try {
+            await axiosInstance.put(`/pharmacy/orders/${orderToCancel.pharmacyOrderId}/cancel`, { reason });
+            fetchData();
+            return true;
+          } catch (err) {
+            console.error(err);
+            toast.error(getApiErrorMessage((err as any), "Failed to cancel order"));
+            return false;
+          }
+        }}
+      />
 
-          {cancelReasonType === "Other" && (
-            <TextField
-              fullWidth
-              size="small"
-              label="Specify Reason"
-              value={cancelReasonText}
-              onChange={(e) => setCancelReasonText(e.target.value)}
-            />
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCancelDialogOpen(false)} disabled={cancelling}>Close</Button>
-          <Button onClick={handleCancelOrder} variant="contained" color="error" disabled={cancelling}>
-            {cancelling ? "Cancelling..." : "Cancel Order"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Dismiss Prescription Dialog */}
-      <Dialog open={dismissDialogOpen} onClose={() => !dismissing && setDismissDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Dismiss Pending Prescription</DialogTitle>
-        <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            Dismissing this prescription will remove it from the pending queue permanently.
-          </Typography>
-          
-          <Box>
-            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>Reason for dismissal</Typography>
-            <Select
-              fullWidth
-              size="small"
-              value={dismissReasonType}
-              onChange={(e) => setDismissReasonType(e.target.value)}
-            >
-              <MenuItem value="Patient no-show">Patient no-show</MenuItem>
-              <MenuItem value="Patient refused purchase">Patient refused purchase</MenuItem>
-              <MenuItem value="Sent to different pharmacy">Sent to different pharmacy</MenuItem>
-              <MenuItem value="Other">Other (Specify)</MenuItem>
-            </Select>
-          </Box>
-
-          {dismissReasonType === "Other" && (
-            <TextField
-              fullWidth
-              size="small"
-              label="Specify Reason"
-              value={dismissReasonText}
-              onChange={(e) => setDismissReasonText(e.target.value)}
-            />
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDismissDialogOpen(false)} disabled={dismissing}>Close</Button>
-          <Button onClick={handleDismissPrescription} variant="contained" color="error" disabled={dismissing}>
-            {dismissing ? "Dismissing..." : "Dismiss Prescription"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ReasonDialog
+        open={!!prescriptionToDismiss}
+        title="Dismiss Pending Prescription"
+        description="Dismissing this prescription will remove it from the pending queue permanently."
+        reasonLabel="Reason for dismissal"
+        reasons={["Patient no-show", "Patient refused purchase", "Sent to different pharmacy", "Other"]}
+        confirmLabel="Dismiss Prescription"
+        busyLabel="Dismissing..."
+        onClose={() => setPrescriptionToDismiss(null)}
+        onConfirm={async (reason) => {
+          try {
+            await axiosInstance.put(`/pharmacy/prescriptions/${prescriptionToDismiss.prescriptionId}/status`, { status: 'cancelled', reason });
+            fetchData();
+            return true;
+          } catch (err) {
+            console.error(err);
+            toast.error(getApiErrorMessage((err as any), "Failed to dismiss prescription"));
+            return false;
+          }
+        }}
+      />
 
       {showPOS && createdOrder && (
         <PointOfCarePOS
