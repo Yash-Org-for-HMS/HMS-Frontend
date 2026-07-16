@@ -53,7 +53,6 @@ interface Role {
 }
 
 export default function PermissionMatrix() {
-  const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);

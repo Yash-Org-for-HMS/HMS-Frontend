@@ -77,7 +77,6 @@ const PLAN_COLORS = ["#8B5CF6", "#3B82F6", "#14B8A6", "#F59E0B", "#EF4444"];
 export default function Dashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [tabIndex, setTabIndex] = useState(0);
 
   const {
     data: stats,

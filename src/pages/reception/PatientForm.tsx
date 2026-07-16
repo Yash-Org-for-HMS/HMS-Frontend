@@ -68,7 +68,6 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
   const { id } = useParams();
   const isEditing = Boolean(id);
 
-  const [activeSection, setActiveSection] = useState("personal");
   const [loading, setLoading] = useState(false);
   const toast = useToast();
 
