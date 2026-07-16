@@ -16,6 +16,7 @@ import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
+import SoftChip from "../SoftChip";
 
 interface Props {
   open: boolean;
@@ -188,7 +189,7 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
                         {o.createdAt ? dayjs(o.createdAt).format("DD MMM YYYY, h:mm A") : "—"}
                       </Typography>
                     </Box>
-                    <Chip icon={sc.icon} label={sc.label} size="small" sx={{ bgcolor: sc.bg, color: sc.color, fontWeight: 700 }} />
+                    <SoftChip {...sc} />
                     {o.status === "PENDING" && (
                       <IconButton size="small" disabled={busyId === o.labOrderId} onClick={() => cancelOrder(o)} sx={{ color: "#ef4444" }} title="Cancel order">
                         <DeleteOutlineRounded fontSize="small" />

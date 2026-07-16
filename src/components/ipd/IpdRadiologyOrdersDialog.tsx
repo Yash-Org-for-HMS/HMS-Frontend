@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
-  Stack, Typography, Box, IconButton, Chip, Tabs, Tab, MenuItem, Collapse, Link,
+  Stack, Typography, Box, IconButton, Tabs, Tab, MenuItem, Collapse, Link,
 } from "@mui/material";
 import {
   MonitorHeartRounded, AddRounded, DeleteOutlineRounded, HourglassTopRounded,
@@ -15,6 +15,7 @@ import { formatINR } from "../../utils/format";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
+import SoftChip from "../SoftChip";
 
 interface Props {
   open: boolean;
@@ -194,7 +195,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
                         {o.orderDate ? dayjs(o.orderDate).format("DD MMM YYYY, h:mm A") : "—"}
                       </Typography>
                     </Box>
-                    <Chip icon={sc.icon} label={sc.label} size="small" sx={{ bgcolor: sc.bg, color: sc.color, fontWeight: 700 }} />
+                    <SoftChip {...sc} />
                     {o.status === "PENDING" && (
                       <IconButton size="small" disabled={busyId === o.radiologyOrderId} onClick={() => cancelOrder(o)} sx={{ color: "#ef4444" }} title="Cancel scan">
                         <DeleteOutlineRounded fontSize="small" />

@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Autocomplete,
   Stack, Typography, Box, Table, TableHead, TableBody, TableRow, TableCell,
-  TableContainer, IconButton, Divider, Tooltip, Chip, Tabs, Tab, MenuItem,
+  TableContainer, IconButton, Divider, Tooltip, Tabs, Tab, MenuItem,
 } from "@mui/material";
 import {
   MedicationRounded, AddRounded, DeleteOutlineRounded, ReceiptLongRounded, HourglassTopRounded, CheckCircleRounded,
@@ -15,6 +15,7 @@ import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
+import SoftChip from "../SoftChip";
 import MarChart from "./MarChart";
 
 // Standard frequency codes drive the MAR dose schedule (see backend
@@ -185,13 +186,13 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
                     <TableCell>{m.orderedAt ? dayjs(m.orderedAt).format("DD MMM") : "—"}</TableCell>
                     <TableCell>
                       {m.status === "REQUESTED" && (
-                        <Chip icon={<HourglassTopRounded sx={{ fontSize: 14 }} />} label="Awaiting pharmacy" size="small" sx={{ bgcolor: "rgba(245,158,11,0.12)", color: "#b45309", fontWeight: 700 }} />
+                        <SoftChip icon={<HourglassTopRounded sx={{ fontSize: 14 }} />} label="Awaiting pharmacy" bg="rgba(245,158,11,0.12)" color="#b45309" />
                       )}
                       {m.status === "ACTIVE" && (
-                        <Chip icon={<CheckCircleRounded sx={{ fontSize: 14 }} />} label="Dispensed" size="small" sx={{ bgcolor: "rgba(16,185,129,0.12)", color: "#059669", fontWeight: 700 }} />
+                        <SoftChip icon={<CheckCircleRounded sx={{ fontSize: 14 }} />} label="Dispensed" bg="rgba(16,185,129,0.12)" color="#059669" />
                       )}
                       {m.status === "BILLED" && (
-                        <Chip icon={<ReceiptLongRounded sx={{ fontSize: 14 }} />} label="Billed" size="small" sx={{ bgcolor: "rgba(8,145,178,0.12)", color: "#0891b2", fontWeight: 700 }} />
+                        <SoftChip icon={<ReceiptLongRounded sx={{ fontSize: 14 }} />} label="Billed" bg="rgba(8,145,178,0.12)" color="#0891b2" />
                       )}
                     </TableCell>
                     <TableCell align="right">
