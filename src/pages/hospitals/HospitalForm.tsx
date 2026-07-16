@@ -29,6 +29,7 @@ import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
 import FormHeader from "../../components/layout/FormHeader";
+import BranchDialog from "../../components/hospitals/BranchDialog";
 import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "../../utils/validation";
 
 export default function HospitalForm() {
@@ -72,11 +73,8 @@ export default function HospitalForm() {
     enabled: isConvert,
   });
 
-  // Branch Dialog State
-  const [branchDialogOpen, setBranchDialogOpen] = useState(false);
-  const [newBranch, setNewBranch] = useState({ name: "", subscriptionPlanId: "", status: "active" });
-  const [branchLoading, setBranchLoading] = useState(false);
-  const [editingBranchId, setEditingBranchId] = useState<string | null>(null);
+  // Branch dialog target: null = closed, { editing } = open (editing null => add).
+  const [branchDialog, setBranchDialog] = useState<{ editing: any | null } | null>(null);
 
   const [formData, setFormData] = useState({
     hospitalName: "",
@@ -172,52 +170,6 @@ export default function HospitalForm() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleAddBranchSubmit = async () => {
-    if (!newBranch.name) return;
-    setBranchLoading(true);
-    try {
-      if (editingBranchId) {
-        // Branch code is auto-assigned and immutable — not sent on edit.
-        await axiosInstance.put(`/hospitals/${id}/branches/${editingBranchId}`, {
-          branchName: newBranch.name,
-          subscriptionPlanId: newBranch.subscriptionPlanId || undefined,
-          status: newBranch.status
-        });
-      } else {
-        // No branchCode sent — the server generates a unique one.
-        await axiosInstance.post(`/hospitals/${id}/branches`, {
-          branchName: newBranch.name,
-          subscriptionPlanId: newBranch.subscriptionPlanId || undefined,
-          status: newBranch.status
-        });
-      }
-      setReload(r => r + 1);
-      setBranchDialogOpen(false);
-      setNewBranch({ name: "", subscriptionPlanId: "", status: "active" });
-      setEditingBranchId(null);
-    } catch (err: any) {
-      toast.error(getApiErrorMessage(err, "Failed to save branch"));
-    } finally {
-      setBranchLoading(false);
-    }
-  };
-
-  const handleAddBranch = () => {
-    setEditingBranchId(null);
-    setNewBranch({ name: "", subscriptionPlanId: "", status: "active" });
-    setBranchDialogOpen(true);
-  };
-
-  const handleEditBranch = (branch: any) => {
-    setEditingBranchId(branch.branchId);
-    setNewBranch({
-      name: branch.branchName,
-      subscriptionPlanId: branch.subscriptionPlanId || "",
-      status: branch.status || "active"
-    });
-    setBranchDialogOpen(true);
   };
 
   const handleDeleteBranch = async (branchId: string) => {
@@ -466,7 +418,7 @@ export default function HospitalForm() {
             <Button
               variant="contained"
               size="small"
-              onClick={handleAddBranch}
+              onClick={() => setBranchDialog({ editing: null })}
               sx={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}
             >
               Add Branch
@@ -498,7 +450,7 @@ export default function HospitalForm() {
                       />
                     </Box>
                     <Box sx={{ display: "flex", gap: 2 }}>
-                      <Button size="small" sx={{ minWidth: 0, p: 0, color: "#a5b4fc" }} onClick={() => handleEditBranch(branch)}>
+                      <Button size="small" sx={{ minWidth: 0, p: 0, color: "#a5b4fc" }} onClick={() => setBranchDialog({ editing: branch })}>
                         Edit
                       </Button>
                       <Button size="small" color="error" onClick={() => handleDeleteBranch(branch.branchId)} sx={{ minWidth: 0, p: 0 }}>
@@ -513,89 +465,14 @@ export default function HospitalForm() {
         </Paper>
       )}
 
-      <Dialog 
-        open={branchDialogOpen} 
-        onClose={() => setBranchDialogOpen(false)}
-        PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3, minWidth: 400 } }}
-      >
-        <DialogTitle sx={{ borderBottom: "1px solid", borderColor: "divider", mb: 2 }}>
-          {editingBranchId ? "Edit Branch" : "Add New Branch"}
-        </DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-          <TextField
-            fullWidth
-            label="Branch Name"
-            value={newBranch.name}
-            onChange={(e) => setNewBranch({ ...newBranch, name: e.target.value })}
-            inputProps={{ maxLength: 100 }}
-            placeholder="e.g. Main Hospital"
-            sx={{ mt: 1 }}
-            helperText={editingBranchId ? undefined : "A unique branch code is assigned automatically."}
-          />
-          <TextField
-            select
-            fullWidth
-            label="Subscription Plan"
-            value={newBranch.subscriptionPlanId}
-            onChange={(e) => setNewBranch({ ...newBranch, subscriptionPlanId: e.target.value })}
-            
-            SelectProps={{
-              MenuProps: {
-                PaperProps: {
-                  sx: {
-                    bgcolor: "background.paper",
-                    color: "text.primary",
-                    border: "1px solid", borderColor: "divider",
-                    "& .MuiMenuItem-root": { py: 1.5, px: 2 }
-                  }
-                }
-              }
-            }}
-          >
-            <MenuItem value="">No Subscription Plan</MenuItem>
-            {plans.map((plan: any) => (
-              <MenuItem key={plan.planId} value={plan.planId}>
-                {plan.planName}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            fullWidth
-            label="Status"
-            value={newBranch.status}
-            onChange={(e) => setNewBranch({ ...newBranch, status: e.target.value })}
-            
-            SelectProps={{
-              MenuProps: {
-                PaperProps: {
-                  sx: {
-                    bgcolor: "background.paper",
-                    color: "text.primary",
-                    border: "1px solid", borderColor: "divider",
-                    "& .MuiMenuItem-root": { py: 1.5, px: 2 }
-                  }
-                }
-              }
-            }}
-          >
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="suspended">Suspended</MenuItem>
-            <MenuItem value="inactive">Inactive</MenuItem>
-          </TextField>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, borderTop: "1px solid", borderColor: "divider" }}>
-          <Button onClick={() => setBranchDialogOpen(false)} sx={{ color: "text.secondary" }}>Cancel</Button>
-          <Button 
-            onClick={handleAddBranchSubmit} 
-            variant="contained" 
-            disabled={!newBranch.name || branchLoading}
-            sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" }}
-          >
-            {branchLoading ? "Adding..." : "Add Branch"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <BranchDialog
+        open={!!branchDialog}
+        onClose={() => setBranchDialog(null)}
+        hospitalId={id!}
+        plans={plans}
+        editingBranch={branchDialog?.editing ?? null}
+        onSaved={() => setReload(r => r + 1)}
+      />
 
       {/* One-time admin credentials after a trial conversion */}
       <Dialog open={!!convertResult} onClose={() => { setConvertResult(null); navigate("/hospitals"); }} maxWidth="xs" fullWidth
