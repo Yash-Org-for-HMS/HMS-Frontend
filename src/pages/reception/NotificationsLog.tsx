@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import { EmailRounded, SmsRounded, CheckCircleRounded, SearchRounded, ScienceRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
@@ -34,17 +35,11 @@ const PAGE_SIZE = 20;
 
 export default function NotificationsLog() {
   const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
+  const search = useDebouncedValue(searchInput.trim(), 350);
   const [page, setPage] = useState(1);
 
-  // Debounce the search box; reset to page 1 whenever the term changes.
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setSearch(searchInput.trim());
-      setPage(1);
-    }, 350);
-    return () => clearTimeout(t);
-  }, [searchInput]);
+  // Reset to page 1 whenever the (debounced) search term changes.
+  useEffect(() => { setPage(1); }, [search]);
 
   // Server-side column sorting (the list is paginated, so sorting happens in the DB).
   const { orderBy, order, onSort } = useServerSort();

@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import { ReceiptLongRounded, PaymentRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import ErrorState from "../../components/ErrorState";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
@@ -19,7 +20,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   
   // Patient Search
   const [patientQuery, setPatientQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(patientQuery, 500);
   const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
 
   // Billing Items
@@ -38,11 +39,6 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  // Debounced patient search.
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedQuery(patientQuery), 500);
-    return () => clearTimeout(t);
-  }, [patientQuery]);
 
   // Preselect a patient when launched from "Bill" on a patient row.
   useEffect(() => {

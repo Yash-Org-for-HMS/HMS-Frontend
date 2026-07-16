@@ -12,6 +12,7 @@ import {
   WarningAmberRounded, BiotechRounded, MonitorHeartRounded, OpenInNewRounded, PersonRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { assetUrl } from "../../utils/assetUrl";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
@@ -47,7 +48,7 @@ export default function DoctorResults() {
       .catch(() => {});
   }, []);
   const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
+  const search = useDebouncedValue(searchInput.trim(), 350);
   const [page, setPage] = useState(1);
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -56,13 +57,8 @@ export default function DoctorResults() {
 
   const status = TABS[tab].key;
 
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setSearch(searchInput.trim());
-      setPage(1);
-    }, 350);
-    return () => clearTimeout(t);
-  }, [searchInput]);
+  // Reset to page 1 whenever the (debounced) search term changes.
+  useEffect(() => { setPage(1); }, [search]);
 
   useEffect(() => { setPage(1); setExpanded(null); }, [tab]);
 

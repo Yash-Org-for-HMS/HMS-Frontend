@@ -33,6 +33,7 @@ import {
   LockResetRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import ErrorState from "../../components/ErrorState";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
@@ -66,7 +67,7 @@ export default function UsersList() {
   const toast = useToast();
   const confirm = useConfirm();
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 500);
   const [resetCreds, setResetCreds] = useState<{ email: string; temporaryPassword: string; name: string } | null>(null);
 
   // Pagination
@@ -77,11 +78,6 @@ export default function UsersList() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Debounce the search box so we don't fire a query per keystroke.
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search), 500);
-    return () => clearTimeout(t);
-  }, [search]);
 
   // Server-side column sorting (the list is paginated, so sorting happens in the DB).
   const { orderBy, order, onSort } = useServerSort();

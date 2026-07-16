@@ -21,6 +21,7 @@ import {
 import { EditRounded, EventAvailableRounded, CalendarTodayRounded, SearchRounded, AddRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
+import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
 import PageHeader from "../../../components/layout/PageHeader";
@@ -37,17 +38,14 @@ const HEAD_SX = { color: "text.secondary", borderBottom: "1px solid", borderColo
 export default function DoctorsList() {
   const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
+  const search = useDebouncedValue(searchInput.trim(), 350);
   const [page, setPage] = useState(1);
 
   // Server-side column sorting (the list is paginated, so sorting happens server-side).
   const { orderBy, order, onSort } = useServerSort();
 
-  // Debounce the search box; reset to page 1 whenever the term changes.
-  useEffect(() => {
-    const t = setTimeout(() => { setSearch(searchInput.trim()); setPage(1); }, 350);
-    return () => clearTimeout(t);
-  }, [searchInput]);
+  // Reset to page 1 whenever the (debounced) search term changes.
+  useEffect(() => { setPage(1); }, [search]);
 
   // Jump back to the first page whenever the sort changes.
   useEffect(() => { setPage(1); }, [orderBy, order]);

@@ -7,6 +7,7 @@ import {
 import { EditRounded, DeleteRounded, AddRounded, MedicationRounded, SearchRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import Mascot from "../../components/Mascot";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import ErrorState from "../../components/ErrorState";
@@ -59,14 +60,8 @@ export default function MedicineCatalog() {
   });
 
   // Debounce the search box, resetting to page 1 whenever the term changes.
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  useEffect(() => {
-    const id = setTimeout(() => {
-      setDebouncedSearch(searchTerm.trim());
-      setPage(1);
-    }, 350);
-    return () => clearTimeout(id);
-  }, [searchTerm]);
+  const debouncedSearch = useDebouncedValue(searchTerm.trim(), 350);
+  useEffect(() => { setPage(1); }, [debouncedSearch]);
 
   // Reset to the first page whenever the sort column/direction changes.
   useEffect(() => { setPage(1); }, [orderBy, order]);
