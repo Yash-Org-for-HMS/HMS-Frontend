@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography,
@@ -62,7 +63,7 @@ export default function CheckoutDialog({ open, onClose, token, onDone }: Checkou
       onDone();
       onClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to check out");
+      toast.error(getApiErrorMessage(err, "Failed to check out"));
     } finally {
       setSubmitting(false);
     }

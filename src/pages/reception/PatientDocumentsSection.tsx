@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Grid, Alert,
@@ -67,7 +68,7 @@ export default function PatientDocumentsSection({ patientId, readOnly = false }:
         fetchDocuments();
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to upload document");
+      toast.error(getApiErrorMessage(err, "Failed to upload document"));
     } finally {
       setUploading(false);
     }
@@ -87,7 +88,7 @@ export default function PatientDocumentsSection({ patientId, readOnly = false }:
         fetchDocuments();
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to delete document");
+      toast.error(getApiErrorMessage(err, "Failed to delete document"));
     }
   };
 
@@ -115,7 +116,7 @@ export default function PatientDocumentsSection({ patientId, readOnly = false }:
 {loading ? (
         <ListSkeleton />
       ) : isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message || "Failed to load documents"} onRetry={fetchDocuments} />
+        <ErrorState message={getApiErrorMessage((error as any), "Failed to load documents")} onRetry={fetchDocuments} />
       ) : documents.length === 0 ? (
         <Paper elevation={0} sx={{ p: 3, bgcolor: "action.hover", border: "1px dashed", borderColor: "divider", borderRadius: 3 }}>
           <Mascot pose="nothing-here-yet" title="No documents found" subtitle="Upload Aadhaar, Insurance Cards, or Referral Letters here." size={130} />

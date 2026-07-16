@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
   Autocomplete, MenuItem, Box, Typography,
@@ -123,7 +124,7 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
       onCreated();
       onClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to create walk-in order");
+      toast.error(getApiErrorMessage(err, "Failed to create walk-in order"));
     } finally {
       setSubmitting(false);
     }

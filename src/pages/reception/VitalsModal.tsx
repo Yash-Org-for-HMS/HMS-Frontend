@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
@@ -182,7 +183,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
       onSaved?.();
       setTimeout(() => onClose(), 1200);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save vitals");
+      toast.error(getApiErrorMessage(err, "Failed to save vitals"));
     } finally {
       setSaving(false);
     }

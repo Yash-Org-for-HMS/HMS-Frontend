@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -105,7 +106,7 @@ export default function Dashboard() {
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <ErrorState
           title="Couldn't load the dashboard"
-          message={(error as any)?.response?.data?.message || "Please check your connection and try again."}
+          message={getApiErrorMessage((error as any), "Please check your connection and try again.")}
           onRetry={() => refetch()}
         />
       </Container>

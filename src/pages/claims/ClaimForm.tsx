@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
@@ -109,7 +110,7 @@ export default function ClaimForm() {
       toast.success(isEdit ? "Claim updated" : `Claim ${res.data?.data?.claimNumber} registered`);
       navigate(`/reception/claims/${claimId}`);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save claim");
+      toast.error(getApiErrorMessage(err, "Failed to save claim"));
     } finally {
       setSaving(false);
     }
@@ -208,7 +209,7 @@ function AddPayerDialog({ open, onClose, onAdded }: { open: boolean; onClose: ()
       setName(""); setPortal("");
       onAdded(res.data.data);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to add payer");
+      toast.error(getApiErrorMessage(err, "Failed to add payer"));
     } finally { setSaving(false); }
   };
   return (

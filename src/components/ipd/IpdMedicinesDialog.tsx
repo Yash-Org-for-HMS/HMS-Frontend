@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { formatINR } from "../../utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -107,7 +108,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
       setSearch("");
       afterChange();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to assign medicine");
+      toast.error(getApiErrorMessage(err, "Failed to assign medicine"));
     } finally {
       setSaving(false);
     }
@@ -129,7 +130,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
       toast.success("Medicine removed");
       afterChange();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to remove");
+      toast.error(getApiErrorMessage(err, "Failed to remove"));
     } finally {
       setBusyId(null);
     }

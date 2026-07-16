@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -85,7 +86,7 @@ export default function FeatureFlagsList() {
       setDeleteId(null);
       refetch();
     } catch (error) {
-      toast.error((error as any)?.response?.data?.message || "Failed to delete feature flag");
+      toast.error(getApiErrorMessage((error as any), "Failed to delete feature flag"));
     }
   };
 

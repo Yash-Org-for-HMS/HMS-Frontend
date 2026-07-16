@@ -1,4 +1,5 @@
 import { ACCENTS } from "../../styles/accents";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -186,7 +187,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
       setActionTarget(null);
       refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save");
+      toast.error(getApiErrorMessage(err, "Failed to save"));
     } finally {
       setSaving(false);
     }
@@ -198,7 +199,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
       toast.success(`${row.vaccineName} (${row.doseLabel}) reverted to pending`);
       refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to undo");
+      toast.error(getApiErrorMessage(err, "Failed to undo"));
     }
   };
 
@@ -227,7 +228,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
       setAddOpen(false);
       refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to add vaccine");
+      toast.error(getApiErrorMessage(err, "Failed to add vaccine"));
     } finally {
       setAddSaving(false);
     }

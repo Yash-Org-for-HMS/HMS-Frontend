@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -197,7 +198,7 @@ export default function HospitalForm() {
       setNewBranch({ name: "", subscriptionPlanId: "", status: "active" });
       setEditingBranchId(null);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save branch");
+      toast.error(getApiErrorMessage(err, "Failed to save branch"));
     } finally {
       setBranchLoading(false);
     }
@@ -231,7 +232,7 @@ export default function HospitalForm() {
       await axiosInstance.delete(`/hospitals/${id}/branches/${branchId}`);
       setReload(r => r + 1);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to delete branch");
+      toast.error(getApiErrorMessage(err, "Failed to delete branch"));
     }
   };
 

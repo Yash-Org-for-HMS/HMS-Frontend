@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import {
   Box,
   Typography,
@@ -103,7 +104,7 @@ export default function PermissionMatrix() {
       });
       setMatrixState(newState);
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Failed to load data";
+      const msg = getApiErrorMessage(err, "Failed to load data");
       setLoadError(msg);
       toast.error(msg);
     } finally {
@@ -173,7 +174,7 @@ export default function PermissionMatrix() {
       alert("Permission matrix saved successfully!");
       fetchData();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save matrix");
+      toast.error(getApiErrorMessage(err, "Failed to save matrix"));
     } finally {
       setSaving(false);
     }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Grid, Button, Chip, Menu, MenuItem, IconButton,
@@ -184,7 +185,7 @@ function SetupDialog({ kind, edit, wards, onClose, onDone }: { kind: "ward" | "r
       toast.success(`${kind[0].toUpperCase() + kind.slice(1)} ${isEdit ? "updated" : "added"}`);
       onDone();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save");
+      toast.error(getApiErrorMessage(err, "Failed to save"));
     } finally {
       setSaving(false);
     }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Paper, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
@@ -42,7 +43,7 @@ export default function WardStock() {
       toast.success(enabled ? "Ward stock enabled" : "Ward stock disabled");
       refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update setting");
+      toast.error(getApiErrorMessage(err, "Failed to update setting"));
     }
   };
 
@@ -58,7 +59,7 @@ export default function WardStock() {
       setSearch("");
       refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed");
+      toast.error(getApiErrorMessage(err, "Failed"));
     } finally {
       setBusy(false);
     }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -65,7 +66,7 @@ export default function FormTemplatesList() {
       await axiosInstance.delete(`/hospital/form-builder/${id}`);
       refetch();
     } catch (error) {
-      alert((error as any)?.response?.data?.message || "Failed to delete template");
+      alert(getApiErrorMessage((error as any), "Failed to delete template"));
     }
   };
 

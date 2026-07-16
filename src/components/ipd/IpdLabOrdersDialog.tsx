@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { formatINR } from "../../utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -90,7 +91,7 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
       afterChange();
       setTab("results");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to order labs");
+      toast.error(getApiErrorMessage(err, "Failed to order labs"));
     } finally {
       setSaving(false);
     }
@@ -110,7 +111,7 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
       toast.success("Lab order cancelled");
       afterChange();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to cancel");
+      toast.error(getApiErrorMessage(err, "Failed to cancel"));
     } finally {
       setBusyId(null);
     }

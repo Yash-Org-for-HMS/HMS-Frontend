@@ -1,4 +1,5 @@
 import { ACCENTS } from "../../styles/accents";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -108,7 +109,7 @@ export default function ConsultationWorkspace() {
         fetchHistory(data.patient.patientId);
       }
     } catch (err: any) {
-      const errMsg = err.response?.data?.message || "Failed to load consultation context";
+      const errMsg = getApiErrorMessage(err, "Failed to load consultation context");
       setError(errMsg);
       toast.error(errMsg);
     } finally {
@@ -124,7 +125,7 @@ export default function ConsultationWorkspace() {
     } catch (err: any) {
       // Surfaced distinctly from "no history" below — a fetch failure must not
       // look identical to a patient who genuinely has no past consultations.
-      setHistoryError(err.response?.data?.message || "Failed to load consultation history");
+      setHistoryError(getApiErrorMessage(err, "Failed to load consultation history"));
     }
   };
 
@@ -191,7 +192,7 @@ export default function ConsultationWorkspace() {
       // (existing consultations may not echo the id back).
       return res.data.data?.consultationId ?? true;
     } catch (err: any) {
-      if (!isAutoSave) toast.error(err.response?.data?.message || "Failed to save consultation");
+      if (!isAutoSave) toast.error(getApiErrorMessage(err, "Failed to save consultation"));
       return null;
     } finally {
       if (!isAutoSave) setSaving(false);
@@ -220,7 +221,7 @@ export default function ConsultationWorkspace() {
       
       navigate("/doctor/queue");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to complete consultation");
+      toast.error(getApiErrorMessage(err, "Failed to complete consultation"));
       setCompleting(false);
     }
   };

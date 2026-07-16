@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { formatINR } from "../../utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -67,7 +68,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
       toast.success(inv ? `Discharged — invoice ${inv.invoiceNumber} (${formatINR(inv.netAmount)})` : "Patient discharged");
       onDone();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to discharge");
+      toast.error(getApiErrorMessage(err, "Failed to discharge"));
     } finally {
       setSaving(false);
     }

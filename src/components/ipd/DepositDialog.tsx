@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { formatINR } from "../../utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -49,7 +50,7 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
       toast.success(isRefund ? "Deposit refunded" : "Deposit collected");
       onDone();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed");
+      toast.error(getApiErrorMessage(err, "Failed"));
     } finally {
       setSaving(false);
     }

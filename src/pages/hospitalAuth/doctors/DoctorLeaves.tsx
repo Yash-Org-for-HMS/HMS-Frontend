@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Button, Table, TableBody, TableCell,
@@ -66,7 +67,7 @@ export default function DoctorLeaves() {
       setToDate("");
       queryClient.invalidateQueries({ queryKey: ["doctor-leaves", id] });
     },
-    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to add leave"),
+    onError: (err: any) => toast.error(getApiErrorMessage(err, "Failed to add leave")),
   });
 
   const removeLeave = useMutation({
@@ -75,7 +76,7 @@ export default function DoctorLeaves() {
       toast.success("Leave removed");
       queryClient.invalidateQueries({ queryKey: ["doctor-leaves", id] });
     },
-    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to remove leave"),
+    onError: (err: any) => toast.error(getApiErrorMessage(err, "Failed to remove leave")),
   });
 
   return (

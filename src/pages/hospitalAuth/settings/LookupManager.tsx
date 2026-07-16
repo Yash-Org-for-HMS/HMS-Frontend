@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -128,7 +129,7 @@ export default function LookupManager() {
       handleClose();
       refetch();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to save");
+      alert(getApiErrorMessage(err, "Failed to save"));
     }
   };
 
@@ -151,7 +152,7 @@ export default function LookupManager() {
       });
       refetch();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to toggle status");
+      alert(getApiErrorMessage(err, "Failed to toggle status"));
     }
   };
 

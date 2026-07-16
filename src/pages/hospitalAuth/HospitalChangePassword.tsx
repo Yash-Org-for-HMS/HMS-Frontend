@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import {
   Box,
   Button,
@@ -65,8 +66,7 @@ export default function HospitalChangePassword() {
       );
     } catch (err: any) {
       toast.error(
-        err.response?.data?.message ||
-          "Failed to change password. The link may have expired."
+        getApiErrorMessage(err, "Failed to change password. The link may have expired.")
       );
     } finally {
       setIsLoading(false);

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useLocation } from "react-router-dom";
 import { 
   Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
@@ -129,7 +130,7 @@ export default function DispensaryPOS() {
       fetchData();
     } catch (err) {
       console.error(err);
-      toast.error((err as any)?.response?.data?.message || "Failed to cancel order");
+      toast.error(getApiErrorMessage((err as any), "Failed to cancel order"));
     } finally {
       setCancelling(false);
     }
@@ -153,7 +154,7 @@ export default function DispensaryPOS() {
       fetchData();
     } catch (err) {
       console.error(err);
-      toast.error((err as any)?.response?.data?.message || "Failed to dismiss prescription");
+      toast.error(getApiErrorMessage((err as any), "Failed to dismiss prescription"));
     } finally {
       setDismissing(false);
     }
@@ -184,7 +185,7 @@ export default function DispensaryPOS() {
         });
         setCart(initialCart);
       } catch (err: any) {
-        toast.error(err.response?.data?.message || "Failed to cancel order for editing");
+        toast.error(getApiErrorMessage(err, "Failed to cancel order for editing"));
       } finally {
         setCancelling(false);
         fetchData();
@@ -335,7 +336,7 @@ export default function DispensaryPOS() {
       // Surface the real backend reason (e.g. "Select a branch before performing
       // this action", "Insufficient stock to complete this sale.") instead of a
       // generic message that hides what actually went wrong.
-      toast.error(err.response?.data?.message || "Failed to process sale");
+      toast.error(getApiErrorMessage(err, "Failed to process sale"));
     } finally {
       setProcessing(false);
     }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
@@ -33,7 +34,7 @@ export default function IpdMedicationRequests() {
       toast.success(`${r.medicineName} dispensed for ${r.patientName || "patient"}`);
       refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to confirm this request");
+      toast.error(getApiErrorMessage(err, "Failed to confirm this request"));
     } finally {
       setBusyId(null);
     }
@@ -49,7 +50,7 @@ export default function IpdMedicationRequests() {
       setReason("");
       refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to reject this request");
+      toast.error(getApiErrorMessage(err, "Failed to reject this request"));
     } finally {
       setBusyId(null);
     }

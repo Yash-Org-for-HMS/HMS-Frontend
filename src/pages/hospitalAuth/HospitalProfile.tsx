@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "../../components/ErrorState";
 import GeoAddressPicker from "../../components/GeoAddressPicker";
@@ -141,7 +142,7 @@ export default function HospitalProfile() {
         updateHospital({ logoUrl: res.data.data.logoUrl });
         toast.success("Logo uploaded successfully!");
       } catch (err: any) {
-        toast.error(err.response?.data?.message || "Failed to upload logo");
+        toast.error(getApiErrorMessage(err, "Failed to upload logo"));
       } finally {
         setUploadingLogo(false);
       }
@@ -162,7 +163,7 @@ export default function HospitalProfile() {
       // Optionally re-fetch
       await refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update profile");
+      toast.error(getApiErrorMessage(err, "Failed to update profile"));
     } finally {
       setSaving(false);
     }

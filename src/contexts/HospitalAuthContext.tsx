@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
+import { getApiErrorMessage } from "../utils/apiError";
 import { axiosInstance } from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "./ToastContext";
@@ -101,7 +102,7 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
         setActiveBranch(fallback);
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load your accessible branches");
+      toast.error(getApiErrorMessage(err, "Failed to load your accessible branches"));
     }
   }, [setActiveBranch, toast]);
 

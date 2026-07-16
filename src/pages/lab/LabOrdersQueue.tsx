@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { orderStatusColor } from "../../utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab } from "@mui/material";
 import { VisibilityRounded, BloodtypeRounded, AddRounded } from "@mui/icons-material";
@@ -63,7 +64,7 @@ export default function LabOrdersQueue() {
       setCollectOrder(null);
       fetchOrders();
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || "Failed to collect sample. Please verify the barcode.");
+      setErrorMsg(getApiErrorMessage(err, "Failed to collect sample. Please verify the barcode."));
     } finally {
       setCollecting(false);
     }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
@@ -253,14 +254,14 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
         navigate("/reception/appointments");
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save appointment");
+      toast.error(getApiErrorMessage(err, "Failed to save appointment"));
       setSaving(false);
     }
   };
 
   if (loading) return <FormSkeleton />;
 
-  if (isError) return <Box sx={{ p: 4 }}><ErrorState message={(error as any)?.response?.data?.message || "Failed to initialize form"} onRetry={refetch} /></Box>;
+  if (isError) return <Box sx={{ p: 4 }}><ErrorState message={getApiErrorMessage((error as any), "Failed to initialize form")} onRetry={refetch} /></Box>;
 
   const filteredDoctors = (dropdowns?.doctors || []).filter((d: any) => !formData.departmentId || d.departmentId === formData.departmentId);
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Box, Typography, Divider, Alert,
@@ -125,7 +126,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       }
 
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Failed to load billing data";
+      const msg = getApiErrorMessage(err, "Failed to load billing data");
       setLoadError(msg);
       toast.error(msg);
     } finally {
@@ -164,7 +165,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       }
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.message || "Payment failed");
+      toast.error(getApiErrorMessage(err, "Payment failed"));
     } finally {
       setPaying(false);
     }
@@ -189,7 +190,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       }
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.message || "Failed to add line item");
+      toast.error(getApiErrorMessage(err, "Failed to add line item"));
     } finally {
       setAddingItem(false);
     }
@@ -208,7 +209,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         await fetchBillingData();
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update invoice");
+      toast.error(getApiErrorMessage(err, "Failed to update invoice"));
     } finally {
       setAdjusting(false);
     }
@@ -294,7 +295,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         await fetchBillingData();
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Refund failed");
+      toast.error(getApiErrorMessage(err, "Refund failed"));
     } finally {
       setRefunding(false);
     }

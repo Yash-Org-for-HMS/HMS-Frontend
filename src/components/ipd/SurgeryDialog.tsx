@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { formatINR } from "../../utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -87,7 +88,7 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
       setForm(emptyForm);
       refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to add surgery");
+      toast.error(getApiErrorMessage(err, "Failed to add surgery"));
     } finally {
       setSaving(false);
     }
@@ -110,7 +111,7 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
       invalidateBillingIfCharged(res.data?.data?.invoiceId);
       refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update surgery");
+      toast.error(getApiErrorMessage(err, "Failed to update surgery"));
     } finally {
       setBusyId(null);
     }

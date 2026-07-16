@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -77,7 +78,7 @@ export default function RolesList() {
       });
       refetch();
     } catch (error) {
-      toast.error((error as any)?.response?.data?.message || "Failed to update role status");
+      toast.error(getApiErrorMessage((error as any), "Failed to update role status"));
     }
   };
 

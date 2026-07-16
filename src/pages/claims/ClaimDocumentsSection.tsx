@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Paper, Typography, Button, Chip, IconButton, Tooltip, Divider, Stack,
@@ -38,7 +39,7 @@ export default function ClaimDocumentsSection({ claimId }: { claimId: string }) 
       toast.success("Document deleted");
       refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to delete");
+      toast.error(getApiErrorMessage(err, "Failed to delete"));
     }
   };
 
@@ -130,7 +131,7 @@ function UploadDialog({ claimId, docType, stage, onClose, onDone }: { claimId: s
       toast.success("Document uploaded");
       onDone();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Upload failed");
+      toast.error(getApiErrorMessage(err, "Upload failed"));
     } finally {
       setSaving(false);
     }

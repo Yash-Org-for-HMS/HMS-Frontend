@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
@@ -181,7 +182,7 @@ function AdvanceStatusDialog({ open, onClose, options, onDone, claimId }: { open
       setToStatus(""); setNote("");
       onDone();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update status");
+      toast.error(getApiErrorMessage(err, "Failed to update status"));
     } finally { setSaving(false); }
   };
   return (
@@ -219,7 +220,7 @@ function LinkInvoiceDialog({ open, onClose, claimId, currentInvoiceId, onDone }:
       toast.success(invoiceId ? "Bill linked" : "Bill unlinked");
       onDone();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to link bill");
+      toast.error(getApiErrorMessage(err, "Failed to link bill"));
     } finally { setSaving(false); }
   };
   return (
@@ -256,7 +257,7 @@ function RecordSettlementDialog({ open, onClose, claimId, onDone }: { open: bool
       setAmount(""); setNote("");
       onDone();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to record settlement");
+      toast.error(getApiErrorMessage(err, "Failed to record settlement"));
     } finally { setSaving(false); }
   };
   return (

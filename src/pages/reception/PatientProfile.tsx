@@ -1,4 +1,5 @@
 import { ACCENTS } from "../../styles/accents";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { formatINR, getInitials } from "../../utils/format";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -158,7 +159,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
       toast.success("Patient checked in");
       refetchAppts();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to check in");
+      toast.error(getApiErrorMessage(err, "Failed to check in"));
     } finally {
       setCheckinId(null);
     }
@@ -172,7 +173,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
       const res = await axiosInstance.post(`/reception/notifications/patients/${id}/registration`);
       setSuccessMsg(res.data.message || "Welcome notification sent");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to send notification");
+      toast.error(getApiErrorMessage(err, "Failed to send notification"));
     } finally {
       setNotifProcessing(false);
     }
@@ -202,7 +203,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
   if (isError || !patient) {
     return (
       <Box sx={{ maxWidth: 600, mx: "auto", mt: 4 }}>
-        <ErrorState title="Couldn't load patient" message={(error as any)?.response?.data?.message || "Patient not found"} onRetry={() => refetch()} />
+        <ErrorState title="Couldn't load patient" message={getApiErrorMessage((error as any), "Patient not found")} onRetry={() => refetch()} />
         <Box sx={{ textAlign: "center" }}>
           <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ mt: 2, color: ACCENT }}>Back</Button>
         </Box>

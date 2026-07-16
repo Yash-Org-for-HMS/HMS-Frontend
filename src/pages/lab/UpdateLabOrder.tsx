@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "../../components/ErrorState";
 import { Box, Typography, Paper, Grid, TextField, Button, Alert, Chip, Divider } from "@mui/material";
@@ -76,7 +77,7 @@ export default function UpdateLabOrder() {
 
   if (loading) return <DetailSkeleton />;
   if (isError || !order) {
-    return <ErrorState title="Couldn't load lab order" message={(error as any)?.response?.data?.message || "Order not found"} onRetry={() => refetch()} />;
+    return <ErrorState title="Couldn't load lab order" message={getApiErrorMessage((error as any), "Order not found")} onRetry={() => refetch()} />;
   }
 
   return (

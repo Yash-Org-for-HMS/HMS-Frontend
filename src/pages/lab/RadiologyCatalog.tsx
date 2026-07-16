@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -88,7 +89,7 @@ export default function RadiologyCatalog() {
       handleClose();
       refetch();
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || "Failed to save the radiology scan.");
+      setErrorMsg(getApiErrorMessage(err, "Failed to save the radiology scan."));
     } finally {
       setSaving(false);
     }
@@ -106,7 +107,7 @@ export default function RadiologyCatalog() {
       await axiosInstance.delete(`/lab/radiology-catalog/${id}`);
       refetch();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to delete the radiology scan.");
+      alert(getApiErrorMessage(err, "Failed to delete the radiology scan."));
     }
   };
 

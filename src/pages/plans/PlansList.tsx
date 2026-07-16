@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -65,7 +66,7 @@ export default function PlansList() {
       setDeleteId(null);
       qc.invalidateQueries({ queryKey: ["plans"] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Failed to delete plan"),
+    onError: (err: any) => toast.error(getApiErrorMessage(err, "Failed to delete plan")),
   });
 
   const { sorted, orderBy, order, onSort } = useTableSort(plans, {

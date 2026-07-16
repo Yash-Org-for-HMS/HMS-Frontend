@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
@@ -34,7 +35,7 @@ export default function MarChart({ admissionId }: { admissionId: string }) {
       await axiosInstance.post(`/ipd/mar/${adminId}`, { status });
       await refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update dose");
+      toast.error(getApiErrorMessage(err, "Failed to update dose"));
     } finally {
       setBusy(null);
     }

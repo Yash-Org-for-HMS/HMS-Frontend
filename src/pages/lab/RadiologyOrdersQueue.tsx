@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { orderStatusColor } from "../../utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab } from "@mui/material";
 import { VisibilityRounded, CheckCircleRounded, InsertDriveFileRounded, EditRounded, CloudUploadRounded, AddRounded } from "@mui/icons-material";
@@ -56,7 +57,7 @@ export default function RadiologyOrdersQueue() {
       const res = await axiosInstance.get("/lab/radiology-macros");
       setMacros(res.data.data || []);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load report macros");
+      toast.error(getApiErrorMessage(err, "Failed to load report macros"));
     }
   };
 
@@ -91,7 +92,7 @@ export default function RadiologyOrdersQueue() {
       setStatus("COMPLETED");
     } catch (err: any) {
       console.error("Failed to upload report", err);
-      alert(err.response?.data?.message || "Failed to upload the file.");
+      alert(getApiErrorMessage(err, "Failed to upload the file."));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";

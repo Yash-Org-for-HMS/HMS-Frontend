@@ -1,4 +1,5 @@
 import { ACCENTS } from "../../styles/accents";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -44,7 +45,7 @@ export default function ConsentFormsSection({ patientId, patientName, readOnly =
       toast.success(`Consent ${status.toLowerCase()}`);
       refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update consent");
+      toast.error(getApiErrorMessage(err, "Failed to update consent"));
     }
   };
 
@@ -184,7 +185,7 @@ function IssueConsentDialog({ patientId, onClose, onIssued }: { patientId: strin
       toast.success("Consent form issued");
       onIssued();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to issue consent form");
+      toast.error(getApiErrorMessage(err, "Failed to issue consent form"));
     } finally {
       setSaving(false);
     }
@@ -303,7 +304,7 @@ function SignConsentDialog({ form, patientName, onClose, onSigned }: { form: any
       toast.success("Consent signed and filed");
       onSigned();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to capture consent");
+      toast.error(getApiErrorMessage(err, "Failed to capture consent"));
     } finally {
       setSaving(false);
     }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
@@ -63,7 +64,7 @@ export default function HospitalModules() {
         planId: planId || null,
       })).data,
     onSuccess: () => { toast.success("Module access updated"); refetch(); },
-    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to save"),
+    onError: (err: any) => toast.error(getApiErrorMessage(err, "Failed to save")),
   });
 
   const modules = data?.modules || [];

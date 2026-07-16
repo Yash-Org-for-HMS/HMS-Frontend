@@ -1,4 +1,5 @@
 import { ACCENTS } from "../../styles/accents";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -226,7 +227,7 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
         {loading ? (
           <ListSkeleton rows={3} />
         ) : isError ? (
-          <ErrorState message={(error as any)?.response?.data?.message || "Failed to load lab orders"} onRetry={refetch} />
+          <ErrorState message={getApiErrorMessage((error as any), "Failed to load lab orders")} onRetry={refetch} />
         ) : existingOrders.length === 0 ? (
           <Mascot pose="nothing-here-yet" subtitle="No lab orders for this consultation yet." size={130} />
         ) : (

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -117,7 +118,7 @@ export default function LeadsList() {
       setDeleteId(null);
       refetch();
     } catch (error) {
-      toast.error((error as any)?.response?.data?.message || "Failed to delete lead");
+      toast.error(getApiErrorMessage((error as any), "Failed to delete lead"));
     }
   };
 
@@ -151,7 +152,7 @@ export default function LeadsList() {
       }
       refetch();
     } catch (error: any) {
-      setConvertError(error.response?.data?.message || "Failed to convert lead");
+      setConvertError(getApiErrorMessage(error, "Failed to convert lead"));
     } finally {
       setConverting(false);
     }
@@ -162,7 +163,7 @@ export default function LeadsList() {
       await axiosInstance.patch(`/leads/${leadId}/status`, { status: newStatus });
       refetch();
     } catch (error) {
-      toast.error((error as any)?.response?.data?.message || "Failed to update status");
+      toast.error(getApiErrorMessage((error as any), "Failed to update status"));
     }
   };
 
@@ -173,7 +174,7 @@ export default function LeadsList() {
       setAnchorEl(null);
       refetch();
     } catch (error) {
-      toast.error((error as any)?.response?.data?.message || "Failed to assign lead");
+      toast.error(getApiErrorMessage((error as any), "Failed to assign lead"));
     }
   };
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { Box, Typography, Table, TableBody, TableCell, TableHead, TableRow, Grid, Divider } from "@mui/material";
 import { axiosInstance } from "../../api/axios";
 import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
@@ -18,7 +19,7 @@ export default function PrintLabReport() {
       } catch (err: any) {
         // Distinct from "order not found" — a network/permission error isn't
         // the same thing and shouldn't be reported as one.
-        setError(err.response?.data?.message || "Failed to load this lab order");
+        setError(getApiErrorMessage(err, "Failed to load this lab order"));
       } finally {
         setLoading(false);
       }

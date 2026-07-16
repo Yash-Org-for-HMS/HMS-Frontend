@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -107,7 +108,7 @@ export default function LabTestCatalog() {
       refetch();
     } catch (err: any) {
       console.error("Failed to save lab test", err);
-      setErrorMsg(err.response?.data?.message || "Failed to save the lab test.");
+      setErrorMsg(getApiErrorMessage(err, "Failed to save the lab test."));
     } finally {
       setSaving(false);
     }
@@ -125,7 +126,7 @@ export default function LabTestCatalog() {
       await axiosInstance.delete(`/lab/tests/${id}`);
       refetch();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to delete the lab test.");
+      alert(getApiErrorMessage(err, "Failed to delete the lab test."));
     }
   };
 

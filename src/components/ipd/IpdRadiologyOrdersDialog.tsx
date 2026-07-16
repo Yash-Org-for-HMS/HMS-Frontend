@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
@@ -98,7 +99,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
       afterChange();
       setTab("results");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to order scans");
+      toast.error(getApiErrorMessage(err, "Failed to order scans"));
     } finally {
       setSaving(false);
     }
@@ -118,7 +119,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
       toast.success("Scan cancelled");
       afterChange();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to cancel");
+      toast.error(getApiErrorMessage(err, "Failed to cancel"));
     } finally {
       setBusyId(null);
     }

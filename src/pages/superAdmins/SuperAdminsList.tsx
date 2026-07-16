@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -77,7 +78,7 @@ export default function SuperAdminsList() {
   const resetPassword = useMutation({
     mutationFn: async (id: string) => (await axiosInstance.post(`/super-admins/${id}/reset-password`)).data.data,
     onSuccess: (creds) => setResetCreds({ email: creds.email, temporaryPassword: creds.temporaryPassword, name: `${creds.firstName} ${creds.lastName}`.trim() }),
-    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to reset password"),
+    onError: (err: any) => toast.error(getApiErrorMessage(err, "Failed to reset password")),
   });
 
   const handleResetPassword = async (admin: any) => {

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, TextField,
@@ -93,14 +94,14 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
           });
           toast.success("Patient admitted & insurance claim started");
         } catch (claimErr: any) {
-          toast.error(`Admitted, but couldn't start the claim: ${claimErr.response?.data?.message || "permission or validation error"}`);
+          toast.error(`Admitted, but couldn't start the claim: ${getApiErrorMessage(claimErr, "permission or validation error")}`);
         }
       } else {
         toast.success("Patient admitted");
       }
       onAdmitted();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to admit patient");
+      toast.error(getApiErrorMessage(err, "Failed to admit patient"));
     } finally {
       setSaving(false);
     }

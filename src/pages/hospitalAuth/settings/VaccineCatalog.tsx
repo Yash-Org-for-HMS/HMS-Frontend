@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Button, Chip, IconButton, Tooltip,
@@ -128,7 +129,7 @@ function AddVaccineDialog({ onClose, onDone }: { onClose: () => void; onDone: ()
       toast.success("Vaccine added");
       onDone();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to add vaccine");
+      toast.error(getApiErrorMessage(err, "Failed to add vaccine"));
     } finally {
       setSaving(false);
     }
@@ -168,7 +169,7 @@ function EditVaccineDialog({ vaccine, onClose, onDone }: { vaccine: Vaccine; onC
       toast.success("Vaccine updated");
       onDone();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update vaccine");
+      toast.error(getApiErrorMessage(err, "Failed to update vaccine"));
     } finally {
       setSaving(false);
     }
@@ -215,7 +216,7 @@ function DosesDialog({ vaccine, onClose, onChanged }: { vaccine: Vaccine; onClos
       toast.success("Dose added");
       onChanged();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to add dose");
+      toast.error(getApiErrorMessage(err, "Failed to add dose"));
     } finally {
       setBusy(false);
     }
@@ -236,7 +237,7 @@ function DosesDialog({ vaccine, onClose, onChanged }: { vaccine: Vaccine; onClos
       toast.success("Dose removed");
       onChanged();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to remove dose");
+      toast.error(getApiErrorMessage(err, "Failed to remove dose"));
     } finally {
       setBusy(false);
     }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Dialog, DialogTitle, DialogContent, DialogActions, Grid,
@@ -154,7 +155,7 @@ export default function SupplierDirectory() {
       handleClose();
       refetch();
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || "Failed to save the supplier.");
+      setErrorMsg(getApiErrorMessage(err, "Failed to save the supplier."));
     } finally {
       setSaving(false);
     }
@@ -177,7 +178,7 @@ export default function SupplierDirectory() {
         refetch();
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to delete the supplier.");
+      toast.error(getApiErrorMessage(err, "Failed to delete the supplier."));
     }
   };
 

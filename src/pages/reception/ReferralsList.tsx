@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer,
@@ -73,7 +74,7 @@ export default function ReferralsList() {
       toast.success(`Referral marked ${status.toLowerCase()}`);
       refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update referral");
+      toast.error(getApiErrorMessage(err, "Failed to update referral"));
     }
   };
 

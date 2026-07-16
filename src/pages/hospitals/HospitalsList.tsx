@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -99,7 +100,7 @@ export default function HospitalsList() {
       setDeleteDialog({ open: false, hospital: null });
       refetch();
     } catch (error) {
-      toast.error((error as any)?.response?.data?.message || "Failed to delete hospital");
+      toast.error(getApiErrorMessage((error as any), "Failed to delete hospital"));
     } finally {
       setActionLoading(false);
     }
@@ -111,7 +112,7 @@ export default function HospitalsList() {
       await axiosInstance.put(`/hospitals/${hospitalId}/restore`);
       refetch();
     } catch (error) {
-      toast.error((error as any)?.response?.data?.message || "Failed to restore hospital");
+      toast.error(getApiErrorMessage((error as any), "Failed to restore hospital"));
     } finally {
       setActionLoading(false);
     }

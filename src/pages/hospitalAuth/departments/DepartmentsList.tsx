@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import {
   Box,
   Typography,
@@ -62,7 +63,7 @@ export default function DepartmentsList() {
       });
       refetch();
     } catch (error) {
-      toast.error((error as any)?.response?.data?.message || "Failed to update department status");
+      toast.error(getApiErrorMessage((error as any), "Failed to update department status"));
     }
   };
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { 
   Dialog, DialogTitle, DialogContent, DialogActions, 
   Button, Typography, Box, Alert,
@@ -71,7 +72,7 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
       }, 2000);
       
     } catch (err: any) {
-      setError(err.response?.data?.message || "Payment processing failed. Please try again.");
+      setError(getApiErrorMessage(err, "Payment processing failed. Please try again."));
       setLoading(false);
     }
   };

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useParams } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
 import { axiosInstance } from "../../api/axios";
@@ -63,7 +64,7 @@ export default function PrintIpBill() {
         const res = await axiosInstance.get(`/reception/billing/invoices/${invoiceId}/detail`);
         setInv(res.data.data);
       } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load this bill");
+        setError(getApiErrorMessage(err, "Failed to load this bill"));
       } finally {
         setLoading(false);
       }

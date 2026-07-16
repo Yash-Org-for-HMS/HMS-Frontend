@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "../../components/ErrorState";
 import {
@@ -137,7 +138,7 @@ export default function HospitalSettings() {
       await axiosInstance.put("/hospital/settings", formData);
       toast.success("Settings updated successfully!");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update settings");
+      toast.error(getApiErrorMessage(err, "Failed to update settings"));
     } finally {
       setSaving(false);
     }

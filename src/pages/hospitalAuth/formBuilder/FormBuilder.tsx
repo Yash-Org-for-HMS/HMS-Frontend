@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -128,7 +129,7 @@ export default function FormBuilder() {
       }
       navigate("/hospital/form-builder");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save template");
+      toast.error(getApiErrorMessage(err, "Failed to save template"));
       setLoading(false);
     }
   };
@@ -140,7 +141,7 @@ export default function FormBuilder() {
   }
 
   if (isError) {
-    return <Box sx={{ p: 4 }}><ErrorState message={(error as any)?.response?.data?.message || "Failed to load template"} onRetry={refetch} /></Box>;
+    return <Box sx={{ p: 4 }}><ErrorState message={getApiErrorMessage((error as any), "Failed to load template")} onRetry={refetch} /></Box>;
   }
 
   const textFieldProps = {

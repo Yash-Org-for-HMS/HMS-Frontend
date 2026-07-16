@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -183,7 +184,7 @@ export default function UserForm() {
         }
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save user");
+      toast.error(getApiErrorMessage(err, "Failed to save user"));
       setSaving(false);
     }
   };

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
@@ -155,7 +156,7 @@ export default function AppointmentsList() {
       refetch();
       toast.success(actionType === 'cancel' ? "Appointment cancelled" : "Patient checked in");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to process action");
+      toast.error(getApiErrorMessage(err, "Failed to process action"));
     } finally {
       setProcessing(false);
     }
@@ -168,7 +169,7 @@ export default function AppointmentsList() {
       const res = await axiosInstance.post(`/reception/notifications/appointments/${apptId}/${type}`);
       setSuccessMsg(res.data.message || "Notification sent");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to send notification");
+      toast.error(getApiErrorMessage(err, "Failed to send notification"));
     } finally {
       setProcessing(false);
     }

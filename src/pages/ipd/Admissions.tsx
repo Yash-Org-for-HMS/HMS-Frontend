@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { formatINR } from "../../utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -81,7 +82,7 @@ export default function Admissions() {
       toast.success("Admission cancelled");
       refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to cancel");
+      toast.error(getApiErrorMessage(err, "Failed to cancel"));
     }
   };
 

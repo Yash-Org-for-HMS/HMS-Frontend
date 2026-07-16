@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box,
@@ -127,7 +128,7 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
       queryClient.invalidateQueries({ queryKey: ["patients"] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to delete patient");
+      toast.error(getApiErrorMessage(err, "Failed to delete patient"));
     }
   });
 
@@ -224,7 +225,7 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
 
         {error && (
           <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5" }}>
-            {(error as any)?.response?.data?.message || "Failed to load patients"}
+            {getApiErrorMessage((error as any), "Failed to load patients")}
           </Alert>
         )}
 

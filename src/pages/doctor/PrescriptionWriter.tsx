@@ -1,4 +1,5 @@
 import { ACCENTS } from "../../styles/accents";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -213,7 +214,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
         : "the previous visit";
       toast.success(`Added ${toAdd.length} medicine${toAdd.length === 1 ? "" : "s"} from ${dateStr}.`);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load the last prescription.");
+      toast.error(getApiErrorMessage(err, "Failed to load the last prescription."));
     } finally {
       setRepeating(false);
     }
@@ -389,7 +390,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   }
 
   if (isError) {
-    return <Box sx={{ p: 4 }}><ErrorState message={(error as any)?.response?.data?.message || "Failed to load prescription"} onRetry={refetch} /></Box>;
+    return <Box sx={{ p: 4 }}><ErrorState message={getApiErrorMessage((error as any), "Failed to load prescription")} onRetry={refetch} /></Box>;
   }
 
   return (

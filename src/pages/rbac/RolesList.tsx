@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -84,7 +85,7 @@ export default function RolesList() {
       setCleanupResult(res.data.data);
       refetch();
     } catch (error) {
-      toast.error((error as any)?.response?.data?.message || "Failed to clean up roles");
+      toast.error(getApiErrorMessage((error as any), "Failed to clean up roles"));
     } finally {
       setCleaning(false);
     }

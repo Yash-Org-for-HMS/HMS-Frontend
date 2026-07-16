@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { formatINR, formatDate } from "../../utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -59,7 +60,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
       await refetch();
       onChanged?.();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Payment failed");
+      toast.error(getApiErrorMessage(err, "Payment failed"));
     } finally {
       setPaying(false);
     }

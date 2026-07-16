@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
@@ -104,7 +105,7 @@ export default function UsersList() {
   const resetPassword = useMutation({
     mutationFn: async (id: string) => (await axiosInstance.post(`/rbac/users/${id}/reset-password`)).data.data,
     onSuccess: (creds) => setResetCreds({ email: creds.email, temporaryPassword: creds.temporaryPassword, name: `${creds.firstName} ${creds.lastName}`.trim() }),
-    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to reset password"),
+    onError: (err: any) => toast.error(getApiErrorMessage(err, "Failed to reset password")),
   });
 
   const handleResetPassword = async (user: User) => {
@@ -125,7 +126,7 @@ export default function UsersList() {
       setDeleteId(null);
       refetch();
     } catch (error) {
-      toast.error((error as any)?.response?.data?.message || "Failed to delete user");
+      toast.error(getApiErrorMessage((error as any), "Failed to delete user"));
     } finally {
       setDeleteLoading(false);
     }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -106,7 +107,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
       onSuccess(finalPassword);
       handleClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to reset password");
+      toast.error(getApiErrorMessage(err, "Failed to reset password"));
     } finally {
       setLoading(false);
     }
@@ -440,7 +441,7 @@ export default function UsersList() {
       await axiosInstance.put(`/hospital/users/${user.userId}/deactivate`, { isActive: !user.isActive });
       refetch();
     } catch (error) {
-      toast.error((error as any)?.response?.data?.message || "Failed to update user status");
+      toast.error(getApiErrorMessage((error as any), "Failed to update user status"));
     }
   };
 

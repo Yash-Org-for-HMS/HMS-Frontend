@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -129,7 +130,7 @@ export default function InventoryManagement() {
       setAlertPage(1);
       await Promise.all([fetchReference(), fetchInventory(1), fetchPurchaseOrders(1)]);
     } catch (err: any) {
-      setLoadError(err?.response?.data?.message || "Failed to load inventory data");
+      setLoadError(getApiErrorMessage(err, "Failed to load inventory data"));
     } finally {
       setLoading(false);
       didMount.current = true;
@@ -146,12 +147,12 @@ export default function InventoryManagement() {
 
   // Page changes fetch only the affected list (skipped on the initial mount).
   useEffect(() => {
-    if (didMount.current) fetchInventory(stockPage).catch(err => toast.error(err.response?.data?.message || "Failed to load that page of inventory"));
+    if (didMount.current) fetchInventory(stockPage).catch(err => toast.error(getApiErrorMessage(err, "Failed to load that page of inventory")));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stockPage]);
 
   useEffect(() => {
-    if (didMount.current) fetchPurchaseOrders(poPage).catch(err => toast.error(err.response?.data?.message || "Failed to load that page of purchase orders"));
+    if (didMount.current) fetchPurchaseOrders(poPage).catch(err => toast.error(getApiErrorMessage(err, "Failed to load that page of purchase orders")));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [poPage]);
 
@@ -161,14 +162,14 @@ export default function InventoryManagement() {
   useEffect(() => {
     if (!didMount.current) return;
     setStockPage(1);
-    fetchInventory(1).catch(err => toast.error(err.response?.data?.message || "Failed to sort inventory"));
+    fetchInventory(1).catch(err => toast.error(getApiErrorMessage(err, "Failed to sort inventory")));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stockSort.orderBy, stockSort.order]);
 
   useEffect(() => {
     if (!didMount.current) return;
     setPoPage(1);
-    fetchPurchaseOrders(1).catch(err => toast.error(err.response?.data?.message || "Failed to sort purchase orders"));
+    fetchPurchaseOrders(1).catch(err => toast.error(getApiErrorMessage(err, "Failed to sort purchase orders")));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [poSort.orderBy, poSort.order]);
 
@@ -216,7 +217,7 @@ export default function InventoryManagement() {
       await Promise.all([fetchPurchaseOrders(1), fetchReference()]);
     } catch (err) {
       console.error(err);
-      toast.error((err as any)?.response?.data?.message || "Failed to create PO");
+      toast.error(getApiErrorMessage((err as any), "Failed to create PO"));
     } finally {
       setSavingPo(false);
     }
@@ -287,7 +288,7 @@ export default function InventoryManagement() {
       setPoPage(1);
       await Promise.all([fetchPurchaseOrders(1), fetchReference()]);
     } catch (err) {
-      toast.error((err as any)?.response?.data?.message || "Failed to generate purchase orders");
+      toast.error(getApiErrorMessage((err as any), "Failed to generate purchase orders"));
       // Some POs may have been created before the failure — refresh so the list is honest.
       await Promise.all([fetchPurchaseOrders(1), fetchReference()]);
     } finally {
@@ -349,7 +350,7 @@ export default function InventoryManagement() {
       await Promise.all([fetchInventory(stockPage), fetchPurchaseOrders(poPage), fetchReference()]);
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.message || "Failed to receive PO");
+      toast.error(getApiErrorMessage(err, "Failed to receive PO"));
     } finally {
       setReceiving(false);
     }
@@ -376,7 +377,7 @@ export default function InventoryManagement() {
       setEditInvItem(null);
       await fetchInventory(stockPage);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update this batch");
+      toast.error(getApiErrorMessage(err, "Failed to update this batch"));
     } finally {
       setSavingInvEdit(false);
     }
@@ -587,7 +588,7 @@ export default function InventoryManagement() {
                                   });
                                   await fetchReference();
                                 } catch(err) {
-                                  toast.error((err as any)?.response?.data?.message || "Failed to assign default supplier");
+                                  toast.error(getApiErrorMessage((err as any), "Failed to assign default supplier"));
                                 }
                               }
                             }}

@@ -1,4 +1,5 @@
 import { ACCENTS } from "../../styles/accents";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -86,7 +87,7 @@ export default function SoapTemplateBar({ current, onApply }: Props) {
       queryClient.invalidateQueries({ queryKey: ["doctor-templates"] });
       toast.success("Template deleted");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to delete template");
+      toast.error(getApiErrorMessage(err, "Failed to delete template"));
     }
   };
 
@@ -110,7 +111,7 @@ export default function SoapTemplateBar({ current, onApply }: Props) {
       setSaveOpen(false);
       setName("");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save template");
+      toast.error(getApiErrorMessage(err, "Failed to save template"));
     } finally {
       setSaving(false);
     }

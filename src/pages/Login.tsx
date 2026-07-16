@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../utils/apiError";
 import {
   Box, Button, TextField, Typography, InputAdornment, IconButton, Fade,
 } from "@mui/material";
@@ -65,7 +66,7 @@ export default function Login() {
       const { user, tokens } = response.data.data;
       login(tokens.accessToken, tokens.refreshToken, user);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to login. Please check your credentials.");
+      toast.error(getApiErrorMessage(err, "Failed to login. Please check your credentials."));
     } finally {
       setIsLoading(false);
     }

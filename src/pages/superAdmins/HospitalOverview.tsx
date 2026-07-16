@@ -1,4 +1,5 @@
 import { ACCENTS } from "../../styles/accents";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
@@ -101,7 +102,7 @@ export default function HospitalOverview() {
   if (isError || !data) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <ErrorState title="Couldn't load hospital" message={(error as any)?.response?.data?.message || "Hospital not found"} onRetry={() => refetch()} />
+        <ErrorState title="Couldn't load hospital" message={getApiErrorMessage((error as any), "Hospital not found")} onRetry={() => refetch()} />
       </Container>
     );
   }
@@ -237,7 +238,7 @@ export default function HospitalOverview() {
                 </Box>
                 {resetPassword.isError && (
                   <Typography variant="caption" sx={{ color: "error.main", display: "block", mt: 1 }}>
-                    {(resetPassword.error as any)?.response?.data?.message || "Failed to reset password."}
+                    {getApiErrorMessage((resetPassword.error as any), "Failed to reset password.")}
                   </Typography>
                 )}
               </Grid>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem,
@@ -36,7 +37,7 @@ export default function TransferDialog({ open, onClose, onDone, admission }: Pro
       toast.success("Patient transferred");
       onDone();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to transfer");
+      toast.error(getApiErrorMessage(err, "Failed to transfer"));
     } finally {
       setSaving(false);
     }

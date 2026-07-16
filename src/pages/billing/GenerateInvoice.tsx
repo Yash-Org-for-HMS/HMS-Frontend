@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Autocomplete, TextField,
@@ -104,7 +105,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
       setPaymentAmount(netAmount);
       toast.success(`Invoice ${res.data.data?.invoiceNumber || ""} generated`);
     } catch (err) {
-      toast.error((err as any)?.response?.data?.message || "Error generating invoice");
+      toast.error(getApiErrorMessage((err as any), "Error generating invoice"));
     } finally {
       setIsGenerating(false);
     }
@@ -122,7 +123,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
       setGeneratedInvoice(null);
       refetchUnbilled();
     } catch (err) {
-      toast.error((err as any)?.response?.data?.message || "Payment failed");
+      toast.error(getApiErrorMessage((err as any), "Payment failed"));
     } finally {
       setIsProcessingPayment(false);
     }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import {
   Box,
   Typography,
@@ -152,7 +153,7 @@ export default function DoctorForm() {
         setLoading(false);
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "An error occurred");
+      toast.error(getApiErrorMessage(err, "An error occurred"));
       setLoading(false);
     }
   };

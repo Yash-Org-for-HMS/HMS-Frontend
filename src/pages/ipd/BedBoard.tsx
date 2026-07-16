@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Grid, Chip, Menu, MenuItem, Tooltip,
@@ -39,7 +40,7 @@ export default function BedBoard() {
       toast.success(`Bed marked ${status.toLowerCase()}`);
       refetch();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update bed");
+      toast.error(getApiErrorMessage(err, "Failed to update bed"));
     }
   };
 

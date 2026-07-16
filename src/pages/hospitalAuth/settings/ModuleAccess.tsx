@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import ErrorState from "../../../components/ErrorState";
 import {
   Box, Typography, Paper, List, ListItem, ListItemText,
@@ -34,7 +35,7 @@ export default function ModuleAccess() {
       toast.success(res?.message || "Updated");
       queryClient.invalidateQueries({ queryKey: ["module-access"] });
     },
-    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to update module"),
+    onError: (err: any) => toast.error(getApiErrorMessage(err, "Failed to update module")),
   });
 
   if (loading) {

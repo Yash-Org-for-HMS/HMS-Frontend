@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "../../../components/ErrorState";
 import {
@@ -64,7 +65,7 @@ export default function DoctorSchedule() {
       await axiosInstance.put(`/hospital/doctors/${id}/schedule`, { schedules });
       navigate("/hospital/doctors");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "An error occurred");
+      toast.error(getApiErrorMessage(err, "An error occurred"));
       setLoading(false);
     }
   };

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, TextField, InputAdornment,
@@ -48,7 +49,7 @@ export default function FrontDeskConsole() {
       });
       setPatients(res.data.data);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to search patients");
+      toast.error(getApiErrorMessage(err, "Failed to search patients"));
     } finally {
       setLoading(false);
     }

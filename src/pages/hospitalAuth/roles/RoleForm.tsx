@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -115,7 +116,7 @@ export default function RoleForm() {
       }
       navigate("/hospital/roles");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "An error occurred");
+      toast.error(getApiErrorMessage(err, "An error occurred"));
       setLoading(false);
     }
   };
