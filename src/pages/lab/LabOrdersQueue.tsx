@@ -196,6 +196,11 @@ export default function LabOrdersQueue() {
               Billing Lock Active: The invoice for this order has not been paid. You cannot collect the sample until payment is received.
             </Alert>
           )}
+          {collectOrder?.admissionNumber && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Inpatient order ({collectOrder.admissionNumber}) — covered on the IP bill, settled at discharge. No pre-payment needed.
+            </Alert>
+          )}
           {errorMsg && <Alert severity="error" sx={{ mb: 2 }}>{errorMsg}</Alert>}
           <Typography variant="body1" sx={{ mb: 2 }}>
             Please scan or enter the barcode for the sample collected from <strong>{collectOrder?.patient?.firstName} {collectOrder?.patient?.lastName}</strong>.

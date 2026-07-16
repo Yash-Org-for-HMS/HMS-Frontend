@@ -237,6 +237,11 @@ export default function RadiologyOrdersQueue() {
               Billing Lock Active: The invoice for this scan has not been paid. Processing is disabled.
             </Alert>
           )}
+          {editOrder?.admissionNumber && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Inpatient scan ({editOrder.admissionNumber}) — covered on the IP bill, settled at discharge. No pre-payment needed.
+            </Alert>
+          )}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
             <Typography variant="subtitle2" color="text.secondary">Scan Type: {editOrder?.scanType}</Typography>
             <TextField
