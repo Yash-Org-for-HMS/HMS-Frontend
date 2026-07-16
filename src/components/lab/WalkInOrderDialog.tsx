@@ -6,6 +6,7 @@ import {
 import HeartbeatLoader from "../HeartbeatLoader";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
+import { formatINR } from "../../utils/format";
 import { useToast } from "../../contexts/ToastContext";
 
 interface WalkInOrderDialogProps {
@@ -60,6 +61,17 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
     queryFn: async () => (await axiosInstance.get("/lab/tests")).data.data || [],
     enabled: open && kind === "lab",
   });
+
+  // Priced scan catalog — ordering from it keeps the scanType aligned with a
+  // catalog entry so billing uses its real price (not a flat fallback).
+  const { data: scanCatalog = [] } = useQuery<any[]>({
+    queryKey: ["radiology-catalog-walkin"],
+    queryFn: async () => (await axiosInstance.get("/lab/radiology-catalog")).data.data || [],
+    enabled: open && kind === "radiology",
+  });
+  const scanOptions: { name: string; price: number | null }[] = scanCatalog.length
+    ? scanCatalog.map((c: any) => ({ name: c.testName, price: Number(c.price) }))
+    : SCAN_TYPES.map((s) => ({ name: s, price: null }));
 
   const reset = () => {
     setPatientQuery("");
@@ -170,8 +182,10 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
                 value={scanType}
                 onChange={(e) => setScanType(e.target.value)}
               >
-                {SCAN_TYPES.map((s) => (
-                  <MenuItem key={s} value={s}>{s}</MenuItem>
+                {scanOptions.map((o) => (
+                  <MenuItem key={o.name} value={o.name}>
+                    {o.name}{o.price != null ? ` · ${formatINR(o.price)}` : ""}
+                  </MenuItem>
                 ))}
               </TextField>
               <TextField

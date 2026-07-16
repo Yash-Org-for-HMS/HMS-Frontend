@@ -10,6 +10,7 @@ import {
   CheckCircleRounded, PendingActionsRounded, ExpandMoreRounded, ExpandLessRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
+import { formatINR } from "../../utils/format";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../contexts/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
@@ -20,7 +21,8 @@ interface Props {
   admission: any; // { admissionId, patientName }
 }
 
-// Same fixed scan list the walk-in radiology counter uses.
+// Fallback scan list, used only if the hospital hasn't set up a priced radiology
+// catalog yet (those scans bill at a flat fallback until the catalog is filled).
 const SCAN_TYPES = ["X-Ray", "CT Scan", "MRI Scan", "Ultrasound", "PET Scan", "Mammography"];
 const PRIORITIES = [
   { value: 1, label: "Routine" },
@@ -40,7 +42,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
   const [tab, setTab] = useState<"order" | "results">("order");
   const [scanType, setScanType] = useState("");
   const [notes, setNotes] = useState("");
-  const [basket, setBasket] = useState<{ scanType: string; notes: string }[]>([]);
+  const [basket, setBasket] = useState<{ scanType: string; notes: string; price: number | null }[]>([]);
   const [priorityId, setPriorityId] = useState(1);
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -52,9 +54,22 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
     enabled: open && !!admission?.admissionId,
   });
 
+  // Priced scan catalog. Ordering from it keeps the scanType aligned with a
+  // catalog entry so the bill uses its real price (not a flat fallback).
+  const { data: catalog = [] } = useQuery<any[]>({
+    queryKey: ["ipd-radiology-catalog"],
+    queryFn: async () => (await axiosInstance.get("/ipd/radiology-catalog")).data.data,
+    enabled: open,
+  });
+  // Catalog names (with price) when set up; otherwise the fixed fallback list.
+  const scanOptions: { name: string; price: number | null }[] = catalog.length
+    ? catalog.map((c: any) => ({ name: c.testName, price: Number(c.price) }))
+    : SCAN_TYPES.map((s) => ({ name: s, price: null }));
+  const priceFor = (name: string) => scanOptions.find((o) => o.name === name)?.price ?? null;
+
   const addToBasket = () => {
     if (!scanType) return;
-    setBasket([...basket, { scanType, notes: notes.trim() }]);
+    setBasket([...basket, { scanType, notes: notes.trim(), price: priceFor(scanType) }]);
     setScanType("");
     setNotes("");
   };
@@ -62,7 +77,9 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
 
   // A scan chosen in the picker but not yet "added" still counts — so ordering a
   // single scan needs no extra Add click. Add stays useful for stacking several.
-  const effectiveScans = scanType ? [...basket, { scanType, notes: notes.trim() }] : basket;
+  const effectiveScans = scanType ? [...basket, { scanType, notes: notes.trim(), price: priceFor(scanType) }] : basket;
+  const estTotal = effectiveScans.reduce((s, x) => s + (x.price || 0), 0);
+  const hasPricing = catalog.length > 0;
 
   const afterChange = () => {
     refetch();
@@ -126,7 +143,11 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
           <Stack spacing={2}>
             <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 2fr auto" }, gap: 2, alignItems: "start" }}>
               <TextField select label="Scan type" value={scanType} onChange={(e) => setScanType(e.target.value)}>
-                {SCAN_TYPES.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                {scanOptions.map((o) => (
+                  <MenuItem key={o.name} value={o.name}>
+                    {o.name}{o.price != null ? ` · ${formatINR(o.price)}` : ""}
+                  </MenuItem>
+                ))}
               </TextField>
               <TextField label="Clinical note (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. R/O chest infection" />
               <Button onClick={addToBasket} disabled={!scanType} startIcon={<AddRounded />} sx={{ textTransform: "none", mt: 0.5, color: "#0891b2" }}>Add</Button>
@@ -141,10 +162,12 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>{s.scanType}</Typography>
                         {s.notes && <Typography variant="caption" sx={{ color: "text.secondary" }}>{s.notes}</Typography>}
                       </Box>
+                      {s.price != null && <Typography variant="caption" sx={{ color: "text.secondary" }}>{formatINR(s.price)}</Typography>}
                       <IconButton size="small" onClick={() => removeFromBasket(i)} sx={{ color: "#ef4444" }}><DeleteOutlineRounded fontSize="small" /></IconButton>
                     </Box>
                   ))}
                 </Stack>
+                {hasPricing && <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>Estimated <strong>{formatINR(estTotal)}</strong></Typography>}
               </Box>
             )}
 
