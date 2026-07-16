@@ -48,7 +48,7 @@ import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import Mascot from "../../components/Mascot";
-import { getInitials } from "../../utils/format";
+import { getInitials, formatDate } from "../../utils/format";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import IdCardModal from "../../components/reception/IdCardModal";
 import AdmitDialog from "../../components/ipd/AdmitDialog";
@@ -367,7 +367,7 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
                             {patient.age !== null ? `${patient.age} yrs` : "—"}
                           </Typography>
                           <Typography variant="caption" sx={{ color: "#334155" }}>
-                            {new Date(patient.dateOfBirth).toLocaleDateString("en-IN")}
+                            {formatDate(patient.dateOfBirth)}
                           </Typography>
                         </Box>
                       </TableCell>

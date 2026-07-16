@@ -1,5 +1,5 @@
 import { ACCENTS } from "../../styles/accents";
-import { formatINR } from "../../utils/format";
+import { formatINR, formatDate } from "../../utils/format";
 import { useEffect, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
@@ -126,7 +126,7 @@ function BillsList({ type }: { type: "OPD" | "IPD" }) {
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>{r.uhid}</Typography>
                   </TableCell>
                   {isIpd && <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{r.admissionNumber || "—"}</TableCell>}
-                  <TableCell sx={{ color: "text.secondary" }}>{new Date(r.invoiceDate).toLocaleDateString("en-IN")}</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>{formatDate(r.invoiceDate)}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(r.netAmount)}</TableCell>
                   <TableCell align="right" sx={{ color: "text.secondary" }}>{formatINR(r.paidAmount)}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700, color: Number(r.balance) > 0.005 ? "#ef4444" : "#10b981" }}>{formatINR(r.balance)}</TableCell>

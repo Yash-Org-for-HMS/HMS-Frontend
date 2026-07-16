@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { formatINR } from "../../utils/format";
+import { formatINR, formatDate } from "../../utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, Divider,
@@ -106,7 +106,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                 <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2, fontSize: 13 }}>
                   <Box>
                     <div><strong>Receipt:</strong> {invoice.invoiceNumber}</div>
-                    <div><strong>Date:</strong> {new Date(invoice.invoiceDate).toLocaleDateString("en-IN")}</div>
+                    <div><strong>Date:</strong> {formatDate(invoice.invoiceDate)}</div>
                   </Box>
                   <Box sx={{ textAlign: "right" }}>
                     <div><strong>Patient:</strong> {invoice.patient ? `${invoice.patient.firstName} ${invoice.patient.lastName}` : "—"}</div>
@@ -146,7 +146,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                     <Typography variant="caption" sx={{ fontWeight: 700, color: "#6b7280", letterSpacing: 1 }}>PAYMENTS</Typography>
                     {invoice.Payment.map((p: any, i: number) => (
                       <Box key={i} sx={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#4b5563", mt: 0.5 }}>
-                        <span>{new Date(p.createdAt).toLocaleDateString("en-IN")} · {p.paymentMethod?.methodName || "—"}</span>
+                        <span>{formatDate(p.createdAt)} · {p.paymentMethod?.methodName || "—"}</span>
                         <span>{formatINR(p.paidAmount)}</span>
                       </Box>
                     ))}

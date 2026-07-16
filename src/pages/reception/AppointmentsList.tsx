@@ -14,6 +14,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
+import { formatDate } from "../../utils/format";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
@@ -377,7 +378,7 @@ export default function AppointmentsList() {
                           {new Date(appt.appointmentDate).toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' })}
                         </Typography>
                         <Typography variant="caption" sx={{ color: "text.secondary", display: 'block', mb: 0.5 }}>
-                          {new Date(appt.appointmentDate).toLocaleDateString("en-IN")}
+                          {formatDate(appt.appointmentDate)}
                         </Typography>
                         <Chip label={typeInfo.label} size="small" sx={{ bgcolor: typeInfo.bgcolor, color: typeInfo.color, fontWeight: 700, fontSize: "0.75rem", height: 20 }} />
                       </TableCell>

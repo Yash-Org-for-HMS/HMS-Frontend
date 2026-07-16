@@ -14,6 +14,15 @@ export function formatINR(amount: number | null | undefined, decimals = 2): stri
 }
 
 /**
+ * Format a date as a short Indian-locale date (e.g. "16/07/2026") — the same
+ * `new Date(x).toLocaleDateString("en-IN")` that was inlined across the invoice,
+ * appointment and patient list views. Accepts a Date, timestamp, or date string.
+ */
+export function formatDate(value: string | number | Date): string {
+  return new Date(value).toLocaleDateString("en-IN");
+}
+
+/**
  * Strip HTML tags, decode the common named/numeric entities, and collapse
  * whitespace to a single-line plain string. Used to render rich-text SOAP notes
  * and template previews as plain text.
