@@ -50,29 +50,12 @@ export const minLen =
   (v) =>
     isBlank(v) || String(v).trim().length >= n ? "" : `${label} must be at least ${n} characters`;
 
-export const maxLen =
-  (n: number, label = "This field"): Rule =>
-  (v) =>
-    isBlank(v) || String(v).trim().length <= n ? "" : `${label} must be at most ${n} characters`;
-
-/** A finite number (empty passes). */
-export const isNumber: Rule = (v) =>
-  isBlank(v) || Number.isFinite(Number(v)) ? "" : "Enter a valid number";
-
 /** A finite number ≥ 0 (empty passes). Used for prices, quantities, amounts. */
 export const isNonNegativeNumber: Rule = (v) => {
   if (isBlank(v)) return "";
   const n = Number(v);
   if (!Number.isFinite(n)) return "Enter a valid number";
   return n >= 0 ? "" : "Value cannot be negative";
-};
-
-/** A finite number > 0 (empty passes). Used for payment/charge amounts. */
-export const isPositiveNumber: Rule = (v) => {
-  if (isBlank(v)) return "";
-  const n = Number(v);
-  if (!Number.isFinite(n)) return "Enter a valid number";
-  return n > 0 ? "" : "Value must be greater than zero";
 };
 
 export const min =

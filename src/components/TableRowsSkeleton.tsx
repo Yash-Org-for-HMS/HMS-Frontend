@@ -84,5 +84,3 @@ export function ListSkeleton({ rows = 6 }: { rows?: number }) {
     </Paper>
   );
 }
-
-export default TableRowsSkeleton;
