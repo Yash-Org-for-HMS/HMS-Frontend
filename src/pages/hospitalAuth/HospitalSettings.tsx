@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "../../components/ErrorState";
 import {
@@ -154,7 +154,7 @@ export default function HospitalSettings() {
     return (
       <ErrorState
         title="Couldn't load settings"
-        message={(error as any)?.response?.data?.message}
+        message={apiErrorText(error)}
         onRetry={() => refetch()}
       />
     );

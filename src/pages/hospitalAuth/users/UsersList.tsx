@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -441,7 +441,7 @@ export default function UsersList() {
       await axiosInstance.put(`/hospital/users/${user.userId}/deactivate`, { isActive: !user.isActive });
       refetch();
     } catch (error) {
-      toast.error(getApiErrorMessage((error as any), "Failed to update user status"));
+      toast.error(getApiErrorMessage(error, "Failed to update user status"));
     }
   };
 
@@ -490,7 +490,7 @@ export default function UsersList() {
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
-                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+                    <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : sorted.length === 0 ? (

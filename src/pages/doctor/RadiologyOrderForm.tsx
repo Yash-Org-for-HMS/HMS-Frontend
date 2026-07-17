@@ -152,7 +152,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
         {loading ? (
           <ListSkeleton rows={3} />
         ) : isError ? (
-          <ErrorState message={getApiErrorMessage((error as any), "Failed to load radiology orders")} onRetry={refetch} />
+          <ErrorState message={getApiErrorMessage(error, "Failed to load radiology orders")} onRetry={refetch} />
         ) : existingOrders.length === 0 ? (
           <Mascot pose="nothing-here-yet" subtitle="No radiology orders for this consultation yet." size={130} />
         ) : (

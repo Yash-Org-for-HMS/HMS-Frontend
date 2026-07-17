@@ -21,6 +21,7 @@ import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import { useServerSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { apiErrorText } from "../../utils/apiError";
 
 // Match this page's existing table-head styling so SortableHeadCell blends in.
 const HEAD_SX = { bgcolor: "background.paper", color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" } as const;
@@ -148,7 +149,7 @@ export default function DoctorResults() {
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={7} sx={{ py: 4, borderBottom: "none" }}>
-                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+                    <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : rows.length === 0 ? (

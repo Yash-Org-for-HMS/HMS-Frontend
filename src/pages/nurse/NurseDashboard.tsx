@@ -18,6 +18,7 @@ import ErrorState from "../../components/ErrorState";
 import StatCard from "../../components/StatCard";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
+import { apiErrorText } from "../../utils/apiError";
 
 const NURSE_PURPLE = ACCENTS.nurse;
 const NURSE_PURPLE_DARK = ACCENTS.nurseDark;
@@ -54,7 +55,7 @@ export default function NurseDashboard() {
       <Box sx={{ pb: 6 }}>
         <ErrorState
           title="Couldn't load the queue"
-          message={(error as any)?.response?.data?.message}
+          message={apiErrorText(error)}
           onRetry={() => refetch()}
         />
       </Box>

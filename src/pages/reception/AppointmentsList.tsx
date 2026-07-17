@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
@@ -366,7 +366,7 @@ export default function AppointmentsList() {
               {loading ? (
                 <TableRowsSkeleton rows={6} columns={5} />
               ) : isError ? (
-                <TableRow><TableCell colSpan={5} sx={{ py: 4, border: 0 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} sx={{ py: 4, border: 0 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : sortedAppointments.length === 0 ? (
                 <TableRow><TableCell colSpan={5} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No appointments" subtitle="No appointments found." /></TableCell></TableRow>
               ) : (

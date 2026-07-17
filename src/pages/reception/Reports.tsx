@@ -21,6 +21,7 @@ import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
 import { exportTableToExcel } from "../../utils/exportExcel";
 import dayjs from "dayjs";
+import { apiErrorText } from "../../utils/apiError";
 
 const ACCENT = ACCENTS.reception;
 const PIE = ["#0891b2", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#3b82f6", "#ec4899"];
@@ -101,7 +102,7 @@ export function OpRegistration() {
         <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
         <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
       </Toolbar>
-      {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="Registrations" value={String(data.totals.registrations)} color={ACCENT} /></Grid>
@@ -130,7 +131,7 @@ export function OpBills() {
         <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
         <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
       </Toolbar>
-      {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PaymentsRounded />} label="Invoices" value={String(data.totals.invoices)} color={ACCENT} /></Grid>
@@ -161,7 +162,7 @@ export function DiagnosisWise() {
         <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
         <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
       </Toolbar>
-      {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<MedicalInformationRounded />} label="Consultations" value={String(data.totals.consultations)} color={ACCENT} /></Grid>
@@ -202,7 +203,7 @@ export function ReferralsByDoctor() {
         <FilterSelect label="Referring doctor" value={referrerId} onChange={setReferrerId} options={opts?.doctors} width={200} />
       </Toolbar>
 
-      {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<MedicalInformationRounded />} label="Referring doctors" value={String(s.referringDoctors)} color={ACCENT} /></Grid>
@@ -253,7 +254,7 @@ export function Census() {
         <FilterSelect label="Ward" value={wardId} onChange={setWardId} options={opts?.wards} />
       </Toolbar>
 
-      {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHotelRounded />} label="Current inpatients" value={String(data.currentInpatients)} color={ACCENT} /></Grid>
@@ -323,7 +324,7 @@ export function DailyOpd() {
         <FilterSelect label="Status" value={statusId} onChange={setStatusId} options={opts?.appointmentStatuses} />
       </Toolbar>
 
-      {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<EventRounded />} label="Appointments" value={String(t.appointments)} color={ACCENT} /></Grid>
@@ -395,7 +396,7 @@ export function Analytics() {
         <FilterSelect label="Status" value={statusId} onChange={setStatusId} options={opts?.appointmentStatuses} />
       </Toolbar>
 
-      {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<EventRounded />} label="Total appointments" value={String(t.appointments)} color={ACCENT} /></Grid>
@@ -477,7 +478,7 @@ export function Collection() {
         <FilterSelect label="Collector" value={collectedBy} onChange={setCollectedBy} options={opts?.collectors} width={200} />
       </Toolbar>
 
-      {isLoading ? <Loading /> : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /> : (
+      {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PaymentsRounded />} label="Gross collected" value={inr(t.gross)} color="#10b981" /></Grid>

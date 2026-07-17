@@ -40,6 +40,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from "recharts";
+import { apiErrorText } from "../../utils/apiError";
 
 interface DashboardStats {
   activePlanName: string;
@@ -79,7 +80,7 @@ export default function HospitalDashboard() {
       <Box sx={{ pb: 6 }}>
         <ErrorState
           title="Couldn't load the dashboard"
-          message={(error as any)?.response?.data?.message}
+          message={apiErrorText(error)}
           onRetry={() => refetch()}
         />
       </Box>

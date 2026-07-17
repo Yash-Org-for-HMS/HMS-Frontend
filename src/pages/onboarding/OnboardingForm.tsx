@@ -23,6 +23,7 @@ import HeartbeatLoader from "../../components/HeartbeatLoader";
 import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
+import { apiErrorText } from "../../utils/apiError";
 
 export default function OnboardingForm() {
   const { t } = useTranslation();
@@ -85,7 +86,7 @@ export default function OnboardingForm() {
   if (isError) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
-        <ErrorState title="Couldn't load onboarding record" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState title="Couldn't load onboarding record" message={apiErrorText(error)} onRetry={() => refetch()} />
       </Container>
     );
   }

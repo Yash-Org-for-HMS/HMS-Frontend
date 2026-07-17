@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -197,7 +197,7 @@ export default function HospitalForm() {
   if (isError) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
-        <ErrorState title="Couldn't load hospital" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState title="Couldn't load hospital" message={apiErrorText(error)} onRetry={() => refetch()} />
       </Container>
     );
   }

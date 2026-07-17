@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -172,7 +172,7 @@ export default function LabTestCatalog() {
         {loading ? (
           <ListSkeleton rows={6} />
         ) : isError ? (
-          <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+          <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
         ) : tests.length === 0 ? (
           <Mascot pose="nothing-here-yet" title="No lab tests found" subtitle="Get started by creating your first lab test." />
         ) : (

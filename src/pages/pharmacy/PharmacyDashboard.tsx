@@ -14,6 +14,7 @@ import ErrorState from "../../components/ErrorState";
 import StatCard from "../../components/StatCard";
 import PharmacyPage from "./components/PharmacyPage";
 import type { Medicine, LowStockAlert, PharmacyOrder, PurchaseOrder } from "../../types";
+import { apiErrorText } from "../../utils/apiError";
 
 export default function PharmacyDashboard() {
   const theme = useTheme();
@@ -55,7 +56,7 @@ export default function PharmacyDashboard() {
       {loading ? (
         <DashboardSkeleton />
       ) : isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : (
         <>
           <Grid container spacing={3} mb={4}>

@@ -105,7 +105,7 @@ export default function Dashboard() {
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <ErrorState
           title="Couldn't load the dashboard"
-          message={getApiErrorMessage((error as any), "Please check your connection and try again.")}
+          message={getApiErrorMessage(error, "Please check your connection and try again.")}
           onRetry={() => refetch()}
         />
       </Container>

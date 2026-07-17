@@ -390,7 +390,7 @@ export default function InventoryManagement() {
                                   });
                                   await fetchReference();
                                 } catch(err) {
-                                  toast.error(getApiErrorMessage((err as any), "Failed to assign default supplier"));
+                                  toast.error(getApiErrorMessage(err, "Failed to assign default supplier"));
                                 }
                               }
                             }}

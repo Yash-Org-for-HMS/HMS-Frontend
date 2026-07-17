@@ -21,6 +21,7 @@ import Mascot from "../../components/Mascot";
 import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { apiErrorText } from "../../utils/apiError";
 
 const ACCENT = "#10B981";
 const PIE_COLORS = ["#10b981", "#f59e0b", "#3b82f6", "#ef4444", "#8b5cf6", "#64748b"];
@@ -137,7 +138,7 @@ export default function LabReports() {
       {isLoading ? (
         <ReportSkeleton />
       ) : isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {/* KPIs */}

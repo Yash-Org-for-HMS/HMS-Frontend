@@ -11,6 +11,7 @@ import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import MarChart from "../../components/ipd/MarChart";
+import { apiErrorText } from "../../utils/apiError";
 
 // Nurse ward view: current in-patients + their medication chart (MAR).
 export default function NurseWard() {
@@ -48,7 +49,7 @@ export default function NurseWard() {
               {isLoading ? (
                 <TableRowsSkeleton rows={6} columns={5} />
               ) : isError ? (
-                <TableRow><TableCell colSpan={5}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={5}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow><TableCell colSpan={5}><Box sx={{ py: 4 }}><Mascot pose="all-caught-up" title="No in-patients" subtitle="No active admissions right now." size={120} /></Box></TableCell></TableRow>
               ) : (

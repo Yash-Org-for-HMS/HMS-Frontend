@@ -31,6 +31,7 @@ import PageHeader from "../../../components/layout/PageHeader";
 import { ListSkeleton } from "../../../components/TableRowsSkeleton";
 import { useTableSort } from "../../../components/table/useTableSort";
 import SortableHeadCell from "../../../components/table/SortableHeadCell";
+import { apiErrorText } from "../../../utils/apiError";
 
 const EMPTY_FILTERS = { moduleName: "", actionType: "", startDate: "", endDate: "" };
 
@@ -183,7 +184,7 @@ export default function AuditLogs() {
             <ListSkeleton rows={6} />
           </Box>
         ) : isError ? (
-          <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+          <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
         ) : (
           <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
             <Table stickyHeader>

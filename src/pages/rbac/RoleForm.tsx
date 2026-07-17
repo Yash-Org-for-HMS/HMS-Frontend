@@ -25,6 +25,7 @@ import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import FormSkeleton from "../../components/skeletons/FormSkeleton";
+import { apiErrorText } from "../../utils/apiError";
 
 export default function RoleForm() {
   const { t } = useTranslation();
@@ -124,7 +125,7 @@ export default function RoleForm() {
   if (isError) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <ErrorState title="Couldn't load role form" message={(error as any)?.response?.data?.message} onRetry={refetch} />
+        <ErrorState title="Couldn't load role form" message={apiErrorText(error)} onRetry={refetch} />
       </Container>
     );
   }

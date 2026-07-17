@@ -77,7 +77,7 @@ export default function UpdateLabOrder() {
 
   if (loading) return <DetailSkeleton />;
   if (isError || !order) {
-    return <ErrorState title="Couldn't load lab order" message={getApiErrorMessage((error as any), "Order not found")} onRetry={() => refetch()} />;
+    return <ErrorState title="Couldn't load lab order" message={getApiErrorMessage(error, "Order not found")} onRetry={() => refetch()} />;
   }
 
   return (

@@ -37,6 +37,7 @@ import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import { useAuth } from "../../contexts/AuthContext";
 import { useServerSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { apiErrorText } from "../../utils/apiError";
 
 // Keep the admin list's existing sentence-case header look (the SortableHeadCell
 // default is the reception-panel uppercase style).
@@ -148,7 +149,7 @@ export default function AuditLogsList() {
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={7} sx={{ py: 4, border: 0 }}>
-                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+                    <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : logs.length === 0 ? (

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -66,7 +66,7 @@ export default function FormTemplatesList() {
       await axiosInstance.delete(`/hospital/form-builder/${id}`);
       refetch();
     } catch (error) {
-      alert(getApiErrorMessage((error as any), "Failed to delete template"));
+      alert(getApiErrorMessage(error, "Failed to delete template"));
     }
   };
 
@@ -105,7 +105,7 @@ export default function FormTemplatesList() {
       {loading ? (
         <ListSkeleton rows={6} />
       ) : isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : (
         <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "calc(100vh - 300px)" }}>
           <Table stickyHeader>

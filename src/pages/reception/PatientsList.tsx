@@ -225,7 +225,7 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
 
         {error && (
           <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5" }}>
-            {getApiErrorMessage((error as any), "Failed to load patients")}
+            {getApiErrorMessage(error, "Failed to load patients")}
           </Alert>
         )}
 

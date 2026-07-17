@@ -15,6 +15,7 @@ import ErrorState from "../ErrorState";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { assetUrl } from "../../utils/assetUrl";
 import dayjs from "dayjs";
+import { apiErrorText } from "../../utils/apiError";
 
 type DocKind = "prescription" | "lab" | "radiology";
 
@@ -64,7 +65,7 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
       {isLoading ? (
         <ListSkeleton />
       ) : isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : (
         <>
           <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 1, "& .MuiTab-root": { textTransform: "none", fontWeight: 600 }, "& .Mui-selected": { color: `${ACCENT} !important` }, "& .MuiTabs-indicator": { bgcolor: ACCENT } }}>

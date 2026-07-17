@@ -17,6 +17,7 @@ import ErrorState from "../../components/ErrorState";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useSocket } from "../../hooks/useSocket";
 import PageHeader from "../../components/layout/PageHeader";
+import { apiErrorText } from "../../utils/apiError";
 
 interface AppointmentEntry {
   appointmentId: string;
@@ -113,7 +114,7 @@ export default function ReceptionDashboard() {
   const beds = bedData?.summary;
 
   if (isError) {
-    return <Box sx={{ pb: 6 }}><ErrorState title="Couldn't load the dashboard" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></Box>;
+    return <Box sx={{ pb: 6 }}><ErrorState title="Couldn't load the dashboard" message={apiErrorText(error)} onRetry={() => refetch()} /></Box>;
   }
 
   const waiting = stats?.waitingPatients || 0;

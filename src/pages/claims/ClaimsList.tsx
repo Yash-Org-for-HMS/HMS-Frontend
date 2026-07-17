@@ -15,6 +15,7 @@ import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import { CLAIM_STATUS_META, statusMeta } from "./claimMeta";
+import { apiErrorText } from "../../utils/apiError";
 
 const ACCENT = ACCENTS.reception;
 
@@ -75,7 +76,7 @@ export default function ClaimsList() {
               {isLoading ? (
                 <TableRowsSkeleton rows={6} columns={7} />
               ) : isError ? (
-                <TableRow><TableCell colSpan={7}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={7}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : claims.length === 0 ? (
                 <TableRow><TableCell colSpan={7}>
                   <Box sx={{ py: 4 }}>

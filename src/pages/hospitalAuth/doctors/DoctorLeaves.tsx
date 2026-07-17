@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Button, Table, TableBody, TableCell,
@@ -127,7 +127,7 @@ export default function DoctorLeaves() {
       {isLoading ? (
         <PageSkeleton />
       ) : isError ? (
-        <ErrorState title="Couldn't load leaves" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState title="Couldn't load leaves" message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : (
         <TableContainer component={Paper} elevation={0} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, border: "1px solid", borderColor: "divider", maxHeight: "calc(100vh - 300px)" }}>
           <Table stickyHeader>

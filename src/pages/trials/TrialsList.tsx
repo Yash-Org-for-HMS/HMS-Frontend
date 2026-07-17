@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { trialStatusColor } from "../../utils/statusColors";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -103,7 +103,7 @@ export default function TrialsList() {
       toast.success("Trial expired");
       refetch();
     } catch (error) {
-      toast.error(getApiErrorMessage((error as any), "Failed to expire trial"));
+      toast.error(getApiErrorMessage(error, "Failed to expire trial"));
     }
   };
 
@@ -117,7 +117,7 @@ export default function TrialsList() {
       toast.success("Trial extended by 14 days");
       refetch();
     } catch (error) {
-      toast.error(getApiErrorMessage((error as any), "Failed to extend trial"));
+      toast.error(getApiErrorMessage(error, "Failed to extend trial"));
     }
   };
 
@@ -135,7 +135,7 @@ export default function TrialsList() {
       toast.success("Marked as lost");
       refetch();
     } catch (error) {
-      toast.error(getApiErrorMessage((error as any), "Failed to update"));
+      toast.error(getApiErrorMessage(error, "Failed to update"));
     }
   };
 
@@ -239,7 +239,7 @@ export default function TrialsList() {
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={6} sx={{ py: 4, border: 0 }}>
-                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+                    <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : trials.length === 0 ? (

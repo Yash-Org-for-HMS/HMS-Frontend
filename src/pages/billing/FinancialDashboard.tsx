@@ -14,6 +14,7 @@ import ErrorState from "../../components/ErrorState";
 import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 import StatCard from "../../components/StatCard";
+import { apiErrorText } from "../../utils/apiError";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"];
 const PAYMENT_COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b"];
@@ -34,7 +35,7 @@ export default function FinancialDashboard() {
   if (isError || !analytics) {
     return (
       <Box>
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       </Box>
     );
   }

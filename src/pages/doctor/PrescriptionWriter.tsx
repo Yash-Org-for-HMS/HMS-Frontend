@@ -390,7 +390,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   }
 
   if (isError) {
-    return <Box sx={{ p: 4 }}><ErrorState message={getApiErrorMessage((error as any), "Failed to load prescription")} onRetry={refetch} /></Box>;
+    return <Box sx={{ p: 4 }}><ErrorState message={getApiErrorMessage(error, "Failed to load prescription")} onRetry={refetch} /></Box>;
   }
 
   return (

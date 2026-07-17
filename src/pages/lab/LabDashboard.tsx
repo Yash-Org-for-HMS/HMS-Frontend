@@ -9,6 +9,7 @@ import ErrorState from "../../components/ErrorState";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "../../components/layout/PageHeader";
 import StatCard from "../../components/StatCard";
+import { apiErrorText } from "../../utils/apiError";
 
 export default function LabDashboard() {
   const navigate = useNavigate();
@@ -79,7 +80,7 @@ export default function LabDashboard() {
   if (isError) {
     return (
       <Box sx={{ p: { xs: 2, md: 4 } }}>
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       </Box>
     );
   }

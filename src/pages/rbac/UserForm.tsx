@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -188,7 +188,7 @@ export default function UserForm() {
   }
 
   if (isError) {
-    return <ErrorState title="Couldn't load user" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
+    return <ErrorState title="Couldn't load user" message={apiErrorText(error)} onRetry={() => refetch()} />;
   }
 
   return (

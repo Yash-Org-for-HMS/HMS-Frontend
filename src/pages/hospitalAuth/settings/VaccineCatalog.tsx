@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Button, Chip, IconButton, Tooltip,
@@ -45,7 +45,7 @@ export default function VaccineCatalog() {
   };
 
   if (isLoading) return <DetailSkeleton />;
-  if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
+  if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
   return (
     <Box>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
@@ -44,7 +44,7 @@ export default function ClaimDetail() {
   });
 
   if (isLoading) return <DetailSkeleton />;
-  if (isError || !claim) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
+  if (isError || !claim) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
   const m = statusMeta(claim.status);
   const inr = (v: any) => (v != null ? formatINR(Number(v)) : "—");

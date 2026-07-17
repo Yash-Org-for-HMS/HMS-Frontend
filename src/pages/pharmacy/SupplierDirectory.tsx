@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Dialog, DialogTitle, DialogContent, DialogActions, Grid,
@@ -240,7 +240,7 @@ export default function SupplierDirectory() {
             <ListSkeleton rows={6} />
           </Box>
         ) : isError ? (
-          <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+          <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
         ) : suppliers.length === 0 ? (
           <Mascot
             pose={debouncedSearch ? "no-matches" : "nothing-here-yet"}

@@ -21,6 +21,7 @@ import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
 import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "../../utils/validation";
+import { apiErrorText } from "../../utils/apiError";
 
 export default function LeadForm() {
   const { t } = useTranslation();
@@ -120,7 +121,7 @@ export default function LeadForm() {
   if (isError) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
-        <ErrorState title="Couldn't load lead" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState title="Couldn't load lead" message={apiErrorText(error)} onRetry={() => refetch()} />
       </Container>
     );
   }

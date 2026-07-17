@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { formatINR } from "../../utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -127,7 +127,7 @@ export default function Admissions() {
               {isLoading ? (
                 <TableRowsSkeleton rows={6} columns={9} />
               ) : isError ? (
-                <TableRow><TableCell colSpan={9} sx={{ py: 4, border: 0 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} sx={{ py: 4, border: 0 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : sorted.length === 0 ? (
                 <TableRow><TableCell colSpan={9} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No admissions" subtitle="Nothing here for this filter." /></TableCell></TableRow>
               ) : sorted.map((a) => {

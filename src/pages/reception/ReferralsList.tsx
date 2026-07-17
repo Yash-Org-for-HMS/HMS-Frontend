@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer,
@@ -128,7 +128,7 @@ export default function ReferralsList() {
               {isLoading ? (
                 <TableRowsSkeleton rows={6} columns={7} />
               ) : isError ? (
-                <TableRow><TableCell colSpan={7} sx={{ py: 4, border: 0 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} sx={{ py: 4, border: 0 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : sorted.length === 0 ? (
                 <TableRow><TableCell colSpan={7} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No referrals" subtitle="No referrals match your filters." /></TableCell></TableRow>
               ) : (

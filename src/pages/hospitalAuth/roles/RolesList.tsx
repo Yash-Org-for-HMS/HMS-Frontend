@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -77,7 +77,7 @@ export default function RolesList() {
       });
       refetch();
     } catch (error) {
-      toast.error(getApiErrorMessage((error as any), "Failed to update role status"));
+      toast.error(getApiErrorMessage(error, "Failed to update role status"));
     }
   };
 
@@ -131,7 +131,7 @@ export default function RolesList() {
             ) : isError ? (
               <TableRow>
                 <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
-                  <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+                  <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
                 </TableCell>
               </TableRow>
             ) : sorted.length === 0 ? (

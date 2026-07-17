@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
 import {
   Box,
   Typography,
@@ -165,7 +165,7 @@ export default function DoctorForm() {
   }
 
   if (isError) {
-    return <ErrorState title="Couldn't load doctor form" message={(error as any)?.response?.data?.message} onRetry={refetch} />;
+    return <ErrorState title="Couldn't load doctor form" message={apiErrorText(error)} onRetry={refetch} />;
   }
 
   const textFieldProps = {

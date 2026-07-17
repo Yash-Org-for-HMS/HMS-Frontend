@@ -22,6 +22,7 @@ import Mascot from "../../components/Mascot";
 import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { apiErrorText } from "../../utils/apiError";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
 const PIE_COLORS = ["#3b82f6", "#ec4899", "#f59e0b", "#10b981", "#8b5cf6", "#64748b"];
@@ -315,7 +316,7 @@ export default function DoctorReports() {
       {isLoading ? (
         <ReportSkeleton />
       ) : isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : (
         <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2.5, alignItems: "flex-start" }}>
           {/* Report picker */}

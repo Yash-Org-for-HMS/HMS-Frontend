@@ -51,7 +51,7 @@ export default function CreatePODialog({ open, onClose, suppliers, medicines, on
       await onCreated();
     } catch (err) {
       console.error(err);
-      toast.error(getApiErrorMessage((err as any), "Failed to create PO"));
+      toast.error(getApiErrorMessage(err, "Failed to create PO"));
     } finally {
       setSaving(false);
     }

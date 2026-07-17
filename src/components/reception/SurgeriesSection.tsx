@@ -11,6 +11,7 @@ import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
 import Mascot from "../Mascot";
 import dayjs from "dayjs";
+import { apiErrorText } from "../../utils/apiError";
 
 const ACCENT = ACCENTS.reception;
 
@@ -30,7 +31,7 @@ export default function SurgeriesSection({ patientId }: { patientId: string }) {
   });
 
   if (isLoading) return <ListSkeleton />;
-  if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
+  if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
   return (
     <Box>

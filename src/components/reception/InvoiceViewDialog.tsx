@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { formatINR, formatDate } from "../../utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -94,7 +94,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
       </DialogTitle>
       <DialogContent dividers>
         {isLoading ? <ListSkeleton />
-          : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+          : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
           : invoice ? (
             <>
               <Box ref={receiptRef}>

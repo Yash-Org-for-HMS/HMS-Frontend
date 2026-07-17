@@ -1,5 +1,5 @@
 import { ACCENTS } from "../../styles/accents";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -67,7 +67,7 @@ export default function ConsentFormsSection({ patientId, patientName, readOnly =
       {isLoading ? (
         <ListSkeleton />
       ) : isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : forms.length === 0 ? (
         <Typography variant="body2" sx={{ color: "text.secondary", py: 3, textAlign: "center" }}>No consent forms issued yet</Typography>
       ) : (

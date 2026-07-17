@@ -19,6 +19,7 @@ import GenerateInvoice from "../billing/GenerateInvoice";
 import InvoiceViewDialog from "../../components/reception/InvoiceViewDialog";
 import PageHeader from "../../components/layout/PageHeader";
 import { useSearchParams } from "react-router-dom";
+import { apiErrorText } from "../../utils/apiError";
 
 const ACCENT = ACCENTS.reception;
 const STATUSES = [
@@ -113,7 +114,7 @@ function BillsList({ type }: { type: "OPD" | "IPD" }) {
               {isLoading ? (
                 <TableRowsSkeleton rows={6} columns={columnCount} />
               ) : isError ? (
-                <TableRow><TableCell colSpan={columnCount} sx={{ py: 4, border: 0 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={columnCount} sx={{ py: 4, border: 0 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : rows.length === 0 ? (
                 <TableRow><TableCell colSpan={columnCount} sx={{ py: 4, border: 0 }}>
                   <Mascot pose="all-caught-up" title={isIpd ? "No IPD bills" : "No OPD bills"} subtitle="No invoices match your filters." />

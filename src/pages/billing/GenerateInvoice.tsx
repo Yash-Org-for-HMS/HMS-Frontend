@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Autocomplete, TextField,
@@ -105,7 +105,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
       setPaymentAmount(netAmount);
       toast.success(`Invoice ${res.data.data?.invoiceNumber || ""} generated`);
     } catch (err) {
-      toast.error(getApiErrorMessage((err as any), "Error generating invoice"));
+      toast.error(getApiErrorMessage(err, "Error generating invoice"));
     } finally {
       setIsGenerating(false);
     }
@@ -123,7 +123,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
       setGeneratedInvoice(null);
       refetchUnbilled();
     } catch (err) {
-      toast.error(getApiErrorMessage((err as any), "Payment failed"));
+      toast.error(getApiErrorMessage(err, "Payment failed"));
     } finally {
       setIsProcessingPayment(false);
     }
@@ -174,7 +174,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                 <ListSkeleton />
               ) : itemsError ? (
                 <Box sx={{ p: 2 }}>
-                  <ErrorState message={(itemsErr as any)?.response?.data?.message} onRetry={() => refetchUnbilled()} />
+                  <ErrorState message={apiErrorText(itemsErr)} onRetry={() => refetchUnbilled()} />
                 </Box>
               ) : unbilledItems.length === 0 ? (
                 <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>

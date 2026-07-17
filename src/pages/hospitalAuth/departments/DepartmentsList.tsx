@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getApiErrorMessage } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
 import {
   Box,
   Typography,
@@ -62,7 +62,7 @@ export default function DepartmentsList() {
       });
       refetch();
     } catch (error) {
-      toast.error(getApiErrorMessage((error as any), "Failed to update department status"));
+      toast.error(getApiErrorMessage(error, "Failed to update department status"));
     }
   };
 
@@ -107,7 +107,7 @@ export default function DepartmentsList() {
             ) : isError ? (
               <TableRow>
                 <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
-                  <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+                  <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
                 </TableCell>
               </TableRow>
             ) : sorted.length === 0 ? (

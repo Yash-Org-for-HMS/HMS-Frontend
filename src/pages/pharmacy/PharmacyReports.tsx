@@ -20,6 +20,7 @@ import Mascot from "../../components/Mascot";
 import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { apiErrorText } from "../../utils/apiError";
 
 const ACCENT = "#4F46E5";
 const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
@@ -138,7 +139,7 @@ export default function PharmacyReports() {
       {isLoading ? (
         <ReportSkeleton />
       ) : isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {/* KPIs */}

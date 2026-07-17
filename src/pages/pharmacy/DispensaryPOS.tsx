@@ -629,7 +629,7 @@ export default function DispensaryPOS() {
             return true;
           } catch (err) {
             console.error(err);
-            toast.error(getApiErrorMessage((err as any), "Failed to cancel order"));
+            toast.error(getApiErrorMessage(err, "Failed to cancel order"));
             return false;
           }
         }}
@@ -651,7 +651,7 @@ export default function DispensaryPOS() {
             return true;
           } catch (err) {
             console.error(err);
-            toast.error(getApiErrorMessage((err as any), "Failed to dismiss prescription"));
+            toast.error(getApiErrorMessage(err, "Failed to dismiss prescription"));
             return false;
           }
         }}

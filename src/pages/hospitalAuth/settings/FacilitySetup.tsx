@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Grid, Button, Chip, Menu, MenuItem, IconButton,
@@ -77,7 +77,7 @@ export default function FacilitySetup() {
       )}
 
       {isLoading ? <ListSkeleton />
-        : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
         : wards.length === 0 ? <Mascot pose="all-caught-up" title="No wards yet" subtitle="Use Add to create a ward, room, and beds." />
         : (
           <Stack spacing={2.5}>

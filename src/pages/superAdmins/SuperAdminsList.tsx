@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -152,7 +152,7 @@ export default function SuperAdminsList() {
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={4} sx={{ py: 4, border: 0 }}>
-                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+                    <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : admins.length === 0 ? (

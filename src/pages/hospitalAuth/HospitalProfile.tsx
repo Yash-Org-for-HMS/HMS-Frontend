@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "../../components/ErrorState";
 import GeoAddressPicker from "../../components/GeoAddressPicker";
@@ -179,7 +179,7 @@ export default function HospitalProfile() {
     return (
       <ErrorState
         title="Couldn't load profile"
-        message={(error as any)?.response?.data?.message}
+        message={apiErrorText(error)}
         onRetry={() => refetch()}
       />
     );

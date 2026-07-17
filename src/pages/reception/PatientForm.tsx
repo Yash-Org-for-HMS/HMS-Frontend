@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import GeoAddressPicker from "../../components/GeoAddressPicker";
 import {
@@ -210,7 +210,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
   }
 
   if (isError) {
-    return <ErrorState title="Couldn't load patient form" message={(error as any)?.response?.data?.message} onRetry={refetch} />;
+    return <ErrorState title="Couldn't load patient form" message={apiErrorText(error)} onRetry={refetch} />;
   }
 
   const fieldSx = {

@@ -17,6 +17,7 @@ import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import StatCard from "../../components/StatCard";
 import { typeScale } from "../../styles/typography";
 import { sanitizeRichText } from "../../utils/sanitizeHtml";
+import { apiErrorText } from "../../utils/apiError";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
 
@@ -96,7 +97,7 @@ export default function DoctorPatientProfile() {
   if (patientQ.isError || !p) {
     return (
       <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", p: 4 }}>
-        <ErrorState title="Couldn't load this patient" message={(patientQ.error as any)?.response?.data?.message} onRetry={() => patientQ.refetch()} />
+        <ErrorState title="Couldn't load this patient" message={apiErrorText(patientQ.error)} onRetry={() => patientQ.refetch()} />
         <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ mt: 1 }}>
           Back to Patients
         </Button>

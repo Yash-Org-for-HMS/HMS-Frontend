@@ -27,6 +27,7 @@ import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 import { useServerSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { apiErrorText } from "../../utils/apiError";
 
 // Match this list's existing sentence-case header look.
 const headSx = { bgcolor: "background.paper", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider", textTransform: "none", letterSpacing: "normal", fontSize: "0.875rem" } as const;
@@ -117,7 +118,7 @@ export default function NotificationsLog() {
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={5} sx={{ py: 4, borderBottom: "none" }}>
-                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+                    <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : notifications.length === 0 ? (

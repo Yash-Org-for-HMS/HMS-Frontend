@@ -19,6 +19,7 @@ import { exportTableToExcel } from "../../utils/exportExcel";
 import PageHeader from "../../components/layout/PageHeader";
 import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
 import ErrorState from "../../components/ErrorState";
+import { apiErrorText } from "../../utils/apiError";
 
 const ACCENT = ACCENTS.admin; // indigo #6366f1
 const PIE_COLORS = ["#6366f1", "#8b5cf6", "#0891b2", "#10b981", "#f59e0b", "#ef4444", "#64748b", "#ec4899"];
@@ -134,7 +135,7 @@ function OverviewReport() {
   });
 
   if (isLoading) return <ReportSkeleton />;
-  if (isError || !data) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
+  if (isError || !data) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
   const byPlan: any[] = data.hospitalsByPlan || [];
   const byStatus: any[] = data.leadsByStatus || [];
@@ -232,7 +233,7 @@ function HospitalsReport() {
   });
 
   if (isLoading) return <ReportSkeleton />;
-  if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
+  if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
   const planNames = (h: any) => {
     const names = [...new Set((h.branches || []).map((b: any) => b.subscriptionPlan?.planName).filter(Boolean))];
@@ -271,7 +272,7 @@ function LeadsReport() {
   });
 
   if (isLoading) return <ReportSkeleton />;
-  if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
+  if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
   const rows = data.map((l: any) => [
     l.hospitalName || "—",
@@ -320,7 +321,7 @@ function TrialsReport() {
   });
 
   if (isLoading) return <ReportSkeleton />;
-  if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
+  if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
   const rows = data.map((t: any) => [
     t.lead?.hospitalName || "—",
@@ -353,7 +354,7 @@ function SubscriptionsReport() {
   });
 
   if (isLoading) return <ReportSkeleton />;
-  if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
+  if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
   // Est. MRR per plan = monthlyPrice × branches subscribed to it (same basis as the dashboard).
   const withMrr = data.map((p: any) => {
@@ -411,7 +412,7 @@ function OnboardingReport() {
   });
 
   if (isLoading) return <ReportSkeleton />;
-  if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
+  if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
   const rows = data.map((o: any) => [
     o.hospital?.hospitalName || "—",

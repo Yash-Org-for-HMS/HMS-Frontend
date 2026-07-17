@@ -261,7 +261,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
 
   if (loading) return <FormSkeleton />;
 
-  if (isError) return <Box sx={{ p: 4 }}><ErrorState message={getApiErrorMessage((error as any), "Failed to initialize form")} onRetry={refetch} /></Box>;
+  if (isError) return <Box sx={{ p: 4 }}><ErrorState message={getApiErrorMessage(error, "Failed to initialize form")} onRetry={refetch} /></Box>;
 
   const filteredDoctors = (dropdowns?.doctors || []).filter((d: any) => !formData.departmentId || d.departmentId === formData.departmentId);
 

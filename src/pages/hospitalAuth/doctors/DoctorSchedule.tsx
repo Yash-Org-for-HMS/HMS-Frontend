@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "../../../components/ErrorState";
 import {
@@ -77,7 +77,7 @@ export default function DoctorSchedule() {
   }
 
   if (isError) {
-    return <ErrorState title="Couldn't load schedule" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
+    return <ErrorState title="Couldn't load schedule" message={apiErrorText(error)} onRetry={() => refetch()} />;
   }
 
   const textFieldProps = {

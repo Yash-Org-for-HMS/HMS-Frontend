@@ -28,6 +28,7 @@ import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import { validate, hasErrors, required, isEmail, type Errors } from "../../utils/validation";
 import FormHeader from "../../components/layout/FormHeader";
+import { apiErrorText } from "../../utils/apiError";
 
 export default function TrialForm() {
   const { t } = useTranslation();
@@ -142,7 +143,7 @@ export default function TrialForm() {
   if (isError) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
-        <ErrorState title="Couldn't load leads" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState title="Couldn't load leads" message={apiErrorText(error)} onRetry={() => refetch()} />
       </Container>
     );
   }

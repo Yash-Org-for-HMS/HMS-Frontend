@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getApiErrorMessage } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
 import ErrorState from "../../../components/ErrorState";
 import {
   Box, Typography, Paper, List, ListItem, ListItemText,
@@ -42,7 +42,7 @@ export default function ModuleAccess() {
     return <DetailSkeleton />;
   }
   if (isError) {
-    return <ErrorState title="Couldn't load module access" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
+    return <ErrorState title="Couldn't load module access" message={apiErrorText(error)} onRetry={() => refetch()} />;
   }
 
   const allModules = [...(data?.enabledModules || []), ...(data?.disabledModules || [])];

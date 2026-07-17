@@ -23,6 +23,7 @@ import HeartbeatLoader from "../../components/HeartbeatLoader";
 import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
+import { apiErrorText } from "../../utils/apiError";
 
 export default function FeatureFlagForm() {
   const { t } = useTranslation();
@@ -106,7 +107,7 @@ export default function FeatureFlagForm() {
   if (isError) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
-        <ErrorState title="Couldn't load feature flag" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState title="Couldn't load feature flag" message={apiErrorText(error)} onRetry={() => refetch()} />
       </Container>
     );
   }

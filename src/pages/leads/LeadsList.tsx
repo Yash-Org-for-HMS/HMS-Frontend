@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -118,7 +118,7 @@ export default function LeadsList() {
       setDeleteId(null);
       refetch();
     } catch (error) {
-      toast.error(getApiErrorMessage((error as any), "Failed to delete lead"));
+      toast.error(getApiErrorMessage(error, "Failed to delete lead"));
     }
   };
 
@@ -163,7 +163,7 @@ export default function LeadsList() {
       await axiosInstance.patch(`/leads/${leadId}/status`, { status: newStatus });
       refetch();
     } catch (error) {
-      toast.error(getApiErrorMessage((error as any), "Failed to update status"));
+      toast.error(getApiErrorMessage(error, "Failed to update status"));
     }
   };
 
@@ -174,7 +174,7 @@ export default function LeadsList() {
       setAnchorEl(null);
       refetch();
     } catch (error) {
-      toast.error(getApiErrorMessage((error as any), "Failed to assign lead"));
+      toast.error(getApiErrorMessage(error, "Failed to assign lead"));
     }
   };
 
@@ -309,7 +309,7 @@ export default function LeadsList() {
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={5} sx={{ py: 4, border: 0 }}>
-                    <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+                    <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : leads.length === 0 ? (

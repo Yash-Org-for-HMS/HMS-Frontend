@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -202,7 +202,7 @@ export default function LookupManager() {
 {loading ? (
         <Box sx={{ height: "calc(100vh - 320px)" }}><ListSkeleton rows={6} /></Box>
       ) : isError ? (
-        <Box sx={{ height: "calc(100vh - 320px)" }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></Box>
+        <Box sx={{ height: "calc(100vh - 320px)" }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></Box>
       ) : (
         <TableContainer component={Paper} sx={{ width: "100%", bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, height: "calc(100vh - 320px)" }}>
           <Table stickyHeader sx={{ width: "100%", tableLayout: "fixed" }}>

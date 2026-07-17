@@ -116,7 +116,7 @@ export default function PatientDocumentsSection({ patientId, readOnly = false }:
 {loading ? (
         <ListSkeleton />
       ) : isError ? (
-        <ErrorState message={getApiErrorMessage((error as any), "Failed to load documents")} onRetry={fetchDocuments} />
+        <ErrorState message={getApiErrorMessage(error, "Failed to load documents")} onRetry={fetchDocuments} />
       ) : documents.length === 0 ? (
         <Paper elevation={0} sx={{ p: 3, bgcolor: "action.hover", border: "1px dashed", borderColor: "divider", borderRadius: 3 }}>
           <Mascot pose="nothing-here-yet" title="No documents found" subtitle="Upload Aadhaar, Insurance Cards, or Referral Letters here." size={130} />

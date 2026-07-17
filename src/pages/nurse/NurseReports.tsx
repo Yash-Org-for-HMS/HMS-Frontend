@@ -22,6 +22,7 @@ import Mascot from "../../components/Mascot";
 import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { apiErrorText } from "../../utils/apiError";
 
 const NURSE_PURPLE = ACCENTS.nurse;
 
@@ -303,7 +304,7 @@ export default function NurseReports() {
       {isLoading ? (
         <ReportSkeleton />
       ) : isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : (
         <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2.5, alignItems: "flex-start" }}>
           {/* Report picker */}

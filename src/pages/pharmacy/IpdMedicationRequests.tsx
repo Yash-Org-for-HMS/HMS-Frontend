@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
@@ -81,7 +81,7 @@ export default function IpdMedicationRequests() {
               {isLoading ? (
                 <TableRow><TableCell colSpan={8} sx={{ border: 0 }}><ListSkeleton rows={5} /></TableCell></TableRow>
               ) : isError ? (
-                <TableRow><TableCell colSpan={8}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={8}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : requests.length === 0 ? (
                 <TableRow><TableCell colSpan={8} sx={{ border: 0 }}>
                   <Mascot pose="all-caught-up" title="No pending requests" subtitle="Nothing waiting from the wards right now." size={110} />

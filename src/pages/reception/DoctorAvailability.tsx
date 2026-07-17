@@ -17,6 +17,7 @@ import AppointmentForm from "./AppointmentForm";
 import BillingModal from "./BillingModal";
 import { useToast } from "../../contexts/ToastContext";
 import dayjs from "dayjs";
+import { apiErrorText } from "../../utils/apiError";
 
 const STATUS = {
   AVAILABLE: { label: "Available", color: "#10b981", icon: <EventAvailableRounded fontSize="small" /> },
@@ -78,7 +79,7 @@ export default function DoctorAvailability() {
       {isLoading ? (
         <CardGridSkeleton />
       ) : isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : doctors.length === 0 ? (
         <Mascot pose="all-caught-up" title="No doctors" subtitle="No doctors are configured for this hospital yet." />
       ) : (

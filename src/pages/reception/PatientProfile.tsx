@@ -203,7 +203,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
   if (isError || !patient) {
     return (
       <Box sx={{ maxWidth: 600, mx: "auto", mt: 4 }}>
-        <ErrorState title="Couldn't load patient" message={getApiErrorMessage((error as any), "Patient not found")} onRetry={() => refetch()} />
+        <ErrorState title="Couldn't load patient" message={getApiErrorMessage(error, "Patient not found")} onRetry={() => refetch()} />
         <Box sx={{ textAlign: "center" }}>
           <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ mt: 2, color: ACCENT }}>Back</Button>
         </Box>

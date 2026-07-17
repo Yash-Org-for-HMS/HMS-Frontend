@@ -22,6 +22,7 @@ import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
 import { validate, hasErrors, required, isNonNegativeNumber, min } from "../../utils/validation";
+import { apiErrorText } from "../../utils/apiError";
 
 export default function PlanForm() {
   const { t } = useTranslation();
@@ -121,7 +122,7 @@ export default function PlanForm() {
   if (isError) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
-        <ErrorState title="Couldn't load plan" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState title="Couldn't load plan" message={apiErrorText(error)} onRetry={() => refetch()} />
       </Container>
     );
   }

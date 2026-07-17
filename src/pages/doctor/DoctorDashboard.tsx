@@ -16,6 +16,7 @@ import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
 import StatCard from "../../components/StatCard";
 import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
+import { apiErrorText } from "../../utils/apiError";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
 
@@ -34,7 +35,7 @@ export default function DoctorDashboard() {
       <Box sx={{ pb: 6 }}>
         <ErrorState
           title="Couldn't load your dashboard"
-          message={(error as any)?.response?.data?.message}
+          message={apiErrorText(error)}
           onRetry={() => refetch()}
         />
       </Box>

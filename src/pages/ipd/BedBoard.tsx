@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Grid, Chip, Menu, MenuItem, Tooltip,
@@ -69,7 +69,7 @@ export default function BedBoard() {
       )}
 
       {isLoading ? <ListSkeleton />
-        : isError ? <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
         : wards.length === 0 ? <Mascot pose="all-caught-up" title="No wards yet" subtitle="Ask your hospital administrator to set up wards, rooms, and beds." />
         : (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>

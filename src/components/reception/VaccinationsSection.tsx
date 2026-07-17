@@ -1,5 +1,5 @@
 import { ACCENTS } from "../../styles/accents";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -235,7 +235,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
   };
 
   if (isLoading) return <ListSkeleton />;
-  if (isError) return <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />;
+  if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
   const totals = data?.totals ?? { due: 0, overdue: 0, done: 0, upcoming: 0 };
 

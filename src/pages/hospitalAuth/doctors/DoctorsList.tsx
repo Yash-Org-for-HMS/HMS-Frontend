@@ -29,6 +29,7 @@ import { ListSkeleton } from "../../../components/TableRowsSkeleton";
 import HeartbeatLoader from "../../../components/HeartbeatLoader";
 import { useServerSort } from "../../../components/table/useTableSort";
 import SortableHeadCell from "../../../components/table/SortableHeadCell";
+import { apiErrorText } from "../../../utils/apiError";
 
 const PAGE_SIZE = 20;
 
@@ -91,7 +92,7 @@ export default function DoctorsList() {
       {loading ? (
         <ListSkeleton rows={6} />
       ) : isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : (
         <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "calc(100vh - 300px)" }}>
           <Table stickyHeader>

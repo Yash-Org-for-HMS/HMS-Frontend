@@ -91,7 +91,7 @@ export default function AutoGeneratePODialog({ open, onClose, lowStockAlerts, me
       onClose();
       await onGenerated();
     } catch (err) {
-      toast.error(getApiErrorMessage((err as any), "Failed to generate purchase orders"));
+      toast.error(getApiErrorMessage(err, "Failed to generate purchase orders"));
       // Some POs may have been created before the failure — refresh so the list is honest.
       await onGenerated();
     } finally {

@@ -24,6 +24,7 @@ import PageHeader from "../../components/layout/PageHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
 import { statusMeta } from "./claimMeta";
+import { apiErrorText } from "../../utils/apiError";
 
 const ACCENT = ACCENTS.reception;
 const fmtDate = (d: string) => (d ? dayjs(d).format("DD MMM YYYY") : "—");
@@ -240,7 +241,7 @@ export default function ClaimReports() {
       {isLoading ? (
         <ReportSkeleton />
       ) : isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : (data?.summary?.totalClaims ?? 0) === 0 ? (
         <Box sx={{ py: 6 }}><Mascot pose="nothing-here-yet" title="No claims in this range" subtitle="Register some claims, then come back for analytics." size={130} /></Box>
       ) : (

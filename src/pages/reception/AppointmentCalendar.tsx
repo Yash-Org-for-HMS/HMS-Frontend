@@ -15,6 +15,7 @@ import PageSkeleton from "../../components/PageSkeleton";
 import ErrorState from "../../components/ErrorState";
 import PageHeader from "../../components/layout/PageHeader";
 import dayjs, { Dayjs } from "dayjs";
+import { apiErrorText } from "../../utils/apiError";
 
 // Grid bounds. Slots run START_HOUR→END_HOUR in SLOT_MINUTES steps.
 const START_HOUR = 8;
@@ -161,7 +162,7 @@ export default function AppointmentCalendar() {
       {/* Grid */}
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
         {isError ? (
-          <Box sx={{ p: 4 }}><ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} /></Box>
+          <Box sx={{ p: 4 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></Box>
         ) : (
           <Box sx={{ overflowX: "auto", position: "relative" }}>
             {isLoading && (

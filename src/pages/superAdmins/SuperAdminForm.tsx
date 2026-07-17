@@ -21,6 +21,7 @@ import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
 import { validate, hasErrors, required, isEmail, isPhone, minLen, type Errors } from "../../utils/validation";
+import { apiErrorText } from "../../utils/apiError";
 
 export default function SuperAdminForm() {
   const { t } = useTranslation();
@@ -112,7 +113,7 @@ export default function SuperAdminForm() {
   if (isError) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
-        <ErrorState title="Couldn't load admin" message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState title="Couldn't load admin" message={apiErrorText(error)} onRetry={() => refetch()} />
       </Container>
     );
   }

@@ -24,6 +24,7 @@ import ErrorState from "../../components/ErrorState";
 import PageSkeleton from "../../components/PageSkeleton";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
+import { apiErrorText } from "../../utils/apiError";
 
 // How soon (in days) an active trial counts as "expiring soon".
 const EXPIRY_WINDOW_DAYS = 7;
@@ -100,7 +101,7 @@ export default function OnboardingList() {
     return (
       <PageContainer>
         <ErrorState
-          message={(hq.error as any)?.response?.data?.message || (tq.error as any)?.response?.data?.message}
+          message={apiErrorText(hq.error) || apiErrorText(tq.error)}
           onRetry={() => { hq.refetch(); tq.refetch(); }}
         />
       </PageContainer>

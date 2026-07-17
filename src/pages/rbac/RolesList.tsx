@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -85,7 +85,7 @@ export default function RolesList() {
       setCleanupResult(res.data.data);
       refetch();
     } catch (error) {
-      toast.error(getApiErrorMessage((error as any), "Failed to clean up roles"));
+      toast.error(getApiErrorMessage(error, "Failed to clean up roles"));
     } finally {
       setCleaning(false);
     }
@@ -182,7 +182,7 @@ export default function RolesList() {
       {loading ? (
         <PageSkeleton />
       ) : isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : (
         <>
           {/* ── Standard (System) Roles — shown once across all hospitals ── */}

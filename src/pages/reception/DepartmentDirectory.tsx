@@ -13,6 +13,7 @@ import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { CardGridSkeleton } from "../../components/TableRowsSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
+import { apiErrorText } from "../../utils/apiError";
 
 export default function DepartmentDirectory() {
   const [search, setSearch] = useState("");
@@ -53,7 +54,7 @@ export default function DepartmentDirectory() {
       {isLoading ? (
         <CardGridSkeleton />
       ) : isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : filtered.length === 0 ? (
         <Mascot pose="all-caught-up" title="No departments" subtitle={search ? "No departments match your search." : "No departments have been set up yet."} />
       ) : (

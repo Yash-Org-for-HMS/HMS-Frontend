@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Paper, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
@@ -70,7 +70,7 @@ export default function WardStock() {
       <PageHeader title="Ward Stock" subtitle="Issue floor stock from central pharmacy to wards, and take back unused stock" />
 
       {isError ? (
-        <ErrorState message={(error as any)?.response?.data?.message} onRetry={() => refetch()} />
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : (
         <>
           <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2 }}>
