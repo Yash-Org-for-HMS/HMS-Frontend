@@ -14,6 +14,18 @@ export function formatINR(amount: number | null | undefined, decimals = 2): stri
 }
 
 /**
+ * Age in whole years from a date of birth. Returns null for a missing/invalid
+ * value. Uses 365.25 days/year (the formula previously inlined at the patient
+ * headers). Accepts a Date, timestamp, or date string.
+ */
+export function calculateAge(dob?: string | number | Date | null): number | null {
+  if (!dob) return null;
+  const t = new Date(dob).getTime();
+  if (Number.isNaN(t)) return null;
+  return Math.floor((Date.now() - t) / (1000 * 60 * 60 * 24 * 365.25));
+}
+
+/**
  * Format a date as a short Indian-locale date (e.g. "16/07/2026") — the same
  * `new Date(x).toLocaleDateString("en-IN")` that was inlined across the invoice,
  * appointment and patient list views. Accepts a Date, timestamp, or date string.

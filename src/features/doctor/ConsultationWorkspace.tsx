@@ -1,5 +1,6 @@
 import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
+import { calculateAge } from "@/utils/format";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -261,7 +262,7 @@ export default function ConsultationWorkspace() {
                 {p?.firstName} {p?.lastName}
               </Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {p?.gender} • {(p?.dateOfBirth || p?.dob) ? `${Math.floor((Date.now() - new Date(p?.dateOfBirth || p?.dob).getTime()) / (1000 * 60 * 60 * 24 * 365.25))} yrs` : "Age Unknown"} • {context?.appointment?.reason || "General Checkup"}
+                {p?.gender} • {(p?.dateOfBirth || p?.dob) ? `${calculateAge(p?.dateOfBirth || p?.dob)} yrs` : "Age Unknown"} • {context?.appointment?.reason || "General Checkup"}
               </Typography>
             </Box>
           </Box>
@@ -508,9 +509,7 @@ export default function ConsultationWorkspace() {
                   patientInfo={{
                     name: `${p?.firstName || ""} ${p?.lastName || ""}`.trim(),
                     uhid: p?.uhidNumber,
-                    age: (p?.dateOfBirth || p?.dob)
-                      ? Math.floor((Date.now() - new Date(p?.dateOfBirth || p?.dob).getTime()) / (1000 * 60 * 60 * 24 * 365.25))
-                      : null,
+                    age: calculateAge(p?.dateOfBirth || p?.dob),
                     gender: p?.gender,
                   }}
                   patientWeightKg={v?.weightKg != null ? Number(v.weightKg) : null}
