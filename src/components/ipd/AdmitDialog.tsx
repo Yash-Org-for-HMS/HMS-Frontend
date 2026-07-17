@@ -9,8 +9,8 @@ import { LocalHotelRounded, PersonAddRounded, HealthAndSafetyRounded } from "@mu
 import { axiosInstance } from "../../api/axios";
 import { useToast } from "../../providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
-import PatientForm from "../../pages/reception/PatientForm";
-import { SCHEME_OPTIONS } from "../../pages/claims/claimMeta";
+import PatientForm from "../../features/reception/PatientForm";
+import { SCHEME_OPTIONS } from "../../features/claims/claimMeta";
 
 interface Props {
   open: boolean;

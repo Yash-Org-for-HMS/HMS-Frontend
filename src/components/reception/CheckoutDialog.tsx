@@ -9,7 +9,7 @@ import { LogoutRounded, PaymentRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { useToast } from "../../providers/ToastContext";
-import BillingModal from "../../pages/reception/BillingModal";
+import BillingModal from "../../features/reception/BillingModal";
 
 interface CheckoutToken {
   queueTokenId: string;
