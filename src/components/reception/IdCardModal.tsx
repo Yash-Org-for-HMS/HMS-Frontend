@@ -4,7 +4,7 @@ import {
 } from "@mui/material";
 import { PrintRounded, CloseRounded } from "@mui/icons-material";
 import JsBarcode from "jsbarcode";
-import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { useHospitalAuth } from "../../providers/HospitalAuthContext";
 
 export interface IdCardPatient {
   uhidNumber: string;

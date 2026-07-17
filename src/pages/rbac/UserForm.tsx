@@ -18,7 +18,7 @@ import {
 import { ArrowBackRounded, Visibility, VisibilityOff } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import FormSkeleton from "../../components/skeletons/FormSkeleton";

@@ -7,9 +7,9 @@ import {
   Visibility, VisibilityOff, LockOutlined, EmailOutlined, LocalHospitalRounded,
   KeyboardCapslockRounded, ShieldRounded,
 } from "@mui/icons-material";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../providers/AuthContext";
 import { axiosInstance } from "../api/axios";
-import { useToast } from "../contexts/ToastContext";
+import { useToast } from "../providers/ToastContext";
 import HeartbeatLoader from "../components/HeartbeatLoader";
 
 // Admin/platform realm accent (src/styles/accents.ts: admin = "#6366f1"),

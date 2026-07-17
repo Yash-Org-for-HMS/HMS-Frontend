@@ -15,7 +15,7 @@ import { CardGridSkeleton } from "../../components/TableRowsSkeleton";
 import PageHeader from "../../components/layout/PageHeader";
 import AppointmentForm from "./AppointmentForm";
 import BillingModal from "./BillingModal";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import dayjs from "dayjs";
 import { apiErrorText } from "../../utils/apiError";
 

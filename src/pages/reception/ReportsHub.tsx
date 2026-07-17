@@ -4,7 +4,7 @@ import {
 } from "@mui/material";
 import PageHeader from "../../components/layout/PageHeader";
 import { useEnabledModules } from "../../hooks/useEnabledModules";
-import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { useHospitalAuth } from "../../providers/HospitalAuthContext";
 import { isAdmin as isAdminRole } from "../../constants/roles";
 import {
   DailyOpd, Analytics, Collection, ReferralsByDoctor, OpRegistration, OpBills, DiagnosisWise, Census,

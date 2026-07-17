@@ -8,7 +8,7 @@ import {
 import { AddRounded, CallSplitRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 
 interface ReferralDialogProps {
   open: boolean;

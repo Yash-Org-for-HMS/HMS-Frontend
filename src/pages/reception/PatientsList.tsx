@@ -53,7 +53,7 @@ import { getInitials, formatDate } from "../../utils/format";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import IdCardModal from "../../components/reception/IdCardModal";
 import AdmitDialog from "../../components/ipd/AdmitDialog";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 import { useServerSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";

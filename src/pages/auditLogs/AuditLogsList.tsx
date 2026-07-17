@@ -34,7 +34,7 @@ import PageHeader from "../../components/layout/PageHeader";
 import ActionButton from "../../components/layout/ActionButton";
 import FilterBar from "../../components/layout/FilterBar";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../providers/AuthContext";
 import { useServerSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
 import { apiErrorText } from "../../utils/apiError";

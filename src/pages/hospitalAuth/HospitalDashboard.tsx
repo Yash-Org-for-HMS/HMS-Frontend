@@ -13,7 +13,7 @@ import {
   Chip,
   useTheme
 } from "@mui/material";
-import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { useHospitalAuth } from "../../providers/HospitalAuthContext";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";

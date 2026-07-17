@@ -8,8 +8,8 @@ import { AddRounded, InventoryRounded, ShoppingCartRounded, CheckCircleRounded, 
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
-import { useToast } from "../../contexts/ToastContext";
-import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { useToast } from "../../providers/ToastContext";
+import { useHospitalAuth } from "../../providers/HospitalAuthContext";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import { useServerSort, useTableSort } from "../../components/table/useTableSort";

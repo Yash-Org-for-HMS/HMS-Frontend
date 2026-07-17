@@ -12,7 +12,7 @@ import {
 import { axiosInstance } from "../../api/axios";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
-import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { useHospitalAuth } from "../../providers/HospitalAuthContext";
 import { assetUrl } from "../../utils/assetUrl";
 import dayjs from "dayjs";
 import { apiErrorText } from "../../utils/apiError";

@@ -27,8 +27,8 @@ import { AddRounded, EditRounded, PowerSettingsNewRounded } from "@mui/icons-mat
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
-import { useToast } from "../../../contexts/ToastContext";
-import { useConfirm } from "../../../contexts/ConfirmContext";
+import { useToast } from "../../../providers/ToastContext";
+import { useConfirm } from "../../../providers/ConfirmContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import { ListSkeleton } from "../../../components/TableRowsSkeleton";
 import { useTableSort } from "../../../components/table/useTableSort";

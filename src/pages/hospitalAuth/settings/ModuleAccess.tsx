@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import { LockRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../../api/axios";
-import { useToast } from "../../../contexts/ToastContext";
+import { useToast } from "../../../providers/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import DetailSkeleton from "../../../components/skeletons/DetailSkeleton";
 

@@ -15,7 +15,7 @@ import { getInitials } from "../../utils/format";
 import PatientForm from "./PatientForm";
 import AppointmentForm from "./AppointmentForm";
 import BillingModal from "./BillingModal";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 
 import type { Patient } from "../../types";

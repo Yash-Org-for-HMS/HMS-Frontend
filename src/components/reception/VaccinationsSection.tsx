@@ -17,8 +17,8 @@ import { axiosInstance } from "../../api/axios";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
 import Mascot from "../Mascot";
-import { useToast } from "../../contexts/ToastContext";
-import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { useToast } from "../../providers/ToastContext";
+import { useHospitalAuth } from "../../providers/HospitalAuthContext";
 import dayjs, { Dayjs } from "dayjs";
 
 const ACCENT = ACCENTS.reception;

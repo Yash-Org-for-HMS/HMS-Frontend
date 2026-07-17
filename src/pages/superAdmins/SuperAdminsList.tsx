@@ -38,8 +38,8 @@ import FilterBar from "../../components/layout/FilterBar";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import { useServerSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
-import { useToast } from "../../contexts/ToastContext";
-import { useConfirm } from "../../contexts/ConfirmContext";
+import { useToast } from "../../providers/ToastContext";
+import { useConfirm } from "../../providers/ConfirmContext";
 import CredentialDialog from "../../components/CredentialDialog";
 
 // Keep the admin list's existing sentence-case header look (the SortableHeadCell

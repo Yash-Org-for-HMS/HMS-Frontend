@@ -16,7 +16,7 @@ import {
   AssessmentRounded,
   MedicationRounded,
 } from "@mui/icons-material";
-import { useHospitalAuth } from "../contexts/HospitalAuthContext";
+import { useHospitalAuth } from "../providers/HospitalAuthContext";
 import BranchSwitcher from "../components/BranchSwitcher";
 import SidebarHeader from "../components/layout/SidebarHeader";
 import SidebarUserCard from "../components/layout/SidebarUserCard";

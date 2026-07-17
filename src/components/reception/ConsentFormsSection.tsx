@@ -15,7 +15,7 @@ import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import { assetUrl } from "../../utils/assetUrl";
 import dayjs from "dayjs";
 import DynamicFormRenderer, { validateFormResponses, type FormValues } from "../DynamicFormRenderer";

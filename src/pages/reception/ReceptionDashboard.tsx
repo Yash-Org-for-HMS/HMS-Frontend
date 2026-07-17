@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../api/axios";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
-import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { useHospitalAuth } from "../../providers/HospitalAuthContext";
 import { useSocket } from "../../hooks/useSocket";
 import PageHeader from "../../components/layout/PageHeader";
 import { apiErrorText } from "../../utils/apiError";

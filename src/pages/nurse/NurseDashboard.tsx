@@ -16,7 +16,7 @@ import { TableRowsSkeleton, CardGridSkeleton } from "../../components/TableRowsS
 import PageHeader from "../../components/layout/PageHeader";
 import ErrorState from "../../components/ErrorState";
 import StatCard from "../../components/StatCard";
-import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { useHospitalAuth } from "../../providers/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
 import { apiErrorText } from "../../utils/apiError";
 

@@ -15,7 +15,7 @@ import { assetUrl } from "../../utils/assetUrl";
 import PageHeader from "../../components/layout/PageHeader";
 import { useTableSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 
 export default function RadiologyOrdersQueue() {
   const toast = useToast();

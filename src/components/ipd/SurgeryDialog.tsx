@@ -12,8 +12,8 @@ import {
   MedicalServicesRounded, AddRounded, CheckCircleRounded, CancelRounded, ReceiptLongRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
-import { useToast } from "../../contexts/ToastContext";
-import { useConfirm } from "../../contexts/ConfirmContext";
+import { useToast } from "../../providers/ToastContext";
+import { useConfirm } from "../../providers/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { validate, hasErrors, required, isNonNegativeNumber } from "../../utils/validation";
 

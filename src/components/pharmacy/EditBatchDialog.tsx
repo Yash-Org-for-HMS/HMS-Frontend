@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Typography, Button } from "@mui/material";
 import { axiosInstance } from "../../api/axios";
 import { getApiErrorMessage } from "../../utils/apiError";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 
 interface Props {
   /** The inventory row being corrected; null closes the dialog. */

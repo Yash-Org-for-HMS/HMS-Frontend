@@ -23,7 +23,7 @@ import StatusChip from "../../components/StatusChip";
 import BillingModal from "./BillingModal";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
 import ReferralDialog from "../../components/reception/ReferralDialog";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 import { useTableSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";

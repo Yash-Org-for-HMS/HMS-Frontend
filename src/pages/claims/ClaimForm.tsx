@@ -9,7 +9,7 @@ import {
 import { SaveRounded, AddRounded } from "@mui/icons-material";
 import { ACCENTS } from "../../styles/accents";
 import { axiosInstance } from "../../api/axios";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import HeartbeatLoader from "../../components/HeartbeatLoader";

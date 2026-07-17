@@ -13,8 +13,8 @@ import { axiosInstance } from "../../../api/axios";
 import ErrorState from "../../../components/ErrorState";
 import Mascot from "../../../components/Mascot";
 import DetailSkeleton from "../../../components/skeletons/DetailSkeleton";
-import { useToast } from "../../../contexts/ToastContext";
-import { useConfirm } from "../../../contexts/ConfirmContext";
+import { useToast } from "../../../providers/ToastContext";
+import { useConfirm } from "../../../providers/ConfirmContext";
 import PageHeader from "../../../components/layout/PageHeader";
 
 const ACCENT = "#6366f1";

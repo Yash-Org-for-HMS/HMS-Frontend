@@ -19,7 +19,7 @@ import {
   ScienceRounded,
   AssessmentRounded,
 } from "@mui/icons-material";
-import { useHospitalAuth } from "../contexts/HospitalAuthContext";
+import { useHospitalAuth } from "../providers/HospitalAuthContext";
 import { assetUrl } from "../utils/assetUrl";
 import BranchSwitcher from "../components/BranchSwitcher";
 import SidebarHeader from "../components/layout/SidebarHeader";

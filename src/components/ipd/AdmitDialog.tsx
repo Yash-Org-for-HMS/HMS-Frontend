@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import { LocalHotelRounded, PersonAddRounded, HealthAndSafetyRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import PatientForm from "../../pages/reception/PatientForm";
 import { SCHEME_OPTIONS } from "../../pages/claims/claimMeta";

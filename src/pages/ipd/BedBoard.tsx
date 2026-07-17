@@ -12,7 +12,7 @@ import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 
 const STATUS_COLOR: Record<string, string> = {

@@ -12,10 +12,10 @@ import {
   Alert,
 } from "@mui/material";
 import { Visibility, VisibilityOff, LockOutlined, LockResetRounded } from "@mui/icons-material";
-import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { useHospitalAuth } from "../../providers/HospitalAuthContext";
 import { axiosInstance } from "../../api/axios";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 export default function HospitalChangePassword() {

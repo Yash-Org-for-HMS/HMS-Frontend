@@ -6,8 +6,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 // (layouts/guards) render instantly. Everything else is lazy-loaded per route.
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { HospitalProtectedRoute } from "./components/HospitalProtectedRoute";
-import { AuthProvider } from "./contexts/AuthContext";
-import { HospitalAuthProvider } from "./contexts/HospitalAuthContext";
+import { AuthProvider } from "./providers/AuthContext";
+import { HospitalAuthProvider } from "./providers/HospitalAuthContext";
 // Layouts are lazy: only one realm's shell is ever used per session, and
 // deferring them keeps their deps (e.g. socket.io in DoctorLayout) out of the
 // login-critical first paint. Each is rendered via el() so it gets a Suspense

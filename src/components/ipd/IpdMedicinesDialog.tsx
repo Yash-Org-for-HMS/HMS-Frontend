@@ -12,8 +12,8 @@ import {
   MedicationRounded, AddRounded, DeleteOutlineRounded, ReceiptLongRounded, HourglassTopRounded, CheckCircleRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
-import { useToast } from "../../contexts/ToastContext";
-import { useConfirm } from "../../contexts/ConfirmContext";
+import { useToast } from "../../providers/ToastContext";
+import { useConfirm } from "../../providers/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import SoftChip from "../SoftChip";
 import MarChart from "./MarChart";

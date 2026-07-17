@@ -15,7 +15,7 @@ import PageHeader from "../../components/layout/PageHeader";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import { useTableSort } from "../../components/table/useTableSort";
 import SortableHeadCell from "../../components/table/SortableHeadCell";
-import { useConfirm } from "../../contexts/ConfirmContext";
+import { useConfirm } from "../../providers/ConfirmContext";
 
 export default function RadiologyCatalog() {
   const theme = useTheme();

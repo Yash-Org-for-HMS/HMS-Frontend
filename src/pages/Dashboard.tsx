@@ -45,7 +45,7 @@ import {
   Area,
 } from "recharts";
 import { axiosInstance } from "../api/axios";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../providers/AuthContext";
 import ErrorState from "../components/ErrorState";
 import DashboardSkeleton from "../components/skeletons/DashboardSkeleton";
 

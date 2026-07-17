@@ -13,7 +13,7 @@ import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import ReferralDialog from "../../components/reception/ReferralDialog";
 import PageHeader from "../../components/layout/PageHeader";
 import { useTableSort } from "../../components/table/useTableSort";

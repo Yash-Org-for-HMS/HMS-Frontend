@@ -23,7 +23,7 @@ import ConsultationHistory from "../../components/doctor/ConsultationHistory";
 import RadiologyOrderForm from "./RadiologyOrderForm";
 import RichTextEditor from "../../components/RichTextEditor";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
 

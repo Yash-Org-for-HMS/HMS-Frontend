@@ -11,8 +11,8 @@ import {
 } from "@mui/icons-material";
 import { ACCENTS } from "../../styles/accents";
 import { axiosInstance } from "../../api/axios";
-import { useToast } from "../../contexts/ToastContext";
-import { useConfirm } from "../../contexts/ConfirmContext";
+import { useToast } from "../../providers/ToastContext";
+import { useConfirm } from "../../providers/ConfirmContext";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { CLAIM_DOC_CATALOG, DOC_STAGE_LABEL, docTypeLabel, type DocStage } from "./claimMeta";
 

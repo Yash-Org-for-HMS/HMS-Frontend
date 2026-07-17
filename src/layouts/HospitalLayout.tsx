@@ -47,7 +47,7 @@ import {
   ReceiptLongRounded,
   FormatListNumberedRounded,
 } from "@mui/icons-material";
-import { useHospitalAuth } from "../contexts/HospitalAuthContext";
+import { useHospitalAuth } from "../providers/HospitalAuthContext";
 import { isAdmin as isAdminRole } from "../constants/roles";
 import { useEnabledModules } from "../hooks/useEnabledModules";
 import BranchSwitcher from "../components/BranchSwitcher";

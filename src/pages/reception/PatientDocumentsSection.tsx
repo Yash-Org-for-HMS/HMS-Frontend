@@ -14,8 +14,8 @@ import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
-import { useToast } from "../../contexts/ToastContext";
-import { useConfirm } from "../../contexts/ConfirmContext";
+import { useToast } from "../../providers/ToastContext";
+import { useConfirm } from "../../providers/ConfirmContext";
 
 export default function PatientDocumentsSection({ patientId, readOnly = false }: { patientId: string; readOnly?: boolean }) {
   const toast = useToast();

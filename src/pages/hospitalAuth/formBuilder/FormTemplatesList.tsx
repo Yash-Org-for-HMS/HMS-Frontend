@@ -27,7 +27,7 @@ import PageHeader from "../../../components/layout/PageHeader";
 import { ListSkeleton } from "../../../components/TableRowsSkeleton";
 import { useTableSort } from "../../../components/table/useTableSort";
 import SortableHeadCell from "../../../components/table/SortableHeadCell";
-import { useConfirm } from "../../../contexts/ConfirmContext";
+import { useConfirm } from "../../../providers/ConfirmContext";
 
 // Match the file's existing sentence-case fontWeight-600 header look (override SortableHeadCell's default uppercase/700 style).
 const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 600, fontSize: "0.875rem", py: undefined };

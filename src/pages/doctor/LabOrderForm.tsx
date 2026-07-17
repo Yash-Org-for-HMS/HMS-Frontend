@@ -10,7 +10,7 @@ import { DeleteRounded, SaveRounded, AddRounded, ScienceRounded } from "@mui/ico
 import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
 

@@ -10,8 +10,8 @@ import {
   AutoAwesomeMotionRounded, AddRounded, DeleteOutlineRounded, KeyboardArrowDownRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
-import { useToast } from "../../contexts/ToastContext";
-import { useConfirm } from "../../contexts/ConfirmContext";
+import { useToast } from "../../providers/ToastContext";
+import { useConfirm } from "../../providers/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import { stripHtml } from "../../utils/format";

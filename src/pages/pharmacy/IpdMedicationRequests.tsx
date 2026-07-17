@@ -11,7 +11,7 @@ import { axiosInstance } from "../../api/axios";
 import { formatINR } from "../../utils/format";
 import Mascot from "../../components/Mascot";
 import ErrorState from "../../components/ErrorState";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import PharmacyPage from "./components/PharmacyPage";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";

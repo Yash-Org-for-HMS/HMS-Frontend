@@ -13,7 +13,7 @@ import ErrorState from "../../components/ErrorState";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 
 export default function GenerateInvoice({ patientId: initialPatientId }: { patientId?: string } = {}) {
   const theme = useTheme();

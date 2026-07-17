@@ -8,7 +8,7 @@ import HeartbeatLoader from "../HeartbeatLoader";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api/axios";
 import { formatINR } from "../../utils/format";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 
 interface WalkInOrderDialogProps {
   open: boolean;

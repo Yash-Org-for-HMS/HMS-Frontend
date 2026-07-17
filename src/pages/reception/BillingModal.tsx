@@ -12,8 +12,8 @@ import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import { ListSkeleton } from "../../components/TableRowsSkeleton";
 import ErrorState from "../../components/ErrorState";
-import { useToast } from "../../contexts/ToastContext";
-import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { useToast } from "../../providers/ToastContext";
+import { useHospitalAuth } from "../../providers/HospitalAuthContext";
 import BillReceipt from "../../components/reception/BillReceipt";
 
 interface BillingModalProps {

@@ -32,7 +32,7 @@ import ConsentFormsSection from "../../components/reception/ConsentFormsSection"
 import VaccinationsSection from "../../components/reception/VaccinationsSection";
 import SurgeriesSection from "../../components/reception/SurgeriesSection";
 import InvoiceViewDialog from "../../components/reception/InvoiceViewDialog";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 
 const ACCENT = ACCENTS.reception;
 

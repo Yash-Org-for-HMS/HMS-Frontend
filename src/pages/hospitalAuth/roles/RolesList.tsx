@@ -22,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../../api/axios";
 import Mascot from "../../../components/Mascot";
 import ErrorState from "../../../components/ErrorState";
-import { useToast } from "../../../contexts/ToastContext";
+import { useToast } from "../../../providers/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import { TableRowsSkeleton } from "../../../components/TableRowsSkeleton";
 import { useTableSort } from "../../../components/table/useTableSort";

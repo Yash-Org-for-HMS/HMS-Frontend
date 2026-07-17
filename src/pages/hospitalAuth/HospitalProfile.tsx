@@ -18,8 +18,8 @@ import {
 } from "@mui/material";
 import { SaveRounded, BusinessRounded, PaletteRounded, GavelRounded, CloudUploadRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
-import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
-import { useToast } from "../../contexts/ToastContext";
+import { useHospitalAuth } from "../../providers/HospitalAuthContext";
+import { useToast } from "../../providers/ToastContext";
 import { assetUrl } from "../../utils/assetUrl";
 import PageHeader from "../../components/layout/PageHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";

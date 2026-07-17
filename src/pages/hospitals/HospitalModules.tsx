@@ -10,7 +10,7 @@ import { axiosInstance } from "../../api/axios";
 import ErrorState from "../../components/ErrorState";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 
 interface ModuleRow { key: string; label: string; entitled: boolean }

@@ -12,7 +12,7 @@ import PageHeader from "../../components/layout/PageHeader";
 import ErrorState from "../../components/ErrorState";
 import Mascot from "../../components/Mascot";
 import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 
 export default function WardStock() {

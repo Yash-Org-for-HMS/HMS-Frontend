@@ -6,7 +6,7 @@ import {
 import { DeleteOutlineRounded } from "@mui/icons-material";
 import { axiosInstance } from "../../api/axios";
 import { getApiErrorMessage } from "../../utils/apiError";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 
 const HEAD_SX = { fontWeight: 700, textTransform: "none", letterSpacing: "normal", fontSize: "inherit", color: "inherit" } as const;
 

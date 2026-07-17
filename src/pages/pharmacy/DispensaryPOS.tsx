@@ -15,9 +15,9 @@ import ReasonDialog from "../../components/ReasonDialog";
 import { useSocket } from "../../hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
 import PharmacyPage, { ROWS_PER_PAGE } from "./components/PharmacyPage";
-import { useToast } from "../../contexts/ToastContext";
-import { useConfirm } from "../../contexts/ConfirmContext";
-import { useHospitalAuth } from "../../contexts/HospitalAuthContext";
+import { useToast } from "../../providers/ToastContext";
+import { useConfirm } from "../../providers/ConfirmContext";
+import { useHospitalAuth } from "../../providers/HospitalAuthContext";
 import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
 
 export default function DispensaryPOS() {

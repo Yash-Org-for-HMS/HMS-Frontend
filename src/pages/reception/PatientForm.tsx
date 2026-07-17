@@ -31,7 +31,7 @@ import { axiosInstance } from "../../api/axios";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import ErrorState from "../../components/ErrorState";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "../../utils/validation";
 

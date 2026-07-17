@@ -11,7 +11,7 @@ import { ArrowBackRounded, EditRounded, TimelineRounded, ArrowForwardRounded, Pa
 import { ACCENTS } from "../../styles/accents";
 import { axiosInstance } from "../../api/axios";
 import { formatINR } from "../../utils/format";
-import { useToast } from "../../contexts/ToastContext";
+import { useToast } from "../../providers/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
 import ErrorState from "../../components/ErrorState";

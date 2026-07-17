@@ -36,8 +36,8 @@ import {
 import { axiosInstance } from "../../api/axios";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import ErrorState from "../../components/ErrorState";
-import { useToast } from "../../contexts/ToastContext";
-import { useConfirm } from "../../contexts/ConfirmContext";
+import { useToast } from "../../providers/ToastContext";
+import { useConfirm } from "../../providers/ConfirmContext";
 import CredentialDialog from "../../components/CredentialDialog";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
