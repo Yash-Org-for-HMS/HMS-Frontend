@@ -20,13 +20,7 @@ import ErrorState from "../../../components/ErrorState";
 import { useToast } from "../../../contexts/ToastContext";
 import PageHeader from "../../../components/layout/PageHeader";
 import FormSkeleton from "../../../components/skeletons/FormSkeleton";
-
-interface Permission {
-  permissionId: string;
-  permissionCode: string;
-  moduleName: string;
-  actionName: string;
-}
+import type { Permission } from "../../../types";
 
 export default function RoleForm() {
   const navigate = useNavigate();

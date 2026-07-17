@@ -27,13 +27,12 @@ import PageHeader from "../../../components/layout/PageHeader";
 import { TableRowsSkeleton } from "../../../components/TableRowsSkeleton";
 import { useTableSort } from "../../../components/table/useTableSort";
 import SortableHeadCell from "../../../components/table/SortableHeadCell";
+import type { Role as RoleBase } from "../../../types";
 
 // Match the file's existing sentence-case header look (override SortableHeadCell's default uppercase/bold style).
 const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 400, fontSize: "0.875rem", py: undefined };
 
-interface Role {
-  roleId: string;
-  roleName: string;
+interface Role extends RoleBase {
   roleCode: string;
   isSystemRole: boolean;
   status: string;

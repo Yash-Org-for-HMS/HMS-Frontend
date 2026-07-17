@@ -33,20 +33,8 @@ import PageHeader from "../../../components/layout/PageHeader";
 import HeartbeatLoader from "../../../components/HeartbeatLoader";
 import FormSkeleton from "../../../components/skeletons/FormSkeleton";
 import { validate, hasErrors, required, isEmail, isPhone, minLen, match, type Errors } from "../../../utils/validation";
+import type { Role, Department, Branch } from "../../../types";
 
-interface Role {
-  roleId: string;
-  roleName: string;
-  roleCode?: string;
-}
-interface Department {
-  departmentId: string;
-  departmentName: string;
-}
-interface Branch {
-  branchId: string;
-  branchName: string;
-}
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;

@@ -25,6 +25,40 @@ export interface StaffUser {
   email: string;
 }
 
+// ── Access control (RBAC) ────────────────────────────────────────────────────
+
+export interface Permission {
+  permissionId: string;
+  permissionCode: string;
+  moduleName: string;
+  actionName: string;
+}
+
+/** Fields present on every role-consuming screen. Screens that need more (or need
+ *  an optional here to be required) `extend` this — never re-declare it. */
+export interface Role {
+  roleId: string;
+  roleName: string;
+  roleCode?: string;
+  isSystemRole?: boolean;
+  status?: string;
+  hospitalId?: string | null;
+}
+
+// ── Org structure ────────────────────────────────────────────────────────────
+
+/** Base department fields. Richer screens extend with code/status/relations. */
+export interface Department {
+  departmentId: string;
+  departmentName: string;
+}
+
+export interface Branch {
+  branchId: string;
+  branchName: string;
+  status?: string;
+}
+
 // ── Pharmacy ─────────────────────────────────────────────────────────────────
 
 export interface Medicine {

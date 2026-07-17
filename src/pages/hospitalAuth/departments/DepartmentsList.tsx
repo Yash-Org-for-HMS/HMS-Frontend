@@ -25,14 +25,13 @@ import PageHeader from "../../../components/layout/PageHeader";
 import { TableRowsSkeleton } from "../../../components/TableRowsSkeleton";
 import { useTableSort } from "../../../components/table/useTableSort";
 import SortableHeadCell from "../../../components/table/SortableHeadCell";
+import type { Department as DepartmentBase } from "../../../types";
 
 // Match the file's existing sentence-case header look (override SortableHeadCell's default uppercase/bold style).
 const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 400, fontSize: "0.875rem", py: undefined };
 
-interface Department {
-  departmentId: string;
+interface Department extends DepartmentBase {
   departmentCode: string;
-  departmentName: string;
   status: string;
   departmentType?: { typeName: string };
   headOfDepartment?: { firstName: string; lastName: string };

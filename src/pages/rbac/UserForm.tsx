@@ -24,12 +24,7 @@ import HeartbeatLoader from "../../components/HeartbeatLoader";
 import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import CredentialDialog from "../../components/CredentialDialog";
 import { validate, hasErrors, required, isEmail, isPhone, minLen, type Errors } from "../../utils/validation";
-
-interface Branch {
-  branchId: string;
-  branchName: string;
-  status?: string;
-}
+import type { Branch, Role as RoleBase } from "../../types";
 
 interface Hospital {
   hospitalId: string;
@@ -37,11 +32,8 @@ interface Hospital {
   branches?: Branch[];
 }
 
-interface Role {
-  roleId: string;
-  roleName: string;
+interface Role extends RoleBase {
   hospitalId: string | null;
-  isSystemRole?: boolean;
 }
 
 export default function UserForm() {
