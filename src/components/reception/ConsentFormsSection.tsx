@@ -1,5 +1,5 @@
-import { ACCENTS } from "../../styles/accents";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { ACCENTS } from "@/styles/accents";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -11,12 +11,12 @@ import {
   AssignmentTurnedInRounded, AddRounded, GestureRounded, UploadFileRounded,
   OpenInNewRounded, CloseRounded, DoNotDisturbRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
+import { axiosInstance } from "@/api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
-import { useToast } from "../../providers/ToastContext";
-import { assetUrl } from "../../utils/assetUrl";
+import { useToast } from "@/providers/ToastContext";
+import { assetUrl } from "@/utils/assetUrl";
 import dayjs from "dayjs";
 import DynamicFormRenderer, { validateFormResponses, type FormValues } from "../DynamicFormRenderer";
 

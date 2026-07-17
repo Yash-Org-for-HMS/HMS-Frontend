@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
-import { useHospitalAuth } from "../providers/HospitalAuthContext";
-import { useToast } from "../providers/ToastContext";
-import { API_URL } from "../api/axios";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { useToast } from "@/providers/ToastContext";
+import { API_URL } from "@/api/axios";
 
 export function useSocket(eventMap: Record<string, (...args: any[]) => void>) {
   const { user, hospital } = useHospitalAuth();

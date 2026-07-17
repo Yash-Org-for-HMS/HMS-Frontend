@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
@@ -14,19 +14,19 @@ import {
   FilterAltRounded, EventRepeatRounded, CallSplitRounded
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import { axiosInstance } from "../../api/axios";
-import { formatDate } from "../../utils/format";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import Mascot from "../../components/Mascot";
-import ErrorState from "../../components/ErrorState";
-import StatusChip from "../../components/StatusChip";
+import { axiosInstance } from "@/api/axios";
+import { formatDate } from "@/utils/format";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import Mascot from "@/components/Mascot";
+import ErrorState from "@/components/ErrorState";
+import StatusChip from "@/components/StatusChip";
 import BillingModal from "./BillingModal";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
-import ReferralDialog from "../../components/reception/ReferralDialog";
-import { useToast } from "../../providers/ToastContext";
-import PageHeader from "../../components/layout/PageHeader";
-import { useTableSort } from "../../components/table/useTableSort";
-import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import ReferralDialog from "@/components/reception/ReferralDialog";
+import { useToast } from "@/providers/ToastContext";
+import PageHeader from "@/components/layout/PageHeader";
+import { useTableSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
 import dayjs, { Dayjs } from "dayjs";
 
 const getAppointmentType = (reason: string | null | undefined) => {

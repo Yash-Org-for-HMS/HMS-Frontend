@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { getApiErrorMessage } from "../../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box,
   Typography,
@@ -29,13 +29,13 @@ import {
   ChecklistRounded,
   RemoveDoneRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../../api/axios";
-import ErrorState from "../../../components/ErrorState";
-import { useToast } from "../../../providers/ToastContext";
-import PageHeader from "../../../components/layout/PageHeader";
-import HeartbeatLoader from "../../../components/HeartbeatLoader";
-import DetailSkeleton from "../../../components/skeletons/DetailSkeleton";
-import type { Permission, Role as RoleBase } from "../../../types";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import PageHeader from "@/components/layout/PageHeader";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
+import type { Permission, Role as RoleBase } from "@/types";
 
 interface Role extends RoleBase {
   roleCode: string;

@@ -1,4 +1,4 @@
-import { ACCENTS } from "../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { Box, Paper, Typography, Skeleton } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import type { ReactNode } from "react";

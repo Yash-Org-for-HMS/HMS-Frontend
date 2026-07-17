@@ -1,4 +1,4 @@
-import { API_URL } from "../api/axios";
+import { API_URL } from "@/api/axios";
 
 // Base URL for server-hosted assets (uploaded logos, documents, reports).
 // Derived from the API URL by stripping the trailing "/api" so it works in any

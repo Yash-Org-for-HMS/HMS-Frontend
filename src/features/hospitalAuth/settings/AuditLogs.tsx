@@ -24,14 +24,14 @@ import {
   Tooltip,
 } from "@mui/material";
 import { InfoRounded, SearchRounded, RefreshRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../../api/axios";
-import Mascot from "../../../components/Mascot";
-import ErrorState from "../../../components/ErrorState";
-import PageHeader from "../../../components/layout/PageHeader";
-import { ListSkeleton } from "../../../components/TableRowsSkeleton";
-import { useTableSort } from "../../../components/table/useTableSort";
-import SortableHeadCell from "../../../components/table/SortableHeadCell";
-import { apiErrorText } from "../../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import ErrorState from "@/components/ErrorState";
+import PageHeader from "@/components/layout/PageHeader";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import { useTableSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
+import { apiErrorText } from "@/utils/apiError";
 
 const EMPTY_FILTERS = { moduleName: "", actionType: "", startDate: "", endDate: "" };
 

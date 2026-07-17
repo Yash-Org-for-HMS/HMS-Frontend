@@ -14,17 +14,17 @@ import {
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Cell,
 } from "recharts";
-import { ACCENTS } from "../../styles/accents";
-import { axiosInstance } from "../../api/axios";
-import { exportTableToExcel } from "../../utils/exportExcel";
-import { formatINR } from "../../utils/format";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import PageHeader from "../../components/layout/PageHeader";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
+import { ACCENTS } from "@/styles/accents";
+import { axiosInstance } from "@/api/axios";
+import { exportTableToExcel } from "@/utils/exportExcel";
+import { formatINR } from "@/utils/format";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import PageHeader from "@/components/layout/PageHeader";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import { statusMeta } from "./claimMeta";
-import { apiErrorText } from "../../utils/apiError";
+import { apiErrorText } from "@/utils/apiError";
 
 const ACCENT = ACCENTS.reception;
 const fmtDate = (d: string) => (d ? dayjs(d).format("DD MMM YYYY") : "—");

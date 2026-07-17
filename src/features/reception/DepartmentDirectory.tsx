@@ -8,12 +8,12 @@ import {
   SearchRounded, PlaceRounded, CallRounded, ScheduleRounded, PersonRounded,
   ApartmentRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import { CardGridSkeleton } from "../../components/TableRowsSkeleton";
-import PageHeader from "../../components/layout/PageHeader";
-import { apiErrorText } from "../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import { CardGridSkeleton } from "@/components/TableRowsSkeleton";
+import PageHeader from "@/components/layout/PageHeader";
+import { apiErrorText } from "@/utils/apiError";
 
 export default function DepartmentDirectory() {
   const [search, setSearch] = useState("");

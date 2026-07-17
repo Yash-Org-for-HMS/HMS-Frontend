@@ -1,20 +1,20 @@
 import { useState, useEffect, useMemo } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
-import { orderStatusColor } from "../../utils/statusColors";
+import { getApiErrorMessage } from "@/utils/apiError";
+import { orderStatusColor } from "@/utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab } from "@mui/material";
 import { VisibilityRounded, BloodtypeRounded, AddRounded } from "@mui/icons-material";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { axiosInstance } from "../../api/axios";
-import Mascot from "../../components/Mascot";
-import { ListSkeleton } from "../../components/TableRowsSkeleton";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useNavigate } from "react-router-dom";
-import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
-import WalkInOrderDialog from "../../components/lab/WalkInOrderDialog";
-import { useSocket } from "../../hooks/useSocket";
+import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
+import WalkInOrderDialog from "@/components/lab/WalkInOrderDialog";
+import { useSocket } from "@/hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
-import PageHeader from "../../components/layout/PageHeader";
-import { useTableSort } from "../../components/table/useTableSort";
-import SortableHeadCell from "../../components/table/SortableHeadCell";
+import PageHeader from "@/components/layout/PageHeader";
+import { useTableSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
 
 export default function LabOrdersQueue() {
   const { data: orders = [], isLoading: loading, refetch: fetchOrders } = useQuery({

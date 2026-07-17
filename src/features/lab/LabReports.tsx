@@ -14,14 +14,14 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
   BarChart, Bar, PieChart, Pie, Cell, Legend,
 } from "recharts";
-import { axiosInstance } from "../../api/axios";
-import { exportTableToExcel } from "../../utils/exportExcel";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
-import PageHeader from "../../components/layout/PageHeader";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { apiErrorText } from "../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import { exportTableToExcel } from "@/utils/exportExcel";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
+import PageHeader from "@/components/layout/PageHeader";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { apiErrorText } from "@/utils/apiError";
 
 const ACCENT = "#10B981";
 const PIE_COLORS = ["#10b981", "#f59e0b", "#3b82f6", "#ef4444", "#8b5cf6", "#64748b"];

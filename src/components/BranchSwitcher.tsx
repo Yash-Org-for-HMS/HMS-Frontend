@@ -1,7 +1,7 @@
 import { TextField, MenuItem, Box } from "@mui/material";
 import { AccountTreeRounded } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
-import { useHospitalAuth } from "../providers/HospitalAuthContext";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 
 /**
  * Branch switcher for the hospital portal. Lets multi-branch users (org admins,

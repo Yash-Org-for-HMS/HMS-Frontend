@@ -1,4 +1,4 @@
-import { ACCENTS } from "../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -16,11 +16,11 @@ import {
   AssessmentRounded,
   MedicationRounded,
 } from "@mui/icons-material";
-import { useHospitalAuth } from "../providers/HospitalAuthContext";
-import BranchSwitcher from "../components/BranchSwitcher";
-import SidebarHeader from "../components/layout/SidebarHeader";
-import SidebarUserCard from "../components/layout/SidebarUserCard";
-import TrialBanner from "../components/layout/TrialBanner";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import BranchSwitcher from "@/components/BranchSwitcher";
+import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarUserCard from "@/components/layout/SidebarUserCard";
+import TrialBanner from "@/components/layout/TrialBanner";
 
 const drawerWidth = 260;
 const NURSE_PURPLE = ACCENTS.nurse;

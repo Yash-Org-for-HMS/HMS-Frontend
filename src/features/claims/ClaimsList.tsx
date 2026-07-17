@@ -7,15 +7,15 @@ import {
   Chip, Button, TextField, MenuItem, InputAdornment,
 } from "@mui/material";
 import { AddRounded, SearchRounded, AssessmentRounded } from "@mui/icons-material";
-import { ACCENTS } from "../../styles/accents";
-import { axiosInstance } from "../../api/axios";
-import { formatINR } from "../../utils/format";
-import PageHeader from "../../components/layout/PageHeader";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { ACCENTS } from "@/styles/accents";
+import { axiosInstance } from "@/api/axios";
+import { formatINR } from "@/utils/format";
+import PageHeader from "@/components/layout/PageHeader";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { CLAIM_STATUS_META, statusMeta } from "./claimMeta";
-import { apiErrorText } from "../../utils/apiError";
+import { apiErrorText } from "@/utils/apiError";
 
 const ACCENT = ACCENTS.reception;
 

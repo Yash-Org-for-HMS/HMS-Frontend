@@ -13,13 +13,13 @@ import {
   Chip,
   useTheme
 } from "@mui/material";
-import { useHospitalAuth } from "../../providers/HospitalAuthContext";
-import { axiosInstance } from "../../api/axios";
-import Mascot from "../../components/Mascot";
-import ErrorState from "../../components/ErrorState";
-import PageHeader from "../../components/layout/PageHeader";
-import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
-import StatCard from "../../components/StatCard";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import ErrorState from "@/components/ErrorState";
+import PageHeader from "@/components/layout/PageHeader";
+import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
+import StatCard from "@/components/StatCard";
 import { useNavigate } from "react-router-dom";
 import { 
   PeopleAltRounded,
@@ -40,7 +40,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from "recharts";
-import { apiErrorText } from "../../utils/apiError";
+import { apiErrorText } from "@/utils/apiError";
 
 interface DashboardStats {
   activePlanName: string;

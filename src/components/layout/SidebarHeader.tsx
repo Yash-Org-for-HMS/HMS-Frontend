@@ -1,7 +1,7 @@
 import { Box, Toolbar, Typography } from "@mui/material";
 import { LocalHospitalRounded } from "@mui/icons-material";
 import type { ReactNode } from "react";
-import { assetUrl } from "../../utils/assetUrl";
+import { assetUrl } from "@/utils/assetUrl";
 
 interface SidebarHeaderProps {
   /** Raw hospital logo path (passed through assetUrl). Falls back to an icon tile. */

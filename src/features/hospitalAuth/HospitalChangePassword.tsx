@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box,
   Button,
@@ -12,11 +12,11 @@ import {
   Alert,
 } from "@mui/material";
 import { Visibility, VisibilityOff, LockOutlined, LockResetRounded } from "@mui/icons-material";
-import { useHospitalAuth } from "../../providers/HospitalAuthContext";
-import { axiosInstance } from "../../api/axios";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { axiosInstance } from "@/api/axios";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "../../providers/ToastContext";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { useToast } from "@/providers/ToastContext";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
 
 export default function HospitalChangePassword() {
   const [newPassword, setNewPassword] = useState("");

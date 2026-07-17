@@ -1,15 +1,15 @@
 import { Box, Typography, Grid, Paper, Chip, Table, TableBody, TableCell, TableHead, TableRow, Button } from "@mui/material";
-import { orderStatusColor } from "../../utils/statusColors";
+import { orderStatusColor } from "@/utils/statusColors";
 import { ScienceRounded, CheckCircleRounded, PendingActionsRounded, BiotechRounded, AttachMoneyRounded, TrendingUpRounded } from "@mui/icons-material";
-import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
+import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import { useQuery } from "@tanstack/react-query";
-import { axiosInstance } from "../../api/axios";
-import Mascot from "../../components/Mascot";
-import ErrorState from "../../components/ErrorState";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import ErrorState from "@/components/ErrorState";
 import { useNavigate } from "react-router-dom";
-import PageHeader from "../../components/layout/PageHeader";
-import StatCard from "../../components/StatCard";
-import { apiErrorText } from "../../utils/apiError";
+import PageHeader from "@/components/layout/PageHeader";
+import StatCard from "@/components/StatCard";
+import { apiErrorText } from "@/utils/apiError";
 
 export default function LabDashboard() {
   const navigate = useNavigate();

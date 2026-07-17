@@ -19,12 +19,12 @@ import {
   VisibilityRounded,
   CheckCircleRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import PageSkeleton from "../../components/PageSkeleton";
-import PageContainer from "../../components/layout/PageContainer";
-import PageHeader from "../../components/layout/PageHeader";
-import { apiErrorText } from "../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import PageSkeleton from "@/components/PageSkeleton";
+import PageContainer from "@/components/layout/PageContainer";
+import PageHeader from "@/components/layout/PageHeader";
+import { apiErrorText } from "@/utils/apiError";
 
 // How soon (in days) an active trial counts as "expiring soon".
 const EXPIRY_WINDOW_DAYS = 7;

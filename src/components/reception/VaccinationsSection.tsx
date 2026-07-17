@@ -1,5 +1,5 @@
-import { ACCENTS } from "../../styles/accents";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { ACCENTS } from "@/styles/accents";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -13,12 +13,12 @@ import {
   CheckCircleRounded, BlockRounded, ReplayRounded, EventBusyRounded, AddRounded,
   ReceiptLongRounded, PrintRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
+import { axiosInstance } from "@/api/axios";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
 import Mascot from "../Mascot";
-import { useToast } from "../../providers/ToastContext";
-import { useHospitalAuth } from "../../providers/HospitalAuthContext";
+import { useToast } from "@/providers/ToastContext";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import dayjs, { Dayjs } from "dayjs";
 
 const ACCENT = ACCENTS.reception;

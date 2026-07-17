@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, TextField,
   MenuItem, Box, Switch, FormControlLabel, Typography, Divider,
 } from "@mui/material";
 import { LocalHotelRounded, PersonAddRounded, HealthAndSafetyRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import { useToast } from "../../providers/ToastContext";
+import { axiosInstance } from "@/api/axios";
+import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
-import PatientForm from "../../features/reception/PatientForm";
-import { SCHEME_OPTIONS } from "../../features/claims/claimMeta";
+import PatientForm from "@/features/reception/PatientForm";
+import { SCHEME_OPTIONS } from "@/features/claims/claimMeta";
 
 interface Props {
   open: boolean;

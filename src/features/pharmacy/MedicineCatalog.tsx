@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -7,18 +7,18 @@ import {
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded, MedicationRounded, SearchRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
-import { axiosInstance } from "../../api/axios";
-import { useDebouncedValue } from "../../hooks/useDebouncedValue";
-import Mascot from "../../components/Mascot";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import ErrorState from "../../components/ErrorState";
+import { axiosInstance } from "@/api/axios";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import Mascot from "@/components/Mascot";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import ErrorState from "@/components/ErrorState";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
-import { ListSkeleton } from "../../components/TableRowsSkeleton";
-import { useToast } from "../../providers/ToastContext";
-import { useConfirm } from "../../providers/ConfirmContext";
-import { useServerSort } from "../../components/table/useTableSort";
-import SortableHeadCell from "../../components/table/SortableHeadCell";
-import { validate, hasErrors, required, isNonNegativeNumber, min } from "../../utils/validation";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import { useToast } from "@/providers/ToastContext";
+import { useConfirm } from "@/providers/ConfirmContext";
+import { useServerSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
+import { validate, hasErrors, required, isNonNegativeNumber, min } from "@/utils/validation";
 
 // Match the existing plain (non-uppercase) table-head look, overriding
 // SortableHeadCell's default uppercase/secondary styling.

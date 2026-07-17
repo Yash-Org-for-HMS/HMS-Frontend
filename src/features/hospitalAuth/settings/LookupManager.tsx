@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -24,15 +24,15 @@ import {
   Tooltip,
 } from "@mui/material";
 import { AddRounded, EditRounded, PowerSettingsNewRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../../api/axios";
-import Mascot from "../../../components/Mascot";
-import ErrorState from "../../../components/ErrorState";
-import { useToast } from "../../../providers/ToastContext";
-import { useConfirm } from "../../../providers/ConfirmContext";
-import PageHeader from "../../../components/layout/PageHeader";
-import { ListSkeleton } from "../../../components/TableRowsSkeleton";
-import { useTableSort } from "../../../components/table/useTableSort";
-import SortableHeadCell from "../../../components/table/SortableHeadCell";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import { useConfirm } from "@/providers/ConfirmContext";
+import PageHeader from "@/components/layout/PageHeader";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import { useTableSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
 
 const LOOKUP_CONFIGS: Record<string, any> = {
   specialization: {

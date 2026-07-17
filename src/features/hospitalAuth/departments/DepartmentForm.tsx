@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -12,19 +12,19 @@ import {
 } from "@mui/material";
 import { SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
-import { axiosInstance } from "../../../api/axios";
-import ErrorState from "../../../components/ErrorState";
-import { useToast } from "../../../providers/ToastContext";
-import PageHeader from "../../../components/layout/PageHeader";
-import FormSkeleton from "../../../components/skeletons/FormSkeleton";
-import { validate, hasErrors, required, type Errors } from "../../../utils/validation";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import PageHeader from "@/components/layout/PageHeader";
+import FormSkeleton from "@/components/skeletons/FormSkeleton";
+import { validate, hasErrors, required, type Errors } from "@/utils/validation";
 
 interface DepartmentType {
   departmentTypeId: number;
   typeName: string;
 }
 
-import type { StaffUser as User } from "../../../types";
+import type { StaffUser as User } from "@/types";
 
 export default function DepartmentForm() {
   const navigate = useNavigate();

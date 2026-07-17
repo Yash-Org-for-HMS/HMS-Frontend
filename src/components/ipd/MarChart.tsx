@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
   Box, Typography, Chip, Button, Stack, Divider, Tooltip,
 } from "@mui/material";
 import { CheckRounded, CloseRounded, PauseRounded, UndoRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import { useToast } from "../../providers/ToastContext";
+import { axiosInstance } from "@/api/axios";
+import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import Mascot from "../Mascot";
 

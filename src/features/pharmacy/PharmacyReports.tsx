@@ -13,14 +13,14 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
   BarChart, Bar, Legend,
 } from "recharts";
-import { axiosInstance } from "../../api/axios";
-import { exportTableToExcel } from "../../utils/exportExcel";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
-import PageHeader from "../../components/layout/PageHeader";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { apiErrorText } from "../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import { exportTableToExcel } from "@/utils/exportExcel";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
+import PageHeader from "@/components/layout/PageHeader";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { apiErrorText } from "@/utils/apiError";
 
 const ACCENT = "#4F46E5";
 const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN")}`;

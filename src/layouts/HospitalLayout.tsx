@@ -47,14 +47,14 @@ import {
   ReceiptLongRounded,
   FormatListNumberedRounded,
 } from "@mui/icons-material";
-import { useHospitalAuth } from "../providers/HospitalAuthContext";
-import { isAdmin as isAdminRole } from "../constants/roles";
-import { useEnabledModules } from "../hooks/useEnabledModules";
-import BranchSwitcher from "../components/BranchSwitcher";
-import SidebarHeader from "../components/layout/SidebarHeader";
-import SidebarUserCard from "../components/layout/SidebarUserCard";
-import TrialBanner from "../components/layout/TrialBanner";
-import { axiosInstance } from "../api/axios";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { isAdmin as isAdminRole } from "@/constants/roles";
+import { useEnabledModules } from "@/hooks/useEnabledModules";
+import BranchSwitcher from "@/components/BranchSwitcher";
+import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarUserCard from "@/components/layout/SidebarUserCard";
+import TrialBanner from "@/components/layout/TrialBanner";
+import { axiosInstance } from "@/api/axios";
 
 const drawerWidth = 260;
 

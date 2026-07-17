@@ -5,13 +5,13 @@ import {
   Button, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, Typography,
 } from "@mui/material";
 import { SearchRounded, MedicationRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import PageHeader from "../../components/layout/PageHeader";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
-import MarChart from "../../components/ipd/MarChart";
-import { apiErrorText } from "../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import PageHeader from "@/components/layout/PageHeader";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import MarChart from "@/components/ipd/MarChart";
+import { apiErrorText } from "@/utils/apiError";
 
 // Nurse ward view: current in-patients + their medication chart (MAR).
 export default function NurseWard() {

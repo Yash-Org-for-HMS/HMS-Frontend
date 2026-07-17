@@ -1,5 +1,5 @@
-import { ACCENTS } from "../../styles/accents";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { ACCENTS } from "@/styles/accents";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -7,12 +7,12 @@ import {
   Paper, Grid, Alert, Table, TableBody, TableCell, TableHead, TableRow, MenuItem
 } from "@mui/material";
 import { DeleteRounded, SaveRounded, AddRounded, ScienceRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import { useToast } from "../../providers/ToastContext";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { ListSkeleton } from "../../components/TableRowsSkeleton";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import { useToast } from "@/providers/ToastContext";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
 

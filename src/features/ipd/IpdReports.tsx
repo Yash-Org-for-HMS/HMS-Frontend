@@ -5,13 +5,13 @@ import {
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
 } from "@mui/material";
 import { LocalHotelRounded, ReplayRounded, AccessTimeRounded, PersonAddRounded, SavingsRounded, FileDownloadRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import { exportTableToExcel } from "../../utils/exportExcel";
-import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
-import ErrorState from "../../components/ErrorState";
-import PageHeader from "../../components/layout/PageHeader";
+import { axiosInstance } from "@/api/axios";
+import { exportTableToExcel } from "@/utils/exportExcel";
+import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
+import ErrorState from "@/components/ErrorState";
+import PageHeader from "@/components/layout/PageHeader";
 import dayjs from "dayjs";
-import { apiErrorText } from "../../utils/apiError";
+import { apiErrorText } from "@/utils/apiError";
 
 const ACCENT = "#0891b2";
 const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 0 })}`;

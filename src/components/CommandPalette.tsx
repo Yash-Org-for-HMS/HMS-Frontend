@@ -7,8 +7,8 @@ import {
   ApartmentRounded, CallSplitRounded, BoltRounded,
 } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
-import { axiosInstance } from "../api/axios";
-import { useEnabledModules } from "../hooks/useEnabledModules";
+import { axiosInstance } from "@/api/axios";
+import { useEnabledModules } from "@/hooks/useEnabledModules";
 import HeartbeatLoader from "./HeartbeatLoader";
 
 // Create-flows surfaced as one-tap actions (reception/admin).

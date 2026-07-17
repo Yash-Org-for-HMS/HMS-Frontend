@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
@@ -11,10 +11,10 @@ import {
   ScaleRounded, HeightRounded, BloodtypeRounded, SaveRounded,
   SentimentVeryDissatisfied, SentimentSatisfied, SentimentVerySatisfied,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { ListSkeleton } from "../../components/TableRowsSkeleton";
-import { useToast } from "../../providers/ToastContext";
+import { axiosInstance } from "@/api/axios";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import { useToast } from "@/providers/ToastContext";
 
 interface VitalsModalProps {
   open: boolean;

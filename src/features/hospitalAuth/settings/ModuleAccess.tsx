@@ -1,15 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
-import ErrorState from "../../../components/ErrorState";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
+import ErrorState from "@/components/ErrorState";
 import {
   Box, Typography, Paper, List, ListItem, ListItemText,
   Chip, Switch, Divider, Tooltip,
 } from "@mui/material";
 import { LockRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../../api/axios";
-import { useToast } from "../../../providers/ToastContext";
-import PageHeader from "../../../components/layout/PageHeader";
-import DetailSkeleton from "../../../components/skeletons/DetailSkeleton";
+import { axiosInstance } from "@/api/axios";
+import { useToast } from "@/providers/ToastContext";
+import PageHeader from "@/components/layout/PageHeader";
+import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 
 interface ModuleAccessData {
   enabledModules: string[];

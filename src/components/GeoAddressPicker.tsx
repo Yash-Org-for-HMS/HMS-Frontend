@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Grid, TextField, MenuItem, InputAdornment, CircularProgress } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { axiosInstance } from "../api/axios";
+import { axiosInstance } from "@/api/axios";
 
 interface GeoOption { stateId?: number; districtId?: number; name: string }
 

@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useHospitalAuth } from "../providers/HospitalAuthContext";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { Box } from "@mui/material";
 import HeartbeatLoader from "./HeartbeatLoader";
 

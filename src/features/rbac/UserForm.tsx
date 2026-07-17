@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -16,15 +16,15 @@ import {
   Chip,
 } from "@mui/material";
 import { ArrowBackRounded, Visibility, VisibilityOff } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import { useToast } from "../../providers/ToastContext";
-import FormHeader from "../../components/layout/FormHeader";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import FormSkeleton from "../../components/skeletons/FormSkeleton";
-import CredentialDialog from "../../components/CredentialDialog";
-import { validate, hasErrors, required, isEmail, isPhone, minLen, type Errors } from "../../utils/validation";
-import type { Branch, Role as RoleBase } from "../../types";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import FormHeader from "@/components/layout/FormHeader";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import FormSkeleton from "@/components/skeletons/FormSkeleton";
+import CredentialDialog from "@/components/CredentialDialog";
+import { validate, hasErrors, required, isEmail, isPhone, minLen, type Errors } from "@/utils/validation";
+import type { Branch, Role as RoleBase } from "@/types";
 
 interface Hospital {
   hospitalId: string;

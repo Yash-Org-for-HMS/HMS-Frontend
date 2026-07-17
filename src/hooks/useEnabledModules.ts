@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { axiosInstance } from "../api/axios";
+import { axiosInstance } from "@/api/axios";
 
 /**
  * The modules enabled for the logged-in hospital user, used to hide nav items

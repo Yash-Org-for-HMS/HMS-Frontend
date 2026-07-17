@@ -1,4 +1,4 @@
-import { ACCENTS } from "../../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useRef, useState, useEffect } from "react";
 import { Box, Typography, Button, Chip, Alert, Fade, TextField, IconButton, Tooltip } from "@mui/material";
 import {
@@ -8,9 +8,9 @@ import {
   MonitorHeartRounded, DescriptionRounded, CircleRounded, SendRounded,
   KeyboardTabRounded,
 } from "@mui/icons-material";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { typeScale } from "../../styles/typography";
-import { API_URL } from "../../api/axios";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { typeScale } from "@/styles/typography";
+import { API_URL } from "@/api/axios";
 
 const BLUE = ACCENTS.doctor;
 const BLUE_DARK = ACCENTS.doctorDark;

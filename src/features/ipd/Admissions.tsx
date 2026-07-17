@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
-import { formatINR } from "../../utils/format";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
+import { formatINR } from "@/utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableHead, TableBody, TableRow, TableCell,
@@ -12,22 +12,22 @@ import {
   CancelRounded, SavingsRounded, UndoRounded, MedicalServicesRounded, MedicationRounded,
   ScienceRounded, MonitorHeartRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
-import { useToast } from "../../providers/ToastContext";
-import AdmitDialog from "../../components/ipd/AdmitDialog";
-import TransferDialog from "../../components/ipd/TransferDialog";
-import DischargeDialog from "../../components/ipd/DischargeDialog";
-import DepositDialog from "../../components/ipd/DepositDialog";
-import SurgeryDialog from "../../components/ipd/SurgeryDialog";
-import IpdMedicinesDialog from "../../components/ipd/IpdMedicinesDialog";
-import IpdLabOrdersDialog from "../../components/ipd/IpdLabOrdersDialog";
-import IpdRadiologyOrdersDialog from "../../components/ipd/IpdRadiologyOrdersDialog";
-import PageHeader from "../../components/layout/PageHeader";
-import { useTableSort } from "../../components/table/useTableSort";
-import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import { useToast } from "@/providers/ToastContext";
+import AdmitDialog from "@/components/ipd/AdmitDialog";
+import TransferDialog from "@/components/ipd/TransferDialog";
+import DischargeDialog from "@/components/ipd/DischargeDialog";
+import DepositDialog from "@/components/ipd/DepositDialog";
+import SurgeryDialog from "@/components/ipd/SurgeryDialog";
+import IpdMedicinesDialog from "@/components/ipd/IpdMedicinesDialog";
+import IpdLabOrdersDialog from "@/components/ipd/IpdLabOrdersDialog";
+import IpdRadiologyOrdersDialog from "@/components/ipd/IpdRadiologyOrdersDialog";
+import PageHeader from "@/components/layout/PageHeader";
+import { useTableSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
 
 const inr = (n: any) => formatINR(n, 0);
 

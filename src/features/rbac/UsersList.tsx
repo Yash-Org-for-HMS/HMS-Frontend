@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
@@ -33,26 +33,26 @@ import {
   DeleteRounded,
   LockResetRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import { useDebouncedValue } from "../../hooks/useDebouncedValue";
-import ErrorState from "../../components/ErrorState";
-import { useToast } from "../../providers/ToastContext";
-import { useConfirm } from "../../providers/ConfirmContext";
-import CredentialDialog from "../../components/CredentialDialog";
-import PageContainer from "../../components/layout/PageContainer";
-import PageHeader from "../../components/layout/PageHeader";
-import ActionButton from "../../components/layout/ActionButton";
-import FilterBar from "../../components/layout/FilterBar";
-import { useServerSort } from "../../components/table/useTableSort";
-import SortableHeadCell from "../../components/table/SortableHeadCell";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { axiosInstance } from "@/api/axios";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import { useConfirm } from "@/providers/ConfirmContext";
+import CredentialDialog from "@/components/CredentialDialog";
+import PageContainer from "@/components/layout/PageContainer";
+import PageHeader from "@/components/layout/PageHeader";
+import ActionButton from "@/components/layout/ActionButton";
+import FilterBar from "@/components/layout/FilterBar";
+import { useServerSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 
 // Keep the admin list's existing sentence-case header look (the SortableHeadCell
 // default is the reception-panel uppercase style).
 const adminHeadSx = { fontWeight: 600, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.paper" } as const;
 
-import type { StaffUser } from "../../types";
+import type { StaffUser } from "@/types";
 
 interface User extends StaffUser {
   phone: string | null;

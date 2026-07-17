@@ -1,21 +1,21 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
-import { orderStatusColor } from "../../utils/statusColors";
+import { getApiErrorMessage } from "@/utils/apiError";
+import { orderStatusColor } from "@/utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab } from "@mui/material";
 import { VisibilityRounded, CheckCircleRounded, InsertDriveFileRounded, EditRounded, CloudUploadRounded, AddRounded } from "@mui/icons-material";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { axiosInstance } from "../../api/axios";
-import Mascot from "../../components/Mascot";
-import { ListSkeleton } from "../../components/TableRowsSkeleton";
-import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
-import WalkInOrderDialog from "../../components/lab/WalkInOrderDialog";
-import { useSocket } from "../../hooks/useSocket";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
+import WalkInOrderDialog from "@/components/lab/WalkInOrderDialog";
+import { useSocket } from "@/hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
-import { assetUrl } from "../../utils/assetUrl";
-import PageHeader from "../../components/layout/PageHeader";
-import { useTableSort } from "../../components/table/useTableSort";
-import SortableHeadCell from "../../components/table/SortableHeadCell";
-import { useToast } from "../../providers/ToastContext";
+import { assetUrl } from "@/utils/assetUrl";
+import PageHeader from "@/components/layout/PageHeader";
+import { useTableSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
+import { useToast } from "@/providers/ToastContext";
 
 export default function RadiologyOrdersQueue() {
   const toast = useToast();

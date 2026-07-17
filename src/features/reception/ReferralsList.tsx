@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer,
@@ -9,15 +9,15 @@ import {
 import {
   AddRounded, SearchRounded, MoreVertRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
-import { useToast } from "../../providers/ToastContext";
-import ReferralDialog from "../../components/reception/ReferralDialog";
-import PageHeader from "../../components/layout/PageHeader";
-import { useTableSort } from "../../components/table/useTableSort";
-import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import { useToast } from "@/providers/ToastContext";
+import ReferralDialog from "@/components/reception/ReferralDialog";
+import PageHeader from "@/components/layout/PageHeader";
+import { useTableSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
 import dayjs from "dayjs";
 
 const STATUS_META: Record<string, { label: string; color: string }> = {

@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography,
   TextField, Chip, Alert,
 } from "@mui/material";
 import { LogoutRounded, PaymentRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
+import { axiosInstance } from "@/api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
-import { useToast } from "../../providers/ToastContext";
-import BillingModal from "../../features/reception/BillingModal";
+import { useToast } from "@/providers/ToastContext";
+import BillingModal from "@/features/reception/BillingModal";
 
 interface CheckoutToken {
   queueTokenId: string;

@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
-import { formatINR } from "../../utils/format";
+import { getApiErrorMessage } from "@/utils/apiError";
+import { formatINR } from "@/utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem,
   Stack, Typography, Box,
 } from "@mui/material";
 import { SavingsRounded, UndoRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import { useToast } from "../../providers/ToastContext";
+import { axiosInstance } from "@/api/axios";
+import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 
 

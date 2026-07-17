@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
-import GeoAddressPicker from "../../../components/GeoAddressPicker";
-import CredentialDialog from "../../../components/CredentialDialog";
+import GeoAddressPicker from "@/components/GeoAddressPicker";
+import CredentialDialog from "@/components/CredentialDialog";
 import {
   Box,
   Typography,
@@ -26,14 +26,14 @@ import {
   PersonRounded,
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
-import { axiosInstance } from "../../../api/axios";
-import ErrorState from "../../../components/ErrorState";
-import { useToast } from "../../../providers/ToastContext";
-import PageHeader from "../../../components/layout/PageHeader";
-import HeartbeatLoader from "../../../components/HeartbeatLoader";
-import FormSkeleton from "../../../components/skeletons/FormSkeleton";
-import { validate, hasErrors, required, isEmail, isPhone, minLen, match, type Errors } from "../../../utils/validation";
-import type { Role, Department, Branch } from "../../../types";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import PageHeader from "@/components/layout/PageHeader";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import FormSkeleton from "@/components/skeletons/FormSkeleton";
+import { validate, hasErrors, required, isEmail, isPhone, minLen, match, type Errors } from "@/utils/validation";
+import type { Role, Department, Branch } from "@/types";
 
 interface TabPanelProps {
   children?: React.ReactNode;

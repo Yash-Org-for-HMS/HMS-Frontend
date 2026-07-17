@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useLocation } from "react-router-dom";
 import { 
   Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
@@ -7,18 +7,18 @@ import {
   List, ListItem, ListItemButton, Chip, Pagination, Select, MenuItem, Tooltip, Alert
 } from "@mui/material";
 import { PointOfSaleRounded, AddCircleRounded, RemoveCircleRounded, DeleteRounded, PaymentRounded, LocalPharmacyRounded, DownloadRounded, EditRounded, CancelRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import Mascot from "../../components/Mascot";
-import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
-import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
-import ReasonDialog from "../../components/ReasonDialog";
-import { useSocket } from "../../hooks/useSocket";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
+import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
+import ReasonDialog from "@/components/ReasonDialog";
+import { useSocket } from "@/hooks/useSocket";
 import { useQuery } from "@tanstack/react-query";
 import PharmacyPage, { ROWS_PER_PAGE } from "./components/PharmacyPage";
-import { useToast } from "../../providers/ToastContext";
-import { useConfirm } from "../../providers/ConfirmContext";
-import { useHospitalAuth } from "../../providers/HospitalAuthContext";
-import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
+import { useToast } from "@/providers/ToastContext";
+import { useConfirm } from "@/providers/ConfirmContext";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { useHospitalTaxRate } from "@/hooks/useHospitalTaxRate";
 
 export default function DispensaryPOS() {
   const theme = useTheme();

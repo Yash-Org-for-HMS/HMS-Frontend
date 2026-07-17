@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -15,12 +15,12 @@ import {
 } from "@mui/material";
 import { SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { axiosInstance } from "../../../api/axios";
-import ErrorState from "../../../components/ErrorState";
-import { useToast } from "../../../providers/ToastContext";
-import PageHeader from "../../../components/layout/PageHeader";
-import FormSkeleton from "../../../components/skeletons/FormSkeleton";
-import type { Permission } from "../../../types";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import PageHeader from "@/components/layout/PageHeader";
+import FormSkeleton from "@/components/skeletons/FormSkeleton";
+import type { Permission } from "@/types";
 
 export default function RoleForm() {
   const navigate = useNavigate();

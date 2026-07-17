@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
-import { getApiErrorMessage } from "../utils/apiError";
-import { axiosInstance } from "../api/axios";
+import { getApiErrorMessage } from "@/utils/apiError";
+import { axiosInstance } from "@/api/axios";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "./ToastContext";
 

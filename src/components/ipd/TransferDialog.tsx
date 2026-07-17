@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem,
   Stack, Typography,
 } from "@mui/material";
 import { SwapHorizRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import { useToast } from "../../providers/ToastContext";
+import { axiosInstance } from "@/api/axios";
+import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 
 interface Props {

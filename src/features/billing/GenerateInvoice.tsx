@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Autocomplete, TextField,
@@ -7,13 +7,13 @@ import {
   Button, Divider, Grid, Dialog, DialogTitle, DialogContent, DialogActions, alpha, useTheme
 } from "@mui/material";
 import { ReceiptLongRounded, PaymentRounded, CheckCircleRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import { useDebouncedValue } from "../../hooks/useDebouncedValue";
-import ErrorState from "../../components/ErrorState";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { ListSkeleton } from "../../components/TableRowsSkeleton";
-import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
-import { useToast } from "../../providers/ToastContext";
+import { axiosInstance } from "@/api/axios";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import ErrorState from "@/components/ErrorState";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import { useHospitalTaxRate } from "@/hooks/useHospitalTaxRate";
+import { useToast } from "@/providers/ToastContext";
 
 export default function GenerateInvoice({ patientId: initialPatientId }: { patientId?: string } = {}) {
   const theme = useTheme();

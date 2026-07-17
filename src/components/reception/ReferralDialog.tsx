@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, TextField,
   MenuItem, ToggleButton, ToggleButtonGroup, Typography,
 } from "@mui/material";
 import { AddRounded, CallSplitRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
+import { axiosInstance } from "@/api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
-import { useToast } from "../../providers/ToastContext";
+import { useToast } from "@/providers/ToastContext";
 
 interface ReferralDialogProps {
   open: boolean;

@@ -1,4 +1,4 @@
-import { ACCENTS } from "../../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Grid, Typography, Paper, Alert,
@@ -9,16 +9,16 @@ import {
   MonitorHeartRounded, CheckCircleRounded, HourglassTopRounded,
   PeopleAltRounded, ArrowForwardRounded, SyncRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import Mascot from "../../components/Mascot";
-import StatusChip from "../../components/StatusChip";
-import { TableRowsSkeleton, CardGridSkeleton } from "../../components/TableRowsSkeleton";
-import PageHeader from "../../components/layout/PageHeader";
-import ErrorState from "../../components/ErrorState";
-import StatCard from "../../components/StatCard";
-import { useHospitalAuth } from "../../providers/HospitalAuthContext";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import StatusChip from "@/components/StatusChip";
+import { TableRowsSkeleton, CardGridSkeleton } from "@/components/TableRowsSkeleton";
+import PageHeader from "@/components/layout/PageHeader";
+import ErrorState from "@/components/ErrorState";
+import StatCard from "@/components/StatCard";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
-import { apiErrorText } from "../../utils/apiError";
+import { apiErrorText } from "@/utils/apiError";
 
 const NURSE_PURPLE = ACCENTS.nurse;
 const NURSE_PURPLE_DARK = ACCENTS.nurseDark;

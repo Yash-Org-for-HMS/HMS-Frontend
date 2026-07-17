@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, TextField, InputAdornment,
@@ -8,17 +8,17 @@ import {
 import {
   SearchRounded, PersonAddRounded, CloseRounded, ChevronRightRounded, ContentCopyRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import Mascot from "../../components/Mascot";
-import { getInitials } from "../../utils/format";
+import { axiosInstance } from "@/api/axios";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import Mascot from "@/components/Mascot";
+import { getInitials } from "@/utils/format";
 import PatientForm from "./PatientForm";
 import AppointmentForm from "./AppointmentForm";
 import BillingModal from "./BillingModal";
-import { useToast } from "../../providers/ToastContext";
-import PageHeader from "../../components/layout/PageHeader";
+import { useToast } from "@/providers/ToastContext";
+import PageHeader from "@/components/layout/PageHeader";
 
-import type { Patient } from "../../types";
+import type { Patient } from "@/types";
 
 export default function FrontDeskConsole() {
   const [search, setSearch] = useState("");

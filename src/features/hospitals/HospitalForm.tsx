@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -22,15 +22,15 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import FormSkeleton from "../../components/skeletons/FormSkeleton";
-import { useToast } from "../../providers/ToastContext";
-import { useConfirm } from "../../providers/ConfirmContext";
-import FormHeader from "../../components/layout/FormHeader";
-import BranchDialog from "../../components/hospitals/BranchDialog";
-import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "../../utils/validation";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import FormSkeleton from "@/components/skeletons/FormSkeleton";
+import { useToast } from "@/providers/ToastContext";
+import { useConfirm } from "@/providers/ConfirmContext";
+import FormHeader from "@/components/layout/FormHeader";
+import BranchDialog from "@/components/hospitals/BranchDialog";
+import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "@/utils/validation";
 
 export default function HospitalForm() {
   const { t } = useTranslation();

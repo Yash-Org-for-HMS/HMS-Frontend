@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Grid, Chip, Menu, MenuItem, Tooltip,
@@ -8,12 +8,12 @@ import {
   EventSeatRounded, BuildRounded, CheckCircleRounded,
   PersonRounded, ApartmentRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import { ListSkeleton } from "../../components/TableRowsSkeleton";
-import { useToast } from "../../providers/ToastContext";
-import PageHeader from "../../components/layout/PageHeader";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import { useToast } from "@/providers/ToastContext";
+import PageHeader from "@/components/layout/PageHeader";
 
 const STATUS_COLOR: Record<string, string> = {
   AVAILABLE: "#10b981", OCCUPIED: "#ef4444", RESERVED: "#f59e0b", MAINTENANCE: "#64748b",

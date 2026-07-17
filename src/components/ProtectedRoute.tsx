@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "../providers/AuthContext";
+import { useAuth } from "@/providers/AuthContext";
 import { Box } from "@mui/material";
 import HeartbeatLoader from "./HeartbeatLoader";
 

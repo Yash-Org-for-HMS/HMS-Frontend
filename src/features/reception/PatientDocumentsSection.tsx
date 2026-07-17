@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Grid, Alert,
@@ -9,13 +9,13 @@ import {
 import {
   CloudUploadRounded, DeleteRounded, VisibilityRounded, InsertDriveFileRounded
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { ListSkeleton } from "../../components/TableRowsSkeleton";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import { useToast } from "../../providers/ToastContext";
-import { useConfirm } from "../../providers/ConfirmContext";
+import { axiosInstance } from "@/api/axios";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import { useToast } from "@/providers/ToastContext";
+import { useConfirm } from "@/providers/ConfirmContext";
 
 export default function PatientDocumentsSection({ patientId, readOnly = false }: { patientId: string; readOnly?: boolean }) {
   const toast = useToast();

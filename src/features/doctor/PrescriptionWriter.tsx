@@ -1,5 +1,5 @@
-import { ACCENTS } from "../../styles/accents";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { ACCENTS } from "@/styles/accents";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -7,15 +7,15 @@ import {
   Paper, Grid, Alert, Divider, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Switch, FormControlLabel, Chip
 } from "@mui/material";
 import { DeleteRounded, SaveRounded, AddRounded, PrintRounded, ReplayRounded, WarningAmberRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import FormSkeleton from "../../components/skeletons/FormSkeleton";
-import { useToast } from "../../providers/ToastContext";
-import { useHospitalAuth } from "../../providers/HospitalAuthContext";
-import { assetUrl } from "../../utils/assetUrl";
-import DoseCalculator from "../../components/doctor/DoseCalculator";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import FormSkeleton from "@/components/skeletons/FormSkeleton";
+import { useToast } from "@/providers/ToastContext";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { assetUrl } from "@/utils/assetUrl";
+import DoseCalculator from "@/components/doctor/DoseCalculator";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
 

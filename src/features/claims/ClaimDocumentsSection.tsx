@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Paper, Typography, Button, Chip, IconButton, Tooltip, Divider, Stack,
@@ -9,11 +9,11 @@ import {
   CloudUploadRounded, DeleteOutlineRounded, VisibilityRounded, CheckCircleRounded,
   RadioButtonUncheckedRounded, DescriptionRounded,
 } from "@mui/icons-material";
-import { ACCENTS } from "../../styles/accents";
-import { axiosInstance } from "../../api/axios";
-import { useToast } from "../../providers/ToastContext";
-import { useConfirm } from "../../providers/ConfirmContext";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { ACCENTS } from "@/styles/accents";
+import { axiosInstance } from "@/api/axios";
+import { useToast } from "@/providers/ToastContext";
+import { useConfirm } from "@/providers/ConfirmContext";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { CLAIM_DOC_CATALOG, DOC_STAGE_LABEL, docTypeLabel, type DocStage } from "./claimMeta";
 
 const ACCENT = ACCENTS.reception;

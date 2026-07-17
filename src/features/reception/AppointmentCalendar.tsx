@@ -1,4 +1,4 @@
-import { ACCENTS } from "../../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -10,12 +10,12 @@ import {
   ViewListRounded, CalendarMonthRounded,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import { axiosInstance } from "../../api/axios";
-import PageSkeleton from "../../components/PageSkeleton";
-import ErrorState from "../../components/ErrorState";
-import PageHeader from "../../components/layout/PageHeader";
+import { axiosInstance } from "@/api/axios";
+import PageSkeleton from "@/components/PageSkeleton";
+import ErrorState from "@/components/ErrorState";
+import PageHeader from "@/components/layout/PageHeader";
 import dayjs, { Dayjs } from "dayjs";
-import { apiErrorText } from "../../utils/apiError";
+import { apiErrorText } from "@/utils/apiError";
 
 // Grid bounds. Slots run START_HOUR→END_HOUR in SLOT_MINUTES steps.
 const START_HOUR = 8;

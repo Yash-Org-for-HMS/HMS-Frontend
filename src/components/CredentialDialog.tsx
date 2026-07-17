@@ -1,4 +1,4 @@
-import { ACCENTS } from "../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useState } from "react";
 import { Box, Button, Dialog, DialogContent, IconButton, Tooltip, Typography } from "@mui/material";
 import { CheckCircleRounded, ContentCopyRounded, InfoOutlined } from "@mui/icons-material";

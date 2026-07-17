@@ -1,17 +1,17 @@
 import { useRef, useState } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
-import { formatINR, formatDate } from "../../utils/format";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
+import { formatINR, formatDate } from "@/utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, Divider,
   Chip, TextField, MenuItem, Grid,
 } from "@mui/material";
 import { CloseRounded, PrintRounded, PaymentRounded, CheckCircleRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
+import { axiosInstance } from "@/api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
-import { useToast } from "../../providers/ToastContext";
+import { useToast } from "@/providers/ToastContext";
 
 
 interface Props {

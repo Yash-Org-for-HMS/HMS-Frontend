@@ -44,12 +44,12 @@ import {
   AccessTimeRounded,
   HealthAndSafetyRounded,
 } from "@mui/icons-material";
-import { useHospitalAuth } from "../providers/HospitalAuthContext";
-import { assetUrl } from "../utils/assetUrl";
-import BranchSwitcher from "../components/BranchSwitcher";
-import SidebarHeader from "../components/layout/SidebarHeader";
-import SidebarUserCard from "../components/layout/SidebarUserCard";
-import { useEnabledModules } from "../hooks/useEnabledModules";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { assetUrl } from "@/utils/assetUrl";
+import BranchSwitcher from "@/components/BranchSwitcher";
+import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarUserCard from "@/components/layout/SidebarUserCard";
+import { useEnabledModules } from "@/hooks/useEnabledModules";
 
 const drawerWidth = 260;
 

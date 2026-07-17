@@ -1,4 +1,4 @@
-import { ACCENTS } from "../../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useState } from "react";
 import {
   IconButton, Popover, Box, Typography, TextField, Button, Chip, Divider, Tooltip,

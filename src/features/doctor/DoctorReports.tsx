@@ -1,4 +1,4 @@
-import { ACCENTS } from "../../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useMemo, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -15,14 +15,14 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
   BarChart, Bar, PieChart, Pie, Cell, Legend,
 } from "recharts";
-import { axiosInstance } from "../../api/axios";
-import { exportTableToExcel } from "../../utils/exportExcel";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
-import PageHeader from "../../components/layout/PageHeader";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { apiErrorText } from "../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import { exportTableToExcel } from "@/utils/exportExcel";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
+import PageHeader from "@/components/layout/PageHeader";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { apiErrorText } from "@/utils/apiError";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
 const PIE_COLORS = ["#3b82f6", "#ec4899", "#f59e0b", "#10b981", "#8b5cf6", "#64748b"];

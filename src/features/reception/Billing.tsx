@@ -1,5 +1,5 @@
-import { ACCENTS } from "../../styles/accents";
-import { formatINR, formatDate } from "../../utils/format";
+import { ACCENTS } from "@/styles/accents";
+import { formatINR, formatDate } from "@/utils/format";
 import { useEffect, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
@@ -10,16 +10,16 @@ import {
 import {
   SearchRounded, AddRounded, VisibilityRounded, ReceiptRounded, LocalHotelRounded, PrintRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import StatusChip from "../../components/StatusChip";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import StatusChip from "@/components/StatusChip";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import GenerateInvoice from "../billing/GenerateInvoice";
-import InvoiceViewDialog from "../../components/reception/InvoiceViewDialog";
-import PageHeader from "../../components/layout/PageHeader";
+import InvoiceViewDialog from "@/components/reception/InvoiceViewDialog";
+import PageHeader from "@/components/layout/PageHeader";
 import { useSearchParams } from "react-router-dom";
-import { apiErrorText } from "../../utils/apiError";
+import { apiErrorText } from "@/utils/apiError";
 
 const ACCENT = ACCENTS.reception;
 const STATUSES = [

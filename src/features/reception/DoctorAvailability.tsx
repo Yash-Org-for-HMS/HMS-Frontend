@@ -8,16 +8,16 @@ import {
   EventAvailableRounded, BeachAccessRounded, DoNotDisturbRounded,
   ScheduleRounded, AddRounded, CloseRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import { CardGridSkeleton } from "../../components/TableRowsSkeleton";
-import PageHeader from "../../components/layout/PageHeader";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import { CardGridSkeleton } from "@/components/TableRowsSkeleton";
+import PageHeader from "@/components/layout/PageHeader";
 import AppointmentForm from "./AppointmentForm";
 import BillingModal from "./BillingModal";
-import { useToast } from "../../providers/ToastContext";
+import { useToast } from "@/providers/ToastContext";
 import dayjs from "dayjs";
-import { apiErrorText } from "../../utils/apiError";
+import { apiErrorText } from "@/utils/apiError";
 
 const STATUS = {
   AVAILABLE: { label: "Available", color: "#10b981", icon: <EventAvailableRounded fontSize="small" /> },

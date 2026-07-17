@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -37,21 +37,21 @@ import {
   InfoOutlined,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import { axiosInstance } from "../../../api/axios";
-import Mascot from "../../../components/Mascot";
-import ErrorState from "../../../components/ErrorState";
-import { useToast } from "../../../providers/ToastContext";
-import { useConfirm } from "../../../providers/ConfirmContext";
-import PageHeader from "../../../components/layout/PageHeader";
-import { TableRowsSkeleton } from "../../../components/TableRowsSkeleton";
-import { useTableSort } from "../../../components/table/useTableSort";
-import SortableHeadCell from "../../../components/table/SortableHeadCell";
-import HeartbeatLoader from "../../../components/HeartbeatLoader";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import { useConfirm } from "@/providers/ConfirmContext";
+import PageHeader from "@/components/layout/PageHeader";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import { useTableSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
 
 // Match the file's existing sentence-case header look (override SortableHeadCell's default uppercase/bold style).
 const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 400, fontSize: "0.875rem", py: undefined };
 
-import type { StaffUser } from "../../../types";
+import type { StaffUser } from "@/types";
 
 interface User extends StaffUser {
   employeeCode: string;

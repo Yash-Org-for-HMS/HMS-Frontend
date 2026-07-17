@@ -38,9 +38,9 @@ import {
   NotificationsActiveRounded,
   AssessmentRounded,
 } from "@mui/icons-material";
-import { useAuth } from "../providers/AuthContext";
-import SidebarHeader from "../components/layout/SidebarHeader";
-import SidebarUserCard from "../components/layout/SidebarUserCard";
+import { useAuth } from "@/providers/AuthContext";
+import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarUserCard from "@/components/layout/SidebarUserCard";
 
 const drawerWidth = 260;
 

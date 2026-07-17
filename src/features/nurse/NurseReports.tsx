@@ -1,4 +1,4 @@
-import { ACCENTS } from "../../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useMemo, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -14,15 +14,15 @@ import {
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
 } from "recharts";
-import { axiosInstance } from "../../api/axios";
-import { exportTableToExcel } from "../../utils/exportExcel";
-import { useEnabledModules } from "../../hooks/useEnabledModules";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
-import PageHeader from "../../components/layout/PageHeader";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { apiErrorText } from "../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import { exportTableToExcel } from "@/utils/exportExcel";
+import { useEnabledModules } from "@/hooks/useEnabledModules";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
+import PageHeader from "@/components/layout/PageHeader";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { apiErrorText } from "@/utils/apiError";
 
 const NURSE_PURPLE = ACCENTS.nurse;
 

@@ -1,4 +1,4 @@
-import { ACCENTS } from "../../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -9,15 +9,15 @@ import {
   LocalHospitalRounded, MedicationRounded, VaccinesRounded, MedicalServicesRounded,
   TodayRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import Mascot from "../../components/Mascot";
-import ErrorState from "../../components/ErrorState";
-import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
-import { ListSkeleton } from "../../components/TableRowsSkeleton";
-import StatCard from "../../components/StatCard";
-import { typeScale } from "../../styles/typography";
-import { sanitizeRichText } from "../../utils/sanitizeHtml";
-import { apiErrorText } from "../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import ErrorState from "@/components/ErrorState";
+import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import StatCard from "@/components/StatCard";
+import { typeScale } from "@/styles/typography";
+import { sanitizeRichText } from "@/utils/sanitizeHtml";
+import { apiErrorText } from "@/utils/apiError";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
 

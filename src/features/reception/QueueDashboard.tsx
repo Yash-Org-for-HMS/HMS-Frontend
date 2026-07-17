@@ -10,15 +10,15 @@ import {
   SkipNextRounded, CancelRounded, SyncRounded, ReceiptRounded,
   MonitorHeartRounded, LogoutRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import Mascot from "../../components/Mascot";
-import StatusChip from "../../components/StatusChip";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import StatusChip from "@/components/StatusChip";
 import BillingModal from "./BillingModal";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import VitalsModal from "./VitalsModal";
-import CheckoutDialog from "../../components/reception/CheckoutDialog";
-import { useSocket } from "../../hooks/useSocket";
-import PageHeader from "../../components/layout/PageHeader";
+import CheckoutDialog from "@/components/reception/CheckoutDialog";
+import { useSocket } from "@/hooks/useSocket";
+import PageHeader from "@/components/layout/PageHeader";
 
 const getDoctorInitials = (doctorName?: string) => {
   if (!doctorName || doctorName === "Unknown") return "";

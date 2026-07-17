@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box,
@@ -46,19 +46,19 @@ import {
   MoreVertRounded,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import { axiosInstance } from "../../api/axios";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import Mascot from "../../components/Mascot";
-import { getInitials, formatDate } from "../../utils/format";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
-import IdCardModal from "../../components/reception/IdCardModal";
-import AdmitDialog from "../../components/ipd/AdmitDialog";
-import { useToast } from "../../providers/ToastContext";
-import PageHeader from "../../components/layout/PageHeader";
-import { useServerSort } from "../../components/table/useTableSort";
-import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { axiosInstance } from "@/api/axios";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import Mascot from "@/components/Mascot";
+import { getInitials, formatDate } from "@/utils/format";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import IdCardModal from "@/components/reception/IdCardModal";
+import AdmitDialog from "@/components/ipd/AdmitDialog";
+import { useToast } from "@/providers/ToastContext";
+import PageHeader from "@/components/layout/PageHeader";
+import { useServerSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
 
-import type { Patient as PatientBase } from "../../types";
+import type { Patient as PatientBase } from "@/types";
 
 interface Patient extends PatientBase {
   city: string;

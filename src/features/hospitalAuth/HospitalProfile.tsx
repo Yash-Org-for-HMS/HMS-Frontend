@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
-import ErrorState from "../../components/ErrorState";
-import GeoAddressPicker from "../../components/GeoAddressPicker";
+import ErrorState from "@/components/ErrorState";
+import GeoAddressPicker from "@/components/GeoAddressPicker";
 import {
   Box,
   Typography,
@@ -17,13 +17,13 @@ import {
   Divider,
 } from "@mui/material";
 import { SaveRounded, BusinessRounded, PaletteRounded, GavelRounded, CloudUploadRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import { useHospitalAuth } from "../../providers/HospitalAuthContext";
-import { useToast } from "../../providers/ToastContext";
-import { assetUrl } from "../../utils/assetUrl";
-import PageHeader from "../../components/layout/PageHeader";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
+import { axiosInstance } from "@/api/axios";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { useToast } from "@/providers/ToastContext";
+import { assetUrl } from "@/utils/assetUrl";
+import PageHeader from "@/components/layout/PageHeader";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 
 interface TabPanelProps {
   children?: React.ReactNode;

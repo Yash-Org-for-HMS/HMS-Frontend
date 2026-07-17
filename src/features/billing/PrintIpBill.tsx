@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useParams } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
-import { axiosInstance } from "../../api/axios";
-import { formatINR } from "../../utils/format";
-import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
+import { axiosInstance } from "@/api/axios";
+import { formatINR } from "@/utils/format";
+import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 
 // Printable A4 in-patient bill. Hospitals print on their own pre-printed
 // letterhead stationery, so we render NO logo/branding — just a fixed blank top

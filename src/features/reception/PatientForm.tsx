@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
-import GeoAddressPicker from "../../components/GeoAddressPicker";
+import GeoAddressPicker from "@/components/GeoAddressPicker";
 import {
   Box,
   Typography,
@@ -27,13 +27,13 @@ import {
   ArrowBackRounded,
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
-import { axiosInstance } from "../../api/axios";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import FormSkeleton from "../../components/skeletons/FormSkeleton";
-import ErrorState from "../../components/ErrorState";
-import { useToast } from "../../providers/ToastContext";
-import PageHeader from "../../components/layout/PageHeader";
-import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "../../utils/validation";
+import { axiosInstance } from "@/api/axios";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import FormSkeleton from "@/components/skeletons/FormSkeleton";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import PageHeader from "@/components/layout/PageHeader";
+import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "@/utils/validation";
 
 interface Gender {
   genderId: number;

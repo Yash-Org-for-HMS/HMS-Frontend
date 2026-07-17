@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import ModuleGate from "../components/ModuleGate";
+import ModuleGate from "@/components/ModuleGate";
 import {
   Box,
   Drawer,
@@ -32,11 +32,11 @@ import {
   WarehouseRounded,
   LocalPharmacyRounded,
 } from "@mui/icons-material";
-import { useHospitalAuth } from "../providers/HospitalAuthContext";
-import BranchSwitcher from "../components/BranchSwitcher";
-import SidebarHeader from "../components/layout/SidebarHeader";
-import SidebarUserCard from "../components/layout/SidebarUserCard";
-import TrialBanner from "../components/layout/TrialBanner";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import BranchSwitcher from "@/components/BranchSwitcher";
+import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarUserCard from "@/components/layout/SidebarUserCard";
+import TrialBanner from "@/components/layout/TrialBanner";
 
 const drawerWidth = 260;
 

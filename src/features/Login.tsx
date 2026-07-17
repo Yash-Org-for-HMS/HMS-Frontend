@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box, Button, TextField, Typography, InputAdornment, IconButton, Fade,
 } from "@mui/material";
@@ -7,10 +7,10 @@ import {
   Visibility, VisibilityOff, LockOutlined, EmailOutlined, LocalHospitalRounded,
   KeyboardCapslockRounded, ShieldRounded,
 } from "@mui/icons-material";
-import { useAuth } from "../providers/AuthContext";
-import { axiosInstance } from "../api/axios";
-import { useToast } from "../providers/ToastContext";
-import HeartbeatLoader from "../components/HeartbeatLoader";
+import { useAuth } from "@/providers/AuthContext";
+import { axiosInstance } from "@/api/axios";
+import { useToast } from "@/providers/ToastContext";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
 
 // Admin/platform realm accent (src/styles/accents.ts: admin = "#6366f1"),
 // matching the app's primary indigo gradient (theme.ts) — distinct from the

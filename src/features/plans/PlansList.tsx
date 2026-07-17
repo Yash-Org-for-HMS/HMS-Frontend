@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -30,16 +30,16 @@ import {
   EditRounded,
   DeleteRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import { useToast } from "../../providers/ToastContext";
-import PageContainer from "../../components/layout/PageContainer";
-import PageHeader from "../../components/layout/PageHeader";
-import ActionButton from "../../components/layout/ActionButton";
-import FilterBar from "../../components/layout/FilterBar";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
-import { useTableSort } from "../../components/table/useTableSort";
-import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import PageContainer from "@/components/layout/PageContainer";
+import PageHeader from "@/components/layout/PageHeader";
+import ActionButton from "@/components/layout/ActionButton";
+import FilterBar from "@/components/layout/FilterBar";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import { useTableSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
 
 const headSx = { color: "text.secondary", fontWeight: 600, textTransform: "none", letterSpacing: "normal", fontSize: "0.875rem", bgcolor: "background.paper" } as const;
 

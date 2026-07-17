@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
-import { formatINR } from "../../utils/format";
+import { getApiErrorMessage } from "@/utils/apiError";
+import { formatINR } from "@/utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
@@ -11,9 +11,9 @@ import {
 import {
   MedicationRounded, AddRounded, DeleteOutlineRounded, ReceiptLongRounded, HourglassTopRounded, CheckCircleRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import { useToast } from "../../providers/ToastContext";
-import { useConfirm } from "../../providers/ConfirmContext";
+import { axiosInstance } from "@/api/axios";
+import { useToast } from "@/providers/ToastContext";
+import { useConfirm } from "@/providers/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import SoftChip from "../SoftChip";
 import MarChart from "./MarChart";

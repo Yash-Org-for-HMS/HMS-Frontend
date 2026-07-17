@@ -1,4 +1,4 @@
-import { ACCENTS } from "../../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -9,13 +9,13 @@ import {
   MedicationRounded, ScienceRounded, MonitorHeartRounded, PrintRounded,
   OpenInNewRounded, VisibilityRounded, CloseRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
+import { axiosInstance } from "@/api/axios";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
-import { useHospitalAuth } from "../../providers/HospitalAuthContext";
-import { assetUrl } from "../../utils/assetUrl";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { assetUrl } from "@/utils/assetUrl";
 import dayjs from "dayjs";
-import { apiErrorText } from "../../utils/apiError";
+import { apiErrorText } from "@/utils/apiError";
 
 type DocKind = "prescription" | "lab" | "radiology";
 

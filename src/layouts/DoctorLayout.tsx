@@ -1,7 +1,7 @@
-import { ACCENTS } from "../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import ModuleGate from "../components/ModuleGate";
+import ModuleGate from "@/components/ModuleGate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Drawer, AppBar, Toolbar, List, Typography, Divider,
@@ -19,14 +19,14 @@ import {
   ScienceRounded,
   AssessmentRounded,
 } from "@mui/icons-material";
-import { useHospitalAuth } from "../providers/HospitalAuthContext";
-import { assetUrl } from "../utils/assetUrl";
-import BranchSwitcher from "../components/BranchSwitcher";
-import SidebarHeader from "../components/layout/SidebarHeader";
-import SidebarUserCard from "../components/layout/SidebarUserCard";
-import TrialBanner from "../components/layout/TrialBanner";
-import { axiosInstance } from "../api/axios";
-import { useSocket } from "../hooks/useSocket";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { assetUrl } from "@/utils/assetUrl";
+import BranchSwitcher from "@/components/BranchSwitcher";
+import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarUserCard from "@/components/layout/SidebarUserCard";
+import TrialBanner from "@/components/layout/TrialBanner";
+import { axiosInstance } from "@/api/axios";
+import { useSocket } from "@/hooks/useSocket";
 
 const drawerWidth = 260;
 const DOCTOR_BLUE = ACCENTS.doctor;

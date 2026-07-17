@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { axiosInstance } from "../api/axios";
+import { axiosInstance } from "@/api/axios";
 
 /**
  * The hospital's configured GST/tax percentage (from hospital settings).

@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { 
   Dialog, DialogTitle, DialogContent, DialogActions, 
   Button, Typography, Box, Alert,
   Divider, TextField, MenuItem, useTheme, alpha 
 } from "@mui/material";
 import { CheckCircleRounded, PointOfSaleRounded, ReceiptLongRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
+import { axiosInstance } from "@/api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
-import { useHospitalTaxRate } from "../../hooks/useHospitalTaxRate";
+import { useHospitalTaxRate } from "@/hooks/useHospitalTaxRate";
 
 interface PointOfCarePOSProps {
   open: boolean;

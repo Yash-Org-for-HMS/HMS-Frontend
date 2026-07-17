@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Button, Table, TableBody, TableCell,
@@ -8,16 +8,16 @@ import {
 import { AddRounded, DeleteOutlineRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
-import { axiosInstance } from "../../../api/axios";
-import Mascot from "../../../components/Mascot";
-import ErrorState from "../../../components/ErrorState";
-import { useToast } from "../../../providers/ToastContext";
-import { useConfirm } from "../../../providers/ConfirmContext";
-import PageHeader from "../../../components/layout/PageHeader";
-import { useTableSort } from "../../../components/table/useTableSort";
-import SortableHeadCell from "../../../components/table/SortableHeadCell";
-import HeartbeatLoader from "../../../components/HeartbeatLoader";
-import PageSkeleton from "../../../components/PageSkeleton";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import { useConfirm } from "@/providers/ConfirmContext";
+import PageHeader from "@/components/layout/PageHeader";
+import { useTableSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import PageSkeleton from "@/components/PageSkeleton";
 
 const INACTIVE = ["rejected", "cancelled", "declined"];
 

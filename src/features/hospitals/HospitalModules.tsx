@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Button, Grid, Chip, MenuItem, TextField, Tooltip,
 } from "@mui/material";
 import { ArrowBackRounded, SaveRounded, WidgetsRounded, CheckCircleRounded, AddCircleOutlineRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
-import { useToast } from "../../providers/ToastContext";
-import PageHeader from "../../components/layout/PageHeader";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
+import { useToast } from "@/providers/ToastContext";
+import PageHeader from "@/components/layout/PageHeader";
 
 interface ModuleRow { key: string; label: string; entitled: boolean }
 interface ModulesResp {

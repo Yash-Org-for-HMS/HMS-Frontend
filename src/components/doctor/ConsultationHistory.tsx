@@ -1,6 +1,6 @@
 import { Box, Typography, Button, Paper, Chip } from "@mui/material";
-import { ACCENTS } from "../../styles/accents";
-import { stripHtml } from "../../utils/format";
+import { ACCENTS } from "@/styles/accents";
+import { stripHtml } from "@/utils/format";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
@@ -8,14 +8,14 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
 } from "@mui/material";
 import { ArrowBackRounded, EditRounded, TimelineRounded, ArrowForwardRounded, PaymentsRounded } from "@mui/icons-material";
-import { ACCENTS } from "../../styles/accents";
-import { axiosInstance } from "../../api/axios";
-import { formatINR } from "../../utils/format";
-import { useToast } from "../../providers/ToastContext";
-import PageHeader from "../../components/layout/PageHeader";
-import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
-import ErrorState from "../../components/ErrorState";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { ACCENTS } from "@/styles/accents";
+import { axiosInstance } from "@/api/axios";
+import { formatINR } from "@/utils/format";
+import { useToast } from "@/providers/ToastContext";
+import PageHeader from "@/components/layout/PageHeader";
+import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
+import ErrorState from "@/components/ErrorState";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
 import ClaimDocumentsSection from "./ClaimDocumentsSection";
 import { statusMeta } from "./claimMeta";
 

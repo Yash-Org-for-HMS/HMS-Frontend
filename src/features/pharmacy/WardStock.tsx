@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Paper, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
@@ -7,13 +7,13 @@ import {
   ToggleButton, ToggleButtonGroup, Stack, Divider,
 } from "@mui/material";
 import { WarehouseRounded, SwapHorizRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import PageHeader from "../../components/layout/PageHeader";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
-import { useToast } from "../../providers/ToastContext";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { axiosInstance } from "@/api/axios";
+import PageHeader from "@/components/layout/PageHeader";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import { useToast } from "@/providers/ToastContext";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
 
 export default function WardStock() {
   const toast = useToast();

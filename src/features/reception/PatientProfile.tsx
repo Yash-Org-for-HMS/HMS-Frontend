@@ -1,6 +1,6 @@
-import { ACCENTS } from "../../styles/accents";
-import { getApiErrorMessage } from "../../utils/apiError";
-import { formatINR, getInitials } from "../../utils/format";
+import { ACCENTS } from "@/styles/accents";
+import { getApiErrorMessage } from "@/utils/apiError";
+import { formatINR, getInitials } from "@/utils/format";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -18,25 +18,25 @@ import {
   PaymentsRounded, AccountBalanceWalletRounded, VaccinesRounded, MedicalServicesRounded,
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
-import { axiosInstance } from "../../api/axios";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import ErrorState from "../../components/ErrorState";
-import Mascot from "../../components/Mascot";
-import StatCard from "../../components/StatCard";
-import StatusChip from "../../components/StatusChip";
+import { axiosInstance } from "@/api/axios";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import StatCard from "@/components/StatCard";
+import StatusChip from "@/components/StatusChip";
 import PatientDocumentsSection from "./PatientDocumentsSection";
-import IdCardModal from "../../components/reception/IdCardModal";
-import ReferralDialog from "../../components/reception/ReferralDialog";
-import ClinicalRecordsSection from "../../components/reception/ClinicalRecordsSection";
-import ConsentFormsSection from "../../components/reception/ConsentFormsSection";
-import VaccinationsSection from "../../components/reception/VaccinationsSection";
-import SurgeriesSection from "../../components/reception/SurgeriesSection";
-import InvoiceViewDialog from "../../components/reception/InvoiceViewDialog";
-import { useToast } from "../../providers/ToastContext";
+import IdCardModal from "@/components/reception/IdCardModal";
+import ReferralDialog from "@/components/reception/ReferralDialog";
+import ClinicalRecordsSection from "@/components/reception/ClinicalRecordsSection";
+import ConsentFormsSection from "@/components/reception/ConsentFormsSection";
+import VaccinationsSection from "@/components/reception/VaccinationsSection";
+import SurgeriesSection from "@/components/reception/SurgeriesSection";
+import InvoiceViewDialog from "@/components/reception/InvoiceViewDialog";
+import { useToast } from "@/providers/ToastContext";
 
 const ACCENT = ACCENTS.reception;
 
-import type { Patient as PatientBase } from "../../types";
+import type { Patient as PatientBase } from "@/types";
 
 interface Patient extends PatientBase {
   addressLine1: string | null;

@@ -27,17 +27,17 @@ import {
 } from "@mui/material";
 import { SearchRounded, VisibilityRounded, CloseRounded } from "@mui/icons-material";
 import Grid from "@mui/material/Grid";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import PageContainer from "../../components/layout/PageContainer";
-import PageHeader from "../../components/layout/PageHeader";
-import ActionButton from "../../components/layout/ActionButton";
-import FilterBar from "../../components/layout/FilterBar";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
-import { useAuth } from "../../providers/AuthContext";
-import { useServerSort } from "../../components/table/useTableSort";
-import SortableHeadCell from "../../components/table/SortableHeadCell";
-import { apiErrorText } from "../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import PageContainer from "@/components/layout/PageContainer";
+import PageHeader from "@/components/layout/PageHeader";
+import ActionButton from "@/components/layout/ActionButton";
+import FilterBar from "@/components/layout/FilterBar";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import { useAuth } from "@/providers/AuthContext";
+import { useServerSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
+import { apiErrorText } from "@/utils/apiError";
 
 // Keep the admin list's existing sentence-case header look (the SortableHeadCell
 // default is the reception-panel uppercase style).

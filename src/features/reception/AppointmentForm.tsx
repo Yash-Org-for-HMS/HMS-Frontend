@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
@@ -8,13 +8,13 @@ import {
 } from "@mui/material";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { axiosInstance } from "../../api/axios";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import FormSkeleton from "../../components/skeletons/FormSkeleton";
-import ErrorState from "../../components/ErrorState";
+import { axiosInstance } from "@/api/axios";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import FormSkeleton from "@/components/skeletons/FormSkeleton";
+import ErrorState from "@/components/ErrorState";
 import BillingModal from "./BillingModal";
-import { useToast } from "../../providers/ToastContext";
-import PageHeader from "../../components/layout/PageHeader";
+import { useToast } from "@/providers/ToastContext";
+import PageHeader from "@/components/layout/PageHeader";
 
 export interface AppointmentFormProps {
   isEmbedded?: boolean;

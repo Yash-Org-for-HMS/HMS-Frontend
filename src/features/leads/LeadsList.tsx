@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -38,19 +38,19 @@ import {
   FilterAltRounded,
   AssignmentIndRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import CredentialDialog from "../../components/CredentialDialog";
-import PageContainer from "../../components/layout/PageContainer";
-import PageHeader from "../../components/layout/PageHeader";
-import ActionButton from "../../components/layout/ActionButton";
-import FilterBar from "../../components/layout/FilterBar";
-import { useAuth } from "../../providers/AuthContext";
-import { useToast } from "../../providers/ToastContext";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
-import { useServerSort } from "../../components/table/useTableSort";
-import SortableHeadCell from "../../components/table/SortableHeadCell";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import CredentialDialog from "@/components/CredentialDialog";
+import PageContainer from "@/components/layout/PageContainer";
+import PageHeader from "@/components/layout/PageHeader";
+import ActionButton from "@/components/layout/ActionButton";
+import FilterBar from "@/components/layout/FilterBar";
+import { useAuth } from "@/providers/AuthContext";
+import { useToast } from "@/providers/ToastContext";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import { useServerSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
 
 // Keep the admin list's existing sentence-case header look (the SortableHeadCell
 // default is the reception-panel uppercase style).

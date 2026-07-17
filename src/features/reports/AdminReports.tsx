@@ -1,4 +1,4 @@
-import { ACCENTS } from "../../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -14,12 +14,12 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
   PieChart, Pie, Cell, Legend, AreaChart, Area,
 } from "recharts";
-import { axiosInstance } from "../../api/axios";
-import { exportTableToExcel } from "../../utils/exportExcel";
-import PageHeader from "../../components/layout/PageHeader";
-import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
-import ErrorState from "../../components/ErrorState";
-import { apiErrorText } from "../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import { exportTableToExcel } from "@/utils/exportExcel";
+import PageHeader from "@/components/layout/PageHeader";
+import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
+import ErrorState from "@/components/ErrorState";
+import { apiErrorText } from "@/utils/apiError";
 
 const ACCENT = ACCENTS.admin; // indigo #6366f1
 const PIE_COLORS = ["#6366f1", "#8b5cf6", "#0891b2", "#10b981", "#f59e0b", "#ef4444", "#64748b", "#ec4899"];

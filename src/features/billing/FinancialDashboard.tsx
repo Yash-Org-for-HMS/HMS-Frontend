@@ -9,12 +9,12 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from "recharts";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
-import PageHeader from "../../components/layout/PageHeader";
-import StatCard from "../../components/StatCard";
-import { apiErrorText } from "../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
+import PageHeader from "@/components/layout/PageHeader";
+import StatCard from "@/components/StatCard";
+import { apiErrorText } from "@/utils/apiError";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"];
 const PAYMENT_COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b"];

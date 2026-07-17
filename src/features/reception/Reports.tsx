@@ -1,4 +1,4 @@
-import { ACCENTS } from "../../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -15,13 +15,13 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
   PieChart, Pie, Cell, Legend, AreaChart, Area,
 } from "recharts";
-import { axiosInstance } from "../../api/axios";
-import ReportSkeleton from "../../components/skeletons/ReportSkeleton";
-import ErrorState from "../../components/ErrorState";
-import PageHeader from "../../components/layout/PageHeader";
-import { exportTableToExcel } from "../../utils/exportExcel";
+import { axiosInstance } from "@/api/axios";
+import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
+import ErrorState from "@/components/ErrorState";
+import PageHeader from "@/components/layout/PageHeader";
+import { exportTableToExcel } from "@/utils/exportExcel";
 import dayjs from "dayjs";
-import { apiErrorText } from "../../utils/apiError";
+import { apiErrorText } from "@/utils/apiError";
 
 const ACCENT = ACCENTS.reception;
 const PIE = ["#0891b2", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#3b82f6", "#ec4899"];

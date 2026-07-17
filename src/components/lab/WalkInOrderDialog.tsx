@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
   Autocomplete, MenuItem, Box, Typography,
 } from "@mui/material";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { useQuery } from "@tanstack/react-query";
-import { axiosInstance } from "../../api/axios";
-import { formatINR } from "../../utils/format";
-import { useToast } from "../../providers/ToastContext";
+import { axiosInstance } from "@/api/axios";
+import { formatINR } from "@/utils/format";
+import { useToast } from "@/providers/ToastContext";
 
 interface WalkInOrderDialogProps {
   open: boolean;

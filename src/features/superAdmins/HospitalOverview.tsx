@@ -1,5 +1,5 @@
-import { ACCENTS } from "../../styles/accents";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { ACCENTS } from "@/styles/accents";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
@@ -47,11 +47,11 @@ import {
   LockResetRounded,
   ContentCopyRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
-import StatCard from "../../components/StatCard";
-import { assetUrl } from "../../utils/assetUrl";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
+import StatCard from "@/components/StatCard";
+import { assetUrl } from "@/utils/assetUrl";
 
 const ACCENT = ACCENTS.admin;
 

@@ -20,16 +20,16 @@ import {
 } from "@mui/material";
 import { EditRounded, EventAvailableRounded, CalendarTodayRounded, SearchRounded, AddRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import { axiosInstance } from "../../../api/axios";
-import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
-import Mascot from "../../../components/Mascot";
-import ErrorState from "../../../components/ErrorState";
-import PageHeader from "../../../components/layout/PageHeader";
-import { ListSkeleton } from "../../../components/TableRowsSkeleton";
-import HeartbeatLoader from "../../../components/HeartbeatLoader";
-import { useServerSort } from "../../../components/table/useTableSort";
-import SortableHeadCell from "../../../components/table/SortableHeadCell";
-import { apiErrorText } from "../../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import Mascot from "@/components/Mascot";
+import ErrorState from "@/components/ErrorState";
+import PageHeader from "@/components/layout/PageHeader";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { useServerSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
+import { apiErrorText } from "@/utils/apiError";
 
 const PAGE_SIZE = 20;
 

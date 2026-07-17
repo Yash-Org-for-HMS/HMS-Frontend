@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -44,10 +44,10 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import { axiosInstance } from "../api/axios";
-import { useAuth } from "../providers/AuthContext";
-import ErrorState from "../components/ErrorState";
-import DashboardSkeleton from "../components/skeletons/DashboardSkeleton";
+import { axiosInstance } from "@/api/axios";
+import { useAuth } from "@/providers/AuthContext";
+import ErrorState from "@/components/ErrorState";
+import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 
 interface DashboardStats {
   totalHospitals: number;

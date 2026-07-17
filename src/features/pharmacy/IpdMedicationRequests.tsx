@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
@@ -7,14 +7,14 @@ import {
   Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip,
 } from "@mui/material";
 import { CheckCircleRounded, CancelRounded, LocalPharmacyRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import { formatINR } from "../../utils/format";
-import Mascot from "../../components/Mascot";
-import ErrorState from "../../components/ErrorState";
-import { useToast } from "../../providers/ToastContext";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { axiosInstance } from "@/api/axios";
+import { formatINR } from "@/utils/format";
+import Mascot from "@/components/Mascot";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
 import PharmacyPage from "./components/PharmacyPage";
-import { ListSkeleton } from "../../components/TableRowsSkeleton";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
 
 export default function IpdMedicationRequests() {
   const toast = useToast();

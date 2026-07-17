@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
-import ErrorState from "../../components/ErrorState";
+import ErrorState from "@/components/ErrorState";
 import { Box, Typography, Paper, Grid, TextField, Button, Alert, Chip, Divider } from "@mui/material";
 import { SaveRounded, ArrowBackRounded, ScienceRounded, AccessTimeRounded, PrintRounded } from "@mui/icons-material";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
-import { axiosInstance } from "../../api/axios";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
+import { axiosInstance } from "@/api/axios";
 import { useParams, useNavigate } from "react-router-dom";
-import PointOfCarePOS from "../../components/billing/PointOfCarePOS";
-import PageHeader from "../../components/layout/PageHeader";
+import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
+import PageHeader from "@/components/layout/PageHeader";
 
 const evaluateCriticalValue = (testCode: string, resultValue: string): boolean => {
   const val = parseFloat(resultValue);

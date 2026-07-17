@@ -1,4 +1,4 @@
-import { ACCENTS } from "../../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
@@ -10,16 +10,16 @@ import {
 import {
   SearchRounded, ChevronRightRounded, BloodtypeRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import { useDebouncedValue } from "../../hooks/useDebouncedValue";
-import Mascot from "../../components/Mascot";
-import ErrorState from "../../components/ErrorState";
-import PageHeader from "../../components/layout/PageHeader";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
-import { useServerSort } from "../../components/table/useTableSort";
-import SortableHeadCell from "../../components/table/SortableHeadCell";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { apiErrorText } from "../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import Mascot from "@/components/Mascot";
+import ErrorState from "@/components/ErrorState";
+import PageHeader from "@/components/layout/PageHeader";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import { useServerSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { apiErrorText } from "@/utils/apiError";
 
 // Match this page's existing table-head styling so SortableHeadCell blends in.
 const HEAD_SX = { bgcolor: "background.paper", color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" } as const;

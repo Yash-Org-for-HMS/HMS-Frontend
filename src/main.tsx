@@ -24,9 +24,9 @@ import "@fontsource/inter/700.css";
 import { theme } from "./theme";
 import "./i18n";
 import App from "./App";
-import ErrorBoundary from "./components/ErrorBoundary";
-import { ToastProvider } from "./providers/ToastContext";
-import { ConfirmProvider } from "./providers/ConfirmContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { ToastProvider } from "@/providers/ToastContext";
+import { ConfirmProvider } from "@/providers/ConfirmContext";
 
 // Wrap the app in an error boundary keyed to the current route, so a render
 // crash shows a contained fallback (not a blank screen) and navigating to

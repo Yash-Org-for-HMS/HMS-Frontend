@@ -1,7 +1,7 @@
 import { Box, Typography, Tooltip } from "@mui/material";
 import { AccessTimeRounded, WarningAmberRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
-import { axiosInstance } from "../../api/axios";
+import { axiosInstance } from "@/api/axios";
 
 interface TrialStatus {
   isTrial: boolean;

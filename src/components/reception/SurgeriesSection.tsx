@@ -1,17 +1,17 @@
-import { ACCENTS } from "../../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Chip,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
 } from "@mui/material";
 import { MedicalServicesRounded, ReceiptLongRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import { formatINR } from "../../utils/format";
+import { axiosInstance } from "@/api/axios";
+import { formatINR } from "@/utils/format";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
 import Mascot from "../Mascot";
 import dayjs from "dayjs";
-import { apiErrorText } from "../../utils/apiError";
+import { apiErrorText } from "@/utils/apiError";
 
 const ACCENT = ACCENTS.reception;
 

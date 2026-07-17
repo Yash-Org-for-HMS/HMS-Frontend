@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { Box, Typography, Table, TableBody, TableCell, TableHead, TableRow, Grid, Divider } from "@mui/material";
-import { axiosInstance } from "../../api/axios";
-import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
+import { axiosInstance } from "@/api/axios";
+import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import { useParams } from "react-router-dom";
 
 export default function PrintLabReport() {

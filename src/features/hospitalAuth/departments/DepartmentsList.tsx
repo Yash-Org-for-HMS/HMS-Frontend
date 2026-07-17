@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getApiErrorMessage, apiErrorText } from "../../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
   Box,
   Typography,
@@ -17,15 +17,15 @@ import {
 } from "@mui/material";
 import { AddRounded, EditRounded, BlockRounded, CheckCircleRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import { axiosInstance } from "../../../api/axios";
-import Mascot from "../../../components/Mascot";
-import ErrorState from "../../../components/ErrorState";
-import { useToast } from "../../../providers/ToastContext";
-import PageHeader from "../../../components/layout/PageHeader";
-import { TableRowsSkeleton } from "../../../components/TableRowsSkeleton";
-import { useTableSort } from "../../../components/table/useTableSort";
-import SortableHeadCell from "../../../components/table/SortableHeadCell";
-import type { Department as DepartmentBase } from "../../../types";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import PageHeader from "@/components/layout/PageHeader";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import { useTableSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
+import type { Department as DepartmentBase } from "@/types";
 
 // Match the file's existing sentence-case header look (override SortableHeadCell's default uppercase/bold style).
 const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 400, fontSize: "0.875rem", py: undefined };

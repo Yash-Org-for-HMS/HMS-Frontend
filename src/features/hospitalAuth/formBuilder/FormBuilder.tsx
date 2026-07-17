@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getApiErrorMessage } from "../../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -17,12 +17,12 @@ import {
 } from "@mui/material";
 import { SaveRounded, DeleteRounded, AddCircleOutlineRounded, DragIndicatorRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
-import { axiosInstance } from "../../../api/axios";
-import ErrorState from "../../../components/ErrorState";
-import Mascot from "../../../components/Mascot";
-import { useToast } from "../../../providers/ToastContext";
-import PageHeader from "../../../components/layout/PageHeader";
-import FormSkeleton from "../../../components/skeletons/FormSkeleton";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import Mascot from "@/components/Mascot";
+import { useToast } from "@/providers/ToastContext";
+import PageHeader from "@/components/layout/PageHeader";
+import FormSkeleton from "@/components/skeletons/FormSkeleton";
 
 const FIELD_TYPES = [
   { value: "text", label: "Text Input" },

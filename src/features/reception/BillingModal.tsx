@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Box, Typography, Divider, Alert,
@@ -8,13 +8,13 @@ import {
 import {
   ReceiptRounded, CheckCircleRounded, PrintRounded, PaymentRounded, CloseRounded
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { ListSkeleton } from "../../components/TableRowsSkeleton";
-import ErrorState from "../../components/ErrorState";
-import { useToast } from "../../providers/ToastContext";
-import { useHospitalAuth } from "../../providers/HospitalAuthContext";
-import BillReceipt from "../../components/reception/BillReceipt";
+import { axiosInstance } from "@/api/axios";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import BillReceipt from "@/components/reception/BillReceipt";
 
 interface BillingModalProps {
   open: boolean;

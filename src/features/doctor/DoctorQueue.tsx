@@ -1,4 +1,4 @@
-import { ACCENTS } from "../../styles/accents";
+import { ACCENTS } from "@/styles/accents";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -10,15 +10,15 @@ import {
   MonitorHeartRounded, CheckCircleRounded, SyncRounded, HourglassTopRounded,
   LocalHospitalRounded, PlayArrowRounded, VisibilityRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import Mascot from "../../components/Mascot";
-import StatusChip from "../../components/StatusChip";
-import PageHeader from "../../components/layout/PageHeader";
-import { typeScale } from "../../styles/typography";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import StatusChip from "@/components/StatusChip";
+import PageHeader from "@/components/layout/PageHeader";
+import { typeScale } from "@/styles/typography";
 import VitalsModal from "../reception/VitalsModal";
-import { TableRowsSkeleton } from "../../components/TableRowsSkeleton";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useNavigate } from "react-router-dom";
-import { useSocket } from "../../hooks/useSocket";
+import { useSocket } from "@/hooks/useSocket";
 
 const getDoctorInitials = (doctorName?: string) => {
   if (!doctorName || doctorName === "Unknown") return "";

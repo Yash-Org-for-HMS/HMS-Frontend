@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage, apiErrorText } from "../../utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -7,16 +7,16 @@ import {
   Fade, Zoom, alpha
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded } from "@mui/icons-material";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { useQuery } from "@tanstack/react-query";
-import { axiosInstance } from "../../api/axios";
-import Mascot from "../../components/Mascot";
-import ErrorState from "../../components/ErrorState";
-import PageHeader from "../../components/layout/PageHeader";
-import { ListSkeleton } from "../../components/TableRowsSkeleton";
-import { useTableSort } from "../../components/table/useTableSort";
-import SortableHeadCell from "../../components/table/SortableHeadCell";
-import { useConfirm } from "../../providers/ConfirmContext";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import ErrorState from "@/components/ErrorState";
+import PageHeader from "@/components/layout/PageHeader";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import { useTableSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
+import { useConfirm } from "@/providers/ConfirmContext";
 
 export default function LabTestCatalog() {
   const theme = useTheme();

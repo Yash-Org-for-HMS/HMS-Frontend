@@ -19,13 +19,13 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import ErrorState from "../../components/ErrorState";
-import { useToast } from "../../providers/ToastContext";
-import FormHeader from "../../components/layout/FormHeader";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import FormSkeleton from "../../components/skeletons/FormSkeleton";
-import { apiErrorText, getApiErrorMessage } from "../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import FormHeader from "@/components/layout/FormHeader";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import FormSkeleton from "@/components/skeletons/FormSkeleton";
+import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
 
 export default function RoleForm() {
   const { t } = useTranslation();

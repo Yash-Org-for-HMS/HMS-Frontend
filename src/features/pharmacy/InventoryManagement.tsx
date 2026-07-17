@@ -1,23 +1,23 @@
 import { useState, useEffect, useRef } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, useTheme, alpha, Tabs, Tab, MenuItem, Select, IconButton, Tooltip
 } from "@mui/material";
 import { AddRounded, InventoryRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import Mascot from "../../components/Mascot";
-import ErrorState from "../../components/ErrorState";
-import { useToast } from "../../providers/ToastContext";
-import { useHospitalAuth } from "../../providers/HospitalAuthContext";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import ErrorState from "@/components/ErrorState";
+import { useToast } from "@/providers/ToastContext";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import PharmacyPage, { PaginationBar, ROWS_PER_PAGE } from "./components/PharmacyPage";
-import { ListSkeleton } from "../../components/TableRowsSkeleton";
-import { useServerSort, useTableSort } from "../../components/table/useTableSort";
-import SortableHeadCell from "../../components/table/SortableHeadCell";
-import CreatePODialog from "../../components/pharmacy/CreatePODialog";
-import AutoGeneratePODialog from "../../components/pharmacy/AutoGeneratePODialog";
-import ReceivePODialog from "../../components/pharmacy/ReceivePODialog";
-import EditBatchDialog from "../../components/pharmacy/EditBatchDialog";
+import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import { useServerSort, useTableSort } from "@/components/table/useTableSort";
+import SortableHeadCell from "@/components/table/SortableHeadCell";
+import CreatePODialog from "@/components/pharmacy/CreatePODialog";
+import AutoGeneratePODialog from "@/components/pharmacy/AutoGeneratePODialog";
+import ReceivePODialog from "@/components/pharmacy/ReceivePODialog";
+import EditBatchDialog from "@/components/pharmacy/EditBatchDialog";
 
 // Match the existing plain (non-uppercase) table-head look, overriding
 // SortableHeadCell's default uppercase/secondary styling.

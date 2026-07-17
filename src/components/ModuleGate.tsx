@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Box, Typography } from "@mui/material";
 import { BlockRounded } from "@mui/icons-material";
-import { useEnabledModules } from "../hooks/useEnabledModules";
+import { useEnabledModules } from "@/hooks/useEnabledModules";
 
 /**
  * Wraps a panel's content and shows a friendly "not enabled" message when the

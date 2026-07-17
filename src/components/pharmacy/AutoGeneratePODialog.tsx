@@ -4,9 +4,9 @@ import {
   MenuItem, Select, IconButton, Chip, Autocomplete, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
 } from "@mui/material";
 import { DeleteOutlineRounded } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import { getApiErrorMessage } from "../../utils/apiError";
-import { useToast } from "../../providers/ToastContext";
+import { axiosInstance } from "@/api/axios";
+import { getApiErrorMessage } from "@/utils/apiError";
+import { useToast } from "@/providers/ToastContext";
 
 const HEAD_SX = { fontWeight: 700, textTransform: "none", letterSpacing: "normal", fontSize: "inherit", color: "inherit" } as const;
 

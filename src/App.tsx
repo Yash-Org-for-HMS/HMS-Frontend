@@ -4,136 +4,136 @@ import { Routes, Route, Navigate } from "react-router-dom";
 // ── Eager: app shell + auth entry ───────────────────────────────────────────
 // Kept in the initial bundle so the login screen and the authenticated shell
 // (layouts/guards) render instantly. Everything else is lazy-loaded per route.
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import { HospitalProtectedRoute } from "./components/HospitalProtectedRoute";
-import { AuthProvider } from "./providers/AuthContext";
-import { HospitalAuthProvider } from "./providers/HospitalAuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { HospitalProtectedRoute } from "@/components/HospitalProtectedRoute";
+import { AuthProvider } from "@/providers/AuthContext";
+import { HospitalAuthProvider } from "@/providers/HospitalAuthContext";
 // Layouts are lazy: only one realm's shell is ever used per session, and
 // deferring them keeps their deps (e.g. socket.io in DoctorLayout) out of the
 // login-critical first paint. Each is rendered via el() so it gets a Suspense
 // boundary + the standard PageSkeleton fallback.
-const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
-const HospitalLayout = lazy(() => import("./layouts/HospitalLayout"));
-const ReceptionLayout = lazy(() => import("./layouts/ReceptionLayout"));
-const NurseLayout = lazy(() => import("./layouts/NurseLayout"));
-const DoctorLayout = lazy(() => import("./layouts/DoctorLayout"));
-const LabLayout = lazy(() => import("./layouts/LabLayout"));
-const PharmacyLayout = lazy(() => import("./layouts/PharmacyLayout"));
-import CommandPalette from "./components/CommandPalette";
-import PageSkeleton from "./components/PageSkeleton";
-import Login from "./features/Login";
-import HospitalLogin from "./features/hospitalAuth/HospitalLogin";
+const AdminLayout = lazy(() => import("@/layouts/AdminLayout"));
+const HospitalLayout = lazy(() => import("@/layouts/HospitalLayout"));
+const ReceptionLayout = lazy(() => import("@/layouts/ReceptionLayout"));
+const NurseLayout = lazy(() => import("@/layouts/NurseLayout"));
+const DoctorLayout = lazy(() => import("@/layouts/DoctorLayout"));
+const LabLayout = lazy(() => import("@/layouts/LabLayout"));
+const PharmacyLayout = lazy(() => import("@/layouts/PharmacyLayout"));
+import CommandPalette from "@/components/CommandPalette";
+import PageSkeleton from "@/components/PageSkeleton";
+import Login from "@/features/Login";
+import HospitalLogin from "@/features/hospitalAuth/HospitalLogin";
 
 // ── Lazy: every route page becomes its own on-demand chunk ───────────────────
 // Declared at module scope (NOT inside render) so React.lazy is created once.
 // Super Admin
-const Dashboard = lazy(() => import("./features/Dashboard"));
-const PlansList = lazy(() => import("./features/plans/PlansList"));
-const PlanForm = lazy(() => import("./features/plans/PlanForm"));
-const FeatureFlagsList = lazy(() => import("./features/featureFlags/FeatureFlagsList"));
-const FeatureFlagForm = lazy(() => import("./features/featureFlags/FeatureFlagForm"));
-const LeadsList = lazy(() => import("./features/leads/LeadsList"));
-const LeadForm = lazy(() => import("./features/leads/LeadForm"));
-const TrialsList = lazy(() => import("./features/trials/TrialsList"));
-const TrialForm = lazy(() => import("./features/trials/TrialForm"));
-const HospitalsList = lazy(() => import("./features/hospitals/HospitalsList"));
-const HospitalForm = lazy(() => import("./features/hospitals/HospitalForm"));
-const HospitalOverview = lazy(() => import("./features/superAdmins/HospitalOverview"));
-const HospitalModules = lazy(() => import("./features/hospitals/HospitalModules"));
-const OnboardingList = lazy(() => import("./features/onboarding/OnboardingList"));
-const OnboardingForm = lazy(() => import("./features/onboarding/OnboardingForm"));
-const SuperAdminsList = lazy(() => import("./features/superAdmins/SuperAdminsList"));
-const SuperAdminForm = lazy(() => import("./features/superAdmins/SuperAdminForm"));
-const RolesList = lazy(() => import("./features/rbac/RolesList"));
-const RoleForm = lazy(() => import("./features/rbac/RoleForm"));
-const UsersList = lazy(() => import("./features/rbac/UsersList"));
-const UserForm = lazy(() => import("./features/rbac/UserForm"));
-const AuditLogsList = lazy(() => import("./features/auditLogs/AuditLogsList"));
-const AdminReports = lazy(() => import("./features/reports/AdminReports"));
+const Dashboard = lazy(() => import("@/features/Dashboard"));
+const PlansList = lazy(() => import("@/features/plans/PlansList"));
+const PlanForm = lazy(() => import("@/features/plans/PlanForm"));
+const FeatureFlagsList = lazy(() => import("@/features/featureFlags/FeatureFlagsList"));
+const FeatureFlagForm = lazy(() => import("@/features/featureFlags/FeatureFlagForm"));
+const LeadsList = lazy(() => import("@/features/leads/LeadsList"));
+const LeadForm = lazy(() => import("@/features/leads/LeadForm"));
+const TrialsList = lazy(() => import("@/features/trials/TrialsList"));
+const TrialForm = lazy(() => import("@/features/trials/TrialForm"));
+const HospitalsList = lazy(() => import("@/features/hospitals/HospitalsList"));
+const HospitalForm = lazy(() => import("@/features/hospitals/HospitalForm"));
+const HospitalOverview = lazy(() => import("@/features/superAdmins/HospitalOverview"));
+const HospitalModules = lazy(() => import("@/features/hospitals/HospitalModules"));
+const OnboardingList = lazy(() => import("@/features/onboarding/OnboardingList"));
+const OnboardingForm = lazy(() => import("@/features/onboarding/OnboardingForm"));
+const SuperAdminsList = lazy(() => import("@/features/superAdmins/SuperAdminsList"));
+const SuperAdminForm = lazy(() => import("@/features/superAdmins/SuperAdminForm"));
+const RolesList = lazy(() => import("@/features/rbac/RolesList"));
+const RoleForm = lazy(() => import("@/features/rbac/RoleForm"));
+const UsersList = lazy(() => import("@/features/rbac/UsersList"));
+const UserForm = lazy(() => import("@/features/rbac/UserForm"));
+const AuditLogsList = lazy(() => import("@/features/auditLogs/AuditLogsList"));
+const AdminReports = lazy(() => import("@/features/reports/AdminReports"));
 
 // Hospital Admin
-const HospitalChangePassword = lazy(() => import("./features/hospitalAuth/HospitalChangePassword"));
-const HospitalDashboard = lazy(() => import("./features/hospitalAuth/HospitalDashboard"));
-const HospitalProfile = lazy(() => import("./features/hospitalAuth/HospitalProfile"));
-const HospitalSettings = lazy(() => import("./features/hospitalAuth/HospitalSettings"));
-const DepartmentsList = lazy(() => import("./features/hospitalAuth/departments/DepartmentsList"));
-const DepartmentForm = lazy(() => import("./features/hospitalAuth/departments/DepartmentForm"));
-const HospitalUsersList = lazy(() => import("./features/hospitalAuth/users/UsersList"));
-const HospitalUserForm = lazy(() => import("./features/hospitalAuth/users/UserForm"));
-const HospitalRolesList = lazy(() => import("./features/hospitalAuth/roles/RolesList"));
-const HospitalRoleForm = lazy(() => import("./features/hospitalAuth/roles/RoleForm"));
-const PermissionMatrix = lazy(() => import("./features/hospitalAuth/roles/PermissionMatrix"));
-const ModuleAccess = lazy(() => import("./features/hospitalAuth/settings/ModuleAccess"));
-const DoctorsList = lazy(() => import("./features/hospitalAuth/doctors/DoctorsList"));
-const DoctorForm = lazy(() => import("./features/hospitalAuth/doctors/DoctorForm"));
-const DoctorSchedule = lazy(() => import("./features/hospitalAuth/doctors/DoctorSchedule"));
-const DoctorLeaves = lazy(() => import("./features/hospitalAuth/doctors/DoctorLeaves"));
-const LookupManager = lazy(() => import("./features/hospitalAuth/settings/LookupManager"));
-const FacilitySetup = lazy(() => import("./features/hospitalAuth/settings/FacilitySetup"));
-const VaccineCatalog = lazy(() => import("./features/hospitalAuth/settings/VaccineCatalog"));
-const FormTemplatesList = lazy(() => import("./features/hospitalAuth/formBuilder/FormTemplatesList"));
-const FormBuilder = lazy(() => import("./features/hospitalAuth/formBuilder/FormBuilder"));
-const AuditLogs = lazy(() => import("./features/hospitalAuth/settings/AuditLogs"));
-const FinancialDashboard = lazy(() => import("./features/billing/FinancialDashboard"));
+const HospitalChangePassword = lazy(() => import("@/features/hospitalAuth/HospitalChangePassword"));
+const HospitalDashboard = lazy(() => import("@/features/hospitalAuth/HospitalDashboard"));
+const HospitalProfile = lazy(() => import("@/features/hospitalAuth/HospitalProfile"));
+const HospitalSettings = lazy(() => import("@/features/hospitalAuth/HospitalSettings"));
+const DepartmentsList = lazy(() => import("@/features/hospitalAuth/departments/DepartmentsList"));
+const DepartmentForm = lazy(() => import("@/features/hospitalAuth/departments/DepartmentForm"));
+const HospitalUsersList = lazy(() => import("@/features/hospitalAuth/users/UsersList"));
+const HospitalUserForm = lazy(() => import("@/features/hospitalAuth/users/UserForm"));
+const HospitalRolesList = lazy(() => import("@/features/hospitalAuth/roles/RolesList"));
+const HospitalRoleForm = lazy(() => import("@/features/hospitalAuth/roles/RoleForm"));
+const PermissionMatrix = lazy(() => import("@/features/hospitalAuth/roles/PermissionMatrix"));
+const ModuleAccess = lazy(() => import("@/features/hospitalAuth/settings/ModuleAccess"));
+const DoctorsList = lazy(() => import("@/features/hospitalAuth/doctors/DoctorsList"));
+const DoctorForm = lazy(() => import("@/features/hospitalAuth/doctors/DoctorForm"));
+const DoctorSchedule = lazy(() => import("@/features/hospitalAuth/doctors/DoctorSchedule"));
+const DoctorLeaves = lazy(() => import("@/features/hospitalAuth/doctors/DoctorLeaves"));
+const LookupManager = lazy(() => import("@/features/hospitalAuth/settings/LookupManager"));
+const FacilitySetup = lazy(() => import("@/features/hospitalAuth/settings/FacilitySetup"));
+const VaccineCatalog = lazy(() => import("@/features/hospitalAuth/settings/VaccineCatalog"));
+const FormTemplatesList = lazy(() => import("@/features/hospitalAuth/formBuilder/FormTemplatesList"));
+const FormBuilder = lazy(() => import("@/features/hospitalAuth/formBuilder/FormBuilder"));
+const AuditLogs = lazy(() => import("@/features/hospitalAuth/settings/AuditLogs"));
+const FinancialDashboard = lazy(() => import("@/features/billing/FinancialDashboard"));
 
 // Reception
-const ReceptionDashboard = lazy(() => import("./features/reception/ReceptionDashboard"));
-const PatientsList = lazy(() => import("./features/reception/PatientsList"));
-const PatientForm = lazy(() => import("./features/reception/PatientForm"));
-const PatientProfile = lazy(() => import("./features/reception/PatientProfile"));
-const AppointmentsList = lazy(() => import("./features/reception/AppointmentsList"));
-const AppointmentCalendar = lazy(() => import("./features/reception/AppointmentCalendar"));
-const AppointmentForm = lazy(() => import("./features/reception/AppointmentForm"));
-const DoctorAvailability = lazy(() => import("./features/reception/DoctorAvailability"));
-const DepartmentDirectory = lazy(() => import("./features/reception/DepartmentDirectory"));
-const ReferralsList = lazy(() => import("./features/reception/ReferralsList"));
-const Reports = lazy(() => import("./features/reception/ReportsHub"));
-const Admissions = lazy(() => import("./features/ipd/Admissions"));
-const BedBoard = lazy(() => import("./features/ipd/BedBoard"));
-const QueueDashboard = lazy(() => import("./features/reception/QueueDashboard"));
-const Billing = lazy(() => import("./features/reception/Billing"));
-const NotificationsLog = lazy(() => import("./features/reception/NotificationsLog"));
-const ClaimsList = lazy(() => import("./features/claims/ClaimsList"));
-const ClaimForm = lazy(() => import("./features/claims/ClaimForm"));
-const ClaimDetail = lazy(() => import("./features/claims/ClaimDetail"));
-const ClaimReports = lazy(() => import("./features/claims/ClaimReports"));
-const FrontDeskConsole = lazy(() => import("./features/reception/FrontDeskConsole"));
+const ReceptionDashboard = lazy(() => import("@/features/reception/ReceptionDashboard"));
+const PatientsList = lazy(() => import("@/features/reception/PatientsList"));
+const PatientForm = lazy(() => import("@/features/reception/PatientForm"));
+const PatientProfile = lazy(() => import("@/features/reception/PatientProfile"));
+const AppointmentsList = lazy(() => import("@/features/reception/AppointmentsList"));
+const AppointmentCalendar = lazy(() => import("@/features/reception/AppointmentCalendar"));
+const AppointmentForm = lazy(() => import("@/features/reception/AppointmentForm"));
+const DoctorAvailability = lazy(() => import("@/features/reception/DoctorAvailability"));
+const DepartmentDirectory = lazy(() => import("@/features/reception/DepartmentDirectory"));
+const ReferralsList = lazy(() => import("@/features/reception/ReferralsList"));
+const Reports = lazy(() => import("@/features/reception/ReportsHub"));
+const Admissions = lazy(() => import("@/features/ipd/Admissions"));
+const BedBoard = lazy(() => import("@/features/ipd/BedBoard"));
+const QueueDashboard = lazy(() => import("@/features/reception/QueueDashboard"));
+const Billing = lazy(() => import("@/features/reception/Billing"));
+const NotificationsLog = lazy(() => import("@/features/reception/NotificationsLog"));
+const ClaimsList = lazy(() => import("@/features/claims/ClaimsList"));
+const ClaimForm = lazy(() => import("@/features/claims/ClaimForm"));
+const ClaimDetail = lazy(() => import("@/features/claims/ClaimDetail"));
+const ClaimReports = lazy(() => import("@/features/claims/ClaimReports"));
+const FrontDeskConsole = lazy(() => import("@/features/reception/FrontDeskConsole"));
 
 // Nurse
-const NurseDashboard = lazy(() => import("./features/nurse/NurseDashboard"));
-const NurseQueue = lazy(() => import("./features/nurse/NurseQueue"));
-const NurseReports = lazy(() => import("./features/nurse/NurseReports"));
-const NurseWard = lazy(() => import("./features/nurse/NurseWard"));
+const NurseDashboard = lazy(() => import("@/features/nurse/NurseDashboard"));
+const NurseQueue = lazy(() => import("@/features/nurse/NurseQueue"));
+const NurseReports = lazy(() => import("@/features/nurse/NurseReports"));
+const NurseWard = lazy(() => import("@/features/nurse/NurseWard"));
 
 // Doctor
-const DoctorDashboard = lazy(() => import("./features/doctor/DoctorDashboard"));
-const DoctorQueue = lazy(() => import("./features/doctor/DoctorQueue"));
-const ConsultationWorkspace = lazy(() => import("./features/doctor/ConsultationWorkspace"));
-const DoctorPatients = lazy(() => import("./features/doctor/DoctorPatients"));
-const DoctorPatientProfile = lazy(() => import("./features/doctor/DoctorPatientProfile"));
-const DoctorResults = lazy(() => import("./features/doctor/DoctorResults"));
-const DoctorReports = lazy(() => import("./features/doctor/DoctorReports"));
+const DoctorDashboard = lazy(() => import("@/features/doctor/DoctorDashboard"));
+const DoctorQueue = lazy(() => import("@/features/doctor/DoctorQueue"));
+const ConsultationWorkspace = lazy(() => import("@/features/doctor/ConsultationWorkspace"));
+const DoctorPatients = lazy(() => import("@/features/doctor/DoctorPatients"));
+const DoctorPatientProfile = lazy(() => import("@/features/doctor/DoctorPatientProfile"));
+const DoctorResults = lazy(() => import("@/features/doctor/DoctorResults"));
+const DoctorReports = lazy(() => import("@/features/doctor/DoctorReports"));
 
 // Lab
-const LabDashboard = lazy(() => import("./features/lab/LabDashboard"));
-const LabOrdersQueue = lazy(() => import("./features/lab/LabOrdersQueue"));
-const UpdateLabOrder = lazy(() => import("./features/lab/UpdateLabOrder"));
-const RadiologyOrdersQueue = lazy(() => import("./features/lab/RadiologyOrdersQueue"));
-const LabTestCatalog = lazy(() => import("./features/lab/LabTestCatalog"));
-const PrintLabReport = lazy(() => import("./features/lab/PrintLabReport"));
-const PrintIpBill = lazy(() => import("./features/billing/PrintIpBill"));
-const RadiologyCatalog = lazy(() => import("./features/lab/RadiologyCatalog"));
-const LabReports = lazy(() => import("./features/lab/LabReports"));
+const LabDashboard = lazy(() => import("@/features/lab/LabDashboard"));
+const LabOrdersQueue = lazy(() => import("@/features/lab/LabOrdersQueue"));
+const UpdateLabOrder = lazy(() => import("@/features/lab/UpdateLabOrder"));
+const RadiologyOrdersQueue = lazy(() => import("@/features/lab/RadiologyOrdersQueue"));
+const LabTestCatalog = lazy(() => import("@/features/lab/LabTestCatalog"));
+const PrintLabReport = lazy(() => import("@/features/lab/PrintLabReport"));
+const PrintIpBill = lazy(() => import("@/features/billing/PrintIpBill"));
+const RadiologyCatalog = lazy(() => import("@/features/lab/RadiologyCatalog"));
+const LabReports = lazy(() => import("@/features/lab/LabReports"));
 
 // Pharmacy
-const PharmacyDashboard = lazy(() => import("./features/pharmacy/PharmacyDashboard"));
-const MedicineCatalog = lazy(() => import("./features/pharmacy/MedicineCatalog"));
-const SupplierDirectory = lazy(() => import("./features/pharmacy/SupplierDirectory"));
-const InventoryManagement = lazy(() => import("./features/pharmacy/InventoryManagement"));
-const DispensaryPOS = lazy(() => import("./features/pharmacy/DispensaryPOS"));
-const PharmacyReports = lazy(() => import("./features/pharmacy/PharmacyReports"));
-const WardStock = lazy(() => import("./features/pharmacy/WardStock"));
-const IpdMedicationRequests = lazy(() => import("./features/pharmacy/IpdMedicationRequests"));
+const PharmacyDashboard = lazy(() => import("@/features/pharmacy/PharmacyDashboard"));
+const MedicineCatalog = lazy(() => import("@/features/pharmacy/MedicineCatalog"));
+const SupplierDirectory = lazy(() => import("@/features/pharmacy/SupplierDirectory"));
+const InventoryManagement = lazy(() => import("@/features/pharmacy/InventoryManagement"));
+const DispensaryPOS = lazy(() => import("@/features/pharmacy/DispensaryPOS"));
+const PharmacyReports = lazy(() => import("@/features/pharmacy/PharmacyReports"));
+const WardStock = lazy(() => import("@/features/pharmacy/WardStock"));
+const IpdMedicationRequests = lazy(() => import("@/features/pharmacy/IpdMedicationRequests"));
 
 // Wrap a lazy page in a Suspense boundary with the skeleton fallback. The
 // boundary sits at the page-content level (inside each layout's <Outlet/>), so

@@ -1,5 +1,5 @@
-import { ACCENTS } from "../../styles/accents";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { ACCENTS } from "@/styles/accents";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -12,18 +12,18 @@ import {
   CloudDoneRounded, CloudSyncRounded, CloudOffRounded, AutoAwesomeRounded
 } from "@mui/icons-material";
 import AiSummaryPanel from "./AiSummaryPanel";
-import { axiosInstance } from "../../api/axios";
-import Mascot from "../../components/Mascot";
-import DetailSkeleton from "../../components/skeletons/DetailSkeleton";
-import ErrorState from "../../components/ErrorState";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
+import ErrorState from "@/components/ErrorState";
 import PrescriptionWriter from "./PrescriptionWriter";
-import SoapTemplateBar, { type SoapTemplate } from "../../components/doctor/SoapTemplateBar";
+import SoapTemplateBar, { type SoapTemplate } from "@/components/doctor/SoapTemplateBar";
 import LabOrderForm from "./LabOrderForm";
-import ConsultationHistory from "../../components/doctor/ConsultationHistory";
+import ConsultationHistory from "@/components/doctor/ConsultationHistory";
 import RadiologyOrderForm from "./RadiologyOrderForm";
-import RichTextEditor from "../../components/RichTextEditor";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
-import { useToast } from "../../providers/ToastContext";
+import RichTextEditor from "@/components/RichTextEditor";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { useToast } from "@/providers/ToastContext";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
 

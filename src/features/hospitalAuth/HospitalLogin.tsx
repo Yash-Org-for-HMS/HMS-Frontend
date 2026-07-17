@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box, Button, TextField, Typography, InputAdornment, IconButton, Link, Fade,
 } from "@mui/material";
@@ -7,11 +7,11 @@ import {
   Visibility, VisibilityOff, LockOutlined, EmailOutlined, LocalHospitalRounded,
   KeyboardCapslockRounded, ShieldRounded,
 } from "@mui/icons-material";
-import { useHospitalAuth } from "../../providers/HospitalAuthContext";
-import { axiosInstance } from "../../api/axios";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { axiosInstance } from "@/api/axios";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "../../providers/ToastContext";
-import HeartbeatLoader from "../../components/HeartbeatLoader";
+import { useToast } from "@/providers/ToastContext";
+import HeartbeatLoader from "@/components/HeartbeatLoader";
 
 // Same accent as the reception realm (src/styles/accents.ts) — this is the
 // staff portal, so the login should read as the same product, not a one-off.

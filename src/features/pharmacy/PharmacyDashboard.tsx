@@ -7,14 +7,14 @@ import {
 import {
   MedicationRounded, LocalShippingRounded, WarningRounded, PointOfSaleRounded, DashboardRounded
 } from "@mui/icons-material";
-import { axiosInstance } from "../../api/axios";
-import Mascot from "../../components/Mascot";
-import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
-import ErrorState from "../../components/ErrorState";
-import StatCard from "../../components/StatCard";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
+import ErrorState from "@/components/ErrorState";
+import StatCard from "@/components/StatCard";
 import PharmacyPage from "./components/PharmacyPage";
-import type { Medicine, LowStockAlert, PharmacyOrder, PurchaseOrder } from "../../types";
-import { apiErrorText } from "../../utils/apiError";
+import type { Medicine, LowStockAlert, PharmacyOrder, PurchaseOrder } from "@/types";
+import { apiErrorText } from "@/utils/apiError";
 
 export default function PharmacyDashboard() {
   const theme = useTheme();

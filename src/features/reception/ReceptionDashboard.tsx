@@ -1,5 +1,5 @@
-import { ACCENTS } from "../../styles/accents";
-import { formatINR } from "../../utils/format";
+import { ACCENTS } from "@/styles/accents";
+import { formatINR } from "@/utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Skeleton, Chip, Button, Table, TableBody, TableCell,
@@ -11,13 +11,13 @@ import {
   PersonAddRounded, CalendarMonthRounded, LocalHotelRounded,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import { axiosInstance } from "../../api/axios";
-import Mascot from "../../components/Mascot";
-import ErrorState from "../../components/ErrorState";
-import { useHospitalAuth } from "../../providers/HospitalAuthContext";
-import { useSocket } from "../../hooks/useSocket";
-import PageHeader from "../../components/layout/PageHeader";
-import { apiErrorText } from "../../utils/apiError";
+import { axiosInstance } from "@/api/axios";
+import Mascot from "@/components/Mascot";
+import ErrorState from "@/components/ErrorState";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { useSocket } from "@/hooks/useSocket";
+import PageHeader from "@/components/layout/PageHeader";
+import { apiErrorText } from "@/utils/apiError";
 
 interface AppointmentEntry {
   appointmentId: string;
