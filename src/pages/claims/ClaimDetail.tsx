@@ -181,7 +181,7 @@ function AdvanceStatusDialog({ open, onClose, options, onDone, claimId }: { open
       toast.success("Status updated");
       setToStatus(""); setNote("");
       onDone();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update status"));
     } finally { setSaving(false); }
   };
@@ -219,7 +219,7 @@ function LinkInvoiceDialog({ open, onClose, claimId, currentInvoiceId, onDone }:
       await axiosInstance.put(`/claims/${claimId}`, { invoiceId: invoiceId || null });
       toast.success(invoiceId ? "Bill linked" : "Bill unlinked");
       onDone();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to link bill"));
     } finally { setSaving(false); }
   };
@@ -256,7 +256,7 @@ function RecordSettlementDialog({ open, onClose, claimId, onDone }: { open: bool
       toast.success("Settlement recorded");
       setAmount(""); setNote("");
       onDone();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to record settlement"));
     } finally { setSaving(false); }
   };

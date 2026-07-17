@@ -64,7 +64,7 @@ export default function HospitalModules() {
         planId: planId || null,
       })).data,
     onSuccess: () => { toast.success("Module access updated"); refetch(); },
-    onError: (err: any) => toast.error(getApiErrorMessage(err, "Failed to save")),
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, "Failed to save")),
   });
 
   const modules = data?.modules || [];

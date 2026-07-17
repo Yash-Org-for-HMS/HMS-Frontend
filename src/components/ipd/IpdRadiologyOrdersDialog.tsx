@@ -99,7 +99,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
       setNotes("");
       afterChange();
       setTab("results");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to order scans"));
     } finally {
       setSaving(false);
@@ -119,7 +119,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
       await axiosInstance.delete(`/ipd/admissions/${admission.admissionId}/radiology-orders/${o.radiologyOrderId}`);
       toast.success("Scan cancelled");
       afterChange();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to cancel"));
     } finally {
       setBusyId(null);

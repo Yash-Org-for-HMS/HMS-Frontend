@@ -69,7 +69,7 @@ export default function ReceivePODialog({ po, onClose, suppliers, getMedicineNam
       });
       onClose();
       await onReceived();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       toast.error(getApiErrorMessage(err, "Failed to receive PO"));
     } finally {

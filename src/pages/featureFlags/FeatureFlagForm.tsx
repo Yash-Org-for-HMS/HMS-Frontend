@@ -23,7 +23,7 @@ import HeartbeatLoader from "../../components/HeartbeatLoader";
 import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
-import { apiErrorText } from "../../utils/apiError";
+import { apiErrorText, getApiErrorMessage } from "../../utils/apiError";
 
 export default function FeatureFlagForm() {
   const { t } = useTranslation();
@@ -91,8 +91,8 @@ export default function FeatureFlagForm() {
         await axiosInstance.post("/feature-flags", formData);
       }
       navigate("/feature-flags");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || t("common.error"));
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, t("common.error")));
     } finally {
       setLoading(false);
     }

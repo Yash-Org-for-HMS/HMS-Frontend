@@ -108,7 +108,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
       setForm(emptyForm);
       setSearch("");
       afterChange();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to assign medicine"));
     } finally {
       setSaving(false);
@@ -130,7 +130,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
       await axiosInstance.delete(`/ipd/admissions/${admission.admissionId}/medications/${m.ipMedOrderId}`);
       toast.success("Medicine removed");
       afterChange();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to remove"));
     } finally {
       setBusyId(null);

@@ -152,9 +152,9 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
         onDone: () => setStatus("done"),
       });
       setStatus((s) => (s === "error" ? s : "done"));
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (controller.signal.aborted) return;
-      setError(e?.message || "AI generation failed."); setStatus("error");
+      setError((e instanceof Error && e.message) || "AI generation failed."); setStatus("error");
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
     }
@@ -190,8 +190,8 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
         }),
         onError: (msg) => setChatError(msg),
       });
-    } catch (e: any) {
-      if (!controller.signal.aborted) setChatError(e?.message || "Couldn't get an answer.");
+    } catch (e: unknown) {
+      if (!controller.signal.aborted) setChatError((e instanceof Error && e.message) || "Couldn't get an answer.");
     } finally {
       setChatBusy(false);
       chatAbortRef.current = null;

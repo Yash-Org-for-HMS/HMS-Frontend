@@ -128,7 +128,7 @@ export default function LookupManager() {
       }
       handleClose();
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       alert(getApiErrorMessage(err, "Failed to save"));
     }
   };
@@ -151,7 +151,7 @@ export default function LookupManager() {
         isActive: !item.isActive
       });
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       alert(getApiErrorMessage(err, "Failed to toggle status"));
     }
   };

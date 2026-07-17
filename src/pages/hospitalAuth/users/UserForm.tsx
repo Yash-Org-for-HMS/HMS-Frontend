@@ -204,7 +204,7 @@ export default function UserForm() {
           name: `${formData.firstName} ${formData.lastName}`,
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "An error occurred"));
       setLoading(false);
     }

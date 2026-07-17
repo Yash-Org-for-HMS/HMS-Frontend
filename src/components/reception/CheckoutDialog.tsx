@@ -62,7 +62,7 @@ export default function CheckoutDialog({ open, onClose, token, onDone }: Checkou
       setNote("");
       onDone();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to check out"));
     } finally {
       setSubmitting(false);

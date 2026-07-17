@@ -71,7 +71,7 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
         onSuccess();
       }, 2000);
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getApiErrorMessage(err, "Payment processing failed. Please try again."));
       setLoading(false);
     }

@@ -42,7 +42,7 @@ export default function WardStock() {
       await axiosInstance.patch("/pharmacy/ward-stock/settings", { enabled });
       toast.success(enabled ? "Ward stock enabled" : "Ward stock disabled");
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update setting"));
     }
   };
@@ -58,7 +58,7 @@ export default function WardStock() {
       setQty("");
       setSearch("");
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed"));
     } finally {
       setBusy(false);

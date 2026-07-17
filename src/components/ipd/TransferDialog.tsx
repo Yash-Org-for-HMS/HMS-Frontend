@@ -36,7 +36,7 @@ export default function TransferDialog({ open, onClose, onDone, admission }: Pro
       await axiosInstance.post(`/ipd/admissions/${admission.admissionId}/transfer`, { toBedId, reason: reason || undefined });
       toast.success("Patient transferred");
       onDone();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to transfer"));
     } finally {
       setSaving(false);

@@ -141,7 +141,7 @@ export default function HospitalProfile() {
         setFormData((prev) => ({ ...prev, logoUrl: res.data.data.logoUrl }));
         updateHospital({ logoUrl: res.data.data.logoUrl });
         toast.success("Logo uploaded successfully!");
-      } catch (err: any) {
+      } catch (err: unknown) {
         toast.error(getApiErrorMessage(err, "Failed to upload logo"));
       } finally {
         setUploadingLogo(false);
@@ -162,7 +162,7 @@ export default function HospitalProfile() {
       toast.success("Profile updated successfully!");
       // Optionally re-fetch
       await refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update profile"));
     } finally {
       setSaving(false);

@@ -25,7 +25,7 @@ import { useToast } from "../../contexts/ToastContext";
 import FormHeader from "../../components/layout/FormHeader";
 import HeartbeatLoader from "../../components/HeartbeatLoader";
 import FormSkeleton from "../../components/skeletons/FormSkeleton";
-import { apiErrorText } from "../../utils/apiError";
+import { apiErrorText, getApiErrorMessage } from "../../utils/apiError";
 
 export default function RoleForm() {
   const { t } = useTranslation();
@@ -102,8 +102,8 @@ export default function RoleForm() {
         await axiosInstance.post("/rbac/roles", payload);
       }
       navigate("/rbac/roles");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || t("common.error"));
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, t("common.error")));
     } finally {
       setLoading(false);
     }

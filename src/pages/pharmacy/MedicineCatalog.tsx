@@ -150,7 +150,7 @@ export default function MedicineCatalog() {
       }
       handleClose();
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setErrorMsg(getApiErrorMessage(err, "Failed to save the medicine."));
     } finally {
       setSaving(false);
@@ -173,7 +173,7 @@ export default function MedicineCatalog() {
       } else {
         refetch();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to delete the medicine."));
     }
   };

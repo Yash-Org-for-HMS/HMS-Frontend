@@ -127,7 +127,7 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
       setDeleteDialog({ open: false, patient: null });
       queryClient.invalidateQueries({ queryKey: ["patients"] });
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       toast.error(getApiErrorMessage(err, "Failed to delete patient"));
     }
   });

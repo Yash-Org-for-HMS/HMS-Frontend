@@ -106,7 +106,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
       const finalPassword = res.data.temporaryPassword;
       onSuccess(finalPassword);
       handleClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to reset password"));
     } finally {
       setLoading(false);

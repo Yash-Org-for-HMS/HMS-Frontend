@@ -128,7 +128,7 @@ export default function FormBuilder() {
         await axiosInstance.post(`/hospital/form-builder`, payload);
       }
       navigate("/hospital/form-builder");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to save template"));
       setLoading(false);
     }

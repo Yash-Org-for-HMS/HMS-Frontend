@@ -91,7 +91,7 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
       setSearch("");
       afterChange();
       setTab("results");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to order labs"));
     } finally {
       setSaving(false);
@@ -111,7 +111,7 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
       await axiosInstance.delete(`/ipd/admissions/${admission.admissionId}/lab-orders/${o.labOrderId}`);
       toast.success("Lab order cancelled");
       afterChange();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to cancel"));
     } finally {
       setBusyId(null);

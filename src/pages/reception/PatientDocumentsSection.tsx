@@ -67,7 +67,7 @@ export default function PatientDocumentsSection({ patientId, readOnly = false }:
         setSelectedType("");
         fetchDocuments();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to upload document"));
     } finally {
       setUploading(false);
@@ -87,7 +87,7 @@ export default function PatientDocumentsSection({ patientId, readOnly = false }:
       if (res.data.success) {
         fetchDocuments();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to delete document"));
     }
   };

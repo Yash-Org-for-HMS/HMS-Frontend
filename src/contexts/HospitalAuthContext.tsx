@@ -101,7 +101,7 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
         const fallback = data?.activeBranchId ?? (branches[0]?.branchId ?? null);
         setActiveBranch(fallback);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to load your accessible branches"));
     }
   }, [setActiveBranch, toast]);

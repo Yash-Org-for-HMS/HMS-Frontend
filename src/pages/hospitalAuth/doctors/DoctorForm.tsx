@@ -152,7 +152,7 @@ export default function DoctorForm() {
         });
         setLoading(false);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "An error occurred"));
       setLoading(false);
     }

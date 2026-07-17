@@ -104,7 +104,7 @@ export default function DepartmentForm() {
         await axiosInstance.post("/hospital/departments", formData);
       }
       navigate("/hospital/departments");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "An error occurred"));
       setLoading(false);
     }

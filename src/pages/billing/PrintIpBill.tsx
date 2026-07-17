@@ -63,7 +63,7 @@ export default function PrintIpBill() {
       try {
         const res = await axiosInstance.get(`/reception/billing/invoices/${invoiceId}/detail`);
         setInv(res.data.data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         setError(getApiErrorMessage(err, "Failed to load this bill"));
       } finally {
         setLoading(false);

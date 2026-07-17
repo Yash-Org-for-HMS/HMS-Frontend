@@ -184,7 +184,7 @@ function SetupDialog({ kind, edit, wards, onClose, onDone }: { kind: "ward" | "r
       }
       toast.success(`${kind[0].toUpperCase() + kind.slice(1)} ${isEdit ? "updated" : "added"}`);
       onDone();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to save"));
     } finally {
       setSaving(false);

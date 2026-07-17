@@ -64,7 +64,7 @@ export default function HospitalChangePassword() {
         data.branch,
         data.sessionId
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(
         getApiErrorMessage(err, "Failed to change password. The link may have expired.")
       );

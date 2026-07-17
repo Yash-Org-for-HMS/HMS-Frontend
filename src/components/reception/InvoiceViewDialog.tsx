@@ -59,7 +59,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
       setAmount("");
       await refetch();
       onChanged?.();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Payment failed"));
     } finally {
       setPaying(false);

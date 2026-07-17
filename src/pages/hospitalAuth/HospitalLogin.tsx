@@ -78,7 +78,7 @@ export default function HospitalLogin() {
         data.branch,
         data.sessionId,
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to login. Please check your credentials."));
     } finally {
       setIsLoading(false);

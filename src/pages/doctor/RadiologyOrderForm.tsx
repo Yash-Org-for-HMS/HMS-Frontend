@@ -84,8 +84,8 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
       setRadiologistNotes("");
       // Refresh list (covers both the existing consultation and a freshly-created one)
       qc.invalidateQueries({ queryKey: ["radiology-orders"] });
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || "Failed to create radiology order");
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, (err instanceof Error && err.message) || "Failed to create radiology order"));
     } finally {
       setSaving(false);
     }

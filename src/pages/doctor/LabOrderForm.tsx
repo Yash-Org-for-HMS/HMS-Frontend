@@ -120,8 +120,8 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
       setSelectedPriority(1);
       // Refresh list (covers both the existing consultation and a freshly-created one)
       qc.invalidateQueries({ queryKey: ["lab-orders"] });
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || "Failed to create lab order");
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, (err instanceof Error && err.message) || "Failed to create lab order"));
     } finally {
       setSaving(false);
     }

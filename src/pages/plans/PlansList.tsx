@@ -66,7 +66,7 @@ export default function PlansList() {
       setDeleteId(null);
       qc.invalidateQueries({ queryKey: ["plans"] });
     },
-    onError: (err: any) => toast.error(getApiErrorMessage(err, "Failed to delete plan")),
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, "Failed to delete plan")),
   });
 
   const { sorted, orderBy, order, onSort } = useTableSort(plans, {

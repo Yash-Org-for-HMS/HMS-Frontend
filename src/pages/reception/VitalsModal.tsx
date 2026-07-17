@@ -182,7 +182,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
       toast.success("Vitals saved successfully");
       onSaved?.();
       setTimeout(() => onClose(), 1200);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to save vitals"));
     } finally {
       setSaving(false);

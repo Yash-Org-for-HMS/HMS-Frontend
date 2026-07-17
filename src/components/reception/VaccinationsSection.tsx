@@ -186,7 +186,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
       }
       setActionTarget(null);
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to save"));
     } finally {
       setSaving(false);
@@ -198,7 +198,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
       await axiosInstance.put(`/vaccination/records/${row.patientVaccinationId}/undo`, {});
       toast.success(`${row.vaccineName} (${row.doseLabel}) reverted to pending`);
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to undo"));
     }
   };
@@ -227,7 +227,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
       toast.success(addMode === "given" ? "Vaccine logged as administered" : "Vaccine scheduled");
       setAddOpen(false);
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to add vaccine"));
     } finally {
       setAddSaving(false);

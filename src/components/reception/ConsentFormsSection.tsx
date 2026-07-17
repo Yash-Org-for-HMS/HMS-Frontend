@@ -44,7 +44,7 @@ export default function ConsentFormsSection({ patientId, patientName, readOnly =
       await axiosInstance.put(`/reception/consent-forms/${id}/status`, { status });
       toast.success(`Consent ${status.toLowerCase()}`);
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update consent"));
     }
   };
@@ -184,7 +184,7 @@ function IssueConsentDialog({ patientId, onClose, onIssued }: { patientId: strin
       });
       toast.success("Consent form issued");
       onIssued();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to issue consent form"));
     } finally {
       setSaving(false);
@@ -303,7 +303,7 @@ function SignConsentDialog({ form, patientName, onClose, onSigned }: { form: any
       });
       toast.success("Consent signed and filed");
       onSigned();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to capture consent"));
     } finally {
       setSaving(false);

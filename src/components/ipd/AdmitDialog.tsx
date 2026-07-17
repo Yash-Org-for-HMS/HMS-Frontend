@@ -93,14 +93,14 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
             estimatedCost: ins.estimatedCost ? Number(ins.estimatedCost) : undefined,
           });
           toast.success("Patient admitted & insurance claim started");
-        } catch (claimErr: any) {
+        } catch (claimErr: unknown) {
           toast.error(`Admitted, but couldn't start the claim: ${getApiErrorMessage(claimErr, "permission or validation error")}`);
         }
       } else {
         toast.success("Patient admitted");
       }
       onAdmitted();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to admit patient"));
     } finally {
       setSaving(false);

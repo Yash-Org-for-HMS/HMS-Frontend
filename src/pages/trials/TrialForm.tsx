@@ -28,7 +28,7 @@ import FormSkeleton from "../../components/skeletons/FormSkeleton";
 import { useToast } from "../../contexts/ToastContext";
 import { validate, hasErrors, required, isEmail, type Errors } from "../../utils/validation";
 import FormHeader from "../../components/layout/FormHeader";
-import { apiErrorText } from "../../utils/apiError";
+import { apiErrorText, getApiErrorMessage } from "../../utils/apiError";
 
 export default function TrialForm() {
   const { t } = useTranslation();
@@ -127,8 +127,8 @@ export default function TrialForm() {
         toast.success("Trial started");
         navigate("/trials");
       }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || t("common.error"));
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, t("common.error")));
     } finally {
       setLoading(false);
     }

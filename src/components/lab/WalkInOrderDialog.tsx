@@ -123,7 +123,7 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
       reset();
       onCreated();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to create walk-in order"));
     } finally {
       setSubmitting(false);

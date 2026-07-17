@@ -113,7 +113,7 @@ export default function InventoryManagement() {
       setPoPage(1);
       setAlertPage(1);
       await Promise.all([fetchReference(), fetchInventory(1), fetchPurchaseOrders(1)]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setLoadError(getApiErrorMessage(err, "Failed to load inventory data"));
     } finally {
       setLoading(false);

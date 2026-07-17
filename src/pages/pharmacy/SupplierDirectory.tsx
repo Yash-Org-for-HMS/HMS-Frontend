@@ -154,7 +154,7 @@ export default function SupplierDirectory() {
       }
       handleClose();
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setErrorMsg(getApiErrorMessage(err, "Failed to save the supplier."));
     } finally {
       setSaving(false);
@@ -177,7 +177,7 @@ export default function SupplierDirectory() {
       } else {
         refetch();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to delete the supplier."));
     }
   };

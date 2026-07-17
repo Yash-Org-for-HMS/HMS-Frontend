@@ -108,7 +108,7 @@ export default function ConsultationWorkspace() {
       if (data.patient?.patientId) {
         fetchHistory(data.patient.patientId);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errMsg = getApiErrorMessage(err, "Failed to load consultation context");
       setError(errMsg);
       toast.error(errMsg);
@@ -122,7 +122,7 @@ export default function ConsultationWorkspace() {
       setHistoryError(null);
       const res = await axiosInstance.get(`/doctor/consultation/patients/${patientId}/history`);
       setHistory(res.data.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Surfaced distinctly from "no history" below — a fetch failure must not
       // look identical to a patient who genuinely has no past consultations.
       setHistoryError(getApiErrorMessage(err, "Failed to load consultation history"));
@@ -191,7 +191,7 @@ export default function ConsultationWorkspace() {
       // Return the id when present, but treat any non-throwing save as success
       // (existing consultations may not echo the id back).
       return res.data.data?.consultationId ?? true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (!isAutoSave) toast.error(getApiErrorMessage(err, "Failed to save consultation"));
       return null;
     } finally {
@@ -220,7 +220,7 @@ export default function ConsultationWorkspace() {
       await axiosInstance.post(`/doctor/consultation/appointments/${appointmentId}/complete`);
       
       navigate("/doctor/queue");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to complete consultation"));
       setCompleting(false);
     }

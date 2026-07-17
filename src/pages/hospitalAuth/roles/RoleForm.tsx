@@ -109,7 +109,7 @@ export default function RoleForm() {
         await axiosInstance.post("/hospital/roles", payload);
       }
       navigate("/hospital/roles");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "An error occurred"));
       setLoading(false);
     }

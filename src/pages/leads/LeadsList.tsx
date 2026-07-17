@@ -151,7 +151,7 @@ export default function LeadsList() {
         setCredentials({ email: admin.email, temporaryPassword: admin.temporaryPassword, hospitalName: convertedName });
       }
       refetch();
-    } catch (error: any) {
+    } catch (error: unknown) {
       setConvertError(getApiErrorMessage(error, "Failed to convert lead"));
     } finally {
       setConverting(false);

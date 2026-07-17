@@ -83,7 +83,7 @@ export default function ReferralDialog({
       // Reset the editable fields so the dialog is clean if reopened.
       setForm((f) => ({ ...f, toDepartmentId: "", externalFacility: "", externalContact: "", reason: "", notes: "" }));
       onCreated();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to create referral"));
     } finally {
       setSaving(false);

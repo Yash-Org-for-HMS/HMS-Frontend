@@ -35,7 +35,7 @@ export default function ModuleAccess() {
       toast.success(res?.message || "Updated");
       queryClient.invalidateQueries({ queryKey: ["module-access"] });
     },
-    onError: (err: any) => toast.error(getApiErrorMessage(err, "Failed to update module")),
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, "Failed to update module")),
   });
 
   if (loading) {

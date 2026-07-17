@@ -38,7 +38,7 @@ export default function ClaimDocumentsSection({ claimId }: { claimId: string }) 
       await axiosInstance.delete(`/claims/documents/${doc.claimDocumentId}`);
       toast.success("Document deleted");
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to delete"));
     }
   };
@@ -130,7 +130,7 @@ function UploadDialog({ claimId, docType, stage, onClose, onDone }: { claimId: s
       await axiosInstance.post(`/claims/${claimId}/documents`, fd, { headers: { "Content-Type": "multipart/form-data" } });
       toast.success("Document uploaded");
       onDone();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Upload failed"));
     } finally {
       setSaving(false);

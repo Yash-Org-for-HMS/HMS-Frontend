@@ -94,7 +94,7 @@ export default function PermissionMatrix() {
         newState[role.roleId] = new Set(pIds);
       });
       setMatrixState(newState);
-    } catch (err: any) {
+    } catch (err: unknown) {
       const msg = getApiErrorMessage(err, "Failed to load data");
       setLoadError(msg);
       toast.error(msg);
@@ -164,7 +164,7 @@ export default function PermissionMatrix() {
       await axiosInstance.put("/hospital/roles/matrix", { updates });
       alert("Permission matrix saved successfully!");
       fetchData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to save matrix"));
     } finally {
       setSaving(false);

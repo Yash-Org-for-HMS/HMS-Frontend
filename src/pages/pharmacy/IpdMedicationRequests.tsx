@@ -33,7 +33,7 @@ export default function IpdMedicationRequests() {
       await axiosInstance.post(`/pharmacy/ipd-medication-requests/${r.ipMedOrderId}/confirm`);
       toast.success(`${r.medicineName} dispensed for ${r.patientName || "patient"}`);
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to confirm this request"));
     } finally {
       setBusyId(null);
@@ -49,7 +49,7 @@ export default function IpdMedicationRequests() {
       setRejecting(null);
       setReason("");
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to reject this request"));
     } finally {
       setBusyId(null);

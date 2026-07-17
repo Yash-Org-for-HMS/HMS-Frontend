@@ -86,7 +86,7 @@ export default function SoapTemplateBar({ current, onApply }: Props) {
       await axiosInstance.delete(`/doctor/templates/${t.templateId}`);
       queryClient.invalidateQueries({ queryKey: ["doctor-templates"] });
       toast.success("Template deleted");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to delete template"));
     }
   };
@@ -110,7 +110,7 @@ export default function SoapTemplateBar({ current, onApply }: Props) {
       toast.success("Template saved");
       setSaveOpen(false);
       setName("");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to save template"));
     } finally {
       setSaving(false);

@@ -87,7 +87,7 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
       toast.success("Surgery added");
       setForm(emptyForm);
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to add surgery"));
     } finally {
       setSaving(false);
@@ -110,7 +110,7 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
       toast.success(status === "COMPLETED" ? "Marked completed" : "Surgery cancelled");
       invalidateBillingIfCharged(res.data?.data?.invoiceId);
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update surgery"));
     } finally {
       setBusyId(null);

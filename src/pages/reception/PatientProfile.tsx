@@ -158,7 +158,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
       await axiosInstance.put(`/reception/appointments/${apptId}/checkin`);
       toast.success("Patient checked in");
       refetchAppts();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to check in"));
     } finally {
       setCheckinId(null);
@@ -172,7 +172,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
       setSuccessMsg(null);
       const res = await axiosInstance.post(`/reception/notifications/patients/${id}/registration`);
       setSuccessMsg(res.data.message || "Welcome notification sent");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to send notification"));
     } finally {
       setNotifProcessing(false);

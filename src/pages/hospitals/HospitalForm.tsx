@@ -165,8 +165,8 @@ export default function HospitalForm() {
         await axiosInstance.post("/hospitals", formData);
       }
       navigate("/hospitals");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || t("common.error"));
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, t("common.error")));
     } finally {
       setLoading(false);
     }
@@ -183,7 +183,7 @@ export default function HospitalForm() {
     try {
       await axiosInstance.delete(`/hospitals/${id}/branches/${branchId}`);
       setReload(r => r + 1);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to delete branch"));
     }
   };

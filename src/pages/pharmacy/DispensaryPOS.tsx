@@ -129,7 +129,7 @@ export default function DispensaryPOS() {
           }
         });
         setCart(initialCart);
-      } catch (err: any) {
+      } catch (err: unknown) {
         toast.error(getApiErrorMessage(err, "Failed to cancel order for editing"));
       } finally {
         fetchData();
@@ -275,7 +275,7 @@ export default function DispensaryPOS() {
       const res = await axiosInstance.post("/pharmacy/orders", payload);
       setCreatedOrder(res.data.data);
       setShowPOS(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       // Surface the real backend reason (e.g. "Select a branch before performing
       // this action", "Insufficient stock to complete this sale.") instead of a

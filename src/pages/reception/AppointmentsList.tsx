@@ -155,7 +155,7 @@ export default function AppointmentsList() {
       setActionDialog({ open: false, type: null, appt: null });
       refetch();
       toast.success(actionType === 'cancel' ? "Appointment cancelled" : "Patient checked in");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to process action"));
     } finally {
       setProcessing(false);
@@ -168,7 +168,7 @@ export default function AppointmentsList() {
       setSuccessMsg(null);
       const res = await axiosInstance.post(`/reception/notifications/appointments/${apptId}/${type}`);
       setSuccessMsg(res.data.message || "Notification sent");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to send notification"));
     } finally {
       setProcessing(false);

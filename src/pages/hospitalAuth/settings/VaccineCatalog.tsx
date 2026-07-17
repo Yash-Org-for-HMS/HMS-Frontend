@@ -128,7 +128,7 @@ function AddVaccineDialog({ onClose, onDone }: { onClose: () => void; onDone: ()
       await axiosInstance.post("/vaccination/admin/vaccines", { vaccineCode, vaccineName, description: description || undefined, price: price ? Number(price) : undefined });
       toast.success("Vaccine added");
       onDone();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to add vaccine"));
     } finally {
       setSaving(false);
@@ -168,7 +168,7 @@ function EditVaccineDialog({ vaccine, onClose, onDone }: { vaccine: Vaccine; onC
       await axiosInstance.put(`/vaccination/admin/vaccines/${vaccine.vaccineId}`, { vaccineName, description, isActive, price: price === "" ? null : Number(price) });
       toast.success("Vaccine updated");
       onDone();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update vaccine"));
     } finally {
       setSaving(false);
@@ -215,7 +215,7 @@ function DosesDialog({ vaccine, onClose, onChanged }: { vaccine: Vaccine; onClos
       setDoseLabel(""); setAgeLabel(""); setAgeDays(""); setAdding(false);
       toast.success("Dose added");
       onChanged();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to add dose"));
     } finally {
       setBusy(false);
@@ -236,7 +236,7 @@ function DosesDialog({ vaccine, onClose, onChanged }: { vaccine: Vaccine; onClos
       setItems((prev) => prev.filter((i) => i.scheduleItemId !== item.scheduleItemId));
       toast.success("Dose removed");
       onChanged();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to remove dose"));
     } finally {
       setBusy(false);

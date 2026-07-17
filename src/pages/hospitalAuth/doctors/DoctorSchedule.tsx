@@ -64,7 +64,7 @@ export default function DoctorSchedule() {
     try {
       await axiosInstance.put(`/hospital/doctors/${id}/schedule`, { schedules });
       navigate("/hospital/doctors");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "An error occurred"));
       setLoading(false);
     }

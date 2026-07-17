@@ -64,7 +64,7 @@ export default function BranchDialog({ open, onClose, hospitalId, plans, editing
       }
       onSaved();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to save branch"));
     } finally {
       setLoading(false);

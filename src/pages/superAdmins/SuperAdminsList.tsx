@@ -78,7 +78,7 @@ export default function SuperAdminsList() {
   const resetPassword = useMutation({
     mutationFn: async (id: string) => (await axiosInstance.post(`/super-admins/${id}/reset-password`)).data.data,
     onSuccess: (creds) => setResetCreds({ email: creds.email, temporaryPassword: creds.temporaryPassword, name: `${creds.firstName} ${creds.lastName}`.trim() }),
-    onError: (err: any) => toast.error(getApiErrorMessage(err, "Failed to reset password")),
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, "Failed to reset password")),
   });
 
   const handleResetPassword = async (admin: any) => {

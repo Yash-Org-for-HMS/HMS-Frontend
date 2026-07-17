@@ -56,7 +56,7 @@ export default function RadiologyOrdersQueue() {
     try {
       const res = await axiosInstance.get("/lab/radiology-macros");
       setMacros(res.data.data || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to load report macros"));
     }
   };
@@ -90,7 +90,7 @@ export default function RadiologyOrdersQueue() {
       
       setReportUrl(res.data.data.reportUrl);
       setStatus("COMPLETED");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to upload report", err);
       alert(getApiErrorMessage(err, "Failed to upload the file."));
     } finally {

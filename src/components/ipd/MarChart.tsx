@@ -34,7 +34,7 @@ export default function MarChart({ admissionId }: { admissionId: string }) {
     try {
       await axiosInstance.post(`/ipd/mar/${adminId}`, { status });
       await refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update dose"));
     } finally {
       setBusy(null);

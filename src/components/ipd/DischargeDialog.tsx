@@ -67,7 +67,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
       const inv = res.data?.data?.invoice;
       toast.success(inv ? `Discharged — invoice ${inv.invoiceNumber} (${formatINR(inv.netAmount)})` : "Patient discharged");
       onDone();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to discharge"));
     } finally {
       setSaving(false);

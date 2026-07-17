@@ -48,7 +48,7 @@ export default function FrontDeskConsole() {
         params: { search: q, page: 1, limit: 10 },
       });
       setPatients(res.data.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to search patients"));
     } finally {
       setLoading(false);

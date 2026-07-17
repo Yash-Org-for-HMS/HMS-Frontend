@@ -106,7 +106,7 @@ export default function LabTestCatalog() {
       }
       handleClose();
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to save lab test", err);
       setErrorMsg(getApiErrorMessage(err, "Failed to save the lab test."));
     } finally {
@@ -125,7 +125,7 @@ export default function LabTestCatalog() {
     try {
       await axiosInstance.delete(`/lab/tests/${id}`);
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       alert(getApiErrorMessage(err, "Failed to delete the lab test."));
     }
   };

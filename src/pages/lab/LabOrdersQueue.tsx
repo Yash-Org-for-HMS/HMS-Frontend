@@ -63,7 +63,7 @@ export default function LabOrdersQueue() {
       });
       setCollectOrder(null);
       fetchOrders();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setErrorMsg(getApiErrorMessage(err, "Failed to collect sample. Please verify the barcode."));
     } finally {
       setCollecting(false);

@@ -88,7 +88,7 @@ export default function RadiologyCatalog() {
       }
       handleClose();
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setErrorMsg(getApiErrorMessage(err, "Failed to save the radiology scan."));
     } finally {
       setSaving(false);
@@ -106,7 +106,7 @@ export default function RadiologyCatalog() {
     try {
       await axiosInstance.delete(`/lab/radiology-catalog/${id}`);
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       alert(getApiErrorMessage(err, "Failed to delete the radiology scan."));
     }
   };

@@ -67,7 +67,7 @@ export default function DoctorLeaves() {
       setToDate("");
       queryClient.invalidateQueries({ queryKey: ["doctor-leaves", id] });
     },
-    onError: (err: any) => toast.error(getApiErrorMessage(err, "Failed to add leave")),
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, "Failed to add leave")),
   });
 
   const removeLeave = useMutation({
@@ -76,7 +76,7 @@ export default function DoctorLeaves() {
       toast.success("Leave removed");
       queryClient.invalidateQueries({ queryKey: ["doctor-leaves", id] });
     },
-    onError: (err: any) => toast.error(getApiErrorMessage(err, "Failed to remove leave")),
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, "Failed to remove leave")),
   });
 
   return (

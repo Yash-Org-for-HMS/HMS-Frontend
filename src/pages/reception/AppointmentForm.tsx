@@ -253,7 +253,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
       } else {
         navigate("/reception/appointments");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to save appointment"));
       setSaving(false);
     }

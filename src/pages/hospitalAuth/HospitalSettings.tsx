@@ -137,7 +137,7 @@ export default function HospitalSettings() {
       setSaving(true);
       await axiosInstance.put("/hospital/settings", formData);
       toast.success("Settings updated successfully!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update settings"));
     } finally {
       setSaving(false);

@@ -65,7 +65,7 @@ export default function Login() {
       const response = await axiosInstance.post("/auth/login", { email, password });
       const { user, tokens } = response.data.data;
       login(tokens.accessToken, tokens.refreshToken, user);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to login. Please check your credentials."));
     } finally {
       setIsLoading(false);

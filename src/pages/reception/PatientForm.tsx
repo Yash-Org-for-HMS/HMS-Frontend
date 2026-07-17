@@ -197,7 +197,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
           setTimeout(() => navigate(`/reception/patients/${patientId}`), 1400);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "An error occurred"));
       setLoading(false);
     }

@@ -49,7 +49,7 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
       });
       toast.success(isRefund ? "Deposit refunded" : "Deposit collected");
       onDone();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed"));
     } finally {
       setSaving(false);

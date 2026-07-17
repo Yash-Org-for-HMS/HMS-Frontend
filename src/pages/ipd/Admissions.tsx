@@ -81,7 +81,7 @@ export default function Admissions() {
       await axiosInstance.post(`/ipd/admissions/${row.admissionId}/cancel`);
       toast.success("Admission cancelled");
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to cancel"));
     }
   };

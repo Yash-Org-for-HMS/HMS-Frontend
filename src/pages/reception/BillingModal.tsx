@@ -126,7 +126,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         setTaxInput(currentRate ? String(currentRate) : "");
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       const msg = getApiErrorMessage(err, "Failed to load billing data");
       setLoadError(msg);
       toast.error(msg);
@@ -164,7 +164,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
           }
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       toast.error(getApiErrorMessage(err, "Payment failed"));
     } finally {
@@ -189,7 +189,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         setNewItemQty("1");
         setNewItemPrice("");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       toast.error(getApiErrorMessage(err, "Failed to add line item"));
     } finally {
@@ -209,7 +209,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         toast.success("Discount & tax applied");
         await fetchBillingData();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update invoice"));
     } finally {
       setAdjusting(false);
@@ -295,7 +295,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         setRefundReason("");
         await fetchBillingData();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Refund failed"));
     } finally {
       setRefunding(false);

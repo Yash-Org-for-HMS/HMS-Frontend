@@ -16,7 +16,7 @@ export default function PrintLabReport() {
       try {
         const res = await axiosInstance.get(`/lab/orders/${id}`);
         setOrder(res.data.data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         // Distinct from "order not found" — a network/permission error isn't
         // the same thing and shouldn't be reported as one.
         setError(getApiErrorMessage(err, "Failed to load this lab order"));

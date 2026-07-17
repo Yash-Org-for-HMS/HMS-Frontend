@@ -175,7 +175,7 @@ export default function UserForm() {
           navigate("/rbac/users");
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to save user"));
       setSaving(false);
     }

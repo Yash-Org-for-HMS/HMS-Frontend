@@ -73,7 +73,7 @@ export default function ReferralsList() {
       await axiosInstance.put(`/reception/referrals/${referralId}/status`, { status });
       toast.success(`Referral marked ${status.toLowerCase()}`);
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update referral"));
     }
   };

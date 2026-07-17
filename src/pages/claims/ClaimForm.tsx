@@ -109,7 +109,7 @@ export default function ClaimForm() {
       const claimId = isEdit ? id : res.data?.data?.claimId;
       toast.success(isEdit ? "Claim updated" : `Claim ${res.data?.data?.claimNumber} registered`);
       navigate(`/reception/claims/${claimId}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to save claim"));
     } finally {
       setSaving(false);
@@ -208,7 +208,7 @@ function AddPayerDialog({ open, onClose, onAdded }: { open: boolean; onClose: ()
       toast.success("Payer added");
       setName(""); setPortal("");
       onAdded(res.data.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to add payer"));
     } finally { setSaving(false); }
   };

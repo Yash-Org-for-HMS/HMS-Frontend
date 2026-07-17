@@ -39,7 +39,7 @@ export default function BedBoard() {
       await axiosInstance.put(`/ipd/beds/${bedId}/status`, { status });
       toast.success(`Bed marked ${status.toLowerCase()}`);
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update bed"));
     }
   };

@@ -213,7 +213,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
         ? new Date(last.prescriptionDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
         : "the previous visit";
       toast.success(`Added ${toAdd.length} medicine${toAdd.length === 1 ? "" : "s"} from ${dateStr}.`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to load the last prescription."));
     } finally {
       setRepeating(false);
@@ -263,8 +263,8 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
       setDispensingStatus(allExternal ? "external" : "pending");
 
       toast.success("Prescription saved successfully!");
-} catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || "Failed to save prescription");
+} catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, (err instanceof Error && err.message) || "Failed to save prescription"));
     } finally {
       setSaving(false);
     }

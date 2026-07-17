@@ -48,7 +48,7 @@ export default function EditBatchDialog({ item, onClose, getMedicineName, onSave
       toast.success("Batch updated");
       onClose();
       await onSaved();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update this batch"));
     } finally {
       setSaving(false);
