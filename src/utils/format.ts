@@ -14,6 +14,16 @@ export function formatINR(amount: number | null | undefined, decimals = 2): stri
 }
 
 /**
+ * ₹ with natural precision (0–3 fraction digits) — exactly the bare
+ * `toLocaleString("en-IN")` that the report/dashboard views inlined. Use this
+ * when trailing ".00" on whole amounts is undesirable; use {@link formatINR}
+ * (with a `decimals` arg) when you need fixed 2dp.
+ */
+export function formatINRAuto(amount: number | string | null | undefined): string {
+  return `₹${Number(amount || 0).toLocaleString("en-IN")}`;
+}
+
+/**
  * Age in whole years from a date of birth. Returns null for a missing/invalid
  * value. Uses 365.25 days/year (the formula previously inlined at the patient
  * headers). Accepts a Date, timestamp, or date string.

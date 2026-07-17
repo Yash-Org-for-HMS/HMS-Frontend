@@ -27,6 +27,7 @@ import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
 import { axiosInstance } from "@/api/axios";
 import { useSocket } from "@/hooks/useSocket";
+import { DASHBOARD_POLL_MS } from "@/constants/intervals";
 
 const drawerWidth = 260;
 const DOCTOR_BLUE = ACCENTS.doctor;
@@ -50,7 +51,7 @@ export default function DoctorLayout() {
   const { data: badges } = useQuery({
     queryKey: ["doctor-badges"],
     queryFn: async () => (await axiosInstance.get("/doctor/badges")).data.data as { resultsReady: number; queueWaiting: number },
-    refetchInterval: 60000,
+    refetchInterval: DASHBOARD_POLL_MS,
     refetchOnWindowFocus: true,
   });
   useSocket({ QUEUE_UPDATED: () => queryClient.invalidateQueries({ queryKey: ["doctor-badges"] }) });

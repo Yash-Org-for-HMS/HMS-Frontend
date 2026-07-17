@@ -22,10 +22,11 @@ import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import PageHeader from "@/components/layout/PageHeader";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
+import { formatINRAuto } from "@/utils/format";
 
 const ACCENT = "#10B981";
 const PIE_COLORS = ["#10b981", "#f59e0b", "#3b82f6", "#ef4444", "#8b5cf6", "#64748b"];
-const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
+const inr = formatINRAuto;
 
 const PRESETS = [
   { key: "today", label: "Today", from: () => dayjs(), to: () => dayjs() },

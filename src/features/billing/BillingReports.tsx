@@ -15,9 +15,10 @@ import ErrorState from "@/components/ErrorState";
 import PageHeader from "@/components/layout/PageHeader";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
+import { formatINRAuto } from "@/utils/format";
 
 const ACCENT = "#0891b2";
-const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 0 })}`;
+const inr = formatINRAuto;
 
 function Kpi({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
   return (

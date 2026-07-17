@@ -19,6 +19,7 @@ import VitalsModal from "./VitalsModal";
 import CheckoutDialog from "@/components/reception/CheckoutDialog";
 import { useSocket } from "@/hooks/useSocket";
 import PageHeader from "@/components/layout/PageHeader";
+import { QUEUE_POLL_MS } from "@/constants/intervals";
 
 const getDoctorInitials = (doctorName?: string) => {
   if (!doctorName || doctorName === "Unknown") return "";
@@ -53,7 +54,7 @@ export default function QueueDashboard() {
       const res = await axiosInstance.get("/reception/queue");
       return res.data.data;
     },
-    refetchInterval: 30000 // Auto refresh every 30s as a fallback
+    refetchInterval: QUEUE_POLL_MS // Auto refresh every 30s as a fallback
   });
 
   const error = queryError ? "Failed to load queue" : null;

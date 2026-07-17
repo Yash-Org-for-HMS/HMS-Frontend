@@ -19,6 +19,7 @@ import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useHospitalTaxRate } from "@/hooks/useHospitalTaxRate";
+import { QUEUE_POLL_MS } from "@/constants/intervals";
 
 export default function DispensaryPOS() {
   const theme = useTheme();
@@ -47,7 +48,7 @@ export default function DispensaryPOS() {
         sales: salesRes.data.data || []
       };
     },
-    refetchInterval: 30000,
+    refetchInterval: QUEUE_POLL_MS,
   });
 
   const medicines = data?.medicines || [];

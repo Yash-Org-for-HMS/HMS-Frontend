@@ -21,9 +21,10 @@ import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import PageHeader from "@/components/layout/PageHeader";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
+import { formatINRAuto } from "@/utils/format";
 
 const ACCENT = "#4F46E5";
-const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
+const inr = formatINRAuto;
 
 const PRESETS = [
   { key: "today", label: "Today", from: () => dayjs(), to: () => dayjs() },

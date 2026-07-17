@@ -16,6 +16,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import { useToast } from "@/providers/ToastContext";
+import { QUEUE_POLL_MS } from "@/constants/intervals";
 
 export default function RadiologyOrdersQueue() {
   const toast = useToast();
@@ -25,7 +26,7 @@ export default function RadiologyOrdersQueue() {
       const res = await axiosInstance.get(`/lab/radiology-orders?t=${Date.now()}`);
       return res.data.data || [];
     },
-    refetchInterval: 30000,
+    refetchInterval: QUEUE_POLL_MS,
   });
 
   const [macros, setMacros] = useState<any[]>([]);

@@ -20,9 +20,10 @@ import Mascot from "../Mascot";
 import { useToast } from "@/providers/ToastContext";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import dayjs, { Dayjs } from "dayjs";
+import { formatINRAuto } from "@/utils/format";
 
 const ACCENT = ACCENTS.reception;
-const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
+const inr = formatINRAuto;
 
 const STATE_META: Record<string, { label: string; color: string }> = {
   OVERDUE: { label: "Overdue", color: "#ef4444" },

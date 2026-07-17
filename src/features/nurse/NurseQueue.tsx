@@ -18,6 +18,7 @@ import { TableRowsSkeleton, CardGridSkeleton } from "@/components/TableRowsSkele
 import PageHeader from "@/components/layout/PageHeader";
 import VitalsModal from "../reception/VitalsModal";
 import { useSocket } from "@/hooks/useSocket";
+import { QUEUE_POLL_MS } from "@/constants/intervals";
 
 const getDoctorInitials = (doctorName?: string) => {
   if (!doctorName || doctorName === "Unknown") return "";
@@ -41,7 +42,7 @@ export default function NurseQueue() {
       const res = await axiosInstance.get("/reception/queue");
       return res.data.data;
     },
-    refetchInterval: 30000,
+    refetchInterval: QUEUE_POLL_MS,
   });
   // Coerce to an array so an unexpected payload can never crash the page.
   const tokens: any[] = Array.isArray(data) ? data : [];

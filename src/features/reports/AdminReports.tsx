@@ -20,11 +20,12 @@ import PageHeader from "@/components/layout/PageHeader";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import ErrorState from "@/components/ErrorState";
 import { apiErrorText } from "@/utils/apiError";
+import { formatINRAuto } from "@/utils/format";
 
 const ACCENT = ACCENTS.admin; // indigo #6366f1
 const PIE_COLORS = ["#6366f1", "#8b5cf6", "#0891b2", "#10b981", "#f59e0b", "#ef4444", "#64748b", "#ec4899"];
 
-const inr = (n: unknown) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 0 })}`;
+const inr = formatINRAuto;
 const fmtDate = (d: unknown) =>
   d ? new Date(d as string).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 const cap = (s: unknown) => {

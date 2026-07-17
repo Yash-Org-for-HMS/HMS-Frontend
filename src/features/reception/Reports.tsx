@@ -22,10 +22,11 @@ import PageHeader from "@/components/layout/PageHeader";
 import { exportTableToExcel } from "@/utils/exportExcel";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
+import { formatINRAuto } from "@/utils/format";
 
 const ACCENT = ACCENTS.reception;
 const PIE = ["#0891b2", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#3b82f6", "#ec4899"];
-const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 0 })}`;
+const inr = formatINRAuto;
 
 function KpiTile({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
   return (

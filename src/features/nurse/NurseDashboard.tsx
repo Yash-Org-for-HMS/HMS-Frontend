@@ -19,6 +19,7 @@ import StatCard from "@/components/StatCard";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
 import { apiErrorText } from "@/utils/apiError";
+import { QUEUE_POLL_MS } from "@/constants/intervals";
 
 const NURSE_PURPLE = ACCENTS.nurse;
 const NURSE_PURPLE_DARK = ACCENTS.nurseDark;
@@ -45,7 +46,7 @@ export default function NurseDashboard() {
       });
       return { tokens: tokenList, vitalsRecorded: recorded };
     },
-    refetchInterval: 30000, // refresh every 30s
+    refetchInterval: QUEUE_POLL_MS, // refresh every 30s
   });
   const tokens: any[] = data?.tokens ?? [];
   const vitalsRecorded: Set<string> = data?.vitalsRecorded ?? new Set();

@@ -19,6 +19,7 @@ import VitalsModal from "../reception/VitalsModal";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useNavigate } from "react-router-dom";
 import { useSocket } from "@/hooks/useSocket";
+import { QUEUE_POLL_MS } from "@/constants/intervals";
 
 const getDoctorInitials = (doctorName?: string) => {
   if (!doctorName || doctorName === "Unknown") return "";
@@ -40,7 +41,7 @@ export default function DoctorQueue() {
       const res = await axiosInstance.get("/doctor/queue");
       return res.data.data;
     },
-    refetchInterval: 30000,
+    refetchInterval: QUEUE_POLL_MS,
   });
 
   const [vitalsDialog, setVitalsDialog] = useState<{ open: boolean; token: any; readonly: boolean }>({ open: false, token: null, readonly: true });

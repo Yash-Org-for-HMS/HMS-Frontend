@@ -16,13 +16,14 @@ import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import PageHeader from "@/components/layout/PageHeader";
+import { formatINRAuto } from "@/utils/format";
 
 const ACCENT = "#6366f1";
 const ACCENT_DARK = "#4f46e5";
 
 type ScheduleItem = { scheduleItemId: string; doseLabel: string; ageLabel: string; recommendedAgeDays: number; sortOrder: number };
 type Vaccine = { vaccineId: string; vaccineCode: string; vaccineName: string; description: string | null; price: number | string | null; isActive: boolean; isGlobal: boolean; scheduleItems: ScheduleItem[] };
-const inr = (n: any) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
+const inr = formatINRAuto;
 
 // The catalog every "+ Add Vaccine" picker (Reception patient profile) draws
 // from. The shared/global UIP list (isGlobal) is read-only here — a hospital

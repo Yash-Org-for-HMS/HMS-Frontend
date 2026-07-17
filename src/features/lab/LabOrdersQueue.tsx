@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/layout/PageHeader";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
+import { QUEUE_POLL_MS } from "@/constants/intervals";
 
 export default function LabOrdersQueue() {
   const { data: orders = [], isLoading: loading, refetch: fetchOrders } = useQuery({
@@ -23,7 +24,7 @@ export default function LabOrdersQueue() {
       const res = await axiosInstance.get(`/lab/orders?t=${Date.now()}`);
       return res.data.data || [];
     },
-    refetchInterval: 30000,
+    refetchInterval: QUEUE_POLL_MS,
   });
 
   const [collectOrder, setCollectOrder] = useState<any>(null);

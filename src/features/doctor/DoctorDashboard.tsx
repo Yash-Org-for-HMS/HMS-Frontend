@@ -17,6 +17,7 @@ import StatCard from "@/components/StatCard";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
 import { apiErrorText } from "@/utils/apiError";
+import { DASHBOARD_POLL_MS } from "@/constants/intervals";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
 
@@ -27,7 +28,7 @@ export default function DoctorDashboard() {
   const { data: stats, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ["doctor-dashboard-stats"],
     queryFn: async () => (await axiosInstance.get("/doctor/dashboard/stats")).data.data,
-    refetchInterval: 60000, // refresh every minute
+    refetchInterval: DASHBOARD_POLL_MS, // refresh every minute
   });
 
   if (isError) {
