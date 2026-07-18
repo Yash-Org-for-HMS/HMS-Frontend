@@ -112,7 +112,7 @@ export default function RadiologyCatalog() {
   };
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: "auto" }}>
+    <Box>
       <PageHeader
         title="Radiology Catalog"
         subtitle="Manage available radiology scans, imaging services, and pricing."
@@ -147,8 +147,6 @@ export default function RadiologyCatalog() {
         border: '1px solid',
         borderColor: 'divider',
         boxShadow: '0 10px 30px -10px rgba(0,0,0,0.05)',
-        background: 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(20px)',
       }}>
         {loading ? (
           <ListSkeleton rows={6} />
@@ -170,17 +168,7 @@ export default function RadiologyCatalog() {
               </TableHead>
               <TableBody>
                 {sorted.map((scan) => (
-                  <TableRow 
-                    key={scan.radiologyTestId} 
-                    hover
-                    sx={{ 
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        bgcolor: alpha(theme.palette.primary.main, 0.02),
-                        transform: 'scale(1.001)'
-                      }
-                    }}
-                  >
+                  <TableRow key={scan.radiologyTestId} hover>
                     <TableCell sx={{ fontWeight: 600, fontFamily: 'monospace', color: '#0284C7' }}>{scan.testCode}</TableCell>
                     <TableCell sx={{ fontWeight: 500 }}>{scan.testName}</TableCell>
                     <TableCell sx={{ fontWeight: 600, color: '#10B981' }}>${parseFloat(scan.price).toFixed(2)}</TableCell>

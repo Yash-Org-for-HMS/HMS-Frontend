@@ -37,6 +37,15 @@ export default function LabOrdersQueue() {
 
   const navigate = useNavigate();
 
+  // Real payable amount for this order (server-priced). The list endpoint omits
+  // per-test prices, so /billing/unbilled is the correct source for the POS.
+  const { data: unbilledItems = [] } = useQuery({
+    queryKey: ["unbilled", collectOrder?.patientId],
+    enabled: !!collectOrder?.patientId,
+    queryFn: async () => (await axiosInstance.get(`/billing/unbilled/${collectOrder!.patientId}`)).data.data || [],
+  });
+  const posItem = unbilledItems.find((it: any) => it.id === collectOrder?.labOrderId);
+
   // Listen for real-time queue updates
   useSocket({
     QUEUE_UPDATED: () => fetchOrders(),
@@ -220,7 +229,7 @@ export default function LabOrdersQueue() {
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           {collectOrder?.billingLockActive && (
-            <Button color="success" variant="outlined" onClick={() => setShowPOS(true)}>Collect Payment (Cash)</Button>
+            <Button color="success" variant="outlined" onClick={() => setShowPOS(true)}>Collect Payment</Button>
           )}
           <Button onClick={() => setCollectOrder(null)} color="inherit" disabled={collecting}>Cancel</Button>
           <Button onClick={handleConfirmCollect} variant="contained" disabled={collecting || collectOrder?.billingLockActive}>
@@ -243,8 +252,8 @@ export default function LabOrdersQueue() {
           item={{
             id: collectOrder.labOrderId,
             type: "LAB",
-            description: `Lab Tests: ${collectOrder.reports?.map((r: any) => r.labTest?.testName).filter(Boolean).join(', ') || 'Pending Tests'}`,
-            amount: collectOrder.reports?.reduce((sum: number, r: any) => sum + Number(r.labTest?.price || 0), 0) || 300,
+            description: posItem?.description || `Lab Tests: ${collectOrder.reports?.map((r: any) => r.labTest?.testName).filter(Boolean).join(', ') || 'Pending Tests'}`,
+            amount: Number(posItem?.amount ?? 0),
             date: collectOrder.createdAt
           }}
         />

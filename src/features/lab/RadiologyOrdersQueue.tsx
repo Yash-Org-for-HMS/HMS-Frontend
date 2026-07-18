@@ -43,6 +43,16 @@ export default function RadiologyOrdersQueue() {
   const [walkInOpen, setWalkInOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Real payable amount for this scan (server-priced), so the POS shows the
+  // correct figure instead of a hardcoded placeholder. /billing/unbilled is the
+  // only lab-authorised price source.
+  const { data: unbilledItems = [] } = useQuery({
+    queryKey: ["unbilled", editOrder?.patientId],
+    enabled: !!editOrder?.patientId,
+    queryFn: async () => (await axiosInstance.get(`/billing/unbilled/${editOrder!.patientId}`)).data.data || [],
+  });
+  const posItem = unbilledItems.find((it: any) => it.id === editOrder?.radiologyOrderId);
+
   // Listen for real-time queue updates
   useSocket({
     QUEUE_UPDATED: () => fetchOrders(),
@@ -253,9 +263,12 @@ export default function RadiologyOrdersQueue() {
               onChange={(e) => setStatus(e.target.value)}
               fullWidth
               disabled={editOrder?.billingLockActive}
+              helperText={editOrder?.status === "COMPLETED" ? "A completed report can't be moved back to pending — edit the report in place." : " "}
             >
-              <MenuItem value="PENDING">Pending</MenuItem>
-              <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
+              {/* A completed report can't be un-completed (it's delivered/billed);
+                  the lower options are locked to match the backend guard. */}
+              <MenuItem value="PENDING" disabled={editOrder?.status === "COMPLETED"}>Pending</MenuItem>
+              <MenuItem value="IN_PROGRESS" disabled={editOrder?.status === "COMPLETED"}>In Progress</MenuItem>
               <MenuItem value="COMPLETED">Completed</MenuItem>
             </TextField>
             
@@ -345,7 +358,7 @@ export default function RadiologyOrdersQueue() {
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           {editOrder?.billingLockActive && (
-            <Button color="success" variant="outlined" onClick={() => setShowPOS(true)}>Collect Payment (Cash)</Button>
+            <Button color="success" variant="outlined" onClick={() => setShowPOS(true)}>Collect Payment</Button>
           )}
           <Button onClick={handleClose} color="inherit">Cancel</Button>
           <Button onClick={handleSave} variant="contained" disabled={saving || editOrder?.billingLockActive}>
@@ -368,8 +381,8 @@ export default function RadiologyOrdersQueue() {
           item={{
             id: editOrder.radiologyOrderId,
             type: "RADIOLOGY",
-            description: `Radiology Scan: ${editOrder.scanType}`,
-            amount: 1000, // Or fetch the actual test price like we did for lab
+            description: posItem?.description || `Radiology Scan: ${editOrder.scanType}`,
+            amount: Number(posItem?.amount ?? 0),
             date: editOrder.orderDate
           }}
         />

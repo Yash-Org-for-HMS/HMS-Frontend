@@ -194,6 +194,10 @@ const themeOptions: ThemeOptions = {
           borderRadius: 8,
           border: "1px solid rgba(15, 23, 42, 0.05)",
           boxShadow: "0 2px 12px rgba(0, 0, 0, 0.02)",
+          // Reserve the vertical scrollbar's space so it can't appear/disappear as
+          // rows repaint on hover — the "scrollbar dance" that flickers scrollable
+          // tables (same trick already used for the page scrollbar).
+          scrollbarGutter: "stable",
         }
       }
     },
@@ -228,7 +232,10 @@ const themeOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           transition: "background-color 0.2s ease",
-          "&:hover": {
+          // Only body rows should highlight on hover. Excluding header (and
+          // footer) rows stops the sticky column-header from flickering/tinting
+          // as the pointer passes over it.
+          "&:not(.MuiTableRow-head):not(.MuiTableRow-footer):hover": {
             backgroundColor: "rgba(15, 23, 42, 0.02) !important",
           }
         }

@@ -28,6 +28,8 @@ import {
   IconButton,
   Tooltip,
   Alert,
+  TextField,
+  MenuItem,
 } from "@mui/material";
 import {
   ArrowBackRounded,
@@ -46,12 +48,16 @@ import {
   CancelRounded,
   LockResetRounded,
   ContentCopyRounded,
+  SwapHorizRounded,
+  PrintRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
+import { useToast } from "@/providers/ToastContext";
 import ErrorState from "@/components/ErrorState";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import StatCard from "@/components/StatCard";
 import { assetUrl } from "@/utils/assetUrl";
+import { formatINR } from "@/utils/format";
 
 const ACCENT = ACCENTS.admin;
 
@@ -81,6 +87,9 @@ export default function HospitalOverview() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState(0);
   const [resetCreds, setResetCreds] = useState<{ email: string; temporaryPassword: string } | null>(null);
+  const [changePlanOpen, setChangePlanOpen] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState("");
+  const toast = useToast();
 
   const { data, isLoading: loading, isError, error, refetch } = useQuery<any>({
     queryKey: ["hospital-overview", id],
@@ -94,6 +103,23 @@ export default function HospitalOverview() {
       setResetCreds(creds);
       queryClient.invalidateQueries({ queryKey: ["hospital-overview", id] });
     },
+  });
+
+  const { data: plans = [] } = useQuery<any[]>({
+    queryKey: ["plans", "change-plan-options"],
+    queryFn: async () => (await axiosInstance.get("/plans", { params: { limit: 100 } })).data.data,
+    enabled: changePlanOpen,
+  });
+
+  const changePlan = useMutation({
+    mutationFn: async (newPlanId: string) => (await axiosInstance.post(`/hospitals/${id}/change-plan`, { newPlanId })).data.data,
+    onSuccess: (res: any) => {
+      toast.success(res?.message || "Plan updated");
+      setChangePlanOpen(false);
+      setSelectedPlanId("");
+      queryClient.invalidateQueries({ queryKey: ["hospital-overview", id] });
+    },
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, "Failed to change plan")),
   });
 
   if (loading) {
@@ -112,6 +138,19 @@ export default function HospitalOverview() {
   const trials: any[] = data.lead?.trials ?? [];
   const users: any[] = data.users ?? [];
   const activePlan = data.branches?.[0]?.subscriptionPlan?.planName || "No plan assigned";
+  const billing = data.billing;
+  const quotas = data.quotas;
+
+  const billingState: Record<string, { label: string; color: string }> = {
+    active: { label: "Billing current", color: "#10b981" },
+    overdue: { label: "Payment overdue", color: "#f59e0b" },
+    suspended: { label: "Suspended (unpaid)", color: "#ef4444" },
+  };
+  const PHASE: Record<string, "default" | "success" | "warning" | "error" | "secondary"> = {
+    PAID: "success", PENDING: "default", OVERDUE: "warning", SUSPENDED: "error", VOID: "secondary",
+  };
+  const quotaText = (q: { used: number | null; limit: number | null } | undefined) =>
+    !q ? "—" : q.limit != null ? `of ${q.limit} allowed` : "no limit";
 
   const lifecycle =
     data.status === "suspended" ? { label: "Suspended", color: "#ef4444" }
@@ -141,6 +180,9 @@ export default function HospitalOverview() {
             <Typography variant="h5" fontWeight={800} sx={{ color: "text.primary" }} noWrap>{data.hospitalName}</Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.75, flexWrap: "wrap" }}>
               <Chip size="small" label={lifecycle.label} sx={{ fontWeight: 700, bgcolor: `${lifecycle.color}22`, color: lifecycle.color }} />
+              {billing && billing.state !== "active" && (
+                <Chip size="small" label={billingState[billing.state]?.label} sx={{ fontWeight: 700, bgcolor: `${billingState[billing.state]?.color}22`, color: billingState[billing.state]?.color }} />
+              )}
               <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>{data.hospitalCode}</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>· {activePlan}</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>· Joined {new Date(data.createdAt).toLocaleDateString()}</Typography>
@@ -154,8 +196,8 @@ export default function HospitalOverview() {
 
         {/* Stat tiles */}
         <Grid container spacing={2} sx={{ mt: 2 }}>
-          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<ApartmentRounded />} label="Branches" value={data.branches?.length || 0} color={ACCENT} /></Grid>
-          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<MedicalServicesRounded />} label="Doctors" value={data._count?.doctors || 0} color="#10b981" /></Grid>
+          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<ApartmentRounded />} label="Branches" value={quotas?.branches?.used ?? data.branches?.length ?? 0} sub={quotaText(quotas?.branches)} color={ACCENT} /></Grid>
+          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<MedicalServicesRounded />} label="Doctors" value={quotas?.doctors?.used ?? data._count?.doctors ?? 0} sub={quotaText(quotas?.doctors)} color="#10b981" /></Grid>
           <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<PeopleRounded />} label="Patients" value={data._count?.patients || 0} color="#f59e0b" /></Grid>
           <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<AccountCircleRounded />} label="Users" value={data._count?.users || 0} color="#3b82f6" /></Grid>
         </Grid>
@@ -327,6 +369,69 @@ export default function HospitalOverview() {
 
       {/* ── Subscription ── */}
       <Panel value={tab} index={3}>
+        {billing && (
+          <Paper sx={{ ...cardSx, mb: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2, flexWrap: "wrap" }}>
+              <SectionTitle>Subscription Billing</SectionTitle>
+              <Chip size="small" label={billingState[billing.state]?.label} sx={{ fontWeight: 700, bgcolor: `${billingState[billing.state]?.color}22`, color: billingState[billing.state]?.color }} />
+              {billing.pendingPlanName && (
+                <Chip size="small" label={`Downgrade → ${billing.pendingPlanName} (next cycle)`} sx={{ fontWeight: 600, bgcolor: "rgba(245,158,11,0.12)", color: "#f59e0b" }} />
+              )}
+              <Box sx={{ flex: 1 }} />
+              <Button size="small" variant="outlined" startIcon={<SwapHorizRounded />} onClick={() => setChangePlanOpen(true)} sx={{ textTransform: "none", borderColor: "divider", color: "text.primary" }}>
+                Change plan
+              </Button>
+            </Box>
+            <Grid container spacing={3}>
+              <InfoRow label="Billing cycle" value={billing.cycle === "ANNUAL" ? "Annual" : "Monthly"} />
+              <InfoRow label={billing.cycle === "ANNUAL" ? "Amount / year" : "Amount / month"} value={formatINR(billing.cycleAmount)} />
+              <InfoRow label="MRR (this tenant)" value={formatINR(billing.mrr)} />
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>Outstanding</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 600, color: billing.outstanding > 0 ? "#ef4444" : "#10b981" }}>
+                  {formatINR(billing.outstanding)}
+                </Typography>
+              </Grid>
+            </Grid>
+
+            <Divider sx={{ my: 2.5 }} />
+            <SectionTitle>Invoice history</SectionTitle>
+            {billing.invoices?.length ? (
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      {["Invoice #", "Period", "Amount", "Status", "Due", ""].map((h, i) => (
+                        <TableCell key={h || i} sx={{ fontWeight: 700, color: "text.secondary" }}>{h}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {billing.invoices.map((inv: any) => (
+                      <TableRow key={inv.subscriptionInvoiceId} hover>
+                        <TableCell sx={{ fontFamily: "monospace", fontWeight: 600 }}>{inv.invoiceNumber}</TableCell>
+                        <TableCell sx={{ color: "text.secondary" }}>{new Date(inv.periodStart).toLocaleDateString()} – {new Date(inv.periodEnd).toLocaleDateString()}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{formatINR(inv.amount)}</TableCell>
+                        <TableCell><Chip size="small" label={inv.phase.charAt(0) + inv.phase.slice(1).toLowerCase()} color={PHASE[inv.phase] || "default"} /></TableCell>
+                        <TableCell sx={{ color: "text.secondary" }}>{new Date(inv.dueDate).toLocaleDateString()}</TableCell>
+                        <TableCell align="right">
+                          <Tooltip title="Print / download invoice">
+                            <IconButton size="small" onClick={() => window.open(`/subscription-billing/invoices/${inv.subscriptionInvoiceId}/print`, "_blank")}><PrintRounded sx={{ fontSize: 16 }} /></IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>
+                No invoices yet. Run “Generate Due Invoices” on the Billing page to bill this tenant.
+              </Typography>
+            )}
+          </Paper>
+        )}
+
         <Paper sx={{ ...cardSx, mb: 3 }}>
           <SectionTitle>Plans by branch</SectionTitle>
           <Grid container spacing={2}>
@@ -404,6 +509,37 @@ export default function HospitalOverview() {
           ) : <Typography color="text.secondary">No trials for this hospital.</Typography>}
         </Paper>
       </Panel>
+
+      {/* ── Change plan ── */}
+      <Dialog open={changePlanOpen} onClose={() => setChangePlanOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>Change subscription plan</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            Current: <strong>{activePlan}</strong> · {billing?.cycle === "ANNUAL" ? "Annual" : "Monthly"} billing
+          </Typography>
+          <TextField select fullWidth size="small" label="New plan" value={selectedPlanId} onChange={(e) => setSelectedPlanId(e.target.value)}>
+            {plans.length === 0 ? (
+              <MenuItem value="" disabled>Loading plans…</MenuItem>
+            ) : (
+              plans.map((p: any) => (
+                <MenuItem key={p.planId} value={p.planId} disabled={p.planId === billing?.currentPlanId}>
+                  {p.planName} — ₹{billing?.cycle === "ANNUAL" ? `${p.annualPrice}/yr` : `${p.monthlyPrice}/mo`}
+                  {p.planId === billing?.currentPlanId ? " (current)" : ""}
+                </MenuItem>
+              ))
+            )}
+          </TextField>
+          <Alert severity="info" sx={{ mt: 2 }}>
+            Upgrades apply immediately with a prorated charge for the rest of this period. Downgrades take effect at the next billing cycle (the tenant keeps its current plan until then).
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setChangePlanOpen(false)} color="inherit">Cancel</Button>
+          <Button variant="contained" disabled={!selectedPlanId || changePlan.isPending} onClick={() => changePlan.mutate(selectedPlanId)} sx={{ textTransform: "none" }}>
+            {changePlan.isPending ? "Applying…" : "Change plan"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* ── New admin credentials (shown once after a reset) ── */}
       <Dialog open={!!resetCreds} onClose={() => setResetCreds(null)} maxWidth="xs" fullWidth>

@@ -17,6 +17,18 @@ export function orderStatusColor(status: string): MuiColor {
   }
 }
 
+/** MUI Chip colour for an invoice / order payment status (PaymentState). */
+export function paymentStatusColor(status: string): MuiColor {
+  switch (status) {
+    case "PAID": return "success";
+    case "PARTIAL": return "warning";
+    case "UNPAID": return "warning";
+    case "BILLED": return "info";
+    case "REFUNDED": return "secondary";
+    default: return "default";
+  }
+}
+
 /** MUI Chip colour for a trial lifecycle status. */
 export function trialStatusColor(status: string): MuiColor {
   switch (status) {

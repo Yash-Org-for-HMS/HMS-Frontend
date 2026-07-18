@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogActions,
   Chip,
+  Tooltip,
   Autocomplete,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
@@ -84,6 +85,7 @@ export default function HospitalForm() {
     legalBusinessName: "",
     status: "active",
     planId: "",
+    billingCycle: "MONTHLY",
   });
   const [errors, setErrors] = useState<Errors<typeof formData>>({});
 
@@ -111,6 +113,7 @@ export default function HospitalForm() {
       legalBusinessName: d.legalBusinessName || "",
       status: d.status || "active",
       planId: d.subscriptionPlanId || "",
+      billingCycle: d.billingCycle || "MONTHLY",
     });
     setBranches(d.branches || []);
   }, [hospitalData]);
@@ -201,6 +204,13 @@ export default function HospitalForm() {
       </Container>
     );
   }
+
+  // Branch usage vs the governing plan's maxBranches (opt-in: no plan / <=0 → unlimited).
+  // Governing plan = the branches' plan, else the plan selected for this hospital.
+  const governingPlanId = branches[0]?.subscriptionPlanId || formData.planId || null;
+  const governingPlan = plans.find((p: any) => p.planId === governingPlanId);
+  const branchLimit = governingPlan && governingPlan.maxBranches > 0 ? governingPlan.maxBranches : null;
+  const atBranchLimit = branchLimit != null && branches.length >= branchLimit;
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
@@ -313,6 +323,20 @@ export default function HospitalForm() {
                 helperText={errors.officialPhone}
               />
             </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                select
+                fullWidth
+                label="Billing cycle"
+                name="billingCycle"
+                value={formData.billingCycle}
+                onChange={handleChange}
+                helperText="How often this tenant is invoiced for its plan."
+              >
+                <MenuItem value="MONTHLY">Monthly</MenuItem>
+                <MenuItem value="ANNUAL">Annual</MenuItem>
+              </TextField>
+            </Grid>
             {isConvert && (
               <Grid size={{ xs: 12 }}>
                 <TextField
@@ -412,17 +436,37 @@ export default function HospitalForm() {
           }}
         >
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-            <Typography variant="h6" fontWeight="700" sx={{ color: "text.primary" }}>
-              Hospital Branches
-            </Typography>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => setBranchDialog({ editing: null })}
-              sx={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}
-            >
-              Add Branch
-            </Button>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Typography variant="h6" fontWeight="700" sx={{ color: "text.primary" }}>
+                Hospital Branches
+              </Typography>
+              {branchLimit != null ? (
+                <Tooltip title={governingPlan?.planName ? `${governingPlan.planName} plan limit` : "Plan limit"}>
+                  <Chip
+                    size="small"
+                    label={`${branches.length} / ${branchLimit} branches`}
+                    color={atBranchLimit ? "error" : branches.length >= branchLimit * 0.8 ? "warning" : "success"}
+                    variant={atBranchLimit ? "filled" : "outlined"}
+                    sx={{ fontWeight: 600 }}
+                  />
+                </Tooltip>
+              ) : (
+                <Chip size="small" label={`${branches.length} branch${branches.length === 1 ? "" : "es"}`} sx={{ fontWeight: 600 }} />
+              )}
+            </Box>
+            <Tooltip title={atBranchLimit ? `Branch limit reached for the ${governingPlan?.planName ?? "current"} plan — upgrade to add more.` : ""}>
+              <span>
+                <Button
+                  variant="contained"
+                  size="small"
+                  disabled={atBranchLimit}
+                  onClick={() => setBranchDialog({ editing: null })}
+                  sx={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}
+                >
+                  Add Branch
+                </Button>
+              </span>
+            </Tooltip>
           </Box>
           {branches.length === 0 ? (
             <Typography variant="body2" sx={{ color: "text.secondary" }}>No branches found.</Typography>

@@ -30,8 +30,8 @@ import HospitalLogin from "@/features/hospitalAuth/HospitalLogin";
 const Dashboard = lazy(() => import("@/features/Dashboard"));
 const PlansList = lazy(() => import("@/features/plans/PlansList"));
 const PlanForm = lazy(() => import("@/features/plans/PlanForm"));
-const FeatureFlagsList = lazy(() => import("@/features/featureFlags/FeatureFlagsList"));
-const FeatureFlagForm = lazy(() => import("@/features/featureFlags/FeatureFlagForm"));
+const SubscriptionBilling = lazy(() => import("@/features/subscriptionBilling/SubscriptionBilling"));
+const SubscriptionInvoicePrint = lazy(() => import("@/features/subscriptionBilling/SubscriptionInvoicePrint"));
 const LeadsList = lazy(() => import("@/features/leads/LeadsList"));
 const LeadForm = lazy(() => import("@/features/leads/LeadForm"));
 const TrialsList = lazy(() => import("@/features/trials/TrialsList"));
@@ -124,6 +124,7 @@ const PrintLabReport = lazy(() => import("@/features/lab/PrintLabReport"));
 const PrintIpBill = lazy(() => import("@/features/billing/PrintIpBill"));
 const RadiologyCatalog = lazy(() => import("@/features/lab/RadiologyCatalog"));
 const LabReports = lazy(() => import("@/features/lab/LabReports"));
+const LabBilling = lazy(() => import("@/features/lab/LabBilling"));
 
 // Pharmacy
 const PharmacyDashboard = lazy(() => import("@/features/pharmacy/PharmacyDashboard"));
@@ -167,9 +168,8 @@ function App() {
             <Route path="/plans" element={el(PlansList)} />
             <Route path="/plans/new" element={el(PlanForm)} />
             <Route path="/plans/:id/edit" element={el(PlanForm)} />
-            <Route path="/feature-flags" element={el(FeatureFlagsList)} />
-            <Route path="/feature-flags/new" element={el(FeatureFlagForm)} />
-            <Route path="/feature-flags/:id/edit" element={el(FeatureFlagForm)} />
+            <Route path="/subscription-billing" element={el(SubscriptionBilling)} />
+            {/* Feature Flags routes removed — page hidden (see AdminLayout note). */}
             <Route path="/leads" element={el(LeadsList)} />
             <Route path="/leads/new" element={el(LeadForm)} />
             <Route path="/leads/:id/edit" element={el(LeadForm)} />
@@ -195,6 +195,8 @@ function App() {
             <Route path="/reports" element={el(AdminReports)} />
             <Route path="/audit-logs" element={el(AuditLogsList)} />
           </Route>
+          {/* Full-page printable subscription invoice (no admin shell). */}
+          <Route path="/subscription-billing/invoices/:id/print" element={el(SubscriptionInvoicePrint)} />
         </Route>
       </Routes>
     </AuthProvider>
@@ -326,6 +328,7 @@ function App() {
             <Route path="/lab/radiology" element={el(RadiologyOrdersQueue)} />
             <Route path="/lab/catalog" element={el(LabTestCatalog)} />
             <Route path="/lab/radiology-catalog" element={el(RadiologyCatalog)} />
+            <Route path="/lab/billing" element={el(LabBilling)} />
             <Route path="/lab/reports" element={el(LabReports)} />
           </Route>
         </Route>

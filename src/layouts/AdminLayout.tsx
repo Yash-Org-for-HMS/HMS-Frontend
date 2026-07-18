@@ -28,7 +28,7 @@ import {
   PeopleAltRounded,
   TimerRounded,
   CardMembershipRounded,
-  ToggleOnRounded,
+  ReceiptLongRounded,
   HandshakeRounded,
   AdminPanelSettingsRounded,
   LogoutRounded,
@@ -91,7 +91,11 @@ export default function AdminLayout() {
       heading: t("nav.group.configuration", "Configuration"),
       items: [
         { text: t("nav.plans"), icon: <CardMembershipRounded />, path: "/plans" },
-        { text: t("nav.featureFlags"), icon: <ToggleOnRounded />, path: "/feature-flags" },
+        { text: t("nav.subscriptionBilling", "Billing"), icon: <ReceiptLongRounded />, path: "/subscription-billing" },
+        // Feature Flags page hidden: its only functional keys (MODULE_*) are managed
+        // better by the per-hospital Module Access screen (immediate, cache-aware),
+        // and its Global scope / arbitrary keys are not consumed by any code. The
+        // backend table, API, and Module Access screen are left untouched.
       ],
     },
     {

@@ -131,7 +131,7 @@ export default function LabTestCatalog() {
   };
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: "auto" }}>
+    <Box>
       <PageHeader
         title="Lab Test Catalog"
         subtitle="Manage available lab tests, profiles, and their reference ranges."
@@ -166,8 +166,6 @@ export default function LabTestCatalog() {
         border: '1px solid',
         borderColor: 'divider',
         boxShadow: '0 10px 30px -10px rgba(0,0,0,0.05)',
-        background: 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(20px)',
       }}>
         {loading ? (
           <ListSkeleton rows={6} />
@@ -191,17 +189,7 @@ export default function LabTestCatalog() {
               </TableHead>
               <TableBody>
                 {sorted.map((test, index) => (
-                  <TableRow 
-                    key={test.labTestId} 
-                    hover
-                    sx={{ 
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        bgcolor: alpha(theme.palette.primary.main, 0.02),
-                        transform: 'scale(1.001)'
-                      }
-                    }}
-                  >
+                  <TableRow key={test.labTestId} hover>
                     <TableCell>
                       {test.isProfile ? (
                         <Chip label="Profile" size="small" sx={{ bgcolor: alpha('#7C3AED', 0.1), color: '#7C3AED', fontWeight: 600, borderRadius: '6px' }} />

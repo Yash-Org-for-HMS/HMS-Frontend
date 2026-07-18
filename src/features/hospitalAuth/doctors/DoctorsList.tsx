@@ -60,20 +60,53 @@ export default function DoctorsList() {
   const doctors: any[] = data?.data || [];
   const meta = data?.meta as { total: number; totalPages: number } | undefined;
 
+  // Subscription-plan doctor usage (used / limit) — drives the header indicator
+  // and disables "Add Doctor" once the plan's cap is reached.
+  const { data: quota } = useQuery({
+    queryKey: ["hospital-doctors-quota"],
+    queryFn: async () =>
+      (await axiosInstance.get("/hospital/doctors/quota")).data.data as {
+        used: number; limit: number | null; planName: string | null; unlimited: boolean;
+      },
+  });
+  const atLimit = !!quota && !quota.unlimited && quota.limit != null && quota.used >= quota.limit;
+
   return (
     <Box>
       <PageHeader
         title="Doctor Management"
         subtitle="Add doctors and manage their profiles, schedules, and leaves."
         actions={
-          <Button
-            variant="contained"
-            startIcon={<AddRounded />}
-            onClick={() => navigate("/hospital/doctors/new")}
-            sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, textTransform: "none", fontWeight: 600, px: 3 }}
-          >
-            Add Doctor
-          </Button>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            {quota && (
+              quota.unlimited ? (
+                <Chip size="small" label={`${quota.used} doctor${quota.used === 1 ? "" : "s"}`} sx={{ fontWeight: 600 }} />
+              ) : (
+                <Tooltip title={quota.planName ? `${quota.planName} plan limit` : "Plan limit"}>
+                  <Chip
+                    size="small"
+                    label={`${quota.used} / ${quota.limit} doctors`}
+                    color={atLimit ? "error" : quota.limit != null && quota.used >= quota.limit * 0.8 ? "warning" : "success"}
+                    variant={atLimit ? "filled" : "outlined"}
+                    sx={{ fontWeight: 600 }}
+                  />
+                </Tooltip>
+              )
+            )}
+            <Tooltip title={atLimit ? `Doctor limit reached for the ${quota?.planName ?? "current"} plan — upgrade to add more.` : ""}>
+              <span>
+                <Button
+                  variant="contained"
+                  startIcon={<AddRounded />}
+                  disabled={atLimit}
+                  onClick={() => navigate("/hospital/doctors/new")}
+                  sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, textTransform: "none", fontWeight: 600, px: 3 }}
+                >
+                  Add Doctor
+                </Button>
+              </span>
+            </Tooltip>
+          </Box>
         }
       />
 
