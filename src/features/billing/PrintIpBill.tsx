@@ -5,13 +5,12 @@ import { Box, Typography } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
 import { formatINR } from "@/utils/format";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
+import BillDocument from "@/components/billing/BillDocument";
 
 // Printable A4 in-patient bill. Hospitals print on their own pre-printed
 // letterhead stationery, so we render NO logo/branding — just a fixed blank top
 // gap for the letterhead, then the bill body (meta grid, Bill-To, categorized
 // itemized table with subtotals, totals).
-
-const LETTERHEAD_GAP_MM = 45; // blank space at the top for the pre-printed letterhead
 
 const CATEGORY_ORDER = [
   "ADMISSION", "ROOM", "PROCEDURE", "INVESTIGATION", "RADIOLOGY", "DOCTOR_VISIT", "PHARMACY", "OTHER",
@@ -110,81 +109,70 @@ export default function PrintIpBill() {
   return (
     <Box sx={{
       width: "210mm", minHeight: "297mm", margin: "0 auto", bgcolor: "white", color: "#111827",
-      px: "18mm", pb: "15mm", pt: `${LETTERHEAD_GAP_MM}mm`, boxSizing: "border-box", fontFamily: "'Inter', Arial, sans-serif",
+      px: "18mm", pb: "15mm", pt: 0, boxSizing: "border-box", fontFamily: "'Inter', Arial, sans-serif",
       "@media screen": { boxShadow: "0 4px 12px rgba(0,0,0,0.12)", my: 4 },
       "@media print": { margin: 0, boxShadow: "none", width: "100%" },
     }}>
-      {/* Title */}
-      <Box sx={{ textAlign: "center", borderBottom: "2px solid #111827", pb: 1, mb: 2 }}>
-        <Typography sx={{ fontWeight: 800, fontSize: 18, letterSpacing: 1 }}>FINAL IP BILL</Typography>
-      </Box>
+      <BillDocument
+        variant="letterhead"
+        title="Final IP Bill"
+        metaLeft={[
+          { label: "UHID", value: patient?.uhidNumber },
+          { label: "Patient", value: patient ? `${patient.firstName || ""} ${patient.lastName || ""} (${ageSex(patient)})` : "—" },
+          { label: "Contact", value: patient?.phone },
+          { label: "Consultant", value: adm?.consultantName },
+        ]}
+        metaRight={[
+          { label: "Bill No", value: inv.invoiceNumber },
+          { label: "Bill Date", value: fmtDateTime(inv.invoiceDate) },
+          { label: "IP ID", value: adm?.admissionNumber },
+          { label: "DOA", value: fmtDateTime(adm?.admissionDate) },
+          { label: "DOD", value: fmtDateTime(adm?.dischargeDate) },
+        ]}
+        totals={{
+          subtotal: Number(inv.grossAmount || 0),
+          discount: Number(inv.discountAmount || 0),
+          tax: Number(inv.taxAmount || 0), taxLabel: "Tax (CGST+SGST)",
+          total: Number(inv.netAmount || 0), paid: totalPaid, refunded: totalRefunded, balance,
+        }}
+        footer={
+          <span style={{ display: "flex", justifyContent: "space-between", width: "100%", fontStyle: "normal", color: "#6b7280" }}>
+            <span>Bill No: {inv.invoiceNumber}</span>
+            <span>Printed: {fmtDateTime(new Date().toISOString())}</span>
+          </span>
+        }
+      >
+        {/* Bill To */}
+        <div style={{ marginBottom: 16, padding: 10, border: "1px solid #e5e7eb", borderRadius: 4 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: 0.5 }}>BILL TO</div>
+          <div style={{ fontSize: 12.5, fontWeight: 700 }}>{patient ? `${patient.firstName || ""} ${patient.lastName || ""}` : "—"}</div>
+          {patientAddress && <div style={{ fontSize: 11.5, color: "#4b5563" }}>{patientAddress}</div>}
+        </div>
 
-      {/* Meta grid — patient/admission ↔ bill identifiers */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", gap: 4, mb: 2, fontSize: 12.5 }}>
-        <Box sx={{ flex: 1 }}>
-          <MetaRow label="UHID" value={patient?.uhidNumber} />
-          <MetaRow label="Patient" value={patient ? `${patient.firstName || ""} ${patient.lastName || ""} (${ageSex(patient)})` : "—"} />
-          <MetaRow label="Contact" value={patient?.phone} />
-          <MetaRow label="Consultant" value={adm?.consultantName} />
-        </Box>
-        <Box sx={{ flex: 1 }}>
-          <MetaRow label="Bill No" value={inv.invoiceNumber} />
-          <MetaRow label="Bill Date" value={fmtDateTime(inv.invoiceDate)} />
-          <MetaRow label="IP ID" value={adm?.admissionNumber} />
-          <MetaRow label="DOA" value={fmtDateTime(adm?.admissionDate)} />
-          <MetaRow label="DOD" value={fmtDateTime(adm?.dischargeDate)} />
-        </Box>
-      </Box>
-
-      {/* Bill To */}
-      <Box sx={{ mb: 2, p: 1.25, border: "1px solid #e5e7eb", borderRadius: 1 }}>
-        <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: 0.5 }}>BILL TO</Typography>
-        <Typography sx={{ fontSize: 12.5, fontWeight: 700 }}>{patient ? `${patient.firstName || ""} ${patient.lastName || ""}` : "—"}</Typography>
-        {patientAddress && <Typography sx={{ fontSize: 11.5, color: "#4b5563" }}>{patientAddress}</Typography>}
-      </Box>
-
-      {/* Itemized, categorized table */}
-      <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
-        <thead>
-          <tr>
-            <th style={{ ...th, textAlign: "left", width: "9%" }}>Date</th>
-            <th style={{ ...th, textAlign: "left", width: "37%" }}>Service Name</th>
-            <th style={{ ...th, width: "6%" }}>Qty</th>
-            <th style={{ ...th }}>Rate</th>
-            <th style={{ ...th }}>Gross</th>
-            <th style={{ ...th, width: "7%" }}>Disc %</th>
-            <th style={{ ...th }}>Disc Amt</th>
-            <th style={{ ...th }}>Net Amt</th>
-          </tr>
-        </thead>
-        <tbody>
-          {groups.map((g) => (
-            <GroupBlock key={g.cat} label={CATEGORY_LABEL[g.cat]} rows={g.rows} subtotal={g.subtotal} cell={cell} />
-          ))}
-          {groups.length === 0 && (
-            <tr><td colSpan={8} style={{ ...cell, textAlign: "center", color: "#9ca3af" }}>No charges on this bill</td></tr>
-          )}
-        </tbody>
-      </table>
-
-      {/* Totals */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        <Box sx={{ width: 280, borderTop: "2px solid #111827", pt: 1 }}>
-          <TotalRow label="Gross Amount" value={formatINR(inv.grossAmount)} />
-          {Number(inv.discountAmount) > 0 && <TotalRow label="Discount" value={`- ${formatINR(inv.discountAmount)}`} />}
-          {Number(inv.taxAmount) > 0 && <TotalRow label="Tax (CGST+SGST)" value={`+ ${formatINR(inv.taxAmount)}`} />}
-          <TotalRow label="Net Payable" value={formatINR(inv.netAmount)} bold />
-          <TotalRow label="Paid" value={formatINR(totalPaid)} />
-          {totalRefunded > 0 && <TotalRow label="Refunded" value={`- ${formatINR(totalRefunded)}`} />}
-          <TotalRow label="Balance Due" value={formatINR(balance)} bold />
-        </Box>
-      </Box>
-
-      {/* Functional footer (letterhead carries the contact strip) */}
-      <Box sx={{ mt: 6, pt: 1.5, borderTop: "1px dashed #cbd5e1", display: "flex", justifyContent: "space-between", fontSize: 10.5, color: "#6b7280" }}>
-        <span>Bill No: {inv.invoiceNumber}</span>
-        <span>Printed: {fmtDateTime(new Date().toISOString())}</span>
-      </Box>
+        {/* Itemized, categorized table */}
+        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
+          <thead>
+            <tr>
+              <th style={{ ...th, textAlign: "left", width: "9%" }}>Date</th>
+              <th style={{ ...th, textAlign: "left", width: "37%" }}>Service Name</th>
+              <th style={{ ...th, width: "6%" }}>Qty</th>
+              <th style={{ ...th }}>Rate</th>
+              <th style={{ ...th }}>Gross</th>
+              <th style={{ ...th, width: "7%" }}>Disc %</th>
+              <th style={{ ...th }}>Disc Amt</th>
+              <th style={{ ...th }}>Net Amt</th>
+            </tr>
+          </thead>
+          <tbody>
+            {groups.map((g) => (
+              <GroupBlock key={g.cat} label={CATEGORY_LABEL[g.cat]} rows={g.rows} subtotal={g.subtotal} cell={cell} />
+            ))}
+            {groups.length === 0 && (
+              <tr><td colSpan={8} style={{ ...cell, textAlign: "center", color: "#9ca3af" }}>No charges on this bill</td></tr>
+            )}
+          </tbody>
+        </table>
+      </BillDocument>
     </Box>
   );
 }
@@ -218,23 +206,5 @@ function GroupBlock({ label, rows, subtotal, cell }: { label: string; rows: any[
         <td style={{ ...cell, textAlign: "right", fontWeight: 700 }}>{formatINR(subtotal)}</td>
       </tr>
     </>
-  );
-}
-
-function MetaRow({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <Box sx={{ display: "flex", mb: 0.4 }}>
-      <Typography component="span" sx={{ fontSize: 12.5, fontWeight: 700, width: 95, flexShrink: 0 }}>{label}</Typography>
-      <Typography component="span" sx={{ fontSize: 12.5 }}>: {value || "—"}</Typography>
-    </Box>
-  );
-}
-
-function TotalRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
-  return (
-    <Box sx={{ display: "flex", justifyContent: "space-between", my: 0.4 }}>
-      <Typography sx={{ fontSize: bold ? 13.5 : 12.5, fontWeight: bold ? 800 : 500, color: "#374151" }}>{label}</Typography>
-      <Typography sx={{ fontSize: bold ? 13.5 : 12.5, fontWeight: bold ? 800 : 600 }}>{value}</Typography>
-    </Box>
   );
 }

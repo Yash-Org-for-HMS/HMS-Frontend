@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import { CloseRounded, PrintRounded, PaymentRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
+import BillDocument from "@/components/billing/BillDocument";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
@@ -47,7 +48,6 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
   const fullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || balance <= 0.005;
 
   const hp = invoice?.hospital;
-  const addressLine = [hp?.addressLine1, hp?.addressLine2, hp?.postalCode].filter(Boolean).join(", ");
 
   const pay = async () => {
     const amt = Number(amount);
@@ -98,61 +98,52 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
           : invoice ? (
             <>
               <Box ref={receiptRef}>
-                <Box sx={{ textAlign: "center", borderBottom: "2px solid #0891b2", pb: 1.5, mb: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 800, color: "#0e7490" }}>{hp?.hospitalName || "Hospital"}</Typography>
-                  {addressLine && <Typography variant="caption" sx={{ color: "#6b7280", display: "block" }}>{addressLine}</Typography>}
-                  <Typography variant="caption" sx={{ color: "#3b82f6", fontWeight: 700, letterSpacing: 2 }}>PAYMENT RECEIPT</Typography>
-                </Box>
-
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2, fontSize: 13 }}>
-                  <Box>
-                    <div><strong>Receipt:</strong> {invoice.invoiceNumber}</div>
-                    <div><strong>Date:</strong> {formatDate(invoice.invoiceDate)}</div>
-                  </Box>
-                  <Box sx={{ textAlign: "right" }}>
-                    <div><strong>Patient:</strong> {invoice.patient ? `${invoice.patient.firstName} ${invoice.patient.lastName}` : "—"}</div>
-                    <div><strong>UHID:</strong> {invoice.patient?.uhidNumber || "—"}</div>
-                  </Box>
-                </Box>
-
-                <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
-                  <thead><tr>
-                    <th style={{ ...cell, textAlign: "left", fontWeight: 700 }}>Description</th>
-                    <th style={{ ...cell, textAlign: "center", fontWeight: 700 }}>Qty</th>
-                    <th style={{ ...cell, textAlign: "right", fontWeight: 700 }}>Amount</th>
-                  </tr></thead>
-                  <tbody>
-                    {invoice.InvoiceItem?.map((it: any, i: number) => (
-                      <tr key={i}>
-                        <td style={cell}>{it.description}</td>
-                        <td style={{ ...cell, textAlign: "center" }}>{it.quantity}</td>
-                        <td style={{ ...cell, textAlign: "right" }}>{formatINR(it.totalPrice)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                <Box sx={{ borderTop: "2px solid #1f2937", pt: 1 }}>
-                  <Row label="Subtotal" value={formatINR(invoice.grossAmount)} />
-                  {Number(invoice.discountAmount) > 0 && <Row label="Discount" value={`- ${formatINR(invoice.discountAmount)}`} color="#059669" />}
-                  {Number(invoice.taxAmount) > 0 && <Row label="Tax (CGST+SGST)" value={`+ ${formatINR(invoice.taxAmount)}`} />}
-                  <Row label="Total" value={formatINR(invoice.netAmount)} bold />
-                  <Row label="Paid" value={formatINR(totalPaid)} />
-                  {totalRefunded > 0 && <Row label="Refunded" value={`- ${formatINR(totalRefunded)}`} color="#8b5cf6" />}
-                  <Row label="Balance" value={formatINR(balance)} bold color={balance > 0.005 ? "#ef4444" : "#10b981"} />
-                </Box>
-
-                {invoice.Payment?.length > 0 && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: "#6b7280", letterSpacing: 1 }}>PAYMENTS</Typography>
-                    {invoice.Payment.map((p: any, i: number) => (
-                      <Box key={i} sx={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#4b5563", mt: 0.5 }}>
-                        <span>{formatDate(p.createdAt)} · {p.paymentMethod?.methodName || "—"}</span>
-                        <span>{formatINR(p.paidAmount)}</span>
-                      </Box>
-                    ))}
-                  </Box>
-                )}
+                <BillDocument
+                  hospital={hp}
+                  title="Payment Receipt"
+                  metaLeft={[
+                    { label: "Receipt", value: invoice.invoiceNumber },
+                    { label: "Date", value: formatDate(invoice.invoiceDate) },
+                  ]}
+                  metaRight={[
+                    { label: "Patient", value: invoice.patient ? `${invoice.patient.firstName} ${invoice.patient.lastName}` : "—" },
+                    { label: "UHID", value: invoice.patient?.uhidNumber || "—" },
+                  ]}
+                  totals={{
+                    subtotal: Number(invoice.grossAmount || 0),
+                    discount: Number(invoice.discountAmount || 0),
+                    tax: Number(invoice.taxAmount || 0), taxLabel: "Tax (CGST+SGST)",
+                    total: Number(invoice.netAmount || 0), paid: totalPaid, refunded: totalRefunded, balance,
+                  }}
+                  afterTotals={invoice.Payment?.length > 0 ? (
+                    <div style={{ marginTop: 16 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: 1, marginBottom: 6 }}>PAYMENTS</div>
+                      {invoice.Payment.map((p: any, i: number) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#4b5563", marginTop: 4 }}>
+                          <span>{formatDate(p.createdAt)} · {p.paymentMethod?.methodName || "—"}</span>
+                          <span>{formatINR(p.paidAmount)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : undefined}
+                >
+                  <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
+                    <thead><tr>
+                      <th style={{ ...cell, textAlign: "left", fontWeight: 700 }}>Description</th>
+                      <th style={{ ...cell, textAlign: "center", fontWeight: 700 }}>Qty</th>
+                      <th style={{ ...cell, textAlign: "right", fontWeight: 700 }}>Amount</th>
+                    </tr></thead>
+                    <tbody>
+                      {invoice.InvoiceItem?.map((it: any, i: number) => (
+                        <tr key={i}>
+                          <td style={cell}>{it.description}</td>
+                          <td style={{ ...cell, textAlign: "center" }}>{it.quantity}</td>
+                          <td style={{ ...cell, textAlign: "right" }}>{formatINR(it.totalPrice)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </BillDocument>
               </Box>
 
               {/* Record payment (only if balance outstanding, and not in read-only oversight mode) */}
@@ -204,14 +195,5 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
         <Button variant="contained" startIcon={<PrintRounded />} disabled={!invoice} onClick={print} sx={{ bgcolor: "#0891b2", "&:hover": { bgcolor: "#0e7490" } }}>{invoice?.admissionId ? "Receipt" : "Print"}</Button>
       </DialogActions>
     </Dialog>
-  );
-}
-
-function Row({ label, value, bold, color }: { label: string; value: string; bold?: boolean; color?: string }) {
-  return (
-    <Box sx={{ display: "flex", justifyContent: "space-between", my: 0.5 }}>
-      <Typography variant="body2" sx={{ fontWeight: bold ? 800 : 400, color: color || "text.secondary" }}>{label}</Typography>
-      <Typography variant="body2" sx={{ fontWeight: bold ? 800 : 600, color: color || "text.primary" }}>{value}</Typography>
-    </Box>
   );
 }
