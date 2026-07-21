@@ -43,6 +43,7 @@ import {
   WifiRounded,
   AccessTimeRounded,
   HealthAndSafetyRounded,
+  LockRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { assetUrl } from "@/utils/assetUrl";
@@ -159,12 +160,10 @@ export default function ReceptionLayout() {
         </Box>
       </Box>
 
-      {/* Navigation — hide items for modules this hospital doesn't have, and
-          drop any section left empty. */}
+      {/* Navigation — module-gated items (e.g. IPD) aren't hidden; they show with
+          a lock so staff can see the feature exists, and the page shows an upsell. */}
       <List sx={{ px: 1.5, pt: 1, flex: 1, overflowY: "auto" }}>
         {navSections
-          .map((section) => ({ ...section, items: section.items.filter((i) => isModuleEnabled((i as any).module)) }))
-          .filter((section) => section.items.length > 0)
           .map((section, si) => (
           <Box key={section.heading} sx={{ mb: 0.5 }}>
             <Typography
@@ -177,6 +176,7 @@ export default function ReceptionLayout() {
               const isActive =
                 location.pathname === item.path ||
                 (item.path !== "/reception/dashboard" && location.pathname.startsWith(item.path));
+              const locked = (item as any).module && !isModuleEnabled((item as any).module);
               return (
                 <ListItem key={item.text} disablePadding sx={{ mb: 0.25 }}>
                   <ListItemButton
@@ -198,6 +198,7 @@ export default function ReceptionLayout() {
                         minWidth: 40,
                         color: isActive ? "primary.main" : "text.secondary",
                         transition: "color 0.15s ease",
+                        opacity: locked ? 0.55 : 1,
                       }}
                     >
                       {(item as any).badge ? (
@@ -214,8 +215,10 @@ export default function ReceptionLayout() {
                         fontSize: "0.875rem",
                         fontWeight: isActive ? 600 : 500,
                         color: isActive ? "primary.main" : "text.secondary",
+                        sx: { opacity: locked ? 0.6 : 1 },
                       }}
                     />
+                    {locked && <LockRounded sx={{ fontSize: 15, color: "#f59e0b", ml: 1, flexShrink: 0 }} />}
                   </ListItemButton>
                 </ListItem>
               );

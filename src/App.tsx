@@ -285,8 +285,8 @@ function App() {
             <Route path="/reception/directory" element={el(DepartmentDirectory)} />
             <Route path="/reception/referrals" element={el(ReferralsList)} />
             <Route path="/reception/reports" element={el(Reports)} />
-            <Route path="/reception/ipd/admissions" element={el(Admissions)} />
-            <Route path="/reception/ipd/beds" element={el(BedBoard)} />
+            <Route path="/reception/ipd/admissions" element={elGated(Admissions, "IPD", "Admissions")} />
+            <Route path="/reception/ipd/beds" element={elGated(BedBoard, "IPD", "Bed Management")} />
 
             <Route path="/reception/queue" element={el(QueueDashboard)} />
             <Route path="/reception/billing" element={el(Billing)} />
