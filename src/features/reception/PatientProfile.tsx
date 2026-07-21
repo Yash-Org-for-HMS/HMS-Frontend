@@ -33,6 +33,7 @@ import VaccinationsSection from "@/components/reception/VaccinationsSection";
 import SurgeriesSection from "@/components/reception/SurgeriesSection";
 import InvoiceViewDialog from "@/components/reception/InvoiceViewDialog";
 import { useToast } from "@/providers/ToastContext";
+import { useEnabledModules } from "@/hooks/useEnabledModules";
 
 const ACCENT = ACCENTS.reception;
 
@@ -114,6 +115,8 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
   });
 
   const [tab, setTab] = useState(0);
+  const { isModuleEnabled } = useEnabledModules();
+  const billingEnabled = isModuleEnabled("Billing");
   const [notifProcessing, setNotifProcessing] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [checkinId, setCheckinId] = useState<string | null>(null);
@@ -136,7 +139,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
   const { data: billing, refetch: refetchBilling } = useQuery<{ totals: any; invoices: any[] }>({
     queryKey: ["patient-billing", id],
     queryFn: async () => (await axiosInstance.get(`/reception/patients/${id}/billing-summary`)).data.data,
-    enabled: !!id,
+    enabled: !!id && billingEnabled,
   });
 
   const isToday = (d: string) => new Date(d).toDateString() === new Date().toDateString();
@@ -312,11 +315,15 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
         <StatCard layout="horizontal" icon={<CalendarTodayRounded />} label="Last visit" color="#8b5cf6"
           value={stats.lastVisit ? stats.lastVisit.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—"}
           sub={stats.lastVisit ? stats.lastVisit.getFullYear().toString() : "no visits yet"} />
-        <StatCard layout="horizontal" icon={<PaymentsRounded />} label="Total billed" value={formatINR(billing?.totals?.totalBilled)} color="#10b981"
-          sub={`${billing?.totals?.invoiceCount || 0} invoices`} />
-        <StatCard layout="horizontal" icon={<AccountBalanceWalletRounded />} label="Outstanding dues" value={formatINR(billing?.totals?.totalDues)}
-          color={Number(billing?.totals?.totalDues || 0) > 0 ? "#ef4444" : "#10b981"}
-          sub={Number(billing?.totals?.totalDues || 0) > 0 ? "due now" : "all settled"} />
+        {billingEnabled && (
+          <StatCard layout="horizontal" icon={<PaymentsRounded />} label="Total billed" value={formatINR(billing?.totals?.totalBilled)} color="#10b981"
+            sub={`${billing?.totals?.invoiceCount || 0} invoices`} />
+        )}
+        {billingEnabled && (
+          <StatCard layout="horizontal" icon={<AccountBalanceWalletRounded />} label="Outstanding dues" value={formatINR(billing?.totals?.totalDues)}
+            color={Number(billing?.totals?.totalDues || 0) > 0 ? "#ef4444" : "#10b981"}
+            sub={Number(billing?.totals?.totalDues || 0) > 0 ? "due now" : "all settled"} />
+        )}
       </Box>
 
       {/* ── Tabs ── */}
@@ -327,7 +334,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
             "& .Mui-selected": { color: `${ACCENT} !important` }, "& .MuiTabs-indicator": { bgcolor: ACCENT } }}>
           <Tab icon={<PersonRounded fontSize="small" />} iconPosition="start" label="Overview" />
           <Tab icon={<CalendarTodayRounded fontSize="small" />} iconPosition="start" label={`Appointments${stats.total ? ` (${stats.total})` : ""}`} />
-          <Tab icon={<ReceiptLongRounded fontSize="small" />} iconPosition="start" label={`Billing${invoices.length ? ` (${invoices.length})` : ""}`} />
+          <Tab icon={<ReceiptLongRounded fontSize="small" />} iconPosition="start" label={`Billing${invoices.length ? ` (${invoices.length})` : ""}`} disabled={!billingEnabled} />
           <Tab icon={<EventRepeatRounded fontSize="small" />} iconPosition="start" label="Records" />
           <Tab icon={<BadgeRounded fontSize="small" />} iconPosition="start" label="Consent" />
           <Tab icon={<VaccinesRounded fontSize="small" />} iconPosition="start" label="Vaccinations" />
@@ -455,7 +462,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
       )}
 
       {/* ── Tab: Billing ── */}
-      {tab === 2 && (
+      {tab === 2 && billingEnabled && (
         <SectionCard title="Billing & Invoices" icon={<ReceiptLongRounded fontSize="small" />}>
           <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap", gap: 1, mb: 2 }}>
             <Chip label={`Billed: ${formatINR(billing?.totals?.totalBilled)}`} sx={{ bgcolor: "action.hover", color: "text.primary", fontWeight: 700 }} />

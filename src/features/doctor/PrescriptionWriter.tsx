@@ -12,6 +12,7 @@ import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
 import FormSkeleton from "@/components/skeletons/FormSkeleton";
 import { useToast } from "@/providers/ToastContext";
+import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { assetUrl } from "@/utils/assetUrl";
 import DoseCalculator from "@/components/doctor/DoseCalculator";
@@ -44,6 +45,10 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [items, setItems] = useState<any[]>([]);
   const [dispensingStatus, setDispensingStatus] = useState<string | null>(null);
+  // Without the Pharmacy module there's no in-house dispensing — every Rx is
+  // "buy outside" (a clinical record). The API also skips the pharmacy dispatch.
+  const { isModuleEnabled } = useEnabledModules();
+  const pharmacyEnabled = isModuleEnabled("Pharmacy");
   const [bulkBuyOutside, setBulkBuyOutside] = useState(false);
 
   // Lightweight allergy safety net: direct name/generic match against the
@@ -260,7 +265,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
 
       // Update status locally based on items
       const allExternal = items.length > 0 && items.every(i => i.buyOutside);
-      setDispensingStatus(allExternal ? "external" : "pending");
+      setDispensingStatus(allExternal || !pharmacyEnabled ? "external" : "pending");
 
       toast.success("Prescription saved successfully!");
 } catch (err: unknown) {
@@ -442,10 +447,13 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
       <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, borderColor: "divider" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Add Medicine</Typography>
-          <FormControlLabel
-            control={<Switch checked={bulkBuyOutside} onChange={(e) => toggleBulkBuyOutside(e.target.checked)} color="primary" />}
-            label={<Typography variant="body2" fontWeight={600} color={bulkBuyOutside ? "primary.main" : "text.secondary"}>Buy Outside (All items)</Typography>}
-          />
+          {/* The in-house / buy-outside choice only matters when there's a Pharmacy. */}
+          {pharmacyEnabled && (
+            <FormControlLabel
+              control={<Switch checked={bulkBuyOutside} onChange={(e) => toggleBulkBuyOutside(e.target.checked)} color="primary" />}
+              label={<Typography variant="body2" fontWeight={600} color={bulkBuyOutside ? "primary.main" : "text.secondary"}>Buy Outside (All items)</Typography>}
+            />
+          )}
         </Box>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <Autocomplete

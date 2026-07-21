@@ -16,6 +16,7 @@ import PatientForm from "./PatientForm";
 import AppointmentForm from "./AppointmentForm";
 import BillingModal from "./BillingModal";
 import { useToast } from "@/providers/ToastContext";
+import { useEnabledModules } from "@/hooks/useEnabledModules";
 import PageHeader from "@/components/layout/PageHeader";
 
 import type { Patient } from "@/types";
@@ -25,6 +26,8 @@ export default function FrontDeskConsole() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(false);
   const toast = useToast();
+  const { isModuleEnabled } = useEnabledModules();
+  const billingEnabled = isModuleEnabled("Billing");
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [billingDialog, setBillingDialog] = useState({ open: false, apptId: "", patientName: "", apptDate: "" });
@@ -276,7 +279,8 @@ export default function FrontDeskConsole() {
                   prefilledPatientId={selectedPatientId} 
                   onSuccess={(apptId, pName, apptDate) => {
                      toast.success(`Appointment booked${pName ? ` for ${pName}` : ""}`);
-                     if (apptId) {
+                     // Only proceed to billing if the hospital's plan includes the Billing module.
+                     if (apptId && billingEnabled) {
                         setBillingDialog({ open: true, apptId, patientName: pName || "Patient", apptDate: apptDate || new Date().toISOString() });
                      }
                      setSearch("");

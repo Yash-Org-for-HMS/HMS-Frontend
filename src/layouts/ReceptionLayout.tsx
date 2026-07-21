@@ -102,7 +102,7 @@ export default function ReceptionLayout() {
     {
       heading: "Finance & Insights",
       items: [
-        { text: "Billing", icon: <ReceiptRounded />, path: "/reception/billing" },
+        { text: "Billing", icon: <ReceiptRounded />, path: "/reception/billing", module: "Billing" },
         { text: "Insurance Claims", icon: <HealthAndSafetyRounded />, path: "/reception/claims" },
         { text: "Reports", icon: <AssessmentRounded />, path: "/reception/reports" },
       ],

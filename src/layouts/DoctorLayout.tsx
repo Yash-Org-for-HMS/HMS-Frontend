@@ -18,7 +18,9 @@ import {
   QueueRounded,
   ScienceRounded,
   AssessmentRounded,
+  LockRounded,
 } from "@mui/icons-material";
+import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { assetUrl } from "@/utils/assetUrl";
 import BranchSwitcher from "@/components/BranchSwitcher";
@@ -56,12 +58,13 @@ export default function DoctorLayout() {
   });
   useSocket({ QUEUE_UPDATED: () => queryClient.invalidateQueries({ queryKey: ["doctor-badges"] }) });
 
+  const { isModuleEnabled } = useEnabledModules();
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/doctor/dashboard", badge: 0, section: "Overview" },
     { text: "My Queue", icon: <QueueRounded />, path: "/doctor/queue", badge: badges?.queueWaiting || 0, section: "My Work" },
     { text: "My Patients", icon: <PeopleAltRounded />, path: "/doctor/patients", badge: 0, section: "My Work" },
     { text: "All Patients", icon: <GroupsRounded />, path: "/doctor/all-patients", badge: 0, section: "My Work" },
-    { text: "Results", icon: <ScienceRounded />, path: "/doctor/results", badge: badges?.resultsReady || 0, section: "My Work" },
+    { text: "Results", icon: <ScienceRounded />, path: "/doctor/results", badge: badges?.resultsReady || 0, section: "My Work", module: "Laboratory" },
     { text: "My Reports", icon: <AssessmentRounded />, path: "/doctor/reports", badge: 0, section: "Insights" },
   ];
 
@@ -90,6 +93,7 @@ export default function DoctorLayout() {
           const isActive =
             location.pathname === item.path ||
             (item.path !== "/doctor/dashboard" && location.pathname.startsWith(item.path));
+          const locked = (item as any).module && !isModuleEnabled((item as any).module);
           return (
             <Box key={item.text}>
               {(idx === 0 || arr[idx - 1].section !== item.section) && (
@@ -115,9 +119,10 @@ export default function DoctorLayout() {
                     minWidth: 40,
                     color: isActive ? DOCTOR_BLUE : "text.secondary",
                     transition: "color 0.15s ease",
+                    opacity: locked ? 0.55 : 1,
                   }}
                 >
-                  <Badge badgeContent={item.badge} color="error" max={99} overlap="circular">
+                  <Badge badgeContent={locked ? 0 : item.badge} color="error" max={99} overlap="circular">
                     {item.icon}
                   </Badge>
                 </ListItemIcon>
@@ -127,8 +132,10 @@ export default function DoctorLayout() {
                     fontSize: "0.875rem",
                     fontWeight: isActive ? 600 : 500,
                     color: isActive ? DOCTOR_BLUE : "text.secondary",
+                    sx: { opacity: locked ? 0.6 : 1 },
                   }}
                 />
+                {locked && <LockRounded sx={{ fontSize: 15, color: "#f59e0b", ml: 1, flexShrink: 0 }} />}
               </ListItemButton>
             </ListItem>
             </Box>

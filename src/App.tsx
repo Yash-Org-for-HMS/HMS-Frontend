@@ -233,7 +233,7 @@ function App() {
             <Route path="/hospital/roles" element={el(HospitalRolesList)} />
             <Route path="/hospital/roles/new" element={el(HospitalRoleForm)} />
             <Route path="/hospital/roles/:id/edit" element={el(HospitalRoleForm)} />
-            <Route path="/hospital/financials" element={el(FinancialDashboard)} />
+            <Route path="/hospital/financials" element={elGated(FinancialDashboard, "Billing", "Financial Analytics")} />
             <Route path="/hospital/reports" element={el(Reports)} />
             <Route path="/hospital/permissions-matrix" element={el(PermissionMatrix)} />
             <Route path="/hospital/module-access" element={el(ModuleAccess)} />
@@ -289,7 +289,7 @@ function App() {
             <Route path="/reception/ipd/beds" element={elGated(BedBoard, "IPD", "Bed Management")} />
 
             <Route path="/reception/queue" element={el(QueueDashboard)} />
-            <Route path="/reception/billing" element={el(Billing)} />
+            <Route path="/reception/billing" element={elGated(Billing, "Billing", "Billing")} />
             <Route path="/reception/claims" element={el(ClaimsList)} />
             <Route path="/reception/claims/reports" element={el(ClaimReports)} />
             <Route path="/reception/claims/new" element={el(ClaimForm)} />
@@ -324,7 +324,7 @@ function App() {
             <Route path="/doctor/consultation/:appointmentId" element={el(ConsultationWorkspace)} />
             <Route path="/doctor/patients" element={el(DoctorPatients)} />
             <Route path="/doctor/all-patients" element={elp(DoctorPatients, { scope: "all" })} />
-            <Route path="/doctor/results" element={el(DoctorResults)} />
+            <Route path="/doctor/results" element={elGated(DoctorResults, "Laboratory", "Results")} />
             <Route path="/doctor/reports" element={el(DoctorReports)} />
             <Route path="/doctor/patients/:id" element={el(DoctorPatientProfile)} />
           </Route>
@@ -340,7 +340,7 @@ function App() {
             <Route path="/lab/radiology" element={el(RadiologyOrdersQueue)} />
             <Route path="/lab/catalog" element={el(LabTestCatalog)} />
             <Route path="/lab/radiology-catalog" element={el(RadiologyCatalog)} />
-            <Route path="/lab/billing" element={el(LabBilling)} />
+            <Route path="/lab/billing" element={elGated(LabBilling, "Billing", "Lab Billing")} />
             <Route path="/lab/reports" element={el(LabReports)} />
           </Route>
         </Route>
