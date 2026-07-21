@@ -33,7 +33,16 @@ import PageHeader from "@/components/layout/PageHeader";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import FormSkeleton from "@/components/skeletons/FormSkeleton";
 import { validate, hasErrors, required, isEmail, isPhone, minLen, match, type Errors } from "@/utils/validation";
+import { useEnabledModules } from "@/hooks/useEnabledModules";
 import type { Role, Department, Branch } from "@/types";
+
+// Which licensable module a role belongs to (mirrors the backend
+// ROLE_REQUIRED_MODULE). A role is hidden when adding staff if the hospital's
+// plan doesn't include its module — the backend also rejects it, this is UX.
+const ROLE_MODULE: Record<string, string> = {
+  LAB_TECH: "Laboratory",
+  PHARMACIST: "Pharmacy",
+};
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -74,6 +83,7 @@ export default function UserForm() {
   const roles: Role[] = dd?.roles ?? [];
   const departments: Department[] = dd?.departments ?? [];
   const branches: Branch[] = dd?.branches ?? [];
+  const { isModuleEnabled } = useEnabledModules();
 
   // Credential dialog state
   const [credentialDialog, setCredentialDialog] = useState<{
@@ -315,6 +325,9 @@ export default function UserForm() {
                         when adding new staff. Existing doctor-users still edit normally. */}
                     {roles
                       .filter((role) => isEditing || role.roleCode !== "DOCTOR")
+                      // Hide roles whose module the plan doesn't include (LAB_TECH,
+                      // PHARMACIST). Existing users still edit normally.
+                      .filter((role) => isEditing || isModuleEnabled(role.roleCode ? ROLE_MODULE[role.roleCode] : undefined))
                       .map((role) => (
                         <MenuItem key={role.roleId} value={role.roleId}>
                           {role.roleName}
