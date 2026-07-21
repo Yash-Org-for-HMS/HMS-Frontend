@@ -47,8 +47,20 @@ export default function HospitalModules() {
 
   const { data: plans = [] } = useQuery({
     queryKey: ["plans-options"],
-    queryFn: async () => (await axiosInstance.get(`/plans?limit=100`)).data.data as { planId: string; planName: string }[],
+    queryFn: async () => (await axiosInstance.get(`/plans?limit=100`)).data.data as { planId: string; planName: string; featuresJson?: unknown }[],
   });
+
+  // Module keys a plan includes — featuresJson is either an array of keys or a
+  // { key: true } map (same parsing the backend uses).
+  const planModuleKeys = (plan: { featuresJson?: unknown } | undefined): string[] => {
+    const f = plan?.featuresJson;
+    const keys = Array.isArray(f)
+      ? f
+      : f && typeof f === "object"
+      ? Object.keys(f as Record<string, unknown>).filter((k) => (f as Record<string, unknown>)[k] === true)
+      : [];
+    return keys.filter((k): k is string => typeof k === "string");
+  };
 
   useEffect(() => {
     if (data) {
@@ -81,6 +93,18 @@ export default function HospitalModules() {
       return next;
     });
 
+  // Picking a plan sets the module selection to that plan's included modules, so
+  // the plan actually drives the entitlement (you can still fine-tune afterwards).
+  const onPlanChange = (newPlanId: string) => {
+    setPlanId(newPlanId);
+    if (!newPlanId) return; // "— No plan —": leave the current selection untouched
+    const plan = plans.find((p) => p.planId === newPlanId);
+    if (plan) {
+      const valid = planModuleKeys(plan).filter((k) => modules.some((m) => m.key === k));
+      setSelected(new Set(valid));
+    }
+  };
+
   return (
     <Box sx={{ maxWidth: 1040, mx: "auto", p: { xs: 2, md: 3 } }}>
       <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/hospitals")} sx={{ color: "text.secondary", textTransform: "none", mb: 1 }}>
@@ -112,7 +136,8 @@ export default function HospitalModules() {
           <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
             <TextField
               select size="small" label="Subscription plan" value={planId}
-              onChange={(e) => setPlanId(e.target.value)} sx={{ minWidth: 260 }}
+              onChange={(e) => onPlanChange(e.target.value)} sx={{ minWidth: 260 }}
+              helperText="Choosing a plan sets the modules below to what it includes."
             >
               <MenuItem value="">— No plan —</MenuItem>
               {plans.map((p) => <MenuItem key={p.planId} value={p.planId}>{p.planName}</MenuItem>)}
