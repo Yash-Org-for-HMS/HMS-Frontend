@@ -30,7 +30,7 @@ import ErrorState from "@/components/ErrorState";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import PageHeader from "@/components/layout/PageHeader";
-import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 
@@ -199,12 +199,7 @@ export default function LookupManager() {
           </Grid>
         </Grid>
       </Paper>
-{loading ? (
-        <Box sx={{ height: "calc(100vh - 320px)" }}><ListSkeleton rows={6} /></Box>
-      ) : isError ? (
-        <Box sx={{ height: "calc(100vh - 320px)" }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></Box>
-      ) : (
-        <TableContainer component={Paper} sx={{ width: "100%", bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, height: "calc(100vh - 320px)" }}>
+<TableContainer component={Paper} sx={{ width: "100%", bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, height: "calc(100vh - 320px)" }}>
           <Table stickyHeader sx={{ width: "100%", tableLayout: "fixed" }}>
             <TableHead>
               <TableRow>
@@ -233,7 +228,15 @@ export default function LookupManager() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {sorted.length === 0 ? (
+              {loading ? (
+                <TableRowsSkeleton rows={8} columns={config.columns.length + 2} />
+              ) : isError ? (
+                <TableRow>
+                  <TableCell colSpan={config.columns.length + 2} sx={{ py: 3, borderBottom: "none" }}>
+                    <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
+                  </TableCell>
+                </TableRow>
+              ) : sorted.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={config.columns.length + 2} sx={{ py: 3, borderBottom: "none" }}>
                     <Mascot pose="nothing-here-yet" subtitle={`No records found for ${config.label}.`} size={120} />
@@ -287,7 +290,6 @@ export default function LookupManager() {
             </TableBody>
           </Table>
         </TableContainer>
-      )}
 
       {/* Dynamic Modal */}
       <Dialog open={modalOpen} onClose={handleClose} PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", width: "400px" } }}>
