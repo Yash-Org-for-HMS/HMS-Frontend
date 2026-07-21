@@ -46,6 +46,7 @@ import {
   LocalHotelRounded,
   ReceiptLongRounded,
   FormatListNumberedRounded,
+  LockRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { isAdmin as isAdminRole } from "@/constants/roles";
@@ -112,14 +113,16 @@ export default function HospitalLayout() {
   // tab for branch admins — leaving only the two ungated items (the "2 tabs" bug).
   const isAdmin = isAdminRole(user?.role);
   const { isModuleEnabled } = useEnabledModules();
+  // Module-gated items are NOT hidden — they render with a lock badge so tenants
+  // can discover the feature and upgrade (the page itself shows the upsell).
+  // adminOnly / permission still gate visibility as before.
   const visibleMenuItems = menuItems.filter(item => {
-    // Hide items for modules the hospital hasn't licensed (fail-open while loading).
-    if (!isModuleEnabled((item as any).module)) return false;
     if ((item as any).adminOnly) return isAdmin;   // admin-only tab (e.g. Financial, Operations)
     if (!item.permission) return true;
     if (isAdmin) return true;
     return user?.permissions?.includes(item.permission);
   });
+  const isLocked = (item: any) => item.module && !isModuleEnabled(item.module);
 
   // First-run gate: the hospital admin must fill a few required profile details
   // before using the rest of the panel. Completeness is derived from the fields
@@ -176,6 +179,7 @@ export default function HospitalLayout() {
       <List sx={{ px: 2, pt: 2, flex: 1, overflowY: "auto" }}>
         {visibleMenuItems.map((item, idx, arr) => {
           const isActive = location.pathname.startsWith(item.path);
+          const locked = isLocked(item);
           return (
             <Box key={item.text}>
               {(idx === 0 || arr[idx - 1].section !== item.section) && (
@@ -201,6 +205,7 @@ export default function HospitalLayout() {
                   sx={{
                     minWidth: 40,
                     color: isActive ? "#10B981" : "#64748B",
+                    opacity: locked ? 0.55 : 1,
                   }}
                 >
                   {item.icon}
@@ -211,8 +216,10 @@ export default function HospitalLayout() {
                     fontSize: "0.875rem",
                     fontWeight: isActive ? 600 : 500,
                     color: isActive ? "#10B981" : "#64748B",
+                    sx: { opacity: locked ? 0.6 : 1 },
                   }}
                 />
+                {locked && <LockRounded sx={{ fontSize: 15, color: "#f59e0b", ml: 1, flexShrink: 0 }} />}
               </ListItemButton>
             </ListItem>
             </Box>

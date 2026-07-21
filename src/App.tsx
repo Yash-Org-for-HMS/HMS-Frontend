@@ -21,6 +21,7 @@ const LabLayout = lazy(() => import("@/layouts/LabLayout"));
 const PharmacyLayout = lazy(() => import("@/layouts/PharmacyLayout"));
 import CommandPalette from "@/components/CommandPalette";
 import PageSkeleton from "@/components/PageSkeleton";
+import ModuleGate from "@/components/ModuleGate";
 import Login from "@/features/Login";
 import HospitalLogin from "@/features/hospitalAuth/HospitalLogin";
 
@@ -155,6 +156,17 @@ const elp = (C: ComponentType<any>, props: Record<string, unknown>) => (
   </Suspense>
 );
 
+// Like el(), but shows the "upgrade to unlock" upsell when the hospital's plan
+// doesn't include `module` — so plan-gated pages advertise the feature instead
+// of 404ing or 403ing.
+const elGated = (C: ComponentType<any>, module: string, feature?: string) => (
+  <ModuleGate module={module} feature={feature}>
+    <Suspense fallback={<PageSkeleton />}>
+      <C />
+    </Suspense>
+  </ModuleGate>
+);
+
 function App() {
   return (
     <>
@@ -232,7 +244,7 @@ function App() {
             <Route path="/hospital/doctors/:id/schedule" element={el(DoctorSchedule)} />
             <Route path="/hospital/doctors/:id/leaves" element={el(DoctorLeaves)} />
             <Route path="/hospital/lookups" element={el(LookupManager)} />
-            <Route path="/hospital/facility-setup" element={el(FacilitySetup)} />
+            <Route path="/hospital/facility-setup" element={elGated(FacilitySetup, "IPD", "Ward & Bed Setup")} />
             <Route path="/hospital/vaccines" element={el(VaccineCatalog)} />
             <Route path="/hospital/medicines" element={el(MedicineCatalog)} />
             <Route path="/hospital/form-builder" element={el(FormTemplatesList)} />
@@ -247,9 +259,9 @@ function App() {
             <Route path="/hospital/patients/:id" element={elp(PatientProfile, { readOnly: true })} />
             <Route path="/hospital/appointments" element={el(AppointmentsList)} />
             <Route path="/hospital/queue" element={el(QueueDashboard)} />
-            <Route path="/hospital/ipd/admissions" element={el(Admissions)} />
-            <Route path="/hospital/ipd/beds" element={el(BedBoard)} />
-            <Route path="/hospital/billing" element={el(Billing)} />
+            <Route path="/hospital/ipd/admissions" element={elGated(Admissions, "IPD", "Admissions")} />
+            <Route path="/hospital/ipd/beds" element={elGated(BedBoard, "IPD", "Bed Board")} />
+            <Route path="/hospital/billing" element={elGated(Billing, "Billing", "Billing Overview")} />
             {/* Add more hospital routes here as they are built */}
           </Route>
         </Route>
