@@ -1,5 +1,6 @@
 import { Box, Avatar, Typography, IconButton, Tooltip } from "@mui/material";
 import { LogoutRounded } from "@mui/icons-material";
+import { SEMANTIC } from "@/styles/accents";
 
 interface SidebarUserCardProps {
   name: string;
@@ -59,7 +60,7 @@ export default function SidebarUserCard({ name, role, onLogout, avatarText, onPr
           <IconButton
             size="small"
             onClick={onLogout}
-            sx={{ color: "text.secondary", flexShrink: 0, "&:hover": { color: "#ef4444" } }}
+            sx={{ color: "text.secondary", flexShrink: 0, "&:hover": { color: SEMANTIC.danger } }}
           >
             <LogoutRounded fontSize="small" />
           </IconButton>

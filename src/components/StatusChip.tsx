@@ -1,4 +1,5 @@
 import { Chip, type ChipProps } from "@mui/material";
+import { NEUTRAL } from "@/styles/accents";
 
 interface StatusChipProps extends Omit<ChipProps, "color" | "label"> {
   /** Human-readable status text (falls back to "—"). */
@@ -7,7 +8,7 @@ interface StatusChipProps extends Omit<ChipProps, "color" | "label"> {
   color?: string | null;
 }
 
-const FALLBACK = "#64748b";
+const FALLBACK = NEUTRAL.muted;
 
 /**
  * The soft-tinted status chip used across appointment/invoice/queue lists.

@@ -8,6 +8,7 @@ import {
   CheckCircleRounded,
 } from "@mui/icons-material";
 import HeartbeatLoader from "./HeartbeatLoader";
+import { SEMANTIC } from "@/styles/accents";
 
 export type MascotPose =
   | "all-caught-up"   // positive empty: nothing left to do (empty queue / no appointments)
@@ -20,11 +21,11 @@ export type MascotPose =
 // Clean, icon-based empty/error/success states (no illustrations). The
 // "thinking" pose is a loading state, so it renders the heartbeat loader.
 const POSE_META: Record<Exclude<MascotPose, "thinking">, { Icon: typeof TaskAltRounded; color: string }> = {
-  "all-caught-up": { Icon: TaskAltRounded, color: "#10b981" },
+  "all-caught-up": { Icon: TaskAltRounded, color: SEMANTIC.success },
   "nothing-here-yet": { Icon: InboxRounded, color: "text.disabled" },
   "no-matches": { Icon: SearchOffRounded, color: "text.disabled" },
-  oops: { Icon: ErrorOutlineRounded, color: "#ef4444" },
-  "nice-work": { Icon: CheckCircleRounded, color: "#10b981" },
+  oops: { Icon: ErrorOutlineRounded, color: SEMANTIC.danger },
+  "nice-work": { Icon: CheckCircleRounded, color: SEMANTIC.success },
 };
 
 interface MascotProps {

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Box, Typography, Chip } from "@mui/material";
 import { LockRounded, WorkspacePremiumRounded } from "@mui/icons-material";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
+import { SEMANTIC, alpha } from "@/styles/accents";
 
 // Friendly labels for the licensable modules (mirrors config/modules on the API).
 const MODULE_LABELS: Record<string, string> = {
@@ -23,14 +24,14 @@ export function ModuleLocked({ module, feature, description }: { module: string;
   const moduleLabel = MODULE_LABELS[module] || module;
   return (
     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", minHeight: "60vh", px: 3, gap: 1.75 }}>
-      <Box sx={{ position: "relative", width: 76, height: 76, borderRadius: "50%", bgcolor: "rgba(245, 158, 11, 0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <LockRounded sx={{ fontSize: 38, color: "#f59e0b" }} />
+      <Box sx={{ position: "relative", width: 76, height: 76, borderRadius: "50%", bgcolor: alpha(SEMANTIC.warning, 0.12), display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <LockRounded sx={{ fontSize: 38, color: SEMANTIC.warning }} />
       </Box>
       <Chip
         icon={<WorkspacePremiumRounded sx={{ fontSize: "16px !important" }} />}
         label="Available on upgrade"
         size="small"
-        sx={{ fontWeight: 700, bgcolor: "rgba(245, 158, 11, 0.12)", color: "#b45309" }}
+        sx={{ fontWeight: 700, bgcolor: alpha(SEMANTIC.warning, 0.12), color: "#b45309" }}
       />
       <Typography variant="h6" sx={{ fontWeight: 800 }}>
         {feature || moduleLabel} is a premium feature
