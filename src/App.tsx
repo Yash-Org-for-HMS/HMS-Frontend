@@ -305,7 +305,7 @@ function App() {
           <Route element={el(NurseLayout)}>
             <Route path="/nurse/dashboard" element={el(NurseDashboard)} />
             <Route path="/nurse/queue" element={el(NurseQueue)} />
-            <Route path="/nurse/ward" element={el(NurseWard)} />
+            <Route path="/nurse/ward" element={elGated(NurseWard, "IPD", "Ward")} />
             <Route path="/nurse/reports" element={el(NurseReports)} />
             {/* Read-only view under the Nurse shell — a nurse opening a patient (e.g. via
                 command-palette search) must not land inside the full Reception sidebar,
@@ -352,8 +352,8 @@ function App() {
             <Route path="/pharmacy/medicines" element={el(MedicineCatalog)} />
             <Route path="/pharmacy/suppliers" element={el(SupplierDirectory)} />
             <Route path="/pharmacy/inventory" element={el(InventoryManagement)} />
-            <Route path="/pharmacy/ward-stock" element={el(WardStock)} />
-            <Route path="/pharmacy/ipd-requests" element={el(IpdMedicationRequests)} />
+            <Route path="/pharmacy/ward-stock" element={elGated(WardStock, "IPD", "Ward Stock")} />
+            <Route path="/pharmacy/ipd-requests" element={elGated(IpdMedicationRequests, "IPD", "IPD Medication Requests")} />
             <Route path="/pharmacy/pos" element={el(DispensaryPOS)} />
             <Route path="/pharmacy/reports" element={el(PharmacyReports)} />
           </Route>

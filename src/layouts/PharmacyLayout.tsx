@@ -31,7 +31,9 @@ import {
   AssessmentRounded,
   WarehouseRounded,
   LocalPharmacyRounded,
+  LockRounded,
 } from "@mui/icons-material";
+import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BranchSwitcher from "@/components/BranchSwitcher";
 import SidebarHeader from "@/components/layout/SidebarHeader";
@@ -50,15 +52,16 @@ export default function PharmacyLayout() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
   const location = useLocation();
+  const { isModuleEnabled } = useEnabledModules();
 
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/pharmacy/dashboard", section: "Overview" },
     { text: "Dispensary (POS)", icon: <PointOfSaleRounded />, path: "/pharmacy/pos", section: "Dispensary" },
-    { text: "IPD Medication Requests", icon: <LocalPharmacyRounded />, path: "/pharmacy/ipd-requests", section: "Dispensary" },
+    { text: "IPD Medication Requests", icon: <LocalPharmacyRounded />, path: "/pharmacy/ipd-requests", section: "Dispensary", module: "IPD" },
     { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/pharmacy/medicines", section: "Inventory" },
     { text: "Suppliers", icon: <LocalShippingRounded />, path: "/pharmacy/suppliers", section: "Inventory" },
     { text: "Inventory & POs", icon: <InventoryRounded />, path: "/pharmacy/inventory", section: "Inventory" },
-    { text: "Ward Stock", icon: <WarehouseRounded />, path: "/pharmacy/ward-stock", section: "Inventory" },
+    { text: "Ward Stock", icon: <WarehouseRounded />, path: "/pharmacy/ward-stock", section: "Inventory", module: "IPD" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/pharmacy/reports", section: "Reports" },
   ];
 
@@ -85,6 +88,7 @@ export default function PharmacyLayout() {
       <List sx={{ px: 2, pt: 2, flex: 1, overflowY: "auto" }}>
         {menuItems.map((item, idx, arr) => {
           const isActive = location.pathname.startsWith(item.path);
+          const locked = (item as any).module && !isModuleEnabled((item as any).module);
           return (
             <Box key={item.text}>
               {(idx === 0 || arr[idx - 1].section !== item.section) && (
@@ -97,10 +101,11 @@ export default function PharmacyLayout() {
                 onClick={() => { navigate(item.path); if (isMobile) setMobileOpen(false); }}
                 sx={{ borderRadius: 2, bgcolor: isActive ? "rgba(79, 70, 229, 0.08)" : "transparent", "&:hover": { bgcolor: "action.hover" } }}
               >
-                <ListItemIcon sx={{ minWidth: 40, color: isActive ? "#4F46E5" : "#64748B" }}>
+                <ListItemIcon sx={{ minWidth: 40, color: isActive ? "#4F46E5" : "#64748B", opacity: locked ? 0.55 : 1 }}>
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: isActive ? 600 : 500, color: isActive ? "#4F46E5" : "#64748B" }} />
+                <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: isActive ? 600 : 500, color: isActive ? "#4F46E5" : "#64748B", sx: { opacity: locked ? 0.6 : 1 } }} />
+                {locked && <LockRounded sx={{ fontSize: 15, color: "#f59e0b", ml: 1, flexShrink: 0 }} />}
               </ListItemButton>
             </ListItem>
             </Box>

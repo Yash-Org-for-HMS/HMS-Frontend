@@ -15,7 +15,9 @@ import {
   MedicalServicesRounded,
   AssessmentRounded,
   MedicationRounded,
+  LockRounded,
 } from "@mui/icons-material";
+import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BranchSwitcher from "@/components/BranchSwitcher";
 import SidebarHeader from "@/components/layout/SidebarHeader";
@@ -36,11 +38,12 @@ export default function NurseLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isModuleEnabled } = useEnabledModules();
 
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/nurse/dashboard", section: "Overview" },
     { text: "Patient Queue", icon: <PeopleAltRounded />, path: "/nurse/queue", section: "Patient Care" },
-    { text: "Ward", icon: <MedicationRounded />, path: "/nurse/ward", section: "Patient Care" },
+    { text: "Ward", icon: <MedicationRounded />, path: "/nurse/ward", section: "Patient Care", module: "IPD" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/nurse/reports", section: "Reports" },
   ];
 
@@ -69,6 +72,7 @@ export default function NurseLayout() {
           const isActive =
             location.pathname === item.path ||
             (item.path !== "/nurse/dashboard" && location.pathname.startsWith(item.path));
+          const locked = (item as any).module && !isModuleEnabled((item as any).module);
           return (
             <Box key={item.text}>
               {(idx === 0 || arr[idx - 1].section !== item.section) && (
@@ -94,6 +98,7 @@ export default function NurseLayout() {
                     minWidth: 40,
                     color: isActive ? NURSE_PURPLE : "text.secondary",
                     transition: "color 0.15s ease",
+                    opacity: locked ? 0.55 : 1,
                   }}
                 >
                   {item.icon}
@@ -104,8 +109,10 @@ export default function NurseLayout() {
                     fontSize: "0.875rem",
                     fontWeight: isActive ? 600 : 500,
                     color: isActive ? NURSE_PURPLE : "text.secondary",
+                    sx: { opacity: locked ? 0.6 : 1 },
                   }}
                 />
+                {locked && <LockRounded sx={{ fontSize: 15, color: "#f59e0b", ml: 1, flexShrink: 0 }} />}
               </ListItemButton>
             </ListItem>
             </Box>
