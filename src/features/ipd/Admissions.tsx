@@ -1,11 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import {
   Box, Typography, Button, Paper, Table, TableHead, TableBody, TableRow, TableCell,
   TableContainer, Chip, TextField, InputAdornment, Tabs, Tab, Tooltip, IconButton,
-  Menu, MenuItem,
+  Menu, MenuItem, Pagination,
 } from "@mui/material";
 import {
   LocalHotelRounded, SearchRounded, SwapHorizRounded, LogoutRounded, MoreVertRounded,
@@ -53,18 +54,24 @@ export default function Admissions() {
   const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: any }>({ anchor: null, row: null });
 
   const status = TABS[tab];
-  const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<any[]>({
-    queryKey: ["ipd-admissions", status],
-    queryFn: async () => (await axiosInstance.get("/ipd/admissions", { params: status ? { status } : {} })).data.data,
+  const [page, setPage] = useState(1);
+  const debouncedSearch = useDebouncedValue(search.trim(), 350);
+  // Search + tab drive a fresh first page (server-side search & paging).
+  useEffect(() => { setPage(1); }, [debouncedSearch, status]);
+
+  const { data: resp, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["ipd-admissions", status, debouncedSearch, page],
+    queryFn: async () =>
+      (await axiosInstance.get("/ipd/admissions", {
+        params: { ...(status ? { status } : {}), search: debouncedSearch || undefined, page, limit: 20 },
+      })).data,
+    placeholderData: keepPreviousData,
   });
+  const admissions: any[] = resp?.data || [];
+  const meta = resp?.meta as { total: number; totalPages: number } | undefined;
 
-  const filtered = useMemo(() => {
-    const s = search.trim().toLowerCase();
-    if (!s) return admissions;
-    return admissions.filter((a) => [a.patientName, a.uhid, a.admissionNumber, a.admittingDiagnosis].filter(Boolean).some((v: string) => v.toLowerCase().includes(s)));
-  }, [admissions, search]);
-
-  const { sorted, orderBy, order, onSort } = useTableSort(filtered, {
+  // Client-side sort of the current page (server owns filtering + paging).
+  const { sorted, orderBy, order, onSort } = useTableSort(admissions, {
     patient: (a) => a.patientName,
     ipd: (a) => a.admissionNumber,
     diagnosis: (a) => a.admittingDiagnosis,
@@ -174,6 +181,12 @@ export default function Admissions() {
             </TableBody>
           </Table>
         </TableContainer>
+        {meta && meta.totalPages > 1 && (
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", px: 2, py: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>{meta.total} admission{meta.total === 1 ? "" : "s"}</Typography>
+            <Pagination count={meta.totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" size="small" />
+          </Box>
+        )}
       </Paper>
 
       <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={() => setMenu({ anchor: null, row: null })}>

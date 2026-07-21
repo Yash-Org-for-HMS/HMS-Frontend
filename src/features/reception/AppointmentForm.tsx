@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { getApiErrorMessage } from "@/utils/apiError";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
   Box, Typography, Button, Paper, TextField, MenuItem,
-  Alert, Grid, IconButton, FormControlLabel, Switch
+  Alert, Grid, IconButton, FormControlLabel, Switch, Autocomplete
 } from "@mui/material";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
@@ -31,7 +32,7 @@ export interface AppointmentFormProps {
 // change identity while the dropdowns query is loading — an inline object
 // literal here would make the slot-generation effect below (which depends on
 // `dropdowns`) re-run and re-render every tick until the query resolves.
-const EMPTY_DROPDOWNS = { departments: [], doctors: [], patients: [], statuses: [], doctorSchedules: [] };
+const EMPTY_DROPDOWNS = { departments: [], doctors: [], statuses: [], doctorSchedules: [] };
 
 // The underlying slot value stays 24h "HH:mm" (used for sorting, comparisons,
 // and the submitted datetime) — this only formats it for display.
@@ -52,9 +53,26 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   const [checkInImmediately, setCheckInImmediately] = useState(true);
   const [postBooking, setPostBooking] = useState<{ apptId?: string; patientName: string; apptDate: string } | null>(null);
 
+  // Patient picker: searchable server lookup (the dropdowns endpoint no longer
+  // ships the full patient list). `selectedPatient` holds the chosen record so
+  // we can show its name after booking without re-fetching.
+  const [patientQuery, setPatientQuery] = useState("");
+  const debouncedPatientQuery = useDebouncedValue(patientQuery, 350);
+  const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
+
   const { data: dropdowns = EMPTY_DROPDOWNS, isLoading: ddLoading, isError: ddIsError, error: ddError, refetch: refetchDd } = useQuery({
     queryKey: ["appointment-dropdowns"],
     queryFn: async () => (await axiosInstance.get("/reception/appointments/dropdowns")).data.data,
+  });
+
+  // Patient search options — hits the paginated /reception/patients endpoint so
+  // we never load every patient just to book one appointment.
+  const { data: patientOptions = [], isFetching: patientsLoading } = useQuery<any[]>({
+    queryKey: ["appointment-patient-search", debouncedPatientQuery],
+    queryFn: async () =>
+      (await axiosInstance.get("/reception/patients", { params: { search: debouncedPatientQuery, page: 1, limit: 20 } })).data.data || [],
+    enabled: debouncedPatientQuery.trim().length >= 2,
+    placeholderData: keepPreviousData,
   });
 
   const [formData, setFormData] = useState({
@@ -124,6 +142,19 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
       reason: cleanReason,
     });
   }, [apptData]);
+
+  // Seed the selected-patient record from an id we already have (prefill from
+  // the front-desk console, ?patientId= link, or editing an existing booking)
+  // so the Autocomplete shows the name without the user re-searching.
+  useEffect(() => {
+    const pid = formData.patientId;
+    if (!pid || selectedPatient?.patientId === pid) return;
+    let cancelled = false;
+    axiosInstance.get(`/reception/patients/${pid}`)
+      .then((res) => { if (!cancelled && res.data?.data) setSelectedPatient(res.data.data); })
+      .catch(() => { /* ignore — user can still search */ });
+    return () => { cancelled = true; };
+  }, [formData.patientId]);
 
   const loading = ddLoading || (!!id && apptLoading);
   const isError = ddIsError || apptIsError;
@@ -239,7 +270,6 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
         await axiosInstance.put(`/reception/appointments/${apptId}/checkin`);
       }
       
-      const selectedPatient = dropdowns.patients?.find((p: any) => p.patientId === formData.patientId);
       const pName = selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : "Patient";
 
       if (isEmbedded && onSuccess) {
@@ -296,20 +326,31 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
             </Grid>
           )}
           <Grid size={{ xs: 12 }}>
-            <TextField
-              select fullWidth required
-              label="Select Patient" name="patientId"
-              value={formData.patientId || ""} onChange={handleChange}
-              disabled={!!id} // Disable changing patient if editing
-              sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
-            >
-              <MenuItem value="" disabled>Select a Patient</MenuItem>
-              {(dropdowns?.patients || []).map((p: any) => (
-                <MenuItem key={p.patientId} value={p.patientId}>
-                  {p.firstName} {p.lastName} - MRN: {p.uhidNumber} - Ph: {p.phone}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Autocomplete
+              fullWidth
+              disabled={!!id} // Can't change patient when rescheduling
+              options={patientOptions}
+              value={selectedPatient}
+              loading={patientsLoading}
+              filterOptions={(x) => x} // server already filtered; don't re-filter client-side
+              isOptionEqualToValue={(opt, val) => opt.patientId === val?.patientId}
+              getOptionLabel={(p: any) => (p ? `${p.firstName} ${p.lastName} - MRN: ${p.uhidNumber} - Ph: ${p.phone}` : "")}
+              onInputChange={(_e, val, reason) => { if (reason === "input") setPatientQuery(val); }}
+              onChange={(_e, val: any) => {
+                setSelectedPatient(val);
+                setFormData(prev => ({ ...prev, patientId: val?.patientId || "" }));
+              }}
+              noOptionsText={debouncedPatientQuery.trim().length < 2 ? "Type at least 2 characters to search…" : "No matching patients"}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  required
+                  label="Select Patient"
+                  placeholder="Search by name, MRN, or phone"
+                  sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
+                />
+              )}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
             <TextField

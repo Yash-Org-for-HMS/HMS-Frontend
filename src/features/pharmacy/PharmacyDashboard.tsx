@@ -13,7 +13,7 @@ import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import ErrorState from "@/components/ErrorState";
 import StatCard from "@/components/StatCard";
 import PharmacyPage from "./components/PharmacyPage";
-import type { Medicine, LowStockAlert, PharmacyOrder, PurchaseOrder } from "@/types";
+import type { LowStockAlert, PharmacyOrder } from "@/types";
 import { apiErrorText } from "@/utils/apiError";
 
 export default function PharmacyDashboard() {
@@ -21,31 +21,25 @@ export default function PharmacyDashboard() {
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ["pharmacy-dashboard"],
     queryFn: async () => {
-      const [medRes, invRes, poRes, salesRes, alertsRes] = await Promise.all([
-        axiosInstance.get("/pharmacy/medicines"),
-        axiosInstance.get("/pharmacy/inventory"),
-        axiosInstance.get("/pharmacy/purchase-orders"),
-        axiosInstance.get("/pharmacy/orders"),
+      // Counts/aggregates + a small recent list come from one stats endpoint, so
+      // the dashboard never pulls the full catalog / inventory / sales history.
+      const [statsRes, alertsRes] = await Promise.all([
+        axiosInstance.get("/pharmacy/dashboard-stats"),
         axiosInstance.get("/pharmacy/low-stock-alerts"),
       ]);
       return {
-        medicines: medRes.data.data || [],
-        inventory: invRes.data.data || [],
-        purchaseOrders: poRes.data.data || [],
-        sales: salesRes.data.data || [],
+        stats: statsRes.data.data || {},
         lowStockAlerts: alertsRes.data.data || [],
       };
     },
   });
-  const medicines: Medicine[] = data?.medicines ?? [];
-  const purchaseOrders: PurchaseOrder[] = data?.purchaseOrders ?? [];
-  const sales: PharmacyOrder[] = data?.sales ?? [];
+  const stats = data?.stats ?? { medicineCount: 0, pendingPOCount: 0, totalSalesValue: 0, recentSales: [] };
   const lowStockAlerts: LowStockAlert[] = data?.lowStockAlerts ?? [];
 
-  const pendingPOs = purchaseOrders.filter(po => po.status === 'pending');
-  const totalSalesValue = sales.reduce((sum, order) => sum + parseFloat(String(order.totalAmount || 0)), 0);
-
-  const getMedicineName = (id: string) => medicines.find(m => m.medicineId === id)?.medicineName || 'Unknown';
+  const medicineCount: number = stats.medicineCount ?? 0;
+  const pendingPOCount: number = stats.pendingPOCount ?? 0;
+  const totalSalesValue: number = Number(stats.totalSalesValue ?? 0);
+  const recentSales: PharmacyOrder[] = stats.recentSales ?? [];
 
   return (
     <PharmacyPage
@@ -61,9 +55,9 @@ export default function PharmacyDashboard() {
         <>
           <Grid container spacing={3} mb={4}>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <StatCard 
+                  <StatCard
                     label="Total Medicines"
-                    value={medicines.length} 
+                    value={medicineCount}
                     icon={<MedicationRounded sx={{ fontSize: 32, color: '#4F46E5' }} />} 
                     color="#4F46E5"
                   />
@@ -79,7 +73,7 @@ export default function PharmacyDashboard() {
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
                     label="Pending POs"
-                    value={pendingPOs.length} 
+                    value={pendingPOCount}
                     icon={<LocalShippingRounded sx={{ fontSize: 32, color: '#F59E0B' }} />} 
                     color="#F59E0B"
                   />
@@ -141,9 +135,9 @@ export default function PharmacyDashboard() {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {sales.filter(s => s.status !== "cancelled").slice(0, 5).length === 0 ? (
+                        {recentSales.length === 0 ? (
                           <TableRow><TableCell colSpan={3} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No recent sales." size={110} /></TableCell></TableRow>
-                        ) : sales.filter(s => s.status !== "cancelled").slice(0, 5).map(sale => (
+                        ) : recentSales.map(sale => (
                           <TableRow key={sale.pharmacyOrderId}>
                             <TableCell sx={{ fontFamily: 'monospace' }}>{sale.pharmacyOrderId.split('-')[0].toUpperCase()}</TableCell>
                             <TableCell>{new Date(sale.createdAt).toLocaleString()}</TableCell>
