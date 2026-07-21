@@ -28,6 +28,8 @@ import {
   FormControlLabel,
   Switch,
   Alert,
+  Chip,
+  Tooltip,
 } from "@mui/material";
 import {
   AddRounded,
@@ -333,45 +335,56 @@ export default function LeadsList() {
                       {lead.assignedUser ? `${lead.assignedUser.firstName} ${lead.assignedUser.lastName}` : "Unassigned"}
                     </TableCell>
                     <TableCell>
-                      <TextField
-                        select
-                        value={lead.leadStatus}
-                        onChange={(e) => handleStatusChange(lead.hospitalLeadId, e.target.value)}
-                        size="small"
-                        sx={{
-                          minWidth: 140,
-                          "& .MuiOutlinedInput-root": {
-                            color: getStatusTextColor(lead.leadStatus),
-                            backgroundColor: getStatusBgColor(lead.leadStatus),
-                            borderRadius: "8px",
-                            fontWeight: 600,
-                            fontSize: "0.875rem",
-                            "& fieldset": { borderColor: "transparent" },
-                            "&:hover fieldset": { borderColor: "divider" },
-                            "&.Mui-focused fieldset": { borderColor: "divider" },
-                          },
-                          "& .MuiSvgIcon-root": { color: getStatusTextColor(lead.leadStatus) }
-                        }}
-                        SelectProps={{
-                          MenuProps: {
-                            sx: {
-                              "& .MuiPaper-root": {
-                                bgcolor: "background.paper",
-                                color: "text.primary",
-                                border: "1px solid", borderColor: "divider"
+                      {/* "In Trial" / "Converted" are system-managed outcomes — set by
+                          starting a trial or converting the lead, never picked by hand —
+                          so they render as a read-only chip, not an editable dropdown. */}
+                      {lead.leadStatus === "trialing" || lead.leadStatus === "converted" ? (
+                        <Tooltip title={lead.leadStatus === "trialing" ? "Set when a trial was started for this lead" : "Set when this lead was converted to a hospital"}>
+                          <Chip
+                            label={lead.leadStatus === "trialing" ? "In Trial" : t("leads.statusConverted")}
+                            size="small"
+                            sx={{ fontWeight: 600, color: getStatusTextColor(lead.leadStatus), bgcolor: getStatusBgColor(lead.leadStatus) }}
+                          />
+                        </Tooltip>
+                      ) : (
+                        <TextField
+                          select
+                          value={lead.leadStatus}
+                          onChange={(e) => handleStatusChange(lead.hospitalLeadId, e.target.value)}
+                          size="small"
+                          sx={{
+                            minWidth: 140,
+                            "& .MuiOutlinedInput-root": {
+                              color: getStatusTextColor(lead.leadStatus),
+                              backgroundColor: getStatusBgColor(lead.leadStatus),
+                              borderRadius: "8px",
+                              fontWeight: 600,
+                              fontSize: "0.875rem",
+                              "& fieldset": { borderColor: "transparent" },
+                              "&:hover fieldset": { borderColor: "divider" },
+                              "&.Mui-focused fieldset": { borderColor: "divider" },
+                            },
+                            "& .MuiSvgIcon-root": { color: getStatusTextColor(lead.leadStatus) }
+                          }}
+                          SelectProps={{
+                            MenuProps: {
+                              sx: {
+                                "& .MuiPaper-root": {
+                                  bgcolor: "background.paper",
+                                  color: "text.primary",
+                                  border: "1px solid", borderColor: "divider"
+                                }
                               }
                             }
-                          }
-                        }}
-                      >
-                        <MenuItem value="new" sx={{ fontWeight: 600, color: "#38bdf8" }}>{t("leads.statusNew")}</MenuItem>
-                        <MenuItem value="contacted" sx={{ fontWeight: 600, color: "#fbbf24" }}>{t("leads.statusContacted")}</MenuItem>
-                        <MenuItem value="qualified" sx={{ fontWeight: 600, color: "#c084fc" }}>{t("leads.statusQualified")}</MenuItem>
-                        <MenuItem value="demo_done" sx={{ fontWeight: 600, color: "#60a5fa" }}>{t("leads.statusDemoDone")}</MenuItem>
-                        <MenuItem value="trialing" sx={{ fontWeight: 600, color: "#f472b6" }}>In Trial</MenuItem>
-                        <MenuItem value="converted" sx={{ fontWeight: 600, color: "#34d399" }}>{t("leads.statusConverted")}</MenuItem>
-                        <MenuItem value="lost" sx={{ fontWeight: 600, color: "#f87171" }}>Lost</MenuItem>
-                      </TextField>
+                          }}
+                        >
+                          <MenuItem value="new" sx={{ fontWeight: 600, color: "#38bdf8" }}>{t("leads.statusNew")}</MenuItem>
+                          <MenuItem value="contacted" sx={{ fontWeight: 600, color: "#fbbf24" }}>{t("leads.statusContacted")}</MenuItem>
+                          <MenuItem value="qualified" sx={{ fontWeight: 600, color: "#c084fc" }}>{t("leads.statusQualified")}</MenuItem>
+                          <MenuItem value="demo_done" sx={{ fontWeight: 600, color: "#60a5fa" }}>{t("leads.statusDemoDone")}</MenuItem>
+                          <MenuItem value="lost" sx={{ fontWeight: 600, color: "#f87171" }}>Lost</MenuItem>
+                        </TextField>
+                      )}
                     </TableCell>
                     <TableCell align="right">
                       <IconButton onClick={(e) => openActionMenu(e, lead)} sx={{ color: "text.secondary" }}>
