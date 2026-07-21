@@ -20,6 +20,7 @@ import ErrorState from "@/components/ErrorState";
 import PrescriptionWriter from "./PrescriptionWriter";
 import SoapTemplateBar, { type SoapTemplate } from "@/components/doctor/SoapTemplateBar";
 import LabOrderForm from "./LabOrderForm";
+import { useEnabledModules } from "@/hooks/useEnabledModules";
 import ConsultationHistory from "@/components/doctor/ConsultationHistory";
 import RadiologyOrderForm from "./RadiologyOrderForm";
 import RichTextEditor from "@/components/RichTextEditor";
@@ -67,6 +68,10 @@ export default function ConsultationWorkspace() {
   const [tabIndex, setTabIndex] = useState(0);
   const [aiOpen, setAiOpen] = useState(false);
   const [rightTabIndex, setRightTabIndex] = useState(0);
+  // Lab & radiology ordering is part of the Laboratory module — hide those tabs
+  // when the hospital's plan doesn't include it (the API also rejects the order).
+  const { isModuleEnabled } = useEnabledModules();
+  const labEnabled = isModuleEnabled("Laboratory");
 
   const [icd10Options, setIcd10Options] = useState<any[]>([]);
   const [icd10Loading, setIcd10Loading] = useState(false);
@@ -388,8 +393,8 @@ export default function ConsultationWorkspace() {
               <Tabs value={rightTabIndex} onChange={(e, val) => setRightTabIndex(val)} variant="scrollable" scrollButtons="auto">
                 <Tab icon={<LocalHospitalRounded fontSize="small" />} iconPosition="start" label="Clinical Notes (SOAP)" sx={{ textTransform: "none", fontWeight: 600, minHeight: 48 }} />
                 <Tab icon={<SaveRounded fontSize="small" />} iconPosition="start" label="Prescription Writer" sx={{ textTransform: "none", fontWeight: 600, minHeight: 48 }} />
-                <Tab icon={<LocalHospitalRounded fontSize="small" />} iconPosition="start" label="Lab Orders" sx={{ textTransform: "none", fontWeight: 600, minHeight: 48 }} />
-                <Tab icon={<LocalHospitalRounded fontSize="small" />} iconPosition="start" label="Radiology Orders" sx={{ textTransform: "none", fontWeight: 600, minHeight: 48 }} />
+                {labEnabled && <Tab icon={<LocalHospitalRounded fontSize="small" />} iconPosition="start" label="Lab Orders" sx={{ textTransform: "none", fontWeight: 600, minHeight: 48 }} />}
+                {labEnabled && <Tab icon={<LocalHospitalRounded fontSize="small" />} iconPosition="start" label="Radiology Orders" sx={{ textTransform: "none", fontWeight: 600, minHeight: 48 }} />}
               </Tabs>
             </Box>
 
@@ -519,25 +524,29 @@ export default function ConsultationWorkspace() {
               </Box>
             </TabPanel>
 
-            <TabPanel value={rightTabIndex} index={2}>
-              <Box sx={{ p: 1 }}>
-                <LabOrderForm 
-                  consultationId={context?.consultation?.consultationId}
-                  patientId={p?.patientId}
-                  onRequireSave={() => handleSave(true)}
-                />
-              </Box>
-            </TabPanel>
+            {labEnabled && (
+              <TabPanel value={rightTabIndex} index={2}>
+                <Box sx={{ p: 1 }}>
+                  <LabOrderForm
+                    consultationId={context?.consultation?.consultationId}
+                    patientId={p?.patientId}
+                    onRequireSave={() => handleSave(true)}
+                  />
+                </Box>
+              </TabPanel>
+            )}
 
-            <TabPanel value={rightTabIndex} index={3}>
-              <Box sx={{ p: 1 }}>
-                <RadiologyOrderForm 
-                  consultationId={context?.consultation?.consultationId}
-                  patientId={p?.patientId}
-                  onRequireSave={() => handleSave(true)}
-                />
-              </Box>
-            </TabPanel>
+            {labEnabled && (
+              <TabPanel value={rightTabIndex} index={3}>
+                <Box sx={{ p: 1 }}>
+                  <RadiologyOrderForm
+                    consultationId={context?.consultation?.consultationId}
+                    patientId={p?.patientId}
+                    onRequireSave={() => handleSave(true)}
+                  />
+                </Box>
+              </TabPanel>
+            )}
             
           </Paper>
         </Grid>
