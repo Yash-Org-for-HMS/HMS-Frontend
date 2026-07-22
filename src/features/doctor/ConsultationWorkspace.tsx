@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { calculateAge } from "@/utils/format";
 import { useState, useEffect, useRef } from "react";
@@ -277,8 +277,8 @@ export default function ConsultationWorkspace() {
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mr: 0.5 }}>
               {saveStatus === "saving" && <CloudSyncRounded sx={{ fontSize: 18, color: "text.secondary" }} />}
               {saveStatus === "saved" && <CloudDoneRounded sx={{ fontSize: 18, color: "#16a34a" }} />}
-              {saveStatus === "error" && <CloudOffRounded sx={{ fontSize: 18, color: "#ef4444" }} />}
-              <Typography variant="caption" sx={{ color: saveStatus === "error" ? "#ef4444" : "text.secondary", fontWeight: 600 }}>
+              {saveStatus === "error" && <CloudOffRounded sx={{ fontSize: 18, color: SEMANTIC.danger }} />}
+              <Typography variant="caption" sx={{ color: saveStatus === "error" ? SEMANTIC.danger : "text.secondary", fontWeight: 600 }}>
                 {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "All changes saved" : "Save failed — retrying on next edit"}
               </Typography>
             </Box>
@@ -307,7 +307,7 @@ export default function ConsultationWorkspace() {
             onClick={handleComplete}
             disabled={saving || completing}
             startIcon={completing ? <HeartbeatLoader size={22} /> : <CheckCircleRounded />}
-            sx={{ bgcolor: DOCTOR_BLUE, "&:hover": { bgcolor: "#2563eb" }, textTransform: "none", fontWeight: 600, boxShadow: "0 4px 12px rgba(59,130,246,0.3)" }}
+            sx={{ bgcolor: DOCTOR_BLUE, "&:hover": { bgcolor: ACCENTS.doctorDark }, textTransform: "none", fontWeight: 600, boxShadow: "0 4px 12px rgba(59,130,246,0.3)" }}
           >
             Complete Consultation
           </Button>
@@ -326,7 +326,7 @@ export default function ConsultationWorkspace() {
 
             <TabPanel value={tabIndex} index={0}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, display: "flex", alignItems: "center", gap: 1 }}>
-                <MonitorHeartRounded sx={{ color: "#ef4444", fontSize: 18 }} /> Today's Vitals
+                <MonitorHeartRounded sx={{ color: SEMANTIC.danger, fontSize: 18 }} /> Today's Vitals
               </Typography>
               {v ? (
                 <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mb: 3 }}>

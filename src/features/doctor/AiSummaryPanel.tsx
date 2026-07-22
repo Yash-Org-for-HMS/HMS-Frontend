@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useRef, useState, useEffect } from "react";
 import { Box, Typography, Button, Chip, Alert, Fade, TextField, IconButton, Tooltip } from "@mui/material";
 import {
@@ -386,12 +386,12 @@ function StreamCursor() {
 
 // ── Section-aware markdown renderer ──────────────────────────────────────────
 const SECTION_STYLES: { match: RegExp; icon: any; color: string }[] = [
-  { match: /snapshot|overview/i, icon: PersonRounded, color: "#3b82f6" },
-  { match: /problem|condition|active|recurring/i, icon: MedicalServicesRounded, color: "#f59e0b" },
+  { match: /snapshot|overview/i, icon: PersonRounded, color: ACCENTS.doctor },
+  { match: /problem|condition|active|recurring/i, icon: MedicalServicesRounded, color: SEMANTIC.warning },
   { match: /medication|drug|prescription/i, icon: MedicationRounded, color: "#8b5cf6" },
   { match: /trend|change|notable/i, icon: TrendingUpRounded, color: "#14b8a6" },
-  { match: /flag|allerg|red|risk|alert/i, icon: FlagRounded, color: "#ef4444" },
-  { match: /suggest|review|recommend|ask|check/i, icon: TaskAltRounded, color: "#10b981" },
+  { match: /flag|allerg|red|risk|alert/i, icon: FlagRounded, color: SEMANTIC.danger },
+  { match: /suggest|review|recommend|ask|check/i, icon: TaskAltRounded, color: SEMANTIC.success },
 ];
 function sectionStyle(heading: string) {
   return SECTION_STYLES.find((s) => s.match.test(heading)) || { icon: CircleRounded, color: BLUE };

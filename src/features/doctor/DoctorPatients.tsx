@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
@@ -147,7 +147,7 @@ export default function DoctorPatients({ scope = "mine" }: { scope?: "mine" | "a
                         icon={<BloodtypeRounded sx={{ fontSize: "16px !important" }} />}
                         label={p.bloodGroupLabel}
                         size="small"
-                        sx={{ bgcolor: "rgba(239,68,68,0.1)", color: "#ef4444", fontWeight: 600 }}
+                        sx={{ bgcolor: "rgba(239,68,68,0.1)", color: SEMANTIC.danger, fontWeight: 600 }}
                       />
                     </TableCell>
                     <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>

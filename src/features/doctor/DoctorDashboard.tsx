@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Grid, Typography, Paper, Alert,
@@ -64,9 +64,9 @@ export default function DoctorDashboard() {
           <StatCard
             label="Waiting Patients"
             value={stats?.waitingPatients || 0}
-            icon={<HourglassTopRounded sx={{ color: "#f59e0b" }} />}
+            icon={<HourglassTopRounded sx={{ color: SEMANTIC.warning }} />}
             loading={loading}
-            color="#f59e0b"
+            color={SEMANTIC.warning}
             sub="Checked in, ready to be seen"
           />
         </Grid>
@@ -74,9 +74,9 @@ export default function DoctorDashboard() {
           <StatCard
             label="Vitals Recorded"
             value={stats?.vitalsRecorded || 0}
-            icon={<MonitorHeartRounded sx={{ color: "#10b981" }} />}
+            icon={<MonitorHeartRounded sx={{ color: SEMANTIC.success }} />}
             loading={loading}
-            color="#10b981"
+            color={SEMANTIC.success}
             sub="Pre-consultation complete"
           />
         </Grid>

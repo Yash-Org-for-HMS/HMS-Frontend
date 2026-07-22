@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -80,14 +80,14 @@ export default function DoctorPatientProfile() {
   const p = patientQ.data;
   const history: any[] = historyQ.data || [];
   const dueRows: any[] = (vaccinationQ.data?.rows || []).filter((r: any) => r.state === "OVERDUE" || r.state === "DUE_SOON");
-  const VAX_STATE_COLOR: Record<string, string> = { OVERDUE: "#ef4444", DUE_SOON: "#f59e0b" };
+  const VAX_STATE_COLOR: Record<string, string> = { OVERDUE: SEMANTIC.danger, DUE_SOON: SEMANTIC.warning };
   const surgeries: any[] = surgeriesQ.data || [];
-  const SURGERY_STATE_COLOR: Record<string, string> = { SCHEDULED: "#f59e0b", COMPLETED: "#10b981", CANCELLED: "#64748b" };
+  const SURGERY_STATE_COLOR: Record<string, string> = { SCHEDULED: SEMANTIC.warning, COMPLETED: SEMANTIC.success, CANCELLED: NEUTRAL.muted };
 
   // At-a-glance stat tiles, computed once for the row under the hero.
   const lastConsult = history[0];
   const hasOverdueDose = dueRows.some((r) => r.state === "OVERDUE");
-  const doseColor = dueRows.length === 0 ? "#10b981" : hasOverdueDose ? "#ef4444" : "#f59e0b";
+  const doseColor = dueRows.length === 0 ? SEMANTIC.success : hasOverdueDose ? SEMANTIC.danger : SEMANTIC.warning;
   const hasAllergy = !!p?.allergies && p.allergies !== "None reported";
 
   if (patientQ.isLoading) {
@@ -130,9 +130,9 @@ export default function DoctorPatientProfile() {
               <Chip size="small" label={`UHID: ${p.uhidNumber}`} sx={{ fontFamily: "monospace", fontWeight: 700, bgcolor: `${DOCTOR_BLUE}1a`, color: DOCTOR_BLUE }} />
               <Chip size="small" label={p.age != null ? `${p.age} yrs` : "Age unknown"} sx={{ bgcolor: "action.hover" }} />
               <Chip size="small" label={p.genderLabel} sx={{ bgcolor: "action.hover" }} />
-              <Chip size="small" icon={<MedicationRounded sx={{ fontSize: "14px !important" }} />} label={p.bloodGroupLabel} sx={{ bgcolor: "rgba(239,68,68,0.1)", color: "#ef4444", fontWeight: 700 }} />
+              <Chip size="small" icon={<MedicationRounded sx={{ fontSize: "14px !important" }} />} label={p.bloodGroupLabel} sx={{ bgcolor: "rgba(239,68,68,0.1)", color: SEMANTIC.danger, fontWeight: 700 }} />
               {hasAllergy && (
-                <Chip size="small" icon={<WarningAmberRounded sx={{ fontSize: "14px !important" }} />} label="Allergies" sx={{ bgcolor: "rgba(245,158,11,0.12)", color: "#d97706", fontWeight: 700 }} />
+                <Chip size="small" icon={<WarningAmberRounded sx={{ fontSize: "14px !important" }} />} label="Allergies" sx={{ bgcolor: "rgba(245,158,11,0.12)", color: SEMANTIC.warningDark, fontWeight: 700 }} />
               )}
             </Box>
           </Box>
@@ -161,10 +161,10 @@ export default function DoctorPatientProfile() {
             <InfoRow label="Date of Birth" value={p.dateOfBirth ? new Date(p.dateOfBirth).toLocaleDateString("en-GB") : "—"} />
           </Section>
 
-          <Section title="Allergies" icon={<WarningAmberRounded fontSize="small" sx={{ color: hasAllergy ? "#ef4444" : DOCTOR_BLUE }} />}>
+          <Section title="Allergies" icon={<WarningAmberRounded fontSize="small" sx={{ color: hasAllergy ? SEMANTIC.danger : DOCTOR_BLUE }} />}>
             {hasAllergy ? (
               <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                <Typography variant="body2" sx={{ color: "#dc2626", fontWeight: 600, lineHeight: 1.6 }}>{p.allergies}</Typography>
+                <Typography variant="body2" sx={{ color: SEMANTIC.dangerDark, fontWeight: 600, lineHeight: 1.6 }}>{p.allergies}</Typography>
               </Box>
             ) : (
               <Typography variant="body2" sx={{ color: "text.secondary" }}>None reported</Typography>

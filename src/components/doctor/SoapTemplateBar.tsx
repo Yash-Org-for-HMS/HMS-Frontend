@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -149,7 +149,7 @@ export default function SoapTemplateBar({ current, onApply }: Props) {
                 secondaryTypographyProps={{ noWrap: true, fontSize: "0.72rem" }}
               />
               <Tooltip title="Delete">
-                <IconButton size="small" edge="end" onClick={(e) => handleDelete(e, t)} sx={{ ml: 1, color: "text.secondary", "&:hover": { color: "#ef4444" } }}>
+                <IconButton size="small" edge="end" onClick={(e) => handleDelete(e, t)} sx={{ ml: 1, color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}>
                   <DeleteOutlineRounded fontSize="small" />
                 </IconButton>
               </Tooltip>

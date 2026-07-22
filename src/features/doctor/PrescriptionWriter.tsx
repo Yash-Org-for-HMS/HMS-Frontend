@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -404,7 +404,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
         <Box>
           {patientAllergies.length > 0 ? (
-            <Typography variant="caption" sx={{ color: "#ef4444", fontWeight: 700, display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Typography variant="caption" sx={{ color: SEMANTIC.danger, fontWeight: 700, display: "flex", alignItems: "center", gap: 0.5 }}>
               <WarningAmberRounded sx={{ fontSize: 16 }} /> Known allergies: {patientAllergies.join(", ")}
             </Typography>
           ) : (
@@ -563,7 +563,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                       {itemConflicts[index]?.length > 0 && (
                         <Tooltip title={`Allergy match: ${itemConflicts[index].join(", ")}`}>
-                          <WarningAmberRounded sx={{ color: "#ef4444", fontSize: 18 }} />
+                          <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 18 }} />
                         </Tooltip>
                       )}
                       <Box>

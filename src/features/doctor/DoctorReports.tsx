@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { useMemo, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -25,7 +25,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
-const PIE_COLORS = ["#3b82f6", "#ec4899", "#f59e0b", "#10b981", "#8b5cf6", "#64748b"];
+const PIE_COLORS = [ACCENTS.doctor, "#ec4899", SEMANTIC.warning, SEMANTIC.success, "#8b5cf6", NEUTRAL.muted];
 
 const PRESETS = [
   { key: "today", label: "Today", from: () => dayjs(), to: () => dayjs() },
@@ -109,11 +109,11 @@ function SummaryReport({ data }: { data: any }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(3,1fr)", md: "repeat(6,1fr)" }, gap: 1.5 }}>
-        <Kpi icon={<DescriptionRounded />} label="Consultations" value={s?.totalConsultations || 0} color="#3b82f6" />
+        <Kpi icon={<DescriptionRounded />} label="Consultations" value={s?.totalConsultations || 0} color={ACCENTS.doctor} />
         <Kpi icon={<GroupRounded />} label="Unique patients" value={s?.uniquePatients || 0} color="#8b5cf6" />
-        <Kpi icon={<EventAvailableRounded />} label="Completed appts" value={s?.completedAppointments || 0} color="#10b981" />
+        <Kpi icon={<EventAvailableRounded />} label="Completed appts" value={s?.completedAppointments || 0} color={SEMANTIC.success} />
         <Kpi icon={<MedicationRounded />} label="Prescriptions" value={s?.prescriptions || 0} color="#ec4899" />
-        <Kpi icon={<ScienceRounded />} label="Lab orders" value={s?.labOrders || 0} color="#f59e0b" />
+        <Kpi icon={<ScienceRounded />} label="Lab orders" value={s?.labOrders || 0} color={SEMANTIC.warning} />
         <Kpi icon={<MonitorHeartRounded />} label="Radiology" value={s?.radiologyOrders || 0} color="#06b6d4" />
       </Box>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1.6fr 1fr" }, gap: 2 }}>

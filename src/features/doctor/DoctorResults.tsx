@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useState, useEffect, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, keepPreviousData, useQueryClient } from "@tanstack/react-query";
@@ -195,11 +195,11 @@ export default function DoctorResults() {
                             {r.status === "READY" ? (
                               <Chip label="Ready" size="small" sx={{ bgcolor: "rgba(16,185,129,0.15)", color: "#16a34a", fontWeight: 700 }} />
                             ) : (
-                              <Chip label={r.type === "LAB" && r.progress ? `Pending ${r.progress}` : "Pending"} size="small" sx={{ bgcolor: "rgba(245,158,11,0.15)", color: "#d97706", fontWeight: 600 }} />
+                              <Chip label={r.type === "LAB" && r.progress ? `Pending ${r.progress}` : "Pending"} size="small" sx={{ bgcolor: "rgba(245,158,11,0.15)", color: SEMANTIC.warningDark, fontWeight: 600 }} />
                             )}
                             {r.isCritical && (
                               <Tooltip title="Critical value flagged">
-                                <WarningAmberRounded sx={{ color: "#ef4444", fontSize: 18 }} />
+                                <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 18 }} />
                               </Tooltip>
                             )}
                           </Box>
@@ -267,11 +267,11 @@ function LabDetail({ reports }: { reports: any[] }) {
             </TableCell>
             <TableCell>
               {rep.pending ? (
-                <Chip label="Pending" size="small" sx={{ bgcolor: "rgba(245,158,11,0.15)", color: "#d97706", fontWeight: 600, height: 20 }} />
+                <Chip label="Pending" size="small" sx={{ bgcolor: "rgba(245,158,11,0.15)", color: SEMANTIC.warningDark, fontWeight: 600, height: 20 }} />
               ) : (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700, color: rep.isCritical ? "#ef4444" : "text.primary" }}>{rep.resultValue}</Typography>
-                  {rep.isCritical && <WarningAmberRounded sx={{ color: "#ef4444", fontSize: 16 }} />}
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: rep.isCritical ? SEMANTIC.danger : "text.primary" }}>{rep.resultValue}</Typography>
+                  {rep.isCritical && <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 16 }} />}
                 </Box>
               )}
             </TableCell>

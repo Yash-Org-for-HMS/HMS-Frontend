@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -93,12 +93,12 @@ export default function DoctorQueue() {
         <Chip
           icon={<HourglassTopRounded sx={{ fontSize: "16px !important" }} />}
           label={`${waiting} Waiting`}
-          sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)", fontWeight: 600 }}
+          sx={{ bgcolor: "rgba(245,158,11,0.1)", color: SEMANTIC.warning, border: "1px solid rgba(245,158,11,0.3)", fontWeight: 600 }}
         />
         <Chip
           icon={<CheckCircleRounded sx={{ fontSize: "16px !important" }} />}
           label={`${inProgress} In Progress`}
-          sx={{ bgcolor: "rgba(59,130,246,0.1)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.3)", fontWeight: 600 }}
+          sx={{ bgcolor: "rgba(59,130,246,0.1)", color: ACCENTS.doctor, border: "1px solid rgba(59,130,246,0.3)", fontWeight: 600 }}
         />
         {skipped > 0 && (
           <Chip
@@ -109,7 +109,7 @@ export default function DoctorQueue() {
         <Chip
           icon={<CheckCircleRounded sx={{ fontSize: "16px !important" }} />}
           label={`${completed} Completed`}
-          sx={{ bgcolor: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600 }}
+          sx={{ bgcolor: "rgba(16,185,129,0.1)", color: SEMANTIC.success, border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600 }}
         />
       </Box>
 
@@ -179,7 +179,7 @@ export default function DoctorQueue() {
                               icon={<MonitorHeartRounded sx={{ fontSize: "14px !important" }} />}
                               label="Recorded"
                               size="small"
-                              sx={{ bgcolor: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600, fontSize: "0.75rem", cursor: "pointer" }}
+                              sx={{ bgcolor: "rgba(16,185,129,0.1)", color: SEMANTIC.success, border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600, fontSize: "0.75rem", cursor: "pointer" }}
                               onClick={() => setVitalsDialog({ open: true, token, readonly: true })}
                             />
                           </Tooltip>
@@ -187,7 +187,7 @@ export default function DoctorQueue() {
                           <Chip
                             label="Not Recorded"
                             size="small"
-                            sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)", fontWeight: 600, fontSize: "0.75rem" }}
+                            sx={{ bgcolor: "rgba(245,158,11,0.1)", color: SEMANTIC.warning, border: "1px solid rgba(245,158,11,0.3)", fontWeight: 600, fontSize: "0.75rem" }}
                           />
                         )}
                       </TableCell>
