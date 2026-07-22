@@ -394,26 +394,23 @@ export function Analytics() {
     })).data.data,
   });
   const t = data?.totals;
-  const clear = () => { setDoctorId(""); setDepartmentId(""); setStatusId(""); };
-  const hasFilters = !!(doctorId || departmentId || statusId);
+  const p = data?.previous;
 
   return (
     <Box>
-      <Toolbar onClear={hasFilters ? clear : undefined}>
-        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
-        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
+      <ReportFilters value={{ from, to }} onChange={(r) => { setFrom(r.from); setTo(r.to); }}>
         <FilterSelect label="Doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
         <FilterSelect label="Department" value={departmentId} onChange={setDepartmentId} options={opts?.departments} />
         <FilterSelect label="Status" value={statusId} onChange={setStatusId} options={opts?.appointmentStatuses} />
-      </Toolbar>
+      </ReportFilters>
 
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<EventRounded />} label="Total appointments" value={String(t.appointments)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Completion rate" value={`${t.completionRate}%`} color={SEMANTIC.success} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CancelRounded />} label="Cancellation rate" value={`${t.cancellationRate}%`} color={SEMANTIC.danger} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<TrendingUpRounded />} label="Avg / day" value={String(t.avgPerDay)} color="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} accent={ACCENT} label="Total appointments" value={String(t.appointments)} current={t.appointments} previous={p?.appointments} spark={(data.trend || []).map((x: any) => x.total)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} accent={SEMANTIC.success} label="Completion rate" value={`${t.completionRate}%`} current={t.completionRate} previous={p?.completionRate} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CancelRounded />} accent={SEMANTIC.danger} label="Cancellation rate" value={`${t.cancellationRate}%`} current={t.cancellationRate} previous={p?.cancellationRate} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent="#8b5cf6" label="Avg / day" value={String(t.avgPerDay)} current={t.avgPerDay} previous={p?.avgPerDay} /></Grid>
           </Grid>
 
           <Grid container spacing={2.5}>
@@ -477,25 +474,22 @@ export function Collection() {
     })).data.data,
   });
   const t = data?.totals;
-  const clear = () => { setPaymentMethodId(""); setCollectedBy(""); };
-  const hasFilters = !!(paymentMethodId || collectedBy);
+  const p = data?.previous;
 
   return (
     <Box>
-      <Toolbar onClear={hasFilters ? clear : undefined}>
-        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
-        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
+      <ReportFilters value={{ from, to }} onChange={(r) => { setFrom(r.from); setTo(r.to); }}>
         <FilterSelect label="Payment method" value={paymentMethodId} onChange={setPaymentMethodId} options={opts?.paymentMethods} />
         <FilterSelect label="Collector" value={collectedBy} onChange={setCollectedBy} options={opts?.collectors} width={200} />
-      </Toolbar>
+      </ReportFilters>
 
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PaymentsRounded />} label="Gross collected" value={inr(t.gross)} color={SEMANTIC.success} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ReplayRounded />} label="Refunds" value={inr(t.refunded)} color={SEMANTIC.danger} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Net" value={inr(t.net)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccessTimeRounded />} label="Transactions" value={String(t.transactions)} color="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Gross collected" value={inr(t.gross)} current={t.gross} previous={p?.gross} spark={(data.byDay || []).map((d: any) => d.amount)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} accent={SEMANTIC.danger} label="Refunds" value={inr(t.refunded)} current={t.refunded} previous={p?.refunded} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={ACCENT} label="Net" value={inr(t.net)} current={t.net} previous={p?.net} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent="#8b5cf6" label="Transactions" value={String(t.transactions)} current={t.transactions} previous={p?.transactions} /></Grid>
           </Grid>
 
           <Grid container spacing={2.5}>
