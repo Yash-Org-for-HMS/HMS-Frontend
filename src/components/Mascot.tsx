@@ -1,5 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material";
+import type { ReactNode } from "react";
 import {
   TaskAltRounded,
   InboxRounded,
@@ -34,6 +35,8 @@ interface MascotProps {
   subtitle?: string;
   /** Icon size in px. Default 56. */
   size?: number;
+  /** Optional call-to-action rendered below the text (e.g. an "Add" button). */
+  action?: ReactNode;
   sx?: SxProps<Theme>;
 }
 
@@ -42,7 +45,7 @@ interface MascotProps {
  * optional title and subtitle. (Loading is handled by HeartbeatLoader, used
  * here for the "thinking" pose.) Drop it anywhere a placeholder is needed.
  */
-export default function Mascot({ pose, title, subtitle, size = 56, sx }: MascotProps) {
+export default function Mascot({ pose, title, subtitle, size = 56, action, sx }: MascotProps) {
   return (
     <Box
       sx={{
@@ -74,6 +77,7 @@ export default function Mascot({ pose, title, subtitle, size = 56, sx }: MascotP
           {subtitle}
         </Typography>
       )}
+      {action && <Box sx={{ mt: 1.5 }}>{action}</Box>}
     </Box>
   );
 }

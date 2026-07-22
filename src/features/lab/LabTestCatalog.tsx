@@ -18,8 +18,10 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import { useConfirm } from "@/providers/ConfirmContext";
+import { useToast } from "@/providers/ToastContext";
 
 export default function LabTestCatalog() {
+  const toast = useToast();
   const theme = useTheme();
   const confirm = useConfirm();
 
@@ -127,7 +129,7 @@ export default function LabTestCatalog() {
       await axiosInstance.delete(`/lab/tests/${id}`);
       refetch();
     } catch (err: unknown) {
-      alert(getApiErrorMessage(err, "Failed to delete the lab test."));
+      toast.error(getApiErrorMessage(err, "Failed to delete the lab test."));
     }
   };
 
@@ -173,7 +175,8 @@ export default function LabTestCatalog() {
         ) : isError ? (
           <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
         ) : tests.length === 0 ? (
-          <Mascot pose="nothing-here-yet" title="No lab tests found" subtitle="Get started by creating your first lab test." />
+          <Mascot pose="nothing-here-yet" title="No lab tests found" subtitle="Get started by creating your first lab test."
+            action={<Button variant="contained" startIcon={<AddRounded />} onClick={handleOpenNew}>Add lab test</Button>} />
         ) : (
           <Fade in timeout={500}>
             <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>

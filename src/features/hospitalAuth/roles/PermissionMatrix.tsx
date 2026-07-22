@@ -163,7 +163,7 @@ export default function PermissionMatrix() {
         }));
 
       await axiosInstance.put("/hospital/roles/matrix", { updates });
-      alert("Permission matrix saved successfully!");
+      toast.success("Permission matrix saved successfully!");
       fetchData();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to save matrix"));

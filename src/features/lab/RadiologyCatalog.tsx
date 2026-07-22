@@ -17,8 +17,10 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import { useConfirm } from "@/providers/ConfirmContext";
+import { useToast } from "@/providers/ToastContext";
 
 export default function RadiologyCatalog() {
+  const toast = useToast();
   const theme = useTheme();
   const confirm = useConfirm();
 
@@ -108,7 +110,7 @@ export default function RadiologyCatalog() {
       await axiosInstance.delete(`/lab/radiology-catalog/${id}`);
       refetch();
     } catch (err: unknown) {
-      alert(getApiErrorMessage(err, "Failed to delete the radiology scan."));
+      toast.error(getApiErrorMessage(err, "Failed to delete the radiology scan."));
     }
   };
 
@@ -154,7 +156,8 @@ export default function RadiologyCatalog() {
         ) : isError ? (
           <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
         ) : scans.length === 0 ? (
-          <Mascot pose="nothing-here-yet" title="No radiology scans found" subtitle="Get started by creating your first scan." />
+          <Mascot pose="nothing-here-yet" title="No radiology scans found" subtitle="Get started by creating your first scan."
+            action={<Button variant="contained" startIcon={<AddRounded />} onClick={handleOpenNew}>Add scan</Button>} />
         ) : (
           <Fade in timeout={500}>
             <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>

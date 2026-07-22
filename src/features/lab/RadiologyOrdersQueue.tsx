@@ -104,7 +104,7 @@ export default function RadiologyOrdersQueue() {
       setStatus("COMPLETED");
     } catch (err: unknown) {
       console.error("Failed to upload report", err);
-      alert(getApiErrorMessage(err, "Failed to upload the file."));
+      toast.error(getApiErrorMessage(err, "Failed to upload the file."));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";

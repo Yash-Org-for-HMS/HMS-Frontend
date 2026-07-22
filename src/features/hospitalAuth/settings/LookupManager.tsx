@@ -130,7 +130,7 @@ export default function LookupManager() {
       handleClose();
       refetch();
     } catch (err: unknown) {
-      alert(getApiErrorMessage(err, "Failed to save"));
+      toast.error(getApiErrorMessage(err, "Failed to save"));
     }
   };
 
@@ -153,7 +153,7 @@ export default function LookupManager() {
       });
       refetch();
     } catch (err: unknown) {
-      alert(getApiErrorMessage(err, "Failed to toggle status"));
+      toast.error(getApiErrorMessage(err, "Failed to toggle status"));
     }
   };
 

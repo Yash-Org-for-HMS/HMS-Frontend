@@ -29,6 +29,7 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import { useConfirm } from "@/providers/ConfirmContext";
+import { useToast } from "@/providers/ToastContext";
 
 // Match the file's existing sentence-case fontWeight-600 header look (override SortableHeadCell's default uppercase/700 style).
 const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 600, fontSize: "0.875rem", py: undefined };
@@ -36,6 +37,7 @@ const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontW
 export default function FormTemplatesList() {
   const navigate = useNavigate();
   const confirm = useConfirm();
+  const toast = useToast();
   const [q, setQ] = useState("");
 
   const { data: templates = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
@@ -67,7 +69,7 @@ export default function FormTemplatesList() {
       await axiosInstance.delete(`/hospital/form-builder/${id}`);
       refetch();
     } catch (error) {
-      alert(getApiErrorMessage(error, "Failed to delete template"));
+      toast.error(getApiErrorMessage(error, "Failed to delete template"));
     }
   };
 
@@ -123,7 +125,8 @@ export default function FormTemplatesList() {
               {sorted.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} sx={{ py: 3, borderBottom: "none" }}>
-                    <Mascot pose="nothing-here-yet" title={term ? "No matching forms" : "No custom forms yet"} subtitle={term ? "Try a different search." : 'Click "Create Form" to begin.'} size={120} />
+                    <Mascot pose="nothing-here-yet" title={term ? "No matching forms" : "No custom forms yet"} subtitle={term ? "Try a different search." : "Build a custom intake or clinical form to get started."} size={120}
+                      action={term ? undefined : <Button variant="contained" startIcon={<AddRounded />} onClick={() => navigate("/hospital/form-builder/new")}>Create form</Button>} />
                   </TableCell>
                 </TableRow>
               ) : (
