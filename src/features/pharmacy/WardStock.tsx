@@ -32,8 +32,8 @@ export default function WardStock() {
 
   const debouncedSearch = useDebouncedValue(search, 300);
   const { data: catalog = [] } = useQuery<any[]>({
-    queryKey: ["ipd-medicine-catalog", debouncedSearch],
-    queryFn: async () => (await axiosInstance.get("/ipd/medicines-catalog", { params: { search: debouncedSearch || undefined } })).data.data,
+    queryKey: ["pharmacy-medicine-catalog", debouncedSearch],
+    queryFn: async () => (await axiosInstance.get("/pharmacy/medicines-catalog", { params: { search: debouncedSearch || undefined } })).data.data,
   });
 
   const wards = data?.wards || [];
