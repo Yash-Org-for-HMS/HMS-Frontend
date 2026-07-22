@@ -1,4 +1,7 @@
 import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ThemeProvider } from "@mui/material/styles";
+import { createPanelTheme } from "@/theme";
+const nurseTheme = createPanelTheme(ACCENTS.nurse, ACCENTS.nurseDark);
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -138,6 +141,7 @@ export default function NurseLayout() {
   );
 
   return (
+    <ThemeProvider theme={nurseTheme}>
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       {/* Mobile Topbar */}
       <AppBar
@@ -202,5 +206,6 @@ export default function NurseLayout() {
         <Outlet />
       </Box>
     </Box>
+    </ThemeProvider>
   );
 }

@@ -1,4 +1,7 @@
 import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ThemeProvider } from "@mui/material/styles";
+import { createPanelTheme } from "@/theme";
+const doctorTheme = createPanelTheme(ACCENTS.doctor, ACCENTS.doctorDark);
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import ModuleGate from "@/components/ModuleGate";
@@ -161,6 +164,7 @@ export default function DoctorLayout() {
   );
 
   return (
+    <ThemeProvider theme={doctorTheme}>
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       {/* Mobile Topbar */}
       <AppBar
@@ -225,5 +229,6 @@ export default function DoctorLayout() {
         <ModuleGate module="Doctor"><Outlet /></ModuleGate>
       </Box>
     </Box>
+    </ThemeProvider>
   );
 }

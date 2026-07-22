@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ThemeProvider } from "@mui/material/styles";
+import { createPanelTheme } from "@/theme";
+const pharmacyTheme = createPanelTheme(ACCENTS.pharmacy, ACCENTS.pharmacyDark);
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import ModuleGate from "@/components/ModuleGate";
 import {
@@ -128,6 +131,7 @@ export default function PharmacyLayout() {
   );
 
   return (
+    <ThemeProvider theme={pharmacyTheme}>
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       <AppBar position="fixed" elevation={0} sx={{ display: { xs: "block", md: "none" }, width: { md: `calc(100% - ${drawerWidth}px)` }, ml: { md: `${drawerWidth}px` }, bgcolor: "background.paper", borderBottom: "1px solid", borderColor: "divider" }}>
         <Toolbar sx={{ justifyContent: "space-between" }}>
@@ -152,5 +156,6 @@ export default function PharmacyLayout() {
         <ModuleGate module="Pharmacy"><Outlet /></ModuleGate>
       </Box>
     </Box>
+    </ThemeProvider>
   );
 }

@@ -1,4 +1,4 @@
-import { createTheme, type ThemeOptions } from "@mui/material/styles";
+import { createTheme, alpha, type ThemeOptions } from "@mui/material/styles";
 
 const themeOptions: ThemeOptions = {
   palette: {
@@ -128,15 +128,17 @@ const themeOptions: ThemeOptions = {
           fontSize: "0.95rem",
           boxShadow: "none",
         },
-        containedPrimary: {
-          background: "linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)",
-          color: "#FFFFFF",
+        // Theme-aware so each per-panel theme's contained buttons follow that
+        // panel's accent (palette.primary) instead of a hardcoded indigo.
+        containedPrimary: ({ theme }) => ({
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+          color: theme.palette.primary.contrastText,
           border: "none",
           "&:hover": {
-            background: "linear-gradient(135deg, #4338CA 0%, #6D28D9 100%)",
-            boxShadow: "0 8px 20px -6px rgba(79, 70, 229, 0.5)",
+            background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+            boxShadow: `0 8px 20px -6px ${alpha(theme.palette.primary.main, 0.5)}`,
           },
-        },
+        }),
         containedSecondary: {
           background: "linear-gradient(135deg, #EC4899 0%, #DB2777 100%)",
           color: "#FFFFFF",
@@ -171,7 +173,8 @@ const themeOptions: ThemeOptions = {
     },
     MuiOutlinedInput: {
       styleOverrides: {
-        root: {
+        // Focus ring follows the active (per-panel) primary accent.
+        root: ({ theme }) => ({
           backgroundColor: "#FFFFFF",
           borderRadius: 8,
           "& .MuiOutlinedInput-notchedOutline": {
@@ -181,11 +184,11 @@ const themeOptions: ThemeOptions = {
             borderColor: "rgba(15, 23, 42, 0.3)",
           },
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#4F46E5",
+            borderColor: theme.palette.primary.main,
             borderWidth: "1px",
-            boxShadow: "0 0 0 3px rgba(79, 70, 229, 0.15)",
+            boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.15)}`,
           }
-        }
+        })
       }
     },
     MuiTableContainer: {
@@ -245,3 +248,17 @@ const themeOptions: ThemeOptions = {
 };
 
 export const theme = createTheme(themeOptions);
+
+/**
+ * Build a panel-scoped theme whose primary accent is the given realm colour.
+ * Each layout wraps its subtree in a ThemeProvider with one of these, so all
+ * interactive elements (contained buttons, tab indicators, toggles, focused
+ * inputs, links, progress) adopt that panel's accent — while semantic colours
+ * (success/error/warning) and everything else stay exactly as in the base theme.
+ */
+export function createPanelTheme(main: string, dark: string) {
+  return createTheme({
+    ...themeOptions,
+    palette: { ...themeOptions.palette, primary: { main, dark } },
+  });
+}

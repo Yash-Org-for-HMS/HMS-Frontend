@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { Outlet, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ThemeProvider } from "@mui/material/styles";
+import { createPanelTheme } from "@/theme";
+const hospitalTheme = createPanelTheme(ACCENTS.hospital, ACCENTS.hospitalDark);
 import {
   Box,
   Drawer,
@@ -252,6 +255,7 @@ export default function HospitalLayout() {
   }
 
   return (
+    <ThemeProvider theme={hospitalTheme}>
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       {/* ── Topbar ──────────────────────────────────────── */}
       <AppBar
@@ -339,5 +343,6 @@ export default function HospitalLayout() {
         <Outlet />
       </Box>
     </Box>
+    </ThemeProvider>
   );
 }

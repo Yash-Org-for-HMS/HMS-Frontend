@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
-import { SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ThemeProvider } from "@mui/material/styles";
+import { createPanelTheme } from "@/theme";
+const labTheme = createPanelTheme(ACCENTS.lab, ACCENTS.labDark);
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import ModuleGate from "@/components/ModuleGate";
 import {
@@ -126,6 +129,7 @@ export default function LabLayout() {
   );
 
   return (
+    <ThemeProvider theme={labTheme}>
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       <AppBar position="fixed" elevation={0} sx={{ display: { xs: "block", md: "none" }, width: { md: `calc(100% - ${drawerWidth}px)` }, ml: { md: `${drawerWidth}px` }, bgcolor: "background.paper", borderBottom: "1px solid", borderColor: "divider" }}>
         <Toolbar sx={{ justifyContent: "space-between" }}>
@@ -150,5 +154,6 @@ export default function LabLayout() {
         <ModuleGate module="Laboratory"><Outlet /></ModuleGate>
       </Box>
     </Box>
+    </ThemeProvider>
   );
 }

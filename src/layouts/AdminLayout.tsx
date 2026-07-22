@@ -42,6 +42,9 @@ import { useAuth } from "@/providers/AuthContext";
 import SidebarHeader from "@/components/layout/SidebarHeader";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import { ACCENTS, NEUTRAL } from "@/styles/accents";
+import { ThemeProvider } from "@mui/material/styles";
+import { createPanelTheme } from "@/theme";
+const adminTheme = createPanelTheme(ACCENTS.admin, ACCENTS.adminDark);
 
 const drawerWidth = 260;
 
@@ -222,6 +225,7 @@ export default function AdminLayout() {
   );
 
   return (
+    <ThemeProvider theme={adminTheme}>
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       {/* ── Topbar ──────────────────────────────────────── */}
       <AppBar
@@ -308,5 +312,6 @@ export default function AdminLayout() {
         <Outlet />
       </Box>
     </Box>
+    </ThemeProvider>
   );
 }

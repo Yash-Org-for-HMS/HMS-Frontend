@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { ThemeProvider } from "@mui/material/styles";
+import { createPanelTheme } from "@/theme";
+import { ACCENTS } from "@/styles/accents";
+const receptionTheme = createPanelTheme(ACCENTS.reception, ACCENTS.receptionDark);
 import {
   Box,
   Drawer,
@@ -245,6 +249,7 @@ export default function ReceptionLayout() {
   );
 
   return (
+    <ThemeProvider theme={receptionTheme}>
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       {/* ── Topbar ──────────────────────────────────────── */}
       <AppBar
@@ -326,5 +331,6 @@ export default function ReceptionLayout() {
         <Outlet />
       </Box>
     </Box>
+    </ThemeProvider>
   );
 }
