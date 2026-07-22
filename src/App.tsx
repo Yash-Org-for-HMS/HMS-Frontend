@@ -134,7 +134,6 @@ const SupplierDirectory = lazy(() => import("@/features/pharmacy/SupplierDirecto
 const InventoryManagement = lazy(() => import("@/features/pharmacy/InventoryManagement"));
 const DispensaryPOS = lazy(() => import("@/features/pharmacy/DispensaryPOS"));
 const PharmacyReports = lazy(() => import("@/features/pharmacy/PharmacyReports"));
-const WardStock = lazy(() => import("@/features/pharmacy/WardStock"));
 const IpdMedicationRequests = lazy(() => import("@/features/pharmacy/IpdMedicationRequests"));
 
 // Wrap a lazy page in a Suspense boundary with the skeleton fallback. The
@@ -352,7 +351,6 @@ function App() {
             <Route path="/pharmacy/medicines" element={el(MedicineCatalog)} />
             <Route path="/pharmacy/suppliers" element={el(SupplierDirectory)} />
             <Route path="/pharmacy/inventory" element={el(InventoryManagement)} />
-            <Route path="/pharmacy/ward-stock" element={elGated(WardStock, "IPD", "Ward Stock")} />
             <Route path="/pharmacy/ipd-requests" element={elGated(IpdMedicationRequests, "IPD", "IPD Medication Requests")} />
             <Route path="/pharmacy/pos" element={el(DispensaryPOS)} />
             <Route path="/pharmacy/reports" element={el(PharmacyReports)} />

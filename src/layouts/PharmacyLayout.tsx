@@ -33,7 +33,6 @@ import {
   LogoutRounded,
   LocalHospitalRounded,
   AssessmentRounded,
-  WarehouseRounded,
   LocalPharmacyRounded,
   LockRounded,
 } from "@mui/icons-material";
@@ -65,7 +64,6 @@ export default function PharmacyLayout() {
     { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/pharmacy/medicines", section: "Inventory" },
     { text: "Suppliers", icon: <LocalShippingRounded />, path: "/pharmacy/suppliers", section: "Inventory" },
     { text: "Inventory & POs", icon: <InventoryRounded />, path: "/pharmacy/inventory", section: "Inventory" },
-    { text: "Ward Stock", icon: <WarehouseRounded />, path: "/pharmacy/ward-stock", section: "Inventory", module: "IPD" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/pharmacy/reports", section: "Reports" },
   ];
 
