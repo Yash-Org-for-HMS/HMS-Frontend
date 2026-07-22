@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
+import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
 import GeoAddressPicker from "@/components/GeoAddressPicker";
 import {
   Box,
@@ -70,6 +71,8 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
   const isEditing = Boolean(id);
 
   const [loading, setLoading] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  useUnsavedGuard(dirty);
   const toast = useToast();
 
   const { data: dd, isLoading: ddLoading, isError: ddIsError, error: ddError, refetch: refetchDd } = useQuery({
@@ -149,6 +152,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    setDirty(true);
     setFormData((prev) => ({ ...prev, [name]: value }));
     // Clear a field's error as soon as the user edits it.
     setErrors((prev) => (prev[name as keyof typeof formData] ? { ...prev, [name]: undefined } : prev));
@@ -181,6 +185,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
     try {
       if (isEditing && id) {
         await axiosInstance.put(`/reception/patients/${id}`, formData);
+        setDirty(false);
         toast.success("Patient updated successfully.");
         if (isModal && onSuccess) {
           setTimeout(() => onSuccess(id, ""), 1000);
@@ -191,6 +196,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
         const res = await axiosInstance.post("/reception/patients", formData);
         const patientId = res.data.data.patientId;
         const mrn = res.data.data.uhidNumber;
+        setDirty(false);
         toast.success(`Patient registered! MRN: ${mrn}`);
         if (isModal && onSuccess) {
           setTimeout(() => onSuccess(patientId, mrn), 1000);

@@ -7,6 +7,7 @@ import {
   Alert, Grid, IconButton, FormControlLabel, Switch, Autocomplete
 } from "@mui/material";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
 import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
@@ -50,6 +51,8 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   const followUpOf = searchParams.get("followUpOf") || "";
 
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  useUnsavedGuard(dirty && !id); // guard new bookings; editing reschedules is lower-risk
   const toast = useToast();
   const [checkInImmediately, setCheckInImmediately] = useState(true);
   const [postBooking, setPostBooking] = useState<{ apptId?: string; patientName: string; apptDate: string } | null>(null);
@@ -226,6 +229,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   }, [formData.appointmentDate, id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDirty(true);
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -272,6 +276,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
       }
       
       const pName = selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : "Patient";
+      setDirty(false); // booked successfully — release the unsaved-changes guard
 
       if (isEmbedded && onSuccess) {
         onSuccess(apptId, pName, payload.appointmentDate);
@@ -338,6 +343,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
               getOptionLabel={(p: any) => (p ? `${p.firstName} ${p.lastName} - MRN: ${p.uhidNumber} - Ph: ${p.phone}` : "")}
               onInputChange={(_e, val, reason) => { if (reason === "input") setPatientQuery(val); }}
               onChange={(_e, val: any) => {
+                setDirty(true);
                 setSelectedPatient(val);
                 setFormData(prev => ({ ...prev, patientId: val?.patientId || "" }));
               }}
