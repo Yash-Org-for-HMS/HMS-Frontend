@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -140,10 +141,10 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <MedicationRounded sx={{ color: "#0891b2" }} /> Medicines
+        <MedicationRounded sx={{ color: ACCENTS.ipd }} /> Medicines
         {isFetching && <HeartbeatLoader size={18} />}
       </DialogTitle>
-      <Tabs value={view} onChange={(_, v) => setView(v)} sx={{ px: 2, borderBottom: "1px solid", borderColor: "divider", "& .Mui-selected": { color: "#0891b2 !important" }, "& .MuiTabs-indicator": { bgcolor: "#0891b2" } }}>
+      <Tabs value={view} onChange={(_, v) => setView(v)} sx={{ px: 2, borderBottom: "1px solid", borderColor: "divider", "& .Mui-selected": { color: "#7c3aed !important" }, "& .MuiTabs-indicator": { bgcolor: ACCENTS.ipd } }}>
         <Tab value="assign" label="Assign & Bill" sx={{ textTransform: "none", fontWeight: 600 }} />
         <Tab value="chart" label="Medication Chart" sx={{ textTransform: "none", fontWeight: 600 }} />
       </Tabs>
@@ -189,16 +190,16 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
                         <SoftChip icon={<HourglassTopRounded sx={{ fontSize: 14 }} />} label="Awaiting pharmacy" bg="rgba(245,158,11,0.12)" color="#b45309" />
                       )}
                       {m.status === "ACTIVE" && (
-                        <SoftChip icon={<CheckCircleRounded sx={{ fontSize: 14 }} />} label="Dispensed" bg="rgba(16,185,129,0.12)" color="#059669" />
+                        <SoftChip icon={<CheckCircleRounded sx={{ fontSize: 14 }} />} label="Dispensed" bg="rgba(16,185,129,0.12)" color={SEMANTIC.successDark} />
                       )}
                       {m.status === "BILLED" && (
-                        <SoftChip icon={<ReceiptLongRounded sx={{ fontSize: 14 }} />} label="Billed" bg="rgba(8,145,178,0.12)" color="#0891b2" />
+                        <SoftChip icon={<ReceiptLongRounded sx={{ fontSize: 14 }} />} label="Billed" bg="rgba(8,145,178,0.12)" color={ACCENTS.ipd} />
                       )}
                     </TableCell>
                     <TableCell align="right">
                       {m.status !== "BILLED" && (
                         <Tooltip title={m.status === "REQUESTED" ? "Retract request" : "Remove (returns stock)"}>
-                          <IconButton size="small" disabled={busyId === m.ipMedOrderId} onClick={() => remove(m)} sx={{ color: "#ef4444" }}>
+                          <IconButton size="small" disabled={busyId === m.ipMedOrderId} onClick={() => remove(m)} sx={{ color: SEMANTIC.danger }}>
                             <DeleteOutlineRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -233,7 +234,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
               <li {...props} key={o.medicineId}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
                   <span>{o.medicineName}{o.genericName ? ` · ${o.genericName}` : ""}</span>
-                  <span style={{ color: o.availableStock > 0 ? "#64748b" : "#ef4444", fontSize: "0.8rem" }}>
+                  <span style={{ color: o.availableStock > 0 ? NEUTRAL.muted : SEMANTIC.danger, fontSize: "0.8rem" }}>
                     {formatINR(o.sellingPrice)} · stock {o.availableStock}
                   </span>
                 </Box>
@@ -290,7 +291,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
         {view === "assign" && (
           <Button variant="contained" onClick={submit} disabled={saving || !canAdd}
             startIcon={saving ? <HeartbeatLoader size={22} /> : <AddRounded />}
-            sx={{ bgcolor: "#0891b2", "&:hover": { bgcolor: "#0e7490" } }}>Assign Medicine</Button>
+            sx={{ bgcolor: ACCENTS.ipd, "&:hover": { bgcolor: ACCENTS.ipdDark } }}>Assign Medicine</Button>
         )}
       </DialogActions>
     </Dialog>

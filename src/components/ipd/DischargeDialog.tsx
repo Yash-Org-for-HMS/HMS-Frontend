@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
 import { useQuery } from "@tanstack/react-query";
@@ -77,7 +78,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <LogoutRounded sx={{ color: "#ef4444" }} /> Discharge — {detail?.patientName || "Patient"}
+        <LogoutRounded sx={{ color: SEMANTIC.danger }} /> Discharge — {detail?.patientName || "Patient"}
       </DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>
@@ -132,7 +133,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
           <Box>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Additional charges</Typography>
-              <Button size="small" startIcon={<AddRounded />} onClick={() => setExtras((x) => [...x, { description: "", amount: "" }])} sx={{ textTransform: "none", color: "#0891b2" }}>Add</Button>
+              <Button size="small" startIcon={<AddRounded />} onClick={() => setExtras((x) => [...x, { description: "", amount: "" }])} sx={{ textTransform: "none", color: ACCENTS.ipd }}>Add</Button>
             </Box>
             {extras.map((e, i) => (
               <Box key={i} sx={{ display: "flex", gap: 1, mb: 1 }}>
@@ -145,16 +146,16 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
 
           {claim && (
             <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: "rgba(59,130,246,0.08)", border: "1px solid", borderColor: "rgba(59,130,246,0.25)" }}>
-              <Typography variant="caption" sx={{ fontWeight: 700, color: "#3b82f6", display: "block", mb: 0.5 }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: SEMANTIC.info, display: "block", mb: 0.5 }}>
                 Insurance claim {claim.claimNumber}
               </Typography>
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>Pre-auth approved</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: "#3b82f6" }}>{formatINR(claimApproved)}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: SEMANTIC.info }}>{formatINR(claimApproved)}</Typography>
               </Box>
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>Patient shortfall (bill − approved)</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: patientShortfall! > 0 ? "#ef4444" : "#10b981" }}>{formatINR(patientShortfall || 0)}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: patientShortfall! > 0 ? SEMANTIC.danger : SEMANTIC.success }}>{formatINR(patientShortfall || 0)}</Typography>
               </Box>
               <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
                 The bill is auto-linked to this claim on discharge; record the payer settlement from the claim page.
@@ -171,7 +172,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
             <>
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>Deposit held</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: "#0891b2" }}>{formatINR(deposit)}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: ACCENTS.ipd }}>{formatINR(deposit)}</Typography>
               </Box>
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>Deposit applied</Typography>
@@ -181,7 +182,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
           )}
           <Box sx={{ display: "flex", justifyContent: "space-between", pt: 0.5, borderTop: deposit > 0 ? "1px dashed" : "none", borderColor: "divider" }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>{deposit > 0 ? "Payable now" : "Final bill total"}</Typography>
-            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: payable > 0 ? "#ef4444" : "#10b981" }}>{formatINR(payable)}</Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: payable > 0 ? SEMANTIC.danger : SEMANTIC.success }}>{formatINR(payable)}</Typography>
           </Box>
           {depositRefundable > 0 && (
             <Typography variant="caption" sx={{ color: "#8b5cf6" }}>
@@ -196,7 +197,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={submit} disabled={saving}
           startIcon={saving ? <HeartbeatLoader size={22} /> : <LogoutRounded />}
-          sx={{ bgcolor: "#ef4444", "&:hover": { bgcolor: "#dc2626" } }}>
+          sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: SEMANTIC.dangerDark } }}>
           Discharge & Bill
         </Button>
       </DialogActions>

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Paper, Grid, TextField, Tabs, Tab, Button, Typography,
@@ -14,7 +15,7 @@ import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 
-const ACCENT = "#0891b2";
+const ACCENT = ACCENTS.ipd;
 const inr = formatINRAuto;
 
 function Kpi({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
@@ -124,7 +125,7 @@ export function IpAdvances() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<SavingsRounded />} label="Advance collected" value={inr(data.totals.total)} color="#10b981" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<SavingsRounded />} label="Advance collected" value={inr(data.totals.total)} color={SEMANTIC.success} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<AccessTimeRounded />} label="Entries" value={String(data.totals.count)} color={ACCENT} /></Grid>
           </Grid>
           <DataTable title={`IP Advances ${from} to ${to}`} head={["Date", "Patient", "UHID", "Method", "Amount"]}

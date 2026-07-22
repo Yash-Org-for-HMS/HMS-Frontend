@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -16,7 +17,7 @@ import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 
 const STATUS_COLOR: Record<string, string> = {
-  AVAILABLE: "#10b981", OCCUPIED: "#ef4444", RESERVED: "#f59e0b", MAINTENANCE: "#64748b",
+  AVAILABLE: SEMANTIC.success, OCCUPIED: SEMANTIC.danger, RESERVED: SEMANTIC.warning, MAINTENANCE: NEUTRAL.muted,
 };
 
 // Read-only structure + day-to-day bed STATUS changes only. Adding/editing
@@ -60,7 +61,7 @@ export default function BedBoard() {
 
       {summary && (
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Total beds" value={summary.totalBeds} color="#0891b2" /></Grid>
+          <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Total beds" value={summary.totalBeds} color={ACCENTS.ipd} /></Grid>
           <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Available" value={summary.available} color={STATUS_COLOR.AVAILABLE} /></Grid>
           <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Occupied" value={summary.occupied} color={STATUS_COLOR.OCCUPIED} /></Grid>
           <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Reserved" value={summary.reserved} color={STATUS_COLOR.RESERVED} /></Grid>
@@ -76,7 +77,7 @@ export default function BedBoard() {
             {wards.map((w) => (
               <Paper key={w.wardId} elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-                  <ApartmentRounded sx={{ color: "#0891b2" }} fontSize="small" />
+                  <ApartmentRounded sx={{ color: ACCENTS.ipd }} fontSize="small" />
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{w.wardName}</Typography>
                   <Chip label={w.wardType} size="small" sx={{ bgcolor: "action.hover", fontWeight: 600 }} />
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>Floor {w.floorNumber}</Typography>
@@ -86,7 +87,7 @@ export default function BedBoard() {
                     <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>Room {r.roomNumber} · {r.roomType}</Typography>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.5 }}>
                       {r.beds.length === 0 ? <Typography variant="caption" sx={{ color: "text.disabled" }}>No beds</Typography> : r.beds.map((b: any) => {
-                        const color = STATUS_COLOR[b.status] || "#64748b";
+                        const color = STATUS_COLOR[b.status] || NEUTRAL.muted;
                         return (
                           <Tooltip key={b.bedId} title={b.occupant ? `${b.occupant.patientName} (${b.occupant.uhid})` : b.status}>
                             <Box onClick={(e) => setBedMenu({ anchor: e.currentTarget, bed: b })}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,9 +25,9 @@ interface Props {
 }
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
-  SCHEDULED: { label: "Scheduled", color: "#f59e0b" },
-  COMPLETED: { label: "Completed", color: "#10b981" },
-  CANCELLED: { label: "Cancelled", color: "#64748b" },
+  SCHEDULED: { label: "Scheduled", color: SEMANTIC.warning },
+  COMPLETED: { label: "Completed", color: SEMANTIC.success },
+  CANCELLED: { label: "Cancelled", color: NEUTRAL.muted },
 };
 
 const emptyForm = { procedureName: "", surgeryType: "MINOR", gradeId: "", surgeonId: "", surgeryDate: "", price: "", notes: "" };
@@ -120,7 +121,7 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <MedicalServicesRounded sx={{ color: "#0891b2" }} /> Surgery Details
+        <MedicalServicesRounded sx={{ color: ACCENTS.ipd }} /> Surgery Details
         {isFetching && <HeartbeatLoader size={18} />}
       </DialogTitle>
       <DialogContent dividers>
@@ -162,19 +163,19 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
                         <Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700, mb: s.invoiceNumber ? 0.5 : 0 }} />
                         {s.invoiceNumber && (
                           <Chip icon={<ReceiptLongRounded sx={{ fontSize: 14 }} />} label={`Billed: ${s.invoiceNumber}`} size="small"
-                            sx={{ display: "block", mt: 0.5, bgcolor: "rgba(8,145,178,0.12)", color: "#0891b2", fontWeight: 700 }} />
+                            sx={{ display: "block", mt: 0.5, bgcolor: "rgba(8,145,178,0.12)", color: ACCENTS.ipd, fontWeight: 700 }} />
                         )}
                       </TableCell>
                       <TableCell align="right">
                         {s.status === "SCHEDULED" && (
                           <>
                             <Tooltip title="Mark completed">
-                              <IconButton size="small" disabled={busyId === s.surgeryId} onClick={() => setStatus(s.surgeryId, "COMPLETED")} sx={{ color: "#10b981" }}>
+                              <IconButton size="small" disabled={busyId === s.surgeryId} onClick={() => setStatus(s.surgeryId, "COMPLETED")} sx={{ color: SEMANTIC.success }}>
                                 <CheckCircleRounded fontSize="small" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Cancel">
-                              <IconButton size="small" disabled={busyId === s.surgeryId} onClick={() => setStatus(s.surgeryId, "CANCELLED")} sx={{ color: "#ef4444" }}>
+                              <IconButton size="small" disabled={busyId === s.surgeryId} onClick={() => setStatus(s.surgeryId, "CANCELLED")} sx={{ color: SEMANTIC.danger }}>
                                 <CancelRounded fontSize="small" />
                               </IconButton>
                             </Tooltip>
@@ -228,7 +229,7 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
         <Button onClick={onClose} color="inherit" disabled={saving}>Close</Button>
         <Button variant="contained" onClick={submit} disabled={saving || !form.procedureName.trim()}
           startIcon={saving ? <HeartbeatLoader size={22} /> : <AddRounded />}
-          sx={{ bgcolor: "#0891b2", "&:hover": { bgcolor: "#0e7490" } }}>Add Surgery</Button>
+          sx={{ bgcolor: ACCENTS.ipd, "&:hover": { bgcolor: ACCENTS.ipdDark } }}>Add Surgery</Button>
       </DialogActions>
     </Dialog>
   );

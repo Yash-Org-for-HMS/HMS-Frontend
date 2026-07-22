@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -15,7 +16,7 @@ const DOSE_META: Record<string, { label: string; color: string; bg: string }> = 
   PENDING: { label: "Due", color: "#b45309", bg: "rgba(245,158,11,0.15)" },
   GIVEN: { label: "Given", color: "#047857", bg: "rgba(16,185,129,0.15)" },
   MISSED: { label: "Missed", color: "#b91c1c", bg: "rgba(239,68,68,0.15)" },
-  HELD: { label: "Held", color: "#475569", bg: "rgba(100,116,139,0.15)" },
+  HELD: { label: "Held", color: NEUTRAL.textSecondary, bg: "rgba(100,116,139,0.15)" },
 };
 
 export default function MarChart({ admissionId }: { admissionId: string }) {
@@ -57,7 +58,7 @@ export default function MarChart({ admissionId }: { admissionId: string }) {
               <Typography variant="body2" sx={{ fontWeight: 700 }}>{o.medicineName}</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>{[o.dosage, o.frequency, o.route].filter(Boolean).join(" · ")}</Typography>
             </Box>
-            {o.status === "BILLED" && <Chip label="Billed" size="small" sx={{ bgcolor: "rgba(8,145,178,0.12)", color: "#0891b2", fontWeight: 700 }} />}
+            {o.status === "BILLED" && <Chip label="Billed" size="small" sx={{ bgcolor: "rgba(8,145,178,0.12)", color: ACCENTS.ipd, fontWeight: 700 }} />}
           </Box>
           <Box sx={{ p: 1 }}>
             {o.doses.map((d: any, i: number) => {

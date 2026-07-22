@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
 import { useQuery } from "@tanstack/react-query";
@@ -59,7 +60,7 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        {isRefund ? <UndoRounded sx={{ color: "#8b5cf6" }} /> : <SavingsRounded sx={{ color: "#0891b2" }} />}
+        {isRefund ? <UndoRounded sx={{ color: "#8b5cf6" }} /> : <SavingsRounded sx={{ color: ACCENTS.ipd }} />}
         {isRefund ? "Refund Deposit" : "Collect Deposit"}
       </DialogTitle>
       <DialogContent dividers>
@@ -84,7 +85,7 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={submit} disabled={saving || !canSubmit}
           startIcon={saving ? <HeartbeatLoader size={22} /> : (isRefund ? <UndoRounded /> : <SavingsRounded />)}
-          sx={{ bgcolor: isRefund ? "#8b5cf6" : "#0891b2", "&:hover": { bgcolor: isRefund ? "#7c3aed" : "#0e7490" } }}>
+          sx={{ bgcolor: isRefund ? "#8b5cf6" : ACCENTS.ipd, "&:hover": { bgcolor: isRefund ? ACCENTS.ipd : ACCENTS.ipdDark } }}>
           {isRefund ? "Refund" : "Collect"}
         </Button>
       </DialogActions>

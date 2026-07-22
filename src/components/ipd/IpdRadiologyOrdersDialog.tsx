@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -33,8 +34,8 @@ const PRIORITIES = [
 ];
 const STATUS_CHIP: Record<string, any> = {
   PENDING: { label: "Pending", icon: <HourglassTopRounded sx={{ fontSize: 14 }} />, bg: "rgba(245,158,11,0.12)", color: "#b45309" },
-  IN_PROGRESS: { label: "In progress", icon: <PendingActionsRounded sx={{ fontSize: 14 }} />, bg: "rgba(59,130,246,0.12)", color: "#2563eb" },
-  COMPLETED: { label: "Completed", icon: <CheckCircleRounded sx={{ fontSize: 14 }} />, bg: "rgba(16,185,129,0.12)", color: "#059669" },
+  IN_PROGRESS: { label: "In progress", icon: <PendingActionsRounded sx={{ fontSize: 14 }} />, bg: "rgba(59,130,246,0.12)", color: SEMANTIC.infoDark },
+  COMPLETED: { label: "Completed", icon: <CheckCircleRounded sx={{ fontSize: 14 }} />, bg: "rgba(16,185,129,0.12)", color: SEMANTIC.successDark },
 };
 
 export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: Props) {
@@ -129,10 +130,10 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <MonitorHeartRounded sx={{ color: "#0891b2" }} /> Radiology / Imaging
+        <MonitorHeartRounded sx={{ color: ACCENTS.ipd }} /> Radiology / Imaging
         {isFetching && <HeartbeatLoader size={18} />}
       </DialogTitle>
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ px: 2, borderBottom: "1px solid", borderColor: "divider", "& .Mui-selected": { color: "#0891b2 !important" }, "& .MuiTabs-indicator": { bgcolor: "#0891b2" } }}>
+      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ px: 2, borderBottom: "1px solid", borderColor: "divider", "& .Mui-selected": { color: "#7c3aed !important" }, "& .MuiTabs-indicator": { bgcolor: ACCENTS.ipd } }}>
         <Tab value="order" label="Order Scans" sx={{ textTransform: "none", fontWeight: 600 }} />
         <Tab value="results" label={`Scans & Reports${orders.length ? ` (${orders.length})` : ""}`} sx={{ textTransform: "none", fontWeight: 600 }} />
       </Tabs>
@@ -152,7 +153,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
                 ))}
               </TextField>
               <TextField label="Clinical note (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. R/O chest infection" />
-              <Button onClick={addToBasket} disabled={!scanType} startIcon={<AddRounded />} sx={{ textTransform: "none", mt: 0.5, color: "#0891b2" }}>Add</Button>
+              <Button onClick={addToBasket} disabled={!scanType} startIcon={<AddRounded />} sx={{ textTransform: "none", mt: 0.5, color: ACCENTS.ipd }}>Add</Button>
             </Box>
 
             {basket.length > 0 && (
@@ -165,7 +166,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
                         {s.notes && <Typography variant="caption" sx={{ color: "text.secondary" }}>{s.notes}</Typography>}
                       </Box>
                       {s.price != null && <Typography variant="caption" sx={{ color: "text.secondary" }}>{formatINR(s.price)}</Typography>}
-                      <IconButton size="small" onClick={() => removeFromBasket(i)} sx={{ color: "#ef4444" }}><DeleteOutlineRounded fontSize="small" /></IconButton>
+                      <IconButton size="small" onClick={() => removeFromBasket(i)} sx={{ color: SEMANTIC.danger }}><DeleteOutlineRounded fontSize="small" /></IconButton>
                     </Box>
                   ))}
                 </Stack>
@@ -197,7 +198,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
                     </Box>
                     <SoftChip {...sc} />
                     {o.status === "PENDING" && (
-                      <IconButton size="small" disabled={busyId === o.radiologyOrderId} onClick={() => cancelOrder(o)} sx={{ color: "#ef4444" }} title="Cancel scan">
+                      <IconButton size="small" disabled={busyId === o.radiologyOrderId} onClick={() => cancelOrder(o)} sx={{ color: SEMANTIC.danger }} title="Cancel scan">
                         <DeleteOutlineRounded fontSize="small" />
                       </IconButton>
                     )}
@@ -222,7 +223,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
                             </Box>
                           )}
                           {(o.reportUrl || report?.reportUrl) && (
-                            <Link href={o.reportUrl || report?.reportUrl} target="_blank" rel="noopener" sx={{ fontSize: "0.85rem", color: "#0891b2" }}>View report file</Link>
+                            <Link href={o.reportUrl || report?.reportUrl} target="_blank" rel="noopener" sx={{ fontSize: "0.85rem", color: ACCENTS.ipd }}>View report file</Link>
                           )}
                         </Stack>
                       ) : (
@@ -241,7 +242,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
         {tab === "order" && (
           <Button variant="contained" onClick={submit} disabled={saving || effectiveScans.length === 0}
             startIcon={saving ? <HeartbeatLoader size={22} /> : <AddRounded />}
-            sx={{ bgcolor: "#0891b2", "&:hover": { bgcolor: "#0e7490" } }}>
+            sx={{ bgcolor: ACCENTS.ipd, "&:hover": { bgcolor: ACCENTS.ipdDark } }}>
             Order {effectiveScans.length || ""} scan{effectiveScans.length === 1 ? "" : "s"}
           </Button>
         )}

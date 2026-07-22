@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
@@ -33,9 +34,9 @@ import SortableHeadCell from "@/components/table/SortableHeadCell";
 const inr = (n: any) => formatINR(n, 0);
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
-  ADMITTED: { label: "Admitted", color: "#0891b2" },
-  DISCHARGED: { label: "Discharged", color: "#10b981" },
-  CANCELLED: { label: "Cancelled", color: "#64748b" },
+  ADMITTED: { label: "Admitted", color: ACCENTS.ipd },
+  DISCHARGED: { label: "Discharged", color: SEMANTIC.success },
+  CANCELLED: { label: "Cancelled", color: NEUTRAL.muted },
 };
 const TABS = ["ADMITTED", "DISCHARGED", ""];
 
@@ -100,14 +101,14 @@ export default function Admissions() {
         subtitle="In-patient admissions, transfers, and discharges"
         actions={
           <Button variant="contained" startIcon={<LocalHotelRounded />} onClick={() => setAdmitOpen(true)}
-            sx={{ background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)", fontWeight: 600, textTransform: "none", borderRadius: 2 }}>
+            sx={{ background: "linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%)", fontWeight: 600, textTransform: "none", borderRadius: 2 }}>
             Admit Patient
           </Button>
         }
       />
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2, mb: 2 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ "& .MuiTab-root": { textTransform: "none", fontWeight: 600 }, "& .Mui-selected": { color: "#0891b2 !important" }, "& .MuiTabs-indicator": { bgcolor: "#0891b2" } }}>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ "& .MuiTab-root": { textTransform: "none", fontWeight: 600 }, "& .Mui-selected": { color: "#7c3aed !important" }, "& .MuiTabs-indicator": { bgcolor: ACCENTS.ipd } }}>
           <Tab label="Current" /><Tab label="Discharged" /><Tab label="All" />
         </Tabs>
         <TextField placeholder="Search patient, IPD#, diagnosis…" value={search} onChange={(e) => setSearch(e.target.value)} size="small"
@@ -138,7 +139,7 @@ export default function Admissions() {
               ) : sorted.length === 0 ? (
                 <TableRow><TableCell colSpan={9} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No admissions" subtitle="Nothing here for this filter." /></TableCell></TableRow>
               ) : sorted.map((a) => {
-                const sm = STATUS_META[a.status] || { label: a.status, color: "#64748b" };
+                const sm = STATUS_META[a.status] || { label: a.status, color: NEUTRAL.muted };
                 return (
                   <TableRow key={a.admissionId} hover>
                     <TableCell sx={{ py: 1.5 }}>
@@ -156,19 +157,19 @@ export default function Admissions() {
                     <TableCell sx={{ color: "text.secondary" }}>{a.days ?? "—"}</TableCell>
                     <TableCell align="right">
                       {Number(a.depositBalance) > 0
-                        ? <Chip label={inr(a.depositBalance)} size="small" sx={{ bgcolor: "rgba(8,145,178,0.12)", color: "#0891b2", fontWeight: 700 }} />
+                        ? <Chip label={inr(a.depositBalance)} size="small" sx={{ bgcolor: "rgba(8,145,178,0.12)", color: ACCENTS.ipd, fontWeight: 700 }} />
                         : <Typography variant="caption" sx={{ color: "text.disabled" }}>—</Typography>}
                     </TableCell>
                     <TableCell><Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700 }} /></TableCell>
                     <TableCell align="right">
                       {a.status === "ADMITTED" && (
                         <>
-                          <Tooltip title="Medicines"><IconButton size="small" onClick={() => setMedsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2" } }}><MedicationRounded fontSize="small" /></IconButton></Tooltip>
-                          <Tooltip title="Lab tests"><IconButton size="small" onClick={() => setLabsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2" } }}><ScienceRounded fontSize="small" /></IconButton></Tooltip>
-                          <Tooltip title="Radiology / imaging"><IconButton size="small" onClick={() => setRadiologyFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2" } }}><MonitorHeartRounded fontSize="small" /></IconButton></Tooltip>
-                          <Tooltip title="Surgery details"><IconButton size="small" onClick={() => setSurgeryFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2" } }}><MedicalServicesRounded fontSize="small" /></IconButton></Tooltip>
-                          <Tooltip title="Transfer bed"><IconButton size="small" onClick={() => setTransferFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2" } }}><SwapHorizRounded fontSize="small" /></IconButton></Tooltip>
-                          <Tooltip title="Discharge"><IconButton size="small" onClick={() => setDischargeFor(a)} sx={{ color: "text.secondary", "&:hover": { color: "#ef4444" } }}><LogoutRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Medicines"><IconButton size="small" onClick={() => setMedsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MedicationRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Lab tests"><IconButton size="small" onClick={() => setLabsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><ScienceRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Radiology / imaging"><IconButton size="small" onClick={() => setRadiologyFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MonitorHeartRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Surgery details"><IconButton size="small" onClick={() => setSurgeryFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MedicalServicesRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Transfer bed"><IconButton size="small" onClick={() => setTransferFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><SwapHorizRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Discharge"><IconButton size="small" onClick={() => setDischargeFor(a)} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}><LogoutRounded fontSize="small" /></IconButton></Tooltip>
                         </>
                       )}
                       {(a.status === "ADMITTED" || Number(a.depositBalance) > 0) && (
@@ -192,7 +193,7 @@ export default function Admissions() {
       <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={() => setMenu({ anchor: null, row: null })}>
         {menu.row?.status === "ADMITTED" && (
           <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setDepositFor({ row: r, mode: "collect" }); }}>
-            <SavingsRounded fontSize="small" sx={{ mr: 1, color: "#0891b2" }} /> Collect deposit
+            <SavingsRounded fontSize="small" sx={{ mr: 1, color: ACCENTS.ipd }} /> Collect deposit
           </MenuItem>
         )}
         {Number(menu.row?.depositBalance) > 0 && (
@@ -201,7 +202,7 @@ export default function Admissions() {
           </MenuItem>
         )}
         {menu.row?.status === "ADMITTED" && (
-          <MenuItem onClick={() => cancel(menu.row)} sx={{ color: "#ef4444" }}><CancelRounded fontSize="small" sx={{ mr: 1 }} /> Cancel admission</MenuItem>
+          <MenuItem onClick={() => cancel(menu.row)} sx={{ color: SEMANTIC.danger }}><CancelRounded fontSize="small" sx={{ mr: 1 }} /> Cancel admission</MenuItem>
         )}
       </Menu>
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,8 +34,8 @@ const PRIORITIES = [
 // Computed order status from the backend (buildStatus): PENDING -> SAMPLE_COLLECTED -> COMPLETED.
 const STATUS_CHIP: Record<string, any> = {
   PENDING: { label: "Pending", icon: <HourglassTopRounded sx={{ fontSize: 14 }} />, bg: "rgba(245,158,11,0.12)", color: "#b45309" },
-  SAMPLE_COLLECTED: { label: "Sample collected", icon: <BiotechRounded sx={{ fontSize: 14 }} />, bg: "rgba(59,130,246,0.12)", color: "#2563eb" },
-  COMPLETED: { label: "Completed", icon: <CheckCircleRounded sx={{ fontSize: 14 }} />, bg: "rgba(16,185,129,0.12)", color: "#059669" },
+  SAMPLE_COLLECTED: { label: "Sample collected", icon: <BiotechRounded sx={{ fontSize: 14 }} />, bg: "rgba(59,130,246,0.12)", color: SEMANTIC.infoDark },
+  COMPLETED: { label: "Completed", icon: <CheckCircleRounded sx={{ fontSize: 14 }} />, bg: "rgba(16,185,129,0.12)", color: SEMANTIC.successDark },
 };
 
 export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) {
@@ -121,10 +122,10 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <ScienceRounded sx={{ color: "#0891b2" }} /> Labs & Investigations
+        <ScienceRounded sx={{ color: ACCENTS.ipd }} /> Labs & Investigations
         {isFetching && <HeartbeatLoader size={18} />}
       </DialogTitle>
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ px: 2, borderBottom: "1px solid", borderColor: "divider", "& .Mui-selected": { color: "#0891b2 !important" }, "& .MuiTabs-indicator": { bgcolor: "#0891b2" } }}>
+      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ px: 2, borderBottom: "1px solid", borderColor: "divider", "& .Mui-selected": { color: "#7c3aed !important" }, "& .MuiTabs-indicator": { bgcolor: ACCENTS.ipd } }}>
         <Tab value="order" label="Order Investigations" sx={{ textTransform: "none", fontWeight: 600 }} />
         <Tab value="results" label={`Orders & Results${orders.length ? ` (${orders.length})` : ""}`} sx={{ textTransform: "none", fontWeight: 600 }} />
       </Tabs>
@@ -147,7 +148,7 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
                 <li {...props} key={o.labTestId}>
                   <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
                     <span>{o.testName || o.testCode}{o.isProfile ? " · profile" : ""}</span>
-                    <span style={{ color: "#64748b", fontSize: "0.8rem" }}>{formatINR(o.price)}</span>
+                    <span style={{ color: NEUTRAL.muted, fontSize: "0.8rem" }}>{formatINR(o.price)}</span>
                   </Box>
                 </li>
               )}
@@ -191,7 +192,7 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
                     </Box>
                     <SoftChip {...sc} />
                     {o.status === "PENDING" && (
-                      <IconButton size="small" disabled={busyId === o.labOrderId} onClick={() => cancelOrder(o)} sx={{ color: "#ef4444" }} title="Cancel order">
+                      <IconButton size="small" disabled={busyId === o.labOrderId} onClick={() => cancelOrder(o)} sx={{ color: SEMANTIC.danger }} title="Cancel order">
                         <DeleteOutlineRounded fontSize="small" />
                       </IconButton>
                     )}
@@ -215,7 +216,7 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
                             return (
                               <TableRow key={r.labReportId}>
                                 <TableCell>{r.testName || r.testCode || "—"}</TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: r.isCritical ? "#ef4444" : pending ? "text.disabled" : "text.primary" }}>
+                                <TableCell sx={{ fontWeight: 600, color: r.isCritical ? SEMANTIC.danger : pending ? "text.disabled" : "text.primary" }}>
                                   {pending ? "Pending" : r.resultValue}{r.isCritical ? " ⚠" : ""}
                                 </TableCell>
                                 <TableCell sx={{ color: "text.secondary" }}>{r.normalRange || "—"}</TableCell>
@@ -237,7 +238,7 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
         {tab === "order" && (
           <Button variant="contained" onClick={submit} disabled={saving || basket.length === 0}
             startIcon={saving ? <HeartbeatLoader size={22} /> : <AddRounded />}
-            sx={{ bgcolor: "#0891b2", "&:hover": { bgcolor: "#0e7490" } }}>
+            sx={{ bgcolor: ACCENTS.ipd, "&:hover": { bgcolor: ACCENTS.ipdDark } }}>
             Order {basket.length || ""} test{basket.length === 1 ? "" : "s"}
           </Button>
         )}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -111,7 +112,7 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
     <>
       <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <LocalHotelRounded sx={{ color: "#0891b2" }} /> Admit Patient
+          <LocalHotelRounded sx={{ color: ACCENTS.ipd }} /> Admit Patient
         </DialogTitle>
         <DialogContent dividers>
           <Grid container spacing={2.5} sx={{ pt: 0.5 }}>
@@ -162,7 +163,7 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
               <Divider sx={{ mb: 1 }} />
               <FormControlLabel
                 control={<Switch checked={insuranceOn} onChange={(e) => setInsuranceOn(e.target.checked)} />}
-                label={<Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}><HealthAndSafetyRounded fontSize="small" sx={{ color: "#0891b2" }} /><Typography variant="body2" sx={{ fontWeight: 600 }}>Insurance / government-scheme case</Typography></Box>}
+                label={<Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}><HealthAndSafetyRounded fontSize="small" sx={{ color: ACCENTS.ipd }} /><Typography variant="body2" sx={{ fontWeight: 600 }}>Insurance / government-scheme case</Typography></Box>}
               />
             </Grid>
             {insuranceOn && (
@@ -198,14 +199,14 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
           <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
           <Button variant="contained" onClick={submit} disabled={saving || !canSubmit}
             startIcon={saving ? <HeartbeatLoader size={22} /> : <LocalHotelRounded />}
-            sx={{ bgcolor: "#0891b2", "&:hover": { bgcolor: "#0e7490" } }}>Admit</Button>
+            sx={{ bgcolor: ACCENTS.ipd, "&:hover": { bgcolor: ACCENTS.ipdDark } }}>Admit</Button>
         </DialogActions>
       </Dialog>
 
       {/* Inline new-patient registration (reuses the reception PatientForm modal). */}
       <Dialog open={registerOpen} onClose={() => setRegisterOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <PersonAddRounded sx={{ color: "#0891b2" }} /> Register New Patient
+          <PersonAddRounded sx={{ color: ACCENTS.ipd }} /> Register New Patient
         </DialogTitle>
         <DialogContent dividers>
           <PatientForm isModal onSuccess={handleNewPatient} onCancel={() => setRegisterOpen(false)} />
