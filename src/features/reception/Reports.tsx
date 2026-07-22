@@ -23,6 +23,7 @@ import { exportTableToExcel } from "@/utils/exportExcel";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
+import { KpiCard, ReportFilters, ReportTable, TrendChart, BreakdownBar, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = ACCENTS.reception;
 const PIE = [ACCENTS.reception, SEMANTIC.success, SEMANTIC.warning, SEMANTIC.danger, "#8b5cf6", SEMANTIC.info, "#ec4899"];
@@ -178,56 +179,65 @@ export function DiagnosisWise() {
 
 // ── Referrals by Doctor ──────────────────────────────────────────────────────
 export function ReferralsByDoctor() {
-  const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
-  const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
+  const [range, setRange] = useState<DateRange>({ from: dayjs().subtract(29, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
   const [type, setType] = useState("");
   const [referrerId, setReferrerId] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
   const { data: opts } = useFilterOptions();
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["report-referrals", from, to, type, referrerId],
+    queryKey: ["report-referrals", range.from, range.to, type, referrerId],
     queryFn: async () => (await axiosInstance.get("/reception/reports/referrals", {
-      params: { from, to, type: type || undefined, referrerId: referrerId || undefined },
+      params: { from: range.from, to: range.to, type: type || undefined, referrerId: referrerId || undefined },
     })).data.data,
   });
   const s = data?.summary;
+  const prev = data?.previous;
+  const trend: any[] = data?.trend ?? [];
   const rows: any[] = data?.rows ?? [];
-  const clear = () => { setType(""); setReferrerId(""); };
-  const hasFilters = !!(type || referrerId);
 
   return (
     <Box>
-      <Toolbar onClear={hasFilters ? clear : undefined}>
-        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
-        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
-        <FilterSelect label="Type" value={type} onChange={(v) => { setType(v); if (v === "EXTERNAL") setReferrerId(""); }} options={opts?.referralTypes} width={150} />
-        <FilterSelect label="Referring doctor" value={referrerId} onChange={setReferrerId} options={opts?.doctors} width={200} />
-      </Toolbar>
+      <ReportFilters value={range} onChange={setRange}>
+        <TextField select size="small" label="Type" value={type} sx={{ minWidth: 150 }}
+          onChange={(e) => { setType(e.target.value); if (e.target.value === "EXTERNAL") setReferrerId(""); }}>
+          <MenuItem value=""><em>All types</em></MenuItem>
+          {(opts?.referralTypes ?? []).map((o) => <MenuItem key={String(o.id)} value={String(o.id)}>{o.name}</MenuItem>)}
+        </TextField>
+        <TextField select size="small" label="Referring doctor" value={referrerId} sx={{ minWidth: 200 }} disabled={type === "EXTERNAL"}
+          onChange={(e) => setReferrerId(e.target.value)}>
+          <MenuItem value=""><em>All doctors</em></MenuItem>
+          {(opts?.doctors ?? []).map((o) => <MenuItem key={String(o.id)} value={String(o.id)}>{o.name}</MenuItem>)}
+        </TextField>
+      </ReportFilters>
 
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
-        <Box ref={ref}>
+        <Box>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<MedicalInformationRounded />} label="Referring doctors" value={String(s.referringDoctors)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="Referred patients" value={String(s.referredPatients)} color={SEMANTIC.success} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CallSplitRounded />} label="Internal / External" value={`${s.internal ?? 0} / ${s.external ?? 0}`} color={SEMANTIC.info} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<EventRounded />} label="Total visits" value={String(s.totalVisits)} color="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicalInformationRounded />} accent={ACCENT} label="Referring doctors" value={String(s.referringDoctors)} current={s.referringDoctors} previous={prev?.referringDoctors} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} accent={SEMANTIC.success} label="Referred patients" value={String(s.referredPatients)} current={s.referredPatients} previous={prev?.referredPatients} spark={trend.map((t) => t.patients)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CallSplitRounded />} accent={SEMANTIC.info} label="Internal / External" value={`${s.internal ?? 0} / ${s.external ?? 0}`} sub="referrers" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} accent="#8b5cf6" label="Total visits" value={String(s.totalVisits)} current={s.totalVisits} previous={prev?.totalVisits} /></Grid>
           </Grid>
 
-          <Grid container spacing={2.5}>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 12, md: 7 }}>
-              <ChartCard title="Patients referred by doctor" empty={!rows.length}>
-                <BarChart data={rows} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} horizontal={false} />
-                  <XAxis type="number" {...axisProps} allowDecimals={false} /><YAxis type="category" dataKey="name" width={140} {...axisProps} />
-                  <RTooltip /><Bar dataKey="patientCount" name="Patients" fill={ACCENT} radius={[0, 6, 6, 0]} />
-                </BarChart>
-              </ChartCard>
+              <BreakdownBar title="Top referrers" subtitle="Patients referred, this period" data={rows.slice(0, 10)} categoryKey="name" valueKey="patientCount" valueName="Patients" colorIndex={0} height={340} />
             </Grid>
             <Grid size={{ xs: 12, md: 5 }}>
-              <SimpleTable title="Referrer detail" head={["Doctor", "Type", "Patients", "Visits"]}
-                rows={rows.map((r) => [`${r.name}${r.specialty ? ` (${r.specialty})` : ""}`, r.type, String(r.patientCount), String(r.visitCount)])} />
+              <TrendChart title="Referrals over time" subtitle="New referred patients per day" data={trend} xKey="date" series={[{ key: "patients", label: "Referred patients" }]} height={340} />
             </Grid>
           </Grid>
+
+          <ReportTable
+            title="Referrer detail"
+            filename={`referrals_${range.from}_${range.to}`}
+            columns={[
+              { key: "name", label: "Doctor / referrer", value: (r) => r.name, format: (_v, r) => r.specialty ? `${r.name} (${r.specialty})` : r.name },
+              { key: "type", label: "Type" },
+              { key: "patientCount", label: "Patients", align: "right" },
+              { key: "visitCount", label: "Visits", align: "right" },
+            ]}
+            rows={rows}
+          />
         </Box>
       )}
     </Box>
