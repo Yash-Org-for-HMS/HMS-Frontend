@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -193,7 +194,7 @@ export default function InventoryManagement() {
     <PharmacyPage
       title="Inventory & POs"
       subtitle="Manage stock levels, raise purchase orders, and receive goods."
-      icon={<InventoryRounded fontSize="large" sx={{ color: '#4F46E5' }} />}
+      icon={<InventoryRounded fontSize="large" sx={{ color: ACCENTS.pharmacy }} />}
       action={
         <Button
           variant="contained"
@@ -205,7 +206,7 @@ export default function InventoryManagement() {
             fontWeight: 600,
             px: 3,
             py: 1.2,
-            background: 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%)',
+            background: 'linear-gradient(135deg, #0d9488 0%, #3B82F6 100%)',
             boxShadow: '0 8px 16px -4px rgba(79, 70, 229, 0.4)',
           }}
         >
@@ -278,7 +279,7 @@ export default function InventoryManagement() {
                     <TableRow><TableCell colSpan={6} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No stock available." size={110} /></TableCell></TableRow>
                   ) : inventory.map(inv => (
                     <TableRow key={inv.inventoryId} hover>
-                      <TableCell sx={{ fontWeight: 600, color: '#4F46E5' }}>{getMedicineName(inv.medicineId)}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: ACCENTS.pharmacy }}>{getMedicineName(inv.medicineId)}</TableCell>
                       <TableCell>{inv.batchNumber}</TableCell>
                       <TableCell sx={{ color: new Date(inv.expiryDate) < new Date() ? 'error.main' : 'inherit' }}>
                         {new Date(inv.expiryDate).toLocaleDateString()}
@@ -326,8 +327,8 @@ export default function InventoryManagement() {
                       <TableCell>
                         <Box sx={{
                           display: 'inline-block', px: 1.5, py: 0.5, borderRadius: 2, fontSize: '0.875rem', fontWeight: 600,
-                          bgcolor: po.status === 'pending' ? alpha('#F59E0B', 0.1) : po.status === 'partial' ? alpha('#3B82F6', 0.1) : alpha('#10B981', 0.1),
-                          color: po.status === 'pending' ? '#F59E0B' : po.status === 'partial' ? '#3B82F6' : '#10B981'
+                          bgcolor: po.status === 'pending' ? alpha(SEMANTIC.warning, 0.1) : po.status === 'partial' ? alpha(SEMANTIC.info, 0.1) : alpha(SEMANTIC.success, 0.1),
+                          color: po.status === 'pending' ? SEMANTIC.warning : po.status === 'partial' ? SEMANTIC.info : SEMANTIC.success
                         }}>
                           {po.status.toUpperCase()}
                         </Box>
@@ -370,7 +371,7 @@ export default function InventoryManagement() {
                     <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="all-caught-up" subtitle="No low stock alerts — stock is healthy." size={110} /></TableCell></TableRow>
                   ) : paginatedAlerts.map(alert => (
                     <TableRow key={alert.medicineId} hover>
-                      <TableCell sx={{ fontWeight: 600, color: '#4F46E5' }}>{alert.medicineName}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: ACCENTS.pharmacy }}>{alert.medicineName}</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{alert.minStockLevel}</TableCell>
                       <TableCell sx={{ fontWeight: 700, color: 'error.main' }}>{alert.currentStock}</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: 'warning.main' }}>{alert.pendingStock || 0}</TableCell>

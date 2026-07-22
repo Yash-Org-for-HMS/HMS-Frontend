@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import {
   Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Typography, Button,
   MenuItem, Select, IconButton, Chip, Autocomplete, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -157,7 +158,7 @@ export default function AutoGeneratePODialog({ open, onClose, lowStockAlerts, me
                       <TextField type="number" size="small" value={r.unitPrice} onChange={(e) => updateRow(idx, { unitPrice: parseFloat(e.target.value) || 0 })} inputProps={{ min: 0, step: 0.01, style: { textAlign: 'right', width: 80 } }} />
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton size="small" onClick={() => removeRow(idx)} sx={{ color: '#ef4444' }}><DeleteOutlineRounded fontSize="small" /></IconButton>
+                      <IconButton size="small" onClick={() => removeRow(idx)} sx={{ color: SEMANTIC.danger }}><DeleteOutlineRounded fontSize="small" /></IconButton>
                     </TableCell>
                   </TableRow>
                 ))}

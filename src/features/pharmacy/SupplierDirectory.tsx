@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -186,7 +187,7 @@ export default function SupplierDirectory() {
     <PharmacyPage
       title="Supplier Directory"
       subtitle="Manage vendors, distributors, and pharmacy suppliers."
-      icon={<LocalShippingRounded fontSize="large" sx={{ color: '#4F46E5' }} />}
+      icon={<LocalShippingRounded fontSize="large" sx={{ color: ACCENTS.pharmacy }} />}
       action={
         <Button
           variant="contained"
@@ -276,7 +277,7 @@ export default function SupplierDirectory() {
                       }}
                     >
                       <TableCell sx={{ fontWeight: 600, fontFamily: 'monospace', color: 'text.secondary' }}>{sup.supplierCode}</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: '#4F46E5' }}>{sup.supplierName}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: ACCENTS.pharmacy }}>{sup.supplierName}</TableCell>
                       <TableCell sx={{ fontWeight: 500 }}>{sup.contactPersonName}</TableCell>
                       <TableCell sx={{ color: 'text.secondary' }}>{sup.phone}</TableCell>
                       <TableCell sx={{ color: 'text.secondary' }}>{sup.email}</TableCell>
@@ -285,7 +286,7 @@ export default function SupplierDirectory() {
                           <IconButton
                             color="primary"
                             onClick={() => handleOpenEdit(sup)}
-                            sx={{ '&:hover': { bgcolor: alpha('#4F46E5', 0.1) } }}
+                            sx={{ '&:hover': { bgcolor: alpha(ACCENTS.pharmacy, 0.1) } }}
                           >
                             <EditRounded fontSize="small" />
                           </IconButton>
@@ -294,7 +295,7 @@ export default function SupplierDirectory() {
                           <IconButton
                             color="error"
                             onClick={() => handleDelete(sup.supplierId)}
-                            sx={{ '&:hover': { bgcolor: alpha('#EF4444', 0.1) } }}
+                            sx={{ '&:hover': { bgcolor: alpha(SEMANTIC.danger, 0.1) } }}
                           >
                             <DeleteRounded fontSize="small" />
                           </IconButton>
@@ -333,7 +334,7 @@ export default function SupplierDirectory() {
         <DialogContent dividers sx={{ p: 3 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {errorMsg && (
-              <Box sx={{ p: 1.5, bgcolor: alpha('#EF4444', 0.1), borderRadius: 2, border: '1px solid', borderColor: alpha('#EF4444', 0.2) }}>
+              <Box sx={{ p: 1.5, bgcolor: alpha(SEMANTIC.danger, 0.1), borderRadius: 2, border: '1px solid', borderColor: alpha(SEMANTIC.danger, 0.2) }}>
                 <Typography color="error" variant="body2" fontWeight="500">{errorMsg}</Typography>
               </Box>
             )}
@@ -425,7 +426,7 @@ export default function SupplierDirectory() {
               fontWeight: 600,
               borderRadius: '8px',
               px: 3,
-              background: 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%)',
+              background: 'linear-gradient(135deg, #0d9488 0%, #3B82F6 100%)',
               boxShadow: 'none',
               '&:hover': { boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)' }
             }}

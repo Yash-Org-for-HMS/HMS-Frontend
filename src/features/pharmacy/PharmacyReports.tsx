@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
@@ -23,7 +24,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 
-const ACCENT = "#4F46E5";
+const ACCENT = ACCENTS.pharmacy;
 const inr = formatINRAuto;
 
 const PRESETS = [
@@ -145,12 +146,12 @@ export default function PharmacyReports() {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {/* KPIs */}
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(3,1fr)", md: "repeat(6,1fr)" }, gap: 1.5 }}>
-            <Kpi icon={<ReceiptLongRounded />} label="Orders dispensed" value={s?.totalOrders || 0} color="#4F46E5" />
-            <Kpi icon={<CurrencyRupeeRounded />} label="Total sales" value={inr(s?.totalSales)} color="#10b981" />
-            <Kpi icon={<TrendingUpRounded />} label="Avg order value" value={inr(s?.avgOrderValue)} color="#3b82f6" />
+            <Kpi icon={<ReceiptLongRounded />} label="Orders dispensed" value={s?.totalOrders || 0} color={ACCENTS.pharmacy} />
+            <Kpi icon={<CurrencyRupeeRounded />} label="Total sales" value={inr(s?.totalSales)} color={SEMANTIC.success} />
+            <Kpi icon={<TrendingUpRounded />} label="Avg order value" value={inr(s?.avgOrderValue)} color={SEMANTIC.info} />
             <Kpi icon={<LocalPharmacyRounded />} label="IPD meds issued" value={inr(s?.ipdMedicationValue)} color="#8b5cf6" />
-            <Kpi icon={<WarningAmberRounded />} label="Low stock items" value={s?.lowStockCount || 0} color="#f59e0b" />
-            <Kpi icon={<EventBusyRounded />} label="Expiring in 30 days" value={s?.expiringSoonCount || 0} color="#ef4444" />
+            <Kpi icon={<WarningAmberRounded />} label="Low stock items" value={s?.lowStockCount || 0} color={SEMANTIC.warning} />
+            <Kpi icon={<EventBusyRounded />} label="Expiring in 30 days" value={s?.expiringSoonCount || 0} color={SEMANTIC.danger} />
           </Box>
 
           {/* Trend */}
@@ -188,7 +189,7 @@ export default function PharmacyReports() {
                       <YAxis type="category" dataKey="medicineName" width={160} tick={{ fontSize: 11 }} tickFormatter={(v) => (v.length > 24 ? v.slice(0, 23) + "…" : v)} />
                       <RTooltip formatter={(v: any, name: any) => (name === "Revenue" ? inr(v) : v)} />
                       <Legend />
-                      <Bar dataKey="qty" name="Units sold" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={14} />
+                      <Bar dataKey="qty" name="Units sold" fill={SEMANTIC.info} radius={[0, 4, 4, 0]} barSize={14} />
                       <Bar dataKey="revenue" name="Revenue" fill={ACCENT} radius={[0, 4, 4, 0]} barSize={14} />
                     </BarChart>
                   </ResponsiveContainer>

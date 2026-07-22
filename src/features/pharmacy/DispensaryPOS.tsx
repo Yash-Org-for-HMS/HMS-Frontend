@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useLocation } from "react-router-dom";
 import { 
@@ -319,7 +320,7 @@ export default function DispensaryPOS() {
     <PharmacyPage
       title="Dispensary & POS"
       subtitle="Process sales, auto-load prescriptions, and auto-deduct inventory."
-      icon={<PointOfSaleRounded fontSize="large" sx={{ color: '#4F46E5' }} />}
+      icon={<PointOfSaleRounded fontSize="large" sx={{ color: ACCENTS.pharmacy }} />}
       action={
         <Button variant="outlined" onClick={() => { setCart([]); setSelectedPrescriptionId(null); setPatientId(""); }}>
           Clear Cart
@@ -443,7 +444,7 @@ export default function DispensaryPOS() {
                         <Typography variant="caption" color="text.secondary">{option.genericName}</Typography>
                       </Box>
                       <Box textAlign="right">
-                        <Typography variant="body2" fontWeight={600} color="#10B981">₹{parseFloat(option.sellingPrice).toFixed(2)}</Typography>
+                        <Typography variant="body2" fontWeight={600} color={SEMANTIC.success}>₹{parseFloat(option.sellingPrice).toFixed(2)}</Typography>
                         <Typography variant="caption" color={option.inStock > 0 ? "text.secondary" : "error"}>
                           Stock: {option.inStock}
                         </Typography>
@@ -503,7 +504,7 @@ export default function DispensaryPOS() {
                             <IconButton size="small" onClick={() => updateQuantity(item.medicineId, 1)} color="primary"><AddCircleRounded fontSize="small" /></IconButton>
                           </Box>
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 800, color: "#10B981", fontSize: '1.1rem' }}>₹{(item.quantity * item.unitPrice).toFixed(2)}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 800, color: SEMANTIC.success, fontSize: '1.1rem' }}>₹{(item.quantity * item.unitPrice).toFixed(2)}</TableCell>
                         <TableCell align="right">
                           <IconButton size="small" color="error" onClick={() => removeFromCart(item.medicineId)}>
                             <DeleteRounded fontSize="small" />
@@ -523,7 +524,7 @@ export default function DispensaryPOS() {
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
                     <Typography variant="h5" fontWeight={800}>Total:</Typography>
-                    <Typography variant="h4" fontWeight={800} color="#10B981">₹{cartGrandTotal.toFixed(2)}</Typography>
+                    <Typography variant="h4" fontWeight={800} color={SEMANTIC.success}>₹{cartGrandTotal.toFixed(2)}</Typography>
                   </Box>
                 </Box>
                 
@@ -594,7 +595,7 @@ export default function DispensaryPOS() {
                           </Tooltip>
                         )}
                       </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 800, color: '#10B981' }}>
+                      <TableCell align="right" sx={{ fontWeight: 800, color: SEMANTIC.success }}>
                         ₹{parseFloat(sale.totalAmount).toFixed(2)}
                       </TableCell>
                       <TableCell align="right">

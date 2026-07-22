@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useNavigate } from "react-router-dom";
 import { 
   Box, Typography, Grid, Paper, Table, TableBody, TableCell, TableHead, TableRow, alpha, useTheme,
@@ -45,7 +46,7 @@ export default function PharmacyDashboard() {
     <PharmacyPage
       title="Dashboard Overview"
       subtitle="Pharmacy summary, low stock alerts, and recent activities."
-      icon={<DashboardRounded fontSize="large" sx={{ color: '#4F46E5' }} />}
+      icon={<DashboardRounded fontSize="large" sx={{ color: ACCENTS.pharmacy }} />}
     >
       {loading ? (
         <DashboardSkeleton />
@@ -58,32 +59,32 @@ export default function PharmacyDashboard() {
                   <StatCard
                     label="Total Medicines"
                     value={medicineCount}
-                    icon={<MedicationRounded sx={{ fontSize: 32, color: '#4F46E5' }} />} 
-                    color="#4F46E5"
+                    icon={<MedicationRounded sx={{ fontSize: 32, color: ACCENTS.pharmacy }} />} 
+                    color={ACCENTS.pharmacy}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
                     label="Low Stock Alerts"
                     value={lowStockAlerts.length} 
-                    icon={<WarningRounded sx={{ fontSize: 32, color: '#EF4444' }} />} 
-                    color="#EF4444"
+                    icon={<WarningRounded sx={{ fontSize: 32, color: SEMANTIC.danger }} />} 
+                    color={SEMANTIC.danger}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
                     label="Pending POs"
                     value={pendingPOCount}
-                    icon={<LocalShippingRounded sx={{ fontSize: 32, color: '#F59E0B' }} />} 
-                    color="#F59E0B"
+                    icon={<LocalShippingRounded sx={{ fontSize: 32, color: SEMANTIC.warning }} />} 
+                    color={SEMANTIC.warning}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
                     label="Total Sales"
                     value={`₹${totalSalesValue.toFixed(2)}`}
-                    icon={<PointOfSaleRounded sx={{ fontSize: 32, color: '#10B981' }} />} 
-                    color="#10B981"
+                    icon={<PointOfSaleRounded sx={{ fontSize: 32, color: SEMANTIC.success }} />} 
+                    color={SEMANTIC.success}
                   />
                 </Grid>
               </Grid>
@@ -141,7 +142,7 @@ export default function PharmacyDashboard() {
                           <TableRow key={sale.pharmacyOrderId}>
                             <TableCell sx={{ fontFamily: 'monospace' }}>{sale.pharmacyOrderId.split('-')[0].toUpperCase()}</TableCell>
                             <TableCell>{new Date(sale.createdAt).toLocaleString()}</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, color: '#10B981' }}>₹{parseFloat(sale.totalAmount).toFixed(2)}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, color: SEMANTIC.success }}>₹{parseFloat(sale.totalAmount).toFixed(2)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

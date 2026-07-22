@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -182,7 +183,7 @@ export default function MedicineCatalog() {
     <PharmacyPage
       title="Medicine Catalog"
       subtitle="Manage the hospital's drug formulary, generic compositions, and pricing."
-      icon={<MedicationRounded fontSize="large" sx={{ color: '#4F46E5' }} />}
+      icon={<MedicationRounded fontSize="large" sx={{ color: ACCENTS.pharmacy }} />}
       action={
         <Button
           variant="contained"
@@ -271,16 +272,16 @@ export default function MedicineCatalog() {
                       }}
                     >
                       <TableCell sx={{ fontWeight: 600, fontFamily: 'monospace', color: 'text.secondary' }}>{med.medicineCode}</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: '#4F46E5' }}>{med.medicineName}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: ACCENTS.pharmacy }}>{med.medicineName}</TableCell>
                       <TableCell sx={{ fontWeight: 500 }}>{med.genericName}</TableCell>
                       <TableCell sx={{ color: 'text.secondary' }}>{med.manufacturer || 'N/A'}</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: '#10B981' }}>₹{parseFloat(med.sellingPrice).toFixed(2)}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: SEMANTIC.success }}>₹{parseFloat(med.sellingPrice).toFixed(2)}</TableCell>
                       <TableCell align="right">
                         <Tooltip title="Edit">
                           <IconButton
                             color="primary"
                             onClick={() => handleOpenEdit(med)}
-                            sx={{ '&:hover': { bgcolor: alpha('#4F46E5', 0.1) } }}
+                            sx={{ '&:hover': { bgcolor: alpha(ACCENTS.pharmacy, 0.1) } }}
                           >
                             <EditRounded fontSize="small" />
                           </IconButton>
@@ -289,7 +290,7 @@ export default function MedicineCatalog() {
                           <IconButton
                             color="error"
                             onClick={() => handleDelete(med.medicineId)}
-                            sx={{ '&:hover': { bgcolor: alpha('#EF4444', 0.1) } }}
+                            sx={{ '&:hover': { bgcolor: alpha(SEMANTIC.danger, 0.1) } }}
                           >
                             <DeleteRounded fontSize="small" />
                           </IconButton>
@@ -328,7 +329,7 @@ export default function MedicineCatalog() {
         <DialogContent dividers sx={{ p: 3 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
             {errorMsg && (
-              <Box sx={{ p: 1.5, bgcolor: alpha('#EF4444', 0.1), borderRadius: 2, border: '1px solid', borderColor: alpha('#EF4444', 0.2) }}>
+              <Box sx={{ p: 1.5, bgcolor: alpha(SEMANTIC.danger, 0.1), borderRadius: 2, border: '1px solid', borderColor: alpha(SEMANTIC.danger, 0.2) }}>
                 <Typography color="error" variant="body2" fontWeight="500">{errorMsg}</Typography>
               </Box>
             )}
@@ -426,7 +427,7 @@ export default function MedicineCatalog() {
               fontWeight: 600,
               borderRadius: '8px',
               px: 3,
-              background: 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%)',
+              background: 'linear-gradient(135deg, #0d9488 0%, #3B82F6 100%)',
               boxShadow: 'none',
               '&:hover': { boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)' }
             }}
