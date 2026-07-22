@@ -14,6 +14,7 @@ import Mascot from "@/components/Mascot";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 export default function WardStock() {
   const toast = useToast();
@@ -29,9 +30,10 @@ export default function WardStock() {
     queryFn: async () => (await axiosInstance.get("/pharmacy/ward-stock")).data.data,
   });
 
+  const debouncedSearch = useDebouncedValue(search, 300);
   const { data: catalog = [] } = useQuery<any[]>({
-    queryKey: ["ipd-medicine-catalog", search],
-    queryFn: async () => (await axiosInstance.get("/ipd/medicines-catalog", { params: { search: search || undefined } })).data.data,
+    queryKey: ["ipd-medicine-catalog", debouncedSearch],
+    queryFn: async () => (await axiosInstance.get("/ipd/medicines-catalog", { params: { search: debouncedSearch || undefined } })).data.data,
   });
 
   const wards = data?.wards || [];
@@ -98,6 +100,7 @@ export default function WardStock() {
                     sx={{ minWidth: 280, flex: 1 }} size="small" options={catalog} value={medicine}
                     onChange={(_, v) => setMedicine(v)}
                     onInputChange={(_, v, r) => { if (r === "input") setSearch(v); }}
+                    filterOptions={(x) => x}
                     getOptionLabel={(o: any) => (o ? o.medicineName : "")}
                     isOptionEqualToValue={(o: any, v: any) => o.medicineId === v?.medicineId}
                     renderOption={(props, o: any) => <li {...props} key={o.medicineId}>{o.medicineName} · central {o.availableStock}</li>}
