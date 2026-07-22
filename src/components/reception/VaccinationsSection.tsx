@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,10 +26,10 @@ const ACCENT = ACCENTS.reception;
 const inr = formatINRAuto;
 
 const STATE_META: Record<string, { label: string; color: string }> = {
-  OVERDUE: { label: "Overdue", color: "#ef4444" },
-  DUE_SOON: { label: "Due soon", color: "#f59e0b" },
-  UPCOMING: { label: "Upcoming", color: "#64748b" },
-  DONE: { label: "Done", color: "#10b981" },
+  OVERDUE: { label: "Overdue", color: SEMANTIC.danger },
+  DUE_SOON: { label: "Due soon", color: SEMANTIC.warning },
+  UPCOMING: { label: "Upcoming", color: NEUTRAL.muted },
+  DONE: { label: "Done", color: SEMANTIC.success },
   SKIPPED: { label: "Skipped", color: "#94a3b8" },
 };
 
@@ -352,7 +352,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
                         {!readOnly && (r.state === "OVERDUE" || r.state === "DUE_SOON" || r.state === "UPCOMING") && (
                           <>
                             <Tooltip title="Mark administered">
-                              <IconButton size="small" onClick={() => openAdminister(r)} sx={{ color: "#10b981" }}><CheckCircleRounded fontSize="small" /></IconButton>
+                              <IconButton size="small" onClick={() => openAdminister(r)} sx={{ color: SEMANTIC.success }}><CheckCircleRounded fontSize="small" /></IconButton>
                             </Tooltip>
                             <Tooltip title="Mark skipped / not applicable">
                               <IconButton size="small" onClick={() => openSkip(r)} sx={{ color: "text.secondary" }}><BlockRounded fontSize="small" /></IconButton>
@@ -377,7 +377,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
       {/* Administer / Skip dialog */}
       <Dialog open={!!actionTarget} onClose={() => (saving ? undefined : setActionTarget(null))} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {actionTarget?.kind === "administer" ? <CheckCircleRounded sx={{ color: "#10b981" }} /> : <EventBusyRounded sx={{ color: "text.secondary" }} />}
+          {actionTarget?.kind === "administer" ? <CheckCircleRounded sx={{ color: SEMANTIC.success }} /> : <EventBusyRounded sx={{ color: "text.secondary" }} />}
           {actionTarget?.kind === "administer" ? "Mark dose administered" : "Mark dose skipped"}
         </DialogTitle>
         <DialogContent dividers>

@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -78,7 +78,7 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
             render={(p) => ({
               title: `Prescription • ${dayjs(p.prescriptionDate).format("DD MMM YYYY")}`,
               sub: `${p.doctorName || "—"} • ${p.items.length} medicine${p.items.length === 1 ? "" : "s"}`,
-              chip: { label: p.dispensingStatus, color: p.dispensingStatus === "dispensed" ? "#10b981" : "#f59e0b" },
+              chip: { label: p.dispensingStatus, color: p.dispensingStatus === "dispensed" ? SEMANTIC.success : SEMANTIC.warning },
             })}
             onView={(p) => setPreview({ kind: "prescription", doc: p })} />}
 
@@ -86,7 +86,7 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
             render={(o) => ({
               title: `Lab order • ${dayjs(o.orderDate).format("DD MMM YYYY")}`,
               sub: `${o.doctorName || "—"} • ${o.tests.length} test${o.tests.length === 1 ? "" : "s"} • ${o.sampleBarcode}`,
-              chip: o.resultsReady ? { label: "Results ready", color: "#10b981" } : { label: "Pending", color: "#f59e0b" },
+              chip: o.resultsReady ? { label: "Results ready", color: SEMANTIC.success } : { label: "Pending", color: SEMANTIC.warning },
             })}
             onView={(o) => setPreview({ kind: "lab", doc: o })} />}
 
@@ -94,7 +94,7 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
             render={(o) => ({
               title: `${o.scanType} • ${dayjs(o.orderDate).format("DD MMM YYYY")}`,
               sub: `${o.doctorName || "—"} • ${o.status}`,
-              chip: o.findings || o.impression ? { label: "Report ready", color: "#10b981" } : { label: o.status || "Pending", color: "#f59e0b" },
+              chip: o.findings || o.impression ? { label: "Report ready", color: SEMANTIC.success } : { label: o.status || "Pending", color: SEMANTIC.warning },
               extra: o.reportUrl ? { href: assetUrl(o.reportUrl) } : undefined,
             })}
             onView={(o) => setPreview({ kind: "radiology", doc: o })} />}
@@ -110,7 +110,7 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
         <DialogContent dividers>
           <Box ref={printRef}>
             <Box sx={{ textAlign: "center", borderBottom: "2px solid #0891b2", pb: 1.5, mb: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: "#0e7490" }}>{hospital?.name || "Hospital"}</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: ACCENTS.receptionDark }}>{hospital?.name || "Hospital"}</Typography>
               <Typography variant="caption" sx={{ color: "#6b7280" }}>
                 {data?.patient?.name} • UHID {data?.patient?.uhid}
               </Typography>
@@ -128,7 +128,7 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
           )}
           <Box sx={{ flex: 1 }} />
           <Button onClick={() => setPreview(null)} color="inherit">Close</Button>
-          <Button variant="contained" startIcon={<PrintRounded />} onClick={handlePrint} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: "#0e7490" } }}>
+          <Button variant="contained" startIcon={<PrintRounded />} onClick={handlePrint} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>
             Print
           </Button>
         </DialogActions>
@@ -160,9 +160,9 @@ function DocList({ items, empty, render, onView }: {
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Chip label={r.chip.label} size="small" sx={{ bgcolor: `${r.chip.color}22`, color: r.chip.color, fontWeight: 700, textTransform: "capitalize" }} />
                 {r.extra && (
-                  <Button size="small" startIcon={<OpenInNewRounded />} onClick={() => window.open(r.extra!.href, "_blank")} sx={{ textTransform: "none", color: "#0891b2" }}>File</Button>
+                  <Button size="small" startIcon={<OpenInNewRounded />} onClick={() => window.open(r.extra!.href, "_blank")} sx={{ textTransform: "none", color: ACCENTS.reception }}>File</Button>
                 )}
-                <Button size="small" startIcon={<VisibilityRounded />} onClick={() => onView(item)} sx={{ textTransform: "none", color: "#0891b2" }}>View / Print</Button>
+                <Button size="small" startIcon={<VisibilityRounded />} onClick={() => onView(item)} sx={{ textTransform: "none", color: ACCENTS.reception }}>View / Print</Button>
               </Box>
             </Box>
           </Box>
@@ -216,7 +216,7 @@ function LabView({ doc }: { doc: any }) {
           {doc.tests.map((t: any, i: number) => (
             <tr key={i}>
               <td style={cell}>{t.testName}{t.isCritical ? " ⚠" : ""}</td>
-              <td style={{ ...cell, fontWeight: 700, color: t.isCritical ? "#ef4444" : "#111827" }}>{t.resultValue || "—"}</td>
+              <td style={{ ...cell, fontWeight: 700, color: t.isCritical ? SEMANTIC.danger : "#111827" }}>{t.resultValue || "—"}</td>
               <td style={cell}>{t.unit || "—"}</td>
               <td style={cell}>{t.normalRange || "—"}</td>
             </tr>

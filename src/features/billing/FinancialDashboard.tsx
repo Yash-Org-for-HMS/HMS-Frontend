@@ -15,9 +15,10 @@ import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import PageHeader from "@/components/layout/PageHeader";
 import StatCard from "@/components/StatCard";
 import { apiErrorText } from "@/utils/apiError";
+import { SEMANTIC, NEUTRAL } from "@/styles/accents";
 
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"];
-const PAYMENT_COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b"];
+const COLORS = [SEMANTIC.info, SEMANTIC.success, SEMANTIC.warning, "#ec4899", "#8b5cf6"];
+const PAYMENT_COLORS = [SEMANTIC.success, SEMANTIC.info, "#8b5cf6", SEMANTIC.warning];
 
 export default function FinancialDashboard() {
   const theme = useTheme();
@@ -53,7 +54,7 @@ export default function FinancialDashboard() {
             label="Total Revenue Collected"
             value={`₹${(analytics.totalCollected || 0).toLocaleString()}`}
             icon={<AccountBalanceRounded />}
-            color="#10B981"
+            color={SEMANTIC.success}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -61,7 +62,7 @@ export default function FinancialDashboard() {
             label="Expected Revenue (Gross)"
             value={`₹${(analytics.expectedRevenue || 0).toLocaleString()}`}
             icon={<TrendingUpRounded />}
-            color="#3B82F6"
+            color={SEMANTIC.info}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -69,7 +70,7 @@ export default function FinancialDashboard() {
             label="Outstanding Dues"
             value={`₹${(analytics.outstandingDues || 0).toLocaleString()}`}
             icon={<WarningRounded />}
-            color="#EF4444"
+            color={SEMANTIC.danger}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -106,15 +107,15 @@ export default function FinancialDashboard() {
                 <AreaChart data={analytics.revenueTrend} margin={{ top: 10, right: 10, left: -20, bottom: 10 }}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                      <stop offset="5%" stopColor={SEMANTIC.success} stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor={SEMANTIC.success} stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,23,42,0.05)" vertical={false} />
                   <XAxis 
                     dataKey="date" 
-                    stroke="#64748B" 
-                    tick={{ fill: "#64748B", fontSize: 13, fontWeight: 500 }} 
+                    stroke={NEUTRAL.muted} 
+                    tick={{ fill: NEUTRAL.muted, fontSize: 13, fontWeight: 500 }} 
                     axisLine={false}
                     tickLine={false}
                     dy={8}
@@ -124,8 +125,8 @@ export default function FinancialDashboard() {
                     }}
                   />
                   <YAxis 
-                    stroke="#64748B" 
-                    tick={{ fill: "#64748B", fontSize: 13, fontWeight: 500 }} 
+                    stroke={NEUTRAL.muted} 
+                    tick={{ fill: NEUTRAL.muted, fontSize: 13, fontWeight: 500 }} 
                     axisLine={false} 
                     tickLine={false}
                     tickFormatter={(val) => `₹${val}`}
@@ -139,13 +140,13 @@ export default function FinancialDashboard() {
                       boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
                       padding: "16px"
                     }}
-                    itemStyle={{ color: "#10B981", fontWeight: 800, fontSize: "1.1rem" }}
+                    itemStyle={{ color: SEMANTIC.success, fontWeight: 800, fontSize: "1.1rem" }}
                     labelStyle={{ color: theme.palette.text.secondary, marginBottom: 8, fontWeight: 600 }}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="amount" 
-                    stroke="#10B981" 
+                    stroke={SEMANTIC.success} 
                     strokeWidth={4} 
                     fillOpacity={1} 
                     fill="url(#colorRevenue)" 

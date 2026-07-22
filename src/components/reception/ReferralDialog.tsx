@@ -9,6 +9,7 @@ import { AddRounded, CallSplitRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { useToast } from "@/providers/ToastContext";
+import { ACCENTS } from "@/styles/accents";
 
 interface ReferralDialogProps {
   open: boolean;
@@ -118,7 +119,7 @@ export default function ReferralDialog({
 
           <Grid size={{ xs: 12 }}>
             <ToggleButtonGroup exclusive size="small" value={form.referralType} onChange={(_, v) => v && set("referralType", v)}
-              sx={{ "& .MuiToggleButton-root.Mui-selected": { bgcolor: "#0891b2", color: "#fff", "&:hover": { bgcolor: "#0e7490" } } }}>
+              sx={{ "& .MuiToggleButton-root.Mui-selected": { bgcolor: ACCENTS.reception, color: "#fff", "&:hover": { bgcolor: ACCENTS.receptionDark } } }}>
               <ToggleButton value="INTERNAL" sx={{ textTransform: "none", px: 2 }}>Internal (department)</ToggleButton>
               <ToggleButton value="EXTERNAL" sx={{ textTransform: "none", px: 2 }}>External (facility)</ToggleButton>
             </ToggleButtonGroup>
@@ -165,7 +166,7 @@ export default function ReferralDialog({
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={submit} disabled={saving || !canSubmit}
           startIcon={saving ? <HeartbeatLoader size={22} /> : <AddRounded />}
-          sx={{ bgcolor: "#0891b2", "&:hover": { bgcolor: "#0e7490" } }}>
+          sx={{ bgcolor: ACCENTS.reception, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>
           Create Referral
         </Button>
       </DialogActions>

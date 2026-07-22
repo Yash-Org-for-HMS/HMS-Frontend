@@ -6,6 +6,7 @@ import { axiosInstance } from "@/api/axios";
 import { formatINR } from "@/utils/format";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import BillDocument from "@/components/billing/BillDocument";
+import { NEUTRAL } from "@/styles/accents";
 
 // Printable A4 in-patient bill. Hospitals print on their own pre-printed
 // letterhead stationery, so we render NO logo/branding — just a fixed blank top
@@ -182,7 +183,7 @@ function GroupBlock({ label, rows, subtotal, cell }: { label: string; rows: any[
   return (
     <>
       <tr>
-        <td colSpan={8} style={{ ...cell, fontWeight: 700, background: "#f1f5f9", textTransform: "uppercase", fontSize: 11, letterSpacing: 0.5 }}>{label}</td>
+        <td colSpan={8} style={{ ...cell, fontWeight: 700, background: NEUTRAL.subtle, textTransform: "uppercase", fontSize: 11, letterSpacing: 0.5 }}>{label}</td>
       </tr>
       {rows.map((it, i) => {
         const gross = it.grossAmount != null ? Number(it.grossAmount) : Number(it.totalPrice || 0);

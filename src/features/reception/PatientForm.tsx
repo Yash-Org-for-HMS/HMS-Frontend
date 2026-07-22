@@ -34,6 +34,7 @@ import ErrorState from "@/components/ErrorState";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "@/utils/validation";
+import { SEMANTIC } from "@/styles/accents";
 
 interface Gender {
   genderId: number;
@@ -403,7 +404,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
       <Grid container spacing={3}>
         <Grid size={{ xs: 12 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, p: 1.5, borderRadius: 1.5, bgcolor: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.12)" }}>
-            <ContactPhoneRounded sx={{ color: "#f59e0b", fontSize: 18 }} />
+            <ContactPhoneRounded sx={{ color: SEMANTIC.warning, fontSize: 18 }} />
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               Emergency contact to notify in case of a medical emergency.
             </Typography>

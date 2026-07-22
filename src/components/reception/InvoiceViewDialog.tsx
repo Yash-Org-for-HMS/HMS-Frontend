@@ -13,6 +13,7 @@ import HeartbeatLoader from "../HeartbeatLoader";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
 import { useToast } from "@/providers/ToastContext";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 
 
 interface Props {
@@ -148,17 +149,17 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
 
               {/* Record payment (only if balance outstanding, and not in read-only oversight mode) */}
               {fullyPaid ? (
-                <Box sx={{ mt: 3, display: "flex", alignItems: "center", justifyContent: "center", gap: 1, color: "#10b981" }}>
+                <Box sx={{ mt: 3, display: "flex", alignItems: "center", justifyContent: "center", gap: 1, color: SEMANTIC.success }}>
                   <CheckCircleRounded /> <Typography sx={{ fontWeight: 700 }}>Fully paid</Typography>
                 </Box>
               ) : readOnly ? (
                 <Box sx={{ mt: 3, p: 2, borderRadius: 2, bgcolor: "rgba(239,68,68,0.06)", border: "1px dashed rgba(239,68,68,0.3)", textAlign: "center" }}>
-                  <Typography variant="body2" sx={{ color: "#ef4444", fontWeight: 700 }}>Balance due: {formatINR(balance)}</Typography>
+                  <Typography variant="body2" sx={{ color: SEMANTIC.danger, fontWeight: 700 }}>Balance due: {formatINR(balance)}</Typography>
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>Collect payment from the Billing panel</Typography>
                 </Box>
               ) : (
                 <Box sx={{ mt: 3, p: 2, borderRadius: 2, bgcolor: "rgba(16,185,129,0.06)", border: "1px dashed rgba(16,185,129,0.3)" }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#10b981", mb: 1.5 }}>Collect Payment</Typography>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: SEMANTIC.success, mb: 1.5 }}>Collect Payment</Typography>
                   <Grid container spacing={1.5}>
                     <Grid size={{ xs: 5 }}>
                       <TextField fullWidth size="small" type="number" label="Amount (₹)" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={String(balance.toFixed(2))}
@@ -174,10 +175,10 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                     <Grid size={{ xs: 3 }}>
                       <Button fullWidth variant="contained" disabled={paying || !amount || Number(amount) <= 0 || Number(amount) > balance + 0.005 || !methodId} onClick={pay}
                         startIcon={paying ? <HeartbeatLoader size={22} /> : <PaymentRounded />}
-                        sx={{ height: 40, bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }}>Pay</Button>
+                        sx={{ height: 40, bgcolor: SEMANTIC.success, "&:hover": { bgcolor: SEMANTIC.successDark } }}>Pay</Button>
                     </Grid>
                     <Grid size={{ xs: 12 }}>
-                      <Button size="small" onClick={() => setAmount(balance.toFixed(2))} sx={{ textTransform: "none", color: "#10b981", p: 0, minWidth: 0 }}>Pay full balance ({formatINR(balance)})</Button>
+                      <Button size="small" onClick={() => setAmount(balance.toFixed(2))} sx={{ textTransform: "none", color: SEMANTIC.success, p: 0, minWidth: 0 }}>Pay full balance ({formatINR(balance)})</Button>
                     </Grid>
                   </Grid>
                 </Box>
@@ -190,9 +191,9 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
         {invoice?.admissionId && (
           <Button variant="outlined" startIcon={<PrintRounded />} disabled={!invoice}
             onClick={() => window.open(`/reception/billing/invoices/${invoiceId}/ip-bill/print`, "_blank")}
-            sx={{ borderColor: "#0891b2", color: "#0e7490" }}>Print IP Bill</Button>
+            sx={{ borderColor: ACCENTS.reception, color: ACCENTS.receptionDark }}>Print IP Bill</Button>
         )}
-        <Button variant="contained" startIcon={<PrintRounded />} disabled={!invoice} onClick={print} sx={{ bgcolor: "#0891b2", "&:hover": { bgcolor: "#0e7490" } }}>{invoice?.admissionId ? "Receipt" : "Print"}</Button>
+        <Button variant="contained" startIcon={<PrintRounded />} disabled={!invoice} onClick={print} sx={{ bgcolor: ACCENTS.reception, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>{invoice?.admissionId ? "Receipt" : "Print"}</Button>
       </DialogActions>
     </Dialog>
   );

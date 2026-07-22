@@ -14,7 +14,7 @@ import {
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Cell,
 } from "recharts";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { axiosInstance } from "@/api/axios";
 import { exportTableToExcel } from "@/utils/exportExcel";
 import { formatINR } from "@/utils/format";
@@ -94,11 +94,11 @@ function OverviewReport({ data }: { data: any }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(3,1fr)", md: "repeat(6,1fr)" }, gap: 1.5 }}>
-        <Kpi icon={<DescriptionRounded />} label="Total claims" value={String(s.totalClaims || 0)} color="#0891b2" />
-        <Kpi icon={<HourglassBottomRounded />} label="Open" value={String(s.open || 0)} color="#f59e0b" />
-        <Kpi icon={<PaidRounded />} label="Settled" value={String(s.settled || 0)} color="#10b981" />
-        <Kpi icon={<CancelRounded />} label="Rejected" value={String(s.rejected || 0)} color="#ef4444" />
-        <Kpi icon={<AccountBalanceWalletRounded />} label="Payer outstanding" value={inr(s.outstandingFromPayer)} color="#3b82f6" />
+        <Kpi icon={<DescriptionRounded />} label="Total claims" value={String(s.totalClaims || 0)} color={ACCENTS.reception} />
+        <Kpi icon={<HourglassBottomRounded />} label="Open" value={String(s.open || 0)} color={SEMANTIC.warning} />
+        <Kpi icon={<PaidRounded />} label="Settled" value={String(s.settled || 0)} color={SEMANTIC.success} />
+        <Kpi icon={<CancelRounded />} label="Rejected" value={String(s.rejected || 0)} color={SEMANTIC.danger} />
+        <Kpi icon={<AccountBalanceWalletRounded />} label="Payer outstanding" value={inr(s.outstandingFromPayer)} color={SEMANTIC.info} />
         <Kpi icon={<GroupRounded />} label="Patient shortfall" value={inr(s.patientShortfall)} color="#8b5cf6" />
       </Box>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
@@ -152,8 +152,8 @@ function TatReport({ data }: { data: any }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr" }, gap: 1.5, maxWidth: 420 }}>
-        <Kpi icon={<HourglassBottomRounded />} label="Avg pre-auth TAT (days)" value={String(tat.avgDays ?? 0)} color="#f59e0b" />
-        <Kpi icon={<DescriptionRounded />} label="Approved pre-auths" value={String(rows.length)} color="#3b82f6" />
+        <Kpi icon={<HourglassBottomRounded />} label="Avg pre-auth TAT (days)" value={String(tat.avgDays ?? 0)} color={SEMANTIC.warning} />
+        <Kpi icon={<DescriptionRounded />} label="Approved pre-auths" value={String(rows.length)} color={SEMANTIC.info} />
       </Box>
       <SimpleTable title="Pre-authorization turnaround" head={["Claim #", "Patient", "Submitted", "Approved", "Days"]}
         rows={rows.map((r) => [r.claimNumber, r.patientName, fmtDate(r.submittedAt), fmtDate(r.approvedAt), r.days])} />

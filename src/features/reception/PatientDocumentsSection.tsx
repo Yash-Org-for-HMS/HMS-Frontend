@@ -16,6 +16,7 @@ import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 
 export default function PatientDocumentsSection({ patientId, readOnly = false }: { patientId: string; readOnly?: boolean }) {
   const toast = useToast();
@@ -107,7 +108,7 @@ export default function PatientDocumentsSection({ patientId, readOnly = false }:
             variant="contained"
             startIcon={<CloudUploadRounded />}
             onClick={() => setUploadOpen(true)}
-            sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" }, textTransform: "none", fontWeight: 600 }}
+            sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: ACCENTS.reception }, textTransform: "none", fontWeight: 600 }}
           >
             Upload Document
           </Button>
@@ -155,7 +156,7 @@ export default function PatientDocumentsSection({ patientId, readOnly = false }:
                     <IconButton
                       size="small"
                       onClick={() => handleDelete(doc.patientDocumentId)}
-                      sx={{ color: "text.secondary", "&:hover": { color: "#ef4444" } }}
+                      sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}
                     >
                       <DeleteRounded fontSize="small" />
                     </IconButton>
@@ -217,7 +218,7 @@ export default function PatientDocumentsSection({ patientId, readOnly = false }:
             onClick={handleUpload} 
             disabled={!file || !selectedType || uploading}
             startIcon={uploading ? <HeartbeatLoader size={22} /> : <CloudUploadRounded />}
-            sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" }, fontWeight: 600 }}
+            sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: ACCENTS.reception }, fontWeight: 600 }}
           >
             Upload
           </Button>

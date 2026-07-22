@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { formatINR } from "@/utils/format";
+import { SEMANTIC } from "@/styles/accents";
 
 /**
  * The single, consistent bill/receipt shell used by every printed billing
@@ -59,8 +60,8 @@ interface Props {
 
 const INK = "#111827";
 const SUB = "#6b7280";
-const POS = "#10b981";
-const NEG = "#ef4444";
+const POS = SEMANTIC.success;
+const NEG = SEMANTIC.danger;
 const REFUND = "#8b5cf6";
 
 const money = (v: number | undefined) => formatINR(v ?? 0);

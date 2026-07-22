@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -22,10 +22,10 @@ import DynamicFormRenderer, { validateFormResponses, type FormValues } from "../
 
 const ACCENT = ACCENTS.reception;
 const STATUS_META: Record<string, { label: string; color: string }> = {
-  ISSUED: { label: "Issued", color: "#f59e0b" },
-  SIGNED: { label: "Signed", color: "#10b981" },
-  DECLINED: { label: "Declined", color: "#ef4444" },
-  CANCELLED: { label: "Cancelled", color: "#64748b" },
+  ISSUED: { label: "Issued", color: SEMANTIC.warning },
+  SIGNED: { label: "Signed", color: SEMANTIC.success },
+  DECLINED: { label: "Declined", color: SEMANTIC.danger },
+  CANCELLED: { label: "Cancelled", color: NEUTRAL.muted },
 };
 
 export default function ConsentFormsSection({ patientId, patientName, readOnly = false }: { patientId: string; patientName?: string; readOnly?: boolean }) {
@@ -73,7 +73,7 @@ export default function ConsentFormsSection({ patientId, patientName, readOnly =
       ) : (
         <Box>
           {forms.map((f, idx) => {
-            const sm = STATUS_META[f.status] || { label: f.status, color: "#64748b" };
+            const sm = STATUS_META[f.status] || { label: f.status, color: NEUTRAL.muted };
             return (
               <Box key={f.consentFormId}>
                 {idx > 0 && <Divider sx={{ borderColor: "divider" }} />}
@@ -98,7 +98,7 @@ export default function ConsentFormsSection({ patientId, patientName, readOnly =
                     )}
                     {!readOnly && f.status === "ISSUED" && (
                       <>
-                        <Button size="small" variant="contained" onClick={() => setSignTarget(f)} sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: "#0e7490" } }}>Capture</Button>
+                        <Button size="small" variant="contained" onClick={() => setSignTarget(f)} sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>Capture</Button>
                         <Button size="small" startIcon={<DoNotDisturbRounded />} onClick={() => setStatus(f.consentFormId, "CANCELLED")} sx={{ textTransform: "none", color: "text.secondary" }}>Cancel</Button>
                       </>
                     )}
@@ -219,7 +219,7 @@ function IssueConsentDialog({ patientId, onClose, onIssued }: { patientId: strin
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={submit} disabled={saving || (!templateId && !title.trim())}
-          sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: "#0e7490" } }}>Issue</Button>
+          sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>Issue</Button>
       </DialogActions>
     </Dialog>
   );
@@ -325,7 +325,7 @@ function SignConsentDialog({ form, patientName, onClose, onSigned }: { form: any
           <TextField fullWidth size="small" label="Witness (optional)" value={witnessName} onChange={(e) => setWitnessName(e.target.value)} />
 
           <ToggleButtonGroup exclusive size="small" value={mode} onChange={(_, v) => v && setMode(v)}
-            sx={{ "& .MuiToggleButton-root.Mui-selected": { bgcolor: ACCENT, color: "#fff", "&:hover": { bgcolor: "#0e7490" } } }}>
+            sx={{ "& .MuiToggleButton-root.Mui-selected": { bgcolor: ACCENT, color: "#fff", "&:hover": { bgcolor: ACCENTS.receptionDark } } }}>
             <ToggleButton value="draw" sx={{ textTransform: "none", px: 2 }}><GestureRounded fontSize="small" sx={{ mr: 0.5 }} /> Draw signature</ToggleButton>
             <ToggleButton value="upload" sx={{ textTransform: "none", px: 2 }}><UploadFileRounded fontSize="small" sx={{ mr: 0.5 }} /> Upload scan</ToggleButton>
           </ToggleButtonGroup>
@@ -363,7 +363,7 @@ function SignConsentDialog({ form, patientName, onClose, onSigned }: { form: any
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={submit} disabled={saving || !canSubmit}
           startIcon={saving ? <HeartbeatLoader size={22} /> : undefined}
-          sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: "#0e7490" } }}>
+          sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>
           Sign & File
         </Button>
       </DialogActions>

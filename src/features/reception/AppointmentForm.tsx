@@ -16,6 +16,7 @@ import ErrorState from "@/components/ErrorState";
 import BillingModal from "./BillingModal";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 
 export interface AppointmentFormProps {
   isEmbedded?: boolean;
@@ -434,7 +435,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
             >
               <MenuItem value="Standard Visit">Standard Visit</MenuItem>
               <MenuItem value="Follow-up">Follow-up</MenuItem>
-              <MenuItem value="Urgent" sx={{ color: '#ef4444', fontWeight: 600 }}>Urgent / Emergency</MenuItem>
+              <MenuItem value="Urgent" sx={{ color: SEMANTIC.danger, fontWeight: 600 }}>Urgent / Emergency</MenuItem>
             </TextField>
           </Grid>
           <Grid size={{ xs: 12, md: 8 }}>
@@ -464,7 +465,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
               <Button variant="outlined" onClick={() => { if (isEmbedded && onCancel) onCancel(); else navigate(-1); }} sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none" }}>
                 Cancel
               </Button>
-              <Button type="submit" variant="contained" disabled={saving || !formData.patientId} startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />} sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" }, textTransform: "none", fontWeight: 600 }}>
+              <Button type="submit" variant="contained" disabled={saving || !formData.patientId} startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />} sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: ACCENTS.reception }, textTransform: "none", fontWeight: 600 }}>
                 {id ? "Update Appointment" : "Confirm Booking"}
               </Button>
             </Box>

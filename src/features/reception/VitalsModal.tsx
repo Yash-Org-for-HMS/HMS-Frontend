@@ -15,6 +15,7 @@ import { axiosInstance } from "@/api/axios";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
+import { SEMANTIC } from "@/styles/accents";
 
 interface VitalsModalProps {
   open: boolean;
@@ -116,19 +117,19 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
     : null;
 
   const bmiCategory = bmi
-    ? Number(bmi) < 18.5 ? { label: "Underweight", color: "#3b82f6" }
-      : Number(bmi) < 25 ? { label: "Normal", color: "#10b981" }
-        : Number(bmi) < 30 ? { label: "Overweight", color: "#f59e0b" }
-          : { label: "Obese", color: "#ef4444" }
+    ? Number(bmi) < 18.5 ? { label: "Underweight", color: SEMANTIC.info }
+      : Number(bmi) < 25 ? { label: "Normal", color: SEMANTIC.success }
+        : Number(bmi) < 30 ? { label: "Overweight", color: SEMANTIC.warning }
+          : { label: "Obese", color: SEMANTIC.danger }
     : null;
 
   const painIcon = form.painScale <= 3
-    ? <SentimentVerySatisfied sx={{ color: "#10b981" }} />
+    ? <SentimentVerySatisfied sx={{ color: SEMANTIC.success }} />
     : form.painScale <= 6
-      ? <SentimentSatisfied sx={{ color: "#f59e0b" }} />
-      : <SentimentVeryDissatisfied sx={{ color: "#ef4444" }} />;
+      ? <SentimentSatisfied sx={{ color: SEMANTIC.warning }} />
+      : <SentimentVeryDissatisfied sx={{ color: SEMANTIC.danger }} />;
 
-  const painColor = form.painScale <= 3 ? "#10b981" : form.painScale <= 6 ? "#f59e0b" : "#ef4444";
+  const painColor = form.painScale <= 3 ? SEMANTIC.success : form.painScale <= 6 ? SEMANTIC.warning : SEMANTIC.danger;
 
   // Seed the form when the dialog opens (with fetched/cached vitals), and
   // reset to defaults when it closes.
@@ -248,7 +249,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
         ) : (
           <>
 {/* ── Section 1: Blood Pressure & Pulse ── */}
-            <SectionHeader icon={<FavoriteRounded sx={{ color: "#ef4444", fontSize: 20 }} />} label="Cardiovascular" />
+            <SectionHeader icon={<FavoriteRounded sx={{ color: SEMANTIC.danger, fontSize: 20 }} />} label="Cardiovascular" />
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid size={{ xs: 12, sm: 4 }}>
                 <VitalInput label="Systolic BP" name="bpSystolic" value={form.bpSystolic} onChange={handleChange} unit="mmHg" placeholder="120" readonly={readonly} />
@@ -264,7 +265,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
             <Divider sx={{ borderColor: "divider", mb: 2 }} />
 
             {/* ── Section 2: Temperature & SpO2 ── */}
-            <SectionHeader icon={<ThermostatRounded sx={{ color: "#f59e0b", fontSize: 20 }} />} label="Respiratory & Temperature" />
+            <SectionHeader icon={<ThermostatRounded sx={{ color: SEMANTIC.warning, fontSize: 20 }} />} label="Respiratory & Temperature" />
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <VitalInput label="Temperature" name="temperatureC" value={form.temperatureC} onChange={handleChange} unit="°C" placeholder="37.0" readonly={readonly} />
@@ -277,7 +278,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
             <Divider sx={{ borderColor: "divider", mb: 2 }} />
 
             {/* ── Section 3: Height, Weight & BMI ── */}
-            <SectionHeader icon={<ScaleRounded sx={{ color: "#10b981", fontSize: 20 }} />} label="Anthropometrics" />
+            <SectionHeader icon={<ScaleRounded sx={{ color: SEMANTIC.success, fontSize: 20 }} />} label="Anthropometrics" />
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid size={{ xs: 12, sm: 5 }}>
                 <VitalInput label="Height" name="heightCm" value={form.heightCm} onChange={handleChange} unit="cm" placeholder="170" readonly={readonly} />
@@ -387,7 +388,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
             <Chip
               label={`BP: ${form.bpSystolic}/${form.bpDiastolic} mmHg`}
               size="small"
-              sx={{ bgcolor: "rgba(239,68,68,0.1)", color: "#f87171", fontWeight: 600, fontSize: "0.75rem" }}
+              sx={{ bgcolor: "rgba(239,68,68,0.1)", color: SEMANTIC.dangerLight, fontWeight: 600, fontSize: "0.75rem" }}
             />
           )}
         </Box>

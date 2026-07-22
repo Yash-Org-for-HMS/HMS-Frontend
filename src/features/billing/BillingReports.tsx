@@ -16,8 +16,9 @@ import PageHeader from "@/components/layout/PageHeader";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 
-const ACCENT = "#0891b2";
+const ACCENT = ACCENTS.reception;
 const inr = formatINRAuto;
 
 function Kpi({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
@@ -108,7 +109,7 @@ export function PharmacyExpense() {
         <Box ref={ref}>
           <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>Purchase orders are organization-wide (not branch-specific).</Typography>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<Inventory2Rounded />} label="Total spend" value={inr(data.totals.total)} color="#ef4444" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<Inventory2Rounded />} label="Total spend" value={inr(data.totals.total)} color={SEMANTIC.danger} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<ReceiptLongRounded />} label="Purchase orders" value={String(data.totals.purchaseOrders)} color={ACCENT} /></Grid>
           </Grid>
           <DataTable title={`Pharmacy Expense ${from} to ${to}`} head={["Order date", "Supplier", "Status", "Amount"]}
@@ -134,7 +135,7 @@ export function Outstanding() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<AccountBalanceWalletRounded />} label="Total dues" value={inr(data.totals.totalDues)} color="#ef4444" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<AccountBalanceWalletRounded />} label="Total dues" value={inr(data.totals.totalDues)} color={SEMANTIC.danger} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<ReceiptLongRounded />} label="Invoices" value={String(data.totals.invoices)} color={ACCENT} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<PaymentsRounded />} label="Billed (these)" value={inr(data.totals.totalBilled)} color="#8b5cf6" /></Grid>
           </Grid>
@@ -189,8 +190,8 @@ export function PatientStatement() {
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<ReceiptLongRounded />} label="Total billed" value={inr(data.totals.totalBilled)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<PaymentsRounded />} label="Total paid" value={inr(data.totals.totalPaid)} color="#10b981" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<AccountBalanceWalletRounded />} label="Dues" value={inr(data.totals.totalDues)} color="#ef4444" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<PaymentsRounded />} label="Total paid" value={inr(data.totals.totalPaid)} color={SEMANTIC.success} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<AccountBalanceWalletRounded />} label="Dues" value={inr(data.totals.totalDues)} color={SEMANTIC.danger} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<SavingsRounded />} label="Advance held" value={inr(data.totals.totalDeposit)} color="#8b5cf6" /></Grid>
           </Grid>
           <DataTable title={`Account Statement ${selected.firstName} ${selected.lastName}`} head={["Invoice", "Date", "Net", "Paid", "Balance", "Status"]}
@@ -216,7 +217,7 @@ export function Receipts() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<PaymentsRounded />} label="Collected" value={inr(data.totals.gross)} color="#10b981" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<PaymentsRounded />} label="Collected" value={inr(data.totals.gross)} color={SEMANTIC.success} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<ReceiptLongRounded />} label="Receipts" value={String(data.totals.count)} color={ACCENT} /></Grid>
           </Grid>
           <DataTable title={`Receipts ${from} to ${to}`} head={["Date", "Invoice", "Patient", "UHID", "Method", "Reference", "Collector", "Amount"]}
@@ -242,7 +243,7 @@ export function ServiceWise() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<TrendingUpRounded />} label="Total revenue" value={inr(data.totals.total)} color="#10b981" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<TrendingUpRounded />} label="Total revenue" value={inr(data.totals.total)} color={SEMANTIC.success} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<ReceiptLongRounded />} label="Services" value={String(data.totals.services)} color={ACCENT} /></Grid>
           </Grid>
           <DataTable title={`Service-Wise Revenue ${from} to ${to}`} head={["Service", "Qty", "Amount"]} rows={rows.map((r) => [r.service, r.quantity, inr(r.amount)])} />

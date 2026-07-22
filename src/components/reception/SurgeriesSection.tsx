@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Chip,
@@ -16,9 +16,9 @@ import { apiErrorText } from "@/utils/apiError";
 const ACCENT = ACCENTS.reception;
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
-  SCHEDULED: { label: "Scheduled", color: "#f59e0b" },
-  COMPLETED: { label: "Completed", color: "#10b981" },
-  CANCELLED: { label: "Cancelled", color: "#64748b" },
+  SCHEDULED: { label: "Scheduled", color: SEMANTIC.warning },
+  COMPLETED: { label: "Completed", color: SEMANTIC.success },
+  CANCELLED: { label: "Cancelled", color: NEUTRAL.muted },
 };
 
 // Read-only surgery history across ALL of the patient's admissions — surgeries

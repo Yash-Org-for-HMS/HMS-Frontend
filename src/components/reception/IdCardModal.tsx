@@ -5,6 +5,7 @@ import {
 import { PrintRounded, CloseRounded } from "@mui/icons-material";
 import JsBarcode from "jsbarcode";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { ACCENTS, NEUTRAL } from "@/styles/accents";
 
 export interface IdCardPatient {
   uhidNumber: string;
@@ -104,17 +105,17 @@ export default function IdCardModal({ open, onClose, patient }: IdCardModalProps
       <DialogContent sx={{ display: "flex", justifyContent: "center", py: 3 }}>
         {/* Inline styles on the inner markup so the printed card looks identical
             regardless of the app's CSS. Fixed width for consistent print size. */}
-        <Box ref={cardRef} sx={{ width: 340 }} style={{ background: "#fff", color: "#0f172a", borderRadius: "12px", border: "1px solid #e5e7eb", overflow: "hidden" }}>
+        <Box ref={cardRef} sx={{ width: 340 }} style={{ background: "#fff", color: NEUTRAL.textPrimary, borderRadius: "12px", border: "1px solid #e5e7eb", overflow: "hidden" }}>
           <div style={{ background: "linear-gradient(135deg,#0891b2,#06b6d4)", color: "#fff", padding: "12px 16px" }}>
             <div style={{ fontWeight: 800, fontSize: "15px", letterSpacing: "0.3px" }}>{hospital?.name || "Hospital"}</div>
             <div style={{ fontSize: "10px", opacity: 0.9, letterSpacing: "2px", textTransform: "uppercase" }}>Patient Identification Card</div>
           </div>
           <div style={{ padding: "16px" }}>
             <div style={{ fontSize: "18px", fontWeight: 800, marginBottom: "8px" }}>{fullName}</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", fontSize: "12px", color: "#475569", marginBottom: "14px" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", fontSize: "12px", color: NEUTRAL.textSecondary, marginBottom: "14px" }}>
               {infoItems.map((item) => (
                 <span key={item.label}>
-                  <b style={{ color: "#0f172a" }}>{item.label}</b> {item.value}
+                  <b style={{ color: NEUTRAL.textPrimary }}>{item.label}</b> {item.value}
                 </span>
               ))}
             </div>
@@ -127,7 +128,7 @@ export default function IdCardModal({ open, onClose, patient }: IdCardModalProps
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit">Close</Button>
-        <Button variant="contained" startIcon={<PrintRounded />} onClick={handlePrint} sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" } }}>
+        <Button variant="contained" startIcon={<PrintRounded />} onClick={handlePrint} sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: ACCENTS.reception } }}>
           Print ID Card
         </Button>
       </DialogActions>

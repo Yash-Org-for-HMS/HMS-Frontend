@@ -13,8 +13,9 @@ import { InPatients, Discharges, IpRegistrations, IpAdvances } from "../ipd/IpdR
 import { Outstanding, PatientStatement, Receipts, ServiceWise, PharmacyExpense } from "../billing/BillingReports";
 import LabReports from "../lab/LabReports";
 import PharmacyReports from "../pharmacy/PharmacyReports";
+import { ACCENTS } from "@/styles/accents";
 
-const ACCENT = "#0891b2";
+const ACCENT = ACCENTS.reception;
 
 type ReportItem = { key: string; label: string; Comp: React.ComponentType };
 type ReportGroup = { heading: string; module?: string; adminOnly?: boolean; items: ReportItem[] };

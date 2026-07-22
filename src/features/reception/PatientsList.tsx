@@ -59,6 +59,7 @@ import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 
 import type { Patient as PatientBase } from "@/types";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 
 interface Patient extends PatientBase {
   city: string;
@@ -148,8 +149,8 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
 
 
   const avatarColors = [
-    "#0891b2", "#7c3aed", "#059669", "#dc2626", "#d97706",
-    "#2563eb", "#db2777", "#65a30d",
+    ACCENTS.reception, "#7c3aed", SEMANTIC.successDark, SEMANTIC.dangerDark, SEMANTIC.warningDark,
+    SEMANTIC.infoDark, "#db2777", "#65a30d",
   ];
 
   const getAvatarColor = (id: string) =>
@@ -289,7 +290,7 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
                           variant="contained"
                           startIcon={<PersonAddRounded />}
                           onClick={() => navigate("/reception/patients/new")}
-                          sx={{ bgcolor: "#0891b2", "&:hover": { bgcolor: "#0e7490" }, textTransform: "none", mt: 1 }}
+                          sx={{ bgcolor: ACCENTS.reception, "&:hover": { bgcolor: ACCENTS.receptionDark }, textTransform: "none", mt: 1 }}
                         >
                           Register First Patient
                         </Button>
@@ -330,7 +331,7 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
                                 <Chip
                                   label={`Dues ₹${Number(patient.outstandingDues).toFixed(0)}`}
                                   size="small"
-                                  sx={{ height: 18, bgcolor: "rgba(239,68,68,0.12)", color: "#ef4444", fontWeight: 700, fontSize: "0.75rem" }}
+                                  sx={{ height: 18, bgcolor: "rgba(239,68,68,0.12)", color: SEMANTIC.danger, fontWeight: 700, fontSize: "0.75rem" }}
                                 />
                               )}
                             </Box>
@@ -383,7 +384,7 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
                           size="small"
                           sx={{
                             bgcolor: "rgba(239, 68, 68, 0.08)",
-                            color: "#f87171",
+                            color: SEMANTIC.dangerLight,
                             border: "1px solid rgba(239, 68, 68, 0.2)",
                             fontWeight: 700,
                             fontSize: "0.75rem",
@@ -399,21 +400,21 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
                         <Tooltip title="Book appointment">
                           <IconButton size="small"
                             onClick={(e) => { e.stopPropagation(); navigate(`/reception/appointments/new?patientId=${patient.patientId}`); }}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#3b82f6", bgcolor: "rgba(59,130,246,0.08)" } }}>
+                            sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.info, bgcolor: "rgba(59,130,246,0.08)" } }}>
                             <CalendarMonthRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Bill / collect payment">
                           <IconButton size="small"
                             onClick={(e) => { e.stopPropagation(); navigate(`/reception/billing?patientId=${patient.patientId}`); }}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#f59e0b", bgcolor: "rgba(245,158,11,0.08)" } }}>
+                            sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.warning, bgcolor: "rgba(245,158,11,0.08)" } }}>
                             <ReceiptLongRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Admit (IPD)">
                           <IconButton size="small"
                             onClick={(e) => { e.stopPropagation(); setAdmitPatient(patient); }}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#0891b2", bgcolor: "rgba(8,145,178,0.08)" } }}>
+                            sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.reception, bgcolor: "rgba(8,145,178,0.08)" } }}>
                             <LocalHotelRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -466,9 +467,9 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
           sx: { bgcolor: "background.paper", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 3, backgroundImage: "none" },
         }}
       >
-        <Box sx={{ height: 4, bgcolor: "#ef4444" }} />
+        <Box sx={{ height: 4, bgcolor: SEMANTIC.danger }} />
         <DialogContent sx={{ p: 3, textAlign: "center" }}>
-          <WarningAmberRounded sx={{ fontSize: 48, color: "#f87171", mb: 2 }} />
+          <WarningAmberRounded sx={{ fontSize: 48, color: SEMANTIC.dangerLight, mb: 2 }} />
           <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
             Delete Patient?
           </Typography>
@@ -484,7 +485,7 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
           <Button fullWidth variant="outlined" onClick={() => setDeleteDialog({ open: false, patient: null })} sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none" }}>
             Cancel
           </Button>
-          <Button fullWidth variant="contained" onClick={handleDelete} disabled={deleteMutation.isPending} sx={{ bgcolor: "#ef4444", "&:hover": { bgcolor: "#dc2626" }, textTransform: "none", fontWeight: 600 }}>
+          <Button fullWidth variant="contained" onClick={handleDelete} disabled={deleteMutation.isPending} sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: SEMANTIC.dangerDark }, textTransform: "none", fontWeight: 600 }}>
             {deleteMutation.isPending ? <HeartbeatLoader size={22} /> : "Delete"}
           </Button>
         </DialogActions>
@@ -510,8 +511,8 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
           <ListItemIcon><EditRounded fontSize="small" /></ListItemIcon>
           <ListItemText>Edit patient</ListItemText>
         </MenuItem>
-        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); setDeleteDialog({ open: true, patient: p }); }} sx={{ color: "#ef4444" }}>
-          <ListItemIcon><DeleteRounded fontSize="small" sx={{ color: "#ef4444" }} /></ListItemIcon>
+        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); setDeleteDialog({ open: true, patient: p }); }} sx={{ color: SEMANTIC.danger }}>
+          <ListItemIcon><DeleteRounded fontSize="small" sx={{ color: SEMANTIC.danger }} /></ListItemIcon>
           <ListItemText>Delete</ListItemText>
         </MenuItem>
       </Menu>

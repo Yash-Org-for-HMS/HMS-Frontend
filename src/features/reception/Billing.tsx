@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { formatINR, formatDate } from "@/utils/format";
 import { useEffect, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
@@ -130,7 +130,7 @@ function BillsList({ type }: { type: "OPD" | "IPD" }) {
                   <TableCell sx={{ color: "text.secondary" }}>{formatDate(r.invoiceDate)}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(r.netAmount)}</TableCell>
                   <TableCell align="right" sx={{ color: "text.secondary" }}>{formatINR(r.paidAmount)}</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700, color: Number(r.balance) > 0.005 ? "#ef4444" : "#10b981" }}>{formatINR(r.balance)}</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, color: Number(r.balance) > 0.005 ? SEMANTIC.danger : SEMANTIC.success }}>{formatINR(r.balance)}</TableCell>
                   <TableCell><StatusChip label={r.statusLabel} color={r.statusColor} /></TableCell>
                   <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     {isIpd && (

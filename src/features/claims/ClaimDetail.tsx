@@ -8,7 +8,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
 } from "@mui/material";
 import { ArrowBackRounded, EditRounded, TimelineRounded, ArrowForwardRounded, PaymentsRounded } from "@mui/icons-material";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { axiosInstance } from "@/api/axios";
 import { formatINR } from "@/utils/format";
 import { useToast } from "@/providers/ToastContext";
@@ -98,11 +98,11 @@ export default function ClaimDetail() {
             {/* Reconciliation — what the payer owes vs what the patient must cover. */}
             <Grid container spacing={1.5} sx={{ mb: 1 }}>
               {[
-                ["Billed", claim.reconciliation?.billed, "#0891b2"],
-                ["Approved", claim.reconciliation?.approved, "#3b82f6"],
-                ["Settled", claim.reconciliation?.settled, "#10b981"],
-                ["Patient pays", claim.reconciliation?.patientResponsibility, "#ef4444"],
-                ["Payer balance", claim.reconciliation?.balanceFromPayer, "#f59e0b"],
+                ["Billed", claim.reconciliation?.billed, ACCENTS.reception],
+                ["Approved", claim.reconciliation?.approved, SEMANTIC.info],
+                ["Settled", claim.reconciliation?.settled, SEMANTIC.success],
+                ["Patient pays", claim.reconciliation?.patientResponsibility, SEMANTIC.danger],
+                ["Payer balance", claim.reconciliation?.balanceFromPayer, SEMANTIC.warning],
               ].map(([label, val, color]) => (
                 <Grid size={{ xs: 6, sm: 4 }} key={label as string}>
                   <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{label as string}</Typography>

@@ -9,7 +9,7 @@ import {
   CloudUploadRounded, DeleteOutlineRounded, VisibilityRounded, CheckCircleRounded,
   RadioButtonUncheckedRounded, DescriptionRounded,
 } from "@mui/icons-material";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
@@ -64,7 +64,7 @@ export default function ClaimDocumentsSection({ claimId }: { claimId: string }) 
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>{DOC_STAGE_LABEL[stage]}</Typography>
                 <Chip size="small" label={`${requiredDone}/${requiredItems.length} required`}
-                  sx={{ bgcolor: requiredDone === requiredItems.length ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)", color: requiredDone === requiredItems.length ? "#10b981" : "#f59e0b", fontWeight: 700 }} />
+                  sx={{ bgcolor: requiredDone === requiredItems.length ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)", color: requiredDone === requiredItems.length ? SEMANTIC.success : SEMANTIC.warning, fontWeight: 700 }} />
               </Box>
               <Divider sx={{ mb: 1 }} />
               <Stack spacing={0.5}>
@@ -73,9 +73,9 @@ export default function ClaimDocumentsSection({ claimId }: { claimId: string }) 
                   const has = uploaded.length > 0;
                   return (
                     <Box key={item.code} sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.75, flexWrap: "wrap" }}>
-                      {has ? <CheckCircleRounded fontSize="small" sx={{ color: "#10b981" }} /> : <RadioButtonUncheckedRounded fontSize="small" sx={{ color: item.required ? "#f59e0b" : "text.disabled" }} />}
+                      {has ? <CheckCircleRounded fontSize="small" sx={{ color: SEMANTIC.success }} /> : <RadioButtonUncheckedRounded fontSize="small" sx={{ color: item.required ? SEMANTIC.warning : "text.disabled" }} />}
                       <Typography variant="body2" sx={{ minWidth: 200, fontWeight: has ? 600 : 400 }}>
-                        {item.label}{item.required && <Box component="span" sx={{ color: "#ef4444", ml: 0.5 }}>*</Box>}
+                        {item.label}{item.required && <Box component="span" sx={{ color: SEMANTIC.danger, ml: 0.5 }}>*</Box>}
                       </Typography>
                       <Box sx={{ flex: 1, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                         {uploaded.map((d) => (

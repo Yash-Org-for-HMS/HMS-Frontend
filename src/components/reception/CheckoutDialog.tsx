@@ -10,6 +10,7 @@ import { axiosInstance } from "@/api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { useToast } from "@/providers/ToastContext";
 import BillingModal from "@/features/reception/BillingModal";
+import { SEMANTIC } from "@/styles/accents";
 
 interface CheckoutToken {
   queueTokenId: string;
@@ -84,9 +85,9 @@ export default function CheckoutDialog({ open, onClose, token, onDone }: Checkou
               ) : !apptId ? (
                 <Chip label="No invoice (walk-in)" size="small" sx={{ bgcolor: "action.hover", color: "text.secondary", fontWeight: 600 }} />
               ) : hasDues ? (
-                <Chip label={`Dues ₹${balance.toFixed(2)}`} size="small" sx={{ bgcolor: "rgba(239,68,68,0.12)", color: "#ef4444", fontWeight: 700 }} />
+                <Chip label={`Dues ₹${balance.toFixed(2)}`} size="small" sx={{ bgcolor: "rgba(239,68,68,0.12)", color: SEMANTIC.danger, fontWeight: 700 }} />
               ) : (
-                <Chip label="Settled" size="small" sx={{ bgcolor: "rgba(16,185,129,0.12)", color: "#10b981", fontWeight: 700 }} />
+                <Chip label="Settled" size="small" sx={{ bgcolor: "rgba(16,185,129,0.12)", color: SEMANTIC.success, fontWeight: 700 }} />
               )}
             </Box>
 
@@ -117,7 +118,7 @@ export default function CheckoutDialog({ open, onClose, token, onDone }: Checkou
             variant="contained"
             disabled={submitting}
             startIcon={submitting ? <HeartbeatLoader size={22} /> : <LogoutRounded />}
-            sx={{ bgcolor: hasDues ? "#f59e0b" : "#10b981", "&:hover": { bgcolor: hasDues ? "#d97706" : "#059669" } }}
+            sx={{ bgcolor: hasDues ? SEMANTIC.warning : SEMANTIC.success, "&:hover": { bgcolor: hasDues ? SEMANTIC.warningDark : SEMANTIC.successDark } }}
           >
             {hasDues ? "Check out with dues" : "Complete check-out"}
           </Button>

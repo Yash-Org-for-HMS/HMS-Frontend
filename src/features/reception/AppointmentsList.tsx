@@ -28,17 +28,18 @@ import PageHeader from "@/components/layout/PageHeader";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import dayjs, { Dayjs } from "dayjs";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 
 const getAppointmentType = (reason: string | null | undefined) => {
-  if (!reason) return { label: "Standard", color: "#64748b", bgcolor: "rgba(100,116,139,0.1)" };
+  if (!reason) return { label: "Standard", color: NEUTRAL.muted, bgcolor: "rgba(100,116,139,0.1)" };
   const lower = reason.toLowerCase();
   if (lower.includes("urgent") || lower.includes("emergency") || lower.includes("stat")) {
-    return { label: "Urgent", color: "#ef4444", bgcolor: "rgba(239,68,68,0.1)" };
+    return { label: "Urgent", color: SEMANTIC.danger, bgcolor: "rgba(239,68,68,0.1)" };
   }
   if (lower.includes("follow") || lower.includes("review")) {
-    return { label: "Follow-up", color: "#3b82f6", bgcolor: "rgba(59,130,246,0.1)" };
+    return { label: "Follow-up", color: SEMANTIC.info, bgcolor: "rgba(59,130,246,0.1)" };
   }
-  return { label: "Standard", color: "#64748b", bgcolor: "rgba(100,116,139,0.1)" };
+  return { label: "Standard", color: NEUTRAL.muted, bgcolor: "rgba(100,116,139,0.1)" };
 };
 
 function MiniCalendar({ selectedDate, onDateChange, highlightedDays }: { selectedDate: Dayjs | null, onDateChange: (d: Dayjs) => void, highlightedDays: string[] }) {
@@ -93,15 +94,15 @@ function MiniCalendar({ selectedDate, onDateChange, highlightedDays }: { selecte
                 onClick={() => onDateChange(day)}
                 sx={{
                   minWidth: 0, width: 32, height: 32, p: 0, borderRadius: '50%',
-                  bgcolor: isSelected ? '#0891b2' : isToday ? 'rgba(8,145,178,0.1)' : 'transparent',
-                  color: isSelected ? '#fff' : isToday ? '#0891b2' : 'text.primary',
-                  "&:hover": { bgcolor: isSelected ? '#0e7490' : 'rgba(8,145,178,0.2)' },
+                  bgcolor: isSelected ? ACCENTS.reception : isToday ? 'rgba(8,145,178,0.1)' : 'transparent',
+                  color: isSelected ? '#fff' : isToday ? ACCENTS.reception : 'text.primary',
+                  "&:hover": { bgcolor: isSelected ? ACCENTS.receptionDark : 'rgba(8,145,178,0.2)' },
                   position: 'relative'
                 }}
               >
                 {day.date()}
                 {hasAppointments && !isSelected && (
-                  <Box sx={{ position: 'absolute', bottom: 2, width: 4, height: 4, borderRadius: '50%', bgcolor: '#0891b2' }} />
+                  <Box sx={{ position: 'absolute', bottom: 2, width: 4, height: 4, borderRadius: '50%', bgcolor: ACCENTS.reception }} />
                 )}
                 {hasAppointments && isSelected && (
                   <Box sx={{ position: 'absolute', bottom: 2, width: 4, height: 4, borderRadius: '50%', bgcolor: '#fff' }} />
@@ -227,7 +228,7 @@ export default function AppointmentsList() {
     return appointments.map(a => dayjs(a.appointmentDate).format("YYYY-MM-DD"));
   }, [appointments]);
 
-  const avatarColors = ["#0891b2", "#7c3aed", "#059669", "#dc2626", "#d97706", "#2563eb", "#db2777", "#65a30d"];
+  const avatarColors = [ACCENTS.reception, "#7c3aed", SEMANTIC.successDark, SEMANTIC.dangerDark, SEMANTIC.warningDark, SEMANTIC.infoDark, "#db2777", "#65a30d"];
   const getAvatarColor = (id: string) => avatarColors[(id || "A").charCodeAt(0) % avatarColors.length];
 
   return (
@@ -297,10 +298,10 @@ export default function AppointmentsList() {
             onClick={(e) => setCalendarAnchor(e.currentTarget)}
             sx={{ 
               ml: 2, mb: 1, textTransform: 'none', borderRadius: 2, 
-              bgcolor: tabValue === 'date' ? '#0891b2' : 'transparent',
-              borderColor: tabValue === 'date' ? '#0891b2' : 'divider',
+              bgcolor: tabValue === 'date' ? ACCENTS.reception : 'transparent',
+              borderColor: tabValue === 'date' ? ACCENTS.reception : 'divider',
               color: tabValue === 'date' ? '#fff' : 'text.secondary',
-              "&:hover": { bgcolor: tabValue === 'date' ? '#0e7490' : 'rgba(8,145,178,0.08)' }
+              "&:hover": { bgcolor: tabValue === 'date' ? ACCENTS.receptionDark : 'rgba(8,145,178,0.08)' }
             }}
           >
             {tabValue === 'date' ? selectedDate?.format("MMM DD") : "Filter by Date"}
@@ -409,22 +410,22 @@ export default function AppointmentsList() {
                         {appt.statusLabel === 'Scheduled' && (
                           <>
                             <Tooltip title="Check In">
-                              <IconButton size="small" onClick={() => setActionDialog({ open: true, type: 'checkin', appt })} sx={{ color: "text.secondary", "&:hover": { color: "#10b981", bgcolor: "rgba(16,185,129,0.08)" } }}>
+                              <IconButton size="small" onClick={() => setActionDialog({ open: true, type: 'checkin', appt })} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.success, bgcolor: "rgba(16,185,129,0.08)" } }}>
                                 <CheckCircleRounded fontSize="small" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Edit / Add Notes">
-                              <IconButton size="small" onClick={() => navigate(`/reception/appointments/${appt.appointmentId}/edit`)} sx={{ color: "text.secondary", "&:hover": { color: "#3b82f6", bgcolor: "rgba(59,130,246,0.08)" } }}>
+                              <IconButton size="small" onClick={() => navigate(`/reception/appointments/${appt.appointmentId}/edit`)} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.info, bgcolor: "rgba(59,130,246,0.08)" } }}>
                                 <NotesRounded fontSize="small" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Billing">
-                              <IconButton size="small" onClick={() => setBillingDialog({ open: true, appt })} sx={{ color: "text.secondary", "&:hover": { color: "#f59e0b", bgcolor: "rgba(245,158,11,0.08)" } }}>
+                              <IconButton size="small" onClick={() => setBillingDialog({ open: true, appt })} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.warning, bgcolor: "rgba(245,158,11,0.08)" } }}>
                                 <ReceiptRounded fontSize="small" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Cancel">
-                              <IconButton size="small" onClick={() => setActionDialog({ open: true, type: 'cancel', appt })} sx={{ color: "text.secondary", "&:hover": { color: "#ef4444", bgcolor: "rgba(239,68,68,0.08)" } }}>
+                              <IconButton size="small" onClick={() => setActionDialog({ open: true, type: 'cancel', appt })} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger, bgcolor: "rgba(239,68,68,0.08)" } }}>
                                 <CancelRounded fontSize="small" />
                               </IconButton>
                             </Tooltip>
@@ -438,12 +439,12 @@ export default function AppointmentsList() {
                         {appt.statusLabel === 'Completed' && (
                           <>
                             <Tooltip title="Book Follow-up">
-                              <IconButton size="small" onClick={() => navigate(`/reception/appointments/new?patientId=${appt.patientId}&doctorId=${appt.doctorId || ""}&followUpOf=${appt.appointmentId}`)} sx={{ color: "text.secondary", "&:hover": { color: "#0891b2", bgcolor: "rgba(8,145,178,0.08)" } }}>
+                              <IconButton size="small" onClick={() => navigate(`/reception/appointments/new?patientId=${appt.patientId}&doctorId=${appt.doctorId || ""}&followUpOf=${appt.appointmentId}`)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.reception, bgcolor: "rgba(8,145,178,0.08)" } }}>
                                 <EventRepeatRounded fontSize="small" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Send Visit Confirmation">
-                              <IconButton size="small" onClick={() => handleSendNotification(appt.appointmentId, 'visit-confirmation')} sx={{ color: "text.secondary", "&:hover": { color: "#10b981", bgcolor: "rgba(16,185,129,0.08)" } }}>
+                              <IconButton size="small" onClick={() => handleSendNotification(appt.appointmentId, 'visit-confirmation')} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.success, bgcolor: "rgba(16,185,129,0.08)" } }}>
                                 <ChecklistRounded fontSize="small" />
                               </IconButton>
                             </Tooltip>
@@ -463,9 +464,9 @@ export default function AppointmentsList() {
       <Dialog open={actionDialog.open} onClose={() => setActionDialog({ open: false, type: null, appt: null })} PaperProps={{ sx: { bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3 } }}>
         <DialogContent sx={{ p: 4, textAlign: "center" }}>
           {actionDialog.type === 'cancel' ? (
-            <WarningAmberRounded sx={{ fontSize: 48, color: "#ef4444", mb: 2 }} />
+            <WarningAmberRounded sx={{ fontSize: 48, color: SEMANTIC.danger, mb: 2 }} />
           ) : (
-            <CheckCircleRounded sx={{ fontSize: 48, color: "#10b981", mb: 2 }} />
+            <CheckCircleRounded sx={{ fontSize: 48, color: SEMANTIC.success, mb: 2 }} />
           )}
           <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
             {actionDialog.type === 'cancel' ? 'Cancel Appointment?' : 'Check In Patient?'}
@@ -477,7 +478,7 @@ export default function AppointmentsList() {
             <Button variant="outlined" onClick={() => setActionDialog({ open: false, type: null, appt: null })} sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none" }}>
               Go Back
             </Button>
-            <Button variant="contained" onClick={handleAction} disabled={processing} sx={{ bgcolor: actionDialog.type === 'cancel' ? '#ef4444' : '#10b981', "&:hover": { bgcolor: actionDialog.type === 'cancel' ? '#dc2626' : '#059669' }, textTransform: "none" }}>
+            <Button variant="contained" onClick={handleAction} disabled={processing} sx={{ bgcolor: actionDialog.type === 'cancel' ? SEMANTIC.danger : SEMANTIC.success, "&:hover": { bgcolor: actionDialog.type === 'cancel' ? SEMANTIC.dangerDark : SEMANTIC.successDark }, textTransform: "none" }}>
               {processing ? <HeartbeatLoader size={22} /> : 'Confirm'}
             </Button>
           </Box>

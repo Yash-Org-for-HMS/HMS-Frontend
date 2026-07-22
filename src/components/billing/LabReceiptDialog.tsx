@@ -10,6 +10,7 @@ import BillDocument from "@/components/billing/BillDocument";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import ErrorState from "@/components/ErrorState";
 import { apiErrorText } from "@/utils/apiError";
+import { SEMANTIC } from "@/styles/accents";
 
 interface Props {
   open: boolean;
@@ -120,7 +121,7 @@ export default function LabReceiptDialog({ open, serviceId, onClose }: Props) {
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit">Close</Button>
-        <Button variant="contained" startIcon={<PrintRounded />} disabled={!invoice} onClick={print} sx={{ bgcolor: "#10B981", "&:hover": { bgcolor: "#059669" } }}>Print</Button>
+        <Button variant="contained" startIcon={<PrintRounded />} disabled={!invoice} onClick={print} sx={{ bgcolor: SEMANTIC.success, "&:hover": { bgcolor: SEMANTIC.successDark } }}>Print</Button>
       </DialogActions>
     </Dialog>
   );

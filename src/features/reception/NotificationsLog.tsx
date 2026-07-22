@@ -28,6 +28,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import { apiErrorText } from "@/utils/apiError";
+import { SEMANTIC } from "@/styles/accents";
 
 // Match this list's existing sentence-case header look.
 const headSx = { bgcolor: "background.paper", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider", textTransform: "none", letterSpacing: "normal", fontSize: "0.875rem" } as const;
@@ -73,7 +74,7 @@ export default function NotificationsLog() {
               icon={<ScienceRounded sx={{ fontSize: "16px !important" }} />}
               label="Simulated"
               size="small"
-              sx={{ bgcolor: "rgba(245,158,11,0.12)", color: "#f59e0b", fontWeight: 700, border: "1px solid rgba(245,158,11,0.3)" }}
+              sx={{ bgcolor: "rgba(245,158,11,0.12)", color: SEMANTIC.warning, fontWeight: 700, border: "1px solid rgba(245,158,11,0.3)" }}
             />
           </Tooltip>
         }
@@ -156,13 +157,13 @@ export default function NotificationsLog() {
                           icon={<CheckCircleRounded fontSize="small" />}
                           label={notif.status}
                           size="small"
-                          sx={{ bgcolor: "rgba(16, 185, 129, 0.15)", color: "#10b981", fontWeight: 600 }}
+                          sx={{ bgcolor: "rgba(16, 185, 129, 0.15)", color: SEMANTIC.success, fontWeight: 600 }}
                         />
                         <Chip
                           label="Simulated"
                           size="small"
                           variant="outlined"
-                          sx={{ color: "#f59e0b", borderColor: "rgba(245,158,11,0.4)", fontWeight: 600, fontSize: "0.75rem", height: 20 }}
+                          sx={{ color: SEMANTIC.warning, borderColor: "rgba(245,158,11,0.4)", fontWeight: 600, fontSize: "0.75rem", height: 20 }}
                         />
                       </Box>
                     </TableCell>

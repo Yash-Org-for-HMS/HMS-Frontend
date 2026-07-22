@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -25,7 +25,7 @@ import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 
 const ACCENT = ACCENTS.reception;
-const PIE = ["#0891b2", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#3b82f6", "#ec4899"];
+const PIE = [ACCENTS.reception, SEMANTIC.success, SEMANTIC.warning, SEMANTIC.danger, "#8b5cf6", SEMANTIC.info, "#ec4899"];
 const inr = formatINRAuto;
 
 function KpiTile({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
@@ -137,7 +137,7 @@ export function OpBills() {
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PaymentsRounded />} label="Invoices" value={String(data.totals.invoices)} color={ACCENT} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Billed" value={inr(data.totals.billed)} color="#8b5cf6" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PaymentsRounded />} label="Collected" value={inr(data.totals.collected)} color="#10b981" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PaymentsRounded />} label="Collected" value={inr(data.totals.collected)} color={SEMANTIC.success} /></Grid>
           </Grid>
           <SimpleTable title="OPD invoices" head={["Invoice", "Patient", "UHID", "Date", "Net", "Paid", "Balance", "Status"]}
             rows={rows.map((r) => [r.invoiceNumber, r.patientName, r.uhid, dayjs(r.invoiceDate).format("DD MMM YYYY"), inr(r.netAmount), inr(r.paidAmount), inr(r.balance), r.statusLabel])} />
@@ -208,8 +208,8 @@ export function ReferralsByDoctor() {
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<MedicalInformationRounded />} label="Referring doctors" value={String(s.referringDoctors)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="Referred patients" value={String(s.referredPatients)} color="#10b981" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CallSplitRounded />} label="Internal / External" value={`${s.internal ?? 0} / ${s.external ?? 0}`} color="#3b82f6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="Referred patients" value={String(s.referredPatients)} color={SEMANTIC.success} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CallSplitRounded />} label="Internal / External" value={`${s.internal ?? 0} / ${s.external ?? 0}`} color={SEMANTIC.info} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<EventRounded />} label="Total visits" value={String(s.totalVisits)} color="#8b5cf6" /></Grid>
           </Grid>
 
@@ -217,7 +217,7 @@ export function ReferralsByDoctor() {
             <Grid size={{ xs: 12, md: 7 }}>
               <ChartCard title="Patients referred by doctor" empty={!rows.length}>
                 <BarChart data={rows} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} horizontal={false} />
                   <XAxis type="number" {...axisProps} allowDecimals={false} /><YAxis type="category" dataKey="name" width={140} {...axisProps} />
                   <RTooltip /><Bar dataKey="patientCount" name="Patients" fill={ACCENT} radius={[0, 6, 6, 0]} />
                 </BarChart>
@@ -259,8 +259,8 @@ export function Census() {
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHotelRounded />} label="Current inpatients" value={String(data.currentInpatients)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<MeetingRoomRounded />} label="Bed occupancy" value={`${beds.occupancyRate}%`} color="#ef4444" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="Admissions" value={String(data.movement.admissions)} color="#10b981" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<MeetingRoomRounded />} label="Bed occupancy" value={`${beds.occupancyRate}%`} color={SEMANTIC.danger} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="Admissions" value={String(data.movement.admissions)} color={SEMANTIC.success} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ReplayRounded />} label="Discharges" value={String(data.movement.discharges)} color="#8b5cf6" /></Grid>
           </Grid>
 
@@ -273,7 +273,7 @@ export function Census() {
                       { name: "Occupied", value: beds.occupied }, { name: "Available", value: beds.available },
                       { name: "Reserved", value: beds.reserved }, { name: "Maintenance", value: beds.maintenance },
                     ].filter((d) => d.value > 0)}>
-                    {["#ef4444", "#10b981", "#f59e0b", "#64748b"].map((c, i) => <Cell key={i} fill={c} />)}
+                    {[SEMANTIC.danger, SEMANTIC.success, SEMANTIC.warning, NEUTRAL.muted].map((c, i) => <Cell key={i} fill={c} />)}
                   </Pie><Legend /><RTooltip />
                 </PieChart>
               </ChartCard>
@@ -281,7 +281,7 @@ export function Census() {
             <Grid size={{ xs: 12, md: 7 }}>
               <ChartCard title="Occupancy by ward (%)" height={260} empty={!data.byWard.length}>
                 <BarChart data={data.byWard} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} horizontal={false} />
                   <XAxis type="number" domain={[0, 100]} {...axisProps} /><YAxis type="category" dataKey="wardName" width={120} {...axisProps} />
                   <RTooltip formatter={(v: any) => `${v}%`} /><Bar dataKey="occupancyRate" name="Occupancy" fill={ACCENT} radius={[0, 6, 6, 0]} />
                 </BarChart>
@@ -329,11 +329,11 @@ export function DailyOpd() {
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<EventRounded />} label="Appointments" value={String(t.appointments)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Completed" value={String(t.completed)} color="#10b981" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CancelRounded />} label="Cancelled" value={String(t.cancelled)} color="#ef4444" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Completed" value={String(t.completed)} color={SEMANTIC.success} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CancelRounded />} label="Cancelled" value={String(t.cancelled)} color={SEMANTIC.danger} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PaymentsRounded />} label="Collected" value={inr(t.collected)} color="#8b5cf6" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Checked in" value={String(t.checkedIn)} color="#3b82f6" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ReplayRounded />} label="Follow-ups" value={String(t.followUps)} color="#f59e0b" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Checked in" value={String(t.checkedIn)} color={SEMANTIC.info} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ReplayRounded />} label="Follow-ups" value={String(t.followUps)} color={SEMANTIC.warning} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<EventRounded />} label="New OPD" value={String(t.newOpd)} color={ACCENT} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="New patients" value={String(t.newPatients)} color="#ec4899" /></Grid>
           </Grid>
@@ -352,7 +352,7 @@ export function DailyOpd() {
             <Grid size={{ xs: 12, md: 7 }}>
               <ChartCard title="Appointments by doctor" empty={!data.byDoctor.length}>
                 <BarChart data={data.byDoctor} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} horizontal={false} />
                   <XAxis type="number" {...axisProps} /><YAxis type="category" dataKey="doctorName" width={120} {...axisProps} />
                   <RTooltip /><Bar dataKey="total" name="Total" fill={ACCENT} radius={[0, 6, 6, 0]} />
                 </BarChart>
@@ -401,8 +401,8 @@ export function Analytics() {
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<EventRounded />} label="Total appointments" value={String(t.appointments)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Completion rate" value={`${t.completionRate}%`} color="#10b981" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CancelRounded />} label="Cancellation rate" value={`${t.cancellationRate}%`} color="#ef4444" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Completion rate" value={`${t.completionRate}%`} color={SEMANTIC.success} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CancelRounded />} label="Cancellation rate" value={`${t.cancellationRate}%`} color={SEMANTIC.danger} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<TrendingUpRounded />} label="Avg / day" value={String(t.avgPerDay)} color="#8b5cf6" /></Grid>
           </Grid>
 
@@ -411,7 +411,7 @@ export function Analytics() {
               <ChartCard title="Daily trend" empty={!data.trend.length}>
                 <AreaChart data={data.trend}>
                   <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={ACCENT} stopOpacity={0.4} /><stop offset="95%" stopColor={ACCENT} stopOpacity={0} /></linearGradient></defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} />
                   <XAxis dataKey="date" {...axisProps} tickFormatter={(d) => dayjs(d).format("DD MMM")} /><YAxis {...axisProps} allowDecimals={false} />
                   <RTooltip /><Area type="monotone" dataKey="total" name="Appointments" stroke={ACCENT} fill="url(#g)" strokeWidth={2} />
                 </AreaChart>
@@ -420,7 +420,7 @@ export function Analytics() {
             <Grid size={{ xs: 12, md: 7 }}>
               <ChartCard title="By weekday">
                 <BarChart data={data.byWeekday}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" /><XAxis dataKey="day" {...axisProps} /><YAxis {...axisProps} allowDecimals={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} /><XAxis dataKey="day" {...axisProps} /><YAxis {...axisProps} allowDecimals={false} />
                   <RTooltip /><Bar dataKey="count" name="Appointments" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ChartCard>
@@ -437,7 +437,7 @@ export function Analytics() {
             <Grid size={{ xs: 12, md: 7 }}>
               <ChartCard title="Appointments by hour">
                 <BarChart data={data.byHour}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" /><XAxis dataKey="hour" {...axisProps} tickFormatter={(h) => `${h}:00`} /><YAxis {...axisProps} allowDecimals={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} /><XAxis dataKey="hour" {...axisProps} tickFormatter={(h) => `${h}:00`} /><YAxis {...axisProps} allowDecimals={false} />
                   <RTooltip labelFormatter={(h) => `${h}:00`} /><Bar dataKey="count" name="Appointments" fill={ACCENT} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ChartCard>
@@ -482,8 +482,8 @@ export function Collection() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PaymentsRounded />} label="Gross collected" value={inr(t.gross)} color="#10b981" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ReplayRounded />} label="Refunds" value={inr(t.refunded)} color="#ef4444" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PaymentsRounded />} label="Gross collected" value={inr(t.gross)} color={SEMANTIC.success} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ReplayRounded />} label="Refunds" value={inr(t.refunded)} color={SEMANTIC.danger} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Net" value={inr(t.net)} color={ACCENT} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccessTimeRounded />} label="Transactions" value={String(t.transactions)} color="#8b5cf6" /></Grid>
           </Grid>
@@ -492,8 +492,8 @@ export function Collection() {
             <Grid size={{ xs: 12, md: 7 }}>
               <ChartCard title="Collected by day" empty={!data.byDay.length}>
                 <BarChart data={data.byDay}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" /><XAxis dataKey="date" {...axisProps} tickFormatter={(d) => dayjs(d).format("DD MMM")} /><YAxis {...axisProps} />
-                  <RTooltip formatter={(v: any) => inr(v)} /><Bar dataKey="amount" name="Collected" fill="#10b981" radius={[6, 6, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} /><XAxis dataKey="date" {...axisProps} tickFormatter={(d) => dayjs(d).format("DD MMM")} /><YAxis {...axisProps} />
+                  <RTooltip formatter={(v: any) => inr(v)} /><Bar dataKey="amount" name="Collected" fill={SEMANTIC.success} radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ChartCard>
             </Grid>
@@ -509,8 +509,8 @@ export function Collection() {
             <Grid size={{ xs: 12, md: 6 }}>
               <ChartCard title="By shift" height={240}>
                 <BarChart data={data.byShift}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" /><XAxis dataKey="shift" {...axisProps} /><YAxis {...axisProps} />
-                  <RTooltip formatter={(v: any) => inr(v)} /><Bar dataKey="amount" name="Collected" fill="#0891b2" radius={[6, 6, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} /><XAxis dataKey="shift" {...axisProps} /><YAxis {...axisProps} />
+                  <RTooltip formatter={(v: any) => inr(v)} /><Bar dataKey="amount" name="Collected" fill={ACCENTS.reception} radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ChartCard>
             </Grid>
@@ -571,7 +571,7 @@ function SimpleTable({ title, head, rows }: { title: string; head: string[]; row
         <Box sx={{ flex: 1 }} />
         {rows.length > 0 && (
           <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />} onClick={() => exportTableToExcel(title, head, rows)}
-            sx={{ textTransform: "none", color: "#0891b2" }}>Excel</Button>
+            sx={{ textTransform: "none", color: ACCENTS.reception }}>Excel</Button>
         )}
       </Box>
       {rows.length === 0 ? (

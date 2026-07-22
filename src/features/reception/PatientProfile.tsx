@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR, getInitials } from "@/utils/format";
 import { useMemo, useState } from "react";
@@ -182,7 +182,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
     }
   };
 
-  const avatarColors = ["#0891b2", "#7c3aed", "#059669", "#dc2626", "#d97706", "#2563eb"];
+  const avatarColors = [ACCENTS.reception, "#7c3aed", SEMANTIC.successDark, SEMANTIC.dangerDark, SEMANTIC.warningDark, SEMANTIC.infoDark];
   const getColor = (pid: string) => avatarColors[pid.charCodeAt(0) % avatarColors.length];
   const formatAddress = (p: Patient) => [p.addressLine1, p.addressLine2, p.city, p.state, p.postalCode].filter(Boolean).join(", ") || null;
 
@@ -289,13 +289,13 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
               <Chip icon={<WcRounded sx={{ fontSize: "14px !important" }} />} label={patient.genderLabel} size="small"
                 sx={{ bgcolor: "rgba(139,92,246,0.1)", color: "#8b5cf6", fontWeight: 600 }} />
               <Chip icon={<BloodtypeRounded sx={{ fontSize: "14px !important" }} />} label={patient.bloodGroupLabel} size="small"
-                sx={{ bgcolor: "rgba(239,68,68,0.1)", color: "#ef4444", fontWeight: 700 }} />
+                sx={{ bgcolor: "rgba(239,68,68,0.1)", color: SEMANTIC.danger, fontWeight: 700 }} />
               {patient.age !== null && (
-                <Chip label={`${patient.age} yrs`} size="small" sx={{ bgcolor: "rgba(16,185,129,0.1)", color: "#10b981", fontWeight: 600 }} />
+                <Chip label={`${patient.age} yrs`} size="small" sx={{ bgcolor: "rgba(16,185,129,0.1)", color: SEMANTIC.success, fontWeight: 600 }} />
               )}
               {patient.allergies && (
                 <Chip icon={<WarningAmberRounded sx={{ fontSize: "14px !important" }} />} label="Allergies" size="small"
-                  sx={{ bgcolor: "rgba(245,158,11,0.12)", color: "#d97706", fontWeight: 700 }} />
+                  sx={{ bgcolor: "rgba(245,158,11,0.12)", color: SEMANTIC.warningDark, fontWeight: 700 }} />
               )}
             </Box>
           </Box>
@@ -316,12 +316,12 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
           value={stats.lastVisit ? stats.lastVisit.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—"}
           sub={stats.lastVisit ? stats.lastVisit.getFullYear().toString() : "no visits yet"} />
         {billingEnabled && (
-          <StatCard layout="horizontal" icon={<PaymentsRounded />} label="Total billed" value={formatINR(billing?.totals?.totalBilled)} color="#10b981"
+          <StatCard layout="horizontal" icon={<PaymentsRounded />} label="Total billed" value={formatINR(billing?.totals?.totalBilled)} color={SEMANTIC.success}
             sub={`${billing?.totals?.invoiceCount || 0} invoices`} />
         )}
         {billingEnabled && (
           <StatCard layout="horizontal" icon={<AccountBalanceWalletRounded />} label="Outstanding dues" value={formatINR(billing?.totals?.totalDues)}
-            color={Number(billing?.totals?.totalDues || 0) > 0 ? "#ef4444" : "#10b981"}
+            color={Number(billing?.totals?.totalDues || 0) > 0 ? SEMANTIC.danger : SEMANTIC.success}
             sub={Number(billing?.totals?.totalDues || 0) > 0 ? "due now" : "all settled"} />
         )}
       </Box>
@@ -389,7 +389,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
           <SectionCard title="Allergies & Medical Notes" icon={<WarningAmberRounded fontSize="small" />}>
             {patient.allergies ? (
               <Box sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
-                <Typography variant="body2" sx={{ color: "#d97706", lineHeight: 1.7, fontWeight: 500 }}>{patient.allergies}</Typography>
+                <Typography variant="body2" sx={{ color: SEMANTIC.warningDark, lineHeight: 1.7, fontWeight: 500 }}>{patient.allergies}</Typography>
               </Box>
             ) : (
               <Box sx={{ py: 3, textAlign: "center" }}>
@@ -439,7 +439,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
                             {canCheckIn && (
                               <Button size="small" variant="contained" startIcon={checkinId === appt.appointmentId ? <HeartbeatLoader size={22} /> : <LoginRounded />}
                                 disabled={checkinId === appt.appointmentId} onClick={() => handleCheckIn(appt.appointmentId)}
-                                sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" }, textTransform: "none" }}>Check in</Button>
+                                sx={{ bgcolor: SEMANTIC.success, "&:hover": { bgcolor: SEMANTIC.successDark }, textTransform: "none" }}>Check in</Button>
                             )}
                             {canEdit && appt.statusLabel === "Completed" && (
                               <Button size="small" variant="outlined" startIcon={<EventRepeatRounded />}
@@ -466,11 +466,11 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
         <SectionCard title="Billing & Invoices" icon={<ReceiptLongRounded fontSize="small" />}>
           <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap", gap: 1, mb: 2 }}>
             <Chip label={`Billed: ${formatINR(billing?.totals?.totalBilled)}`} sx={{ bgcolor: "action.hover", color: "text.primary", fontWeight: 700 }} />
-            <Chip label={`Paid: ${formatINR(billing?.totals?.totalPaid)}`} sx={{ bgcolor: "rgba(16,185,129,0.12)", color: "#10b981", fontWeight: 700 }} />
+            <Chip label={`Paid: ${formatINR(billing?.totals?.totalPaid)}`} sx={{ bgcolor: "rgba(16,185,129,0.12)", color: SEMANTIC.success, fontWeight: 700 }} />
             <Chip label={`Dues: ${formatINR(billing?.totals?.totalDues)}`}
-              sx={{ bgcolor: Number(billing?.totals?.totalDues || 0) > 0 ? "rgba(239,68,68,0.12)" : "rgba(16,185,129,0.12)", color: Number(billing?.totals?.totalDues || 0) > 0 ? "#ef4444" : "#10b981", fontWeight: 700 }} />
+              sx={{ bgcolor: Number(billing?.totals?.totalDues || 0) > 0 ? "rgba(239,68,68,0.12)" : "rgba(16,185,129,0.12)", color: Number(billing?.totals?.totalDues || 0) > 0 ? SEMANTIC.danger : SEMANTIC.success, fontWeight: 700 }} />
             <Chip label={`Deposits: ${formatINR(billing?.totals?.totalDeposit)}`}
-              sx={{ bgcolor: "rgba(8,145,178,0.12)", color: "#0891b2", fontWeight: 700 }} />
+              sx={{ bgcolor: "rgba(8,145,178,0.12)", color: ACCENTS.reception, fontWeight: 700 }} />
           </Stack>
           {invoices.length === 0 ? (
             <Box sx={{ py: 2 }}><Mascot pose="all-caught-up" title="No invoices" subtitle="This patient has no invoices yet." /></Box>
@@ -492,7 +492,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
                         <TableCell sx={{ borderColor: "divider", color: "text.secondary" }}>{new Date(inv.invoiceDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</TableCell>
                         <TableCell sx={{ borderColor: "divider", color: "text.primary", fontWeight: 600 }}>{formatINR(inv.netAmount)}</TableCell>
                         <TableCell sx={{ borderColor: "divider" }}>
-                          {Number(inv.balance) > 0 ? <Typography variant="body2" sx={{ color: "#ef4444", fontWeight: 700 }}>{formatINR(inv.balance)}</Typography> : <Typography variant="body2" sx={{ color: "#10b981" }}>—</Typography>}
+                          {Number(inv.balance) > 0 ? <Typography variant="body2" sx={{ color: SEMANTIC.danger, fontWeight: 700 }}>{formatINR(inv.balance)}</Typography> : <Typography variant="body2" sx={{ color: SEMANTIC.success }}>—</Typography>}
                         </TableCell>
                         <TableCell sx={{ borderColor: "divider" }}>
                           <StatusChip label={inv.statusLabel} color={inv.statusColor} />
@@ -501,8 +501,8 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
                           <Button size="small" variant={!readOnly && Number(inv.balance) > 0 ? "contained" : "text"}
                             onClick={() => setInvoiceView(inv.invoiceId)}
                             sx={!readOnly && Number(inv.balance) > 0
-                              ? { textTransform: "none", bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }
-                              : { textTransform: "none", color: "#0891b2" }}>
+                              ? { textTransform: "none", bgcolor: SEMANTIC.success, "&:hover": { bgcolor: SEMANTIC.successDark } }
+                              : { textTransform: "none", color: ACCENTS.reception }}>
                             {!readOnly && Number(inv.balance) > 0 ? "Pay" : "View"}
                           </Button>
                         </TableCell>

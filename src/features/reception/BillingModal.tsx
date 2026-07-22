@@ -15,6 +15,7 @@ import ErrorState from "@/components/ErrorState";
 import { useToast } from "@/providers/ToastContext";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BillReceipt from "@/components/reception/BillReceipt";
+import { SEMANTIC } from "@/styles/accents";
 
 interface BillingModalProps {
   open: boolean;
@@ -436,8 +437,8 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                       startIcon={paying ? <HeartbeatLoader size={22} /> : <PaymentRounded />}
                       sx={{ 
                         py: 1.5, 
-                        bgcolor: "#10b981", 
-                        "&:hover": { bgcolor: "#059669" }, 
+                        bgcolor: SEMANTIC.success, 
+                        "&:hover": { bgcolor: SEMANTIC.successDark }, 
                         fontWeight: 700,
                         fontSize: "1rem"
                       }}
@@ -447,7 +448,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                   </>
                 ) : (
                   <Box sx={{ textAlign: "center", py: 5 }}>
-                    <CheckCircleRounded sx={{ fontSize: 60, color: "#10b981", mb: 2 }} />
+                    <CheckCircleRounded sx={{ fontSize: 60, color: SEMANTIC.success, mb: 2 }} />
                     <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>Fully Paid</Typography>
                     <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
                       No further payments required for this invoice.
@@ -532,7 +533,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
 
                 {!isFullyPaid && (
                   <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(16,185,129,0.05)", borderRadius: 2, border: "1px dashed rgba(16,185,129,0.3)" }}>
-                    <Typography variant="subtitle2" sx={{ color: "#10b981", fontWeight: 700, mb: 2 }}>
+                    <Typography variant="subtitle2" sx={{ color: SEMANTIC.success, fontWeight: 700, mb: 2 }}>
                       Discount & Tax
                     </Typography>
                     <Grid container spacing={2}>
@@ -562,7 +563,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                       fullWidth variant="outlined"
                       onClick={handleAdjust}
                       disabled={adjusting}
-                      sx={{ mt: 2, color: "#10b981", borderColor: "rgba(16,185,129,0.5)", fontWeight: 600 }}
+                      sx={{ mt: 2, color: SEMANTIC.success, borderColor: "rgba(16,185,129,0.5)", fontWeight: 600 }}
                     >
                       {adjusting ? "Applying..." : "Apply Discount & Tax"}
                     </Button>
@@ -571,7 +572,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
 
                 {!isFullyPaid && (
                   <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(59,130,246,0.05)", borderRadius: 2, border: "1px dashed rgba(59,130,246,0.3)" }}>
-                    <Typography variant="subtitle2" sx={{ color: "#3b82f6", fontWeight: 700, mb: 2 }}>
+                    <Typography variant="subtitle2" sx={{ color: SEMANTIC.info, fontWeight: 700, mb: 2 }}>
                       + Add Custom Line Item
                     </Typography>
                     <Grid container spacing={2}>
@@ -607,7 +608,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                       fullWidth variant="outlined" 
                       onClick={handleAddLineItem}
                       disabled={addingItem || !newItemDesc || !newItemPrice || Number(newItemPrice) < 0}
-                      sx={{ mt: 2, color: "#3b82f6", borderColor: "rgba(59,130,246,0.5)", fontWeight: 600 }}
+                      sx={{ mt: 2, color: SEMANTIC.info, borderColor: "rgba(59,130,246,0.5)", fontWeight: 600 }}
                     >
                       {addingItem ? "Adding..." : "Add Item"}
                     </Button>
@@ -626,7 +627,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
           startIcon={<PrintRounded />}
           disabled={!invoice}
           onClick={handlePrint}
-          sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, fontWeight: 600 }}
+          sx={{ bgcolor: SEMANTIC.info, "&:hover": { bgcolor: SEMANTIC.infoDark }, fontWeight: 600 }}
         >
           Print Receipt
         </Button>

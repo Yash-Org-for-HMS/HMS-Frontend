@@ -19,12 +19,13 @@ import PageHeader from "@/components/layout/PageHeader";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import dayjs from "dayjs";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
-  PENDING: { label: "Pending", color: "#f59e0b" },
-  ACCEPTED: { label: "Accepted", color: "#3b82f6" },
-  COMPLETED: { label: "Completed", color: "#10b981" },
-  CANCELLED: { label: "Cancelled", color: "#ef4444" },
+  PENDING: { label: "Pending", color: SEMANTIC.warning },
+  ACCEPTED: { label: "Accepted", color: SEMANTIC.info },
+  COMPLETED: { label: "Completed", color: SEMANTIC.success },
+  CANCELLED: { label: "Cancelled", color: SEMANTIC.danger },
 };
 
 // Allowed next states from each status (terminal states have none).
@@ -133,7 +134,7 @@ export default function ReferralsList() {
                 <TableRow><TableCell colSpan={7} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No referrals" subtitle="No referrals match your filters." /></TableCell></TableRow>
               ) : (
                 sorted.map((r) => {
-                  const sm = STATUS_META[r.status] || { label: r.status, color: "#64748b" };
+                  const sm = STATUS_META[r.status] || { label: r.status, color: NEUTRAL.muted };
                   const nexts = NEXT_STATES[r.status] || [];
                   return (
                     <TableRow key={r.referralId} sx={{ "&:hover": { bgcolor: "background.default" } }}>
@@ -143,7 +144,7 @@ export default function ReferralsList() {
                       </TableCell>
                       <TableCell>
                         <Chip label={r.referralType === "EXTERNAL" ? "External" : "Internal"} size="small"
-                          sx={{ bgcolor: r.referralType === "EXTERNAL" ? "rgba(139,92,246,0.12)" : "rgba(8,145,178,0.12)", color: r.referralType === "EXTERNAL" ? "#8b5cf6" : "#0891b2", fontWeight: 700 }} />
+                          sx={{ bgcolor: r.referralType === "EXTERNAL" ? "rgba(139,92,246,0.12)" : "rgba(8,145,178,0.12)", color: r.referralType === "EXTERNAL" ? "#8b5cf6" : ACCENTS.reception, fontWeight: 700 }} />
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" sx={{ color: "text.primary" }}>{r.destination}</Typography>

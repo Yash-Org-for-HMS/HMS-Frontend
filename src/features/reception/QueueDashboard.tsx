@@ -20,6 +20,7 @@ import CheckoutDialog from "@/components/reception/CheckoutDialog";
 import { useSocket } from "@/hooks/useSocket";
 import PageHeader from "@/components/layout/PageHeader";
 import { QUEUE_POLL_MS } from "@/constants/intervals";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 
 const getDoctorInitials = (doctorName?: string) => {
   if (!doctorName || doctorName === "Unknown") return "";
@@ -77,7 +78,7 @@ export default function QueueDashboard() {
     const end = t.consultationStartedAt ? new Date(t.consultationStartedAt).getTime() : Date.now();
     return Math.max(0, Math.round((end - new Date(t.createdAt).getTime()) / 60000));
   };
-  const waitColor = (m: number) => (m >= 30 ? "#ef4444" : m >= 15 ? "#f59e0b" : "#10b981");
+  const waitColor = (m: number) => (m >= 30 ? SEMANTIC.danger : m >= 15 ? SEMANTIC.warning : SEMANTIC.success);
   const fmtWait = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`);
 
   const waitingTokens = useMemo(() => activeTokens.filter(isWaitingStatus), [activeTokens]);
@@ -149,7 +150,7 @@ export default function QueueDashboard() {
             onClick={invalidateQueue}
             sx={{
               color: "#06b6d4", borderColor: "rgba(6,182,212,0.5)", fontWeight: 600,
-              "&:hover": { borderColor: "#0891b2", bgcolor: "rgba(6,182,212,0.1)" }
+              "&:hover": { borderColor: ACCENTS.reception, bgcolor: "rgba(6,182,212,0.1)" }
             }}
           >
             Refresh
@@ -201,7 +202,7 @@ export default function QueueDashboard() {
                         <Chip 
                           label={`${getDoctorInitials(token.doctorName)}-${token.displayNumber}`}
                           sx={{ 
-                            bgcolor: token.statusColor || "#f59e0b", 
+                            bgcolor: token.statusColor || SEMANTIC.warning, 
                             color: "#fff", 
                             fontWeight: 800,
                             borderRadius: '8px'
@@ -238,7 +239,7 @@ export default function QueueDashboard() {
                               icon={<MonitorHeartRounded sx={{ fontSize: "14px !important" }} />}
                               label="Recorded"
                               size="small"
-                              sx={{ bgcolor: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600, fontSize: "0.75rem" }}
+                              sx={{ bgcolor: "rgba(16,185,129,0.12)", color: SEMANTIC.success, border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600, fontSize: "0.75rem" }}
                             />
                           </Tooltip>
                         ) : (
@@ -251,7 +252,7 @@ export default function QueueDashboard() {
                             size="small" variant="contained"
                             startIcon={<PlayArrowRounded />}
                             onClick={() => handleAction('call', token.queueTokenId)}
-                            sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, textTransform: "none", mr: 1 }}
+                            sx={{ bgcolor: SEMANTIC.info, "&:hover": { bgcolor: SEMANTIC.infoDark }, textTransform: "none", mr: 1 }}
                           >
                             Call Next
                           </Button>
@@ -261,7 +262,7 @@ export default function QueueDashboard() {
                             size="small" variant="contained"
                             startIcon={<CheckCircleRounded />}
                             onClick={() => handleAction('complete', token.queueTokenId)}
-                            sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" }, textTransform: "none", mr: 1 }}
+                            sx={{ bgcolor: SEMANTIC.success, "&:hover": { bgcolor: SEMANTIC.successDark }, textTransform: "none", mr: 1 }}
                           >
                             Complete
                           </Button>
@@ -314,7 +315,7 @@ export default function QueueDashboard() {
                           size="small" variant="contained"
                           startIcon={<PlayArrowRounded />}
                           onClick={() => handleAction('call', token.queueTokenId)}
-                          sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, textTransform: "none", mr: 1 }}
+                          sx={{ bgcolor: SEMANTIC.info, "&:hover": { bgcolor: SEMANTIC.infoDark }, textTransform: "none", mr: 1 }}
                         >
                           Recall Patient
                         </Button>
@@ -348,7 +349,7 @@ export default function QueueDashboard() {
         )}
         {selectedAppt?.appointmentId && (
           <MenuItem onClick={openBilling} sx={{ "&:hover": { bgcolor: "action.hover" } }}>
-            <ReceiptRounded fontSize="small" sx={{ mr: 1.5, color: "#f59e0b" }} /> Billing & Receipt
+            <ReceiptRounded fontSize="small" sx={{ mr: 1.5, color: SEMANTIC.warning }} /> Billing & Receipt
           </MenuItem>
         )}
         {["READY_FOR_DOCTOR", "IN_CONSULTATION", "PHARMACY_PENDING"].includes(selectedStatus) && (
@@ -357,16 +358,16 @@ export default function QueueDashboard() {
               setAnchorEl(null);
               setCheckoutToken({ queueTokenId: selectedTokenId, appointmentId: selectedAppt?.appointmentId, patientName: selectedAppt?.patientName });
             }}
-            sx={{ "&:hover": { bgcolor: "rgba(16,185,129,0.08)" }, color: "#10b981" }}
+            sx={{ "&:hover": { bgcolor: "rgba(16,185,129,0.08)" }, color: SEMANTIC.success }}
           >
-            <LogoutRounded fontSize="small" sx={{ mr: 1.5, color: "#10b981" }} /> Check out
+            <LogoutRounded fontSize="small" sx={{ mr: 1.5, color: SEMANTIC.success }} /> Check out
           </MenuItem>
         )}
         <MenuItem onClick={() => handleAction('skip')} sx={{ "&:hover": { bgcolor: "action.hover" } }}>
-          <SkipNextRounded fontSize="small" sx={{ mr: 1.5, color: "#f59e0b" }} /> Skip Patient
+          <SkipNextRounded fontSize="small" sx={{ mr: 1.5, color: SEMANTIC.warning }} /> Skip Patient
         </MenuItem>
-        <MenuItem onClick={() => handleAction('cancel')} sx={{ "&:hover": { bgcolor: "rgba(239,68,68,0.1)" }, color: "#ef4444" }}>
-          <CancelRounded fontSize="small" sx={{ mr: 1.5, color: "#ef4444" }} /> Cancel Token
+        <MenuItem onClick={() => handleAction('cancel')} sx={{ "&:hover": { bgcolor: "rgba(239,68,68,0.1)" }, color: SEMANTIC.danger }}>
+          <CancelRounded fontSize="small" sx={{ mr: 1.5, color: SEMANTIC.danger }} /> Cancel Token
         </MenuItem>
       </Menu>
 

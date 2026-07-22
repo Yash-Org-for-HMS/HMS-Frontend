@@ -20,6 +20,7 @@ import { useEnabledModules } from "@/hooks/useEnabledModules";
 import PageHeader from "@/components/layout/PageHeader";
 
 import type { Patient } from "@/types";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 
 export default function FrontDeskConsole() {
   const [search, setSearch] = useState("");
@@ -70,7 +71,7 @@ export default function FrontDeskConsole() {
   };
 
   const getAvatarColor = (id: string) => {
-    const avatarColors = ["#0891b2", "#7c3aed", "#059669", "#dc2626", "#d97706", "#2563eb", "#db2777", "#65a30d"];
+    const avatarColors = [ACCENTS.reception, "#7c3aed", SEMANTIC.successDark, SEMANTIC.dangerDark, SEMANTIC.warningDark, SEMANTIC.infoDark, "#db2777", "#65a30d"];
     return avatarColors[id.charCodeAt(0) % avatarColors.length];
   };
 
@@ -184,7 +185,7 @@ export default function FrontDeskConsole() {
                       Recent Registrations
                     </Typography>
                     {recentPatients.length > 0 && (
-                      <Chip label={`${recentPatients.length} Recent`} size="small" sx={{ bgcolor: "rgba(6, 182, 212, 0.1)", color: "#0891b2", fontWeight: 600, borderRadius: 2 }} />
+                      <Chip label={`${recentPatients.length} Recent`} size="small" sx={{ bgcolor: "rgba(6, 182, 212, 0.1)", color: ACCENTS.reception, fontWeight: 600, borderRadius: 2 }} />
                     )}
                   </Box>
 
@@ -233,7 +234,7 @@ export default function FrontDeskConsole() {
                   background: "linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(14, 116, 144, 0.05) 100%)",
                   display: "flex", alignItems: "center", justifyContent: "center", mb: 3 
                 }}>
-                  <PersonAddRounded sx={{ fontSize: 64, color: "#0891b2", opacity: 0.8 }} />
+                  <PersonAddRounded sx={{ fontSize: 64, color: ACCENTS.reception, opacity: 0.8 }} />
                 </Box>
                 <Typography variant="h5" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
                   Front Desk Workspace
@@ -263,14 +264,14 @@ export default function FrontDeskConsole() {
                      const sp = patients.find(p => p.patientId === selectedPatientId) || recentPatients.find(p => p.patientId === selectedPatientId);
                      return sp ? (
                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                         <Chip label={`Selected: ${sp.firstName} ${sp.lastName}`} size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: "#10b981", border: "1px solid rgba(16, 185, 129, 0.2)", fontWeight: 600 }} />
+                         <Chip label={`Selected: ${sp.firstName} ${sp.lastName}`} size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: SEMANTIC.success, border: "1px solid rgba(16, 185, 129, 0.2)", fontWeight: 600 }} />
                          <Chip label={`MRN: ${sp.uhidNumber}`} size="small" variant="outlined" sx={{ color: "text.secondary", borderColor: "divider", fontWeight: 600, fontFamily: "monospace" }} />
                          <IconButton size="small" onClick={() => navigator.clipboard.writeText(sp.uhidNumber)} sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6, 182, 212, 0.08)" } }}>
                            <ContentCopyRounded fontSize="small" />
                          </IconButton>
                        </Box>
                      ) : (
-                       <Chip label="Selected Patient Linked" size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: "#10b981", border: "1px solid rgba(16, 185, 129, 0.2)" }} />
+                       <Chip label="Selected Patient Linked" size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: SEMANTIC.success, border: "1px solid rgba(16, 185, 129, 0.2)" }} />
                      );
                    })()}
                 </Box>

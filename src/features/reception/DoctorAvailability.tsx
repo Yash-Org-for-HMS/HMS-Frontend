@@ -18,11 +18,12 @@ import BillingModal from "./BillingModal";
 import { useToast } from "@/providers/ToastContext";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 
 const STATUS = {
-  AVAILABLE: { label: "Available", color: "#10b981", icon: <EventAvailableRounded fontSize="small" /> },
-  ON_LEAVE: { label: "On leave", color: "#ef4444", icon: <BeachAccessRounded fontSize="small" /> },
-  OFF: { label: "Off today", color: "#64748b", icon: <DoNotDisturbRounded fontSize="small" /> },
+  AVAILABLE: { label: "Available", color: SEMANTIC.success, icon: <EventAvailableRounded fontSize="small" /> },
+  ON_LEAVE: { label: "On leave", color: SEMANTIC.danger, icon: <BeachAccessRounded fontSize="small" /> },
+  OFF: { label: "Off today", color: NEUTRAL.muted, icon: <DoNotDisturbRounded fontSize="small" /> },
 } as const;
 
 const fmtTime = (hhmm: string) => {
@@ -107,7 +108,7 @@ export default function DoctorAvailability() {
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <ScheduleRounded sx={{ fontSize: 18, color: "text.secondary" }} />
                     {doc.onLeave ? (
-                      <Typography variant="body2" sx={{ color: "#ef4444", fontWeight: 600 }}>
+                      <Typography variant="body2" sx={{ color: SEMANTIC.danger, fontWeight: 600 }}>
                         On leave{doc.leaveReason ? ` — ${doc.leaveReason}` : ""}
                       </Typography>
                     ) : doc.schedule ? (
@@ -137,7 +138,7 @@ export default function DoctorAvailability() {
                       <Button
                         size="small" startIcon={<AddRounded />}
                         onClick={() => setBookingDoctorId(doc.doctorId)}
-                        sx={{ textTransform: "none", color: "#0891b2", fontWeight: 600 }}
+                        sx={{ textTransform: "none", color: ACCENTS.reception, fontWeight: 600 }}
                       >
                         Book
                       </Button>

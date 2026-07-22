@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { formatINR } from "@/utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -131,19 +131,19 @@ export default function ReceptionDashboard() {
         <ActionCard
           icon={<HourglassTopRounded />} label="Patients waiting" value={loading ? "—" : String(waiting)}
           sub={waiting === 0 ? "Queue is clear" : `avg wait ${fmtWait(avgWait)}`}
-          color={waiting === 0 ? "#10b981" : avgWait >= 20 ? "#ef4444" : "#f59e0b"}
+          color={waiting === 0 ? SEMANTIC.success : avgWait >= 20 ? SEMANTIC.danger : SEMANTIC.warning}
           onClick={() => navigate("/reception/queue")}
         />
         <ActionCard
           icon={<ReceiptLongRounded />} label="Unpaid bills today" value={billsToday ? String(outstandingCount) : "—"}
           sub={outstandingCount === 0 ? "All settled today" : `${inr(outstandingDue)} to collect`}
-          color={outstandingCount === 0 ? "#10b981" : "#ef4444"}
+          color={outstandingCount === 0 ? SEMANTIC.success : SEMANTIC.danger}
           onClick={() => navigate("/reception/billing")}
         />
         <ActionCard
           icon={<HotelRounded />} label="Beds available" value={bedsAvail == null ? "—" : String(bedsAvail)}
           sub={beds ? `${beds.occupied}/${beds.totalBeds} occupied` : "IPD"}
-          color={bedsAvail == null ? ACCENT : bedsAvail === 0 ? "#ef4444" : bedsAvail <= 2 ? "#f59e0b" : "#10b981"}
+          color={bedsAvail == null ? ACCENT : bedsAvail === 0 ? SEMANTIC.danger : bedsAvail <= 2 ? SEMANTIC.warning : SEMANTIC.success}
           onClick={() => navigate("/reception/ipd/beds")}
         />
       </Box>
@@ -207,7 +207,7 @@ export default function ReceptionDashboard() {
               Book appointment
             </Button>
             <Button fullWidth variant="outlined" startIcon={<ReceiptLongRounded />} onClick={() => navigate("/reception/billing")}
-              sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, color: "#f59e0b", borderColor: "divider", py: 1.2 }}>
+              sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, color: SEMANTIC.warning, borderColor: "divider", py: 1.2 }}>
               Create / collect a bill
             </Button>
             <Button fullWidth variant="outlined" startIcon={<LocalHotelRounded />} onClick={() => navigate("/reception/ipd/admissions")}
