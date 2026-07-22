@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -191,12 +192,12 @@ export default function LeadsList() {
   const getStatusTextColor = (status: string) => {
     switch (status) {
       case "new": return "#38bdf8";
-      case "contacted": return "#fbbf24";
+      case "contacted": return SEMANTIC.warningLight;
       case "qualified": return "#c084fc";
-      case "demo_done": return "#60a5fa";
+      case "demo_done": return SEMANTIC.infoLight;
       case "trialing": return "#f472b6";
-      case "converted": return "#34d399";
-      case "lost": return "#f87171";
+      case "converted": return SEMANTIC.successLight;
+      case "lost": return SEMANTIC.dangerLight;
       default: return "#cbd5e1";
     }
   };
@@ -221,7 +222,7 @@ export default function LeadsList() {
         subtitle={t("leads.subtitle")}
         actions={
           <ActionButton
-            accentFrom="#6366f1"
+            accentFrom={ACCENTS.admin}
             accentTo="#8b5cf6"
             startIcon={<AddRounded />}
             onClick={() => navigate("/leads/new")}
@@ -379,10 +380,10 @@ export default function LeadsList() {
                           }}
                         >
                           <MenuItem value="new" sx={{ fontWeight: 600, color: "#38bdf8" }}>{t("leads.statusNew")}</MenuItem>
-                          <MenuItem value="contacted" sx={{ fontWeight: 600, color: "#fbbf24" }}>{t("leads.statusContacted")}</MenuItem>
+                          <MenuItem value="contacted" sx={{ fontWeight: 600, color: SEMANTIC.warningLight }}>{t("leads.statusContacted")}</MenuItem>
                           <MenuItem value="qualified" sx={{ fontWeight: 600, color: "#c084fc" }}>{t("leads.statusQualified")}</MenuItem>
-                          <MenuItem value="demo_done" sx={{ fontWeight: 600, color: "#60a5fa" }}>{t("leads.statusDemoDone")}</MenuItem>
-                          <MenuItem value="lost" sx={{ fontWeight: 600, color: "#f87171" }}>Lost</MenuItem>
+                          <MenuItem value="demo_done" sx={{ fontWeight: 600, color: SEMANTIC.infoLight }}>{t("leads.statusDemoDone")}</MenuItem>
+                          <MenuItem value="lost" sx={{ fontWeight: 600, color: SEMANTIC.dangerLight }}>Lost</MenuItem>
                         </TextField>
                       )}
                     </TableCell>
@@ -424,19 +425,19 @@ export default function LeadsList() {
       >
         {selectedLeadStatus !== "converted" && (
           <MenuItem onClick={() => { openConvert(selectedLead); setAnchorEl(null); }}>
-            <AddRounded sx={{ mr: 1.5, fontSize: 20, color: "#10b981" }} /> Convert to Hospital
+            <AddRounded sx={{ mr: 1.5, fontSize: 20, color: SEMANTIC.success }} /> Convert to Hospital
           </MenuItem>
         )}
         {selectedLead && selectedLead.assignedSalesAdminId !== user?.id && (
           <MenuItem onClick={handleAssignToMe}>
-            <AssignmentIndRounded sx={{ mr: 1.5, fontSize: 20, color: "#6366f1" }} /> Assign to Me
+            <AssignmentIndRounded sx={{ mr: 1.5, fontSize: 20, color: ACCENTS.admin }} /> Assign to Me
           </MenuItem>
         )}
         <MenuItem onClick={() => { navigate(`/leads/${selectedLeadId}/edit`); setAnchorEl(null); }}>
           <EditRounded sx={{ mr: 1.5, fontSize: 20, color: "text.secondary" }} /> {t("common.edit")}
         </MenuItem>
         <MenuItem onClick={() => { setDeleteId(selectedLeadId); setAnchorEl(null); }}>
-          <DeleteRounded sx={{ mr: 1.5, fontSize: 20, color: "#ef4444" }} /> {t("common.delete")}
+          <DeleteRounded sx={{ mr: 1.5, fontSize: 20, color: SEMANTIC.danger }} /> {t("common.delete")}
         </MenuItem>
       </Menu>
 
@@ -487,7 +488,7 @@ export default function LeadsList() {
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setConvertId(null)} disabled={converting} sx={{ color: "text.secondary" }}>{t("common.cancel")}</Button>
-          <Button onClick={handleConvert} variant="contained" disabled={converting || !convertForm.planId} sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }}>
+          <Button onClick={handleConvert} variant="contained" disabled={converting || !convertForm.planId} sx={{ bgcolor: SEMANTIC.success, "&:hover": { bgcolor: SEMANTIC.successDark } }}>
             {converting ? <HeartbeatLoader size={22} /> : "Convert to Hospital"}
           </Button>
         </DialogActions>
@@ -525,9 +526,9 @@ const textFieldSx = {
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider" },
     "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+    "&.Mui-focused fieldset": { borderColor: ACCENTS.admin },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: "#6366f1" },
+  "& .MuiInputLabel-root.Mui-focused": { color: ACCENTS.admin },
   "& .MuiSvgIcon-root": { color: "text.secondary" },
 };

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -74,12 +75,12 @@ export default function AuditLogsList() {
 
   const getActionColor = (action: string) => {
     switch(action) {
-      case "CREATE": return { bg: "rgba(16, 185, 129, 0.1)", text: "#34d399" };
-      case "UPDATE": return { bg: "rgba(59, 130, 246, 0.1)", text: "#60a5fa" };
-      case "DELETE": return { bg: "rgba(239, 68, 68, 0.1)", text: "#f87171" };
+      case "CREATE": return { bg: "rgba(16, 185, 129, 0.1)", text: SEMANTIC.successLight };
+      case "UPDATE": return { bg: "rgba(59, 130, 246, 0.1)", text: SEMANTIC.infoLight };
+      case "DELETE": return { bg: "rgba(239, 68, 68, 0.1)", text: SEMANTIC.dangerLight };
       case "LOGIN": return { bg: "rgba(20, 184, 166, 0.1)", text: "#2dd4bf" };
       case "LOGOUT": return { bg: "rgba(100, 116, 139, 0.1)", text: "#94a3b8" };
-      default: return { bg: "rgba(245, 158, 11, 0.1)", text: "#fbbf24" };
+      default: return { bg: "rgba(245, 158, 11, 0.1)", text: SEMANTIC.warningLight };
     }
   };
 
@@ -212,7 +213,7 @@ export default function AuditLogsList() {
               color="primary"
               sx={{
                 "& .MuiPaginationItem-root": { color: "text.primary" },
-                "& .Mui-selected": { bgcolor: "rgba(59, 130, 246, 0.2) !important", color: "#60a5fa" }
+                "& .Mui-selected": { bgcolor: "rgba(59, 130, 246, 0.2) !important", color: SEMANTIC.infoLight }
               }}
             />
           </Box>
@@ -261,7 +262,7 @@ export default function AuditLogsList() {
                   <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", md: "row" } }}>
                     {selectedLog.oldValueJson && (
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="overline" sx={{ color: "#f87171" }}>Old Value</Typography>
+                        <Typography variant="overline" sx={{ color: SEMANTIC.dangerLight }}>Old Value</Typography>
                         <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 2, border: "1px solid rgba(239,68,68,0.2)", overflowX: "auto" }}>
                           <pre style={{ margin: 0, color: "text.primary", fontSize: "0.875rem" }}>
                             {JSON.stringify(selectedLog.oldValueJson, null, 2)}
@@ -271,7 +272,7 @@ export default function AuditLogsList() {
                     )}
                     {selectedLog.newValueJson && (
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="overline" sx={{ color: "#34d399" }}>New Value</Typography>
+                        <Typography variant="overline" sx={{ color: SEMANTIC.successLight }}>New Value</Typography>
                         <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 2, border: "1px solid rgba(16,185,129,0.2)", overflowX: "auto" }}>
                           <pre style={{ margin: 0, color: "text.primary", fontSize: "0.875rem" }}>
                             {JSON.stringify(selectedLog.newValueJson, null, 2)}
@@ -299,7 +300,7 @@ const textFieldSx = {
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider" },
     "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: "#3b82f6" },
+    "&.Mui-focused fieldset": { borderColor: SEMANTIC.info },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
 };

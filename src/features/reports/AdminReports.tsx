@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -23,7 +23,7 @@ import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 
 const ACCENT = ACCENTS.admin; // indigo #6366f1
-const PIE_COLORS = ["#6366f1", "#8b5cf6", "#0891b2", "#10b981", "#f59e0b", "#ef4444", "#64748b", "#ec4899"];
+const PIE_COLORS = [ACCENTS.admin, "#8b5cf6", "#0891b2", SEMANTIC.success, SEMANTIC.warning, SEMANTIC.danger, NEUTRAL.muted, "#ec4899"];
 
 const inr = formatINRAuto;
 const fmtDate = (d: unknown) =>
@@ -125,7 +125,7 @@ function SimpleTable({ title, head, rows }: { title: string; head: string[]; row
 
 // Boolean checkmark cell for onboarding checkpoints.
 const YesNo = ({ v }: { v: boolean }) =>
-  v ? <CheckCircleRounded sx={{ fontSize: 18, color: "#10b981" }} /> : <HighlightOffRounded sx={{ fontSize: 18, color: "text.disabled" }} />;
+  v ? <CheckCircleRounded sx={{ fontSize: 18, color: SEMANTIC.success }} /> : <HighlightOffRounded sx={{ fontSize: 18, color: "text.disabled" }} />;
 
 // ── Overview (from /dashboard/stats) ─────────────────────────────────────────
 
@@ -148,13 +148,13 @@ function OverviewReport() {
       {/* KPIs */}
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Hospitals" value={data.totalHospitals ?? 0} sub={`${data.activeHospitals ?? 0} active`} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<TimerRounded />} label="Active Trials" value={data.activeTrials ?? 0} sub={`${data.expiredHospitals ?? 0} expired`} color="#f59e0b" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<TimerRounded />} label="Active Trials" value={data.activeTrials ?? 0} sub={`${data.expiredHospitals ?? 0} expired`} color={SEMANTIC.warning} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Leads" value={data.totalLeads ?? 0} sub={`${data.convertedLeads ?? 0} converted`} color="#8b5cf6" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(data.totalRevenue)} sub="monthly recurring" color="#10b981" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(data.totalRevenue)} sub="monthly recurring" color={SEMANTIC.success} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CardMembershipRounded />} label="Plans" value={data.activePlans ?? 0} color="#0891b2" /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Patients" value={data.totalPatients ?? 0} color="#ec4899" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Doctors" value={data.totalDoctors ?? 0} color="#6366f1" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Branches" value={data.totalBranches ?? 0} color="#64748b" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Doctors" value={data.totalDoctors ?? 0} color={ACCENTS.admin} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Branches" value={data.totalBranches ?? 0} color={NEUTRAL.muted} /></Grid>
       </Grid>
 
       {/* Charts */}
@@ -168,7 +168,7 @@ function OverviewReport() {
                   <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} />
               <XAxis dataKey="month" {...axisProps} />
               <YAxis {...axisProps} allowDecimals={false} />
               <RTooltip />
@@ -189,7 +189,7 @@ function OverviewReport() {
         <Grid size={{ xs: 12, md: 7 }}>
           <ChartCard title="Leads by stage" empty={!byStatus.length}>
             <BarChart data={byStatus.map((s) => ({ ...s, label: cap(s.status) }))} margin={{ left: -12 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} vertical={false} />
               <XAxis dataKey="label" {...axisProps} />
               <YAxis {...axisProps} allowDecimals={false} />
               <RTooltip />
@@ -255,9 +255,9 @@ function HospitalsReport() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Total" value={data.length} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Active" value={active} color="#10b981" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Suspended" value={suspended} color="#ef4444" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Branches" value={data.reduce((s: number, h: any) => s + Number(h._count?.branches ?? 0), 0)} color="#64748b" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Active" value={active} color={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Suspended" value={suspended} color={SEMANTIC.danger} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Branches" value={data.reduce((s: number, h: any) => s + Number(h._count?.branches ?? 0), 0)} color={NEUTRAL.muted} /></Grid>
       </Grid>
       <SimpleTable title="Hospitals register" head={["Hospital", "Code", "Status", "Plan(s)", "Branches", "Registered"]} rows={rows} />
     </Box>
@@ -295,13 +295,13 @@ function LeadsReport() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Total leads" value={data.length} color="#8b5cf6" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Converted" value={counts["converted"] || 0} color="#10b981" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<RocketLaunchRounded />} label="Trialing" value={counts["trialing"] || 0} color="#f59e0b" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Lost" value={counts["lost"] || 0} color="#ef4444" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Converted" value={counts["converted"] || 0} color={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<RocketLaunchRounded />} label="Trialing" value={counts["trialing"] || 0} color={SEMANTIC.warning} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Lost" value={counts["lost"] || 0} color={SEMANTIC.danger} /></Grid>
       </Grid>
       <ChartCard title="Pipeline by stage" empty={!funnel.length}>
         <BarChart data={funnel} margin={{ left: -12 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} vertical={false} />
           <XAxis dataKey="label" {...axisProps} />
           <YAxis {...axisProps} allowDecimals={false} />
           <RTooltip />
@@ -336,10 +336,10 @@ function TrialsReport() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<TimerRounded />} label="Total trials" value={data.length} color="#f59e0b" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<RocketLaunchRounded />} label="Active" value={byState("active")} color="#6366f1" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Converted" value={byState("converted")} color="#10b981" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Expired" value={byState("expired")} color="#ef4444" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<TimerRounded />} label="Total trials" value={data.length} color={SEMANTIC.warning} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<RocketLaunchRounded />} label="Active" value={byState("active")} color={ACCENTS.admin} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Converted" value={byState("converted")} color={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Expired" value={byState("expired")} color={SEMANTIC.danger} /></Grid>
       </Grid>
       <SimpleTable title="Trials register" head={["Hospital", "Start", "End", "Status", "Auto-expire"]} rows={rows} />
     </Box>
@@ -382,13 +382,13 @@ function SubscriptionsReport() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CardMembershipRounded />} label="Plans" value={data.length} color="#0891b2" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Subscribed branches" value={totalBranches} color="#64748b" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(totalMrr)} sub="monthly recurring" color="#10b981" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Subscribed branches" value={totalBranches} color={NEUTRAL.muted} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(totalMrr)} sub="monthly recurring" color={SEMANTIC.success} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Est. ARR" value={inr(totalMrr * 12)} sub="annualised" color="#8b5cf6" /></Grid>
       </Grid>
       <ChartCard title="Estimated MRR by plan" empty={!chart.length}>
         <BarChart data={chart} margin={{ left: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} vertical={false} />
           <XAxis dataKey="label" {...axisProps} />
           <YAxis {...axisProps} />
           <RTooltip formatter={(v: any) => inr(v)} />
@@ -430,8 +430,8 @@ function OnboardingReport() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<RocketLaunchRounded />} label="Onboarding records" value={data.length} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Completed" value={completed} color="#10b981" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Stalled" value={stalled} color="#ef4444" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Completed" value={completed} color={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Stalled" value={stalled} color={SEMANTIC.danger} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Payment verified" value={data.filter((o: any) => o.paymentVerified).length} color="#0891b2" /></Grid>
       </Grid>
       {/* Custom table so the boolean checkpoints render as icons on-screen while the

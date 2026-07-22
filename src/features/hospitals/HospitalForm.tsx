@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -545,8 +546,8 @@ const textFieldSx = {
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider", borderRadius: "12px" },
     "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: "#3b82f6" },
+    "&.Mui-focused fieldset": { borderColor: SEMANTIC.info },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: "#3b82f6" },
+  "& .MuiInputLabel-root.Mui-focused": { color: SEMANTIC.info },
 };

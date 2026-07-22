@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -133,8 +134,8 @@ export default function SubscriptionBilling() {
               <IconButton onClick={openSettings} sx={{ color: "text.secondary" }}><SettingsRounded /></IconButton>
             </Tooltip>
             <ActionButton
-              accentFrom="#6366f1"
-              accentTo="#4f46e5"
+              accentFrom={ACCENTS.admin}
+              accentTo={ACCENTS.adminDark}
               startIcon={<AutorenewRounded />}
               onClick={() => generateMutation.mutate()}
               disabled={generateMutation.isPending}
@@ -148,16 +149,16 @@ export default function SubscriptionBilling() {
       {/* Metrics */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="MRR" value={metrics ? formatINR(metrics.mrr) : "—"} icon={<TrendingUpRounded sx={{ fontSize: 30, color: "#6366f1" }} />} color="#6366f1" sub={metrics ? `${formatINR(metrics.arr)} ARR` : undefined} />
+          <StatCard label="MRR" value={metrics ? formatINR(metrics.mrr) : "—"} icon={<TrendingUpRounded sx={{ fontSize: 30, color: ACCENTS.admin }} />} color={ACCENTS.admin} sub={metrics ? `${formatINR(metrics.arr)} ARR` : undefined} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Collected" value={metrics ? formatINR(metrics.collected) : "—"} icon={<AccountBalanceWalletRounded sx={{ fontSize: 30, color: "#10b981" }} />} color="#10b981" />
+          <StatCard label="Collected" value={metrics ? formatINR(metrics.collected) : "—"} icon={<AccountBalanceWalletRounded sx={{ fontSize: 30, color: SEMANTIC.success }} />} color={SEMANTIC.success} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Outstanding" value={metrics ? formatINR(metrics.outstanding) : "—"} icon={<PendingActionsRounded sx={{ fontSize: 30, color: "#f59e0b" }} />} color="#f59e0b" sub={metrics ? `${metrics.unpaidCount} unpaid` : undefined} />
+          <StatCard label="Outstanding" value={metrics ? formatINR(metrics.outstanding) : "—"} icon={<PendingActionsRounded sx={{ fontSize: 30, color: SEMANTIC.warning }} />} color={SEMANTIC.warning} sub={metrics ? `${metrics.unpaidCount} unpaid` : undefined} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Overdue" value={metrics ? metrics.overdueCount : "—"} icon={<WarningAmberRounded sx={{ fontSize: 30, color: "#ef4444" }} />} color="#ef4444" />
+          <StatCard label="Overdue" value={metrics ? metrics.overdueCount : "—"} icon={<WarningAmberRounded sx={{ fontSize: 30, color: SEMANTIC.danger }} />} color={SEMANTIC.danger} />
         </Grid>
       </Grid>
 
@@ -211,7 +212,7 @@ export default function SubscriptionBilling() {
                         </Tooltip>
                         {inv.status === "UNPAID" ? (
                           <>
-                            <Button size="small" variant="contained" startIcon={<PaymentsRounded />} onClick={() => { setPayTarget(inv); setPayMethod("Cash"); setPayReference(""); }} sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }}>
+                            <Button size="small" variant="contained" startIcon={<PaymentsRounded />} onClick={() => { setPayTarget(inv); setPayMethod("Cash"); setPayReference(""); }} sx={{ bgcolor: SEMANTIC.success, "&:hover": { bgcolor: SEMANTIC.successDark } }}>
                               Pay
                             </Button>
                             <Tooltip title="Void">
@@ -259,7 +260,7 @@ export default function SubscriptionBilling() {
             variant="contained"
             disabled={payMutation.isPending}
             onClick={() => payTarget && payMutation.mutate({ id: payTarget.subscriptionInvoiceId, method: payMethod, reference: payReference })}
-            sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }}
+            sx={{ bgcolor: SEMANTIC.success, "&:hover": { bgcolor: SEMANTIC.successDark } }}
           >
             {payMutation.isPending ? "Recording…" : `Record ${payTarget ? formatINR(payTarget.amount) : ""}`}
           </Button>

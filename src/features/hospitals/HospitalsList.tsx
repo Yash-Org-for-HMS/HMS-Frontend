@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -125,8 +126,8 @@ export default function HospitalsList() {
         subtitle={t("hospitals.subtitle", "Manage all hospital tenants and their subscriptions")}
         actions={
           <ActionButton
-            accentFrom="#3b82f6"
-            accentTo="#2563eb"
+            accentFrom={SEMANTIC.info}
+            accentTo={SEMANTIC.infoDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/hospitals/new")}
           >
@@ -234,7 +235,7 @@ export default function HospitalsList() {
                                   height: 20,
                                   fontSize: "0.75rem",
                                   bgcolor: "rgba(59, 130, 246, 0.1)",
-                                  color: "#60a5fa"
+                                  color: SEMANTIC.infoLight
                                 }}
                               />
                             </Box>
@@ -260,10 +261,10 @@ export default function HospitalsList() {
                               ? "rgba(16, 185, 129, 0.1)"
                               : "rgba(245, 158, 11, 0.1)",
                           color: hospital.isDeleted
-                            ? "#f87171"
+                            ? SEMANTIC.dangerLight
                             : hospital.status === "active"
-                              ? "#34d399"
-                              : "#fbbf24",
+                              ? SEMANTIC.successLight
+                              : SEMANTIC.warningLight,
                           textTransform: "capitalize",
                           fontWeight: 600 
                         }} 
@@ -275,7 +276,7 @@ export default function HospitalsList() {
                           <Tooltip title="View Overview">
                             <IconButton
                               onClick={() => navigate(`/hospitals/${hospital.hospitalId}/overview`)}
-                              sx={{ color: "#3b82f6" }}
+                              sx={{ color: SEMANTIC.info }}
                             >
                               <VisibilityRounded />
                             </IconButton>
@@ -299,7 +300,7 @@ export default function HospitalsList() {
                           <Tooltip title="Delete">
                             <IconButton
                               onClick={() => setDeleteDialog({ open: true, hospital })}
-                              sx={{ color: "#ef4444", "&:hover": { bgcolor: "rgba(239, 68, 68, 0.08)" } }}
+                              sx={{ color: SEMANTIC.danger, "&:hover": { bgcolor: "rgba(239, 68, 68, 0.08)" } }}
                             >
                               <DeleteOutlineRounded />
                             </IconButton>
@@ -314,11 +315,11 @@ export default function HospitalsList() {
                             onClick={() => handleRestore(hospital.hospitalId)}
                             disabled={actionLoading}
                             sx={{
-                              color: "#10b981",
+                              color: SEMANTIC.success,
                               borderColor: "rgba(16, 185, 129, 0.4)",
                               textTransform: "none",
                               fontWeight: 600,
-                              "&:hover": { borderColor: "#10b981", bgcolor: "rgba(16, 185, 129, 0.08)" },
+                              "&:hover": { borderColor: SEMANTIC.success, bgcolor: "rgba(16, 185, 129, 0.08)" },
                             }}
                           >
                             Restore
@@ -342,7 +343,7 @@ export default function HospitalsList() {
               color="primary"
               sx={{
                 "& .MuiPaginationItem-root": { color: "text.primary" },
-                "& .Mui-selected": { bgcolor: "rgba(59, 130, 246, 0.2) !important", color: "#60a5fa" }
+                "& .Mui-selected": { bgcolor: "rgba(59, 130, 246, 0.2) !important", color: SEMANTIC.infoLight }
               }}
             />
           </Box>
@@ -369,7 +370,7 @@ export default function HospitalsList() {
         <DialogContent>
           <DialogContentText sx={{ color: "text.secondary" }}>
             Are you sure you want to delete{" "}
-            <strong style={{ color: "#ef4444" }}>
+            <strong style={{ color: SEMANTIC.danger }}>
               {deleteDialog.hospital?.hospitalName}
             </strong>
             ? The hospital will be marked as inactive and hidden from the active list. You can restore it later from the "Deleted Hospitals" tab.
@@ -389,10 +390,10 @@ export default function HospitalsList() {
             variant="contained"
             startIcon={actionLoading ? <HeartbeatLoader size={22} /> : <DeleteOutlineRounded />}
             sx={{
-              bgcolor: "#ef4444",
+              bgcolor: SEMANTIC.danger,
               textTransform: "none",
               fontWeight: 600,
-              "&:hover": { bgcolor: "#dc2626" },
+              "&:hover": { bgcolor: SEMANTIC.dangerDark },
             }}
           >
             {actionLoading ? "Deleting..." : "Delete Hospital"}

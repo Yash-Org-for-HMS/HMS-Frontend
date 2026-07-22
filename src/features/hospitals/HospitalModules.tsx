@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import { ArrowBackRounded, SaveRounded, WidgetsRounded, CheckCircleRounded, AddCircleOutlineRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
+import { SEMANTIC } from "@/styles/accents";
 import ErrorState from "@/components/ErrorState";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
@@ -24,11 +25,11 @@ interface ModulesResp {
 
 // A distinct accent per module so the grid reads as colourful cards.
 const ACCENTS: Record<string, string> = {
-  OPD: "#3b82f6",
+  OPD: SEMANTIC.info,
   Doctor: "#8b5cf6",
   IPD: "#ec4899",
-  Laboratory: "#f59e0b",
-  Pharmacy: "#10b981",
+  Laboratory: SEMANTIC.warning,
+  Pharmacy: SEMANTIC.success,
   Billing: "#06b6d4",
 };
 
@@ -119,7 +120,7 @@ export default function HospitalModules() {
             startIcon={save.isPending ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             disabled={!dirty || save.isPending}
             onClick={() => save.mutate()}
-            sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, textTransform: "none", fontWeight: 600 }}
+            sx={{ bgcolor: SEMANTIC.info, "&:hover": { bgcolor: SEMANTIC.infoDark }, textTransform: "none", fontWeight: 600 }}
           >
             Save changes
           </Button>
@@ -153,7 +154,7 @@ export default function HospitalModules() {
           <Grid container spacing={2}>
             {modules.map((m) => {
               const on = selected.has(m.key);
-              const accent = ACCENTS[m.key] || "#3b82f6";
+              const accent = ACCENTS[m.key] || SEMANTIC.info;
               return (
                 <Grid key={m.key} size={{ xs: 12, sm: 6, md: 4 }}>
                   <Paper

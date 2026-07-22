@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -160,8 +161,8 @@ export default function FeatureFlagForm() {
                   }
                 }}
               >
-                <MenuItem value="tenant" sx={{ fontWeight: 600, color: "#fbbf24" }}>Tenant-Specific (Single Hospital Override)</MenuItem>
-                <MenuItem value="global" sx={{ fontWeight: 600, color: "#60a5fa" }}>Global (Applies to all Hospitals)</MenuItem>
+                <MenuItem value="tenant" sx={{ fontWeight: 600, color: SEMANTIC.warningLight }}>Tenant-Specific (Single Hospital Override)</MenuItem>
+                <MenuItem value="global" sx={{ fontWeight: 600, color: SEMANTIC.infoLight }}>Global (Applies to all Hospitals)</MenuItem>
               </TextField>
             </Grid>
 
@@ -295,8 +296,8 @@ const textFieldSx = {
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider", borderRadius: "12px" },
     "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: "#f59e0b" },
+    "&.Mui-focused fieldset": { borderColor: SEMANTIC.warning },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: "#f59e0b" },
+  "& .MuiInputLabel-root.Mui-focused": { color: SEMANTIC.warning },
 };

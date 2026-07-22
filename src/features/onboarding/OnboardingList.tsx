@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { SEMANTIC } from "@/styles/accents";
 import {
   Box,
   Typography,
@@ -109,10 +110,10 @@ export default function OnboardingList() {
   }
 
   const summary = [
-    { label: "Trials expiring", value: expiring.length, color: "#f59e0b" },
-    { label: "Expired trials", value: expired.length, color: "#ef4444" },
-    { label: "Suspended", value: suspended.length, color: "#ef4444" },
-    { label: "Incomplete profiles", value: incomplete.length, color: "#3b82f6" },
+    { label: "Trials expiring", value: expiring.length, color: SEMANTIC.warning },
+    { label: "Expired trials", value: expired.length, color: SEMANTIC.danger },
+    { label: "Suspended", value: suspended.length, color: SEMANTIC.danger },
+    { label: "Incomplete profiles", value: incomplete.length, color: SEMANTIC.info },
   ];
 
   return (
@@ -137,13 +138,13 @@ export default function OnboardingList() {
 
       {total === 0 ? (
         <Paper sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, p: 6, textAlign: "center" }}>
-          <CheckCircleRounded sx={{ fontSize: 56, color: "#10b981", mb: 1.5 }} />
+          <CheckCircleRounded sx={{ fontSize: 56, color: SEMANTIC.success, mb: 1.5 }} />
           <Typography variant="h6" fontWeight={700} sx={{ color: "text.primary" }}>All clear</Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>Nothing needs attention across your tenants right now.</Typography>
         </Paper>
       ) : (
         <>
-          <Section icon={<HourglassBottomRounded />} title="Trials expiring soon" color="#f59e0b" items={expiring.length}>
+          <Section icon={<HourglassBottomRounded />} title="Trials expiring soon" color={SEMANTIC.warning} items={expiring.length}>
             {expiring.map((t) => {
               const d = daysUntil(t.trialEndDate);
               return (
@@ -162,7 +163,7 @@ export default function OnboardingList() {
             })}
           </Section>
 
-          <Section icon={<TimerOffRounded />} title="Expired trials — convert or cancel" color="#ef4444" items={expired.length}>
+          <Section icon={<TimerOffRounded />} title="Expired trials — convert or cancel" color={SEMANTIC.danger} items={expired.length}>
             {expired.map((t) => (
               <Row
                 key={t.hospitalTrialId}
@@ -178,7 +179,7 @@ export default function OnboardingList() {
             ))}
           </Section>
 
-          <Section icon={<BlockRounded />} title="Suspended hospitals" color="#ef4444" items={suspended.length}>
+          <Section icon={<BlockRounded />} title="Suspended hospitals" color={SEMANTIC.danger} items={suspended.length}>
             {suspended.map((h) => (
               <Row
                 key={h.hospitalId}
@@ -189,7 +190,7 @@ export default function OnboardingList() {
             ))}
           </Section>
 
-          <Section icon={<EditNoteRounded />} title="Incomplete hospital profiles" color="#3b82f6" items={incomplete.length}>
+          <Section icon={<EditNoteRounded />} title="Incomplete hospital profiles" color={SEMANTIC.info} items={incomplete.length}>
             {incomplete.map((h) => (
               <Row
                 key={h.hospitalId}

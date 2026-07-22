@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { trialStatusColor } from "@/utils/statusColors";
 import { useQuery } from "@tanstack/react-query";
@@ -311,17 +312,17 @@ export default function TrialsList() {
           ? [<MenuItem key="done" disabled>Already converted to a hospital</MenuItem>]
           : [
               <MenuItem key="convert" onClick={openConvert}>
-                <RocketLaunchRounded sx={{ mr: 1.5, fontSize: 20, color: "#34d399" }} /> Convert to hospital &amp; assign plan
+                <RocketLaunchRounded sx={{ mr: 1.5, fontSize: 20, color: SEMANTIC.successLight }} /> Convert to hospital &amp; assign plan
               </MenuItem>,
               <MenuItem key="extend" onClick={handleExtendTrial}>
-                <CalendarMonthRounded sx={{ mr: 1.5, fontSize: 20, color: "#60a5fa" }} /> {t("trials.extendTrial")} (14 Days)
+                <CalendarMonthRounded sx={{ mr: 1.5, fontSize: 20, color: SEMANTIC.infoLight }} /> {t("trials.extendTrial")} (14 Days)
               </MenuItem>,
               selectedTrial?.trialStatus === "active" ? (
                 <MenuItem key="expire" onClick={handleExpireTrial}>
-                  <TimerOffRounded sx={{ mr: 1.5, fontSize: 20, color: "#f59e0b" }} /> {t("trials.expireTrial")}
+                  <TimerOffRounded sx={{ mr: 1.5, fontSize: 20, color: SEMANTIC.warning }} /> {t("trials.expireTrial")}
                 </MenuItem>
               ) : null,
-              <MenuItem key="lost" onClick={handleMarkLost} sx={{ color: "#f87171" }}>
+              <MenuItem key="lost" onClick={handleMarkLost} sx={{ color: SEMANTIC.dangerLight }}>
                 <CancelRounded sx={{ mr: 1.5, fontSize: 20 }} /> Cancel (mark as lost)
               </MenuItem>,
             ]}

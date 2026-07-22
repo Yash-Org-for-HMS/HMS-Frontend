@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -244,7 +245,7 @@ export default function PlanForm() {
                         label={option}
                         key={key}
                         {...tagProps}
-                        sx={{ color: "#059669", borderColor: "rgba(16, 185, 129, 0.4)", bgcolor: "rgba(16, 185, 129, 0.1)" }}
+                        sx={{ color: SEMANTIC.successDark, borderColor: "rgba(16, 185, 129, 0.4)", bgcolor: "rgba(16, 185, 129, 0.1)" }}
                       />
                     );
                   })
@@ -279,7 +280,7 @@ export default function PlanForm() {
                       px: 2,
                       '&[aria-selected="true"]': {
                         backgroundColor: "rgba(16, 185, 129, 0.15) !important",
-                        color: "#059669",
+                        color: SEMANTIC.successDark,
                       },
                       '&.Mui-focused': {
                         backgroundColor: "action.hover",
@@ -331,10 +332,10 @@ const textFieldSx = {
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider", borderRadius: "12px" },
     "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: "#10b981" },
+    "&.Mui-focused fieldset": { borderColor: SEMANTIC.success },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: "#10b981" },
+  "& .MuiInputLabel-root.Mui-focused": { color: SEMANTIC.success },
   "& input[type=number]::-webkit-inner-spin-button, & input[type=number]::-webkit-outer-spin-button": {
     WebkitAppearance: "none",
     margin: 0,

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -103,8 +104,8 @@ export default function FeatureFlagsList() {
         subtitle={t("flags.subtitle", "Manage hospital-specific feature toggles and overrides")}
         actions={
           <ActionButton
-            accentFrom="#f59e0b"
-            accentTo="#d97706"
+            accentFrom={SEMANTIC.warning}
+            accentTo={SEMANTIC.warningDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/feature-flags/new")}
           >
@@ -172,7 +173,7 @@ export default function FeatureFlagsList() {
                 flags.map((flag) => (
                   <TableRow key={flag.featureFlagId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
                     <TableCell sx={{ color: "text.primary", fontWeight: 500 }}>
-                      {flag.isGlobal ? <span style={{color: "#60a5fa"}}>Global / All Hospitals</span> : flag.hospital?.hospitalName}
+                      {flag.isGlobal ? <span style={{color: SEMANTIC.infoLight}}>Global / All Hospitals</span> : flag.hospital?.hospitalName}
                     </TableCell>
                     <TableCell sx={{ color: "text.primary" }}>
                       {flag.featureName}
@@ -181,10 +182,10 @@ export default function FeatureFlagsList() {
                       {flag.featureKey}
                     </TableCell>
                     <TableCell>
-                      <Chip label={flag.isGlobal ? "Global" : "Tenant"} size="small" sx={{ bgcolor: flag.isGlobal ? "rgba(59, 130, 246, 0.1)" : "rgba(245, 158, 11, 0.1)", color: flag.isGlobal ? "#60a5fa" : "#fbbf24", fontWeight: 600 }} />
+                      <Chip label={flag.isGlobal ? "Global" : "Tenant"} size="small" sx={{ bgcolor: flag.isGlobal ? "rgba(59, 130, 246, 0.1)" : "rgba(245, 158, 11, 0.1)", color: flag.isGlobal ? SEMANTIC.infoLight : SEMANTIC.warningLight, fontWeight: 600 }} />
                     </TableCell>
                     <TableCell>
-                      <Chip label={flag.isEnabled ? "Enabled" : "Disabled"} size="small" sx={{ bgcolor: flag.isEnabled ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)", color: flag.isEnabled ? "#34d399" : "#f87171", fontWeight: 600 }} />
+                      <Chip label={flag.isEnabled ? "Enabled" : "Disabled"} size="small" sx={{ bgcolor: flag.isEnabled ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)", color: flag.isEnabled ? SEMANTIC.successLight : SEMANTIC.dangerLight, fontWeight: 600 }} />
                     </TableCell>
                     <TableCell align="right">
                       <IconButton onClick={(e) => openActionMenu(e, flag.featureFlagId)} sx={{ color: "text.secondary" }}>
@@ -208,7 +209,7 @@ export default function FeatureFlagsList() {
               color="primary"
               sx={{
                 "& .MuiPaginationItem-root": { color: "text.primary" },
-                "& .Mui-selected": { bgcolor: "rgba(245, 158, 11, 0.2) !important", color: "#fbbf24" }
+                "& .Mui-selected": { bgcolor: "rgba(245, 158, 11, 0.2) !important", color: SEMANTIC.warningLight }
               }}
             />
           </Box>
@@ -226,7 +227,7 @@ export default function FeatureFlagsList() {
           <EditRounded sx={{ mr: 1.5, fontSize: 20, color: "text.secondary" }} /> {t("common.edit", "Edit")}
         </MenuItem>
         <MenuItem onClick={() => { setDeleteId(selectedFlagId); setAnchorEl(null); }}>
-          <DeleteRounded sx={{ mr: 1.5, fontSize: 20, color: "#ef4444" }} /> {t("common.delete", "Delete")}
+          <DeleteRounded sx={{ mr: 1.5, fontSize: 20, color: SEMANTIC.danger }} /> {t("common.delete", "Delete")}
         </MenuItem>
       </Menu>
 
@@ -251,9 +252,9 @@ const textFieldSx = {
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider" },
     "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: "#f59e0b" },
+    "&.Mui-focused fieldset": { borderColor: SEMANTIC.warning },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: "#f59e0b" },
+  "& .MuiInputLabel-root.Mui-focused": { color: SEMANTIC.warning },
   "& .MuiSvgIcon-root": { color: "text.secondary" },
 };

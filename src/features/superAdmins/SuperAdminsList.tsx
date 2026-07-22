@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -186,7 +187,7 @@ export default function SuperAdminsList() {
                         size="small" 
                         sx={{ 
                           bgcolor: admin.status === "active" ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)", 
-                          color: admin.status === "active" ? "#34d399" : "#f87171",
+                          color: admin.status === "active" ? SEMANTIC.successLight : SEMANTIC.dangerLight,
                           textTransform: "capitalize",
                           fontWeight: 600 
                         }} 
@@ -197,7 +198,7 @@ export default function SuperAdminsList() {
                         <IconButton
                           onClick={() => handleResetPassword(admin)}
                           disabled={resetPassword.isPending}
-                          sx={{ color: "text.secondary", "&:hover": { color: "#fbbf24", bgcolor: "rgba(234,179,8,0.1)" } }}
+                          sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.warningLight, bgcolor: "rgba(234,179,8,0.1)" } }}
                         >
                           <LockResetRounded />
                         </IconButton>

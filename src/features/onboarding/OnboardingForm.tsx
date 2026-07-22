@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -184,7 +185,7 @@ const textFieldSx = {
     color: "text.primary",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: "#10b981" },
+    "&.Mui-focused fieldset": { borderColor: SEMANTIC.success },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
 };

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -93,8 +94,8 @@ export default function PlansList() {
         subtitle={t("plans.subtitle", "Manage hospital subscription tiers and features")}
         actions={
           <ActionButton
-            accentFrom="#10b981"
-            accentTo="#059669"
+            accentFrom={SEMANTIC.success}
+            accentTo={SEMANTIC.successDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/plans/new")}
           >
@@ -159,7 +160,7 @@ export default function PlansList() {
                       <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", maxWidth: 200 }}>
                         {Array.isArray(plan.featuresJson) ? (
                           plan.featuresJson.slice(0, 3).map((f: string) => (
-                            <Chip key={f} label={f} size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: "#34d399", height: 20, fontSize: "0.75rem" }} />
+                            <Chip key={f} label={f} size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: SEMANTIC.successLight, height: 20, fontSize: "0.75rem" }} />
                           ))
                         ) : null}
                         {Array.isArray(plan.featuresJson) && plan.featuresJson.length > 3 && (
@@ -194,7 +195,7 @@ export default function PlansList() {
           <EditRounded sx={{ mr: 1.5, fontSize: 20, color: "text.secondary" }} /> {t("common.edit", "Edit")}
         </MenuItem>
         <MenuItem onClick={() => { setDeleteId(selectedPlanId); setAnchorEl(null); }}>
-          <DeleteRounded sx={{ mr: 1.5, fontSize: 20, color: "#ef4444" }} /> {t("common.delete", "Delete")}
+          <DeleteRounded sx={{ mr: 1.5, fontSize: 20, color: SEMANTIC.danger }} /> {t("common.delete", "Delete")}
         </MenuItem>
       </Menu>
 

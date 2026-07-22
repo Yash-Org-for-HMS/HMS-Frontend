@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ACCENTS } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -272,8 +273,8 @@ const textFieldSx = {
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider", borderRadius: "12px" },
     "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+    "&.Mui-focused fieldset": { borderColor: ACCENTS.admin },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: "#6366f1" },
+  "& .MuiInputLabel-root.Mui-focused": { color: ACCENTS.admin },
 };

@@ -41,6 +41,7 @@ import {
 import { useAuth } from "@/providers/AuthContext";
 import SidebarHeader from "@/components/layout/SidebarHeader";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
+import { ACCENTS, NEUTRAL } from "@/styles/accents";
 
 const drawerWidth = 260;
 
@@ -187,7 +188,7 @@ export default function AdminLayout() {
                     <ListItemIcon
                       sx={{
                         minWidth: 40,
-                        color: isActive ? "#4F46E5" : "#64748B",
+                        color: isActive ? ACCENTS.adminDark : NEUTRAL.muted,
                       }}
                     >
                       {item.icon}
@@ -197,7 +198,7 @@ export default function AdminLayout() {
                       primaryTypographyProps={{
                         fontSize: "0.875rem",
                         fontWeight: isActive ? 600 : 500,
-                        color: isActive ? "#4F46E5" : "#64748B",
+                        color: isActive ? ACCENTS.adminDark : NEUTRAL.muted,
                       }}
                     />
                   </ListItemButton>

@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -142,9 +142,9 @@ export default function HospitalOverview() {
   const quotas = data.quotas;
 
   const billingState: Record<string, { label: string; color: string }> = {
-    active: { label: "Billing current", color: "#10b981" },
-    overdue: { label: "Payment overdue", color: "#f59e0b" },
-    suspended: { label: "Suspended (unpaid)", color: "#ef4444" },
+    active: { label: "Billing current", color: SEMANTIC.success },
+    overdue: { label: "Payment overdue", color: SEMANTIC.warning },
+    suspended: { label: "Suspended (unpaid)", color: SEMANTIC.danger },
   };
   const PHASE: Record<string, "default" | "success" | "warning" | "error" | "secondary"> = {
     PAID: "success", PENDING: "default", OVERDUE: "warning", SUSPENDED: "error", VOID: "secondary",
@@ -153,10 +153,10 @@ export default function HospitalOverview() {
     !q ? "—" : q.limit != null ? `of ${q.limit} allowed` : "no limit";
 
   const lifecycle =
-    data.status === "suspended" ? { label: "Suspended", color: "#ef4444" }
-    : activeTrial ? { label: "On Trial", color: "#f59e0b" }
-    : data.status === "active" ? { label: "Active", color: "#10b981" }
-    : { label: data.status || "Inactive", color: "#64748b" };
+    data.status === "suspended" ? { label: "Suspended", color: SEMANTIC.danger }
+    : activeTrial ? { label: "On Trial", color: SEMANTIC.warning }
+    : data.status === "active" ? { label: "Active", color: SEMANTIC.success }
+    : { label: data.status || "Inactive", color: NEUTRAL.muted };
 
   const initials = (data.hospitalName || "H").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
 
@@ -197,9 +197,9 @@ export default function HospitalOverview() {
         {/* Stat tiles */}
         <Grid container spacing={2} sx={{ mt: 2 }}>
           <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<ApartmentRounded />} label="Branches" value={quotas?.branches?.used ?? data.branches?.length ?? 0} sub={quotaText(quotas?.branches)} color={ACCENT} /></Grid>
-          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<MedicalServicesRounded />} label="Doctors" value={quotas?.doctors?.used ?? data._count?.doctors ?? 0} sub={quotaText(quotas?.doctors)} color="#10b981" /></Grid>
-          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<PeopleRounded />} label="Patients" value={data._count?.patients || 0} color="#f59e0b" /></Grid>
-          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<AccountCircleRounded />} label="Users" value={data._count?.users || 0} color="#3b82f6" /></Grid>
+          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<MedicalServicesRounded />} label="Doctors" value={quotas?.doctors?.used ?? data._count?.doctors ?? 0} sub={quotaText(quotas?.doctors)} color={SEMANTIC.success} /></Grid>
+          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<PeopleRounded />} label="Patients" value={data._count?.patients || 0} color={SEMANTIC.warning} /></Grid>
+          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<AccountCircleRounded />} label="Users" value={data._count?.users || 0} color={SEMANTIC.info} /></Grid>
         </Grid>
       </Paper>
 
@@ -265,8 +265,8 @@ export default function HospitalOverview() {
               <Grid size={{ xs: 12 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                   {data.admin.mustChangePassword
-                    ? <Chip size="small" label="Password not set yet" sx={{ bgcolor: "rgba(245,158,11,0.12)", color: "#f59e0b", fontWeight: 600 }} />
-                    : <Chip size="small" label="Active login" sx={{ bgcolor: "rgba(16,185,129,0.12)", color: "#10b981", fontWeight: 600 }} />}
+                    ? <Chip size="small" label="Password not set yet" sx={{ bgcolor: "rgba(245,158,11,0.12)", color: SEMANTIC.warning, fontWeight: 600 }} />
+                    : <Chip size="small" label="Active login" sx={{ bgcolor: "rgba(16,185,129,0.12)", color: SEMANTIC.success, fontWeight: 600 }} />}
                   <Button
                     size="small"
                     variant="outlined"
@@ -375,7 +375,7 @@ export default function HospitalOverview() {
               <SectionTitle>Subscription Billing</SectionTitle>
               <Chip size="small" label={billingState[billing.state]?.label} sx={{ fontWeight: 700, bgcolor: `${billingState[billing.state]?.color}22`, color: billingState[billing.state]?.color }} />
               {billing.pendingPlanName && (
-                <Chip size="small" label={`Downgrade → ${billing.pendingPlanName} (next cycle)`} sx={{ fontWeight: 600, bgcolor: "rgba(245,158,11,0.12)", color: "#f59e0b" }} />
+                <Chip size="small" label={`Downgrade → ${billing.pendingPlanName} (next cycle)`} sx={{ fontWeight: 600, bgcolor: "rgba(245,158,11,0.12)", color: SEMANTIC.warning }} />
               )}
               <Box sx={{ flex: 1 }} />
               <Button size="small" variant="outlined" startIcon={<SwapHorizRounded />} onClick={() => setChangePlanOpen(true)} sx={{ textTransform: "none", borderColor: "divider", color: "text.primary" }}>
@@ -388,7 +388,7 @@ export default function HospitalOverview() {
               <InfoRow label="MRR (this tenant)" value={formatINR(billing.mrr)} />
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>Outstanding</Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600, color: billing.outstanding > 0 ? "#ef4444" : "#10b981" }}>
+                <Typography variant="body1" sx={{ fontWeight: 600, color: billing.outstanding > 0 ? SEMANTIC.danger : SEMANTIC.success }}>
                   {formatINR(billing.outstanding)}
                 </Typography>
               </Grid>
@@ -455,7 +455,7 @@ export default function HospitalOverview() {
                 { label: "Payment verified", ok: onboarding.paymentVerified },
               ].map((row) => (
                 <Box key={row.label} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  {row.ok ? <CheckCircleRounded sx={{ color: "#10b981", fontSize: 20 }} /> : <CancelRounded sx={{ color: "text.disabled", fontSize: 20 }} />}
+                  {row.ok ? <CheckCircleRounded sx={{ color: SEMANTIC.success, fontSize: 20 }} /> : <CancelRounded sx={{ color: "text.disabled", fontSize: 20 }} />}
                   <Typography variant="body2" sx={{ color: "text.primary" }}>{row.label}</Typography>
                 </Box>
               ))}
