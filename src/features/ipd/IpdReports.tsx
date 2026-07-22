@@ -1,67 +1,28 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Box, Paper, Grid, TextField, Tabs, Tab, Button, Typography,
-  Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
-} from "@mui/material";
-import { LocalHotelRounded, ReplayRounded, AccessTimeRounded, PersonAddRounded, SavingsRounded, FileDownloadRounded } from "@mui/icons-material";
+import { Box, Paper, Grid, TextField, Tabs, Tab } from "@mui/material";
+import { LocalHotelRounded, ReplayRounded, AccessTimeRounded, PersonAddRounded, SavingsRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
-import { exportTableToExcel } from "@/utils/exportExcel";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import ErrorState from "@/components/ErrorState";
 import PageHeader from "@/components/layout/PageHeader";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
+import { KpiCard, ReportFilters, ReportTable, TrendChart, DonutChart, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = ACCENTS.ipd;
 const inr = formatINRAuto;
-
-function Kpi({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 2 }}>
-      <Box sx={{ width: 44, height: 44, borderRadius: 2.5, bgcolor: `${color}1a`, color, display: "flex", alignItems: "center", justifyContent: "center" }}>{icon}</Box>
-      <Box><Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2 }}>{value}</Typography><Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>{label}</Typography></Box>
-    </Paper>
-  );
-}
-
-function DataTable({ title, head, rows }: { title?: string; head: string[]; rows: (string | number)[][] }) {
-  return (
-    <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
-      {rows.length > 0 && (
-        <Box sx={{ display: "flex", alignItems: "center", px: 2, py: 1, borderBottom: "1px solid", borderColor: "divider" }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{title || "Report"}</Typography>
-          <Box sx={{ flex: 1 }} />
-          <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />} onClick={() => exportTableToExcel(title || "report", head, rows)} sx={{ textTransform: "none", color: ACCENT }}>Excel</Button>
-        </Box>
-      )}
-      {rows.length === 0 ? (
-        <Typography variant="body2" sx={{ color: "text.secondary", py: 5, textAlign: "center" }}>No records for this selection</Typography>
-      ) : (
-        <TableContainer sx={{ maxHeight: "calc(100vh - 360px)" }}>
-          <Table size="small" stickyHeader>
-            <TableHead>
-              <TableRow>{head.map((h, i) => <TableCell key={h} align={i === 0 ? "left" : "right"} sx={{ fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", color: "text.secondary", bgcolor: "background.paper" }}>{h}</TableCell>)}</TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((r, ri) => (
-                <TableRow key={ri} hover>{r.map((c, ci) => <TableCell key={ci} align={ci === 0 ? "left" : "right"} sx={{ color: ci === 0 ? "text.primary" : "text.secondary", fontWeight: ci === 0 ? 600 : 500 }}>{c}</TableCell>)}</TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </Paper>
-  );
-}
+const initialRange = (): DateRange => ({ from: dayjs().subtract(29, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
+const fmtDate = (v: any) => (v ? dayjs(v).format("DD MMM YYYY") : "—");
+const ts = (v: any) => (v ? new Date(v).getTime() : 0);
 
 export default function IpdReports() {
   const [tab, setTab] = useState(0);
   return (
     <Box>
-      <PageHeader title="IPD Reports" subtitle="In-patient census and discharge records" />
+      <PageHeader title="IPD Reports" subtitle="In-patient census, discharges, registrations and advances" />
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2.5 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
           sx={{ px: 1, "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 56 }, "& .Mui-selected": { color: `${ACCENT} !important` }, "& .MuiTabs-indicator": { bgcolor: ACCENT } }}>
@@ -79,71 +40,14 @@ export default function IpdReports() {
   );
 }
 
-export function IpRegistrations() {
-  const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
-  const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
-  const ref = useRef<HTMLDivElement>(null);
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["ipd-report-registrations", from, to],
-    queryFn: async () => (await axiosInstance.get("/ipd/reports/registrations", { params: { from, to } })).data.data,
-  });
-  const rows: any[] = data?.rows ?? [];
-  return (
-    <Box>
-      <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, alignItems: "center", flexWrap: "wrap" }}>
-        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
-        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
-      </Box>
-      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
-        <Box ref={ref}>
-          <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<PersonAddRounded />} label="Admissions" value={String(data.totals.admissions)} color={ACCENT} /></Grid>
-          </Grid>
-          <DataTable title={`IP Registrations ${from} to ${to}`} head={["Patient", "UHID", "Bed", "Admitted", "Status"]}
-            rows={rows.map((r) => [r.patientName, r.uhid, r.bed, r.admissionDate ? dayjs(r.admissionDate).format("DD MMM YYYY") : "—", r.status])} />
-        </Box>
-      )}
-    </Box>
-  );
-}
-
-export function IpAdvances() {
-  const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
-  const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
-  const ref = useRef<HTMLDivElement>(null);
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["ipd-report-advances", from, to],
-    queryFn: async () => (await axiosInstance.get("/ipd/reports/advances", { params: { from, to } })).data.data,
-  });
-  const rows: any[] = data?.rows ?? [];
-  return (
-    <Box>
-      <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, alignItems: "center", flexWrap: "wrap" }}>
-        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
-        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
-      </Box>
-      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
-        <Box ref={ref}>
-          <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<SavingsRounded />} label="Advance collected" value={inr(data.totals.total)} color={SEMANTIC.success} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<AccessTimeRounded />} label="Entries" value={String(data.totals.count)} color={ACCENT} /></Grid>
-          </Grid>
-          <DataTable title={`IP Advances ${from} to ${to}`} head={["Date", "Patient", "UHID", "Method", "Amount"]}
-            rows={rows.map((r) => [dayjs(r.date).format("DD MMM YY HH:mm"), r.patientName, r.uhid, r.method, inr(r.amount)])} />
-        </Box>
-      )}
-    </Box>
-  );
-}
-
 export function InPatients() {
   const [asOf, setAsOf] = useState(dayjs().format("YYYY-MM-DD"));
-  const ref = useRef<HTMLDivElement>(null);
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["ipd-report-inpatients", asOf],
     queryFn: async () => (await axiosInstance.get("/ipd/reports/inpatients", { params: { asOf } })).data.data,
   });
   const rows: any[] = data?.rows ?? [];
+  const byWard: any[] = data?.byWard ?? [];
 
   return (
     <Box>
@@ -151,12 +55,27 @@ export function InPatients() {
         <TextField type="date" size="small" label="As of date" InputLabelProps={{ shrink: true }} value={asOf} onChange={(e) => setAsOf(e.target.value)} sx={{ minWidth: 180 }} />
       </Box>
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
-        <Box ref={ref}>
-          <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<LocalHotelRounded />} label="Current inpatients" value={String(data.totals.inpatients)} color={ACCENT} /></Grid>
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <KpiCard icon={<LocalHotelRounded />} accent={ACCENT} label="Current inpatients" value={String(data.totals.inpatients)} sub={`across ${byWard.length} ward${byWard.length === 1 ? "" : "s"}`} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 8 }}>
+              <DonutChart title="Occupancy by ward" data={byWard} nameKey="ward" valueKey="count" height={260} />
+            </Grid>
           </Grid>
-          <DataTable title={`In-Patient List (as of ${asOf})`} head={["Patient", "UHID", "Bed", "Admitted", "Days"]}
-            rows={rows.map((r) => [r.patientName, r.uhid, r.bed, r.admissionDate ? dayjs(r.admissionDate).format("DD MMM YYYY") : "—", r.days])} />
+          <ReportTable
+            title={`In-patient list (as of ${asOf})`}
+            filename={`inpatients_${asOf}`}
+            columns={[
+              { key: "patientName", label: "Patient" },
+              { key: "uhid", label: "UHID" },
+              { key: "bed", label: "Bed" },
+              { key: "admissionDate", label: "Admitted", format: fmtDate, value: (r) => ts(r.admissionDate) },
+              { key: "days", label: "Days", align: "right" },
+            ]}
+            rows={rows}
+          />
         </Box>
       )}
     </Box>
@@ -164,29 +83,129 @@ export function InPatients() {
 }
 
 export function Discharges() {
-  const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
-  const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
-  const ref = useRef<HTMLDivElement>(null);
+  const [range, setRange] = useState<DateRange>(initialRange);
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["ipd-report-discharges", from, to],
-    queryFn: async () => (await axiosInstance.get("/ipd/reports/discharges", { params: { from, to } })).data.data,
+    queryKey: ["ipd-report-discharges", range.from, range.to],
+    queryFn: async () => (await axiosInstance.get("/ipd/reports/discharges", { params: { from: range.from, to: range.to } })).data.data,
   });
   const rows: any[] = data?.rows ?? [];
+  const trend: any[] = data?.trend ?? [];
+  const prev = data?.previous;
 
   return (
     <Box>
-      <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, alignItems: "center", flexWrap: "wrap" }}>
-        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
-        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
-      </Box>
+      <ReportFilters value={range} onChange={setRange} />
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
-        <Box ref={ref}>
-          <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<ReplayRounded />} label="Discharges" value={String(data.totals.discharges)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><Kpi icon={<AccessTimeRounded />} label="Avg stay (days)" value={String(data.totals.avgStay)} color="#8b5cf6" /></Grid>
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12 }}><KpiCard icon={<ReplayRounded />} accent={ACCENT} label="Discharges" value={String(data.totals.discharges)} current={data.totals.discharges} previous={prev?.discharges} spark={trend.map((t) => t.discharges)} /></Grid>
+                <Grid size={{ xs: 12 }}><KpiCard icon={<AccessTimeRounded />} accent={SEMANTIC.info} label="Avg stay (days)" value={String(data.totals.avgStay)} current={data.totals.avgStay} previous={prev?.avgStay} higherIsBetter={false} /></Grid>
+              </Grid>
+            </Grid>
+            <Grid size={{ xs: 12, md: 8 }}>
+              <TrendChart title="Discharges over time" subtitle="Per day" data={trend} xKey="date" series={[{ key: "discharges", label: "Discharges" }]} height={260} />
+            </Grid>
           </Grid>
-          <DataTable title={`IP Discharges ${from} to ${to}`} head={["Patient", "UHID", "Bed", "Admitted", "Discharged", "Stay (days)"]}
-            rows={rows.map((r) => [r.patientName, r.uhid, r.bed, r.admissionDate ? dayjs(r.admissionDate).format("DD MMM YYYY") : "—", r.dischargeDate ? dayjs(r.dischargeDate).format("DD MMM YYYY") : "—", r.lengthOfStay])} />
+          <ReportTable
+            title="Discharge detail"
+            filename={`discharges_${range.from}_${range.to}`}
+            columns={[
+              { key: "patientName", label: "Patient" },
+              { key: "uhid", label: "UHID" },
+              { key: "bed", label: "Bed" },
+              { key: "admissionDate", label: "Admitted", format: fmtDate, value: (r) => ts(r.admissionDate) },
+              { key: "dischargeDate", label: "Discharged", format: fmtDate, value: (r) => ts(r.dischargeDate) },
+              { key: "lengthOfStay", label: "Stay (days)", align: "right" },
+            ]}
+            rows={rows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+export function IpRegistrations() {
+  const [range, setRange] = useState<DateRange>(initialRange);
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["ipd-report-registrations", range.from, range.to],
+    queryFn: async () => (await axiosInstance.get("/ipd/reports/registrations", { params: { from: range.from, to: range.to } })).data.data,
+  });
+  const rows: any[] = data?.rows ?? [];
+  const trend: any[] = data?.trend ?? [];
+  const prev = data?.previous;
+
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={setRange} />
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <KpiCard icon={<PersonAddRounded />} accent={ACCENT} label="Admissions" value={String(data.totals.admissions)} current={data.totals.admissions} previous={prev?.admissions} spark={trend.map((t) => t.admissions)} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 8 }}>
+              <TrendChart title="Admissions over time" subtitle="Per day" data={trend} xKey="date" series={[{ key: "admissions", label: "Admissions" }]} height={260} />
+            </Grid>
+          </Grid>
+          <ReportTable
+            title="IP registration detail"
+            filename={`ip_registrations_${range.from}_${range.to}`}
+            columns={[
+              { key: "patientName", label: "Patient" },
+              { key: "uhid", label: "UHID" },
+              { key: "bed", label: "Bed" },
+              { key: "admissionDate", label: "Admitted", format: fmtDate, value: (r) => ts(r.admissionDate) },
+              { key: "status", label: "Status" },
+            ]}
+            rows={rows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+export function IpAdvances() {
+  const [range, setRange] = useState<DateRange>(initialRange);
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["ipd-report-advances", range.from, range.to],
+    queryFn: async () => (await axiosInstance.get("/ipd/reports/advances", { params: { from: range.from, to: range.to } })).data.data,
+  });
+  const rows: any[] = data?.rows ?? [];
+  const trend: any[] = data?.trend ?? [];
+  const prev = data?.previous;
+
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={setRange} />
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.success} label="Advance collected" value={inr(data.totals.total)} current={Number(data.totals.total)} previous={prev ? Number(prev.total) : undefined} spark={trend.map((t) => t.amount)} /></Grid>
+                <Grid size={{ xs: 12 }}><KpiCard icon={<AccessTimeRounded />} accent={ACCENT} label="Entries" value={String(data.totals.count)} current={data.totals.count} previous={prev?.count} /></Grid>
+              </Grid>
+            </Grid>
+            <Grid size={{ xs: 12, md: 8 }}>
+              <TrendChart title="Advance collection over time" subtitle="Per day" data={trend} xKey="date" series={[{ key: "amount", label: "Advance (₹)" }]} valueFormatter={inr} height={260} />
+            </Grid>
+          </Grid>
+          <ReportTable
+            title="IP advance detail"
+            filename={`ip_advances_${range.from}_${range.to}`}
+            columns={[
+              { key: "date", label: "Date", format: (v) => dayjs(v).format("DD MMM YY HH:mm"), value: (r) => ts(r.date) },
+              { key: "patientName", label: "Patient" },
+              { key: "uhid", label: "UHID" },
+              { key: "method", label: "Method" },
+              { key: "amount", label: "Amount", align: "right", format: (v) => inr(v), value: (r) => Number(r.amount) },
+            ]}
+            rows={rows}
+          />
         </Box>
       )}
     </Box>
