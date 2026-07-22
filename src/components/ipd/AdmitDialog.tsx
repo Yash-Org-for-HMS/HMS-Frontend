@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, TextField,
-  MenuItem, Box, Switch, FormControlLabel, Typography, Divider,
+  MenuItem, Box, Switch, FormControlLabel, Typography, Divider, Autocomplete,
 } from "@mui/material";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { LocalHotelRounded, PersonAddRounded, HealthAndSafetyRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
@@ -32,6 +33,12 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
   });
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
+  // Patient picker: searchable server lookup (the dropdowns endpoint no longer
+  // ships the full patient register). selectedPatient holds the chosen record.
+  const [patientQuery, setPatientQuery] = useState("");
+  const debouncedPatientQuery = useDebouncedValue(patientQuery, 300);
+  const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
+
   // Insurance / scheme case — optional; captured here and turned into a claim
   // (linked to the new admission) so the pre-auth flow can start right away.
   const [insuranceOn, setInsuranceOn] = useState(false);
@@ -53,6 +60,25 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
     queryFn: async () => (await axiosInstance.get("/claims/payers")).data.data,
     enabled: open && insuranceOn,
   });
+
+  const { data: patientOptions = [] } = useQuery<any[]>({
+    queryKey: ["admit-patient-search", debouncedPatientQuery],
+    queryFn: async () => (await axiosInstance.get("/reception/patients", { params: { search: debouncedPatientQuery, page: 1, limit: 20 } })).data.data || [],
+    enabled: open && debouncedPatientQuery.trim().length >= 2,
+    placeholderData: keepPreviousData,
+  });
+
+  // Seed the selected-patient record from an id we already hold (prefill from a
+  // patient row, or a just-registered patient) so the Autocomplete shows a name.
+  useEffect(() => {
+    const pid = form.patientId;
+    if (!pid || selectedPatient?.patientId === pid) return;
+    let cancelled = false;
+    axiosInstance.get(`/reception/patients/${pid}`)
+      .then((r) => { if (!cancelled && r.data?.data) setSelectedPatient(r.data.data); })
+      .catch(() => { /* user can still search */ });
+    return () => { cancelled = true; };
+  }, [form.patientId]);
 
   const canSubmit = form.patientId && form.bedId;
 
@@ -118,13 +144,21 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
           <Grid container spacing={2.5} sx={{ pt: 0.5 }}>
             <Grid size={{ xs: 12 }}>
               <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
-                <TextField select fullWidth required label="Patient" value={form.patientId} onChange={(e) => set("patientId", e.target.value)} disabled={!!prefilledPatientId}
-                  helperText={newPatientLabel || undefined}>
-                  <MenuItem value="" disabled>Select a patient</MenuItem>
-                  {(dropdowns?.patients || []).map((p: any) => (
-                    <MenuItem key={p.patientId} value={p.patientId}>{p.firstName} {p.lastName} — {p.uhidNumber}</MenuItem>
-                  ))}
-                </TextField>
+                <Autocomplete
+                  fullWidth
+                  disabled={!!prefilledPatientId}
+                  options={patientOptions}
+                  value={selectedPatient}
+                  filterOptions={(x) => x}
+                  isOptionEqualToValue={(o: any, v: any) => o.patientId === v?.patientId}
+                  getOptionLabel={(p: any) => (p ? `${p.firstName} ${p.lastName} — ${p.uhidNumber}` : "")}
+                  onInputChange={(_e, val, reason) => { if (reason === "input") setPatientQuery(val); }}
+                  onChange={(_e, val: any) => { setSelectedPatient(val); set("patientId", val?.patientId || ""); setNewPatientLabel(""); }}
+                  noOptionsText={debouncedPatientQuery.trim().length < 2 ? "Type at least 2 characters to search…" : "No matching patients"}
+                  renderInput={(params) => (
+                    <TextField {...params} required label="Patient" placeholder="Search by name, MRN, or phone" helperText={newPatientLabel || undefined} />
+                  )}
+                />
                 {!prefilledPatientId && (
                   <Button variant="outlined" startIcon={<PersonAddRounded />} onClick={() => setRegisterOpen(true)}
                     sx={{ whiteSpace: "nowrap", mt: 0.25, borderColor: "divider", color: "text.primary" }}>New</Button>

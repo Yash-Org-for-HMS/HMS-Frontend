@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { getApiErrorMessage } from "@/utils/apiError";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, TextField,
-  MenuItem, ToggleButton, ToggleButtonGroup, Typography,
+  MenuItem, ToggleButton, ToggleButtonGroup, Typography, Autocomplete,
 } from "@mui/material";
 import { AddRounded, CallSplitRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { useToast } from "@/providers/ToastContext";
 import { ACCENTS } from "@/styles/accents";
@@ -55,12 +56,33 @@ export default function ReferralDialog({
     }
   }, [open, prefilledPatientId, prefilledFromDepartmentId]);
 
-  const { data: dropdowns = { departments: [], patients: [] } } = useQuery({
+  const { data: dropdowns = { departments: [] } } = useQuery({
     queryKey: ["appointment-dropdowns"],
     queryFn: async () => (await axiosInstance.get("/reception/appointments/dropdowns")).data.data,
   });
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  // Patient picker: searchable server lookup (dropdowns no longer ships patients).
+  const [patientQuery, setPatientQuery] = useState("");
+  const debouncedPatientQuery = useDebouncedValue(patientQuery, 300);
+  const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
+  const { data: patientOptions = [] } = useQuery<any[]>({
+    queryKey: ["referral-patient-search", debouncedPatientQuery],
+    queryFn: async () => (await axiosInstance.get("/reception/patients", { params: { search: debouncedPatientQuery, page: 1, limit: 20 } })).data.data || [],
+    enabled: open && !lockPatient && debouncedPatientQuery.trim().length >= 2,
+    placeholderData: keepPreviousData,
+  });
+  // Seed the selected record from a prefilled id (unlocked contexts).
+  useEffect(() => {
+    const pid = form.patientId;
+    if (lockPatient || !pid || selectedPatient?.patientId === pid) return;
+    let cancelled = false;
+    axiosInstance.get(`/reception/patients/${pid}`)
+      .then((r) => { if (!cancelled && r.data?.data) setSelectedPatient(r.data.data); })
+      .catch(() => { /* user can still search */ });
+    return () => { cancelled = true; };
+  }, [form.patientId, lockPatient]);
 
   const isExternal = form.referralType === "EXTERNAL";
   const canSubmit = form.patientId && form.reason.trim().length > 0 &&
@@ -91,10 +113,7 @@ export default function ReferralDialog({
     }
   };
 
-  const matchedPatient = (dropdowns?.patients || []).find((p: any) => p.patientId === form.patientId);
-  const lockedPatientName = matchedPatient
-    ? `${matchedPatient.firstName} ${matchedPatient.lastName} — ${matchedPatient.uhidNumber}`
-    : (patientLabel || "Selected patient");
+  const lockedPatientName = patientLabel || "Selected patient";
 
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="sm" fullWidth>
@@ -108,12 +127,20 @@ export default function ReferralDialog({
               <TextField fullWidth label="Patient" value={lockedPatientName} disabled
                 helperText="Referring the patient from this record" />
             ) : (
-              <TextField select fullWidth required label="Patient" value={form.patientId} onChange={(e) => set("patientId", e.target.value)}>
-                <MenuItem value="" disabled>Select a patient</MenuItem>
-                {(dropdowns?.patients || []).map((p: any) => (
-                  <MenuItem key={p.patientId} value={p.patientId}>{p.firstName} {p.lastName} — {p.uhidNumber}</MenuItem>
-                ))}
-              </TextField>
+              <Autocomplete
+                fullWidth
+                options={patientOptions}
+                value={selectedPatient}
+                filterOptions={(x) => x}
+                isOptionEqualToValue={(o: any, v: any) => o.patientId === v?.patientId}
+                getOptionLabel={(p: any) => (p ? `${p.firstName} ${p.lastName} — ${p.uhidNumber}` : "")}
+                onInputChange={(_e, val, reason) => { if (reason === "input") setPatientQuery(val); }}
+                onChange={(_e, val: any) => { setSelectedPatient(val); set("patientId", val?.patientId || ""); }}
+                noOptionsText={debouncedPatientQuery.trim().length < 2 ? "Type at least 2 characters to search…" : "No matching patients"}
+                renderInput={(params) => (
+                  <TextField {...params} required label="Patient" placeholder="Search by name, MRN, or phone" />
+                )}
+              />
             )}
           </Grid>
 
