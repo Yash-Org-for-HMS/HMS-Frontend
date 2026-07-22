@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -171,7 +172,7 @@ export default function RadiologyCatalog() {
                   <TableRow key={scan.radiologyTestId} hover>
                     <TableCell sx={{ fontWeight: 600, fontFamily: 'monospace', color: '#0284C7' }}>{scan.testCode}</TableCell>
                     <TableCell sx={{ fontWeight: 500 }}>{scan.testName}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#10B981' }}>${parseFloat(scan.price).toFixed(2)}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: SEMANTIC.success }}>${parseFloat(scan.price).toFixed(2)}</TableCell>
                     <TableCell align="right">
                       <Tooltip title="Edit">
                         <IconButton 
@@ -186,7 +187,7 @@ export default function RadiologyCatalog() {
                         <IconButton 
                           color="error" 
                           onClick={() => handleDelete(scan.radiologyTestId)}
-                          sx={{ '&:hover': { bgcolor: alpha('#EF4444', 0.1) } }}
+                          sx={{ '&:hover': { bgcolor: alpha(SEMANTIC.danger, 0.1) } }}
                         >
                           <DeleteRounded fontSize="small" />
                         </IconButton>
@@ -223,7 +224,7 @@ export default function RadiologyCatalog() {
         <DialogContent dividers sx={{ p: 3 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
             {errorMsg && (
-              <Box sx={{ p: 1.5, bgcolor: alpha('#EF4444', 0.1), borderRadius: 2, border: '1px solid', borderColor: alpha('#EF4444', 0.2) }}>
+              <Box sx={{ p: 1.5, bgcolor: alpha(SEMANTIC.danger, 0.1), borderRadius: 2, border: '1px solid', borderColor: alpha(SEMANTIC.danger, 0.2) }}>
                 <Typography color="error" variant="body2" fontWeight="500">{errorMsg}</Typography>
               </Box>
             )}

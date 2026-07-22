@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { orderStatusColor } from "@/utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab } from "@mui/material";
@@ -214,7 +215,7 @@ export default function RadiologyOrdersQueue() {
                   <TableCell>
                     {order.patient?.firstName} {order.patient?.lastName}
                     {order.admissionNumber && (
-                      <Chip label={`IPD · ${order.admissionNumber}`} size="small" sx={{ ml: 1, height: 20, fontSize: "0.7rem", fontWeight: 700, bgcolor: "rgba(8,145,178,0.12)", color: "#0891b2" }} />
+                      <Chip label={`IPD · ${order.admissionNumber}`} size="small" sx={{ ml: 1, height: 20, fontSize: "0.7rem", fontWeight: 700, bgcolor: "rgba(8,145,178,0.12)", color: ACCENTS.labDark }} />
                     )}
                   </TableCell>
                   <TableCell>{order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</TableCell>

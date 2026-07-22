@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -194,12 +195,12 @@ export default function LabTestCatalog() {
                       {test.isProfile ? (
                         <Chip label="Profile" size="small" sx={{ bgcolor: alpha('#7C3AED', 0.1), color: '#7C3AED', fontWeight: 600, borderRadius: '6px' }} />
                       ) : (
-                        <Chip label="Parameter" size="small" sx={{ bgcolor: alpha('#2563EB', 0.1), color: '#2563EB', fontWeight: 600, borderRadius: '6px' }} />
+                        <Chip label="Parameter" size="small" sx={{ bgcolor: alpha(SEMANTIC.infoDark, 0.1), color: SEMANTIC.infoDark, fontWeight: 600, borderRadius: '6px' }} />
                       )}
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600, fontFamily: 'monospace' }}>{test.testCode}</TableCell>
                     <TableCell sx={{ fontWeight: 500 }}>{test.testName}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#10B981' }}>${parseFloat(test.price).toFixed(2)}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: SEMANTIC.success }}>${parseFloat(test.price).toFixed(2)}</TableCell>
                     <TableCell>
                       {test.defaultNormalRange ? (
                         <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.secondary' }}>
@@ -214,7 +215,7 @@ export default function LabTestCatalog() {
                         <IconButton 
                           color="primary" 
                           onClick={() => handleOpenEdit(test)}
-                          sx={{ '&:hover': { bgcolor: alpha('#2563EB', 0.1) } }}
+                          sx={{ '&:hover': { bgcolor: alpha(SEMANTIC.infoDark, 0.1) } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>
@@ -223,7 +224,7 @@ export default function LabTestCatalog() {
                         <IconButton 
                           color="error" 
                           onClick={() => handleDelete(test.labTestId)}
-                          sx={{ '&:hover': { bgcolor: alpha('#EF4444', 0.1) } }}
+                          sx={{ '&:hover': { bgcolor: alpha(SEMANTIC.danger, 0.1) } }}
                         >
                           <DeleteRounded fontSize="small" />
                         </IconButton>
@@ -260,7 +261,7 @@ export default function LabTestCatalog() {
         <DialogContent dividers sx={{ p: 3 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
             {errorMsg && (
-              <Box sx={{ p: 1.5, bgcolor: alpha('#EF4444', 0.1), borderRadius: 2, border: '1px solid', borderColor: alpha('#EF4444', 0.2) }}>
+              <Box sx={{ p: 1.5, bgcolor: alpha(SEMANTIC.danger, 0.1), borderRadius: 2, border: '1px solid', borderColor: alpha(SEMANTIC.danger, 0.2) }}>
                 <Typography color="error" variant="body2" fontWeight="500">{errorMsg}</Typography>
               </Box>
             )}

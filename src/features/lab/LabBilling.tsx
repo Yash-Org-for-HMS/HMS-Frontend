@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import {
   Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Chip, Button, Tabs, Tab, Grid,
@@ -47,7 +48,7 @@ interface BillableOrder {
 
 interface UnbilledInfo { amount: number; description: string }
 
-const ACCENT = "#10B981";
+const ACCENT = SEMANTIC.success;
 
 function normalizeLab(o: any): BillableOrder {
   return {
@@ -182,7 +183,7 @@ export default function LabBilling() {
       {/* Summary */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Outstanding Orders" value={outstanding.length} icon={<ReceiptLongRounded sx={{ fontSize: 32, color: "#f59e0b" }} />} color="#f59e0b" />
+          <StatCard label="Outstanding Orders" value={outstanding.length} icon={<ReceiptLongRounded sx={{ fontSize: 32, color: SEMANTIC.warning }} />} color={SEMANTIC.warning} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label="Amount Due" value={formatINR(outstandingTotal)} icon={<PointOfSaleRounded sx={{ fontSize: 32, color: ACCENT }} />} color={ACCENT} />
@@ -237,7 +238,7 @@ export default function LabBilling() {
                           icon={o.kind === "LAB" ? <ScienceRounded /> : <BiotechRounded />}
                           label={o.kind === "LAB" ? "Lab" : "Radiology"}
                           size="small"
-                          sx={{ mr: 1, height: 22, fontSize: "0.7rem", fontWeight: 700, bgcolor: o.kind === "LAB" ? "rgba(59,130,246,0.12)" : "rgba(245,158,11,0.12)", color: o.kind === "LAB" ? "#2563eb" : "#b45309", "& .MuiChip-icon": { fontSize: 15 } }}
+                          sx={{ mr: 1, height: 22, fontSize: "0.7rem", fontWeight: 700, bgcolor: o.kind === "LAB" ? "rgba(59,130,246,0.12)" : "rgba(245,158,11,0.12)", color: o.kind === "LAB" ? SEMANTIC.infoDark : "#b45309", "& .MuiChip-icon": { fontSize: 15 } }}
                         />
                         {o.description}
                       </TableCell>
@@ -245,7 +246,7 @@ export default function LabBilling() {
                       <TableCell>{statusChip(o)}</TableCell>
                       <TableCell align="right">
                         {o.billingLockActive ? (
-                          <Button variant="contained" size="small" startIcon={<PointOfSaleRounded />} onClick={() => setPayOrder(o)} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: "#059669" } }}>
+                          <Button variant="contained" size="small" startIcon={<PointOfSaleRounded />} onClick={() => setPayOrder(o)} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: SEMANTIC.successDark } }}>
                             Collect Payment
                           </Button>
                         ) : o.paymentStatus === "PAID" ? (

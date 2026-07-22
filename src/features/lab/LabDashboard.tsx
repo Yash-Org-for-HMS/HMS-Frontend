@@ -1,4 +1,5 @@
 import { Box, Typography, Grid, Paper, Chip, Table, TableBody, TableCell, TableHead, TableRow, Button } from "@mui/material";
+import { SEMANTIC } from "@/styles/accents";
 import { orderStatusColor } from "@/utils/statusColors";
 import { ScienceRounded, CheckCircleRounded, PendingActionsRounded, BiotechRounded, AttachMoneyRounded, TrendingUpRounded } from "@mui/icons-material";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
@@ -103,8 +104,8 @@ export default function LabDashboard() {
           <StatCard 
             label="Total Pending Lab Tests"
             value={labStats.pending} 
-            icon={<ScienceRounded sx={{ fontSize: 32, color: '#3b82f6' }} />} 
-            color="#3b82f6"
+            icon={<ScienceRounded sx={{ fontSize: 32, color: SEMANTIC.info }} />} 
+            color={SEMANTIC.info}
           />
         </Grid>
         
@@ -112,8 +113,8 @@ export default function LabDashboard() {
           <StatCard 
             label="Total Pending Radiology"
             value={radStats.pending} 
-            icon={<BiotechRounded sx={{ fontSize: 32, color: '#f59e0b' }} />} 
-            color="#f59e0b"
+            icon={<BiotechRounded sx={{ fontSize: 32, color: SEMANTIC.warning }} />} 
+            color={SEMANTIC.warning}
           />
         </Grid>
 
@@ -121,8 +122,8 @@ export default function LabDashboard() {
           <StatCard 
             label="Completed Today"
             value={labStats.completed + radStats.completed} 
-            icon={<CheckCircleRounded sx={{ fontSize: 32, color: '#10b981' }} />} 
-            color="#10b981"
+            icon={<CheckCircleRounded sx={{ fontSize: 32, color: SEMANTIC.success }} />} 
+            color={SEMANTIC.success}
           />
         </Grid>
 

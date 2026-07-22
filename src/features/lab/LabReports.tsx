@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
@@ -24,8 +25,8 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 
-const ACCENT = "#10B981";
-const PIE_COLORS = ["#10b981", "#f59e0b", "#3b82f6", "#ef4444", "#8b5cf6", "#64748b"];
+const ACCENT = SEMANTIC.success;
+const PIE_COLORS = [SEMANTIC.success, SEMANTIC.warning, SEMANTIC.info, SEMANTIC.danger, "#8b5cf6", NEUTRAL.muted];
 const inr = formatINRAuto;
 
 const PRESETS = [
@@ -144,17 +145,17 @@ export default function LabReports() {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {/* KPIs */}
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(3,1fr)", md: "repeat(7,1fr)" }, gap: 1.5 }}>
-            <Kpi icon={<ScienceRounded />} label="Total orders" value={s?.totalOrders || 0} color="#10b981" />
-            <Kpi icon={<HourglassEmptyRounded />} label="Pending" value={s?.pending || 0} color="#f59e0b" />
-            <Kpi icon={<BiotechRounded />} label="Sample collected" value={s?.sampleCollected || 0} color="#3b82f6" />
-            <Kpi icon={<CheckCircleRounded />} label="Completed" value={s?.completed || 0} color="#10b981" />
-            <Kpi icon={<MonitorHeartRounded />} label="Radiology" value={s?.radiologyOrders || 0} color="#06b6d4" />
-            <Kpi icon={<WarningAmberRounded />} label="Critical results" value={s?.criticalResults || 0} color="#ef4444" />
+            <Kpi icon={<ScienceRounded />} label="Total orders" value={s?.totalOrders || 0} color={SEMANTIC.success} />
+            <Kpi icon={<HourglassEmptyRounded />} label="Pending" value={s?.pending || 0} color={SEMANTIC.warning} />
+            <Kpi icon={<BiotechRounded />} label="Sample collected" value={s?.sampleCollected || 0} color={SEMANTIC.info} />
+            <Kpi icon={<CheckCircleRounded />} label="Completed" value={s?.completed || 0} color={SEMANTIC.success} />
+            <Kpi icon={<MonitorHeartRounded />} label="Radiology" value={s?.radiologyOrders || 0} color={ACCENTS.lab} />
+            <Kpi icon={<WarningAmberRounded />} label="Critical results" value={s?.criticalResults || 0} color={SEMANTIC.danger} />
             <Kpi icon={<AccessTimeRounded />} label="Avg turnaround" value={`${s?.avgTurnaroundHours || 0}h`} color="#8b5cf6" />
           </Box>
 
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3,1fr)" }, gap: 1.5 }}>
-            <Kpi icon={<CurrencyRupeeRounded />} label="Revenue estimate (billed tests)" value={inr(s?.revenueEstimate)} color="#0891b2" />
+            <Kpi icon={<CurrencyRupeeRounded />} label="Revenue estimate (billed tests)" value={inr(s?.revenueEstimate)} color={ACCENTS.labDark} />
           </Box>
 
           {/* Trend */}
@@ -168,8 +169,8 @@ export default function LabReports() {
                       <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="radTrend" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                      <stop offset="5%" stopColor={ACCENTS.lab} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={ACCENTS.lab} stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
@@ -178,7 +179,7 @@ export default function LabReports() {
                   <RTooltip labelFormatter={(d) => dayjs(d as string).format("DD MMM YYYY")} />
                   <Legend />
                   <Area type="monotone" dataKey="labOrders" name="Lab orders" stroke={ACCENT} strokeWidth={2} fill="url(#labTrend)" />
-                  <Area type="monotone" dataKey="radiologyOrders" name="Radiology orders" stroke="#06b6d4" strokeWidth={2} fill="url(#radTrend)" />
+                  <Area type="monotone" dataKey="radiologyOrders" name="Radiology orders" stroke={ACCENTS.lab} strokeWidth={2} fill="url(#radTrend)" />
                 </AreaChart>
               </ResponsiveContainer>
             </Box>
