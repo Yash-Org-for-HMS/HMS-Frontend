@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -112,7 +112,7 @@ export default function NurseLayout() {
                     sx: { opacity: locked ? 0.6 : 1 },
                   }}
                 />
-                {locked && <LockRounded sx={{ fontSize: 15, color: "#f59e0b", ml: 1, flexShrink: 0 }} />}
+                {locked && <LockRounded sx={{ fontSize: 15, color: SEMANTIC.warning, ml: 1, flexShrink: 0 }} />}
               </ListItemButton>
             </ListItem>
             </Box>

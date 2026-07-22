@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -134,17 +134,17 @@ export default function NurseQueue() {
         <Chip
           icon={<HourglassTopRounded sx={{ fontSize: "16px !important" }} />}
           label={`${waiting} Waiting`}
-          sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)", fontWeight: 600 }}
+          sx={{ bgcolor: "rgba(245,158,11,0.1)", color: SEMANTIC.warning, border: "1px solid rgba(245,158,11,0.3)", fontWeight: 600 }}
         />
         <Chip
           icon={<CheckCircleRounded sx={{ fontSize: "16px !important" }} />}
           label={`${inProgress} In Progress`}
-          sx={{ bgcolor: "rgba(59,130,246,0.1)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.3)", fontWeight: 600 }}
+          sx={{ bgcolor: "rgba(59,130,246,0.1)", color: SEMANTIC.info, border: "1px solid rgba(59,130,246,0.3)", fontWeight: 600 }}
         />
         <Chip
           icon={<CheckCircleRounded sx={{ fontSize: "16px !important" }} />}
           label={`${completed} Completed`}
-          sx={{ bgcolor: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600 }}
+          sx={{ bgcolor: "rgba(16,185,129,0.1)", color: SEMANTIC.success, border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600 }}
         />
         <Chip
           icon={<MonitorHeartRounded sx={{ fontSize: "16px !important" }} />}
@@ -194,7 +194,7 @@ export default function NurseQueue() {
                             label={`${getDoctorInitials(token.doctorName)}-${token.displayNumber}`}
                             sx={{
                               bgcolor: hasVitals ? "rgba(16,185,129,0.15)" : `rgba(167,139,250,0.15)`,
-                              color: hasVitals ? "#10b981" : NURSE_PURPLE,
+                              color: hasVitals ? SEMANTIC.success : NURSE_PURPLE,
                               border: `1px solid ${hasVitals ? "rgba(16,185,129,0.3)" : "rgba(167,139,250,0.3)"}`,
                               fontWeight: 800,
                               borderRadius: '8px'
@@ -227,7 +227,7 @@ export default function NurseQueue() {
                                 icon={<MonitorHeartRounded sx={{ fontSize: "14px !important" }} />}
                                 label="Recorded ✓"
                                 size="small"
-                                sx={{ bgcolor: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600, fontSize: "0.75rem", cursor: "pointer" }}
+                                sx={{ bgcolor: "rgba(16,185,129,0.1)", color: SEMANTIC.success, border: "1px solid rgba(16,185,129,0.3)", fontWeight: 600, fontSize: "0.75rem", cursor: "pointer" }}
                                 onClick={() => setVitalsDialog({ open: true, token })}
                               />
                             </Tooltip>
@@ -237,7 +237,7 @@ export default function NurseQueue() {
                             <Chip
                               label="Pending"
                               size="small"
-                              sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)", fontWeight: 600, fontSize: "0.75rem" }}
+                              sx={{ bgcolor: "rgba(245,158,11,0.1)", color: SEMANTIC.warning, border: "1px solid rgba(245,158,11,0.3)", fontWeight: 600, fontSize: "0.75rem" }}
                             />
                           )}
                         </TableCell>
@@ -253,9 +253,9 @@ export default function NurseQueue() {
                               sx={
                                 hasVitals
                                   ? {
-                                    color: "#10b981", borderColor: "rgba(16,185,129,0.4)",
+                                    color: SEMANTIC.success, borderColor: "rgba(16,185,129,0.4)",
                                     textTransform: "none", fontWeight: 600,
-                                    "&:hover": { borderColor: "#10b981", bgcolor: "rgba(16,185,129,0.06)" },
+                                    "&:hover": { borderColor: SEMANTIC.success, bgcolor: "rgba(16,185,129,0.06)" },
                                   }
                                   : {
                                     background: `linear-gradient(135deg, ${NURSE_PURPLE_DARK}, ${NURSE_PURPLE})`,
@@ -296,7 +296,7 @@ export default function NurseQueue() {
                 </Box>
                 <Chip
                   label={`${pending.length} Pending`}
-                  sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)", fontWeight: 700 }}
+                  sx={{ bgcolor: "rgba(245,158,11,0.1)", color: SEMANTIC.warning, border: "1px solid rgba(245,158,11,0.3)", fontWeight: 700 }}
                 />
               </Box>
 
@@ -337,7 +337,7 @@ export default function NurseQueue() {
                             sx={{
                               position: "absolute", top: -4, right: -4,
                               width: 14, height: 14, borderRadius: "50%",
-                              bgcolor: "#f59e0b", border: "2px solid",
+                              bgcolor: SEMANTIC.warning, border: "2px solid",
                               borderColor: "background.paper",
                             }}
                           />
@@ -397,7 +397,7 @@ export default function NurseQueue() {
                 </Typography>
                 <Chip
                   label={`${done.length} Done`}
-                  sx={{ bgcolor: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontWeight: 700 }}
+                  sx={{ bgcolor: "rgba(16,185,129,0.1)", color: SEMANTIC.success, border: "1px solid rgba(16,185,129,0.3)", fontWeight: 700 }}
                 />
               </Box>
 
@@ -418,7 +418,7 @@ export default function NurseQueue() {
                       }}
                       onClick={() => setVitalsDialog({ open: true, token })}
                     >
-                      <Avatar sx={{ width: 34, height: 34, bgcolor: "rgba(16,185,129,0.15)", color: "#10b981", fontSize: "0.875rem", fontWeight: 800 }}>
+                      <Avatar sx={{ width: 34, height: 34, bgcolor: "rgba(16,185,129,0.15)", color: SEMANTIC.success, fontSize: "0.875rem", fontWeight: 800 }}>
                         {token.displayNumber}
                       </Avatar>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -426,8 +426,8 @@ export default function NurseQueue() {
                         <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.75rem" }} noWrap>{token.doctorName}</Typography>
                       </Box>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        <CheckCircleRounded sx={{ color: "#10b981", fontSize: 18 }} />
-                        <Typography variant="caption" sx={{ color: "#10b981", fontWeight: 600, fontSize: "0.75rem" }}>Update</Typography>
+                        <CheckCircleRounded sx={{ color: SEMANTIC.success, fontSize: 18 }} />
+                        <Typography variant="caption" sx={{ color: SEMANTIC.success, fontWeight: 600, fontSize: "0.75rem" }}>Update</Typography>
                       </Box>
                     </Box>
                   ))}

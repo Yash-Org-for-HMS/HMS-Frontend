@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Grid, Typography, Paper, Alert,
@@ -97,9 +97,9 @@ export default function NurseDashboard() {
           <StatCard
             label="Vitals Pending"
             value={vitalsPending}
-            icon={<HourglassTopRounded sx={{ color: "#f59e0b" }} />}
+            icon={<HourglassTopRounded sx={{ color: SEMANTIC.warning }} />}
             loading={loading}
-            color="#f59e0b"
+            color={SEMANTIC.warning}
             sub="Patients awaiting vitals"
           />
         </Grid>
@@ -107,9 +107,9 @@ export default function NurseDashboard() {
           <StatCard
             label="Vitals Recorded"
             value={vitalsCompleted}
-            icon={<MonitorHeartRounded sx={{ color: "#10b981" }} />}
+            icon={<MonitorHeartRounded sx={{ color: SEMANTIC.success }} />}
             loading={loading}
-            color="#10b981"
+            color={SEMANTIC.success}
             sub="Completed today"
           />
         </Grid>
@@ -117,9 +117,9 @@ export default function NurseDashboard() {
           <StatCard
             label="In Consultation"
             value={inProgress}
-            icon={<CheckCircleRounded sx={{ color: "#3b82f6" }} />}
+            icon={<CheckCircleRounded sx={{ color: SEMANTIC.info }} />}
             loading={loading}
-            color="#3b82f6"
+            color={SEMANTIC.info}
             sub="With doctor now"
           />
         </Grid>
@@ -236,14 +236,14 @@ export default function NurseDashboard() {
                       border: "1px solid rgba(16,185,129,0.2)",
                     }}
                   >
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: "rgba(16,185,129,0.15)", color: "#10b981", fontSize: "0.75rem", fontWeight: 800 }}>
+                    <Avatar sx={{ width: 32, height: 32, bgcolor: "rgba(16,185,129,0.15)", color: SEMANTIC.success, fontSize: "0.75rem", fontWeight: 800 }}>
                       {token.displayNumber}
                     </Avatar>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }} noWrap>{token.patientName}</Typography>
                       <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>{token.doctorName}</Typography>
                     </Box>
-                    <CheckCircleRounded sx={{ color: "#10b981", fontSize: 18 }} />
+                    <CheckCircleRounded sx={{ color: SEMANTIC.success, fontSize: 18 }} />
                   </Box>
                 ))}
               </Box>
