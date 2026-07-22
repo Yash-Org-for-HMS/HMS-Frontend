@@ -57,6 +57,7 @@ import { isAdmin as isAdminRole } from "@/constants/roles";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import BranchSwitcher from "@/components/BranchSwitcher";
 import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarSearch from "@/components/layout/SidebarSearch";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
 import { axiosInstance } from "@/api/axios";
@@ -180,6 +181,7 @@ export default function HospitalLayout() {
         subtitle="Admin Portal"
       />
       
+      <SidebarSearch />
       <List sx={{ px: 2, pt: 2, flex: 1, overflowY: "auto" }}>
         {visibleMenuItems.map((item, idx, arr) => {
           const isActive = location.pathname.startsWith(item.path);

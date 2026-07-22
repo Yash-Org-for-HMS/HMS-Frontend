@@ -40,6 +40,7 @@ import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BranchSwitcher from "@/components/BranchSwitcher";
 import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarSearch from "@/components/layout/SidebarSearch";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
 
@@ -87,6 +88,7 @@ export default function PharmacyLayout() {
         subtitle="Pharmacy Portal"
       />
       
+      <SidebarSearch />
       <List sx={{ px: 2, pt: 2, flex: 1, overflowY: "auto" }}>
         {menuItems.map((item, idx, arr) => {
           const isActive = location.pathname.startsWith(item.path);

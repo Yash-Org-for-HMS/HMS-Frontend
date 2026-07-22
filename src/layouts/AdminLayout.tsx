@@ -40,6 +40,7 @@ import {
 } from "@mui/icons-material";
 import { useAuth } from "@/providers/AuthContext";
 import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarSearch from "@/components/layout/SidebarSearch";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import { ACCENTS, NEUTRAL } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
@@ -150,6 +151,7 @@ export default function AdminLayout() {
         subtitle="Platform Console"
       />
       
+      <SidebarSearch />
       <List sx={{ px: 2, pt: 1.5, flex: 1, overflowY: "auto" }}>
         {navGroups.map((group, gi) => (
           <Box key={group.heading ?? gi} sx={{ mb: 1 }}>

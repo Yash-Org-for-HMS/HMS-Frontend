@@ -20,6 +20,7 @@ const DoctorLayout = lazy(() => import("@/layouts/DoctorLayout"));
 const LabLayout = lazy(() => import("@/layouts/LabLayout"));
 const PharmacyLayout = lazy(() => import("@/layouts/PharmacyLayout"));
 import CommandPalette from "@/components/CommandPalette";
+import AdminCommandPalette from "@/components/AdminCommandPalette";
 import PageSkeleton from "@/components/PageSkeleton";
 import ModuleGate from "@/components/ModuleGate";
 import Login from "@/features/Login";
@@ -170,6 +171,7 @@ function App() {
   return (
     <>
     <AuthProvider>
+      <AdminCommandPalette />
       <Routes>
         <Route path="/login" element={<Login />} />
 
