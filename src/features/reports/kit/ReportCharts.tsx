@@ -69,10 +69,13 @@ export function TrendChart({ data, xKey, series, valueFormatter, height = 280, t
 }
 
 /** Category comparison (magnitude). Horizontal by default for readable labels. */
-export function BreakdownBar({ data, categoryKey, valueKey, valueName, colorIndex = 0, horizontal = true, valueFormatter, height = 280, title, subtitle, action }: {
+export function BreakdownBar({ data, categoryKey, valueKey, valueName, colorIndex = 0, horizontal = true, valueFormatter, labelWidth = 150, height = 280, title, subtitle, action }: {
   data: any[]; categoryKey: string; valueKey: string; valueName?: string; colorIndex?: number;
-  horizontal?: boolean; valueFormatter?: (n: number) => string; height?: number; title: string; subtitle?: string; action?: ReactNode;
+  horizontal?: boolean; valueFormatter?: (n: number) => string; labelWidth?: number; height?: number; title: string; subtitle?: string; action?: ReactNode;
 }) {
+  // Truncate long category labels so they don't overlap the bars/each other;
+  // the tooltip still shows the full name on hover.
+  const truncate = (v: any) => (typeof v === "string" && v.length > 20 ? `${v.slice(0, 19)}…` : v);
   return (
     <ChartCard title={title} subtitle={subtitle} action={action} height={height}>
       <BarChart data={data} layout={horizontal ? "vertical" : "horizontal"} margin={{ top: 4, right: 16, left: horizontal ? 8 : -8, bottom: 0 }}>
@@ -80,7 +83,7 @@ export function BreakdownBar({ data, categoryKey, valueKey, valueName, colorInde
         {horizontal ? (
           <>
             <XAxis type="number" {...xAxisProps} tickFormatter={valueFormatter as any} />
-            <YAxis type="category" dataKey={categoryKey} {...yAxisProps} width={120} />
+            <YAxis type="category" dataKey={categoryKey} {...yAxisProps} width={labelWidth} interval={0} tickFormatter={truncate} />
           </>
         ) : (
           <>
