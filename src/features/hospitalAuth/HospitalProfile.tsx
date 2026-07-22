@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "@/components/ErrorState";
@@ -230,7 +231,7 @@ export default function HospitalProfile() {
                 color: "#10b981 !important",
               },
               "& .MuiTabs-indicator": {
-                backgroundColor: "#10b981",
+                backgroundColor: SEMANTIC.success,
                 height: 3,
                 borderTopLeftRadius: 3,
                 borderTopRightRadius: 3,
@@ -458,8 +459,8 @@ export default function HospitalProfile() {
               disabled={saving}
               startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
               sx={{
-                bgcolor: "#10b981",
-                "&:hover": { bgcolor: "#059669" },
+                bgcolor: SEMANTIC.success,
+                "&:hover": { bgcolor: SEMANTIC.successDark },
                 px: 4,
               }}
             >

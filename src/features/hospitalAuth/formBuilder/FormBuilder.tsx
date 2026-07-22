@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -152,7 +153,7 @@ export default function FormBuilder() {
         color: "text.primary",
         "& fieldset": { borderColor: "divider" },
         "&:hover fieldset": { borderColor: "divider" },
-        "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+        "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
       },
       "& .MuiInputLabel-root": { color: "text.secondary" }
     },
@@ -338,7 +339,7 @@ export default function FormBuilder() {
             variant="contained"
             disabled={loading}
             startIcon={<SaveRounded />}
-            sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, py: 1.5, px: 4, fontWeight: 600, fontSize: "1rem" }}
+            sx={{ bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark }, py: 1.5, px: 4, fontWeight: 600, fontSize: "1rem" }}
           >
             {loading ? "Saving..." : "Save Form Template"}
           </Button>

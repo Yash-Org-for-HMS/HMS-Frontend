@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { SEMANTIC } from "@/styles/accents";
 import {
   Box,
   Typography,
@@ -57,7 +58,7 @@ interface DashboardStats {
   departmentDistribution: { name: string; count: number }[];
 }
 
-const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ec4899", "#8b5cf6", "#06b6d4"];
+const COLORS = [SEMANTIC.success, SEMANTIC.info, SEMANTIC.warning, "#ec4899", "#8b5cf6", "#06b6d4"];
 
 
 export default function HospitalDashboard() {
@@ -117,7 +118,7 @@ export default function HospitalDashboard() {
             label="Total Doctors"
             value={stats?.totalDoctors || 0} 
             icon={<MedicalServicesRounded />} 
-            color="#34d399" 
+            color={SEMANTIC.successLight} 
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }} sx={{ flexBasis: { md: "20%" }, maxWidth: { md: "20%" } }}>
@@ -125,7 +126,7 @@ export default function HospitalDashboard() {
             label="Departments"
             value={stats?.totalDepartments || 0} 
             icon={<DomainRounded />} 
-            color="#fbbf24" 
+            color={SEMANTIC.warningLight} 
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }} sx={{ flexBasis: { md: "20%" }, maxWidth: { md: "20%" } }}>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -115,7 +116,7 @@ export default function DoctorLeaves() {
             startIcon={addLeave.isPending ? <HeartbeatLoader size={22} /> : <AddRounded />}
             onClick={() => addLeave.mutate()}
             disabled={addLeave.isPending || !fromDate}
-            sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, textTransform: "none", fontWeight: 600 }}
+            sx={{ bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark }, textTransform: "none", fontWeight: 600 }}
           >
             Add Leave
           </Button>
@@ -177,7 +178,7 @@ export default function DoctorLeaves() {
                               if (ok) removeLeave.mutate(leave.doctorLeaveId);
                             }}
                             disabled={removeLeave.isPending}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#ef4444" } }}
+                            sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}
                           >
                             <DeleteOutlineRounded fontSize="small" />
                           </IconButton>

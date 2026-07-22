@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
   Box,
@@ -77,8 +78,8 @@ export default function DepartmentsList() {
             startIcon={<AddRounded />}
             onClick={() => navigate("/hospital/departments/new")}
             sx={{
-              bgcolor: "#6366f1",
-              "&:hover": { bgcolor: "#4f46e5" },
+              bgcolor: ACCENTS.hospital,
+              "&:hover": { bgcolor: ACCENTS.hospitalDark },
               textTransform: "none",
               fontWeight: 600,
               px: 3,
@@ -137,7 +138,7 @@ export default function DepartmentsList() {
                       size="small"
                       sx={{
                         bgcolor: dept.status === "active" ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                        color: dept.status === "active" ? "#34d399" : "#f87171",
+                        color: dept.status === "active" ? SEMANTIC.successLight : SEMANTIC.dangerLight,
                         fontWeight: 600,
                       }}
                     />
@@ -147,7 +148,7 @@ export default function DepartmentsList() {
                       <IconButton
                         size="small"
                         onClick={() => navigate(`/hospital/departments/${dept.departmentId}/edit`)}
-                        sx={{ color: "text.secondary", "&:hover": { color: "#6366f1", bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                        sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.hospital, bgcolor: "rgba(99, 102, 241, 0.1)" } }}
                       >
                         <EditRounded fontSize="small" />
                       </IconButton>
@@ -159,7 +160,7 @@ export default function DepartmentsList() {
                         sx={{
                           color: "text.secondary",
                           "&:hover": {
-                            color: dept.status === "active" ? "#f87171" : "#34d399",
+                            color: dept.status === "active" ? SEMANTIC.dangerLight : SEMANTIC.successLight,
                             bgcolor: dept.status === "active" ? "rgba(239, 68, 68, 0.1)" : "rgba(16, 185, 129, 0.1)",
                           },
                         }}

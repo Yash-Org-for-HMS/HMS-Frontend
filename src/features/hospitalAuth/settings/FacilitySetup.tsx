@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -15,15 +16,15 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 
-const ACCENT = "#6366f1";
-const ACCENT_DARK = "#4f46e5";
+const ACCENT = ACCENTS.hospital;
+const ACCENT_DARK = ACCENTS.hospitalDark;
 
 const WARD_TYPES = ["general", "surgical", "maternity", "pediatric", "ICU"];
 const ROOM_TYPES = ["general", "semi_private", "private_room", "ICU", "NICU"];
 const BED_TYPES = ["regular", "ICU", "HDU", "NICU", "isolation"];
 
 const STATUS_COLOR: Record<string, string> = {
-  AVAILABLE: "#10b981", OCCUPIED: "#ef4444", RESERVED: "#f59e0b", MAINTENANCE: "#64748b",
+  AVAILABLE: SEMANTIC.success, OCCUPIED: SEMANTIC.danger, RESERVED: SEMANTIC.warning, MAINTENANCE: NEUTRAL.muted,
 };
 
 // Ward/room/bed SETUP lives here (Hospital Admin) — day-to-day bed STATUS
@@ -106,7 +107,7 @@ export default function FacilitySetup() {
                     </Box>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.5 }}>
                       {r.beds.length === 0 ? <Typography variant="caption" sx={{ color: "text.disabled" }}>No beds</Typography> : r.beds.map((b: any) => {
-                        const color = STATUS_COLOR[b.status] || "#64748b";
+                        const color = STATUS_COLOR[b.status] || NEUTRAL.muted;
                         return (
                           <Tooltip key={b.bedId} title={b.occupant ? `${b.occupant.patientName} (${b.occupant.uhid}) — edit details` : `${b.status} — click to edit details`}>
                             <Box onClick={() => setDialog({ kind: "bed", edit: { ...b, roomId: r.roomId, wardId: w.wardId } })}

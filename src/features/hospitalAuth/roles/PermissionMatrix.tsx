@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box,
@@ -194,8 +195,8 @@ export default function PermissionMatrix() {
             disabled={saving}
             startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             sx={{
-              bgcolor: "#6366f1",
-              "&:hover": { bgcolor: "#4f46e5" },
+              bgcolor: ACCENTS.hospital,
+              "&:hover": { bgcolor: ACCENTS.hospitalDark },
               textTransform: "none",
               fontWeight: 700,
               px: 4,
@@ -271,7 +272,7 @@ export default function PermissionMatrix() {
                       </Box>
 
                       {role.isSystemRole ? (
-                        <Chip label="System Role" size="small" sx={{ height: 22, fontSize: "0.75rem", fontWeight: 700, bgcolor: alpha("#3b82f6", 0.1), color: "#3b82f6" }} />
+                        <Chip label="System Role" size="small" sx={{ height: 22, fontSize: "0.75rem", fontWeight: 700, bgcolor: alpha(SEMANTIC.info, 0.1), color: SEMANTIC.info }} />
                       ) : (
                         <Tooltip title={`${activeCount} out of ${totalPermissionsCount} permissions granted`}>
                           <Chip
@@ -281,8 +282,8 @@ export default function PermissionMatrix() {
                               height: 22,
                               fontSize: "0.75rem",
                               fontWeight: 700,
-                              bgcolor: isAllActive ? alpha("#10b981", 0.1) : alpha("#6366f1", 0.1),
-                              color: isAllActive ? "#10b981" : "#6366f1",
+                              bgcolor: isAllActive ? alpha(SEMANTIC.success, 0.1) : alpha(ACCENTS.hospital, 0.1),
+                              color: isAllActive ? SEMANTIC.success : ACCENTS.hospital,
                             }}
                           />
                         </Tooltip>
@@ -302,7 +303,7 @@ export default function PermissionMatrix() {
                   <TableRow
                     hover
                     onClick={() => toggleModule(moduleName)}
-                    sx={{ cursor: "pointer", "& > *": { borderBottom: "unset" }, bgcolor: isExpanded ? alpha("#6366f1", 0.02) : "transparent" }}
+                    sx={{ cursor: "pointer", "& > *": { borderBottom: "unset" }, bgcolor: isExpanded ? alpha(ACCENTS.hospital, 0.02) : "transparent" }}
                   >
                     <TableCell
                       colSpan={roles.length + 1}
@@ -349,7 +350,7 @@ export default function PermissionMatrix() {
                                 borderBottom: "1px solid",
                                 borderLeft: "1px solid",
                                 borderColor: "divider",
-                                bgcolor: isChecked ? alpha("#10b981", 0.03) : "transparent",
+                                bgcolor: isChecked ? alpha(SEMANTIC.success, 0.03) : "transparent",
                                 py: 1,
                               }}
                             >
@@ -362,11 +363,11 @@ export default function PermissionMatrix() {
                                     size="small"
                                     sx={{
                                       "& .MuiSwitch-switchBase.Mui-checked": {
-                                        color: "#10b981",
-                                        "&:hover": { bgcolor: alpha("#10b981", 0.1) },
+                                        color: SEMANTIC.success,
+                                        "&:hover": { bgcolor: alpha(SEMANTIC.success, 0.1) },
                                       },
                                       "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                                        bgcolor: "#10b981",
+                                        bgcolor: SEMANTIC.success,
                                       },
                                     }}
                                   />
@@ -386,10 +387,10 @@ export default function PermissionMatrix() {
 
       {/* Bulk Action Menu */}
       <Menu anchorEl={anchorEl.element} open={Boolean(anchorEl.element)} onClose={handleBulkActionClose} transformOrigin={{ horizontal: 'right', vertical: 'top' }} anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}>
-        <MenuItem onClick={handleBulkEnable} sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#10b981", py: 1.5 }}>
+        <MenuItem onClick={handleBulkEnable} sx={{ fontSize: "0.875rem", fontWeight: 600, color: SEMANTIC.success, py: 1.5 }}>
           <ChecklistRounded fontSize="small" sx={{ mr: 1.5 }} /> Enable All
         </MenuItem>
-        <MenuItem onClick={handleBulkDisable} sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#ef4444", py: 1.5 }}>
+        <MenuItem onClick={handleBulkDisable} sx={{ fontSize: "0.875rem", fontWeight: 600, color: SEMANTIC.danger, py: 1.5 }}>
           <RemoveDoneRounded fontSize="small" sx={{ mr: 1.5 }} /> Disable All
         </MenuItem>
       </Menu>

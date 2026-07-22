@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -81,8 +82,8 @@ export default function FormTemplatesList() {
             startIcon={<AddRounded />}
             onClick={() => navigate("/hospital/form-builder/new")}
             sx={{
-              bgcolor: "#6366f1",
-              "&:hover": { bgcolor: "#4f46e5" },
+              bgcolor: ACCENTS.hospital,
+              "&:hover": { bgcolor: ACCENTS.hospitalDark },
               textTransform: "none",
               fontWeight: 600,
               px: 3,
@@ -145,9 +146,9 @@ export default function FormTemplatesList() {
                     </TableCell>
                     <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {t.isActive ? (
-                        <Chip label="Active" size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: "#34d399" }} />
+                        <Chip label="Active" size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: SEMANTIC.successLight }} />
                       ) : (
-                        <Chip label="Inactive" size="small" sx={{ bgcolor: "rgba(239, 68, 68, 0.1)", color: "#f87171" }} />
+                        <Chip label="Inactive" size="small" sx={{ bgcolor: "rgba(239, 68, 68, 0.1)", color: SEMANTIC.dangerLight }} />
                       )}
                     </TableCell>
                     <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
@@ -155,7 +156,7 @@ export default function FormTemplatesList() {
                         <IconButton
                           size="small"
                           onClick={() => navigate(`/hospital/form-builder/${t.formTemplateId}/edit`)}
-                          sx={{ color: "#6366f1", mr: 1, "&:hover": { bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                          sx={{ color: ACCENTS.hospital, mr: 1, "&:hover": { bgcolor: "rgba(99, 102, 241, 0.1)" } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>

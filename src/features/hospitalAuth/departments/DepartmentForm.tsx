@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -154,7 +155,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                   },
                 }}
               />
@@ -176,7 +177,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                   },
                 }}
               />
@@ -196,7 +197,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                   },
                   "& .MuiSvgIcon-root": { color: "text.secondary" },
                 }}
@@ -224,7 +225,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                   },
                   "& .MuiSvgIcon-root": { color: "text.secondary" },
                 }}
@@ -251,7 +252,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                   },
                 }}
               />
@@ -270,7 +271,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                   },
                 }}
               />
@@ -289,7 +290,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                   },
                 }}
               />
@@ -310,7 +311,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                   },
                   "& .MuiSvgIcon-root": { color: "text.secondary" },
                 }}
@@ -328,8 +329,8 @@ export default function DepartmentForm() {
                   disabled={loading}
                   startIcon={<SaveRounded />}
                   sx={{
-                    bgcolor: "#6366f1",
-                    "&:hover": { bgcolor: "#4f46e5" },
+                    bgcolor: ACCENTS.hospital,
+                    "&:hover": { bgcolor: ACCENTS.hospitalDark },
                     py: 1.5,
                     px: 4,
                   }}

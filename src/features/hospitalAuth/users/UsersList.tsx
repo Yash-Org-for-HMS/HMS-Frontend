@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -145,7 +146,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
               justifyContent: "center",
             }}
           >
-            <LockResetRounded sx={{ color: "#fbbf24", fontSize: 24 }} />
+            <LockResetRounded sx={{ color: SEMANTIC.warningLight, fontSize: 24 }} />
           </Box>
           <Box>
             <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>
@@ -185,8 +186,8 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
               width: 18,
               height: 18,
               borderRadius: "50%",
-              border: `2px solid ${useDefault ? "#fbbf24" : "#334155"}`,
-              bgcolor: useDefault ? "#fbbf24" : "transparent",
+              border: `2px solid ${useDefault ? SEMANTIC.warningLight : "#334155"}`,
+              bgcolor: useDefault ? SEMANTIC.warningLight : "transparent",
               flexShrink: 0,
               display: "flex",
               alignItems: "center",
@@ -235,7 +236,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
+                    "&.Mui-focused fieldset": { borderColor: SEMANTIC.warningLight },
                   },
                 }}
               />
@@ -265,12 +266,12 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
                           : "rgba(255,255,255,0.1)",
                     },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
+                    "&.Mui-focused fieldset": { borderColor: SEMANTIC.warningLight },
                   },
                 }}
               />
               {confirmPassword && confirmPassword !== newPassword && (
-                <Typography variant="caption" sx={{ color: "#f87171" }}>
+                <Typography variant="caption" sx={{ color: SEMANTIC.dangerLight }}>
                   Passwords do not match
                 </Typography>
               )}
@@ -313,7 +314,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
             disabled={loading}
             startIcon={loading ? <HeartbeatLoader size={22} /> : <LockResetRounded />}
             sx={{
-              bgcolor: "#d97706",
+              bgcolor: SEMANTIC.warningDark,
               "&:hover": { bgcolor: "#b45309" },
               textTransform: "none",
               fontWeight: 600,
@@ -361,10 +362,10 @@ function CredentialSuccessDialog({ open, user, newPassword, onClose }: Credentia
         },
       }}
     >
-      <Box sx={{ height: 4, bgcolor: "#10b981" }} />
+      <Box sx={{ height: 4, bgcolor: SEMANTIC.success }} />
       <DialogContent sx={{ p: 3 }}>
         <Box sx={{ textAlign: "center", mb: 3 }}>
-          <CheckCircleRounded sx={{ color: "#10b981", fontSize: 40, mb: 1 }} />
+          <CheckCircleRounded sx={{ color: SEMANTIC.success, fontSize: 40, mb: 1 }} />
           <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>
             Password Reset!
           </Typography>
@@ -374,10 +375,10 @@ function CredentialSuccessDialog({ open, user, newPassword, onClose }: Credentia
         </Box>
 
         <Box sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(255,255,255,0.03)", border: "1px solid", borderColor: "divider", mb: 2 }}>
-          <Typography variant="caption" sx={{ color: "#475569" }}>Email</Typography>
+          <Typography variant="caption" sx={{ color: NEUTRAL.textSecondary }}>Email</Typography>
           <Typography sx={{ color: "text.primary", fontFamily: "monospace", fontSize: "0.875rem", mb: 1 }}>{user?.email}</Typography>
-          <Typography variant="caption" sx={{ color: "#475569" }}>New Password</Typography>
-          <Typography sx={{ color: "#fbbf24", fontFamily: "monospace", fontSize: "0.875rem", fontWeight: 700 }}>{newPassword}</Typography>
+          <Typography variant="caption" sx={{ color: NEUTRAL.textSecondary }}>New Password</Typography>
+          <Typography sx={{ color: SEMANTIC.warningLight, fontFamily: "monospace", fontSize: "0.875rem", fontWeight: 700 }}>{newPassword}</Typography>
         </Box>
 
         <Box sx={{ display: "flex", gap: 1.5 }}>
@@ -386,11 +387,11 @@ function CredentialSuccessDialog({ open, user, newPassword, onClose }: Credentia
             variant="outlined"
             startIcon={copied ? <CheckCircleRounded /> : <ContentCopyRounded />}
             onClick={copy}
-            sx={{ color: copied ? "#10b981" : "#64748b", borderColor: "divider", textTransform: "none" }}
+            sx={{ color: copied ? SEMANTIC.success : NEUTRAL.muted, borderColor: "divider", textTransform: "none" }}
           >
             {copied ? "Copied!" : "Copy"}
           </Button>
-          <Button fullWidth variant="contained" onClick={onClose} sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" }, textTransform: "none" }}>
+          <Button fullWidth variant="contained" onClick={onClose} sx={{ bgcolor: SEMANTIC.success, "&:hover": { bgcolor: SEMANTIC.successDark }, textTransform: "none" }}>
             Done
           </Button>
         </Box>
@@ -457,8 +458,8 @@ export default function UsersList() {
               startIcon={<AddRounded />}
               onClick={() => navigate("/hospital/users/new")}
               sx={{
-                bgcolor: "#6366f1",
-                "&:hover": { bgcolor: "#4f46e5" },
+                bgcolor: ACCENTS.hospital,
+                "&:hover": { bgcolor: ACCENTS.hospitalDark },
                 textTransform: "none",
                 fontWeight: 600,
                 px: 3,
@@ -508,7 +509,7 @@ export default function UsersList() {
                           sx={{
                             width: 34,
                             height: 34,
-                            bgcolor: "#6366f1",
+                            bgcolor: ACCENTS.hospital,
                             fontSize: "0.875rem",
                             fontWeight: 700,
                           }}
@@ -527,7 +528,7 @@ export default function UsersList() {
                             <Chip
                               label="Must change password"
                               size="small"
-                              sx={{ bgcolor: "rgba(245,158,11,0.1)", color: "#fbbf24", height: 16, fontSize: "0.75rem", ml: 0.5 }}
+                              sx={{ bgcolor: "rgba(245,158,11,0.1)", color: SEMANTIC.warningLight, height: 16, fontSize: "0.75rem", ml: 0.5 }}
                             />
                           )}
                         </Box>
@@ -548,7 +549,7 @@ export default function UsersList() {
                         size="small"
                         sx={{
                           bgcolor: user.isActive ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
-                          color: user.isActive ? "#34d399" : "#f87171",
+                          color: user.isActive ? SEMANTIC.successLight : SEMANTIC.dangerLight,
                           fontWeight: 600,
                         }}
                       />
@@ -558,7 +559,7 @@ export default function UsersList() {
                         <IconButton
                           size="small"
                           onClick={() => setResetDialog({ open: true, user })}
-                          sx={{ color: "text.secondary", "&:hover": { color: "#fbbf24", bgcolor: "rgba(234,179,8,0.1)" } }}
+                          sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.warningLight, bgcolor: "rgba(234,179,8,0.1)" } }}
                         >
                           <KeyRounded fontSize="small" />
                         </IconButton>
@@ -567,7 +568,7 @@ export default function UsersList() {
                         <IconButton
                           size="small"
                           onClick={() => navigate(`/hospital/users/${user.userId}/edit`)}
-                          sx={{ color: "text.secondary", "&:hover": { color: "#6366f1", bgcolor: "rgba(99,102,241,0.1)" } }}
+                          sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.hospital, bgcolor: "rgba(99,102,241,0.1)" } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>
@@ -579,7 +580,7 @@ export default function UsersList() {
                           sx={{
                             color: "text.secondary",
                             "&:hover": {
-                              color: user.isActive ? "#f87171" : "#34d399",
+                              color: user.isActive ? SEMANTIC.dangerLight : SEMANTIC.successLight,
                               bgcolor: user.isActive ? "rgba(239,68,68,0.1)" : "rgba(16,185,129,0.1)",
                             },
                           }}

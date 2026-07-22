@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
+import { ACCENTS } from "@/styles/accents";
 import {
   Box,
   Button,
@@ -224,7 +225,7 @@ export default function UserForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                   },
                 }}
               />
@@ -245,7 +246,7 @@ export default function UserForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                   },
                 }}
               />
@@ -267,7 +268,7 @@ export default function UserForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                   },
                 }}
               />
@@ -287,7 +288,7 @@ export default function UserForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                   },
                 }}
               />
@@ -305,7 +306,7 @@ export default function UserForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                   },
                 }}
               />
@@ -332,7 +333,7 @@ export default function UserForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                     "& .MuiSvgIcon-root": { color: "text.secondary" },
                   },
                 }}
@@ -360,7 +361,7 @@ export default function UserForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                     "& .MuiSvgIcon-root": { color: "text.secondary" },
                   },
                 }}
@@ -406,7 +407,7 @@ export default function UserForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                     "& .MuiSvgIcon-root": { color: "text.secondary" },
                   },
                 }}
@@ -437,7 +438,7 @@ export default function UserForm() {
                       color: "text.primary",
                       "& fieldset": { borderColor: "divider" },
                       "&:hover fieldset": { borderColor: "divider" },
-                      "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                      "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                     },
                   }}
                   InputProps={{
@@ -471,7 +472,7 @@ export default function UserForm() {
                       color: "text.primary",
                       "& fieldset": { borderColor: "divider" },
                       "&:hover fieldset": { borderColor: "divider" },
-                      "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                      "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                       "& .MuiSvgIcon-root": { color: "text.secondary" },
                     },
                   }}
@@ -500,8 +501,8 @@ export default function UserForm() {
                   variant="contained"
                   disabled={saving}
                   sx={{
-                    bgcolor: "#6366f1",
-                    "&:hover": { bgcolor: "#4f46e5" },
+                    bgcolor: ACCENTS.hospital,
+                    "&:hover": { bgcolor: ACCENTS.hospitalDark },
                     minWidth: 120,
                   }}
                 >

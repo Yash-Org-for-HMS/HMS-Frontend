@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "@/components/ErrorState";
@@ -88,7 +89,7 @@ export default function DoctorSchedule() {
         color: "text.primary",
         "& fieldset": { borderColor: "divider" },
         "&:hover fieldset": { borderColor: "divider" },
-        "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+        "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
         "& .MuiSvgIcon-root": { color: "text.secondary" }
       },
     },
@@ -180,7 +181,7 @@ export default function DoctorSchedule() {
               variant="contained"
               disabled={loading}
               startIcon={<SaveRounded />}
-              sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, py: 1.5, px: 4 }}
+              sx={{ bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark }, py: 1.5, px: 4 }}
             >
               {loading ? "Saving..." : "Save Schedule"}
             </Button>

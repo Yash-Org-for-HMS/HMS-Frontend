@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -18,8 +19,8 @@ import { useConfirm } from "@/providers/ConfirmContext";
 import PageHeader from "@/components/layout/PageHeader";
 import { formatINRAuto } from "@/utils/format";
 
-const ACCENT = "#6366f1";
-const ACCENT_DARK = "#4f46e5";
+const ACCENT = ACCENTS.hospital;
+const ACCENT_DARK = ACCENTS.hospitalDark;
 
 type ScheduleItem = { scheduleItemId: string; doseLabel: string; ageLabel: string; recommendedAgeDays: number; sortOrder: number };
 type Vaccine = { vaccineId: string; vaccineCode: string; vaccineName: string; description: string | null; price: number | string | null; isActive: boolean; isGlobal: boolean; scheduleItems: ScheduleItem[] };
@@ -91,7 +92,7 @@ export default function VaccineCatalog() {
                         : <Chip size="small" label="Your hospital" sx={{ bgcolor: `${ACCENT}1f`, color: ACCENT, fontWeight: 700 }} />}
                     </TableCell>
                     <TableCell sx={{ borderColor: "divider" }}>
-                      <Chip size="small" label={v.isActive ? "Active" : "Inactive"} sx={{ bgcolor: v.isActive ? "#10b9811f" : "#94a3b81f", color: v.isActive ? "#10b981" : "#94a3b8", fontWeight: 700 }} />
+                      <Chip size="small" label={v.isActive ? "Active" : "Inactive"} sx={{ bgcolor: v.isActive ? "#10b9811f" : "#94a3b81f", color: v.isActive ? SEMANTIC.success : "#94a3b8", fontWeight: 700 }} />
                     </TableCell>
                     <TableCell align="right" sx={{ borderColor: "divider" }}>
                       {!v.isGlobal && (

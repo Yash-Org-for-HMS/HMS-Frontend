@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -79,7 +80,7 @@ export default function AuditLogs() {
 
   const getActionColor = (action: string) => {
     switch (action) {
-      case "CREATE": return { bg: "rgba(16, 185, 129, 0.1)", text: "#34d399" };
+      case "CREATE": return { bg: "rgba(16, 185, 129, 0.1)", text: SEMANTIC.successLight };
       case "UPDATE": return { bg: "rgba(56, 189, 248, 0.1)", text: "#38bdf8" };
       case "DELETE": return { bg: "rgba(244, 63, 94, 0.1)", text: "#f43f5e" };
       default: return { bg: "rgba(255, 255, 255, 0.1)", text: "#cbd5e1" };
@@ -95,7 +96,7 @@ export default function AuditLogs() {
         color: "text.primary",
         "& fieldset": { borderColor: "divider" },
         "&:hover fieldset": { borderColor: "divider" },
-        "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+        "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
         "& .MuiSvgIcon-root": { color: "text.secondary" }
       },
     },
@@ -168,7 +169,7 @@ export default function AuditLogs() {
               variant="contained"
               fullWidth
               startIcon={<SearchRounded />}
-              sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, py: 1 }}
+              sx={{ bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark }, py: 1 }}
             >
               Search
             </Button>
@@ -233,7 +234,7 @@ export default function AuditLogs() {
                             <IconButton
                               size="small"
                               onClick={() => setSelectedLog(log)}
-                              sx={{ color: "#6366f1", "&:hover": { bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                              sx={{ color: ACCENTS.hospital, "&:hover": { bgcolor: "rgba(99, 102, 241, 0.1)" } }}
                             >
                               <InfoRounded fontSize="small" />
                             </IconButton>
@@ -277,16 +278,16 @@ export default function AuditLogs() {
           
           <Grid container sx={{ borderTop: "1px solid", borderColor: "divider" }}>
             <Grid size={{ xs: 12, md: 6 }} sx={{ p: 3, borderRight: { md: "1px solid rgba(255,255,255,0.05)" }, borderBottom: { xs: "1px solid rgba(255,255,255,0.05)", md: "none" } }}>
-              <Typography variant="subtitle2" sx={{ color: "#f87171", mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
-                <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#f87171" }} /> Old Value
+              <Typography variant="subtitle2" sx={{ color: SEMANTIC.dangerLight, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: SEMANTIC.dangerLight }} /> Old Value
               </Typography>
               <Box component="pre" sx={{ m: 0, p: 2, bgcolor: "background.paper", borderRadius: 1, overflowX: "auto", fontSize: "0.875rem", color: "text.primary" }}>
                 {JSON.stringify(selectedLog?.oldValueJson, null, 2)}
               </Box>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }} sx={{ p: 3 }}>
-              <Typography variant="subtitle2" sx={{ color: "#34d399", mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
-                <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#34d399" }} /> New Value
+              <Typography variant="subtitle2" sx={{ color: SEMANTIC.successLight, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: SEMANTIC.successLight }} /> New Value
               </Typography>
               <Box component="pre" sx={{ m: 0, p: 2, bgcolor: "background.paper", borderRadius: 1, overflowX: "auto", fontSize: "0.875rem", color: "text.primary" }}>
                 {JSON.stringify(selectedLog?.newValueJson, null, 2)}

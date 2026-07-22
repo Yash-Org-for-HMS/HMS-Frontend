@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box, Button, TextField, Typography, InputAdornment, IconButton, Link, Fade,
@@ -18,7 +19,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 const ACCENT = "#0891b2";
 const ACCENT_DARK = "#0e7490";
 const BG = "#F5F5F7"; // matches theme.palette.background.default
-const TEXT = "#0F172A";
+const TEXT = NEUTRAL.textPrimary;
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 // Slim animated pulse line — the clinical signature, pure SVG/CSS (no wasm).

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import ErrorState from "@/components/ErrorState";
 import {
@@ -58,11 +59,11 @@ export default function ModuleAccess() {
 
       <Paper sx={{ p: 3, mb: 3, bgcolor: "rgba(99, 102, 241, 0.08)", borderRadius: 2, border: "1px solid rgba(99, 102, 241, 0.2)" }}>
         <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
-          <Chip label={`Plan: ${data?.planName || "Basic"}`} sx={{ bgcolor: "#6366f1", color: "#fff", fontWeight: 600 }} />
+          <Chip label={`Plan: ${data?.planName || "Basic"}`} sx={{ bgcolor: ACCENTS.hospital, color: "#fff", fontWeight: 600 }} />
           <Typography sx={{ color: "text.secondary", fontWeight: 700 }}>+</Typography>
-          <Chip label="Your toggles" sx={{ bgcolor: "#3b82f6", color: "#fff", fontWeight: 600 }} />
+          <Chip label="Your toggles" sx={{ bgcolor: SEMANTIC.info, color: "#fff", fontWeight: 600 }} />
           <Typography sx={{ color: "text.secondary", fontWeight: 700 }}>+</Typography>
-          <Chip label="RBAC (Roles)" sx={{ bgcolor: "#10b981", color: "#fff", fontWeight: 600 }} />
+          <Chip label="RBAC (Roles)" sx={{ bgcolor: SEMANTIC.success, color: "#fff", fontWeight: 600 }} />
         </Box>
         <Typography variant="caption" display="block" sx={{ mt: 1.5, color: "text.secondary" }}>
           * Turning a module on here still requires staff to hold the matching Role permission to use it.

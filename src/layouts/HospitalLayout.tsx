@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Outlet, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { SEMANTIC, NEUTRAL } from "@/styles/accents";
 import {
   Box,
   Drawer,
@@ -204,7 +205,7 @@ export default function HospitalLayout() {
                 <ListItemIcon
                   sx={{
                     minWidth: 40,
-                    color: isActive ? "#10B981" : "#64748B",
+                    color: isActive ? SEMANTIC.success : NEUTRAL.muted,
                     opacity: locked ? 0.55 : 1,
                   }}
                 >
@@ -215,11 +216,11 @@ export default function HospitalLayout() {
                   primaryTypographyProps={{
                     fontSize: "0.875rem",
                     fontWeight: isActive ? 600 : 500,
-                    color: isActive ? "#10B981" : "#64748B",
+                    color: isActive ? SEMANTIC.success : NEUTRAL.muted,
                     sx: { opacity: locked ? 0.6 : 1 },
                   }}
                 />
-                {locked && <LockRounded sx={{ fontSize: 15, color: "#f59e0b", ml: 1, flexShrink: 0 }} />}
+                {locked && <LockRounded sx={{ fontSize: 15, color: SEMANTIC.warning, ml: 1, flexShrink: 0 }} />}
               </ListItemButton>
             </ListItem>
             </Box>

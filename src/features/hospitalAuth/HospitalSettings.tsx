@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "@/components/ErrorState";
@@ -194,7 +195,7 @@ export default function HospitalSettings() {
                 color: "#10b981 !important",
               },
               "& .MuiTabs-indicator": {
-                backgroundColor: "#10b981",
+                backgroundColor: SEMANTIC.success,
                 height: 3,
                 borderTopLeftRadius: 3,
                 borderTopRightRadius: 3,
@@ -363,11 +364,11 @@ export default function HospitalSettings() {
                       onClick={() => setFormData(prev => ({ ...prev, billingStrategy: "PRE_PAID" }))}
                       sx={{
                         p: 2, borderRadius: 2, border: "2px solid", cursor: "pointer",
-                        borderColor: formData.billingStrategy === "PRE_PAID" ? "#10b981" : "divider",
+                        borderColor: formData.billingStrategy === "PRE_PAID" ? SEMANTIC.success : "divider",
                         bgcolor: formData.billingStrategy === "PRE_PAID" ? "rgba(16, 185, 129, 0.05)" : "transparent"
                       }}
                     >
-                      <Typography variant="subtitle1" fontWeight={600} color={formData.billingStrategy === "PRE_PAID" ? "#10b981" : "text.primary"}>PRE-PAID (Strict Lock)</Typography>
+                      <Typography variant="subtitle1" fontWeight={600} color={formData.billingStrategy === "PRE_PAID" ? SEMANTIC.success : "text.primary"}>PRE-PAID (Strict Lock)</Typography>
                       <Typography variant="body2" color="text.secondary">Services are locked until the patient pays the bill. Payments can be collected anywhere.</Typography>
                     </Box>
                   </Grid>
@@ -376,11 +377,11 @@ export default function HospitalSettings() {
                       onClick={() => setFormData(prev => ({ ...prev, billingStrategy: "POST_PAID" }))}
                       sx={{
                         p: 2, borderRadius: 2, border: "2px solid", cursor: "pointer",
-                        borderColor: formData.billingStrategy === "POST_PAID" ? "#10b981" : "divider",
+                        borderColor: formData.billingStrategy === "POST_PAID" ? SEMANTIC.success : "divider",
                         bgcolor: formData.billingStrategy === "POST_PAID" ? "rgba(16, 185, 129, 0.05)" : "transparent"
                       }}
                     >
-                      <Typography variant="subtitle1" fontWeight={600} color={formData.billingStrategy === "POST_PAID" ? "#10b981" : "text.primary"}>POST-PAID (Consolidated)</Typography>
+                      <Typography variant="subtitle1" fontWeight={600} color={formData.billingStrategy === "POST_PAID" ? SEMANTIC.success : "text.primary"}>POST-PAID (Consolidated)</Typography>
                       <Typography variant="body2" color="text.secondary">Services are instantly unlocked. Bills accumulate for discharge payment.</Typography>
                     </Box>
                   </Grid>
@@ -515,9 +516,9 @@ export default function HospitalSettings() {
 
             {/* Info Banner */}
             <Box sx={{ mt: 3, p: 2.5, borderRadius: 2, bgcolor: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", gap: 1.5 }}>
-              <MedicalServicesRounded sx={{ color: "#f59e0b", flexShrink: 0, mt: 0.2 }} />
+              <MedicalServicesRounded sx={{ color: SEMANTIC.warning, flexShrink: 0, mt: 0.2 }} />
               <Box>
-                <Typography variant="body2" sx={{ color: "#fbbf24", fontWeight: 600, mb: 0.3 }}>Current Selection: {formData.vitalsCollector === "RECEPTIONIST" ? "Receptionist" : "Nurse"}</Typography>
+                <Typography variant="body2" sx={{ color: SEMANTIC.warningLight, fontWeight: 600, mb: 0.3 }}>Current Selection: {formData.vitalsCollector === "RECEPTIONIST" ? "Receptionist" : "Nurse"}</Typography>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>
                   {formData.vitalsCollector === "RECEPTIONIST"
                     ? 'The "Record Vitals" button will appear in the Reception Queue for receptionists.'
@@ -535,8 +536,8 @@ export default function HospitalSettings() {
             disabled={saving}
             startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             sx={{
-              bgcolor: "#10b981",
-              "&:hover": { bgcolor: "#059669" },
+              bgcolor: SEMANTIC.success,
+              "&:hover": { bgcolor: SEMANTIC.successDark },
               px: 4,
             }}
           >

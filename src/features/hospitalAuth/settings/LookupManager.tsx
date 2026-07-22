@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -178,7 +179,7 @@ export default function LookupManager() {
                   color: "text.primary",
                   "& fieldset": { borderColor: "divider" },
                   "&:hover fieldset": { borderColor: "divider" },
-                  "&.Mui-focused fieldset": { borderColor: "#6366f1" }
+                  "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital }
                 },
               }}
             >
@@ -192,7 +193,7 @@ export default function LookupManager() {
               variant="contained"
               startIcon={<AddRounded />}
               onClick={handleOpenAdd}
-              sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, py: 1.5, px: 3, fontWeight: 600 }}
+              sx={{ bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark }, py: 1.5, px: 3, fontWeight: 600 }}
             >
               Add New Record
             </Button>
@@ -256,7 +257,7 @@ export default function LookupManager() {
                         size="small"
                         sx={{
                           bgcolor: item.isActive ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                          color: item.isActive ? "#34d399" : "#f87171",
+                          color: item.isActive ? SEMANTIC.successLight : SEMANTIC.dangerLight,
                           fontWeight: 600
                         }}
                       />
@@ -276,7 +277,7 @@ export default function LookupManager() {
                           size="small"
                           onClick={() => handleToggleStatus(item)}
                           sx={{
-                            color: item.isActive ? "#f87171" : "#10b981",
+                            color: item.isActive ? SEMANTIC.dangerLight : SEMANTIC.success,
                             "&:hover": { bgcolor: item.isActive ? "rgba(239, 68, 68, 0.1)" : "rgba(16, 185, 129, 0.1)" }
                           }}
                         >
@@ -312,7 +313,7 @@ export default function LookupManager() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                   },
                   "& .MuiInputLabel-root": { color: "text.secondary" }
                 }}
@@ -322,7 +323,7 @@ export default function LookupManager() {
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 0 }}>
           <Button onClick={handleClose} sx={{ color: "text.secondary" }}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" } }}>
+          <Button onClick={handleSubmit} variant="contained" sx={{ bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark } }}>
             Save
           </Button>
         </DialogActions>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import GeoAddressPicker from "@/components/GeoAddressPicker";
@@ -238,7 +239,7 @@ export default function UserForm() {
         color: "text.primary",
         "& fieldset": { borderColor: "divider" },
         "&:hover fieldset": { borderColor: "divider" },
-        "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+        "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
       },
       "& .MuiSvgIcon-root": { color: "text.secondary" },
     },
@@ -273,8 +274,8 @@ export default function UserForm() {
                 borderBottom: 1,
                 borderColor: "divider",
                 "& .MuiTab-root": { color: "text.secondary", textTransform: "none", fontSize: "1rem" },
-                "& .Mui-selected": { color: "#6366f1" },
-                "& .MuiTabs-indicator": { backgroundColor: "#6366f1" },
+                "& .Mui-selected": { color: ACCENTS.hospital },
+                "& .MuiTabs-indicator": { backgroundColor: ACCENTS.hospital },
               }}
             >
               <Tab label="Personal & Role" />
@@ -455,7 +456,7 @@ export default function UserForm() {
                           color: "text.primary",
                           "& fieldset": { borderColor: "divider" },
                           "&:hover fieldset": { borderColor: "divider" },
-                          "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                          "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                         },
                       }}
                     />
@@ -491,12 +492,12 @@ export default function UserForm() {
                                 : "rgba(255, 255, 255, 0.1)",
                           },
                           "&:hover fieldset": { borderColor: "divider" },
-                          "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+                          "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
                         },
                       }}
                     />
                     {formData.confirmPassword && formData.confirmPassword !== formData.initialPassword && (
-                      <Typography variant="caption" sx={{ color: "#f87171", mt: 0.5, display: "block" }}>
+                      <Typography variant="caption" sx={{ color: SEMANTIC.dangerLight, mt: 0.5, display: "block" }}>
                         Passwords do not match
                       </Typography>
                     )}
@@ -512,8 +513,8 @@ export default function UserForm() {
                 disabled={loading}
                 startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                 sx={{
-                  bgcolor: "#6366f1",
-                  "&:hover": { bgcolor: "#4f46e5" },
+                  bgcolor: ACCENTS.hospital,
+                  "&:hover": { bgcolor: ACCENTS.hospitalDark },
                   py: 1.5,
                   px: 4,
                   textTransform: "none",

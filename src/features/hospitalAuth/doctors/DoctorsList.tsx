@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   Box,
@@ -100,7 +101,7 @@ export default function DoctorsList() {
                   startIcon={<AddRounded />}
                   disabled={atLimit}
                   onClick={() => navigate("/hospital/doctors/new")}
-                  sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, textTransform: "none", fontWeight: 600, px: 3 }}
+                  sx={{ bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark }, textTransform: "none", fontWeight: 600, px: 3 }}
                 >
                   Add Doctor
                 </Button>
@@ -157,7 +158,7 @@ export default function DoctorsList() {
                     </TableCell>
                     <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {doctor.department ? (
-                         <Chip label={doctor.department.departmentName} size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: "#34d399" }} />
+                         <Chip label={doctor.department.departmentName} size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: SEMANTIC.successLight }} />
                       ) : "N/A"}
                     </TableCell>
                     <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
@@ -192,7 +193,7 @@ export default function DoctorsList() {
                         <IconButton
                           size="small"
                           onClick={() => navigate(`/hospital/doctors/${doctor.doctorId}/edit`)}
-                          sx={{ color: "#6366f1", "&:hover": { bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                          sx={{ color: ACCENTS.hospital, "&:hover": { bgcolor: "rgba(99, 102, 241, 0.1)" } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>

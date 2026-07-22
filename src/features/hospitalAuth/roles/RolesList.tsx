@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -92,8 +93,8 @@ export default function RolesList() {
             startIcon={<AddRounded />}
             onClick={() => navigate("/hospital/roles/new")}
             sx={{
-              bgcolor: "#6366f1",
-              "&:hover": { bgcolor: "#4f46e5" },
+              bgcolor: ACCENTS.hospital,
+              "&:hover": { bgcolor: ACCENTS.hospitalDark },
               textTransform: "none",
               fontWeight: 600,
               px: 3,
@@ -151,7 +152,7 @@ export default function RolesList() {
                   </TableCell>
                   <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                     {role.isSystemRole ? (
-                       <Chip label="System Default" size="small" sx={{ bgcolor: "rgba(59, 130, 246, 0.1)", color: "#60a5fa", fontWeight: 600 }} />
+                       <Chip label="System Default" size="small" sx={{ bgcolor: "rgba(59, 130, 246, 0.1)", color: SEMANTIC.infoLight, fontWeight: 600 }} />
                     ) : (
                        <Chip label="Custom Role" size="small" sx={{ bgcolor: "rgba(139, 92, 246, 0.1)", color: "#a78bfa", fontWeight: 600 }} />
                     )}
@@ -165,7 +166,7 @@ export default function RolesList() {
                       size="small"
                       sx={{
                         bgcolor: role.status === 'active' ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                        color: role.status === 'active' ? "#34d399" : "#f87171",
+                        color: role.status === 'active' ? SEMANTIC.successLight : SEMANTIC.dangerLight,
                         fontWeight: 600,
                       }}
                     />
@@ -187,7 +188,7 @@ export default function RolesList() {
                           size="small"
                           disabled={role.isSystemRole}
                           onClick={() => navigate(`/hospital/roles/${role.roleId}/edit`)}
-                          sx={{ color: "text.secondary", "&:hover": { color: "#6366f1", bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                          sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.hospital, bgcolor: "rgba(99, 102, 241, 0.1)" } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>
@@ -203,7 +204,7 @@ export default function RolesList() {
                           sx={{
                             color: "text.secondary",
                             "&:hover": {
-                              color: role.status === 'active' ? "#f87171" : "#34d399",
+                              color: role.status === 'active' ? SEMANTIC.dangerLight : SEMANTIC.successLight,
                               bgcolor: role.status === 'active' ? "rgba(239, 68, 68, 0.1)" : "rgba(16, 185, 129, 0.1)",
                             },
                           }}

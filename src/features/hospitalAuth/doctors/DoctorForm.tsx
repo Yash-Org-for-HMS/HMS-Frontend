@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
   Box,
@@ -176,7 +177,7 @@ export default function DoctorForm() {
         color: "text.primary",
         "& fieldset": { borderColor: "divider" },
         "&:hover fieldset": { borderColor: "divider" },
-        "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+        "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
         "& .MuiSvgIcon-root": { color: "text.secondary" }
       },
     },
@@ -204,8 +205,8 @@ export default function DoctorForm() {
           sx={{
             borderBottom: "1px solid", borderColor: "divider",
             "& .MuiTab-root": { color: "text.secondary", textTransform: "none", fontWeight: 600, fontSize: "1rem", minHeight: 64 },
-            "& .Mui-selected": { color: "#6366f1" },
-            "& .MuiTabs-indicator": { backgroundColor: "#6366f1" }
+            "& .Mui-selected": { color: ACCENTS.hospital },
+            "& .MuiTabs-indicator": { backgroundColor: ACCENTS.hospital }
           }}
         >
           <Tab icon={<PersonRounded />} iconPosition="start" label="Personal Details" />
@@ -390,7 +391,7 @@ export default function DoctorForm() {
               <Button
                 variant="contained"
                 onClick={() => setTabIndex(tabIndex + 1)}
-                sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, py: 1.5, px: 4 }}
+                sx={{ bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark }, py: 1.5, px: 4 }}
               >
                 {tabIndex === 0 ? "Next: Professional Details" : "Next: Branch Availability"}
               </Button>
@@ -400,7 +401,7 @@ export default function DoctorForm() {
                 variant="contained"
                 disabled={loading}
                 startIcon={<SaveRounded />}
-                sx={{ bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" }, py: 1.5, px: 4 }}
+                sx={{ bgcolor: SEMANTIC.success, "&:hover": { bgcolor: SEMANTIC.successDark }, py: 1.5, px: 4 }}
               >
                 {loading ? "Saving..." : "Save Doctor"}
               </Button>

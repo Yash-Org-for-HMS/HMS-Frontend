@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -139,8 +140,8 @@ export default function UsersList() {
         subtitle="Global Support Mode: Manage hospital administrators and staff members across any tenant"
         actions={
           <ActionButton
-            accentFrom="#6366f1"
-            accentTo="#4f46e5"
+            accentFrom={ACCENTS.hospital}
+            accentTo={ACCENTS.hospitalDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/rbac/users/add")}
           >
@@ -166,7 +167,7 @@ export default function UsersList() {
               bgcolor: "background.paper",
               "& fieldset": { borderColor: "divider" },
               "&:hover fieldset": { borderColor: "divider" },
-              "&.Mui-focused fieldset": { borderColor: "#6366f1" },
+              "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
             },
           }}
           InputProps={{
@@ -258,7 +259,7 @@ export default function UsersList() {
                         size="small"
                         sx={{
                           bgcolor: user.status === "active" ? "rgba(16, 185, 129, 0.1)" : "rgba(245, 158, 11, 0.1)",
-                          color: user.status === "active" ? "#34d399" : "#fbbf24",
+                          color: user.status === "active" ? SEMANTIC.successLight : SEMANTIC.warningLight,
                           textTransform: "capitalize",
                           fontWeight: 600,
                         }}
@@ -269,7 +270,7 @@ export default function UsersList() {
                         <IconButton
                           onClick={() => handleResetPassword(user)}
                           disabled={resetPassword.isPending}
-                          sx={{ color: "text.secondary", "&:hover": { color: "#fbbf24", bgcolor: "rgba(234,179,8,0.1)" } }}
+                          sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.warningLight, bgcolor: "rgba(234,179,8,0.1)" } }}
                         >
                           <LockResetRounded fontSize="small" />
                         </IconButton>
@@ -277,7 +278,7 @@ export default function UsersList() {
                       <Tooltip title="Edit">
                         <IconButton
                           onClick={() => navigate(`/rbac/users/edit/${user.userId}`)}
-                          sx={{ color: "text.secondary", "&:hover": { color: "#6366f1", bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                          sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.hospital, bgcolor: "rgba(99, 102, 241, 0.1)" } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>
@@ -285,7 +286,7 @@ export default function UsersList() {
                       <Tooltip title="Delete">
                         <IconButton
                           onClick={() => setDeleteId(user.userId)}
-                          sx={{ color: "text.secondary", "&:hover": { color: "#ef4444", bgcolor: "rgba(239, 68, 68, 0.1)" } }}
+                          sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger, bgcolor: "rgba(239, 68, 68, 0.1)" } }}
                         >
                           <DeleteRounded fontSize="small" />
                         </IconButton>
