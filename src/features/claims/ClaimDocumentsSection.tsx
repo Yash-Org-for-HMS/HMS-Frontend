@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { getApiErrorMessage } from "@/utils/apiError";
+import { assetUrl } from "@/utils/assetUrl";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Paper, Typography, Button, Chip, IconButton, Tooltip, Divider, Stack,
@@ -80,7 +81,7 @@ export default function ClaimDocumentsSection({ claimId }: { claimId: string }) 
                       <Box sx={{ flex: 1, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                         {uploaded.map((d) => (
                           <Chip key={d.claimDocumentId} size="small" variant="outlined" label={d.fileName}
-                            onClick={() => window.open(d.fileUrl, "_blank")}
+                            onClick={() => window.open(assetUrl(d.fileUrl), "_blank")}
                             onDelete={() => remove(d)}
                             deleteIcon={<DeleteOutlineRounded />}
                             icon={<VisibilityRounded />}

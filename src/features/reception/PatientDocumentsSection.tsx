@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getApiErrorMessage } from "@/utils/apiError";
+import { assetUrl } from "@/utils/assetUrl";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Grid, Alert,
@@ -144,9 +145,9 @@ export default function PatientDocumentsSection({ patientId, readOnly = false }:
                 <CardActions sx={{ justifyContent: "center", borderTop: "1px solid", borderColor: "divider", pt: 1, pb: 1.5 }}>
                   <IconButton 
                     size="small" 
-                    component="a" 
-                    href={doc.fileUrl} 
-                    target="_blank" 
+                    component="a"
+                    href={assetUrl(doc.fileUrl)}
+                    target="_blank"
                     rel="noopener noreferrer"
                     sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4" } }}
                   >
