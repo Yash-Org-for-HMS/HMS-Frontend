@@ -203,10 +203,14 @@ export default function CommandPalette() {
   // own confined profile view (nurses previously fell through to
   // /reception/patients/:id, which rendered inside the FULL Reception
   // sidebar — letting a nurse click into front desk/billing/admissions
-  // screens that aren't theirs). Everyone else uses the Reception profile.
+  // screens that aren't theirs). Hospital admins get the read-only oversight
+  // profile inside their own shell (/hospital/*) — otherwise a patient hit from
+  // the admin panel bounced them into the full Reception panel. Everyone else
+  // uses the Reception profile.
   const patientPath = (p: any) =>
     isDoctor ? `/doctor/patients/${p.patientId}` :
     isNurse ? `/nurse/patients/${p.patientId}` :
+    isAdmin ? `/hospital/patients/${p.patientId}` :
     `/reception/patients/${p.patientId}`;
 
   // Single flat, ordered list mirroring what's rendered below — drives
