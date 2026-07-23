@@ -127,8 +127,13 @@ export default function CommandPalette() {
     setSelectedIndex(0);
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
 
-    // Only search patients if query is 3+ chars
-    if (val.length >= 3) {
+    // Only search patients if the caller's panel owns a patient view, and the
+    // query is 3+ chars. Lab/Pharmacy have no patient-profile destination, so
+    // they get no patient results — which also stops a patient hit from routing
+    // them into the Reception panel. Mirrors the backend, which gates
+    // /reception/patients behind receptionAccess (RECEPTIONIST/NURSE + admin +
+    // PATIENT_VIEW/APPOINTMENT_VIEW).
+    if (canSearchPatients && val.length >= 3) {
       setLoading(true);
       searchTimeout.current = setTimeout(async () => {
         const reqId = ++searchReqId.current;
@@ -180,6 +185,12 @@ export default function CommandPalette() {
   // never matched a real role, so admins previously saw an empty palette.
   const isAdmin = userRole === "h_admin" || userRole === "b_admin";
   const hasAnyPermission = (codes: string[]) => codes.some((c) => permissions.includes(c));
+
+  // Who may search patient PII from the palette. Only panels with a real
+  // patient-profile destination (reception, nurse→reception, doctor, admin→
+  // hospital oversight). Lab/Pharmacy are deliberately excluded — see the guard
+  // in handleSearchChange. Custom roles pass via the reception fallback perms.
+  const canSearchPatients = isReception || isNurse || isDoctor || isAdmin || hasAnyPermission(["PATIENT_VIEW", "APPOINTMENT_VIEW"]);
 
   const allowSection = (section: string) => {
     if (isAdmin) return true;
