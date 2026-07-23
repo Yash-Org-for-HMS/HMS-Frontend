@@ -219,6 +219,7 @@ export default function DepartmentForm() {
                 name="headOfDepartmentId"
                 value={formData.headOfDepartmentId}
                 onChange={handleChange}
+                helperText="Optional — you can assign this later, after adding staff."
                 InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {

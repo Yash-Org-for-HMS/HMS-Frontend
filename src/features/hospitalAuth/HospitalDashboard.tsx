@@ -88,6 +88,11 @@ export default function HospitalDashboard() {
     );
   }
 
+  // Once every setup step is done the guide has served its purpose — hide it so
+  // it doesn't permanently occupy the dashboard. Recent Activities then expands
+  // to full width (see the Grid `size` below).
+  const setupComplete = stats.pendingTasks.length > 0 && stats.pendingTasks.every((t) => t.completed);
+
   return (
     <Box sx={{ pb: 6 }}>
       <PageHeader
@@ -195,6 +200,7 @@ export default function HospitalDashboard() {
 
       {/* Two Column Layout for Lists */}
       <Grid container spacing={4}>
+        {!setupComplete && (
         <Grid size={{ xs: 12, md: 8 }} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <Paper elevation={0} sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 4, overflow: "hidden" }}>
             <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5 }}>
@@ -202,7 +208,7 @@ export default function HospitalDashboard() {
                 <AssignmentRounded sx={{ color: "text.secondary" }} />
                 <Box>
                   <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600 }}>Setup Guide</Typography>
-                  <Typography variant="caption" sx={{ color: "text.secondary" }}>Complete these steps in order to get your hospital running.</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>A recommended order to get your hospital running — most links are optional and can be revisited anytime.</Typography>
                 </Box>
               </Box>
               <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, whiteSpace: "nowrap" }}>
@@ -243,8 +249,9 @@ export default function HospitalDashboard() {
             </List>
           </Paper>
         </Grid>
+        )}
 
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: setupComplete ? 12 : 4 }}>
           <Paper elevation={0} sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 4, overflow: "hidden", height: "100%" }}>
             <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 1.5 }}>
               <HistoryRounded sx={{ color: "text.secondary" }} />
