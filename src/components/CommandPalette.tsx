@@ -44,6 +44,21 @@ const STATIC_ROUTES = [
   { name: "Nurse Dashboard", path: "/nurse/dashboard", icon: <DashboardRounded />, section: "Nurse" },
   { name: "Nurse Patient Queue", path: "/nurse/queue", icon: <QueueRounded />, section: "Nurse" },
   { name: "Nurse Reports", path: "/nurse/reports", icon: <AssessmentRounded />, section: "Nurse" },
+  // Admin section — all within the hospital-admin shell (/hospital/*). Admins
+  // are shown ONLY these (see allowSection): the palette must not route them into
+  // the full Reception/Doctor/etc. panels, and the read-only Operations pages
+  // below are their in-shell equivalents.
+  { name: "Admin Dashboard", path: "/hospital/dashboard", icon: <DashboardRounded />, section: "Admin" },
+  { name: "All Patients", path: "/hospital/patients", icon: <PersonRounded />, section: "Admin" },
+  { name: "Appointments", path: "/hospital/appointments", icon: <CalendarMonthRounded />, section: "Admin" },
+  { name: "Patient Queue", path: "/hospital/queue", icon: <QueueRounded />, section: "Admin" },
+  { name: "Admissions", path: "/hospital/ipd/admissions", icon: <LocalHotelRounded />, section: "Admin", module: "IPD" },
+  { name: "Bed Board", path: "/hospital/ipd/beds", icon: <HotelRounded />, section: "Admin", module: "IPD" },
+  { name: "Billing Overview", path: "/hospital/billing", icon: <ReceiptLongRounded />, section: "Admin", module: "Billing" },
+  { name: "Reports", path: "/hospital/reports", icon: <AssessmentRounded />, section: "Admin" },
+  { name: "Staff & Users", path: "/hospital/users", icon: <PersonRounded />, section: "Admin" },
+  { name: "Departments", path: "/hospital/departments", icon: <ApartmentRounded />, section: "Admin" },
+  { name: "Doctors", path: "/hospital/doctors", icon: <MedicalServicesRounded />, section: "Admin" },
   { name: "Hospital Settings", path: "/hospital/settings", icon: <DashboardRounded />, section: "Admin" },
 ];
 
@@ -193,7 +208,11 @@ export default function CommandPalette() {
   const canSearchPatients = isReception || isNurse || isDoctor || isAdmin || hasAnyPermission(["PATIENT_VIEW", "APPOINTMENT_VIEW"]);
 
   const allowSection = (section: string) => {
-    if (isAdmin) return true;
+    // Admins operate from their own shell. Surface ONLY the Admin section (which
+    // points at /hospital/*), never the other panels' shortcuts — clicking those
+    // would drop the admin into the full Reception/Doctor/etc. panels. Patient
+    // search is separate and already routes admins to /hospital.
+    if (isAdmin) return section === "Admin";
     if (section === "Reception") return isReception || hasAnyPermission(SECTION_PERMISSIONS.Reception);
     if (section === "Laboratory") return isLab || hasAnyPermission(SECTION_PERMISSIONS.Laboratory);
     if (section === "Pharmacy") return isPharmacy || hasAnyPermission(SECTION_PERMISSIONS.Pharmacy);

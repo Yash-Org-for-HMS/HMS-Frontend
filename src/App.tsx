@@ -220,7 +220,7 @@ function App() {
         <Route path="/hospital/login" element={<HospitalLogin />} />
         <Route path="/hospital/change-password" element={el(HospitalChangePassword)} />
 
-        <Route element={<HospitalProtectedRoute />}>
+        <Route element={<HospitalProtectedRoute panel="hospital" />}>
           <Route element={el(HospitalLayout)}>
             <Route path="/hospital/dashboard" element={el(HospitalDashboard)} />
             <Route path="/hospital/profile" element={el(HospitalProfile)} />
@@ -268,7 +268,7 @@ function App() {
         </Route>
 
         {/* ── Reception Panel Routes ─────────────────────── */}
-        <Route element={<HospitalProtectedRoute />}>
+        <Route element={<HospitalProtectedRoute panel="reception" />}>
           <Route element={el(ReceptionLayout)}>
             <Route path="/reception/dashboard" element={el(ReceptionDashboard)} />
             <Route path="/reception/console" element={el(FrontDeskConsole)} />
@@ -302,7 +302,7 @@ function App() {
           <Route path="/reception/billing/invoices/:invoiceId/ip-bill/print" element={el(PrintIpBill)} />
         </Route>
         {/* ── Nurse Panel Routes ────────────────────────────────────── */}
-        <Route element={<HospitalProtectedRoute />}>
+        <Route element={<HospitalProtectedRoute panel="nurse" />}>
           <Route element={el(NurseLayout)}>
             <Route path="/nurse/dashboard" element={el(NurseDashboard)} />
             <Route path="/nurse/queue" element={el(NurseQueue)} />
@@ -318,7 +318,7 @@ function App() {
         </Route>
 
         {/* ── Doctor Panel Routes ───────────────────────────────────── */}
-        <Route element={<HospitalProtectedRoute />}>
+        <Route element={<HospitalProtectedRoute panel="doctor" />}>
           <Route element={el(DoctorLayout)}>
             <Route path="/doctor/dashboard" element={el(DoctorDashboard)} />
             <Route path="/doctor/queue" element={el(DoctorQueue)} />
@@ -332,7 +332,7 @@ function App() {
         </Route>
 
         {/* ── Lab Panel Routes ──────────────────────────────────────── */}
-        <Route element={<HospitalProtectedRoute />}>
+        <Route element={<HospitalProtectedRoute panel="lab" />}>
           <Route path="/lab/orders/:id/print" element={el(PrintLabReport)} />
           <Route element={el(LabLayout)}>
             <Route path="/lab/dashboard" element={el(LabDashboard)} />
@@ -347,7 +347,7 @@ function App() {
         </Route>
 
         {/* ── Pharmacy Panel Routes ─────────────────────────────────── */}
-        <Route element={<HospitalProtectedRoute />}>
+        <Route element={<HospitalProtectedRoute panel="pharmacy" />}>
           <Route element={el(PharmacyLayout)}>
             <Route path="/pharmacy/dashboard" element={el(PharmacyDashboard)} />
             <Route path="/pharmacy/medicines" element={el(MedicineCatalog)} />
