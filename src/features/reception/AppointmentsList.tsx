@@ -116,7 +116,12 @@ function MiniCalendar({ selectedDate, onDateChange, highlightedDays }: { selecte
   );
 }
 
-export default function AppointmentsList() {
+// `readOnly` renders the page as a pure oversight view (hospital-admin
+// Operations): the header create/calendar buttons and the per-row action cell
+// (check-in, edit, bill, cancel, refer, reminders, follow-up) are hidden, so the
+// admin can watch the schedule without leaving their shell or mutating anything.
+// Defaults keep the reception panel fully interactive.
+export default function AppointmentsList({ readOnly = false }: { readOnly?: boolean } = {}) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const toast = useToast();
@@ -237,6 +242,7 @@ export default function AppointmentsList() {
         title="Appointments"
         subtitle="Manage scheduling, check-ins, and patient flow"
         actions={
+          readOnly ? undefined : (
           <>
             <Button
               variant="outlined"
@@ -259,6 +265,7 @@ export default function AppointmentsList() {
               Book Appointment
             </Button>
           </>
+          )
         }
       />
 
@@ -402,6 +409,7 @@ export default function AppointmentsList() {
                         <StatusChip label={appt.statusLabel} color={appt.statusColor} />
                       </TableCell>
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
+                        {readOnly ? null : <>
                         <Tooltip title="Refer Patient">
                           <IconButton size="small" onClick={() => setReferralDialog({ open: true, appt })} sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6,182,212,0.08)" } }}>
                             <CallSplitRounded fontSize="small" />
@@ -450,6 +458,7 @@ export default function AppointmentsList() {
                             </Tooltip>
                           </>
                         )}
+                        </>}
                       </TableCell>
                     </TableRow>
                   );

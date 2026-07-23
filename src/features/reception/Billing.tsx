@@ -36,29 +36,33 @@ const STATUSES = [
 // print action — so they're kept in separate tabs/sections rather than one
 // mixed list. "New Invoice" (manual charge consolidation) is an OPD-side
 // concept: IPD bills are always auto-generated at discharge, never by hand.
-export default function Billing() {
+// `readOnly` renders a pure oversight view (hospital-admin Operations): the
+// "New Invoice" tab is dropped and the invoice viewer opens read-only (no
+// Collect Payment form), so the admin can browse bills without creating charges
+// or taking money. Defaults keep the reception panel fully interactive.
+export default function Billing({ readOnly = false }: { readOnly?: boolean } = {}) {
   const [params] = useSearchParams();
   const billPatientId = params.get("patientId") || undefined;
-  const [tab, setTab] = useState(billPatientId ? 2 : 0);
+  const [tab, setTab] = useState(billPatientId && !readOnly ? 2 : 0);
   return (
     <Box>
-      <PageHeader title="Billing" subtitle="Browse bills, collect payments, and generate new invoices" />
+      <PageHeader title="Billing" subtitle={readOnly ? "Browse bills across the hospital" : "Browse bills, collect payments, and generate new invoices"} />
 
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2.5 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)}
           sx={{ px: 1, "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 56 }, "& .Mui-selected": { color: `${ACCENT} !important` }, "& .MuiTabs-indicator": { bgcolor: ACCENT } }}>
           <Tab icon={<ReceiptRounded fontSize="small" />} iconPosition="start" label="OPD Billing" />
           <Tab icon={<LocalHotelRounded fontSize="small" />} iconPosition="start" label="IPD Billing" />
-          <Tab icon={<AddRounded fontSize="small" />} iconPosition="start" label="New Invoice" />
+          {!readOnly && <Tab icon={<AddRounded fontSize="small" />} iconPosition="start" label="New Invoice" />}
         </Tabs>
       </Paper>
 
-      {tab === 0 ? <BillsList type="OPD" /> : tab === 1 ? <BillsList type="IPD" /> : <GenerateInvoice patientId={billPatientId} />}
+      {tab === 0 ? <BillsList type="OPD" readOnly={readOnly} /> : tab === 1 ? <BillsList type="IPD" readOnly={readOnly} /> : <GenerateInvoice patientId={billPatientId} />}
     </Box>
   );
 }
 
-function BillsList({ type }: { type: "OPD" | "IPD" }) {
+function BillsList({ type, readOnly = false }: { type: "OPD" | "IPD"; readOnly?: boolean }) {
   const isIpd = type === "IPD";
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -158,7 +162,7 @@ function BillsList({ type }: { type: "OPD" | "IPD" }) {
         )}
       </Paper>
 
-      {viewId && <InvoiceViewDialog open invoiceId={viewId} onClose={() => setViewId(null)} onChanged={() => refetch()} />}
+      {viewId && <InvoiceViewDialog open invoiceId={viewId} onClose={() => setViewId(null)} onChanged={() => refetch()} readOnly={readOnly} />}
     </Box>
   );
 }

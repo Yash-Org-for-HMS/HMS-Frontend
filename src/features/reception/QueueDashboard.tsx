@@ -31,7 +31,11 @@ const getDoctorInitials = (doctorName?: string) => {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 };
 
-export default function QueueDashboard() {
+// `readOnly` renders a pure oversight view (hospital-admin Operations): the
+// per-token action buttons (call, complete, recall) and the row overflow menu
+// (vitals, billing, skip, cancel) are hidden, so the admin can watch the live
+// queue without acting on it. Defaults keep the reception panel interactive.
+export default function QueueDashboard({ readOnly = false }: { readOnly?: boolean } = {}) {
   const queryClient = useQueryClient();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
@@ -247,7 +251,7 @@ export default function QueueDashboard() {
                         )}
                       </TableCell>
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                        {isWaiting && (
+                        {!readOnly && isWaiting && (
                           <Button
                             size="small" variant="contained"
                             startIcon={<PlayArrowRounded />}
@@ -257,7 +261,7 @@ export default function QueueDashboard() {
                             Call Next
                           </Button>
                         )}
-                        {isInProgress && (
+                        {!readOnly && isInProgress && (
                           <Button
                             size="small" variant="contained"
                             startIcon={<CheckCircleRounded />}
@@ -269,9 +273,9 @@ export default function QueueDashboard() {
                         )}
                       </TableCell>
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                        <IconButton size="small" onClick={(e) => handleMenuClick(e, token)} sx={{ color: "text.secondary" }}>
+                        {!readOnly && <IconButton size="small" onClick={(e) => handleMenuClick(e, token)} sx={{ color: "text.secondary" }}>
                           <MoreVertRounded fontSize="small" />
-                        </IconButton>
+                        </IconButton>}
                       </TableCell>
                     </TableRow>
                   );
@@ -311,19 +315,19 @@ export default function QueueDashboard() {
                         />
                       </TableCell>
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '15%' }}>
-                        <Button
+                        {!readOnly && <Button
                           size="small" variant="contained"
                           startIcon={<PlayArrowRounded />}
                           onClick={() => handleAction('call', token.queueTokenId)}
                           sx={{ bgcolor: SEMANTIC.info, "&:hover": { bgcolor: SEMANTIC.infoDark }, textTransform: "none", mr: 1 }}
                         >
                           Recall Patient
-                        </Button>
+                        </Button>}
                       </TableCell>
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '5%' }}>
-                        <IconButton size="small" onClick={(e) => handleMenuClick(e, token)} sx={{ color: "#f97316" }}>
+                        {!readOnly && <IconButton size="small" onClick={(e) => handleMenuClick(e, token)} sx={{ color: "#f97316" }}>
                           <MoreVertRounded fontSize="small" />
-                        </IconButton>
+                        </IconButton>}
                       </TableCell>
                     </TableRow>
                   ))}

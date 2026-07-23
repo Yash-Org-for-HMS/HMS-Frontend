@@ -40,7 +40,12 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 };
 const TABS = ["ADMITTED", "DISCHARGED", ""];
 
-export default function Admissions() {
+// `readOnly` renders a pure oversight view (hospital-admin Operations): the
+// "Admit Patient" button and every per-row action (medicines, labs, radiology,
+// surgery, transfer, discharge, collect/refund deposit, cancel) are hidden, so
+// the admin can watch the ward census without acting on any admission. Defaults
+// keep the IPD/reception panel fully interactive.
+export default function Admissions({ readOnly = false }: { readOnly?: boolean } = {}) {
   const toast = useToast();
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
@@ -100,10 +105,12 @@ export default function Admissions() {
         title="Admissions"
         subtitle="In-patient admissions, transfers, and discharges"
         actions={
+          readOnly ? undefined : (
           <Button variant="contained" startIcon={<LocalHotelRounded />} onClick={() => setAdmitOpen(true)}
             sx={{ background: "linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%)", fontWeight: 600, textTransform: "none", borderRadius: 2 }}>
             Admit Patient
           </Button>
+          )
         }
       />
 
@@ -162,7 +169,7 @@ export default function Admissions() {
                     </TableCell>
                     <TableCell><Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700 }} /></TableCell>
                     <TableCell align="right">
-                      {a.status === "ADMITTED" && (
+                      {!readOnly && a.status === "ADMITTED" && (
                         <>
                           <Tooltip title="Medicines"><IconButton size="small" onClick={() => setMedsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MedicationRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Lab tests"><IconButton size="small" onClick={() => setLabsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><ScienceRounded fontSize="small" /></IconButton></Tooltip>
@@ -172,7 +179,7 @@ export default function Admissions() {
                           <Tooltip title="Discharge"><IconButton size="small" onClick={() => setDischargeFor(a)} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}><LogoutRounded fontSize="small" /></IconButton></Tooltip>
                         </>
                       )}
-                      {(a.status === "ADMITTED" || Number(a.depositBalance) > 0) && (
+                      {!readOnly && (a.status === "ADMITTED" || Number(a.depositBalance) > 0) && (
                         <IconButton size="small" onClick={(e) => setMenu({ anchor: e.currentTarget, row: a })} sx={{ color: "text.secondary" }}><MoreVertRounded fontSize="small" /></IconButton>
                       )}
                     </TableCell>

@@ -159,10 +159,10 @@ const elp = (C: ComponentType<any>, props: Record<string, unknown>) => (
 // Like el(), but shows the "upgrade to unlock" upsell when the hospital's plan
 // doesn't include `module` — so plan-gated pages advertise the feature instead
 // of 404ing or 403ing.
-const elGated = (C: ComponentType<any>, module: string, feature?: string) => (
+const elGated = (C: ComponentType<any>, module: string, feature?: string, props: Record<string, unknown> = {}) => (
   <ModuleGate module={module} feature={feature}>
     <Suspense fallback={<PageSkeleton />}>
-      <C />
+      <C {...props} />
     </Suspense>
   </ModuleGate>
 );
@@ -256,13 +256,13 @@ function App() {
             {/* ── Admin oversight (read-only windows into hospital-wide activity) ──
                 Reuse the existing operational pages inside the admin shell. The
                 backend already serves H_ADMIN org-wide data for all of these. */}
-            <Route path="/hospital/patients" element={elp(PatientsList, { basePath: "/hospital" })} />
+            <Route path="/hospital/patients" element={elp(PatientsList, { basePath: "/hospital", readOnly: true })} />
             <Route path="/hospital/patients/:id" element={elp(PatientProfile, { readOnly: true })} />
-            <Route path="/hospital/appointments" element={el(AppointmentsList)} />
-            <Route path="/hospital/queue" element={el(QueueDashboard)} />
-            <Route path="/hospital/ipd/admissions" element={elGated(Admissions, "IPD", "Admissions")} />
-            <Route path="/hospital/ipd/beds" element={elGated(BedBoard, "IPD", "Bed Board")} />
-            <Route path="/hospital/billing" element={elGated(Billing, "Billing", "Billing Overview")} />
+            <Route path="/hospital/appointments" element={elp(AppointmentsList, { readOnly: true })} />
+            <Route path="/hospital/queue" element={elp(QueueDashboard, { readOnly: true })} />
+            <Route path="/hospital/ipd/admissions" element={elGated(Admissions, "IPD", "Admissions", { readOnly: true })} />
+            <Route path="/hospital/ipd/beds" element={elGated(BedBoard, "IPD", "Bed Board", { readOnly: true })} />
+            <Route path="/hospital/billing" element={elGated(Billing, "Billing", "Billing Overview", { readOnly: true })} />
             {/* Add more hospital routes here as they are built */}
           </Route>
         </Route>

@@ -80,7 +80,13 @@ interface Meta {
 // panel uses the default "/reception", while the hospital-admin oversight route
 // passes "/hospital" so a patient row-click opens the profile inside the admin
 // shell instead of bouncing into the reception layout.
-export default function PatientsList({ basePath = "/reception" }: { basePath?: string } = {}) {
+//
+// `readOnly` turns the page into a pure oversight view: every write/navigation
+// action that would leave the current shell (register, book, bill, admit, edit,
+// delete) is hidden, leaving only view/copy actions. The hospital-admin
+// Operations area mounts it read-only so an admin can see the registry without
+// being bounced into the reception panel. Defaults keep reception fully editable.
+export default function PatientsList({ basePath = "/reception", readOnly = false }: { basePath?: string; readOnly?: boolean } = {}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -164,6 +170,7 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
           title="Patient Search & Registry"
           subtitle={`${meta.total} patient${meta.total !== 1 ? "s" : ""} registered`}
           actions={
+            readOnly ? undefined : (
             <Button
               variant="contained"
               startIcon={<PersonAddRounded />}
@@ -180,6 +187,7 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
             >
               Register New Patient
             </Button>
+            )
           }
         />
 
@@ -285,7 +293,7 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
                         title={search ? "No matches" : "No patients yet"}
                         subtitle={search ? "No patients found matching your search." : "No patients registered yet."}
                       />
-                      {!search && (
+                      {!search && !readOnly && (
                         <Button
                           variant="contained"
                           startIcon={<PersonAddRounded />}
@@ -397,27 +405,27 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
                       </TableCell>
                       {/* Actions — primary quick-actions + overflow menu */}
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
-                        <Tooltip title="Book appointment">
+                        {!readOnly && <Tooltip title="Book appointment">
                           <IconButton size="small"
                             onClick={(e) => { e.stopPropagation(); navigate(`/reception/appointments/new?patientId=${patient.patientId}`); }}
                             sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.info, bgcolor: "rgba(59,130,246,0.08)" } }}>
                             <CalendarMonthRounded fontSize="small" />
                           </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Bill / collect payment">
+                        </Tooltip>}
+                        {!readOnly && <Tooltip title="Bill / collect payment">
                           <IconButton size="small"
                             onClick={(e) => { e.stopPropagation(); navigate(`/reception/billing?patientId=${patient.patientId}`); }}
                             sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.warning, bgcolor: "rgba(245,158,11,0.08)" } }}>
                             <ReceiptLongRounded fontSize="small" />
                           </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Admit (IPD)">
+                        </Tooltip>}
+                        {!readOnly && <Tooltip title="Admit (IPD)">
                           <IconButton size="small"
                             onClick={(e) => { e.stopPropagation(); setAdmitPatient(patient); }}
                             sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.reception, bgcolor: "rgba(8,145,178,0.08)" } }}>
                             <LocalHotelRounded fontSize="small" />
                           </IconButton>
-                        </Tooltip>
+                        </Tooltip>}
                         <Tooltip title="View profile">
                           <IconButton size="small"
                             onClick={(e) => { e.stopPropagation(); navigate(`${basePath}/patients/${patient.patientId}`); }}
@@ -494,10 +502,10 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
       {/* Row overflow menu */}
       <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={() => setMenu({ anchor: null, patient: null })}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}>
-        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); navigate(`/reception/appointments/new?patientId=${p.patientId}`); }}>
+        {!readOnly && <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); navigate(`/reception/appointments/new?patientId=${p.patientId}`); }}>
           <ListItemIcon><QueuePlayNextRounded fontSize="small" /></ListItemIcon>
           <ListItemText>Walk-in visit</ListItemText>
-        </MenuItem>
+        </MenuItem>}
         <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); setIdCardPatient(p); }}>
           <ListItemIcon><QrCode2Rounded fontSize="small" /></ListItemIcon>
           <ListItemText>Print ID card</ListItemText>
@@ -506,15 +514,15 @@ export default function PatientsList({ basePath = "/reception" }: { basePath?: s
           <ListItemIcon><ContentCopyRounded fontSize="small" /></ListItemIcon>
           <ListItemText>Copy UHID</ListItemText>
         </MenuItem>
-        <Divider />
-        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); navigate(`/reception/patients/${p.patientId}/edit`); }}>
+        {!readOnly && <Divider />}
+        {!readOnly && <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); navigate(`/reception/patients/${p.patientId}/edit`); }}>
           <ListItemIcon><EditRounded fontSize="small" /></ListItemIcon>
           <ListItemText>Edit patient</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); setDeleteDialog({ open: true, patient: p }); }} sx={{ color: SEMANTIC.danger }}>
+        </MenuItem>}
+        {!readOnly && <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); setDeleteDialog({ open: true, patient: p }); }} sx={{ color: SEMANTIC.danger }}>
           <ListItemIcon><DeleteRounded fontSize="small" sx={{ color: SEMANTIC.danger }} /></ListItemIcon>
           <ListItemText>Delete</ListItemText>
-        </MenuItem>
+        </MenuItem>}
       </Menu>
 
       <IdCardModal open={!!idCardPatient} onClose={() => setIdCardPatient(null)} patient={idCardPatient} />

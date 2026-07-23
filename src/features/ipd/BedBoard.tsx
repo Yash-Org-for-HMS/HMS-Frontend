@@ -23,7 +23,11 @@ const STATUS_COLOR: Record<string, string> = {
 // Read-only structure + day-to-day bed STATUS changes only. Adding/editing
 // wards, rooms, and beds is hospital configuration, managed from the Hospital
 // Admin panel (Ward & Bed Setup) — not from Reception.
-export default function BedBoard() {
+// `readOnly` renders a pure oversight view (hospital-admin Operations): bed
+// tiles still show live occupancy but are not clickable, so the admin can read
+// the ward census without opening the status-change menu (available / reserved /
+// maintenance). Defaults keep the IPD panel interactive.
+export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = {}) {
   const toast = useToast();
   const [bedMenu, setBedMenu] = useState<{ anchor: HTMLElement | null; bed: any }>({ anchor: null, bed: null });
 
@@ -90,8 +94,8 @@ export default function BedBoard() {
                         const color = STATUS_COLOR[b.status] || NEUTRAL.muted;
                         return (
                           <Tooltip key={b.bedId} title={b.occupant ? `${b.occupant.patientName} (${b.occupant.uhid})` : b.status}>
-                            <Box onClick={(e) => setBedMenu({ anchor: e.currentTarget, bed: b })}
-                              sx={{ cursor: "pointer", width: 130, p: 1.25, borderRadius: 2, border: "1px solid", borderColor: `${color}55`, bgcolor: `${color}12`, "&:hover": { borderColor: color } }}>
+                            <Box onClick={readOnly ? undefined : (e) => setBedMenu({ anchor: e.currentTarget, bed: b })}
+                              sx={{ cursor: readOnly ? "default" : "pointer", width: 130, p: 1.25, borderRadius: 2, border: "1px solid", borderColor: `${color}55`, bgcolor: `${color}12`, ...(readOnly ? {} : { "&:hover": { borderColor: color } }) }}>
                               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                                 <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>Bed {b.bedNumber}</Typography>
                                 <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: color }} />
