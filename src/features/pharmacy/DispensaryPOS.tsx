@@ -601,7 +601,10 @@ export default function DispensaryPOS() {
                         ₹{parseFloat(sale.totalAmount).toFixed(2)}
                       </TableCell>
                       <TableCell align="right">
-                        {sale.status !== 'cancelled' && (
+                        {/* Only UNPAID drafts can be edited/cancelled here. A paid+
+                            dispensed sale is final — reversing it is a refund, not an
+                            in-place edit (which would double-charge). */}
+                        {sale.status !== 'completed' && sale.status !== 'cancelled' && (
                           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                             <Button size="small" variant="outlined" color="primary" onClick={() => handleEditOrder(sale)}>Edit</Button>
                             <Button size="small" variant="outlined" color="error" onClick={() => setOrderToCancel(sale)}>Cancel</Button>
@@ -619,8 +622,8 @@ export default function DispensaryPOS() {
 
       <ReasonDialog
         open={!!orderToCancel}
-        title="Cancel Order"
-        description="Cancelling this order will restore the deducted inventory and mark the order as cancelled."
+        title="Cancel Draft Order"
+        description="This discards an unpaid draft order. No payment was taken and no inventory was dispensed, so nothing is refunded or restored."
         reasonLabel="Reason for cancellation"
         reasons={["Out of stock", "Data entry error", "Patient refused", "Other"]}
         confirmLabel="Cancel Order"
