@@ -11,7 +11,7 @@ import {
   AddRounded, SearchRounded, CancelRounded, CheckCircleRounded,
   WarningAmberRounded, ReceiptRounded, NotificationsActiveRounded, ChecklistRounded,
   NotesRounded, ChevronLeftRounded, ChevronRightRounded, CalendarMonthRounded,
-  FilterAltRounded, EventRepeatRounded, CallSplitRounded
+  FilterAltRounded, EventRepeatRounded
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
@@ -22,7 +22,6 @@ import ErrorState from "@/components/ErrorState";
 import StatusChip from "@/components/StatusChip";
 import BillingModal from "./BillingModal";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
-import ReferralDialog from "@/components/reception/ReferralDialog";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import { useTableSort } from "@/components/table/useTableSort";
@@ -136,7 +135,6 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
   });
   const [processing, setProcessing] = useState(false);
   const [billingDialog, setBillingDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
-  const [referralDialog, setReferralDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
 
   // The backend caps this at 500 rows per call (it used to return a hospital's
   // entire history unbounded). This page still filters/sorts client-side, so we
@@ -410,11 +408,6 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
                       </TableCell>
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
                         {readOnly ? null : <>
-                        <Tooltip title="Refer Patient">
-                          <IconButton size="small" onClick={() => setReferralDialog({ open: true, appt })} sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6,182,212,0.08)" } }}>
-                            <CallSplitRounded fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
                         {appt.statusLabel === 'Scheduled' && (
                           <>
                             <Tooltip title="Check In">
@@ -505,18 +498,6 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
         />
       )}
 
-      {/* Referral Dialog */}
-      {referralDialog.appt && (
-        <ReferralDialog
-          open={referralDialog.open}
-          onClose={() => setReferralDialog({ open: false, appt: null })}
-          onCreated={() => setReferralDialog({ open: false, appt: null })}
-          prefilledPatientId={referralDialog.appt.patientId}
-          prefilledFromDepartmentId={referralDialog.appt.departmentId}
-          lockPatient
-          patientLabel={referralDialog.appt.patientName}
-        />
-      )}
     </Box>
   );
 }

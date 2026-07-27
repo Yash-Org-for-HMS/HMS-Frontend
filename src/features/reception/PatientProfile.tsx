@@ -26,7 +26,6 @@ import StatCard from "@/components/StatCard";
 import StatusChip from "@/components/StatusChip";
 import PatientDocumentsSection from "./PatientDocumentsSection";
 import IdCardModal from "@/components/reception/IdCardModal";
-import ReferralDialog from "@/components/reception/ReferralDialog";
 import ClinicalRecordsSection from "@/components/reception/ClinicalRecordsSection";
 import ConsentFormsSection from "@/components/reception/ConsentFormsSection";
 import VaccinationsSection from "@/components/reception/VaccinationsSection";
@@ -121,7 +120,6 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [checkinId, setCheckinId] = useState<string | null>(null);
   const [idCardOpen, setIdCardOpen] = useState(false);
-  const [referralOpen, setReferralOpen] = useState(false);
   const [invoiceView, setInvoiceView] = useState<string | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
@@ -247,12 +245,6 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
               <ListItemIcon><QrCode2Rounded fontSize="small" /></ListItemIcon>
               <ListItemText>Print ID Card</ListItemText>
             </MenuItem>
-            {canEdit && (
-              <MenuItem onClick={() => { setMenuAnchor(null); setReferralOpen(true); }}>
-                <ListItemIcon><CallSplitRounded fontSize="small" /></ListItemIcon>
-                <ListItemText>Refer Patient</ListItemText>
-              </MenuItem>
-            )}
             {canEdit && (
               <MenuItem onClick={handleSendWelcome} disabled={notifProcessing}>
                 <ListItemIcon>{notifProcessing ? <HeartbeatLoader size={22} /> : <NotificationsActiveRounded fontSize="small" />}</ListItemIcon>
@@ -546,17 +538,6 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
 
       {invoiceView && (
         <InvoiceViewDialog open invoiceId={invoiceView} onClose={() => setInvoiceView(null)} onChanged={() => refetchBilling()} readOnly={readOnly} />
-      )}
-
-      {referralOpen && (
-        <ReferralDialog
-          open={referralOpen}
-          onClose={() => setReferralOpen(false)}
-          onCreated={() => setReferralOpen(false)}
-          prefilledPatientId={patient.patientId}
-          lockPatient
-          patientLabel={`${patient.firstName || ""} ${patient.lastName || ""} — ${patient.uhidNumber}`}
-        />
       )}
     </Box>
   );

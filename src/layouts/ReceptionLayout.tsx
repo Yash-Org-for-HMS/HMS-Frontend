@@ -93,7 +93,7 @@ export default function ReceptionLayout() {
       items: [
         { text: "Doctor Availability", icon: <MedicalServicesRounded />, path: "/reception/doctors" },
         { text: "Department Directory", icon: <ApartmentRounded />, path: "/reception/directory" },
-        { text: "Referrals", icon: <CallSplitRounded />, path: "/reception/referrals" },
+        { text: "Referred Patients", icon: <CallSplitRounded />, path: "/reception/referrals" },
       ],
     },
     {

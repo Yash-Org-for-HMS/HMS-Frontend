@@ -27,7 +27,7 @@ const STATIC_ROUTES = [
   { name: "Patient Queue", path: "/reception/queue", icon: <QueueRounded />, section: "Reception" },
   { name: "Doctor Availability", path: "/reception/doctors", icon: <MedicalServicesRounded />, section: "Reception" },
   { name: "Department Directory", path: "/reception/directory", icon: <ApartmentRounded />, section: "Reception" },
-  { name: "Referrals", path: "/reception/referrals", icon: <CallSplitRounded />, section: "Reception" },
+  { name: "Referred Patients", path: "/reception/referrals", icon: <CallSplitRounded />, section: "Reception" },
   { name: "Admissions (IPD)", path: "/reception/ipd/admissions", icon: <LocalHotelRounded />, section: "Reception", module: "IPD" },
   { name: "Bed Management", path: "/reception/ipd/beds", icon: <HotelRounded />, section: "Reception", module: "IPD" },
   { name: "Billing", path: "/reception/billing", icon: <ReceiptLongRounded />, section: "Reception" },
