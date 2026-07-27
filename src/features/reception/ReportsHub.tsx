@@ -30,7 +30,7 @@ const GROUPS: ReportGroup[] = [
       { key: "op-registration", label: "OP Registration", Comp: OpRegistration },
       { key: "op-bills", label: "OP Bills", Comp: OpBills },
       { key: "diagnosis-wise", label: "Diagnosis-Wise", Comp: DiagnosisWise },
-      { key: "referrals", label: "Referrals by Doctor", Comp: ReferralsByDoctor },
+      { key: "referrals", label: "Referral Sources", Comp: ReferralsByDoctor },
     ],
   },
   {

@@ -69,7 +69,7 @@ export default function Reports() {
           <Tab icon={<TrendingUpRounded fontSize="small" />} iconPosition="start" label="Appointment Analytics" />
           <Tab icon={<PaymentsRounded fontSize="small" />} iconPosition="start" label="Collection Report" />
           <Tab icon={<HotelRounded fontSize="small" />} iconPosition="start" label="IPD Census" />
-          <Tab icon={<CallSplitRounded fontSize="small" />} iconPosition="start" label="Referrals by Doctor" />
+          <Tab icon={<CallSplitRounded fontSize="small" />} iconPosition="start" label="Referral Sources" />
           <Tab icon={<PersonAddRounded fontSize="small" />} iconPosition="start" label="OP Registration" />
           <Tab icon={<AccountBalanceWalletRounded fontSize="small" />} iconPosition="start" label="OP Bills" />
           <Tab icon={<MedicalInformationRounded fontSize="small" />} iconPosition="start" label="Diagnosis-Wise" />
