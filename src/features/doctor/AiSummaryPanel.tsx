@@ -15,9 +15,11 @@ import { API_URL } from "@/api/axios";
 const BLUE = ACCENTS.doctor;
 const BLUE_DARK = ACCENTS.doctorDark;
 
-// Signature gradients — the whole "premium AI" look hangs off these two.
-const GRAD = "linear-gradient(135deg, #3b82f6 0%, #6366f1 55%, #8b5cf6 100%)";
-const GRAD_HEADER = "linear-gradient(120deg, #1e40af 0%, #4338ca 52%, #6d28d9 100%)";
+// Signature gradients — the whole "premium AI" look hangs off these two. Kept in
+// the doctor panel's BLUE family (accent #3b82f6) with a sky sheen for depth, so
+// Dr. Dex reads as part of the doctor panel instead of a foreign violet element.
+const GRAD = "linear-gradient(135deg, #38bdf8 0%, #3b82f6 50%, #1d4ed8 100%)";
+const GRAD_HEADER = "linear-gradient(120deg, #1e3a8a 0%, #1d4ed8 55%, #2563eb 100%)";
 
 const DEX_NAME = "Dr. Dex";
 const DEX_TAGLINE = "AI clinical assistant";
@@ -63,7 +65,7 @@ function DexOrb({ size = 40, glow = false }: { size?: number; glow?: boolean }) 
       <Box sx={{
         position: "relative", width: size, height: size, borderRadius: "50%",
         display: "grid", placeItems: "center", background: GRAD, color: "#fff",
-        boxShadow: "0 6px 18px rgba(99,102,241,0.45)",
+        boxShadow: "0 6px 18px rgba(37,99,235,0.45)",
       }}>
         <AutoAwesomeRounded sx={{ fontSize: size * 0.5 }} />
       </Box>
@@ -223,7 +225,7 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
           }}>
             <AutoAwesomeRounded sx={{ fontSize: 20 }} />
           </Box>
-          <Box sx={{ position: "absolute", right: -1, bottom: -1, width: 11, height: 11, borderRadius: "50%", bgcolor: "#22c55e", border: "2px solid #4338ca" }} />
+          <Box sx={{ position: "absolute", right: -1, bottom: -1, width: 11, height: 11, borderRadius: "50%", bgcolor: "#22c55e", border: "2px solid #1e3a8a" }} />
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography sx={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.15 }}>{DEX_NAME}</Typography>
@@ -268,8 +270,8 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
                 variant="contained" size="large" onClick={generate} disabled={!patientId} startIcon={<AutoAwesomeRounded />}
                 sx={{
                   textTransform: "none", fontWeight: 700, fontSize: "0.95rem", px: 3.5, py: 1.15, borderRadius: 99,
-                  background: GRAD, boxShadow: "0 10px 24px rgba(99,102,241,0.4)",
-                  "&:hover": { background: GRAD, filter: "brightness(1.06)", boxShadow: "0 12px 28px rgba(99,102,241,0.5)" },
+                  background: GRAD, boxShadow: "0 10px 24px rgba(37,99,235,0.4)",
+                  "&:hover": { background: GRAD, filter: "brightness(1.06)", boxShadow: "0 12px 28px rgba(37,99,235,0.5)" },
                   "&.Mui-disabled": { background: "action.disabledBackground", color: "action.disabled", boxShadow: "none" },
                 }}
               >
@@ -312,7 +314,7 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
                 <Box sx={{
                   maxWidth: "82%", px: 1.5, py: 1.15, borderRadius: 3,
                   ...(m.role === "user"
-                    ? { background: GRAD, color: "#fff", borderBottomRightRadius: 6, boxShadow: "0 4px 12px rgba(99,102,241,0.3)" }
+                    ? { background: GRAD, color: "#fff", borderBottomRightRadius: 6, boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }
                     : { bgcolor: "action.hover", color: "text.primary", borderTopLeftRadius: 6 }),
                 }}>
                   {m.role === "user"
@@ -362,7 +364,7 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
             type="submit"
             disabled={chatBusy || !patientId || !input.trim()}
             aria-label="Send"
-            sx={{ background: GRAD, color: "#fff", borderRadius: "50%", width: 42, height: 42, flexShrink: 0, boxShadow: "0 4px 12px rgba(99,102,241,0.35)", "&:hover": { background: GRAD, filter: "brightness(1.06)" }, "&.Mui-disabled": { background: "action.disabledBackground", color: "action.disabled", boxShadow: "none" } }}
+            sx={{ background: GRAD, color: "#fff", borderRadius: "50%", width: 42, height: 42, flexShrink: 0, boxShadow: "0 4px 12px rgba(37,99,235,0.35)", "&:hover": { background: GRAD, filter: "brightness(1.06)" }, "&.Mui-disabled": { background: "action.disabledBackground", color: "action.disabled", boxShadow: "none" } }}
           >
             <SendRounded sx={{ fontSize: 20 }} />
           </IconButton>
