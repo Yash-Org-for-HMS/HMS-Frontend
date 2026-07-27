@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
@@ -29,8 +30,14 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const toast = useToast();
+  const navigate = useNavigate();
   const { hospital } = useHospitalAuth();
   const [invoice, setInvoice] = useState<any>(null);
+  // This appointment's invoice only covers the consultation. If the patient has
+  // OTHER unbilled charges (lab / pharmacy / radiology), surface them here so the
+  // front desk doesn't silently miss them — with a one-click route to the full
+  // consolidated billing screen that captures everything they owe.
+  const [otherCharges, setOtherCharges] = useState<any[]>([]);
   
   // Lookups
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
@@ -72,6 +79,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     } else {
       // Reset state on close
       setInvoice(null);
+      setOtherCharges([]);
       setPaymentAmount("");
       setPaymentMethodId("");
       setTransactionRef("");
@@ -106,6 +114,18 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       }
       
       setInvoice(currentInvoice);
+
+      // Surface the patient's OTHER unbilled charges (lab / pharmacy / radiology)
+      // that this consultation invoice does NOT include. Consultation-type items
+      // are excluded — those are what this modal already bills. Best-effort: a
+      // failure here must never block the core billing flow.
+      if (currentInvoice?.patientId) {
+        try {
+          const unbilledRes = await axiosInstance.get(`/billing/unbilled/${currentInvoice.patientId}`);
+          const items: any[] = unbilledRes.data?.data || [];
+          setOtherCharges(items.filter((it) => it.type !== "CONSULTATION"));
+        } catch { /* non-blocking */ }
+      }
 
       // Pre-fill payment amount with remaining balance
       if (currentInvoice) {
@@ -353,6 +373,38 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         ) : loadError ? (
           <ErrorState message={loadError} onRetry={fetchBillingData} />
         ) : invoice ? (
+          <>
+            {otherCharges.length > 0 && (
+              <Alert
+                severity="warning"
+                icon={<ReceiptRounded fontSize="inherit" />}
+                sx={{ mb: 3, alignItems: "center", borderRadius: 2 }}
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    variant="outlined"
+                    onClick={() => {
+                      onClose();
+                      navigate(`/reception/billing?patientId=${invoice.patientId}`);
+                    }}
+                    sx={{ fontWeight: 700, whiteSpace: "nowrap" }}
+                  >
+                    Bill all charges
+                  </Button>
+                }
+              >
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  This patient has {otherCharges.length} other unbilled{" "}
+                  {otherCharges.length === 1 ? "charge" : "charges"} (
+                  {`₹${otherCharges.reduce((s, c) => s + Number(c.amount || 0), 0).toFixed(2)}`}) not on this invoice.
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {[...new Set(otherCharges.map((c) => c.type))].join(", ")} — this consultation bill won't collect
+                  them. Use “Bill all charges” to invoice everything together.
+                </Typography>
+              </Alert>
+            )}
           <Grid container spacing={4}>
             {/* LEFT: Receipt Preview */}
             <Grid size={{ xs: 12, md: 7 }}>
@@ -617,6 +669,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
               </Box>
             </Grid>
           </Grid>
+          </>
         ) : null}
       </DialogContent>
 

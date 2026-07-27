@@ -41,7 +41,8 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedInvoice, setGeneratedInvoice] = useState<any | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number | "">("");
-  const [paymentMethod, setPaymentMethod] = useState("Cash");
+  // The selected configured payment-method row (has paymentMethodId + methodName).
+  const [paymentMethod, setPaymentMethod] = useState<any | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Invoice to view/collect from the patient's history panel.
@@ -92,6 +93,19 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
     .filter((i) => i.invoiceStatus !== "CANCELLED")
     .reduce((sum, i) => sum + Math.max(0, Number(i.balance) || 0), 0);
 
+  // The hospital's configured payment methods — the SAME list the reception
+  // BillingModal / InvoiceViewDialog use — so tender options (and the stored
+  // method) are consistent across every billing screen instead of a hardcoded four.
+  const { data: paymentMethods = [] } = useQuery<any[]>({
+    queryKey: ["billing-payment-methods"],
+    queryFn: async () => (await axiosInstance.get("/reception/billing/lookups")).data?.data?.methods || [],
+    staleTime: 5 * 60 * 1000,
+  });
+  // Default the tender to the first configured method once they load.
+  useEffect(() => {
+    if (paymentMethods.length && !paymentMethod) setPaymentMethod(paymentMethods[0]);
+  }, [paymentMethods]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Auto-select all charges when a fresh set loads (and clear on patient change).
   useEffect(() => {
     setSelectedItemIds(new Set((unbilledData ?? []).map((i: any) => i.id)));
@@ -141,7 +155,8 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
       setIsProcessingPayment(true);
       await axiosInstance.post(`/billing/payments/${generatedInvoice.invoiceId}`, {
         amount: Number(paymentAmount),
-        paymentMethod
+        paymentMethod: paymentMethod?.methodName || "Cash",
+        paymentMethodId: paymentMethod?.paymentMethodId,
       });
       toast.success("Payment collected successfully");
       setGeneratedInvoice(null);
@@ -392,9 +407,11 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
               helperText={Number(paymentAmount || 0) > netAmount + 0.005 ? `Cannot exceed the bill of ₹${netAmount.toFixed(2)}` : undefined}
             />
             <Autocomplete
-              options={["Cash", "Credit Card", "Insurance", "Bank Transfer"]}
+              options={paymentMethods}
+              getOptionLabel={(m: any) => m?.methodName || ""}
+              isOptionEqualToValue={(a: any, b: any) => a?.paymentMethodId === b?.paymentMethodId}
               value={paymentMethod}
-              onChange={(e, val) => setPaymentMethod(val || "Cash")}
+              onChange={(e, val) => setPaymentMethod(val)}
               renderInput={(params) => <TextField {...params} label="Payment Method" />}
             />
           </Box>
@@ -407,7 +424,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
             variant="contained" 
             color="success" 
             onClick={handleProcessPayment}
-            disabled={isProcessingPayment || !paymentAmount || Number(paymentAmount) <= 0 || Number(paymentAmount) > netAmount + 0.005}
+            disabled={isProcessingPayment || !paymentMethod || !paymentAmount || Number(paymentAmount) <= 0 || Number(paymentAmount) > netAmount + 0.005}
             startIcon={<PaymentRounded />}
           >
             {isProcessingPayment ? "Processing..." : "Collect Payment"}
