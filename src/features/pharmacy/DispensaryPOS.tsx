@@ -126,7 +126,9 @@ export default function DispensaryPOS() {
             initialCart.push({
               ...match,
               quantity: item.quantity,
-              unitPrice: item.unitPrice || parseFloat(match.sellingPrice),
+              // Coerce to a number — an existing order's unitPrice arrives from
+              // the API as a Decimal string, which would crash item.unitPrice.toFixed().
+              unitPrice: Number(item.unitPrice) || parseFloat(match.sellingPrice),
             });
           }
         });
