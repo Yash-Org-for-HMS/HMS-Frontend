@@ -14,6 +14,10 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useHospitalTaxRate } from "@/hooks/useHospitalTaxRate";
 import { useToast } from "@/providers/ToastContext";
+import StatusChip from "@/components/StatusChip";
+import InvoiceViewDialog from "@/components/reception/InvoiceViewDialog";
+import { formatINR, formatDate } from "@/utils/format";
+import { SEMANTIC } from "@/styles/accents";
 
 export default function GenerateInvoice({ patientId: initialPatientId }: { patientId?: string } = {}) {
   const theme = useTheme();
@@ -39,6 +43,9 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   const [paymentAmount, setPaymentAmount] = useState<number | "">("");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Invoice to view/collect from the patient's history panel.
+  const [invoiceView, setInvoiceView] = useState<string | null>(null);
 
 
   // Preselect a patient when launched from "Bill" on a patient row.
@@ -72,6 +79,19 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   });
   const unbilledItems: any[] = unbilledData ?? [];
 
+  // This patient's existing invoices (paid + pending) — so staff can see what's
+  // already billed/outstanding right here, and collect a pending one, instead of
+  // accidentally raising a duplicate.
+  const { data: billing, refetch: refetchBilling } = useQuery<{ invoices: any[] }>({
+    queryKey: ["geninvoice-patient-billing", patientId],
+    queryFn: async () => (await axiosInstance.get(`/reception/patients/${patientId}/billing-summary`)).data.data,
+    enabled: !!patientId,
+  });
+  const patientInvoices: any[] = billing?.invoices ?? [];
+  const outstanding = patientInvoices
+    .filter((i) => i.invoiceStatus !== "CANCELLED")
+    .reduce((sum, i) => sum + Math.max(0, Number(i.balance) || 0), 0);
+
   // Auto-select all charges when a fresh set loads (and clear on patient change).
   useEffect(() => {
     setSelectedItemIds(new Set((unbilledData ?? []).map((i: any) => i.id)));
@@ -104,6 +124,10 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
       setGeneratedInvoice(res.data.data);
       setPaymentAmount(netAmount);
       toast.success(`Invoice ${res.data.data?.invoiceNumber || ""} generated`);
+      // The billed items are no longer unbilled; the new invoice now shows in the
+      // patient's history panel below (whether they pay now or later).
+      refetchUnbilled();
+      refetchBilling();
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Error generating invoice"));
     } finally {
@@ -122,6 +146,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
       toast.success("Payment collected successfully");
       setGeneratedInvoice(null);
       refetchUnbilled();
+      refetchBilling();
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Payment failed"));
     } finally {
@@ -282,6 +307,67 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
             </Paper>
           </Grid>
         </Grid>
+      )}
+
+      {/* This patient's invoices — paid history + pending (collectible here) */}
+      {selectedPatient && (
+        <Paper elevation={0} sx={{ mt: 3, borderRadius: 3, overflow: "hidden", border: "1px solid", borderColor: "divider" }}>
+          <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+            <Typography variant="h6" fontWeight={700}>This patient's invoices</Typography>
+            <Typography variant="body2" sx={{ color: outstanding > 0.005 ? SEMANTIC.danger : "text.secondary", fontWeight: 700 }}>
+              Outstanding: {formatINR(outstanding)}
+            </Typography>
+          </Box>
+          {patientInvoices.length === 0 ? (
+            <Box sx={{ p: 3, textAlign: "center", color: "text.secondary" }}>No invoices yet for this patient.</Box>
+          ) : (
+            <Box sx={{ width: "100%", overflowX: "auto" }}>
+              <Table sx={{ minWidth: 640 }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Invoice #</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>Amount</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>Balance</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                    <TableCell align="right" />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {patientInvoices.map((inv) => {
+                    const due = Number(inv.balance) > 0.005;
+                    return (
+                      <TableRow key={inv.invoiceId} hover>
+                        <TableCell sx={{ fontFamily: "monospace", fontWeight: 600 }}>{inv.invoiceNumber}</TableCell>
+                        <TableCell sx={{ color: "text.secondary" }}>{formatDate(inv.invoiceDate)}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(inv.netAmount)}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, color: due ? SEMANTIC.danger : SEMANTIC.success }}>
+                          {due ? formatINR(inv.balance) : "—"}
+                        </TableCell>
+                        <TableCell><StatusChip label={inv.statusLabel} color={inv.statusColor} /></TableCell>
+                        <TableCell align="right">
+                          <Button size="small" variant={due ? "contained" : "text"} onClick={() => setInvoiceView(inv.invoiceId)}
+                            sx={{ textTransform: "none", ...(due ? {} : { color: "text.secondary" }) }}>
+                            {due ? "Collect" : "View"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Box>
+          )}
+        </Paper>
+      )}
+
+      {invoiceView && (
+        <InvoiceViewDialog
+          open
+          invoiceId={invoiceView}
+          onClose={() => setInvoiceView(null)}
+          onChanged={() => { refetchBilling(); refetchUnbilled(); }}
+        />
       )}
 
       {/* Payment Modal */}
