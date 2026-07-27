@@ -37,6 +37,59 @@ interface PrescriptionWriterProps {
   onRequireSave: () => Promise<string | undefined>;
 }
 
+// Frequency shorthand → doses/day + a human meaning. Lets the doctor type any
+// standard format (OD, BD, TDS, Q8H, 1-0-1, …) and still get the quantity
+// auto-calculated. Anything not recognised is still accepted verbatim; only the
+// auto-quantity is skipped for it.
+const FREQ_INFO: Record<string, { perDay: number; desc: string }> = {
+  OD: { perDay: 1, desc: "Once a day" },
+  QD: { perDay: 1, desc: "Once a day" },
+  BD: { perDay: 2, desc: "Twice a day" },
+  BID: { perDay: 2, desc: "Twice a day" },
+  TDS: { perDay: 3, desc: "Three times a day" },
+  TID: { perDay: 3, desc: "Three times a day" },
+  QID: { perDay: 4, desc: "Four times a day" },
+  QDS: { perDay: 4, desc: "Four times a day" },
+  HS: { perDay: 1, desc: "At bedtime" },
+  OM: { perDay: 1, desc: "In the morning" },
+  ON: { perDay: 1, desc: "At night" },
+  Q6H: { perDay: 4, desc: "Every 6 hours" },
+  Q8H: { perDay: 3, desc: "Every 8 hours" },
+  Q12H: { perDay: 2, desc: "Every 12 hours" },
+  SOS: { perDay: 0, desc: "Only when required" },
+  PRN: { perDay: 0, desc: "As needed" },
+  STAT: { perDay: 0, desc: "Immediately, once" },
+};
+
+// Suggested formats offered in the dropdown (the field still accepts free text).
+const FREQ_OPTIONS = [
+  "1-0-1", "1-1-1", "1-0-0", "0-0-1", "0-1-0", "1-1-0", "0-1-1",
+  "OD", "BD", "TDS", "QID", "HS", "OM", "ON", "Q6H", "Q8H", "Q12H", "SOS", "PRN", "STAT",
+];
+
+// Doses per day for the quantity calc. Handles numeric dosing (1-0-1, 1+1),
+// known abbreviations, and "Qn H" (every n hours). Returns 0 when unknown or
+// as-needed, so we don't guess a quantity.
+function dosesPerDay(freq: string): number {
+  const f = freq.trim().toUpperCase();
+  if (!f) return 0;
+  if (/^[\d\s.+-]+$/.test(f)) {
+    return f.split(/[-+]/).reduce((sum, p) => sum + (Number(p) || 0), 0);
+  }
+  if (FREQ_INFO[f]) return FREQ_INFO[f].perDay;
+  const q = f.match(/^Q\s*(\d+)\s*H$/);
+  if (q) { const h = Number(q[1]); return h > 0 ? Math.round(24 / h) : 0; }
+  return 0;
+}
+
+// One-line meaning for the dropdown options.
+function describeFreq(freq: string): string {
+  const f = freq.trim().toUpperCase();
+  if (FREQ_INFO[f]) return FREQ_INFO[f].desc;
+  const per = dosesPerDay(freq);
+  return per > 0 ? `${per}/day` : "";
+}
+
 export default function PrescriptionWriter({ consultationId, patientId, patientAllergies = [], patientInfo, patientWeightKg, diagnosis, onRequireSave }: PrescriptionWriterProps) {
   const [saving, setSaving] = useState(false);
   const [repeating, setRepeating] = useState(false);
@@ -83,12 +136,10 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
 
   useEffect(() => {
     if (!manualQuantity && frequency && durationDays && typeof durationDays === "number") {
-      // Parse frequency like "1-0-1", "1+1", "1-1-1", or even numbers.
-      const parts = frequency.split(/[-+]/).map(p => Number(p) || 0);
-      const dosesPerDay = parts.length > 0 ? parts.reduce((sum, curr) => sum + curr, 0) : 0;
-      
-      if (dosesPerDay > 0) {
-        setQuantity(dosesPerDay * durationDays);
+      // Understands numeric dosing (1-0-1) AND shorthand (OD/BD/TDS/Q8H/…).
+      const perDay = dosesPerDay(frequency);
+      if (perDay > 0) {
+        setQuantity(perDay * durationDays);
       }
     }
   }, [frequency, durationDays, manualQuantity]);
@@ -513,9 +564,26 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
               ),
             }}
           />
-          <TextField 
-            fullWidth size="small" label="Frequency" placeholder="e.g. 1-0-1" 
-            value={frequency} onChange={e => setFrequency(e.target.value)} 
+          <Autocomplete
+            freeSolo fullWidth size="small"
+            options={FREQ_OPTIONS}
+            inputValue={frequency}
+            onInputChange={(_, v) => setFrequency(v)}
+            renderOption={(props, opt) => {
+              const desc = describeFreq(opt);
+              return (
+                <li {...props}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%", gap: 1 }}>
+                    <Typography component="span" sx={{ fontWeight: 600 }}>{opt}</Typography>
+                    {desc && <Typography component="span" variant="caption" sx={{ color: "text.secondary" }}>{desc}</Typography>}
+                  </Box>
+                </li>
+              );
+            }}
+            renderInput={(params) => (
+              <TextField {...params} label="Frequency" placeholder="e.g. 1-0-1, BD, TDS…"
+                helperText={frequency && describeFreq(frequency) ? describeFreq(frequency) : " "} />
+            )}
           />
           <TextField 
             fullWidth size="small" label="Days" type="number" 
