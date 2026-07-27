@@ -124,6 +124,10 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   const taxableAmount = grossAmount - discountAmount;
   const taxAmount = taxableAmount * (Number(taxPercent || 0) / 100);
   const netAmount = taxableAmount + taxAmount;
+  // Amount the payment dialog collects against. Once the invoice is created the
+  // selected items are refetched away (no longer "unbilled"), so the derived
+  // netAmount above collapses to 0 — read the created invoice's own net instead.
+  const payableNet = generatedInvoice ? Number(generatedInvoice.netAmount || 0) : netAmount;
 
   const handleGenerateInvoice = async () => {
     if (!selectedPatient || selectedItemIds.size === 0) return;
@@ -136,7 +140,9 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
       };
       const res = await axiosInstance.post(`/billing/invoices/${selectedPatient.patientId}`, payload);
       setGeneratedInvoice(res.data.data);
-      setPaymentAmount(netAmount);
+      // Prefill from the created invoice's actual net (the refetch below clears
+      // the selected items, so the derived netAmount would otherwise read 0).
+      setPaymentAmount(Number(res.data.data?.netAmount ?? netAmount));
       toast.success(`Invoice ${res.data.data?.invoiceNumber || ""} generated`);
       // The billed items are no longer unbilled; the new invoice now shows in the
       // patient's history panel below (whether they pay now or later).
@@ -402,9 +408,9 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
               fullWidth
               value={paymentAmount}
               onChange={e => setPaymentAmount(e.target.value === "" ? "" : Number(e.target.value))}
-              inputProps={{ min: 0, max: netAmount, step: "0.01" }}
-              error={Number(paymentAmount || 0) > netAmount + 0.005}
-              helperText={Number(paymentAmount || 0) > netAmount + 0.005 ? `Cannot exceed the bill of ₹${netAmount.toFixed(2)}` : undefined}
+              inputProps={{ min: 0, max: payableNet, step: "0.01" }}
+              error={Number(paymentAmount || 0) > payableNet + 0.005}
+              helperText={Number(paymentAmount || 0) > payableNet + 0.005 ? `Cannot exceed the bill of ₹${payableNet.toFixed(2)}` : undefined}
             />
             <Autocomplete
               options={paymentMethods}
@@ -424,7 +430,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
             variant="contained" 
             color="success" 
             onClick={handleProcessPayment}
-            disabled={isProcessingPayment || !paymentMethod || !paymentAmount || Number(paymentAmount) <= 0 || Number(paymentAmount) > netAmount + 0.005}
+            disabled={isProcessingPayment || !paymentMethod || !paymentAmount || Number(paymentAmount) <= 0 || Number(paymentAmount) > payableNet + 0.005}
             startIcon={<PaymentRounded />}
           >
             {isProcessingPayment ? "Processing..." : "Collect Payment"}
