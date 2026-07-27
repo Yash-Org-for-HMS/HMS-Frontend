@@ -7,7 +7,7 @@ import {
   Button, TextField, IconButton, useTheme, Autocomplete, alpha,
   List, ListItem, ListItemButton, Chip, Pagination, Select, MenuItem, Tooltip, Alert
 } from "@mui/material";
-import { PointOfSaleRounded, AddCircleRounded, RemoveCircleRounded, DeleteRounded, PaymentRounded, LocalPharmacyRounded, DownloadRounded, EditRounded, CancelRounded } from "@mui/icons-material";
+import { PointOfSaleRounded, AddCircleRounded, RemoveCircleRounded, DeleteRounded, PaymentRounded, LocalPharmacyRounded, DownloadRounded, EditRounded, CancelRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
@@ -201,6 +201,25 @@ export default function DispensaryPOS() {
     }
   };
 
+  // Close a prescription that was already fulfilled (e.g. dispensed via a manual
+  // walk-in sale rather than the linked "load prescription" flow, which clears it
+  // automatically). Marks it DISPENSED — not cancelled — so the records are right.
+  const handleMarkDispensed = async (p: any) => {
+    const ok = await confirm({
+      title: "Mark as dispensed",
+      message: "Mark this prescription as already dispensed? It will leave the pending queue. Use this only if you've already given the patient these medicines.",
+      confirmText: "Mark dispensed",
+    });
+    if (!ok) return;
+    try {
+      await axiosInstance.put(`/pharmacy/prescriptions/${p.prescriptionId}/status`, { status: "dispensed", reason: "Fulfilled manually" });
+      toast.success("Prescription marked as dispensed");
+      fetchData();
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Failed to update prescription"));
+    }
+  };
+
   const loadPrescription = (prescription: any) => {
     setSelectedPrescriptionId(prescription.prescriptionId);
     setPatientId(prescription.patientId || "");
@@ -387,19 +406,28 @@ export default function DispensaryPOS() {
                         disablePadding 
                         divider
                         secondaryAction={
-                          <Tooltip title="Dismiss Prescription">
-                            <IconButton 
-                              edge="end" 
-                              size="small" 
-                              color="error" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setPrescriptionToDismiss(p);
-                              }}
-                            >
-                              <CancelRounded fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                            <Tooltip title="Already dispensed — mark done">
+                              <IconButton
+                                edge="end"
+                                size="small"
+                                color="success"
+                                onClick={(e) => { e.stopPropagation(); handleMarkDispensed(p); }}
+                              >
+                                <CheckCircleRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Dismiss (not dispensed)">
+                              <IconButton
+                                edge="end"
+                                size="small"
+                                color="error"
+                                onClick={(e) => { e.stopPropagation(); setPrescriptionToDismiss(p); }}
+                              >
+                                <CancelRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
                         }
                       >
                           <ListItemButton 
