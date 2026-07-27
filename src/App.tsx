@@ -115,6 +115,7 @@ const DoctorPatients = lazy(() => import("@/features/doctor/DoctorPatients"));
 const DoctorPatientProfile = lazy(() => import("@/features/doctor/DoctorPatientProfile"));
 const DoctorResults = lazy(() => import("@/features/doctor/DoctorResults"));
 const DoctorReports = lazy(() => import("@/features/doctor/DoctorReports"));
+const DoctorMyLeaves = lazy(() => import("@/features/doctor/MyLeaves"));
 
 // Lab
 const LabDashboard = lazy(() => import("@/features/lab/LabDashboard"));
@@ -327,6 +328,7 @@ function App() {
             <Route path="/doctor/all-patients" element={elp(DoctorPatients, { scope: "all" })} />
             <Route path="/doctor/results" element={elGated(DoctorResults, "Laboratory", "Results")} />
             <Route path="/doctor/reports" element={el(DoctorReports)} />
+            <Route path="/doctor/leaves" element={el(DoctorMyLeaves)} />
             <Route path="/doctor/patients/:id" element={el(DoctorPatientProfile)} />
           </Route>
         </Route>

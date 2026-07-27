@@ -19,6 +19,7 @@ import {
   LogoutRounded,
   LocalHospitalRounded,
   QueueRounded,
+  EventBusyRounded,
   ScienceRounded,
   AssessmentRounded,
   LockRounded,
@@ -70,6 +71,7 @@ export default function DoctorLayout() {
     { text: "All Patients", icon: <GroupsRounded />, path: "/doctor/all-patients", badge: 0, section: "My Work" },
     { text: "Results", icon: <ScienceRounded />, path: "/doctor/results", badge: badges?.resultsReady || 0, section: "My Work", module: "Laboratory" },
     { text: "My Reports", icon: <AssessmentRounded />, path: "/doctor/reports", badge: 0, section: "Insights" },
+    { text: "My Leave", icon: <EventBusyRounded />, path: "/doctor/leaves", badge: 0, section: "My Work" },
   ];
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
