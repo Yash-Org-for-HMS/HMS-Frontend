@@ -123,6 +123,10 @@ export default function DoctorForm() {
       licenseNumber: [required("License number")],
       consultationFee: [required("Consultation fee"), isNonNegativeNumber],
       experienceYears: [isNonNegativeNumber],
+      // A doctor MUST belong to a department — booking filters the doctor list by
+      // department, so a departmentless doctor is invisible there (the empty-
+      // dropdown bug). The field showed a required asterisk but was never enforced.
+      departmentId: [required("Department")],
     });
     if (hasErrors(found)) {
       setErrors(found);
@@ -279,6 +283,8 @@ export default function DoctorForm() {
                   value={formData.departmentId}
                   onChange={handleChange}
                   required
+                  error={!!errors.departmentId}
+                  helperText={errors.departmentId}
                   {...textFieldProps}
                 >
                   {departments.map((d) => (
