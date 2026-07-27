@@ -15,12 +15,25 @@ import { apiErrorText } from "@/utils/apiError";
 export default function LabDashboard() {
   const navigate = useNavigate();
 
-  const isToday = (dateString: string) => {
+  const isToday = (dateString?: string | null) => {
+    if (!dateString) return false;
     const today = new Date();
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return false;
     return date.getDate() === today.getDate() &&
            date.getMonth() === today.getMonth() &&
            date.getFullYear() === today.getFullYear();
+  };
+
+  // A lab order has no completion column — its status is COMPLETED once every
+  // report has a result, so the completion moment is the latest report update.
+  const latestReportAt = (o: any): string | null => {
+    const rs: any[] = o.reports || [];
+    if (!rs.length) return null;
+    return rs.reduce<string | null>((max, r) => {
+      const d = r.updatedAt || r.createdAt;
+      return !max || new Date(d) > new Date(max) ? d : max;
+    }, null);
   };
 
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
@@ -44,7 +57,8 @@ export default function LabDashboard() {
       const labStats = {
         total: labOrders.length,
         pending: labOrders.filter((o: any) => o.status !== "COMPLETED").length,
-        completed: labOrders.filter((o: any) => o.status === "COMPLETED").length,
+        // Completed TODAY: done, and its last result was entered today.
+        completed: labOrders.filter((o: any) => o.status === "COMPLETED" && isToday(latestReportAt(o))).length,
         todayRevenue: labRev,
       };
 
@@ -55,7 +69,8 @@ export default function LabDashboard() {
       const radStats = {
         total: radOrders.length,
         pending: radOrders.filter((o: any) => o.status !== "COMPLETED").length,
-        completed: radOrders.filter((o: any) => o.status === "COMPLETED").length,
+        // Completed TODAY: radiology status is stored, so updatedAt is when it was completed.
+        completed: radOrders.filter((o: any) => o.status === "COMPLETED" && isToday(o.updatedAt)).length,
         todayRevenue: radRev,
       };
 
