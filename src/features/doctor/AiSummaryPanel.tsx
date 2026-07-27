@@ -216,38 +216,33 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.paper" }}>
-      {/* ── Gradient header banner ─────────────────────── */}
-      <Box sx={{ background: GRAD_HEADER, color: "#fff", px: 2, py: 1.75, display: "flex", alignItems: "center", gap: 1.25 }}>
-        <Box sx={{ position: "relative", width: 38, height: 38, flexShrink: 0 }}>
-          <Box sx={{
-            width: 38, height: 38, borderRadius: "50%", display: "grid", placeItems: "center",
-            bgcolor: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.35)",
-          }}>
-            <AutoAwesomeRounded sx={{ fontSize: 20 }} />
-          </Box>
-          <Box sx={{ position: "absolute", right: -1, bottom: -1, width: 11, height: 11, borderRadius: "50%", bgcolor: "#22c55e", border: "2px solid #1e3a8a" }} />
+      {/* ── Header (light — the orb is the only colour pop) ─ */}
+      <Box sx={{ bgcolor: "background.paper", color: "text.primary", px: 2, py: 1.5, display: "flex", alignItems: "center", gap: 1.25, borderBottom: "1px solid", borderColor: "divider" }}>
+        <Box sx={{ position: "relative", flexShrink: 0 }}>
+          <DexOrb size={36} />
+          <Box sx={{ position: "absolute", right: -1, bottom: -1, width: 10, height: 10, borderRadius: "50%", bgcolor: "#22c55e", border: "2px solid", borderColor: "background.paper" }} />
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.15 }}>{DEX_NAME}</Typography>
-          <Typography sx={{ fontSize: "0.72rem", opacity: 0.85 }}>{DEX_TAGLINE}</Typography>
+          <Typography sx={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.15, color: "text.primary" }}>{DEX_NAME}</Typography>
+          <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>{DEX_TAGLINE}</Typography>
         </Box>
         {busy && (
           <Tooltip title="Stop">
-            <IconButton size="small" onClick={stop} aria-label="Stop" sx={{ color: "#fff", bgcolor: "rgba(255,255,255,0.15)", "&:hover": { bgcolor: "rgba(255,255,255,0.28)" } }}>
+            <IconButton size="small" onClick={stop} aria-label="Stop" sx={{ color: "text.secondary" }}>
               <StopRounded sx={{ fontSize: 20 }} />
             </IconButton>
           </Tooltip>
         )}
         {!busy && hasContent && (
           <Tooltip title="Regenerate briefing">
-            <IconButton size="small" onClick={generate} aria-label="Regenerate" sx={{ color: "#fff", bgcolor: "rgba(255,255,255,0.15)", "&:hover": { bgcolor: "rgba(255,255,255,0.28)" } }}>
+            <IconButton size="small" onClick={generate} aria-label="Regenerate" sx={{ color: "text.secondary" }}>
               <ReplayRounded sx={{ fontSize: 19 }} />
             </IconButton>
           </Tooltip>
         )}
         {onCollapse && (
           <Tooltip title="Close">
-            <IconButton size="small" onClick={onCollapse} aria-label="Close Dr. Dex" sx={{ color: "#fff", bgcolor: "rgba(255,255,255,0.15)", "&:hover": { bgcolor: "rgba(255,255,255,0.28)" } }}>
+            <IconButton size="small" onClick={onCollapse} aria-label="Close Dr. Dex" sx={{ color: "text.secondary" }}>
               <KeyboardTabRounded sx={{ fontSize: 20 }} />
             </IconButton>
           </Tooltip>
