@@ -29,19 +29,17 @@ const priorities = [
   { value: 3, label: "STAT" }
 ];
 
-const scanTypes = [
-  "X-Ray",
-  "CT Scan",
-  "MRI Scan",
-  "Ultrasound",
-  "PET Scan",
-  "Mammography"
-];
-
 export default function RadiologyOrderForm({ consultationId, patientId, onRequireSave }: RadiologyOrderFormProps) {
   const [saving, setSaving] = useState(false);
   const toast = useToast();
   const qc = useQueryClient();
+
+  // The priced radiology catalog — the doctor picks a REAL test so its name matches
+  // the catalog and billing charges the correct price (not the flat fallback).
+  const { data: catalog = [] } = useQuery<any[]>({
+    queryKey: ["radiology-catalog"],
+    queryFn: async () => (await axiosInstance.get("/doctor/radiology-orders/catalog")).data.data || [],
+  });
 
   // Form state
   const [selectedScanType, setSelectedScanType] = useState<string>("");
@@ -103,9 +101,12 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
             label="Scan Type"
             value={selectedScanType}
             onChange={(e) => setSelectedScanType(e.target.value)}
+            helperText={catalog.length === 0 ? "No radiology tests configured — add them in Lab settings" : undefined}
           >
-            {scanTypes.map(s => (
-              <MenuItem key={s} value={s}>{s}</MenuItem>
+            {catalog.map((t: any) => (
+              <MenuItem key={t.radiologyTestId || t.testName} value={t.testName}>
+                {t.testName}{t.price != null ? ` — ₹${Number(t.price).toFixed(0)}` : ""}
+              </MenuItem>
             ))}
           </TextField>
           <TextField
