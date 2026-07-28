@@ -6,7 +6,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, Divider,
   Chip, TextField, MenuItem, Grid,
 } from "@mui/material";
-import { CloseRounded, PrintRounded, PaymentRounded, CheckCircleRounded } from "@mui/icons-material";
+import { CloseRounded, PrintRounded, PaymentRounded, CheckCircleRounded, BlockRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import BillDocument from "@/components/billing/BillDocument";
 import HeartbeatLoader from "../HeartbeatLoader";
@@ -31,6 +31,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
   const [amount, setAmount] = useState("");
   const [methodId, setMethodId] = useState("");
   const [paying, setPaying] = useState(false);
+  const [voiding, setVoiding] = useState(false);
 
   const { data: lookups } = useQuery({
     queryKey: ["billing-lookups"],
@@ -64,6 +65,26 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
       toast.error(getApiErrorMessage(err, "Payment failed"));
     } finally {
       setPaying(false);
+    }
+  };
+
+  // A voidable invoice: OPD (not IPD), not already cancelled, and nothing net
+  // collected on it. Voiding frees its charges to be re-billed correctly.
+  const isCancelled = invoice?.invoiceStatus === "CANCELLED" || invoice?.paymentStatus?.statusCode === "CANCELLED";
+  const canVoid = !readOnly && !!invoice && !invoice.admissionId && !isCancelled && (totalPaid - totalRefunded) <= 0.005;
+
+  const voidInvoice = async () => {
+    if (!window.confirm("Void this invoice? Its charges will return to unbilled so they can be re-invoiced. This can't be undone.")) return;
+    setVoiding(true);
+    try {
+      await axiosInstance.post(`/reception/billing/invoices/${invoiceId}/cancel`);
+      toast.success("Invoice voided");
+      onChanged?.();
+      onClose();
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Could not void invoice"));
+    } finally {
+      setVoiding(false);
     }
   };
 
@@ -188,6 +209,10 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit">Close</Button>
+        {canVoid && (
+          <Button variant="outlined" color="error" startIcon={<BlockRounded />} disabled={voiding} onClick={voidInvoice}
+            sx={{ mr: "auto" }}>{voiding ? "Voiding…" : "Void invoice"}</Button>
+        )}
         {invoice?.admissionId && (
           <Button variant="outlined" startIcon={<PrintRounded />} disabled={!invoice}
             onClick={() => window.open(`/reception/billing/invoices/${invoiceId}/ip-bill/print`, "_blank")}
