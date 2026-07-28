@@ -86,7 +86,7 @@ export default function HospitalLogin() {
           "@media (prefers-reduced-motion: no-preference)": { animation: `${kfReveal} 0.5s cubic-bezier(0.22,1,0.36,1) both` },
         }}
       >
-        <AuthBrand accent={ACCENT} />
+        <AuthBrand />
 
         {/* Names the portal so it's never mistaken for the platform-admin login
             (which uses the indigo accent at /login). */}

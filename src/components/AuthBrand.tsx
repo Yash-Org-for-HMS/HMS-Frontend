@@ -1,19 +1,13 @@
 import { Box, Typography } from "@mui/material";
-import { LocalHospitalRounded } from "@mui/icons-material";
 
-// Small, understated brand header for the auth screens: a mark + the full product
-// name (spelled out — never just "HMS"). Kept clean; the clinical pulse motif lives
-// down in the footer via <BrandPulse/> so the top isn't over-stacked.
-export default function AuthBrand({ accent }: { accent: string }) {
+// Typographic brand header for the auth screens — the full product name (spelled
+// out, never just "HMS"), no icon. Uses MUI Typography so it renders in the app's
+// own type (Inter, from the theme) — same font as the rest of the product.
+export default function AuthBrand() {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 3 }}>
-      <Box sx={{ width: 34, height: 34, flexShrink: 0, borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: accent }}>
-        <LocalHospitalRounded sx={{ color: "#fff", fontSize: 19 }} />
-      </Box>
-      <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", letterSpacing: "-0.2px", color: "#0F172A" }}>
-        Hospital Management System
-      </Typography>
-    </Box>
+    <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", letterSpacing: "-0.3px", color: "#0F172A", mb: 3 }}>
+      Hospital Management System
+    </Typography>
   );
 }
 

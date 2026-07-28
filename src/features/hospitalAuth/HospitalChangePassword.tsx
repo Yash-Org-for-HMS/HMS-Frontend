@@ -90,7 +90,7 @@ export default function HospitalChangePassword() {
           "@media (prefers-reduced-motion: no-preference)": { animation: `${kfReveal} 0.5s cubic-bezier(0.22,1,0.36,1) both` },
         }}
       >
-        <AuthBrand accent={ACCENT} />
+        <AuthBrand />
 
         <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.72rem", letterSpacing: "1.6px", textTransform: "uppercase", mb: 1.25 }}>
           Hospital Staff Portal

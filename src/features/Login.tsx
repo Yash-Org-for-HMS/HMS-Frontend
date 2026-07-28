@@ -71,7 +71,7 @@ export default function Login() {
           "@media (prefers-reduced-motion: no-preference)": { animation: `${kfReveal} 0.5s cubic-bezier(0.22,1,0.36,1) both` },
         }}
       >
-        <AuthBrand accent={ACCENT} />
+        <AuthBrand />
 
         {/* Names the portal so it's never mistaken for the hospital staff login
             (which uses the cyan accent at /hospital/login). */}
