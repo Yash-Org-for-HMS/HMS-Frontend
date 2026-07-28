@@ -13,6 +13,7 @@ import { axiosInstance } from "@/api/axios";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
+import AuthBrand from "@/components/AuthBrand";
 
 // Same clinical accent as the reception realm — kept as the ONE spot of colour on
 // an otherwise pure-white, minimalist page.
@@ -85,6 +86,8 @@ export default function HospitalLogin() {
           "@media (prefers-reduced-motion: no-preference)": { animation: `${kfReveal} 0.5s cubic-bezier(0.22,1,0.36,1) both` },
         }}
       >
+        <AuthBrand accent={ACCENT} accentDark={ACCENT_DARK} />
+
         {/* Names the portal so it's never mistaken for the platform-admin login
             (which uses the indigo accent at /login). */}
         <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.72rem", letterSpacing: "1.6px", textTransform: "uppercase", mb: 1.25 }}>

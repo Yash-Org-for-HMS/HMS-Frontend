@@ -11,6 +11,7 @@ import { useAuth } from "@/providers/AuthContext";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
+import AuthBrand from "@/components/AuthBrand";
 
 // Admin/platform realm accent (src/styles/accents.ts: admin indigo) — distinct
 // from the cyan hospital staff login, so the two portals read as different realms
@@ -70,6 +71,8 @@ export default function Login() {
           "@media (prefers-reduced-motion: no-preference)": { animation: `${kfReveal} 0.5s cubic-bezier(0.22,1,0.36,1) both` },
         }}
       >
+        <AuthBrand accent={ACCENT} accentDark={ACCENT_DARK} />
+
         {/* Names the portal so it's never mistaken for the hospital staff login
             (which uses the cyan accent at /hospital/login). */}
         <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.72rem", letterSpacing: "1.6px", textTransform: "uppercase", mb: 1.25 }}>
