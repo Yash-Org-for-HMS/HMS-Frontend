@@ -165,9 +165,12 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
 
           <Divider />
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>Bill total</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>Bill total (estimated)</Typography>
             <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(total)}</Typography>
           </Box>
+          <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+            Estimate up to now — bed days and any new orders are finalized when you discharge.
+          </Typography>
           {deposit > 0 && (
             <>
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
