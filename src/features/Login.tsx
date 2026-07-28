@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { keyframes } from "@emotion/react";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box, Button, TextField, Typography, InputAdornment, IconButton,
@@ -11,7 +10,7 @@ import { useAuth } from "@/providers/AuthContext";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
-import AuthBrand, { BrandPulse } from "@/components/AuthBrand";
+import AuthBrand from "@/components/AuthBrand";
 
 // Admin/platform realm accent (src/styles/accents.ts: admin indigo) — distinct
 // from the cyan hospital staff login, so the two portals read as different realms
@@ -21,7 +20,6 @@ const ACCENT_DARK = "#4338CA";
 const TEXT = "#0F172A";
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
-const kfReveal = keyframes`from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; }`;
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -68,20 +66,19 @@ export default function Login() {
       <Box
         sx={{
           width: "100%", maxWidth: 480, p: { xs: 3, sm: 4.5 }, border: "1px solid rgba(15,23,42,0.08)", borderRadius: 4, bgcolor: "#fff", boxShadow: "0 12px 40px -18px rgba(15,23,42,0.18)",
-          "@media (prefers-reduced-motion: no-preference)": { animation: `${kfReveal} 0.5s cubic-bezier(0.22,1,0.36,1) both` },
         }}
       >
         <AuthBrand />
 
         {/* Names the portal so it's never mistaken for the hospital staff login
             (which uses the cyan accent at /hospital/login). */}
-        <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.72rem", letterSpacing: "1.6px", textTransform: "uppercase", mb: 1.25 }}>
+        <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.7rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 1.75 }}>
           Platform Admin
         </Typography>
-        <Typography sx={{ fontWeight: 800, fontSize: "1.85rem", letterSpacing: "-0.8px", color: TEXT }}>
+        <Typography sx={{ fontWeight: 800, fontSize: "2rem", letterSpacing: "-1px", lineHeight: 1.08, color: TEXT }}>
           Welcome back
         </Typography>
-        <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", mt: 0.75, mb: 3 }}>
+        <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", lineHeight: 1.55, mt: 1, mb: 3.25 }}>
           Sign in to HMS platform administration.
         </Typography>
 
@@ -125,12 +122,9 @@ export default function Login() {
           </Button>
         </form>
 
-        <Box sx={{ mt: 3.5 }}>
-          <BrandPulse accent={ACCENT} accentDark={ACCENT_DARK} />
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 1.5, color: "text.secondary" }}>
-            <ShieldOutlined sx={{ fontSize: 15 }} />
-            <Typography variant="caption">Encrypted · platform access</Typography>
-          </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 4, color: "text.secondary" }}>
+          <ShieldOutlined sx={{ fontSize: 15 }} />
+          <Typography variant="caption">Encrypted · platform access</Typography>
         </Box>
       </Box>
     </Box>

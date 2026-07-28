@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { keyframes } from "@emotion/react";
 import { NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
@@ -13,7 +12,7 @@ import { axiosInstance } from "@/api/axios";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
-import AuthBrand, { BrandPulse } from "@/components/AuthBrand";
+import AuthBrand from "@/components/AuthBrand";
 
 // Same clinical accent as the reception realm — kept as the ONE spot of colour on
 // an otherwise pure-white, minimalist page.
@@ -21,9 +20,6 @@ const ACCENT = "#0891b2";
 const ACCENT_DARK = "#0e7490";
 const TEXT = NEUTRAL.textPrimary;
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-
-// One quiet entrance — a gentle fade-up, disabled under reduced motion.
-const kfReveal = keyframes`from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; }`;
 
 export default function HospitalLogin() {
   const [email, setEmail] = useState("");
@@ -83,20 +79,19 @@ export default function HospitalLogin() {
       <Box
         sx={{
           width: "100%", maxWidth: 480, p: { xs: 3, sm: 4.5 }, border: "1px solid rgba(15,23,42,0.08)", borderRadius: 4, bgcolor: "#fff", boxShadow: "0 12px 40px -18px rgba(15,23,42,0.18)",
-          "@media (prefers-reduced-motion: no-preference)": { animation: `${kfReveal} 0.5s cubic-bezier(0.22,1,0.36,1) both` },
         }}
       >
         <AuthBrand />
 
         {/* Names the portal so it's never mistaken for the platform-admin login
             (which uses the indigo accent at /login). */}
-        <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.72rem", letterSpacing: "1.6px", textTransform: "uppercase", mb: 1.25 }}>
+        <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.7rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 1.75 }}>
           Hospital Staff Portal
         </Typography>
-        <Typography sx={{ fontWeight: 800, fontSize: "1.85rem", letterSpacing: "-0.8px", color: TEXT }}>
+        <Typography sx={{ fontWeight: 800, fontSize: "2rem", letterSpacing: "-1px", lineHeight: 1.08, color: TEXT }}>
           Welcome back
         </Typography>
-        <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", mt: 0.75, mb: 3 }}>
+        <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", lineHeight: 1.55, mt: 1, mb: 3.25 }}>
           Sign in to continue to your workspace.
         </Typography>
 
@@ -150,12 +145,9 @@ export default function HospitalLogin() {
           </Button>
         </form>
 
-        <Box sx={{ mt: 3.5 }}>
-          <BrandPulse accent={ACCENT} accentDark={ACCENT_DARK} />
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 1.5, color: "text.secondary" }}>
-            <ShieldOutlined sx={{ fontSize: 15 }} />
-            <Typography variant="caption">Encrypted · session-bound access</Typography>
-          </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 4, color: "text.secondary" }}>
+          <ShieldOutlined sx={{ fontSize: 15 }} />
+          <Typography variant="caption">Encrypted · session-bound access</Typography>
         </Box>
       </Box>
     </Box>
