@@ -11,7 +11,7 @@ import { useAuth } from "@/providers/AuthContext";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
-import AuthBrand from "@/components/AuthBrand";
+import AuthBrand, { BrandPulse } from "@/components/AuthBrand";
 
 // Admin/platform realm accent (src/styles/accents.ts: admin indigo) — distinct
 // from the cyan hospital staff login, so the two portals read as different realms
@@ -71,7 +71,7 @@ export default function Login() {
           "@media (prefers-reduced-motion: no-preference)": { animation: `${kfReveal} 0.5s cubic-bezier(0.22,1,0.36,1) both` },
         }}
       >
-        <AuthBrand accent={ACCENT} accentDark={ACCENT_DARK} />
+        <AuthBrand accent={ACCENT} />
 
         {/* Names the portal so it's never mistaken for the hospital staff login
             (which uses the cyan accent at /hospital/login). */}
@@ -125,9 +125,12 @@ export default function Login() {
           </Button>
         </form>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 3, color: "text.secondary" }}>
-          <ShieldOutlined sx={{ fontSize: 15 }} />
-          <Typography variant="caption">Encrypted · platform access</Typography>
+        <Box sx={{ mt: 3.5 }}>
+          <BrandPulse accent={ACCENT} accentDark={ACCENT_DARK} />
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 1.5, color: "text.secondary" }}>
+            <ShieldOutlined sx={{ fontSize: 15 }} />
+            <Typography variant="caption">Encrypted · platform access</Typography>
+          </Box>
         </Box>
       </Box>
     </Box>
