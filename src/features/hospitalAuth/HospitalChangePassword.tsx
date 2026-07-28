@@ -92,7 +92,7 @@ export default function HospitalChangePassword() {
         <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.7rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 1.75 }}>
           Hospital Staff Portal
         </Typography>
-        <Typography sx={{ fontWeight: 800, fontSize: "2rem", letterSpacing: "-1px", lineHeight: 1.08, color: TEXT }}>
+        <Typography sx={{ fontWeight: 800, fontSize: "1.45rem", letterSpacing: "-0.5px", lineHeight: 1.15, color: TEXT }}>
           Set a new password
         </Typography>
         <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", lineHeight: 1.55, mt: 1, mb: 3.25 }}>
