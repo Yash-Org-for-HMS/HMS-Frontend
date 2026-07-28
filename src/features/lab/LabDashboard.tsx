@@ -49,10 +49,9 @@ export default function LabDashboard() {
 
       let labRev = 0;
       labOrders.forEach((o: any) => {
-        if (isToday(o.createdAt)) {
-          const orderTotal = o.reports?.reduce((sum: number, r: any) => sum + Number(r.labTest?.price || 0), 0) || 0;
-          if (o.paymentStatus === 'PAID') labRev += orderTotal;
-        }
+        // Use the order's authoritative captured amount (the list endpoint doesn't
+        // join per-test prices, so the old r.labTest.price sum was always 0).
+        if (isToday(o.createdAt) && o.paymentStatus === 'PAID') labRev += Number(o.amount) || 0;
       });
       const labStats = {
         total: labOrders.length,
@@ -64,13 +63,15 @@ export default function LabDashboard() {
 
       let radRev = 0;
       radOrders.forEach((o: any) => {
-        if (isToday(o.orderDate) && o.paymentStatus === 'PAID') radRev += 1000;
+        // Real per-scan price (resolved server-side by scanType), not a flat ₹1000.
+        if (isToday(o.orderDate) && o.paymentStatus === 'PAID') radRev += Number(o.amount) || 0;
       });
       const radStats = {
         total: radOrders.length,
         pending: radOrders.filter((o: any) => o.status !== "COMPLETED").length,
-        // Completed TODAY: radiology status is stored, so updatedAt is when it was completed.
-        completed: radOrders.filter((o: any) => o.status === "COMPLETED" && isToday(o.updatedAt)).length,
+        // Completed TODAY: dated by the report's creation, not the order's updatedAt
+        // (which bumps on later writes like payment, inflating the count).
+        completed: radOrders.filter((o: any) => o.status === "COMPLETED" && isToday(latestReportAt(o))).length,
         todayRevenue: radRev,
       };
 
