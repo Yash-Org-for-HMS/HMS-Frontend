@@ -7,7 +7,7 @@ import { LocalHospitalRounded } from "@mui/icons-material";
 export default function AuthBrand({ accent, accentDark }: { accent: string; accentDark: string }) {
   const gradId = `authPulse-${accent.replace("#", "")}`;
   return (
-    <Box sx={{ mb: 4 }}>
+    <Box sx={{ mb: 3 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
         <Box sx={{ width: 34, height: 34, flexShrink: 0, borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: accent }}>
           <LocalHospitalRounded sx={{ color: "#fff", fontSize: 19 }} />
@@ -20,7 +20,7 @@ export default function AuthBrand({ accent, accentDark }: { accent: string; acce
       <Box
         component="svg" viewBox="0 0 200 32" aria-hidden
         sx={{
-          width: 150, height: 20, display: "block", mt: 1.75, ml: 0.25,
+          width: 140, height: 18, display: "block", mt: 1.25, ml: 0.25,
           "& path": { fill: "none", stroke: `url(#${gradId})`, strokeWidth: 2.5, strokeLinecap: "round", strokeLinejoin: "round", strokeDasharray: 240, animation: "authPulseDraw 3.5s linear infinite" },
           "@keyframes authPulseDraw": { from: { strokeDashoffset: 240 }, to: { strokeDashoffset: 0 } },
           "@media (prefers-reduced-motion: reduce)": { "& path": { animation: "none", strokeDashoffset: 0 } },

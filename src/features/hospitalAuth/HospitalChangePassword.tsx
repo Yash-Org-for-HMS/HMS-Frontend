@@ -86,7 +86,7 @@ export default function HospitalChangePassword() {
     <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#fff", px: 3, py: 6 }}>
       <Box
         sx={{
-          width: "100%", maxWidth: 380,
+          width: "100%", maxWidth: 420,
           "@media (prefers-reduced-motion: no-preference)": { animation: `${kfReveal} 0.5s cubic-bezier(0.22,1,0.36,1) both` },
         }}
       >
@@ -98,7 +98,7 @@ export default function HospitalChangePassword() {
         <Typography sx={{ fontWeight: 800, fontSize: "1.85rem", letterSpacing: "-0.8px", color: TEXT }}>
           Set a new password
         </Typography>
-        <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", mt: 0.75, mb: 4 }}>
+        <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", mt: 0.75, mb: 3 }}>
           Choose a new password to finish signing in.
         </Typography>
 
@@ -142,7 +142,7 @@ export default function HospitalChangePassword() {
           </Button>
         </form>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 4, color: "text.secondary" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 3, color: "text.secondary" }}>
           <ShieldOutlined sx={{ fontSize: 15 }} />
           <Typography variant="caption">Encrypted · session-bound access</Typography>
         </Box>

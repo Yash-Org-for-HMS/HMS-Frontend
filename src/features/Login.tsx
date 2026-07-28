@@ -67,7 +67,7 @@ export default function Login() {
     <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#fff", px: 3, py: 6 }}>
       <Box
         sx={{
-          width: "100%", maxWidth: 380,
+          width: "100%", maxWidth: 420,
           "@media (prefers-reduced-motion: no-preference)": { animation: `${kfReveal} 0.5s cubic-bezier(0.22,1,0.36,1) both` },
         }}
       >
@@ -81,7 +81,7 @@ export default function Login() {
         <Typography sx={{ fontWeight: 800, fontSize: "1.85rem", letterSpacing: "-0.8px", color: TEXT }}>
           Welcome back
         </Typography>
-        <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", mt: 0.75, mb: 4 }}>
+        <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", mt: 0.75, mb: 3 }}>
           Sign in to HMS platform administration.
         </Typography>
 
@@ -125,7 +125,7 @@ export default function Login() {
           </Button>
         </form>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 4, color: "text.secondary" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 3, color: "text.secondary" }}>
           <ShieldOutlined sx={{ fontSize: 15 }} />
           <Typography variant="caption">Encrypted · platform access</Typography>
         </Box>
