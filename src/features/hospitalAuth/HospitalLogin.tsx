@@ -28,7 +28,6 @@ const kfReveal = keyframes`from { opacity: 0; transform: translateY(14px); } to 
 const kfDriftA = keyframes`from { transform: translate(0,0) scale(1); } to { transform: translate(34px, 22px) scale(1.08); }`;
 const kfDriftB = keyframes`from { transform: translate(0,0); } to { transform: translate(-28px,-20px); }`;
 const kfSheen = keyframes`0% { transform: translateX(-60%) rotate(9deg); } 100% { transform: translateX(220%) rotate(9deg); }`;
-const kfBlink = keyframes`0%,100% { opacity: 1; } 50% { opacity: 0.3; }`;
 
 // Staggered entrance for a hero element — no-op under reduced motion (stays visible).
 const reveal = (delay: number) => ({
@@ -67,45 +66,6 @@ function PulseLine({ tone = "accent" as "accent" | "light", width = 180 }) {
         </linearGradient>
       </defs>
       <path d={d} />
-    </Box>
-  );
-}
-
-// A stylized glimpse of the actual product — the live reception queue — so the
-// hero shows what the app does, not just claims it. Purely decorative.
-function QueueGlimpse() {
-  const rows = [
-    { token: "A-05", name: "Rina Patel", state: "waiting" },
-    { token: "A-06", name: "Sunil Kumar", state: "waiting" },
-  ];
-  return (
-    <Box sx={{
-      p: 2, borderRadius: 3, maxWidth: 320,
-      background: "rgba(255,255,255,0.13)", border: "1px solid rgba(255,255,255,0.22)",
-      backdropFilter: "blur(8px)", boxShadow: "0 20px 40px -24px rgba(0,0,0,0.5)",
-    }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-        <Box sx={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 8px #4ade80", "@media (prefers-reduced-motion: no-preference)": { animation: `${kfBlink} 2s ease-in-out infinite` } }} />
-        <Typography sx={{ fontSize: "0.72rem", letterSpacing: "0.5px", textTransform: "uppercase", opacity: 0.85, fontWeight: 700 }}>Reception · Live queue</Typography>
-      </Box>
-
-      {/* Now-serving row */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, p: 1, borderRadius: 2, background: "rgba(255,255,255,0.16)" }}>
-        <Box sx={{ px: 1, py: 0.25, borderRadius: 1.5, background: "rgba(255,255,255,0.9)", color: ACCENT_DARK, fontWeight: 800, fontSize: "0.85rem" }}>A-04</Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, lineHeight: 1.2 }}>Rohan Shah</Typography>
-          <Typography sx={{ fontSize: "0.72rem", opacity: 0.8 }}>Dr. Mehta · Cardiology</Typography>
-        </Box>
-        <Typography sx={{ fontSize: "0.68rem", fontWeight: 700, px: 0.75, py: 0.25, borderRadius: 1, background: "rgba(74,222,128,0.22)", color: "#dcfce7", whiteSpace: "nowrap" }}>Now serving</Typography>
-      </Box>
-
-      {rows.map((r) => (
-        <Box key={r.token} sx={{ display: "flex", alignItems: "center", gap: 1.25, px: 1, py: 0.75, opacity: 0.72 }}>
-          <Typography sx={{ fontSize: "0.8rem", fontWeight: 700, width: 34 }}>{r.token}</Typography>
-          <Typography sx={{ fontSize: "0.8rem", flex: 1 }}>{r.name}</Typography>
-          <Typography sx={{ fontSize: "0.68rem", opacity: 0.8 }}>{r.state}</Typography>
-        </Box>
-      ))}
     </Box>
   );
 }
@@ -211,13 +171,11 @@ export default function HospitalLogin() {
           </Typography>
           <Box sx={reveal(0.25)}><PulseLine tone="light" width={170} /></Box>
 
-          <Box sx={{ mt: 3, ...reveal(0.35) }}><QueueGlimpse /></Box>
-
-          <Stack spacing={1.75} sx={{ mt: 3, maxWidth: 440 }}>
+          <Stack spacing={2.25} sx={{ mt: 4, maxWidth: 440 }}>
             {FEATURES.map((f, i) => {
               const Icon = f.icon;
               return (
-                <Box key={f.title} sx={{ display: "flex", gap: 1.5, alignItems: "center", ...reveal(0.45 + i * 0.08) }}>
+                <Box key={f.title} sx={{ display: "flex", gap: 1.5, alignItems: "center", ...reveal(0.35 + i * 0.08) }}>
                   <Box sx={{ width: 34, height: 34, flexShrink: 0, borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)" }}>
                     <Icon sx={{ fontSize: 18, color: "#fff" }} />
                   </Box>
