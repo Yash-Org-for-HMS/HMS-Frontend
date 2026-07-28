@@ -3,7 +3,8 @@ import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { orderStatusColor } from "@/utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab } from "@mui/material";
-import { VisibilityRounded, BloodtypeRounded, AddRounded } from "@mui/icons-material";
+import { VisibilityRounded, BloodtypeRounded, AddRounded, CancelRounded } from "@mui/icons-material";
+import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
@@ -53,6 +54,19 @@ export default function LabOrdersQueue() {
     connect: () => fetchOrders(), // Refetch on socket reconnect
   });
 
+
+  const toast = useToast();
+
+  const handleCancel = async (order: any) => {
+    if (!window.confirm(`Cancel this lab order for ${order.patient?.firstName || "this patient"}? It will no longer be billable.`)) return;
+    try {
+      await axiosInstance.post(`/lab/orders/${order.labOrderId}/cancel`);
+      toast.success("Lab order cancelled");
+      fetchOrders();
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Could not cancel this order"));
+    }
+  };
 
   const handleCollectClick = (order: any) => {
     setCollectOrder(order);
@@ -170,10 +184,22 @@ export default function LabOrdersQueue() {
                     <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status) as any} size="small" />
                   </TableCell>
                   <TableCell align="right">
+                    {order.status === "PENDING" && !order.admissionId && order.paymentStatus !== "PAID" && order.paymentStatus !== "BILLED" && (
+                      <Button
+                        variant="text"
+                        size="small"
+                        color="error"
+                        startIcon={<CancelRounded />}
+                        onClick={() => handleCancel(order)}
+                        sx={{ mr: 1 }}
+                      >
+                        Cancel
+                      </Button>
+                    )}
                     {order.status === "PENDING" ? (
-                      <Button 
-                        variant="contained" 
-                        size="small" 
+                      <Button
+                        variant="contained"
+                        size="small"
                         color="primary"
                         startIcon={<BloodtypeRounded />}
                         onClick={() => handleCollectClick(order)}
