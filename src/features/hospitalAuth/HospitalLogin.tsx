@@ -113,15 +113,18 @@ export default function HospitalLogin() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", display: "flex" }}>
+    // Lock to the real viewport height (dvh handles mobile browser chrome) and
+    // hide overflow so the page never scrolls; the form panel below scrolls
+    // internally on very short screens, and the decorative hero simply clips.
+    <Box sx={{ height: "100dvh", minHeight: "100dvh", display: "flex", overflow: "hidden" }}>
       {/* ── LEFT: brand / hero panel (hidden on small screens) ─────────────── */}
       <Box
         aria-hidden
         sx={{
           display: { xs: "none", md: "flex" },
-          flexDirection: "column", justifyContent: "space-between",
+          flexDirection: "column", justifyContent: "center", gap: 5,
           flex: "1 1 46%", position: "relative", overflow: "hidden",
-          p: { md: 5, lg: 7 }, color: "#fff",
+          p: { md: 5, lg: 6 }, color: "#fff",
           background: `linear-gradient(150deg, ${ACCENT_LIGHT} 0%, ${ACCENT} 45%, ${ACCENT_DARK} 100%)`,
         }}
       >
@@ -143,7 +146,7 @@ export default function HospitalLogin() {
         </Box>
 
         {/* headline + features */}
-        <Box sx={{ position: "relative", zIndex: 1, my: 4 }}>
+        <Box sx={{ position: "relative", zIndex: 1 }}>
           <Typography sx={{ fontWeight: 800, fontSize: { md: "1.9rem", lg: "2.3rem" }, lineHeight: 1.15, letterSpacing: "-0.8px", maxWidth: 460 }}>
             Everything your hospital runs on, in one place.
           </Typography>
@@ -178,7 +181,8 @@ export default function HospitalLogin() {
         sx={{
           flex: { xs: "1 1 100%", md: "1 1 54%" },
           display: "flex", alignItems: "center", justifyContent: "center",
-          bgcolor: "#fff", p: { xs: 3, sm: 5 }, position: "relative", overflow: "hidden",
+          bgcolor: "#fff", p: { xs: 3, sm: 5 }, position: "relative",
+          overflowX: "hidden", overflowY: "auto",
         }}
       >
         {/* faint accent glow so the white side isn't flat on mobile (where the hero is hidden) */}
