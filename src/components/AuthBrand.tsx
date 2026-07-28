@@ -7,7 +7,7 @@ export default function AuthBrand() {
   return (
     <Typography
       component="div"
-      sx={{ fontSize: "1.35rem", lineHeight: 1.1, letterSpacing: "-0.4px", color: "#0F172A", fontWeight: 500, mb: 3.5 }}
+      sx={{ fontSize: "1.9rem", lineHeight: 1.12, letterSpacing: "-0.8px", color: "#0F172A", fontWeight: 500, mb: 1.5 }}
     >
       <Box component="span" sx={{ fontWeight: 800 }}>Hospital</Box> Management System
     </Typography>

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box, Button, TextField, Typography, InputAdornment, IconButton, Link,
@@ -18,7 +17,6 @@ import AuthBrand from "@/components/AuthBrand";
 // an otherwise pure-white, minimalist page.
 const ACCENT = "#0891b2";
 const ACCENT_DARK = "#0e7490";
-const TEXT = NEUTRAL.textPrimary;
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 export default function HospitalLogin() {
@@ -85,14 +83,8 @@ export default function HospitalLogin() {
 
         {/* Names the portal so it's never mistaken for the platform-admin login
             (which uses the indigo accent at /login). */}
-        <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.7rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 0.75 }}>
+        <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.72rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 3.5 }}>
           Hospital Staff Portal
-        </Typography>
-        <Typography sx={{ fontWeight: 800, fontSize: "1.45rem", letterSpacing: "-0.5px", lineHeight: 1.15, color: TEXT }}>
-          Welcome back
-        </Typography>
-        <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", lineHeight: 1.55, mt: 0.5, mb: 3.5 }}>
-          Sign in to continue to your workspace.
         </Typography>
 
         <form onSubmit={handleLogin} noValidate>

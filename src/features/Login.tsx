@@ -17,7 +17,6 @@ import AuthBrand from "@/components/AuthBrand";
 // of the same product.
 const ACCENT = "#4F46E5";
 const ACCENT_DARK = "#4338CA";
-const TEXT = "#0F172A";
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 
@@ -72,14 +71,8 @@ export default function Login() {
 
         {/* Names the portal so it's never mistaken for the hospital staff login
             (which uses the cyan accent at /hospital/login). */}
-        <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.7rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 0.75 }}>
+        <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.72rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 3.5 }}>
           Platform Admin
-        </Typography>
-        <Typography sx={{ fontWeight: 800, fontSize: "1.45rem", letterSpacing: "-0.5px", lineHeight: 1.15, color: TEXT }}>
-          Welcome back
-        </Typography>
-        <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", lineHeight: 1.55, mt: 0.5, mb: 3.5 }}>
-          Sign in to HMS platform administration.
         </Typography>
 
         <form onSubmit={handleLogin} noValidate>
