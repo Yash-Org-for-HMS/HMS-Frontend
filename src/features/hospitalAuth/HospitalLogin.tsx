@@ -76,10 +76,11 @@ export default function HospitalLogin() {
     <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#f8fafc", px: 3, py: 6 }}>
       <Box
         sx={{
-          width: "100%", maxWidth: 480, p: { xs: 3, sm: 4.5 }, border: "1px solid rgba(15,23,42,0.08)", borderRadius: 4, bgcolor: "#fff", boxShadow: "0 12px 40px -18px rgba(15,23,42,0.18)",
+          width: "100%", maxWidth: 480, p: { xs: 3, sm: 4.5 }, border: "1px solid rgba(15,23,42,0.08)", borderRadius: 4, bgcolor: "#fff", boxShadow: "0 12px 40px -18px rgba(15,23,42,0.18)", position: "relative", overflow: "hidden",
         }}
       >
-        <AuthBrand />
+        <Box aria-hidden sx={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, ${ACCENT}, ${ACCENT_DARK})` }} />
+        <AuthBrand accent={ACCENT} />
 
         {/* Names the portal so it's never mistaken for the platform-admin login
             (which uses the indigo accent at /login). */}
