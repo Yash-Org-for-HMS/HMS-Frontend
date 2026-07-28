@@ -1,195 +1,151 @@
 import { useState, useEffect } from "react";
+import { keyframes } from "@emotion/react";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
-  Box,
-  Button,
-  Container,
-  TextField,
-  Typography,
-  Paper,
-  InputAdornment,
-  IconButton,
-  Alert,
+  Box, Button, TextField, Typography, InputAdornment, IconButton,
 } from "@mui/material";
-import { Visibility, VisibilityOff, LockOutlined, LockResetRounded } from "@mui/icons-material";
+import {
+  Visibility, VisibilityOff, KeyboardCapslockRounded, ShieldOutlined,
+} from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { axiosInstance } from "@/api/axios";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 
+const ACCENT = "#0891b2";
+const ACCENT_DARK = "#0e7490";
+const TEXT = "#0F172A";
+
+const kfReveal = keyframes`from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; }`;
+
 export default function HospitalChangePassword() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const toast = useToast();
+  const [capsOn, setCapsOn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const toast = useToast();
 
   const { login } = useHospitalAuth();
   const navigate = useNavigate();
   const tempToken = sessionStorage.getItem("hospitalTempToken");
 
   useEffect(() => {
-    if (!tempToken) {
-      navigate("/hospital/login");
-    }
+    if (!tempToken) navigate("/hospital/login");
   }, [tempToken, navigate]);
+
+  const mismatch = confirmNewPassword.length > 0 && newPassword !== confirmNewPassword;
+  const canSubmit = newPassword.length > 0 && confirmNewPassword.length > 0 && !mismatch && !isLoading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
     if (newPassword !== confirmNewPassword) {
       toast.error("Passwords do not match");
-      setIsLoading(false);
       return;
     }
-
+    setIsLoading(true);
     try {
       const response = await axiosInstance.post("/hospital-auth/first-login-change-password", {
         tempToken,
         newPassword,
         confirmNewPassword,
       });
-
       const data = response.data.data;
       sessionStorage.removeItem("hospitalTempToken");
-
-      // Login success
       login(
         data.tokens.accessToken,
         data.tokens.refreshToken,
         data.user,
         data.hospital,
         data.branch,
-        data.sessionId
+        data.sessionId,
       );
     } catch (err: unknown) {
-      toast.error(
-        getApiErrorMessage(err, "Failed to change password. The link may have expired.")
-      );
+      toast.error(getApiErrorMessage(err, "Failed to change password. The link may have expired."));
     } finally {
       setIsLoading(false);
     }
   };
 
+  const fieldSx = {
+    mb: 0.5,
+    "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
+    "& .MuiOutlinedInput-root": {
+      borderRadius: 2.5,
+      "& fieldset": { borderColor: "rgba(15,23,42,0.14)" },
+      "&:hover fieldset": { borderColor: "rgba(15,23,42,0.28)" },
+      "&.Mui-focused fieldset": { borderColor: ACCENT, boxShadow: `0 0 0 3px ${ACCENT}1a` },
+    },
+  };
+
   if (!tempToken) return null;
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: "background.default",
-      }}
-    >
-      <Container maxWidth="xs" sx={{ position: "relative", zIndex: 1 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 4, md: 5 },
-            borderRadius: 4,
-            bgcolor: "background.paper",
-            boxShadow: "0 10px 40px -10px rgba(0,0,0,0.08)",
-            border: "1px solid rgba(15, 23, 42, 0.05)",
-          }}
-        >
-          <Box sx={{ mb: 4, textAlign: "center" }}>
-            <Box
-              sx={{
-                width: 64,
-                height: 64,
-                borderRadius: "16px",
-                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "0 auto 16px",
-              }}
-            >
-              <LockResetRounded sx={{ color: "#fff", fontSize: 32 }} />
-            </Box>
-            <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary", mb: 1 }}>
-              Set New Password
-            </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              For security reasons, you must change your password before continuing.
-            </Typography>
-          </Box>
-<form onSubmit={handleSubmit}>
-            <TextField
-              fullWidth
-              label="New Password"
-              type={showPassword ? "text" : "password"}
-              variant="outlined"
-              margin="normal"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              disabled={isLoading}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockOutlined />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <TextField
-              fullWidth
-              label="Confirm New Password"
-              type={showPassword ? "text" : "password"}
-              variant="outlined"
-              margin="normal"
-              value={confirmNewPassword}
-              onChange={(e) => setConfirmNewPassword(e.target.value)}
-              disabled={isLoading}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockOutlined />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: "text.secondary" }}>
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <Button
-              fullWidth
-              type="submit"
-              variant="contained"
-              disabled={isLoading}
-              sx={{
-                py: 1.5,
-                mt: 2,
-                bgcolor: "primary.main",
-                color: "#FFFFFF",
-                fontWeight: 600,
-                fontSize: "1rem",
-                textTransform: "none",
-                borderRadius: 2,
-                boxShadow: "none",
-                "&:hover": {
-                  bgcolor: "primary.dark",
-                  boxShadow: "0 4px 12px rgba(16, 185, 129, 0.2)",
-                  transform: "translateY(-1px)",
-                },
-                transition: "all 0.2s ease-in-out",
-              }}
-            >
-              {isLoading ? <HeartbeatLoader size={22} /> : "Update Password & Continue"}
-            </Button>
-          </form>
-        </Paper>
-      </Container>
+    <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#fff", px: 3, py: 6 }}>
+      <Box
+        sx={{
+          width: "100%", maxWidth: 410,
+          p: { xs: 3, sm: 4.5 },
+          border: "1px solid rgba(15,23,42,0.10)", borderRadius: 4, bgcolor: "#fff",
+          "@media (prefers-reduced-motion: no-preference)": { animation: `${kfReveal} 0.5s cubic-bezier(0.22,1,0.36,1) both` },
+        }}
+      >
+        <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.72rem", letterSpacing: "1.6px", textTransform: "uppercase", mb: 1.25 }}>
+          Hospital Staff Portal
+        </Typography>
+        <Typography sx={{ fontWeight: 800, fontSize: "1.85rem", letterSpacing: "-0.8px", color: TEXT }}>
+          Set a new password
+        </Typography>
+        <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", mt: 0.75, mb: 4 }}>
+          Choose a new password to finish signing in.
+        </Typography>
+
+        <form onSubmit={handleSubmit} noValidate>
+          <TextField
+            fullWidth variant="outlined" label="New password" type={showPassword ? "text" : "password"} margin="dense"
+            value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+            onKeyUp={(e) => setCapsOn(e.getModifierState?.("CapsLock") ?? false)}
+            disabled={isLoading} required sx={fieldSx} inputProps={{ autoComplete: "new-password" }}
+            helperText={capsOn ? "Caps Lock is on" : " "}
+            FormHelperTextProps={{ sx: { color: capsOn ? "warning.main" : undefined } }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  {capsOn && <KeyboardCapslockRounded fontSize="small" sx={{ color: "warning.main", mr: 0.5 }} />}
+                  <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" size="small">
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+          <TextField
+            fullWidth variant="outlined" label="Confirm new password" type={showPassword ? "text" : "password"} margin="dense"
+            value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}
+            disabled={isLoading} required sx={fieldSx} inputProps={{ autoComplete: "new-password" }}
+            error={mismatch} helperText={mismatch ? "Passwords do not match" : " "}
+          />
+
+          <Button
+            fullWidth type="submit" disableElevation disabled={!canSubmit}
+            sx={{
+              py: 1.4, mt: 2, fontWeight: 700, fontSize: "0.98rem", textTransform: "none", borderRadius: 2.5, color: "#fff",
+              bgcolor: ACCENT,
+              "&:hover": { bgcolor: ACCENT_DARK },
+              "&.Mui-disabled": { bgcolor: "rgba(15,23,42,0.10)", color: "rgba(15,23,42,0.4)" },
+              transition: "background-color 0.2s ease",
+            }}
+          >
+            {isLoading ? <HeartbeatLoader size={22} /> : "Update password & continue"}
+          </Button>
+        </form>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 4, color: "text.secondary" }}>
+          <ShieldOutlined sx={{ fontSize: 15 }} />
+          <Typography variant="caption">Encrypted · session-bound access</Typography>
+        </Box>
+      </Box>
     </Box>
   );
 }
