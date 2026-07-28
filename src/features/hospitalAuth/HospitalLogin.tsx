@@ -6,7 +6,7 @@ import {
   Box, Button, TextField, Typography, InputAdornment, IconButton, Link,
 } from "@mui/material";
 import {
-  Visibility, VisibilityOff, LocalHospitalRounded, KeyboardCapslockRounded, ShieldOutlined,
+  Visibility, VisibilityOff, KeyboardCapslockRounded, ShieldOutlined,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { axiosInstance } from "@/api/axios";
@@ -85,14 +85,6 @@ export default function HospitalLogin() {
           "@media (prefers-reduced-motion: no-preference)": { animation: `${kfReveal} 0.5s cubic-bezier(0.22,1,0.36,1) both` },
         }}
       >
-        {/* minimal mark */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 5 }}>
-          <Box sx={{ width: 40, height: 40, borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: ACCENT }}>
-            <LocalHospitalRounded sx={{ color: "#fff", fontSize: 22 }} />
-          </Box>
-          <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", letterSpacing: "-0.4px", color: TEXT }}>HMS</Typography>
-        </Box>
-
         <Typography sx={{ fontWeight: 800, fontSize: "1.85rem", letterSpacing: "-0.8px", color: TEXT }}>
           Welcome back
         </Typography>
