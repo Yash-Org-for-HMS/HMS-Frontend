@@ -85,11 +85,16 @@ export default function HospitalLogin() {
           "@media (prefers-reduced-motion: no-preference)": { animation: `${kfReveal} 0.5s cubic-bezier(0.22,1,0.36,1) both` },
         }}
       >
+        {/* Names the portal so it's never mistaken for the platform-admin login
+            (which uses the indigo accent at /login). */}
+        <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.72rem", letterSpacing: "1.6px", textTransform: "uppercase", mb: 1.25 }}>
+          Hospital Staff Portal
+        </Typography>
         <Typography sx={{ fontWeight: 800, fontSize: "1.85rem", letterSpacing: "-0.8px", color: TEXT }}>
           Welcome back
         </Typography>
         <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", mt: 0.75, mb: 4 }}>
-          Sign in to your hospital staff portal.
+          Sign in to continue to your workspace.
         </Typography>
 
         <form onSubmit={handleLogin} noValidate>
