@@ -63,7 +63,7 @@ export default function Login() {
   };
 
   return (
-    <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#fff", px: 3, py: 6 }}>
+    <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#f8fafc", px: 3, py: 6 }}>
       <Box
         sx={{
           width: "100%", maxWidth: 410,
@@ -72,11 +72,14 @@ export default function Login() {
           "@media (prefers-reduced-motion: no-preference)": { animation: `${kfReveal} 0.5s cubic-bezier(0.22,1,0.36,1) both` },
         }}
       >
-        {/* Names the portal so it's never mistaken for the hospital staff login
-            (which uses the cyan accent at /hospital/login). */}
-        <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.72rem", letterSpacing: "1.6px", textTransform: "uppercase", mb: 1.25 }}>
-          Platform Admin
-        </Typography>
+        {/* Names the portal (badge) so it's never mistaken for the hospital staff
+            login, which uses the cyan accent at /hospital/login. */}
+        <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, px: 1.25, py: 0.5, mb: 2, borderRadius: 999, bgcolor: `${ACCENT}14`, border: `1px solid ${ACCENT}2b` }}>
+          <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: ACCENT }} />
+          <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.68rem", letterSpacing: "1px", textTransform: "uppercase", lineHeight: 1 }}>
+            Platform Admin
+          </Typography>
+        </Box>
         <Typography sx={{ fontWeight: 800, fontSize: "1.85rem", letterSpacing: "-0.8px", color: TEXT }}>
           Welcome back
         </Typography>
