@@ -72,13 +72,13 @@ export default function Login() {
 
         {/* Names the portal so it's never mistaken for the hospital staff login
             (which uses the cyan accent at /hospital/login). */}
-        <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.7rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 1.75 }}>
+        <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.7rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 0.75 }}>
           Platform Admin
         </Typography>
         <Typography sx={{ fontWeight: 800, fontSize: "1.45rem", letterSpacing: "-0.5px", lineHeight: 1.15, color: TEXT }}>
           Welcome back
         </Typography>
-        <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", lineHeight: 1.55, mt: 1, mb: 3.25 }}>
+        <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", lineHeight: 1.55, mt: 0.5, mb: 3.5 }}>
           Sign in to HMS platform administration.
         </Typography>
 
@@ -122,7 +122,7 @@ export default function Login() {
           </Button>
         </form>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 4, color: "text.secondary" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 3.5, color: "text.secondary" }}>
           <ShieldOutlined sx={{ fontSize: 15 }} />
           <Typography variant="caption">Encrypted · platform access</Typography>
         </Box>
