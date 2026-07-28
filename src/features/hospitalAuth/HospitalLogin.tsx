@@ -81,7 +81,9 @@ export default function HospitalLogin() {
     <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#fff", px: 3, py: 6 }}>
       <Box
         sx={{
-          width: "100%", maxWidth: 380,
+          width: "100%", maxWidth: 410,
+          p: { xs: 3, sm: 4.5 },
+          border: "1px solid rgba(15,23,42,0.10)", borderRadius: 4, bgcolor: "#fff",
           "@media (prefers-reduced-motion: no-preference)": { animation: `${kfReveal} 0.5s cubic-bezier(0.22,1,0.36,1) both` },
         }}
       >
