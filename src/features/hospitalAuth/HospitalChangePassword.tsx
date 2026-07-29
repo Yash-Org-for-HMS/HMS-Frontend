@@ -72,6 +72,10 @@ export default function HospitalChangePassword() {
     "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
     "& .MuiOutlinedInput-root": {
       borderRadius: 2.5,
+      // Frosted-white fill so fields read cleanly over the soft background image
+      // without needing a card container around them.
+      backgroundColor: "rgba(255,255,255,0.72)",
+      backdropFilter: "blur(4px)",
       "& fieldset": { borderColor: "rgba(15,23,42,0.14)" },
       "&:hover fieldset": { borderColor: "rgba(15,23,42,0.28)" },
       "&.Mui-focused fieldset": { borderColor: ACCENT, boxShadow: `0 0 0 3px ${ACCENT}1a` },
@@ -81,13 +85,9 @@ export default function HospitalChangePassword() {
   if (!tempToken) return null;
 
   return (
-    <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#f8fafc", px: 3, py: 6 }}>
-      <Box
-        sx={{
-          width: "100%", maxWidth: 480, p: { xs: 3, sm: 4.5 }, border: "1px solid rgba(15,23,42,0.08)", borderRadius: 4, bgcolor: "#fff", boxShadow: "0 12px 40px -18px rgba(15,23,42,0.18)", position: "relative", overflow: "hidden",
-        }}
-      >
-        <Box aria-hidden sx={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, ${ACCENT}, ${ACCENT_DARK})` }} />
+    <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", px: 3, py: 6, backgroundImage: "url('/login.jpg')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
+      {/* Minimalist: the form sits directly on the background image — no card. */}
+      <Box sx={{ width: "100%", maxWidth: 400 }}>
         <AuthBrand accent={ACCENT} />
 
         <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.7rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 0.75 }}>
