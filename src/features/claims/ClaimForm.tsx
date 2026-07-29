@@ -19,7 +19,7 @@ const ACCENT = ACCENTS.reception;
 const empty = {
   patientId: "", schemeType: "INSURANCE", payerId: "", policyOrCardNumber: "", tpaName: "",
   patientRelation: "Self", estimatedCost: "", preAuthRequestedAmount: "", preAuthApprovedAmount: "",
-  finalClaimedAmount: "", settledAmount: "", portalReference: "", remarks: "",
+  finalClaimedAmount: "", portalReference: "", remarks: "",
 };
 
 export default function ClaimForm() {
@@ -72,7 +72,6 @@ export default function ClaimForm() {
       preAuthRequestedAmount: existing.preAuthRequestedAmount ?? "",
       preAuthApprovedAmount: existing.preAuthApprovedAmount ?? "",
       finalClaimedAmount: existing.finalClaimedAmount ?? "",
-      settledAmount: existing.settledAmount ?? "",
       portalReference: existing.portalReference || "",
       remarks: existing.remarks || "",
     });
@@ -99,7 +98,6 @@ export default function ClaimForm() {
         preAuthRequestedAmount: num(form.preAuthRequestedAmount),
         preAuthApprovedAmount: num(form.preAuthApprovedAmount),
         finalClaimedAmount: num(form.finalClaimedAmount),
-        settledAmount: num(form.settledAmount),
         portalReference: form.portalReference || undefined,
         remarks: form.remarks || undefined,
       };
@@ -176,7 +174,8 @@ export default function ClaimForm() {
           <Grid size={{ xs: 12, sm: 6, md: 4 }} ><TextField fullWidth type="number" label="Pre-auth requested" value={form.preAuthRequestedAmount} onChange={(e) => set("preAuthRequestedAmount", e.target.value)} /></Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4 }} ><TextField fullWidth type="number" label="Pre-auth approved" value={form.preAuthApprovedAmount} onChange={(e) => set("preAuthApprovedAmount", e.target.value)} /></Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4 }} ><TextField fullWidth type="number" label="Final claimed" value={form.finalClaimedAmount} onChange={(e) => set("finalClaimedAmount", e.target.value)} /></Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} ><TextField fullWidth type="number" label="Settled" value={form.settledAmount} onChange={(e) => set("settledAmount", e.target.value)} /></Grid>
+          {/* "Settled" is not editable here — it's recorded via the Record-settlement
+              action on the claim (which books the payer payment + audit trail). */}
 
           <Grid size={12} ><TextField fullWidth multiline rows={2} label="Remarks" value={form.remarks} onChange={(e) => set("remarks", e.target.value)} /></Grid>
         </Grid>
