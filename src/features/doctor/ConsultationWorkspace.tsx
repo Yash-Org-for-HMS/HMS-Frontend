@@ -499,6 +499,8 @@ export default function ConsultationWorkspace() {
                       onChange={(e) => setForm({ ...form, followUpDate: e.target.value })}
                       sx={{ "& fieldset": { borderColor: "divider" } }}
                       InputLabelProps={{ shrink: true }}
+                      // A follow-up can only be scheduled from today onward.
+                      inputProps={{ min: new Date().toLocaleDateString("en-CA") }}
                     />
                   </Grid>
                 </Grid>

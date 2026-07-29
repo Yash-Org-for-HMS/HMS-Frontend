@@ -32,6 +32,8 @@ export default function MyLeaves() {
   const [fromDate, setFromDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [toDate, setToDate] = useState("");
   const [reason, setReason] = useState("");
+  // Leave can only be for today onward (the backend enforces this too).
+  const today = dayjs().format("YYYY-MM-DD");
 
   const { data: leaves = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["my-leaves"],
@@ -76,10 +78,11 @@ export default function MyLeaves() {
       <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5 }}>Add leave</Typography>
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "flex-end" }}>
-          <TextField size="small" type="date" label="From" InputLabelProps={{ shrink: true }} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+          <TextField size="small" type="date" label="From" InputLabelProps={{ shrink: true }} value={fromDate} onChange={(e) => setFromDate(e.target.value)} inputProps={{ min: today }} />
           <TextField
             size="small" type="date" label="To (optional)" InputLabelProps={{ shrink: true }}
             value={toDate} onChange={(e) => setToDate(e.target.value)}
+            inputProps={{ min: fromDate || today }}
             helperText="Leave empty for a single day"
             sx={{ position: "relative" }}
             slotProps={{ formHelperText: { sx: { position: "absolute", top: "100%", left: 0, mt: 0.25, whiteSpace: "nowrap" } } }}
