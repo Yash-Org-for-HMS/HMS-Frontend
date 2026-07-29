@@ -11,9 +11,6 @@ import {
   GroupRounded, MonitorHeartRounded, WarningAmberRounded, BadgeRounded,
   FileDownloadRounded,
 } from "@mui/icons-material";
-import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
-} from "recharts";
 import { axiosInstance } from "@/api/axios";
 import { exportTableToExcel } from "@/utils/exportExcel";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
@@ -45,15 +42,6 @@ function Kpi({ icon, label, value, color }: { icon: React.ReactNode; label: stri
         <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.1 }}>{value}</Typography>
         <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>{label}</Typography>
       </Box>
-    </Paper>
-  );
-}
-
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>{title}</Typography>
-      {children}
     </Paper>
   );
 }
@@ -111,29 +99,8 @@ function SummaryReport({ data }: { data: any }) {
         <Kpi icon={<WarningAmberRounded />} label="Abnormal readings" value={s?.abnormalReadings || 0} color={SEMANTIC.danger} />
         <Kpi icon={<BadgeRounded />} label="Staff recording" value={s?.staffRecording || 0} color={SEMANTIC.success} />
       </Box>
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1.6fr 1fr" }, gap: 2 }}>
-        <Panel title="Vitals recorded over time">
-          <Box sx={{ height: 300 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trend} margin={{ top: 8, right: 12, left: -16, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="nurseTrend" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={NURSE_PURPLE} stopOpacity={0.35} />
-                    <stop offset="95%" stopColor={NURSE_PURPLE} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(d) => dayjs(d).format("DD MMM")} minTickGap={24} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                <RTooltip labelFormatter={(d) => dayjs(d as string).format("DD MMM YYYY")} />
-                <Area type="monotone" dataKey="count" name="Vitals" stroke={NURSE_PURPLE} strokeWidth={2} fill="url(#nurseTrend)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </Box>
-        </Panel>
-        <SimpleTable title="Daily vitals recorded" head={["Date", "Vitals"]}
-          rows={trend.map((t) => [fmtDate(t.date), Number(t.count)])} />
-      </Box>
+      <SimpleTable title="Daily vitals recorded" head={["Date", "Vitals"]}
+        rows={trend.map((t) => [fmtDate(t.date), Number(t.count)])} />
     </Box>
   );
 }
