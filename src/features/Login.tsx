@@ -70,9 +70,12 @@ export default function Login() {
       <Box sx={{ width: "100%", maxWidth: 400 }}>
         <AuthBrand accent={ACCENT} />
 
+        <Typography sx={{ color: "#0F172A", fontWeight: 800, fontSize: "1.7rem", letterSpacing: "-0.3px", lineHeight: 1.15, textAlign: "center" }}>
+          Welcome back
+        </Typography>
         {/* Names the portal so it's never mistaken for the hospital staff login
             (which uses the cyan accent at /hospital/login). */}
-        <Typography sx={{ color: ACCENT, fontWeight: 800, fontSize: "1.7rem", letterSpacing: "-0.3px", lineHeight: 1.15, mb: 3.5, textAlign: "center" }}>
+        <Typography sx={{ color: "#0F172A", fontSize: "0.95rem", textAlign: "center", mt: 0.5, mb: 3.5 }}>
           Platform Admin
         </Typography>
 

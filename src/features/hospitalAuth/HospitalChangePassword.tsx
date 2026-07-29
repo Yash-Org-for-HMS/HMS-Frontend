@@ -90,7 +90,7 @@ export default function HospitalChangePassword() {
       <Box sx={{ width: "100%", maxWidth: 400 }}>
         <AuthBrand accent={ACCENT} />
 
-        <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.7rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 0.75, textAlign: "center" }}>
+        <Typography sx={{ color: TEXT, fontWeight: 700, fontSize: "0.7rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 0.75, textAlign: "center" }}>
           Hospital Staff Portal
         </Typography>
         <Typography sx={{ fontWeight: 800, fontSize: "1.45rem", letterSpacing: "-0.5px", lineHeight: 1.15, color: TEXT, textAlign: "center" }}>
