@@ -72,7 +72,7 @@ export default function Login() {
 
         {/* Names the portal so it's never mistaken for the hospital staff login
             (which uses the cyan accent at /hospital/login). */}
-        <Typography sx={{ color: ACCENT, fontWeight: 700, fontSize: "0.72rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 3.5 }}>
+        <Typography sx={{ color: ACCENT, fontWeight: 800, fontSize: "1.7rem", letterSpacing: "-0.3px", lineHeight: 1.15, mb: 3.5 }}>
           Platform Admin
         </Typography>
 
