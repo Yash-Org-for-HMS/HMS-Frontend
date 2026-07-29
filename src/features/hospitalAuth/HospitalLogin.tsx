@@ -87,12 +87,12 @@ export default function HospitalLogin() {
       <Box sx={{ width: "100%", maxWidth: 400 }}>
 
         <Typography sx={{ color: "#0F172A", fontWeight: 800, fontSize: "1.7rem", letterSpacing: "-0.3px", lineHeight: 1.15, textAlign: "center" }}>
-          Welcome back
+          Hospital Staff Portal
         </Typography>
         {/* Names the portal so it's never mistaken for the platform-admin login
             (which uses the indigo accent at /login). */}
         <Typography sx={{ color: "#0F172A", fontSize: "0.95rem", textAlign: "center", mt: 0.5, mb: 3.5 }}>
-          Hospital Staff Portal
+           Welcome back
         </Typography>
 
         <form onSubmit={handleLogin} noValidate>

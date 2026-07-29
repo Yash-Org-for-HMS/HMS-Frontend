@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useMemo, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -11,10 +11,6 @@ import {
   GroupRounded, EventAvailableRounded, MedicationRounded,
   ScienceRounded, MonitorHeartRounded, DescriptionRounded, FileDownloadRounded,
 } from "@mui/icons-material";
-import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
-  BarChart, Bar, PieChart, Pie, Cell, Legend,
-} from "recharts";
 import { axiosInstance } from "@/api/axios";
 import { exportTableToExcel } from "@/utils/exportExcel";
 import ErrorState from "@/components/ErrorState";
@@ -25,7 +21,6 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
-const PIE_COLORS = [ACCENTS.doctor, "#ec4899", SEMANTIC.warning, SEMANTIC.success, "#8b5cf6", NEUTRAL.muted];
 
 const PRESETS = [
   { key: "today", label: "Today", from: () => dayjs(), to: () => dayjs() },
@@ -46,15 +41,6 @@ function Kpi({ icon, label, value, color }: { icon: React.ReactNode; label: stri
         <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.1 }}>{value}</Typography>
         <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>{label}</Typography>
       </Box>
-    </Paper>
-  );
-}
-
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>{title}</Typography>
-      {children}
     </Paper>
   );
 }
@@ -116,29 +102,8 @@ function SummaryReport({ data }: { data: any }) {
         <Kpi icon={<ScienceRounded />} label="Lab orders" value={s?.labOrders || 0} color={SEMANTIC.warning} />
         <Kpi icon={<MonitorHeartRounded />} label="Radiology" value={s?.radiologyOrders || 0} color="#06b6d4" />
       </Box>
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1.6fr 1fr" }, gap: 2 }}>
-        <Panel title="Consultations over time">
-          <Box sx={{ height: 300 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trend} margin={{ top: 8, right: 12, left: -16, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="docTrend" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={DOCTOR_BLUE} stopOpacity={0.35} />
-                    <stop offset="95%" stopColor={DOCTOR_BLUE} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(d) => dayjs(d).format("DD MMM")} minTickGap={24} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                <RTooltip labelFormatter={(d) => dayjs(d as string).format("DD MMM YYYY")} />
-                <Area type="monotone" dataKey="count" name="Consultations" stroke={DOCTOR_BLUE} strokeWidth={2} fill="url(#docTrend)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </Box>
-        </Panel>
-        <SimpleTable title="Daily consultations" head={["Date", "Consultations"]}
-          rows={trend.map((t) => [fmtDate(t.date), Number(t.count)])} />
-      </Box>
+      <SimpleTable title="Daily consultations" head={["Date", "Consultations"]}
+        rows={trend.map((t) => [fmtDate(t.date), Number(t.count)])} />
     </Box>
   );
 }
@@ -146,54 +111,16 @@ function SummaryReport({ data }: { data: any }) {
 function DiagnosesReport({ data }: { data: any }) {
   const topDiagnoses: any[] = data?.topDiagnoses || [];
   return (
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
-      <Panel title="Top diagnoses">
-        {topDiagnoses.length === 0 ? (
-          <Typography variant="body2" sx={{ color: "text.secondary", py: 4, textAlign: "center" }}>No diagnoses recorded in this range.</Typography>
-        ) : (
-          <Box sx={{ height: 320 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topDiagnoses} layout="vertical" margin={{ top: 0, right: 16, left: 8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" horizontal={false} />
-                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
-                <YAxis type="category" dataKey="diagnosis" width={150} tick={{ fontSize: 11 }} tickFormatter={(v) => (v.length > 22 ? v.slice(0, 21) + "…" : v)} />
-                <RTooltip />
-                <Bar dataKey="count" name="Cases" fill={DOCTOR_BLUE} radius={[0, 4, 4, 0]} barSize={16} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Box>
-        )}
-      </Panel>
-      <SimpleTable title="Diagnoses breakdown" head={["Diagnosis", "Cases"]}
-        rows={topDiagnoses.map((d) => [d.diagnosis, Number(d.count)])} />
-    </Box>
+    <SimpleTable title="Diagnoses breakdown" head={["Diagnosis", "Cases"]}
+      rows={topDiagnoses.map((d) => [d.diagnosis, Number(d.count)])} />
   );
 }
 
 function GenderReport({ data }: { data: any }) {
   const genderSplit: any[] = data?.genderSplit || [];
   return (
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
-      <Panel title="Patients by gender">
-        {genderSplit.length === 0 ? (
-          <Typography variant="body2" sx={{ color: "text.secondary", py: 4, textAlign: "center" }}>No patients in this range.</Typography>
-        ) : (
-          <Box sx={{ height: 320 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={genderSplit} dataKey="count" nameKey="label" cx="50%" cy="50%" outerRadius={100} label={(e: any) => `${e.label}: ${e.count}`}>
-                  {genderSplit.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                </Pie>
-                <Legend />
-                <RTooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </Box>
-        )}
-      </Panel>
-      <SimpleTable title="Gender split" head={["Gender", "Patients"]}
-        rows={genderSplit.map((g) => [g.label, Number(g.count)])} />
-    </Box>
+    <SimpleTable title="Gender split" head={["Gender", "Patients"]}
+      rows={genderSplit.map((g) => [g.label, Number(g.count)])} />
   );
 }
 

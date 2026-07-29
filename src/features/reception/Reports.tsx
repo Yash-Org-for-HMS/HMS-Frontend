@@ -1,9 +1,9 @@
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Grid, TextField, Tabs, Tab, Button, MenuItem,
-  Table, TableHead, TableBody, TableRow, TableCell, TableContainer, Chip,
+  Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
 } from "@mui/material";
 import {
   EventRounded, CheckCircleRounded, CancelRounded, PaymentsRounded,
@@ -11,10 +11,6 @@ import {
   HotelRounded, LocalHotelRounded, MeetingRoomRounded, CallSplitRounded, MedicalInformationRounded,
   FileDownloadRounded,
 } from "@mui/icons-material";
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
-  PieChart, Pie, Cell, Legend, AreaChart, Area,
-} from "recharts";
 import { axiosInstance } from "@/api/axios";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import ErrorState from "@/components/ErrorState";
@@ -23,10 +19,9 @@ import { exportTableToExcel } from "@/utils/exportExcel";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportTable, TrendChart, BreakdownBar, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = ACCENTS.reception;
-const PIE = [ACCENTS.reception, SEMANTIC.success, SEMANTIC.warning, SEMANTIC.danger, "#8b5cf6", SEMANTIC.info, "#ec4899"];
 const inr = formatINRAuto;
 
 function KpiTile({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
@@ -40,21 +35,6 @@ function KpiTile({ icon, label, value, color }: { icon: React.ReactNode; label: 
     </Paper>
   );
 }
-
-function ChartCard({ title, children, height = 280, empty = false }: { title: string; children: React.ReactElement; height?: number; empty?: boolean }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.primary", mb: 2 }}>{title}</Typography>
-      <Box sx={{ width: "100%", height }}>
-        {/* Empty renders outside ResponsiveContainer — it clones its child expecting
-            a chart component, and doesn't size/center arbitrary elements reliably. */}
-        {empty ? <Empty /> : <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer>}
-      </Box>
-    </Paper>
-  );
-}
-
-const axisProps = { tick: { fontSize: 12, fill: "#94a3b8" }, stroke: "#cbd5e1" } as any;
 
 export default function Reports() {
   const [tab, setTab] = useState(0);
@@ -218,15 +198,6 @@ export function ReferralsByDoctor() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} accent="#8b5cf6" label="Total visits" value={String(s.totalVisits)} current={s.totalVisits} previous={prev?.totalVisits} /></Grid>
           </Grid>
 
-          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, md: 7 }}>
-              <BreakdownBar title="Top referrers" subtitle="Patients referred, this period" data={rows.slice(0, 10)} categoryKey="name" valueKey="patientCount" valueName="Patients" colorIndex={0} height={340} />
-            </Grid>
-            <Grid size={{ xs: 12, md: 5 }}>
-              <TrendChart title="Referrals over time" subtitle="New referred patients per day" data={trend} xKey="date" series={[{ key: "patients", label: "Referred patients" }]} height={340} />
-            </Grid>
-          </Grid>
-
           <ReportTable
             title="Referrer detail"
             filename={`referrals_${range.from}_${range.to}`}
@@ -274,34 +245,8 @@ export function Census() {
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ReplayRounded />} label="Discharges" value={String(data.movement.discharges)} color="#8b5cf6" /></Grid>
           </Grid>
 
-          <Grid container spacing={2.5}>
-            <Grid size={{ xs: 12, md: 5 }}>
-              <ChartCard title="Beds by status" height={260} empty={!beds.total}>
-                <PieChart>
-                  <Pie dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label
-                    data={[
-                      { name: "Occupied", value: beds.occupied }, { name: "Available", value: beds.available },
-                      { name: "Reserved", value: beds.reserved }, { name: "Maintenance", value: beds.maintenance },
-                    ].filter((d) => d.value > 0)}>
-                    {[SEMANTIC.danger, SEMANTIC.success, SEMANTIC.warning, NEUTRAL.muted].map((c, i) => <Cell key={i} fill={c} />)}
-                  </Pie><Legend /><RTooltip />
-                </PieChart>
-              </ChartCard>
-            </Grid>
-            <Grid size={{ xs: 12, md: 7 }}>
-              <ChartCard title="Occupancy by ward (%)" height={260} empty={!data.byWard.length}>
-                <BarChart data={data.byWard} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} horizontal={false} />
-                  <XAxis type="number" domain={[0, 100]} {...axisProps} /><YAxis type="category" dataKey="wardName" width={120} {...axisProps} />
-                  <RTooltip formatter={(v: any) => `${v}%`} /><Bar dataKey="occupancyRate" name="Occupancy" fill={ACCENT} radius={[0, 6, 6, 0]} />
-                </BarChart>
-              </ChartCard>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <SimpleTable title="Ward detail" head={["Ward", "Beds", "Occupied", "Available", "Occupancy"]}
-                rows={data.byWard.map((w: any) => [w.wardName || "—", String(w.totalBeds), String(w.occupied), String(w.available), `${w.occupancyRate}%`])} />
-            </Grid>
-          </Grid>
+          <SimpleTable title="Ward detail" head={["Ward", "Beds", "Occupied", "Available", "Occupancy"]}
+            rows={data.byWard.map((w: any) => [w.wardName || "—", String(w.totalBeds), String(w.occupied), String(w.available), `${w.occupancyRate}%`])} />
         </Box>
       )}
     </Box>
@@ -348,30 +293,7 @@ export function DailyOpd() {
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="New patients" value={String(t.newPatients)} color="#ec4899" /></Grid>
           </Grid>
 
-          <Grid container spacing={2.5}>
-            <Grid size={{ xs: 12, md: 5 }}>
-              <ChartCard title="By status" empty={!data.byStatus.length}>
-                <PieChart>
-                  <Pie data={data.byStatus} dataKey="count" nameKey="label" cx="50%" cy="50%" outerRadius={90} label>
-                    {data.byStatus.map((s: any, i: number) => <Cell key={i} fill={s.color || PIE[i % PIE.length]} />)}
-                  </Pie>
-                  <Legend /><RTooltip />
-                </PieChart>
-              </ChartCard>
-            </Grid>
-            <Grid size={{ xs: 12, md: 7 }}>
-              <ChartCard title="Appointments by doctor" empty={!data.byDoctor.length}>
-                <BarChart data={data.byDoctor} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} horizontal={false} />
-                  <XAxis type="number" {...axisProps} /><YAxis type="category" dataKey="doctorName" width={120} {...axisProps} />
-                  <RTooltip /><Bar dataKey="total" name="Total" fill={ACCENT} radius={[0, 6, 6, 0]} />
-                </BarChart>
-              </ChartCard>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <SimpleTable title="By department" head={["Department", "Appointments"]} rows={data.byDepartment.map((d: any) => [d.departmentName, String(d.count)])} />
-            </Grid>
-          </Grid>
+          <SimpleTable title="By department" head={["Department", "Appointments"]} rows={data.byDepartment.map((d: any) => [d.departmentName, String(d.count)])} />
         </Box>
       )}
     </Box>
@@ -413,46 +335,7 @@ export function Analytics() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent="#8b5cf6" label="Avg / day" value={String(t.avgPerDay)} current={t.avgPerDay} previous={p?.avgPerDay} /></Grid>
           </Grid>
 
-          <Grid container spacing={2.5}>
-            <Grid size={{ xs: 12 }}>
-              <ChartCard title="Daily trend" empty={!data.trend.length}>
-                <AreaChart data={data.trend}>
-                  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={ACCENT} stopOpacity={0.4} /><stop offset="95%" stopColor={ACCENT} stopOpacity={0} /></linearGradient></defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} />
-                  <XAxis dataKey="date" {...axisProps} tickFormatter={(d) => dayjs(d).format("DD MMM")} /><YAxis {...axisProps} allowDecimals={false} />
-                  <RTooltip /><Area type="monotone" dataKey="total" name="Appointments" stroke={ACCENT} fill="url(#g)" strokeWidth={2} />
-                </AreaChart>
-              </ChartCard>
-            </Grid>
-            <Grid size={{ xs: 12, md: 7 }}>
-              <ChartCard title="By weekday">
-                <BarChart data={data.byWeekday}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} /><XAxis dataKey="day" {...axisProps} /><YAxis {...axisProps} allowDecimals={false} />
-                  <RTooltip /><Bar dataKey="count" name="Appointments" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ChartCard>
-            </Grid>
-            <Grid size={{ xs: 12, md: 5 }}>
-              <ChartCard title="By status" empty={!data.byStatus.length}>
-                <PieChart>
-                  <Pie data={data.byStatus} dataKey="count" nameKey="label" cx="50%" cy="50%" outerRadius={90} label>
-                    {data.byStatus.map((s: any, i: number) => <Cell key={i} fill={s.color || PIE[i % PIE.length]} />)}
-                  </Pie><Legend /><RTooltip />
-                </PieChart>
-              </ChartCard>
-            </Grid>
-            <Grid size={{ xs: 12, md: 7 }}>
-              <ChartCard title="Appointments by hour">
-                <BarChart data={data.byHour}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} /><XAxis dataKey="hour" {...axisProps} tickFormatter={(h) => `${h}:00`} /><YAxis {...axisProps} allowDecimals={false} />
-                  <RTooltip labelFormatter={(h) => `${h}:00`} /><Bar dataKey="count" name="Appointments" fill={ACCENT} radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ChartCard>
-            </Grid>
-            <Grid size={{ xs: 12, md: 5 }}>
-              <SimpleTable title="Top doctors" head={["Doctor", "Appointments"]} rows={data.byDoctor.map((d: any) => [d.doctorName, String(d.count)])} />
-            </Grid>
-          </Grid>
+          <SimpleTable title="Top doctors" head={["Doctor", "Appointments"]} rows={data.byDoctor.map((d: any) => [d.doctorName, String(d.count)])} />
         </Box>
       )}
     </Box>
@@ -492,36 +375,7 @@ export function Collection() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent="#8b5cf6" label="Transactions" value={String(t.transactions)} current={t.transactions} previous={p?.transactions} /></Grid>
           </Grid>
 
-          <Grid container spacing={2.5}>
-            <Grid size={{ xs: 12, md: 7 }}>
-              <ChartCard title="Collected by day" empty={!data.byDay.length}>
-                <BarChart data={data.byDay}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} /><XAxis dataKey="date" {...axisProps} tickFormatter={(d) => dayjs(d).format("DD MMM")} /><YAxis {...axisProps} />
-                  <RTooltip formatter={(v: any) => inr(v)} /><Bar dataKey="amount" name="Collected" fill={SEMANTIC.success} radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ChartCard>
-            </Grid>
-            <Grid size={{ xs: 12, md: 5 }}>
-              <ChartCard title="By payment method" empty={!data.byMethod.length}>
-                <PieChart>
-                  <Pie data={data.byMethod} dataKey="amount" nameKey="method" cx="50%" cy="50%" outerRadius={90} label>
-                    {data.byMethod.map((_: any, i: number) => <Cell key={i} fill={PIE[i % PIE.length]} />)}
-                  </Pie><Legend /><RTooltip formatter={(v: any) => inr(v)} />
-                </PieChart>
-              </ChartCard>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <ChartCard title="By shift" height={240}>
-                <BarChart data={data.byShift}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} /><XAxis dataKey="shift" {...axisProps} /><YAxis {...axisProps} />
-                  <RTooltip formatter={(v: any) => inr(v)} /><Bar dataKey="amount" name="Collected" fill={ACCENTS.reception} radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ChartCard>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <SimpleTable title="By collector" head={["Collector", "Txns", "Amount"]} rows={data.byCollector.map((c: any) => [c.collector, String(c.count), inr(c.amount)])} />
-            </Grid>
-          </Grid>
+          <SimpleTable title="By collector" head={["Collector", "Txns", "Amount"]} rows={data.byCollector.map((c: any) => [c.collector, String(c.count), inr(c.amount)])} />
         </Box>
       )}
     </Box>
@@ -565,7 +419,6 @@ function Toolbar({ children, onClear }: { children: React.ReactNode; onClear?: (
 }
 
 function Loading() { return <ReportSkeleton />; }
-function Empty() { return <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "text.disabled" }}><Typography variant="body2">No data for this period</Typography></Box>; }
 
 function SimpleTable({ title, head, rows }: { title: string; head: string[]; rows: string[][] }) {
   return (
