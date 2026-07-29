@@ -11,9 +11,6 @@ import {
   DescriptionRounded, HourglassBottomRounded, PaidRounded, CancelRounded,
   AccountBalanceWalletRounded, GroupRounded, FileDownloadRounded, ArrowBackRounded,
 } from "@mui/icons-material";
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Cell,
-} from "recharts";
 import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { axiosInstance } from "@/api/axios";
 import { exportTableToExcel } from "@/utils/exportExcel";
@@ -23,7 +20,6 @@ import Mascot from "@/components/Mascot";
 import PageHeader from "@/components/layout/PageHeader";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
-import { statusMeta } from "./claimMeta";
 import { apiErrorText } from "@/utils/apiError";
 
 const ACCENT = ACCENTS.reception;
@@ -102,26 +98,7 @@ function OverviewReport({ data }: { data: any }) {
         <Kpi icon={<GroupRounded />} label="Patient shortfall" value={inr(s.patientShortfall)} color="#8b5cf6" />
       </Box>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
-        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>Claims by status</Typography>
-          {status.length === 0 ? (
-            <Typography variant="body2" sx={{ color: "text.secondary", py: 4, textAlign: "center" }}>No claims in this range.</Typography>
-          ) : (
-            <Box sx={{ height: 300 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={status} layout="vertical" margin={{ top: 0, right: 16, left: 8, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
-                  <YAxis type="category" dataKey="label" width={130} tick={{ fontSize: 11 }} />
-                  <RTooltip />
-                  <Bar dataKey="count" name="Claims" radius={[0, 4, 4, 0]} barSize={16}>
-                    {status.map((row, i) => <Cell key={i} fill={statusMeta(row.status).color} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </Box>
-          )}
-        </Paper>
+        <SimpleTable title="Claims by status" head={["Status", "Claims"]} rows={status.map((r) => [r.label, Number(r.count)])} />
         <SimpleTable title="Amount summary" head={["Metric", "Amount"]} rows={[
           ["Total billed", inr(s.totalBilled)],
           ["Total pre-auth approved", inr(s.totalApproved)],
