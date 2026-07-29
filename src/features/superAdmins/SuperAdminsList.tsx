@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -99,8 +99,8 @@ export default function SuperAdminsList() {
         subtitle={t("superAdmins.subtitle", "Manage global system administrators")}
         actions={
           <ActionButton
-            accentFrom="#8b5cf6"
-            accentTo="#6d28d9"
+            accentFrom={ACCENTS.admin}
+            accentTo={ACCENTS.adminDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/super-admins/new")}
           >
@@ -223,7 +223,7 @@ export default function SuperAdminsList() {
               color="primary"
               sx={{
                 "& .MuiPaginationItem-root": { color: "text.primary" },
-                "& .Mui-selected": { bgcolor: "rgba(139, 92, 246, 0.2) !important", color: "#c4b5fd" }
+                "& .Mui-selected": { bgcolor: "rgba(99, 102, 241, 0.2) !important", color: "#818cf8" }
               }}
             />
           </Box>
@@ -251,7 +251,7 @@ const textFieldSx = {
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider" },
     "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: "#8b5cf6" },
+    "&.Mui-focused fieldset": { borderColor: ACCENTS.admin },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
 };

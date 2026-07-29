@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -104,8 +104,8 @@ export default function FeatureFlagsList() {
         subtitle={t("flags.subtitle", "Manage hospital-specific feature toggles and overrides")}
         actions={
           <ActionButton
-            accentFrom={SEMANTIC.warning}
-            accentTo={SEMANTIC.warningDark}
+            accentFrom={ACCENTS.admin}
+            accentTo={ACCENTS.adminDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/feature-flags/new")}
           >
@@ -209,7 +209,7 @@ export default function FeatureFlagsList() {
               color="primary"
               sx={{
                 "& .MuiPaginationItem-root": { color: "text.primary" },
-                "& .Mui-selected": { bgcolor: "rgba(245, 158, 11, 0.2) !important", color: SEMANTIC.warningLight }
+                "& .Mui-selected": { bgcolor: "rgba(99, 102, 241, 0.2) !important", color: "#818cf8" }
               }}
             />
           </Box>

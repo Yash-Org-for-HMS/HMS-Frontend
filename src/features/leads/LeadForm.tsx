@@ -252,7 +252,7 @@ export default function LeadForm() {
                   disabled={loading} 
                   startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
-                    background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                    background: `linear-gradient(135deg, ${ACCENTS.admin} 0%, ${ACCENTS.adminDark} 100%)`,
                     boxShadow: "0 4px 14px 0 rgba(99, 102, 241, 0.39)",
                   }}
                 >

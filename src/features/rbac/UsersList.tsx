@@ -140,8 +140,8 @@ export default function UsersList() {
         subtitle="Global Support Mode: Manage hospital administrators and staff members across any tenant"
         actions={
           <ActionButton
-            accentFrom={ACCENTS.hospital}
-            accentTo={ACCENTS.hospitalDark}
+            accentFrom={ACCENTS.admin}
+            accentTo={ACCENTS.adminDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/rbac/users/add")}
           >

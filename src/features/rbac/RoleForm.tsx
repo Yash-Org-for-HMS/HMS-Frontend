@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { ACCENTS } from "@/styles/accents";
 import {
   Box,
   Container,
@@ -250,7 +251,7 @@ export default function RoleForm() {
                 {Object.entries(permissionsByModule).map(([moduleName, perms]: [string, any]) => (
                   <Grid size={{ xs: 12 }} key={moduleName}>
                     <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
-                      <Typography variant="subtitle2" sx={{ color: "#14b8a6", mb: 2, fontWeight: 700, textTransform: "uppercase" }}>
+                      <Typography variant="subtitle2" sx={{ color: ACCENTS.admin, mb: 2, fontWeight: 700, textTransform: "uppercase" }}>
                         {moduleName}
                       </Typography>
                       <FormGroup>
@@ -262,7 +263,7 @@ export default function RoleForm() {
                                 checked={selectedPermissions.includes(perm.permissionId)}
                                 onChange={() => handlePermissionChange(perm.permissionId)}
                                 size="small"
-                                sx={{ color: "rgba(255,255,255,0.3)", "&.Mui-checked": { color: "#14b8a6" } }}
+                                sx={{ color: "rgba(255,255,255,0.3)", "&.Mui-checked": { color: ACCENTS.admin } }}
                               />
                             }
                             label={<Typography variant="body2" sx={{ color: "text.primary" }}>{perm.actionName}</Typography>}
@@ -290,7 +291,7 @@ export default function RoleForm() {
                   variant="contained" 
                   disabled={loading} 
                   startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
-                  sx={{ background: "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)" }}
+                  sx={{ background: `linear-gradient(135deg, ${ACCENTS.admin} 0%, ${ACCENTS.adminDark} 100%)` }}
                 >
                   {loading ? t("common.saving", "Saving...") : t("common.save", "Save Role")}
                 </Button>
@@ -308,8 +309,8 @@ const textFieldSx = {
     color: "text.primary",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: "#14b8a6" },
+    "&.Mui-focused fieldset": { borderColor: ACCENTS.admin },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: "#14b8a6" },
+  "& .MuiInputLabel-root.Mui-focused": { color: ACCENTS.admin },
 };

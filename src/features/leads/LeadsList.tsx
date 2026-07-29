@@ -223,7 +223,7 @@ export default function LeadsList() {
         actions={
           <ActionButton
             accentFrom={ACCENTS.admin}
-            accentTo="#8b5cf6"
+            accentTo={ACCENTS.adminDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/leads/new")}
           >

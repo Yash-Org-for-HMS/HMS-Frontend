@@ -190,7 +190,7 @@ export default function HospitalOverview() {
           </Box>
           <Box sx={{ display: "flex", gap: 1 }}>
             <Button variant="outlined" startIcon={<WidgetsRounded />} onClick={() => navigate(`/hospitals/${id}/modules`)} sx={{ textTransform: "none", borderColor: "divider", color: "text.primary" }}>Modules</Button>
-            <Button variant="contained" startIcon={<EditRounded />} onClick={() => navigate(`/hospitals/${id}/edit`)} sx={{ textTransform: "none", background: `linear-gradient(135deg, ${ACCENT}, #8b5cf6)` }}>Edit</Button>
+            <Button variant="contained" startIcon={<EditRounded />} onClick={() => navigate(`/hospitals/${id}/edit`)} sx={{ textTransform: "none", background: `linear-gradient(135deg, ${ACCENT}, ${ACCENTS.adminDark})` }}>Edit</Button>
           </Box>
         </Box>
 

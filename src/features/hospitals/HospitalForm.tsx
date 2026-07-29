@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -462,7 +462,7 @@ export default function HospitalForm() {
                   size="small"
                   disabled={atBranchLimit}
                   onClick={() => setBranchDialog({ editing: null })}
-                  sx={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}
+                  sx={{ background: `linear-gradient(135deg, ${ACCENTS.admin} 0%, ${ACCENTS.adminDark} 100%)` }}
                 >
                   Add Branch
                 </Button>

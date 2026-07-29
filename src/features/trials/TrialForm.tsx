@@ -29,6 +29,7 @@ import { useToast } from "@/providers/ToastContext";
 import { validate, hasErrors, required, isEmail, type Errors } from "@/utils/validation";
 import FormHeader from "@/components/layout/FormHeader";
 import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
+import { ACCENTS } from "@/styles/accents";
 
 export default function TrialForm() {
   const { t } = useTranslation();
@@ -186,10 +187,10 @@ export default function TrialForm() {
                           px: 2,
                           "&:hover": { bgcolor: "action.hover" },
                           "&.Mui-selected": {
-                            bgcolor: "rgba(236, 72, 153, 0.2)",
-                            color: "#f472b6",
+                            bgcolor: "rgba(99, 102, 241, 0.2)",
+                            color: "#818cf8",
                             "&:hover": {
-                              bgcolor: "rgba(236, 72, 153, 0.25)"
+                              bgcolor: "rgba(99, 102, 241, 0.25)"
                             }
                           }
                         }
@@ -298,7 +299,7 @@ export default function TrialForm() {
                           py: 1.5,
                           px: 2,
                           "&:hover": { bgcolor: "action.hover" },
-                          "&.Mui-selected": { bgcolor: "rgba(236, 72, 153, 0.2)", color: "#f472b6" }
+                          "&.Mui-selected": { bgcolor: "rgba(99, 102, 241, 0.2)", color: "#818cf8" }
                         }
                       }
                     }
@@ -336,7 +337,7 @@ export default function TrialForm() {
               <Box sx={{ height: "100%", display: "flex", alignItems: "center", p: 2, bgcolor: "background.paper", borderRadius: "12px", border: "1px solid", borderColor: "divider" }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
                   <Typography sx={{ color: "text.secondary" }}>Days Remaining:</Typography>
-                  <Typography sx={{ color: "#ec4899", fontWeight: 800, fontSize: "1.2rem" }}>
+                  <Typography sx={{ color: ACCENTS.admin, fontWeight: 800, fontSize: "1.2rem" }}>
                     {calculateDaysRemaining()} Days
                   </Typography>
                 </Box>
@@ -374,8 +375,8 @@ export default function TrialForm() {
                   disabled={loading} 
                   startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
-                    background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)",
-                    boxShadow: "0 4px 14px 0 rgba(236, 72, 153, 0.39)",
+                    background: `linear-gradient(135deg, ${ACCENTS.admin} 0%, ${ACCENTS.adminDark} 100%)`,
+                    boxShadow: "0 4px 14px 0 rgba(99, 102, 241, 0.39)",
                   }}
                 >
                   {loading ? t("common.saving") : t("common.save")}
@@ -413,8 +414,8 @@ const textFieldSx = {
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider", borderRadius: "12px" },
     "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: "#ec4899" },
+    "&.Mui-focused fieldset": { borderColor: ACCENTS.admin },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: "#ec4899" },
+  "& .MuiInputLabel-root.Mui-focused": { color: ACCENTS.admin },
 };

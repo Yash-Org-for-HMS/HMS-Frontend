@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import {
   Box,
   Typography,
@@ -155,7 +155,7 @@ export default function OnboardingList() {
                   actions={
                     <>
                       <Button size="small" variant="outlined" onClick={() => navigate("/trials")} sx={{ textTransform: "none" }}>Manage</Button>
-                      <Button size="small" variant="contained" startIcon={<RocketLaunchRounded />} onClick={() => navigate(`/hospitals/new?trialId=${t.hospitalTrialId}`)} sx={{ textTransform: "none", background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)" }}>Convert</Button>
+                      <Button size="small" variant="contained" startIcon={<RocketLaunchRounded />} onClick={() => navigate(`/hospitals/new?trialId=${t.hospitalTrialId}`)} sx={{ textTransform: "none", background: `linear-gradient(135deg, ${ACCENTS.admin} 0%, ${ACCENTS.adminDark} 100%)` }}>Convert</Button>
                     </>
                   }
                 />
@@ -172,7 +172,7 @@ export default function OnboardingList() {
                 actions={
                   <>
                     <Button size="small" variant="outlined" onClick={() => navigate("/trials")} sx={{ textTransform: "none" }}>Manage</Button>
-                    <Button size="small" variant="contained" startIcon={<RocketLaunchRounded />} onClick={() => navigate(`/hospitals/new?trialId=${t.hospitalTrialId}`)} sx={{ textTransform: "none", background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)" }}>Convert</Button>
+                    <Button size="small" variant="contained" startIcon={<RocketLaunchRounded />} onClick={() => navigate(`/hospitals/new?trialId=${t.hospitalTrialId}`)} sx={{ textTransform: "none", background: `linear-gradient(135deg, ${ACCENTS.admin} 0%, ${ACCENTS.adminDark} 100%)` }}>Convert</Button>
                   </>
                 }
               />

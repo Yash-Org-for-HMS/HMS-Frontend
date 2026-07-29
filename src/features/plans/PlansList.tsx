@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -94,8 +94,8 @@ export default function PlansList() {
         subtitle={t("plans.subtitle", "Manage hospital subscription tiers and features")}
         actions={
           <ActionButton
-            accentFrom={SEMANTIC.success}
-            accentTo={SEMANTIC.successDark}
+            accentFrom={ACCENTS.admin}
+            accentTo={ACCENTS.adminDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/plans/new")}
           >

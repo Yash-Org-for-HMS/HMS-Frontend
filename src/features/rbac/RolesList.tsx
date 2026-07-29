@@ -39,6 +39,7 @@ import { useToast } from "@/providers/ToastContext";
 import PageContainer from "@/components/layout/PageContainer";
 import PageHeader from "@/components/layout/PageHeader";
 import ActionButton from "@/components/layout/ActionButton";
+import { ACCENTS } from "@/styles/accents";
 import FilterBar from "@/components/layout/FilterBar";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
@@ -144,8 +145,8 @@ export default function RolesList() {
               Clean up roles
             </Button>
             <ActionButton
-              accentFrom="#14b8a6"
-              accentTo="#0d9488"
+              accentFrom={ACCENTS.admin}
+              accentTo={ACCENTS.adminDark}
               startIcon={<AddRounded />}
               onClick={() => navigate("/rbac/roles/new")}
             >
@@ -287,7 +288,7 @@ export default function RolesList() {
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setCleanupOpen(false)} disabled={cleaning} sx={{ color: "text.secondary" }}>Cancel</Button>
-          <Button onClick={handleCleanup} variant="contained" disabled={cleaning} sx={{ bgcolor: "#14b8a6", "&:hover": { bgcolor: "#0d9488" } }}>
+          <Button onClick={handleCleanup} variant="contained" disabled={cleaning} sx={{ bgcolor: ACCENTS.admin, "&:hover": { bgcolor: ACCENTS.adminDark } }}>
             {cleaning ? <HeartbeatLoader size={22} /> : "Clean up"}
           </Button>
         </DialogActions>
@@ -296,7 +297,7 @@ export default function RolesList() {
       {/* Cleanup result */}
       <Dialog open={Boolean(cleanupResult)} onClose={() => setCleanupResult(null)} maxWidth="sm" fullWidth
         PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>
-        <DialogTitle sx={{ fontWeight: 700, color: "#14b8a6" }}>Cleanup complete</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, color: ACCENTS.admin }}>Cleanup complete</DialogTitle>
         <DialogContent>
           <Typography sx={{ mb: 1 }}>
             Removed <strong>{cleanupResult?.removedCount ?? 0}</strong> non-standard role(s).
@@ -319,7 +320,7 @@ export default function RolesList() {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setCleanupResult(null)} variant="contained" sx={{ bgcolor: "#14b8a6", "&:hover": { bgcolor: "#0d9488" } }}>Done</Button>
+          <Button onClick={() => setCleanupResult(null)} variant="contained" sx={{ bgcolor: ACCENTS.admin, "&:hover": { bgcolor: ACCENTS.adminDark } }}>Done</Button>
         </DialogActions>
       </Dialog>
     </PageContainer>
@@ -332,7 +333,7 @@ const textFieldSx = {
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider" },
     "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: "#14b8a6" },
+    "&.Mui-focused fieldset": { borderColor: ACCENTS.admin },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
 };

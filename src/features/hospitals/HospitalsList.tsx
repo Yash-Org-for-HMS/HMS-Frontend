@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -126,8 +126,8 @@ export default function HospitalsList() {
         subtitle={t("hospitals.subtitle", "Manage all hospital tenants and their subscriptions")}
         actions={
           <ActionButton
-            accentFrom={SEMANTIC.info}
-            accentTo={SEMANTIC.infoDark}
+            accentFrom={ACCENTS.admin}
+            accentTo={ACCENTS.adminDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/hospitals/new")}
           >
@@ -343,7 +343,7 @@ export default function HospitalsList() {
               color="primary"
               sx={{
                 "& .MuiPaginationItem-root": { color: "text.primary" },
-                "& .Mui-selected": { bgcolor: "rgba(59, 130, 246, 0.2) !important", color: SEMANTIC.infoLight }
+                "& .Mui-selected": { bgcolor: "rgba(99, 102, 241, 0.2) !important", color: "#818cf8" }
               }}
             />
           </Box>

@@ -213,7 +213,7 @@ export default function AuditLogsList() {
               color="primary"
               sx={{
                 "& .MuiPaginationItem-root": { color: "text.primary" },
-                "& .Mui-selected": { bgcolor: "rgba(59, 130, 246, 0.2) !important", color: SEMANTIC.infoLight }
+                "& .Mui-selected": { bgcolor: "rgba(99, 102, 241, 0.2) !important", color: "#818cf8" }
               }}
             />
           </Box>
