@@ -10,7 +10,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportTable, TrendChart, DonutChart, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = ACCENTS.ipd;
 const inr = formatINRAuto;
@@ -57,11 +57,8 @@ export function InPatients() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <KpiCard icon={<LocalHotelRounded />} accent={ACCENT} label="Current inpatients" value={String(data.totals.inpatients)} sub={`across ${byWard.length} ward${byWard.length === 1 ? "" : "s"}`} />
-            </Grid>
-            <Grid size={{ xs: 12, md: 8 }}>
-              <DonutChart title="Occupancy by ward" data={byWard} nameKey="ward" valueKey="count" height={260} />
             </Grid>
           </Grid>
           <ReportTable
@@ -97,16 +94,9 @@ export function Discharges() {
       <ReportFilters value={range} onChange={setRange} />
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
-          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}><KpiCard icon={<ReplayRounded />} accent={ACCENT} label="Discharges" value={String(data.totals.discharges)} current={data.totals.discharges} previous={prev?.discharges} spark={trend.map((t) => t.discharges)} /></Grid>
-                <Grid size={{ xs: 12 }}><KpiCard icon={<AccessTimeRounded />} accent={SEMANTIC.info} label="Avg stay (days)" value={String(data.totals.avgStay)} current={data.totals.avgStay} previous={prev?.avgStay} higherIsBetter={false} /></Grid>
-              </Grid>
-            </Grid>
-            <Grid size={{ xs: 12, md: 8 }}>
-              <TrendChart title="Discharges over time" subtitle="Per day" data={trend} xKey="date" series={[{ key: "discharges", label: "Discharges" }]} height={260} />
-            </Grid>
+          <Grid container spacing={2} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}><KpiCard icon={<ReplayRounded />} accent={ACCENT} label="Discharges" value={String(data.totals.discharges)} current={data.totals.discharges} previous={prev?.discharges} spark={trend.map((t) => t.discharges)} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}><KpiCard icon={<AccessTimeRounded />} accent={SEMANTIC.info} label="Avg stay (days)" value={String(data.totals.avgStay)} current={data.totals.avgStay} previous={prev?.avgStay} higherIsBetter={false} /></Grid>
           </Grid>
           <ReportTable
             title="Discharge detail"
@@ -143,11 +133,8 @@ export function IpRegistrations() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <KpiCard icon={<PersonAddRounded />} accent={ACCENT} label="Admissions" value={String(data.totals.admissions)} current={data.totals.admissions} previous={prev?.admissions} spark={trend.map((t) => t.admissions)} />
-            </Grid>
-            <Grid size={{ xs: 12, md: 8 }}>
-              <TrendChart title="Admissions over time" subtitle="Per day" data={trend} xKey="date" series={[{ key: "admissions", label: "Admissions" }]} height={260} />
             </Grid>
           </Grid>
           <ReportTable
@@ -183,16 +170,9 @@ export function IpAdvances() {
       <ReportFilters value={range} onChange={setRange} />
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
-          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.success} label="Advance collected" value={inr(data.totals.total)} current={Number(data.totals.total)} previous={prev ? Number(prev.total) : undefined} spark={trend.map((t) => t.amount)} /></Grid>
-                <Grid size={{ xs: 12 }}><KpiCard icon={<AccessTimeRounded />} accent={ACCENT} label="Entries" value={String(data.totals.count)} current={data.totals.count} previous={prev?.count} /></Grid>
-              </Grid>
-            </Grid>
-            <Grid size={{ xs: 12, md: 8 }}>
-              <TrendChart title="Advance collection over time" subtitle="Per day" data={trend} xKey="date" series={[{ key: "amount", label: "Advance (₹)" }]} valueFormatter={inr} height={260} />
-            </Grid>
+          <Grid container spacing={2} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.success} label="Advance collected" value={inr(data.totals.total)} current={Number(data.totals.total)} previous={prev ? Number(prev.total) : undefined} spark={trend.map((t) => t.amount)} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}><KpiCard icon={<AccessTimeRounded />} accent={ACCENT} label="Entries" value={String(data.totals.count)} current={data.totals.count} previous={prev?.count} /></Grid>
           </Grid>
           <ReportTable
             title="IP advance detail"
