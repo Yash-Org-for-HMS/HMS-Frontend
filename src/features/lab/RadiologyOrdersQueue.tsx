@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { orderStatusColor } from "@/utils/statusColors";
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab } from "@mui/material";
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab, Pagination } from "@mui/material";
 import { VisibilityRounded, CheckCircleRounded, InsertDriveFileRounded, EditRounded, CloudUploadRounded, AddRounded } from "@mui/icons-material";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { axiosInstance } from "@/api/axios";
@@ -11,7 +11,7 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
 import WalkInOrderDialog from "@/components/lab/WalkInOrderDialog";
 import { useSocket } from "@/hooks/useSocket";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { assetUrl } from "@/utils/assetUrl";
 import PageHeader from "@/components/layout/PageHeader";
 import { useTableSort } from "@/components/table/useTableSort";
@@ -19,20 +19,32 @@ import SortableHeadCell from "@/components/table/SortableHeadCell";
 import { useToast } from "@/providers/ToastContext";
 import { QUEUE_POLL_MS } from "@/constants/intervals";
 
+// Tab index → server bucket (Today / Past / Completed / All).
+const BUCKETS = ["today_pending", "past_pending", "completed", "all"];
+
 export default function RadiologyOrdersQueue() {
   const toast = useToast();
-  const { data: orders = [], isLoading: loading, refetch: fetchOrders } = useQuery({
-    queryKey: ["radiology-orders-queue"],
+  const [tabValue, setTabValue] = useState(0);
+  const [page, setPage] = useState(1);
+
+  // Switching tabs resets to the first page.
+  useEffect(() => { setPage(1); }, [tabValue]);
+
+  const { data, isLoading: loading, refetch: fetchOrders } = useQuery({
+    queryKey: ["radiology-orders-queue", tabValue, page],
     queryFn: async () => {
-      const res = await axiosInstance.get(`/lab/radiology-orders?t=${Date.now()}`);
-      return res.data.data || [];
+      const res = await axiosInstance.get(`/lab/radiology-orders`, { params: { bucket: BUCKETS[tabValue], page, limit: 20, t: Date.now() } });
+      return res.data;
     },
     refetchInterval: QUEUE_POLL_MS,
+    placeholderData: keepPreviousData,
   });
+  const orders: any[] = data?.data ?? [];
+  const totalPages: number = data?.pagination?.totalPages ?? 1;
 
   const [macros, setMacros] = useState<any[]>([]);
   const [selectedMacro, setSelectedMacro] = useState("");
-  
+
   const [editOrder, setEditOrder] = useState<any>(null);
   const [status, setStatus] = useState("PENDING");
   const [notes, setNotes] = useState("");
@@ -40,7 +52,6 @@ export default function RadiologyOrdersQueue() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showPOS, setShowPOS] = useState(false);
-  const [tabValue, setTabValue] = useState(0);
   const [walkInOpen, setWalkInOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -135,28 +146,10 @@ export default function RadiologyOrdersQueue() {
     }
   };
 
-  const isToday = (dateString: string) => {
-    const today = new Date();
-    const date = new Date(dateString);
-    return date.getDate() === today.getDate() &&
-           date.getMonth() === today.getMonth() &&
-           date.getFullYear() === today.getFullYear();
-  };
-
-  // Memoized so useTableSort's own memo (keyed on this array's identity) isn't
-  // defeated by a fresh array on every render — without this, sorting silently
-  // re-ran on every unrelated re-render regardless of whether orders/tabValue changed.
-  const filteredOrders = useMemo(() => orders.filter((order: any) => {
-    const today = isToday(order.orderDate);
-    const completed = order.status === "COMPLETED";
-
-    if (tabValue === 0) return today && !completed; // Today's Pending
-    if (tabValue === 1) return !today && !completed; // Past Pending
-    if (tabValue === 2) return completed; // Completed
-    return true; // All
-  }), [orders, tabValue]);
-
-  const { sorted, orderBy, order, onSort } = useTableSort(filteredOrders, {
+  // Bucketing (today/past × completion) is done server-side per the active tab;
+  // `orders` is already the current page of the selected bucket. The table still
+  // sorts the current page client-side.
+  const { sorted, orderBy, order, onSort } = useTableSort(orders, {
     scanType: (o: any) => o.scanType,
     patient: (o: any) => `${o.patient?.firstName ?? ""} ${o.patient?.lastName ?? ""}`.trim(),
     doctor: (o: any) => `${o.doctor?.user?.firstName ?? ""} ${o.doctor?.user?.lastName ?? ""}`.trim(),
@@ -240,6 +233,12 @@ export default function RadiologyOrdersQueue() {
           </TableContainer>
         )}
       </Paper>
+
+      {totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" />
+        </Box>
+      )}
 
       {/* Edit Dialog */}
       <Dialog open={!!editOrder} onClose={handleClose} maxWidth="sm" fullWidth>

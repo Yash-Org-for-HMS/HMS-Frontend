@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { orderStatusColor } from "@/utils/statusColors";
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab } from "@mui/material";
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab, Pagination } from "@mui/material";
 import { VisibilityRounded, BloodtypeRounded, AddRounded, CancelRounded } from "@mui/icons-material";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -13,28 +13,39 @@ import { useNavigate } from "react-router-dom";
 import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
 import WalkInOrderDialog from "@/components/lab/WalkInOrderDialog";
 import { useSocket } from "@/hooks/useSocket";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import PageHeader from "@/components/layout/PageHeader";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import { QUEUE_POLL_MS } from "@/constants/intervals";
 
+// Tab index → server bucket (matches the queue's Today / Past / Completed / All tabs).
+const BUCKETS = ["today_pending", "past_pending", "completed", "all"];
+
 export default function LabOrdersQueue() {
-  const { data: orders = [], isLoading: loading, refetch: fetchOrders } = useQuery({
-    queryKey: ["lab-orders-queue"],
+  const [tabValue, setTabValue] = useState(0);
+  const [page, setPage] = useState(1);
+
+  // Switching tabs resets to the first page.
+  useEffect(() => { setPage(1); }, [tabValue]);
+
+  const { data, isLoading: loading, refetch: fetchOrders } = useQuery({
+    queryKey: ["lab-orders-queue", tabValue, page],
     queryFn: async () => {
-      const res = await axiosInstance.get(`/lab/orders?t=${Date.now()}`);
-      return res.data.data || [];
+      const res = await axiosInstance.get(`/lab/orders`, { params: { bucket: BUCKETS[tabValue], page, limit: 20, t: Date.now() } });
+      return res.data;
     },
     refetchInterval: QUEUE_POLL_MS,
+    placeholderData: keepPreviousData,
   });
+  const orders: any[] = data?.data ?? [];
+  const totalPages: number = data?.pagination?.totalPages ?? 1;
 
   const [collectOrder, setCollectOrder] = useState<any>(null);
   const [barcodeInput, setBarcodeInput] = useState("");
   const [collecting, setCollecting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [showPOS, setShowPOS] = useState(false);
-  const [tabValue, setTabValue] = useState(0);
   const [walkInOpen, setWalkInOpen] = useState(false);
 
   const navigate = useNavigate();
@@ -95,28 +106,10 @@ export default function LabOrdersQueue() {
     }
   };
 
-  const isToday = (dateString: string) => {
-    const today = new Date();
-    const date = new Date(dateString);
-    return date.getDate() === today.getDate() &&
-           date.getMonth() === today.getMonth() &&
-           date.getFullYear() === today.getFullYear();
-  };
-
-  // Memoized so useTableSort's own memo (keyed on this array's identity) isn't
-  // defeated by a fresh array on every render — without this, sorting silently
-  // re-ran on every unrelated re-render regardless of whether orders/tabValue changed.
-  const filteredOrders = useMemo(() => orders.filter((order: any) => {
-    const today = isToday(order.createdAt);
-    const completed = order.status === "COMPLETED";
-
-    if (tabValue === 0) return today && !completed; // Today's Pending
-    if (tabValue === 1) return !today && !completed; // Past Pending
-    if (tabValue === 2) return completed; // Completed
-    return true; // All
-  }), [orders, tabValue]);
-
-  const { sorted, orderBy, order, onSort } = useTableSort(filteredOrders, {
+  // Bucketing (today/past × completion) is now done server-side per the active
+  // tab; `orders` is already the current page of the selected bucket. The table
+  // still sorts the current page client-side.
+  const { sorted, orderBy, order, onSort } = useTableSort(orders, {
     barcode: (o: any) => o.sampleBarcode,
     patient: (o: any) => `${o.patient?.firstName ?? ""} ${o.patient?.lastName ?? ""}`.trim(),
     doctor: (o: any) => `${o.doctor?.user?.firstName ?? ""} ${o.doctor?.user?.lastName ?? ""}`.trim(),
@@ -224,6 +217,12 @@ export default function LabOrdersQueue() {
           </TableContainer>
         )}
       </Paper>
+
+      {totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" />
+        </Box>
+      )}
 
       {/* Collect Sample Dialog */}
       <Dialog open={!!collectOrder} onClose={() => setCollectOrder(null)} maxWidth="sm" fullWidth>
