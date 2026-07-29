@@ -14,7 +14,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportTable, TrendChart, BreakdownBar, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
 
 const inr = formatINRAuto;
 const fmtDate = (v: any) => (v ? dayjs(v).format("DD MMM YYYY") : "—");
@@ -61,21 +61,12 @@ export default function PharmacyReports() {
             <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<EventBusyRounded />} accent={SEMANTIC.danger} label="Expiring in 30 days" value={s?.expiringSoonCount || 0} /></Grid>
           </Grid>
 
-          <TrendChart title="Sales over time" subtitle="Dispensary revenue per day" data={trend} xKey="date" series={[{ key: "sales", label: "Sales (₹)" }]} valueFormatter={inr} height={300} />
-
-          <Grid container spacing={2.5}>
-            <Grid size={{ xs: 12, md: 7 }}>
-              <BreakdownBar title="Top-selling medicines" subtitle="By revenue" data={topMedicines} categoryKey="medicineName" valueKey="revenue" valueName="Revenue" colorIndex={0} valueFormatter={inr} height={320} />
-            </Grid>
-            <Grid size={{ xs: 12, md: 5 }}>
-              <ReportTable title="Top-selling medicines" filename={`pharmacy_top_meds_${range.from}_${range.to}`}
-                columns={[
-                  { key: "medicineName", label: "Medicine" },
-                  { key: "qty", label: "Units", align: "right" },
-                  { key: "revenue", label: "Revenue", align: "right", format: (v) => inr(v), value: (r) => Number(r.revenue) },
-                ]} rows={topMedicines} />
-            </Grid>
-          </Grid>
+          <ReportTable title="Top-selling medicines" filename={`pharmacy_top_meds_${range.from}_${range.to}`}
+            columns={[
+              { key: "medicineName", label: "Medicine" },
+              { key: "qty", label: "Units", align: "right" },
+              { key: "revenue", label: "Revenue", align: "right", format: (v) => inr(v), value: (r) => Number(r.revenue) },
+            ]} rows={topMedicines} />
 
           <ReportTable title="IPD medication issues (confirmed, this range)" filename={`ipd_meds_${range.from}_${range.to}`}
             columns={[
