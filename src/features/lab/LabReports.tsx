@@ -13,7 +13,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportTable, TrendChart, BreakdownBar, DonutChart, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
 import dayjs from "dayjs";
 
 const inr = formatINRAuto;
@@ -57,22 +57,6 @@ export default function LabReports() {
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Critical results" value={s?.criticalResults || 0} current={s?.criticalResults} previous={p?.criticalResults} higherIsBetter={false} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent={ACCENTS.labDark} label="Avg turnaround" value={`${s?.avgTurnaroundHours || 0}h`} current={s?.avgTurnaroundHours} previous={p?.avgTurnaroundHours} higherIsBetter={false} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Revenue estimate" value={inr(s?.revenueEstimate)} current={s?.revenueEstimate} previous={p?.revenueEstimate} /></Grid>
-          </Grid>
-
-          <TrendChart
-            title="Orders over time" subtitle="Lab vs radiology, per day"
-            data={trend} xKey="date"
-            series={[{ key: "labOrders", label: "Lab orders" }, { key: "radiologyOrders", label: "Radiology orders" }]}
-            height={300}
-          />
-
-          <Grid container spacing={2.5}>
-            <Grid size={{ xs: 12, md: 7 }}>
-              <BreakdownBar title="Top tests ordered" data={topTests} categoryKey="testName" valueKey="count" valueName="Times ordered" colorIndex={2} height={320} />
-            </Grid>
-            <Grid size={{ xs: 12, md: 5 }}>
-              <DonutChart title="Radiology status" data={radiologyStatusBreakdown} nameKey="status" valueKey="count" height={320} />
-            </Grid>
           </Grid>
 
           <Grid container spacing={2.5}>
