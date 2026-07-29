@@ -12,7 +12,6 @@ import { axiosInstance } from "@/api/axios";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
-import AuthBrand from "@/components/AuthBrand";
 
 // Same clinical accent as the reception realm — kept as the ONE spot of colour on
 // an otherwise pure-white, minimalist page.
@@ -86,7 +85,6 @@ export default function HospitalLogin() {
     <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", px: 3, py: 6, backgroundImage: "url('/login.jpg')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
       {/* Minimalist: the form sits directly on the background image — no card. */}
       <Box sx={{ width: "100%", maxWidth: 400 }}>
-        <AuthBrand accent={ACCENT} />
 
         <Typography sx={{ color: "#0F172A", fontWeight: 800, fontSize: "1.7rem", letterSpacing: "-0.3px", lineHeight: 1.15, textAlign: "center" }}>
           Welcome back

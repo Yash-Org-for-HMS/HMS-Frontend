@@ -11,7 +11,6 @@ import { axiosInstance } from "@/api/axios";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
-import AuthBrand from "@/components/AuthBrand";
 
 const ACCENT = "#0891b2";
 const ACCENT_DARK = "#0e7490";
@@ -92,7 +91,6 @@ export default function HospitalChangePassword() {
     <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", px: 3, py: 6, backgroundImage: "url('/login.jpg')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
       {/* Minimalist: the form sits directly on the background image — no card. */}
       <Box sx={{ width: "100%", maxWidth: 400 }}>
-        <AuthBrand accent={ACCENT} />
 
         <Typography sx={{ color: TEXT, fontWeight: 700, fontSize: "0.7rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 0.75, textAlign: "center" }}>
           Hospital Staff Portal

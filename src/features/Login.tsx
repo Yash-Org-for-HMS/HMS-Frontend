@@ -11,7 +11,6 @@ import { useAuth } from "@/providers/AuthContext";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
-import AuthBrand from "@/components/AuthBrand";
 
 // Admin/platform realm accent (src/styles/accents.ts: admin indigo) — distinct
 // from the cyan hospital staff login, so the two portals read as different realms
@@ -73,7 +72,6 @@ export default function Login() {
     <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", px: 3, py: 6, backgroundImage: "url('/login.jpg')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
       {/* Minimalist: the form sits directly on the background image — no card. */}
       <Box sx={{ width: "100%", maxWidth: 400 }}>
-        <AuthBrand accent={ACCENT} />
 
         <Typography sx={{ color: "#0F172A", fontWeight: 800, fontSize: "1.7rem", letterSpacing: "-0.3px", lineHeight: 1.15, textAlign: "center" }}>
           Welcome back
