@@ -4,7 +4,7 @@ import {
   Box, Button, TextField, Typography, InputAdornment, IconButton,
 } from "@mui/material";
 import {
-  Visibility, VisibilityOff, KeyboardCapslockRounded, ShieldOutlined,
+  Visibility, VisibilityOff, KeyboardCapslockRounded, ShieldOutlined, LockOutlined,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { axiosInstance } from "@/api/axios";
@@ -69,17 +69,21 @@ export default function HospitalChangePassword() {
 
   const fieldSx = {
     mb: 0.5,
+    "& .MuiInputLabel-root": { fontWeight: 600 },
     "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
     "& .MuiOutlinedInput-root": {
-      borderRadius: 2.5,
+      borderRadius: "14px",
       // Frosted-white fill so fields read cleanly over the soft background image
       // without needing a card container around them.
-      backgroundColor: "rgba(255,255,255,0.72)",
-      backdropFilter: "blur(4px)",
-      "& fieldset": { borderColor: "rgba(15,23,42,0.14)" },
+      backgroundColor: "rgba(255,255,255,0.82)",
+      backdropFilter: "blur(6px)",
+      transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+      "& fieldset": { borderColor: "rgba(15,23,42,0.12)" },
       "&:hover fieldset": { borderColor: "rgba(15,23,42,0.28)" },
-      "&.Mui-focused fieldset": { borderColor: ACCENT, boxShadow: `0 0 0 3px ${ACCENT}1a` },
+      "&.Mui-focused fieldset": { borderColor: ACCENT, borderWidth: "1.5px", boxShadow: `0 0 0 4px ${ACCENT}1f` },
     },
+    "& .MuiOutlinedInput-input": { paddingTop: "14px", paddingBottom: "14px" },
+    "& .MuiOutlinedInput-root.Mui-focused .field-lead-icon": { color: ACCENT },
   };
 
   if (!tempToken) return null;
@@ -106,9 +110,15 @@ export default function HospitalChangePassword() {
             value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
             onKeyUp={(e) => setCapsOn(e.getModifierState?.("CapsLock") ?? false)}
             disabled={isLoading} required sx={fieldSx} inputProps={{ autoComplete: "new-password" }}
+            InputLabelProps={{ shrink: true }} placeholder="At least 8 characters"
             helperText={capsOn ? "Caps Lock is on" : " "}
             FormHelperTextProps={{ sx: { color: capsOn ? "warning.main" : undefined } }}
             InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockOutlined fontSize="small" className="field-lead-icon" sx={{ color: "text.secondary" }} />
+                </InputAdornment>
+              ),
               endAdornment: (
                 <InputAdornment position="end">
                   {capsOn && <KeyboardCapslockRounded fontSize="small" sx={{ color: "warning.main", mr: 0.5 }} />}
@@ -124,6 +134,14 @@ export default function HospitalChangePassword() {
             value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}
             disabled={isLoading} required sx={fieldSx} inputProps={{ autoComplete: "new-password" }}
             error={mismatch} helperText={mismatch ? "Passwords do not match" : " "}
+            InputLabelProps={{ shrink: true }} placeholder="Re-enter your new password"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockOutlined fontSize="small" className="field-lead-icon" sx={{ color: "text.secondary" }} />
+                </InputAdornment>
+              ),
+            }}
           />
 
           <Button
