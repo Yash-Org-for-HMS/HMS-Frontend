@@ -10,10 +10,6 @@ import {
   TimerRounded, CardMembershipRounded, RocketLaunchRounded, AccountBalanceWalletRounded,
   CheckCircleRounded, HighlightOffRounded,
 } from "@mui/icons-material";
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
-  PieChart, Pie, Cell, Legend, AreaChart, Area,
-} from "recharts";
 import { axiosInstance } from "@/api/axios";
 import { exportTableToExcel } from "@/utils/exportExcel";
 import PageHeader from "@/components/layout/PageHeader";
@@ -23,7 +19,6 @@ import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 
 const ACCENT = ACCENTS.admin; // indigo #6366f1
-const PIE_COLORS = [ACCENTS.admin, "#8b5cf6", "#0891b2", SEMANTIC.success, SEMANTIC.warning, SEMANTIC.danger, NEUTRAL.muted, "#ec4899"];
 
 const inr = formatINRAuto;
 const fmtDate = (d: unknown) =>
@@ -32,8 +27,6 @@ const cap = (s: unknown) => {
   const str = String(s ?? "").replace(/_/g, " ");
   return str ? str.charAt(0).toUpperCase() + str.slice(1) : "—";
 };
-
-const axisProps = { tick: { fill: "#94a3b8", fontSize: 12 }, stroke: "#cbd5e1" } as const;
 
 // Page every list endpoint (hard cap 1000/page server-side) so exported
 // registers are complete rather than silently truncated to the first page.
@@ -63,23 +56,6 @@ function KpiTile({ icon, label, value, sub, color = ACCENT }: { icon: React.Reac
         <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4, display: "block" }}>{label}</Typography>
         {sub && <Typography variant="caption" sx={{ color: "text.secondary" }}>{sub}</Typography>}
       </Box>
-    </Paper>
-  );
-}
-
-function ChartCard({ title, empty, children }: { title: string; empty?: boolean; children: React.ReactElement }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>{title}</Typography>
-      {empty ? (
-        <Box sx={{ height: 260, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>No data to chart</Typography>
-        </Box>
-      ) : (
-        <Box sx={{ height: 260 }}>
-          <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer>
-        </Box>
-      )}
     </Paper>
   );
 }
@@ -141,7 +117,6 @@ function OverviewReport() {
   const byPlan: any[] = data.hospitalsByPlan || [];
   const byStatus: any[] = data.leadsByStatus || [];
   const onboarding: any[] = data.onboardingProgress || [];
-  const trend: any[] = data.hospitalsTrend || [];
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -155,58 +130,6 @@ function OverviewReport() {
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Patients" value={data.totalPatients ?? 0} color="#ec4899" /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Doctors" value={data.totalDoctors ?? 0} color={ACCENTS.admin} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Branches" value={data.totalBranches ?? 0} color={NEUTRAL.muted} /></Grid>
-      </Grid>
-
-      {/* Charts */}
-      <Grid container spacing={2.5}>
-        <Grid size={{ xs: 12, md: 7 }}>
-          <ChartCard title="Hospital growth (last 6 months)" empty={!trend.length}>
-            <AreaChart data={trend} margin={{ left: -12 }}>
-              <defs>
-                <linearGradient id="adminTrend" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={ACCENT} stopOpacity={0.35} />
-                  <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} />
-              <XAxis dataKey="month" {...axisProps} />
-              <YAxis {...axisProps} allowDecimals={false} />
-              <RTooltip />
-              <Area type="monotone" dataKey="count" name="Hospitals" stroke={ACCENT} strokeWidth={2} fill="url(#adminTrend)" />
-            </AreaChart>
-          </ChartCard>
-        </Grid>
-        <Grid size={{ xs: 12, md: 5 }}>
-          <ChartCard title="Branches by plan" empty={!byPlan.length}>
-            <PieChart>
-              <Pie data={byPlan} dataKey="count" nameKey="planName" cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={2}>
-                {byPlan.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-              </Pie>
-              <Legend /><RTooltip />
-            </PieChart>
-          </ChartCard>
-        </Grid>
-        <Grid size={{ xs: 12, md: 7 }}>
-          <ChartCard title="Leads by stage" empty={!byStatus.length}>
-            <BarChart data={byStatus.map((s) => ({ ...s, label: cap(s.status) }))} margin={{ left: -12 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} vertical={false} />
-              <XAxis dataKey="label" {...axisProps} />
-              <YAxis {...axisProps} allowDecimals={false} />
-              <RTooltip />
-              <Bar dataKey="count" name="Leads" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ChartCard>
-        </Grid>
-        <Grid size={{ xs: 12, md: 5 }}>
-          <ChartCard title="Onboarding progress" empty={!onboarding.length}>
-            <PieChart>
-              <Pie data={onboarding.map((o) => ({ ...o, label: cap(o.status) }))} dataKey="count" nameKey="label" cx="50%" cy="50%" outerRadius={90} paddingAngle={2}>
-                {onboarding.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-              </Pie>
-              <Legend /><RTooltip />
-            </PieChart>
-          </ChartCard>
-        </Grid>
       </Grid>
 
       {/* Downloadable summary tables */}
@@ -285,11 +208,9 @@ function LeadsReport() {
     fmtDate(l.createdAt),
   ]);
 
-  // Funnel counts from the fetched rows (so the chart matches the exported table exactly).
-  const stageOrder = ["new", "contacted", "qualified", "demo_done", "trialing", "converted", "lost"];
+  // Stage counts (drive the KPI tiles).
   const counts: Record<string, number> = {};
   data.forEach((l: any) => { counts[l.leadStatus] = (counts[l.leadStatus] || 0) + 1; });
-  const funnel = stageOrder.filter((s) => counts[s]).map((s) => ({ label: cap(s), count: counts[s] }));
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -299,15 +220,6 @@ function LeadsReport() {
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<RocketLaunchRounded />} label="Trialing" value={counts["trialing"] || 0} color={SEMANTIC.warning} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Lost" value={counts["lost"] || 0} color={SEMANTIC.danger} /></Grid>
       </Grid>
-      <ChartCard title="Pipeline by stage" empty={!funnel.length}>
-        <BarChart data={funnel} margin={{ left: -12 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} vertical={false} />
-          <XAxis dataKey="label" {...axisProps} />
-          <YAxis {...axisProps} allowDecimals={false} />
-          <RTooltip />
-          <Bar dataKey="count" name="Leads" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
-        </BarChart>
-      </ChartCard>
       <SimpleTable title="Leads register" head={["Hospital", "Contact", "Email", "Phone", "Stage", "Assigned to", "Created"]} rows={rows} />
     </Box>
   );
@@ -376,7 +288,6 @@ function SubscriptionsReport() {
     p.branches,
     inr(p.mrr),
   ]);
-  const chart = withMrr.filter((p: any) => p.mrr > 0).map((p: any) => ({ label: p.planName, mrr: p.mrr }));
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -386,15 +297,6 @@ function SubscriptionsReport() {
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(totalMrr)} sub="monthly recurring" color={SEMANTIC.success} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Est. ARR" value={inr(totalMrr * 12)} sub="annualised" color="#8b5cf6" /></Grid>
       </Grid>
-      <ChartCard title="Estimated MRR by plan" empty={!chart.length}>
-        <BarChart data={chart} margin={{ left: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke={NEUTRAL.line} vertical={false} />
-          <XAxis dataKey="label" {...axisProps} />
-          <YAxis {...axisProps} />
-          <RTooltip formatter={(v: any) => inr(v)} />
-          <Bar dataKey="mrr" name="Est. MRR" fill={ACCENT} radius={[6, 6, 0, 0]} />
-        </BarChart>
-      </ChartCard>
       <SimpleTable
         title="Subscription plans"
         head={["Plan", "Monthly", "Annual", "Max doctors", "Max branches", "Max storage (GB)", "Branches", "Est. MRR"]}
