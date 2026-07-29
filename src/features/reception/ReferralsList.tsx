@@ -1,10 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { apiErrorText } from "@/utils/apiError";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Chip, TextField, InputAdornment, MenuItem, Tooltip,
+  TableHead, TableRow, Chip, TextField, InputAdornment, MenuItem, Tooltip, Pagination,
 } from "@mui/material";
 import { SearchRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -23,23 +23,24 @@ export default function ReferralsList({ basePath = "/reception" }: { basePath?: 
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+  const [page, setPage] = useState(1);
 
-  const { data: rows = [], isLoading, isError, error, refetch } = useQuery<any[]>({
-    queryKey: ["referred-patients", typeFilter],
+  // Search + type filter are applied server-side now (so paging is correct);
+  // changing either resets to the first page.
+  useEffect(() => { setPage(1); }, [search, typeFilter]);
+
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["referred-patients", typeFilter, search, page],
     queryFn: async () => (await axiosInstance.get("/reception/referred-patients", {
-      params: { ...(typeFilter ? { type: typeFilter } : {}) },
-    })).data.data,
+      params: { ...(typeFilter ? { type: typeFilter } : {}), ...(search.trim() ? { search: search.trim() } : {}), page, limit: 20 },
+    })).data,
+    placeholderData: keepPreviousData,
   });
+  const rows: any[] = data?.data ?? [];
+  const totalPages: number = data?.pagination?.totalPages ?? 1;
 
-  const filtered = useMemo(() => {
-    const s = search.trim().toLowerCase();
-    if (!s) return rows;
-    return rows.filter((r) =>
-      [r.patientName, r.uhid, r.source, r.externalClinic].filter(Boolean).some((v: string) => v.toLowerCase().includes(s))
-    );
-  }, [rows, search]);
-
-  const { sorted, orderBy, order, onSort } = useTableSort(filtered, {
+  // Sort the current page client-side (server returns newest-first).
+  const { sorted, orderBy, order, onSort } = useTableSort(rows, {
     patient: (r) => r.patientName,
     type: (r) => (r.referredByType === "EXTERNAL" ? "External" : "Internal"),
     source: (r) => r.source,
@@ -118,6 +119,12 @@ export default function ReferralsList({ basePath = "/reception" }: { basePath?: 
           </Table>
         </TableContainer>
       </Paper>
+
+      {totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" />
+        </Box>
+      )}
     </Box>
   );
 }

@@ -23,6 +23,7 @@ import {
   DialogActions,
   IconButton,
   Tooltip,
+  Pagination,
 } from "@mui/material";
 import { InfoRounded, SearchRounded, RefreshRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -43,18 +44,26 @@ export default function AuditLogs() {
   const [appliedFilters, setAppliedFilters] = useState(EMPTY_FILTERS);
 
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
+  const [page, setPage] = useState(1);
 
-  const { data: logs = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
-    queryKey: ["hospital-audit-logs", appliedFilters],
+  // Applying new filters resets to the first page.
+  useEffect(() => { setPage(1); }, [appliedFilters]);
+
+  const { data: resp, isLoading: loading, isError, error, refetch } = useQuery<{ data: any[]; pagination?: { totalPages: number } }>({
+    queryKey: ["hospital-audit-logs", appliedFilters, page],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (appliedFilters.moduleName) params.append("moduleName", appliedFilters.moduleName);
       if (appliedFilters.actionType) params.append("actionType", appliedFilters.actionType);
       if (appliedFilters.startDate) params.append("startDate", appliedFilters.startDate);
       if (appliedFilters.endDate) params.append("endDate", appliedFilters.endDate);
-      return (await axiosInstance.get(`/hospital/audit-logs?${params.toString()}`)).data.data;
+      params.append("page", String(page));
+      params.append("limit", "20");
+      return (await axiosInstance.get(`/hospital/audit-logs?${params.toString()}`)).data;
     },
   });
+  const logs: any[] = resp?.data ?? [];
+  const totalPages: number = resp?.pagination?.totalPages ?? 1;
 
   // Seed sample logs once (dev convenience), then refresh.
   useEffect(() => {
@@ -249,6 +258,12 @@ export default function AuditLogs() {
           </TableContainer>
         )}
       </Paper>
+
+      {totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" />
+        </Box>
+      )}
 
       {/* Details Modal */}
       <Dialog open={Boolean(selectedLog)} onClose={() => setSelectedLog(null)} maxWidth="md" fullWidth PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary" } }}>

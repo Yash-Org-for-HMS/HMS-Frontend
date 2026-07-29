@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import {
   Box, Paper, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
-  Chip, Button, TextField, MenuItem, InputAdornment,
+  Chip, Button, TextField, MenuItem, InputAdornment, Pagination,
 } from "@mui/material";
 import { AddRounded, SearchRounded, AssessmentRounded } from "@mui/icons-material";
 import { ACCENTS } from "@/styles/accents";
@@ -23,12 +23,19 @@ export default function ClaimsList() {
   const navigate = useNavigate();
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
-  const { data: claims = [], isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["claims", status, search],
-    queryFn: async () => (await axiosInstance.get("/claims", { params: { status: status || undefined, search: search || undefined } })).data.data as any[],
+  // Any filter change resets to the first page — otherwise a narrowed result set
+  // could leave you stranded on a now-empty high page.
+  useEffect(() => { setPage(1); }, [status, search]);
+
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["claims", status, search, page],
+    queryFn: async () => (await axiosInstance.get("/claims", { params: { status: status || undefined, search: search || undefined, page, limit: 20 } })).data,
     placeholderData: keepPreviousData,
   });
+  const claims: any[] = data?.data ?? [];
+  const totalPages: number = data?.pagination?.totalPages ?? 1;
 
   return (
     <Box>
@@ -103,6 +110,12 @@ export default function ClaimsList() {
           </Table>
         </TableContainer>
       </Paper>
+
+      {totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" />
+        </Box>
+      )}
     </Box>
   );
 }
