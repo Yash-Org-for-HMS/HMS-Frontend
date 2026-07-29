@@ -1,20 +1,20 @@
 import { Box } from "@mui/material";
-import { LocalHospitalRounded } from "@mui/icons-material";
+import { PersonRounded } from "@mui/icons-material";
 
-// Minimal brand mark for the auth screens: just an accent square with the product
-// glyph. The product name/tagline were removed at the design's request; the portal
-// name below the mark now carries the heading. Accent is passed so each portal
-// keeps its colour.
+// Centered circular profile avatar for the auth screens (replaces the old logo
+// mark). Accent is passed so each portal keeps its colour.
 export default function AuthBrand({ accent }: { accent: string }) {
   return (
-    <Box
-      sx={{
-        width: 48, height: 48, flexShrink: 0, borderRadius: "12px",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        bgcolor: accent, mb: 2.5,
-      }}
-    >
-      <LocalHospitalRounded sx={{ color: "#fff", fontSize: 26 }} />
+    <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
+      <Box
+        sx={{
+          width: 80, height: 80, borderRadius: "50%",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          bgcolor: accent, boxShadow: `0 10px 30px -10px ${accent}`,
+        }}
+      >
+        <PersonRounded sx={{ color: "#fff", fontSize: 46 }} />
+      </Box>
     </Box>
   );
 }

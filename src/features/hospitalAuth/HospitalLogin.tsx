@@ -84,7 +84,7 @@ export default function HospitalLogin() {
 
         {/* Names the portal so it's never mistaken for the platform-admin login
             (which uses the indigo accent at /login). */}
-        <Typography sx={{ color: ACCENT, fontWeight: 800, fontSize: "1.7rem", letterSpacing: "-0.3px", lineHeight: 1.15, mb: 3.5 }}>
+        <Typography sx={{ color: ACCENT, fontWeight: 800, fontSize: "1.7rem", letterSpacing: "-0.3px", lineHeight: 1.15, mb: 3.5, textAlign: "center" }}>
           Hospital Staff Portal
         </Typography>
 
