@@ -106,6 +106,7 @@ export default function HospitalLayout() {
     // custom role never sees a link that would just 403.
     { text: "Ward & Bed Setup", icon: <HotelRounded />, path: "/hospital/facility-setup", permission: null, adminOnly: true, module: "IPD", section: "Configuration" },
     { text: "Vaccine Catalog", icon: <VaccinesRounded />, path: "/hospital/vaccines", permission: null, adminOnly: true, section: "Configuration" },
+    { text: "Schedule of Charges", icon: <ReceiptLongRounded />, path: "/hospital/soc", permission: null, adminOnly: true, section: "Configuration" },
     { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/hospital/medicines", permission: null, adminOnly: true, section: "Configuration" },
     { text: "Form Builder", icon: <DynamicFormRounded />, path: "/hospital/form-builder", permission: "SETTINGS_MANAGE", section: "Configuration" },
     { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", permission: "SETTINGS_MANAGE", section: "Configuration" },
