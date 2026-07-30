@@ -10,15 +10,18 @@ import { formatINRAuto } from "@/utils/format";
 
 const inr = formatINRAuto;
 
+type RoomPrice = { roomClassId: string; price: number | string };
 type Category = { chargeCategoryId: string; categoryName: string; isActive: boolean };
-type Item = { chargeItemId: string; itemName: string; itemCode: string | null; price: number | string; unit: string | null; isActive: boolean };
+type Item = { chargeItemId: string; itemName: string; itemCode: string | null; price: number | string; unit: string | null; isActive: boolean; roomPrices?: RoomPrice[] };
 export type PickedCharge = { chargeItemId: string; itemName: string; price: number };
 
 // Reusable picker for the hospital's Schedule of Charges. Lets billing screens
 // choose a rate-card charge; the caller sends only the chargeItemId — the server
 // prices the line from the catalog. `accent` themes it to the host panel.
-export default function SocChargePicker({ open, onClose, onPick, accent = "#6366f1" }: {
-  open: boolean; onClose: () => void; onPick: (c: PickedCharge) => void; accent?: string;
+// When `roomClassId` is given, the displayed/returned price reflects that room
+// class's matrix price (falling back to base); the server re-prices authoritatively.
+export default function SocChargePicker({ open, onClose, onPick, accent = "#6366f1", roomClassId }: {
+  open: boolean; onClose: () => void; onPick: (c: PickedCharge) => void; accent?: string; roomClassId?: string | null;
 }) {
   const [categoryId, setCategoryId] = useState("");
   const [search, setSearch] = useState("");
@@ -41,6 +44,16 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#6366
     const s = search.trim().toLowerCase();
     return items.filter((it) => it.isActive && (!s || it.itemName.toLowerCase().includes(s) || (it.itemCode || "").toLowerCase().includes(s)));
   }, [items, search]);
+
+  // Effective price for the selected room class: the matrix price when a class is
+  // set and a row exists, else the base price (matches the server's resolveChargeItem).
+  const effPrice = (it: Item): number => {
+    if (roomClassId) {
+      const rp = it.roomPrices?.find((r) => r.roomClassId === roomClassId);
+      if (rp != null) return Number(rp.price);
+    }
+    return Number(it.price);
+  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -74,7 +87,7 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#6366
             {filtered.map((it) => (
               <ListItemButton
                 key={it.chargeItemId}
-                onClick={() => { onPick({ chargeItemId: it.chargeItemId, itemName: it.itemName, price: Number(it.price) }); onClose(); }}
+                onClick={() => { onPick({ chargeItemId: it.chargeItemId, itemName: it.itemName, price: effPrice(it) }); onClose(); }}
                 sx={{ borderRadius: 1.5, mb: 0.25 }}
               >
                 <ListItemText
@@ -82,7 +95,7 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#6366
                   secondary={[it.itemCode, it.unit].filter(Boolean).join(" · ") || undefined}
                   primaryTypographyProps={{ fontSize: "0.9rem", fontWeight: 600 }}
                 />
-                <Typography sx={{ fontWeight: 700, color: accent, ml: 2 }}>{inr(Number(it.price))}</Typography>
+                <Typography sx={{ fontWeight: 700, color: accent, ml: 2 }}>{inr(effPrice(it))}</Typography>
               </ListItemButton>
             ))}
           </List>

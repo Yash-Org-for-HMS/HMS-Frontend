@@ -42,6 +42,13 @@ export default function FacilitySetup() {
   const summary = data?.summary;
   const wards: any[] = data?.wards || [];
 
+  // Active room classes (Schedule of Charges) — pickable per bed to drive room-wise
+  // pricing of charges on the discharge bill.
+  const { data: roomClasses = [] } = useQuery<any[]>({
+    queryKey: ["soc-room-classes"],
+    queryFn: async () => (await axiosInstance.get("/hospital/soc/room-classes")).data.data,
+  });
+
   const Tile = ({ label, value, color }: { label: string; value: number; color: string }) => (
     <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", textAlign: "center" }}>
       <Typography variant="h5" sx={{ fontWeight: 800, color }}>{value}</Typography>
@@ -116,7 +123,7 @@ export default function FacilitySetup() {
                                 <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>Bed {b.bedNumber}</Typography>
                                 <EditRounded sx={{ fontSize: 13, color: "text.disabled" }} />
                               </Box>
-                              <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{b.bedType}</Typography>
+                              <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{b.bedType}{b.roomClassName ? ` · ${b.roomClassName}` : ""}</Typography>
                               {b.occupant ? (
                                 <Typography variant="caption" sx={{ color, fontWeight: 600, display: "flex", alignItems: "center", gap: 0.3 }} noWrap><PersonRounded sx={{ fontSize: 12 }} /> {b.occupant.patientName}</Typography>
                               ) : (
@@ -134,17 +141,17 @@ export default function FacilitySetup() {
           </Stack>
         )}
 
-      {dialog && <SetupDialog kind={dialog.kind} edit={dialog.edit} wards={wards} onClose={() => setDialog(null)} onDone={() => { setDialog(null); refetch(); }} />}
+      {dialog && <SetupDialog kind={dialog.kind} edit={dialog.edit} wards={wards} roomClasses={roomClasses} onClose={() => setDialog(null)} onDone={() => { setDialog(null); refetch(); }} />}
     </Box>
   );
 }
 
-function SetupDialog({ kind, edit, wards, onClose, onDone }: { kind: "ward" | "room" | "bed"; edit?: any; wards: any[]; onClose: () => void; onDone: () => void }) {
+function SetupDialog({ kind, edit, wards, roomClasses, onClose, onDone }: { kind: "ward" | "room" | "bed"; edit?: any; wards: any[]; roomClasses: any[]; onClose: () => void; onDone: () => void }) {
   const toast = useToast();
   const isEdit = Boolean(edit?.wardId || edit?.roomId || edit?.bedId);
   const [saving, setSaving] = useState(false);
   const [f, setF] = useState<any>(() => {
-    const base = { wardType: "general", roomType: "general", bedType: "regular", floorNumber: "1" };
+    const base = { wardType: "general", roomType: "general", bedType: "regular", floorNumber: "1", roomClassId: "" };
     if (!edit) return base;
     return {
       ...base,
@@ -159,6 +166,7 @@ function SetupDialog({ kind, edit, wards, onClose, onDone }: { kind: "ward" | "r
       bedNumber: edit.bedNumber,
       bedType: edit.bedType ?? base.bedType,
       dailyCharge: edit.dailyCharge != null ? String(edit.dailyCharge) : "",
+      roomClassId: edit.roomClassId ?? "",
     };
   });
   const set = (k: string, v: any) => setF((p: any) => ({ ...p, [k]: v }));
@@ -180,8 +188,9 @@ function SetupDialog({ kind, edit, wards, onClose, onDone }: { kind: "ward" | "r
         else await axiosInstance.post("/ipd/rooms", { wardId: f.wardId, roomNumber: f.roomNumber, roomType: f.roomType });
       } else {
         const charge = f.dailyCharge === "" ? null : Number(f.dailyCharge);
-        if (editingBed) await axiosInstance.put(`/ipd/beds/${f.bedId}`, { bedNumber: f.bedNumber, bedType: f.bedType, dailyCharge: charge });
-        else await axiosInstance.post("/ipd/beds", { roomId: f.roomId, bedNumber: f.bedNumber, bedType: f.bedType, dailyCharge: f.dailyCharge ? Number(f.dailyCharge) : undefined });
+        // Empty room-class clears the link; the backend treats "" / null as no class.
+        if (editingBed) await axiosInstance.put(`/ipd/beds/${f.bedId}`, { bedNumber: f.bedNumber, bedType: f.bedType, dailyCharge: charge, roomClassId: f.roomClassId || null });
+        else await axiosInstance.post("/ipd/beds", { roomId: f.roomId, bedNumber: f.bedNumber, bedType: f.bedType, dailyCharge: f.dailyCharge ? Number(f.dailyCharge) : undefined, roomClassId: f.roomClassId || undefined });
       }
       toast.success(`${kind[0].toUpperCase() + kind.slice(1)} ${isEdit ? "updated" : "added"}`);
       onDone();
@@ -215,6 +224,11 @@ function SetupDialog({ kind, edit, wards, onClose, onDone }: { kind: "ward" | "r
             <TextField fullWidth required label="Bed number" value={f.bedNumber || ""} onChange={(e) => set("bedNumber", e.target.value)} />
             <TextField select fullWidth label="Bed type" value={f.bedType} onChange={(e) => set("bedType", e.target.value)}>{BED_TYPES.map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField>
             <TextField fullWidth type="number" label="Daily charge (₹)" value={f.dailyCharge || ""} onChange={(e) => set("dailyCharge", e.target.value)} />
+            <TextField select fullWidth label="Room class (pricing)" value={f.roomClassId || ""} onChange={(e) => set("roomClassId", e.target.value)}
+              helperText="Sets which Schedule-of-Charges price column applies to this bed's charges at discharge.">
+              <MenuItem value=""><em>None (base price)</em></MenuItem>
+              {roomClasses.map((rc: any) => <MenuItem key={rc.roomClassId} value={rc.roomClassId}>{rc.name}</MenuItem>)}
+            </TextField>
           </>)}
           <Divider />
         </Stack>

@@ -4,7 +4,7 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem,
   Stack, Typography, Box, IconButton, Divider,
 } from "@mui/material";
 import { LogoutRounded, AddRounded, DeleteOutlineRounded } from "@mui/icons-material";
@@ -29,6 +29,9 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const [extras, setExtras] = useState<{ description: string; amount: string; chargeItemId?: string }[]>([]);
   const [saving, setSaving] = useState(false);
   const [socPickerOpen, setSocPickerOpen] = useState(false);
+  // Room class used to price picked SOC charges. `null` = follow the patient's bed
+  // (the detail's derived roomClassId); a non-null value is an explicit override.
+  const [roomClassOverride, setRoomClassOverride] = useState<string | null>(null);
 
   // Pull the admission detail for the bed-charge preview.
   const { data: detail } = useQuery({
@@ -46,6 +49,15 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   });
   const claim = claims[0];
   const claimApproved = claim ? Number(claim.preAuthApprovedAmount || 0) : 0;
+
+  // Active room classes (Schedule of Charges) — options for the pricing override.
+  const { data: roomClasses = [] } = useQuery<any[]>({
+    queryKey: ["soc-room-classes"],
+    queryFn: async () => (await axiosInstance.get("/hospital/soc/room-classes")).data.data,
+    enabled: open,
+  });
+  // The class actually used for pricing: the operator's override, else the bed's class.
+  const billRoomClassId: string = roomClassOverride !== null ? roomClassOverride : (detail?.roomClassId || "");
 
   const bedCharge = Number(detail?.estimatedBedCharge || 0);
   const bedSegments: any[] = detail?.bedSegments || [];
@@ -67,6 +79,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
     try {
       const res = await axiosInstance.post(`/ipd/admissions/${admissionId}/discharge`, {
         dischargeSummary: summary || undefined,
+        roomClassId: billRoomClassId || undefined,
         extraCharges: extras
           .filter((e) => e.chargeItemId || (e.description.trim() && Number(e.amount) > 0))
           .map((e) => e.chargeItemId ? { chargeItemId: e.chargeItemId } : { description: e.description.trim(), amount: Number(e.amount) }),
@@ -145,6 +158,16 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
                 <Button size="small" startIcon={<AddRounded />} onClick={() => setExtras((x) => [...x, { description: "", amount: "" }])} sx={{ textTransform: "none", color: ACCENTS.ipd }}>Custom</Button>
               </Box>
             </Box>
+            {roomClasses.length > 0 && (
+              <TextField
+                select size="small" fullWidth label="Room class (for Schedule-of-Charges pricing)" value={billRoomClassId}
+                onChange={(e) => setRoomClassOverride(e.target.value)} sx={{ mb: 1.5 }}
+                helperText={detail?.roomClassName ? `Defaults to the patient's bed (${detail.roomClassName}); change to re-price rate-card charges.` : "Sets which price column applies to picked rate-card charges."}
+              >
+                <MenuItem value=""><em>None (base price)</em></MenuItem>
+                {roomClasses.map((rc: any) => <MenuItem key={rc.roomClassId} value={rc.roomClassId}>{rc.name}</MenuItem>)}
+              </TextField>
+            )}
             {extras.map((e, i) => (
               <Box key={i} sx={{ display: "flex", gap: 1, mb: 1 }}>
                 {/* Rate-card rows are priced by the server, so name + amount are read-only here. */}
@@ -223,6 +246,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
       onClose={() => setSocPickerOpen(false)}
       onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), chargeItemId: c.chargeItemId }])}
       accent={ACCENTS.ipd}
+      roomClassId={billRoomClassId || undefined}
     />
     </>
   );
