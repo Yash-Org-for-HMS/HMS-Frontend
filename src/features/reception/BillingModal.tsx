@@ -16,7 +16,8 @@ import ErrorState from "@/components/ErrorState";
 import { useToast } from "@/providers/ToastContext";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BillReceipt from "@/components/reception/BillReceipt";
-import { SEMANTIC } from "@/styles/accents";
+import SocChargePicker from "@/components/billing/SocChargePicker";
+import { SEMANTIC, ACCENTS } from "@/styles/accents";
 
 interface BillingModalProps {
   open: boolean;
@@ -53,6 +54,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const [newItemQty, setNewItemQty] = useState("1");
   const [newItemPrice, setNewItemPrice] = useState("");
   const [addingItem, setAddingItem] = useState(false);
+  const [socPickerOpen, setSocPickerOpen] = useState(false);
 
   // Hospital identity for the receipt header
   const [hospitalProfile, setHospitalProfile] = useState<any>(null);
@@ -218,6 +220,24 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     }
   };
 
+  // Add a charge picked from the Schedule of Charges — the server prices it from
+  // the rate card (we send only the id), so no amount is trusted from the client.
+  const handleAddSocCharge = async (chargeItemId: string) => {
+    if (!invoice) return;
+    try {
+      setAddingItem(true);
+      const res = await axiosInstance.post(`/reception/billing/invoices/${invoice.invoiceId}/items`, { chargeItemId });
+      if (res.data.success) {
+        toast.success("Charge added");
+        await fetchBillingData();
+      }
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Failed to add charge"));
+    } finally {
+      setAddingItem(false);
+    }
+  };
+
   const handleAdjust = async () => {
     if (!invoice) return;
     try {
@@ -346,8 +366,9 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const selectedRefundable = refundablePayments.find((p: any) => p.paymentId === refundPaymentId)?.refundable || 0;
 
   return (
-    <Dialog 
-      open={open} 
+    <>
+    <Dialog
+      open={open}
       onClose={onClose} 
       maxWidth="md" 
       fullWidth
@@ -624,8 +645,17 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
 
                 {!isFullyPaid && (
                   <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(59,130,246,0.05)", borderRadius: 2, border: "1px dashed rgba(59,130,246,0.3)" }}>
-                    <Typography variant="subtitle2" sx={{ color: SEMANTIC.info, fontWeight: 700, mb: 2 }}>
-                      + Add Custom Line Item
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, gap: 1, flexWrap: "wrap" }}>
+                      <Typography variant="subtitle2" sx={{ color: SEMANTIC.info, fontWeight: 700 }}>
+                        + Add Charge
+                      </Typography>
+                      <Button size="small" variant="outlined" onClick={() => setSocPickerOpen(true)} disabled={addingItem}
+                        sx={{ textTransform: "none", color: ACCENTS.reception, borderColor: "rgba(8,145,178,0.4)" }}>
+                        Pick from Schedule of Charges
+                      </Button>
+                    </Box>
+                    <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
+                      Pick a rate-card charge (priced automatically), or type a custom line below.
                     </Typography>
                     <Grid container spacing={2}>
                       <Grid size={{ xs: 12 }}>
@@ -686,5 +716,12 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         </Button>
       </DialogActions>
     </Dialog>
+    <SocChargePicker
+      open={socPickerOpen}
+      onClose={() => setSocPickerOpen(false)}
+      onPick={(c) => handleAddSocCharge(c.chargeItemId)}
+      accent={ACCENTS.reception}
+    />
+    </>
   );
 }

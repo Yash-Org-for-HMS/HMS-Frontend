@@ -11,6 +11,7 @@ import { LogoutRounded, AddRounded, DeleteOutlineRounded } from "@mui/icons-mate
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
+import SocChargePicker from "@/components/billing/SocChargePicker";
 
 interface Props {
   open: boolean;
@@ -23,8 +24,11 @@ interface Props {
 export default function DischargeDialog({ open, onClose, onDone, admissionId }: Props) {
   const toast = useToast();
   const [summary, setSummary] = useState("");
-  const [extras, setExtras] = useState<{ description: string; amount: string }[]>([]);
+  // A row is either a free-text charge (editable description + amount) or one picked
+  // from the Schedule of Charges (carries chargeItemId; the server prices it).
+  const [extras, setExtras] = useState<{ description: string; amount: string; chargeItemId?: string }[]>([]);
   const [saving, setSaving] = useState(false);
+  const [socPickerOpen, setSocPickerOpen] = useState(false);
 
   // Pull the admission detail for the bed-charge preview.
   const { data: detail } = useQuery({
@@ -63,7 +67,9 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
     try {
       const res = await axiosInstance.post(`/ipd/admissions/${admissionId}/discharge`, {
         dischargeSummary: summary || undefined,
-        extraCharges: extras.filter((e) => e.description.trim() && Number(e.amount) > 0).map((e) => ({ description: e.description.trim(), amount: Number(e.amount) })),
+        extraCharges: extras
+          .filter((e) => e.chargeItemId || (e.description.trim() && Number(e.amount) > 0))
+          .map((e) => e.chargeItemId ? { chargeItemId: e.chargeItemId } : { description: e.description.trim(), amount: Number(e.amount) }),
       });
       const inv = res.data?.data?.invoice;
       toast.success(inv ? `Discharged — invoice ${inv.invoiceNumber} (${formatINR(inv.netAmount)})` : "Patient discharged");
@@ -76,6 +82,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   };
 
   return (
+    <>
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <LogoutRounded sx={{ color: SEMANTIC.danger }} /> Discharge — {detail?.patientName || "Patient"}
@@ -131,14 +138,20 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
           )}
 
           <Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1, gap: 1, flexWrap: "wrap" }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Additional charges</Typography>
-              <Button size="small" startIcon={<AddRounded />} onClick={() => setExtras((x) => [...x, { description: "", amount: "" }])} sx={{ textTransform: "none", color: ACCENTS.ipd }}>Add</Button>
+              <Box sx={{ display: "flex", gap: 0.5 }}>
+                <Button size="small" onClick={() => setSocPickerOpen(true)} sx={{ textTransform: "none", color: ACCENTS.ipd }}>Pick from Schedule of Charges</Button>
+                <Button size="small" startIcon={<AddRounded />} onClick={() => setExtras((x) => [...x, { description: "", amount: "" }])} sx={{ textTransform: "none", color: ACCENTS.ipd }}>Custom</Button>
+              </Box>
             </Box>
             {extras.map((e, i) => (
               <Box key={i} sx={{ display: "flex", gap: 1, mb: 1 }}>
-                <TextField size="small" fullWidth placeholder="Description" value={e.description} onChange={(ev) => setExtras((x) => x.map((r, ri) => ri === i ? { ...r, description: ev.target.value } : r))} />
-                <TextField size="small" type="number" sx={{ width: 130 }} placeholder="Amount" value={e.amount} onChange={(ev) => setExtras((x) => x.map((r, ri) => ri === i ? { ...r, amount: ev.target.value } : r))} />
+                {/* Rate-card rows are priced by the server, so name + amount are read-only here. */}
+                <TextField size="small" fullWidth placeholder="Description" value={e.description} disabled={!!e.chargeItemId}
+                  onChange={(ev) => setExtras((x) => x.map((r, ri) => ri === i ? { ...r, description: ev.target.value } : r))} />
+                <TextField size="small" type="number" sx={{ width: 130 }} placeholder="Amount" value={e.amount} disabled={!!e.chargeItemId}
+                  onChange={(ev) => setExtras((x) => x.map((r, ri) => ri === i ? { ...r, amount: ev.target.value } : r))} />
                 <IconButton size="small" onClick={() => setExtras((x) => x.filter((_, ri) => ri !== i))}><DeleteOutlineRounded fontSize="small" /></IconButton>
               </Box>
             ))}
@@ -205,5 +218,12 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
         </Button>
       </DialogActions>
     </Dialog>
+    <SocChargePicker
+      open={socPickerOpen}
+      onClose={() => setSocPickerOpen(false)}
+      onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), chargeItemId: c.chargeItemId }])}
+      accent={ACCENTS.ipd}
+    />
+    </>
   );
 }
