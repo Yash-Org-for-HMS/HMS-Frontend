@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
@@ -10,7 +10,9 @@ import {
 } from "@mui/material";
 import {
   AddRounded, EditRounded, DeleteRounded, SearchRounded, ReceiptLongRounded,
+  ExpandMoreRounded, ChevronRightRounded,
 } from "@mui/icons-material";
+import { MenuItem } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
@@ -25,7 +27,7 @@ const ACCENT = ACCENTS.hospital;
 const ACCENT_DARK = ACCENTS.hospitalDark;
 const inr = formatINRAuto;
 
-type Category = { chargeCategoryId: string; categoryName: string; categoryCode: string; sortOrder: number; isActive: boolean; _count?: { items: number } };
+type Category = { chargeCategoryId: string; categoryName: string; categoryCode: string; parentId: string | null; description: string | null; iconName: string | null; sortOrder: number; isActive: boolean; _count?: { items: number } };
 type Item = { chargeItemId: string; chargeCategoryId: string; itemName: string; itemCode: string | null; price: number | string; taxPercent: number | string; unit: string | null; isActive: boolean };
 
 // Hospital's Schedule of Charges (rate card): categories on the left (seeded from
@@ -53,6 +55,29 @@ export default function ScheduleOfCharges() {
     return s ? categories.filter((c) => c.categoryName.toLowerCase().includes(s)) : categories;
   }, [categories, search]);
 
+  // Group categories by parent for the nested tree.
+  const childrenOf = useMemo(() => {
+    const m = new Map<string | null, Category[]>();
+    for (const c of categories) {
+      const k = c.parentId ?? null;
+      const arr = m.get(k);
+      if (arr) arr.push(c); else m.set(k, [c]);
+    }
+    for (const arr of m.values()) arr.sort((a, b) => a.sortOrder - b.sortOrder || a.categoryName.localeCompare(b.categoryName));
+    return m;
+  }, [categories]);
+
+  // Expand top-level groups once, on first load.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const didInit = useRef(false);
+  useEffect(() => {
+    if (!didInit.current && categories.length) {
+      didInit.current = true;
+      setExpanded(new Set((childrenOf.get(null) ?? []).map((c) => c.chargeCategoryId)));
+    }
+  }, [categories, childrenOf]);
+  const toggle = (id: string) => setExpanded((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
   const { data: items = [], isLoading: itemsLoading, isError: itemsError, error: itemsErr, refetch: refetchItems } = useQuery<Item[]>({
     queryKey: ["soc-items", activeCategoryId],
     queryFn: async () => (await axiosInstance.get(`/hospital/soc/categories/${activeCategoryId}/items`)).data.data,
@@ -70,6 +95,35 @@ export default function ScheduleOfCharges() {
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to remove charge"));
     }
+  };
+
+  // Recursive tree node.
+  const renderNode = (cat: Category, depth: number): React.ReactNode => {
+    const kids = childrenOf.get(cat.chargeCategoryId) ?? [];
+    const hasKids = kids.length > 0;
+    const isOpen = expanded.has(cat.chargeCategoryId);
+    const isSel = cat.chargeCategoryId === activeCategoryId;
+    const secondary = !cat.isActive ? "Inactive" : hasKids ? `${kids.length} subcategor${kids.length === 1 ? "y" : "ies"}` : `${cat._count?.items ?? 0} charge${(cat._count?.items ?? 0) === 1 ? "" : "s"}`;
+    return (
+      <Box key={cat.chargeCategoryId}>
+        <ListItemButton
+          selected={isSel} onClick={() => setSelectedId(cat.chargeCategoryId)}
+          sx={{ py: 0.55, pl: 1 + depth * 1.75, "&.Mui-selected": { bgcolor: `${ACCENT}14`, borderRight: `3px solid ${ACCENT}` }, "&.Mui-selected:hover": { bgcolor: `${ACCENT}22` } }}
+        >
+          {hasKids ? (
+            <Box component="span" onClick={(e) => { e.stopPropagation(); toggle(cat.chargeCategoryId); }} sx={{ display: "flex", mr: 0.5, color: "text.secondary" }}>
+              {isOpen ? <ExpandMoreRounded fontSize="small" /> : <ChevronRightRounded fontSize="small" />}
+            </Box>
+          ) : <Box sx={{ width: 24, flexShrink: 0 }} />}
+          <ListItemText
+            primary={cat.categoryName} secondary={secondary}
+            primaryTypographyProps={{ fontSize: "0.86rem", fontWeight: isSel ? 700 : hasKids ? 600 : 500, color: isSel ? ACCENT : "text.primary", noWrap: true }}
+            secondaryTypographyProps={{ fontSize: "0.72rem", color: !cat.isActive ? "warning.main" : "text.secondary" }}
+          />
+        </ListItemButton>
+        {hasKids && isOpen && kids.map((k) => renderNode(k, depth + 1))}
+      </Box>
+    );
   };
 
   if (isLoading) return <DetailSkeleton />;
@@ -97,24 +151,26 @@ export default function ScheduleOfCharges() {
           </Box>
           <Divider />
           <List dense disablePadding sx={{ maxHeight: "calc(100vh - 260px)", overflowY: "auto" }}>
-            {filtered.map((c) => {
-              const isSel = c.chargeCategoryId === activeCategoryId;
-              return (
-                <ListItemButton
-                  key={c.chargeCategoryId} selected={isSel} onClick={() => setSelectedId(c.chargeCategoryId)}
-                  sx={{ py: 0.75, "&.Mui-selected": { bgcolor: `${ACCENT}14`, borderRight: `3px solid ${ACCENT}` }, "&.Mui-selected:hover": { bgcolor: `${ACCENT}22` } }}
-                >
-                  <ListItemText
-                    primary={c.categoryName}
-                    secondary={!c.isActive ? "Inactive" : `${c._count?.items ?? 0} charge${(c._count?.items ?? 0) === 1 ? "" : "s"}`}
-                    primaryTypographyProps={{ fontSize: "0.86rem", fontWeight: isSel ? 700 : 500, color: isSel ? ACCENT : "text.primary" }}
-                    secondaryTypographyProps={{ fontSize: "0.72rem", color: !c.isActive ? "warning.main" : "text.secondary" }}
-                  />
-                </ListItemButton>
-              );
-            })}
-            {filtered.length === 0 && (
-              <Typography variant="body2" sx={{ color: "text.secondary", p: 2, textAlign: "center" }}>No categories match.</Typography>
+            {search.trim() ? (
+              // Search: flat matches across the whole tree.
+              filtered.length ? filtered.map((c) => {
+                const isSel = c.chargeCategoryId === activeCategoryId;
+                return (
+                  <ListItemButton
+                    key={c.chargeCategoryId} selected={isSel} onClick={() => setSelectedId(c.chargeCategoryId)}
+                    sx={{ py: 0.6, "&.Mui-selected": { bgcolor: `${ACCENT}14`, borderRight: `3px solid ${ACCENT}` } }}
+                  >
+                    <ListItemText
+                      primary={c.categoryName}
+                      secondary={!c.isActive ? "Inactive" : `${c._count?.items ?? 0} charge${(c._count?.items ?? 0) === 1 ? "" : "s"}`}
+                      primaryTypographyProps={{ fontSize: "0.86rem", fontWeight: isSel ? 700 : 500, color: isSel ? ACCENT : "text.primary" }}
+                      secondaryTypographyProps={{ fontSize: "0.72rem", color: !c.isActive ? "warning.main" : "text.secondary" }}
+                    />
+                  </ListItemButton>
+                );
+              }) : <Typography variant="body2" sx={{ color: "text.secondary", p: 2, textAlign: "center" }}>No categories match.</Typography>
+            ) : (
+              (childrenOf.get(null) ?? []).map((root) => renderNode(root, 0))
             )}
           </List>
         </Paper>
@@ -187,7 +243,7 @@ export default function ScheduleOfCharges() {
 
       {catDialog && (
         <CategoryDialog
-          mode={catDialog.mode} cat={catDialog.cat}
+          mode={catDialog.mode} cat={catDialog.cat} categories={categories} defaultParentId={selected?.chargeCategoryId ?? null}
           onClose={() => setCatDialog(null)}
           onDone={(newId) => { setCatDialog(null); refetch(); if (newId) setSelectedId(newId); }}
         />
@@ -204,24 +260,40 @@ export default function ScheduleOfCharges() {
 }
 
 // ── Category add/edit ────────────────────────────────────────────────────────
-function CategoryDialog({ mode, cat, onClose, onDone }: { mode: "add" | "edit"; cat?: Category; onClose: () => void; onDone: (newId?: string) => void }) {
+function CategoryDialog({ mode, cat, categories, defaultParentId, onClose, onDone }: { mode: "add" | "edit"; cat?: Category; categories: Category[]; defaultParentId?: string | null; onClose: () => void; onDone: (newId?: string) => void }) {
   const toast = useToast();
   const [name, setName] = useState(cat?.categoryName ?? "");
+  const [parentId, setParentId] = useState<string>(cat?.parentId ?? (mode === "add" ? (defaultParentId ?? "") : "") ?? "");
+  const [description, setDescription] = useState(cat?.description ?? "");
   const [sortOrder, setSortOrder] = useState(String(cat?.sortOrder ?? ""));
   const [isActive, setIsActive] = useState(cat?.isActive ?? true);
   const [saving, setSaving] = useState(false);
+
+  // A category can't be moved under itself or any of its own descendants.
+  const parentOptions = useMemo(() => {
+    const excluded = new Set<string>();
+    if (mode === "edit" && cat) {
+      excluded.add(cat.chargeCategoryId);
+      const childrenBy = new Map<string, Category[]>();
+      for (const c of categories) if (c.parentId) { const a = childrenBy.get(c.parentId); a ? a.push(c) : childrenBy.set(c.parentId, [c]); }
+      const stack = [cat.chargeCategoryId];
+      while (stack.length) { const id = stack.pop()!; for (const ch of childrenBy.get(id) ?? []) if (!excluded.has(ch.chargeCategoryId)) { excluded.add(ch.chargeCategoryId); stack.push(ch.chargeCategoryId); } }
+    }
+    return categories.filter((c) => !excluded.has(c.chargeCategoryId)).sort((a, b) => a.categoryName.localeCompare(b.categoryName));
+  }, [mode, cat, categories]);
 
   const save = async () => {
     if (!name.trim()) { toast.error("Category name is required"); return; }
     setSaving(true);
     try {
       if (mode === "add") {
-        const res = await axiosInstance.post("/hospital/soc/categories", { categoryName: name.trim() });
+        const res = await axiosInstance.post("/hospital/soc/categories", { categoryName: name.trim(), parentId: parentId || undefined, description: description.trim() || undefined });
         toast.success("Category added");
         onDone(res.data?.data?.chargeCategoryId);
       } else {
         await axiosInstance.put(`/hospital/soc/categories/${cat!.chargeCategoryId}`, {
-          categoryName: name.trim(), sortOrder: sortOrder === "" ? undefined : Number(sortOrder), isActive,
+          categoryName: name.trim(), parentId: parentId || null, description: description.trim() || undefined,
+          sortOrder: sortOrder === "" ? undefined : Number(sortOrder), isActive,
         });
         toast.success("Category updated");
         onDone();
@@ -237,6 +309,11 @@ function CategoryDialog({ mode, cat, onClose, onDone }: { mode: "add" | "edit"; 
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <TextField label="Category name" value={name} onChange={(e) => setName(e.target.value)} fullWidth autoFocus />
+          <TextField select label="Parent category" value={parentId} onChange={(e) => setParentId(e.target.value)} fullWidth helperText="Leave as top level, or nest under a parent">
+            <MenuItem value=""><em>— None (top level) —</em></MenuItem>
+            {parentOptions.map((c) => <MenuItem key={c.chargeCategoryId} value={c.chargeCategoryId}>{c.categoryName}</MenuItem>)}
+          </TextField>
+          <TextField label="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={2} />
           {mode === "edit" && (
             <>
               <TextField label="Sort order" type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} fullWidth helperText="Lower numbers appear first" />
