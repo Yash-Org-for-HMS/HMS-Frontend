@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import {
   AddRounded, EditRounded, DeleteRounded, SearchRounded, ReceiptLongRounded,
-  ExpandMoreRounded, ChevronRightRounded,
+  ExpandMoreRounded, ChevronRightRounded, MeetingRoomRounded,
 } from "@mui/icons-material";
 import { MenuItem } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
@@ -28,7 +28,9 @@ const ACCENT_DARK = ACCENTS.hospitalDark;
 const inr = formatINRAuto;
 
 type Category = { chargeCategoryId: string; categoryName: string; categoryCode: string; parentId: string | null; description: string | null; iconName: string | null; sortOrder: number; isActive: boolean; _count?: { items: number } };
-type Item = { chargeItemId: string; chargeCategoryId: string; itemName: string; itemCode: string | null; price: number | string; taxPercent: number | string; unit: string | null; isActive: boolean };
+type RoomPrice = { roomClassId: string; price: number | string };
+type Item = { chargeItemId: string; chargeCategoryId: string; itemName: string; itemCode: string | null; price: number | string; taxPercent: number | string; unit: string | null; isActive: boolean; roomPrices?: RoomPrice[] };
+type RoomClass = { roomClassId: string; name: string; code: string; sortOrder: number; isActive: boolean };
 
 // Hospital's Schedule of Charges (rate card): categories on the left (seeded from
 // a default template on first open, then editable), priced charges/procedures on
@@ -40,11 +42,19 @@ export default function ScheduleOfCharges() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [catDialog, setCatDialog] = useState<{ mode: "add" | "edit"; cat?: Category } | null>(null);
   const [itemDialog, setItemDialog] = useState<{ mode: "add" | "edit"; item?: Item } | null>(null);
+  const [roomDialogOpen, setRoomDialogOpen] = useState(false);
 
   const { data: categories = [], isLoading, isError, error, refetch } = useQuery<Category[]>({
     queryKey: ["soc-categories"],
     queryFn: async () => (await axiosInstance.get("/hospital/soc/categories")).data.data,
   });
+
+  // Room classes drive the dynamic per-room pricing columns.
+  const { data: roomClasses = [], refetch: refetchRoomClasses } = useQuery<RoomClass[]>({
+    queryKey: ["soc-room-classes"],
+    queryFn: async () => (await axiosInstance.get("/hospital/soc/room-classes")).data.data,
+  });
+  const activeRoomClasses = useMemo(() => roomClasses.filter((r) => r.isActive), [roomClasses]);
 
   // Default-select the first category once loaded.
   const selected = categories.find((c) => c.chargeCategoryId === selectedId) ?? categories[0];
@@ -135,8 +145,12 @@ export default function ScheduleOfCharges() {
         title="Schedule of Charges"
         subtitle="Your hospital's rate card — define charges and procedures under each category and set their prices."
         actions={
-          <Button variant="contained" startIcon={<AddRounded />} onClick={() => setCatDialog({ mode: "add" })}
-            sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Add Category</Button>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button variant="outlined" startIcon={<MeetingRoomRounded />} onClick={() => setRoomDialogOpen(true)}
+              sx={{ textTransform: "none", color: ACCENT, borderColor: `${ACCENT}66` }}>Room Classes</Button>
+            <Button variant="contained" startIcon={<AddRounded />} onClick={() => setCatDialog({ mode: "add" })}
+              sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Add Category</Button>
+          </Box>
         }
       />
 
@@ -222,7 +236,14 @@ export default function ScheduleOfCharges() {
                         <TableCell sx={{ color: "text.secondary" }}>{it.itemCode || "—"}</TableCell>
                         <TableCell sx={{ color: "text.secondary" }}>{it.unit || "—"}</TableCell>
                         <TableCell sx={{ color: "text.secondary" }}>{Number(it.taxPercent) > 0 ? `${Number(it.taxPercent)}%` : "—"}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700 }}>{inr(Number(it.price))}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700 }}>
+                          {inr(Number(it.price))}
+                          {(it.roomPrices?.length ?? 0) > 0 && (
+                            <Tooltip title={`Room-wise: ${it.roomPrices!.map((rp) => inr(Number(rp.price))).join(" / ")}`}>
+                              <Chip label={`+${it.roomPrices!.length} room`} size="small" sx={{ ml: 0.75, height: 18, fontSize: "0.62rem", bgcolor: `${ACCENT}14`, color: ACCENT }} />
+                            </Tooltip>
+                          )}
+                        </TableCell>
                         <TableCell align="center">
                           <Chip label={it.isActive ? "Active" : "Inactive"} size="small"
                             sx={{ height: 20, fontSize: "0.7rem", fontWeight: 600, bgcolor: it.isActive ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", color: it.isActive ? "success.main" : "error.main" }} />
@@ -251,9 +272,13 @@ export default function ScheduleOfCharges() {
       {itemDialog && selected && (
         <ItemDialog
           mode={itemDialog.mode} item={itemDialog.item} categoryId={selected.chargeCategoryId} categoryName={selected.categoryName}
+          roomClasses={activeRoomClasses}
           onClose={() => setItemDialog(null)}
           onDone={() => { setItemDialog(null); refetchItems(); refetch(); }}
         />
+      )}
+      {roomDialogOpen && (
+        <RoomClassesDialog roomClasses={roomClasses} onClose={() => setRoomDialogOpen(false)} onChanged={() => { refetchRoomClasses(); refetchItems(); }} />
       )}
     </Box>
   );
@@ -331,7 +356,7 @@ function CategoryDialog({ mode, cat, categories, defaultParentId, onClose, onDon
 }
 
 // ── Charge item add/edit ─────────────────────────────────────────────────────
-function ItemDialog({ mode, item, categoryId, categoryName, onClose, onDone }: { mode: "add" | "edit"; item?: Item; categoryId: string; categoryName: string; onClose: () => void; onDone: () => void }) {
+function ItemDialog({ mode, item, categoryId, categoryName, roomClasses, onClose, onDone }: { mode: "add" | "edit"; item?: Item; categoryId: string; categoryName: string; roomClasses: RoomClass[]; onClose: () => void; onDone: () => void }) {
   const toast = useToast();
   const [name, setName] = useState(item?.itemName ?? "");
   const [code, setCode] = useState(item?.itemCode ?? "");
@@ -339,17 +364,26 @@ function ItemDialog({ mode, item, categoryId, categoryName, onClose, onDone }: {
   const [tax, setTax] = useState(item && Number(item.taxPercent) > 0 ? String(item.taxPercent) : "");
   const [unit, setUnit] = useState(item?.unit ?? "");
   const [isActive, setIsActive] = useState(item?.isActive ?? true);
+  // Per-room-class prices keyed by roomClassId (blank = use the base price).
+  const [roomPrices, setRoomPrices] = useState<Record<string, string>>(() => {
+    const m: Record<string, string> = {};
+    for (const rp of item?.roomPrices ?? []) m[rp.roomClassId] = String(rp.price);
+    return m;
+  });
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
     if (!name.trim()) { toast.error("Charge name is required"); return; }
-    if (price === "" || Number(price) < 0 || !Number.isFinite(Number(price))) { toast.error("Enter a valid price"); return; }
+    if (price === "" || Number(price) < 0 || !Number.isFinite(Number(price))) { toast.error("Enter a valid base price"); return; }
     setSaving(true);
     try {
+      const roomPricesArr = Object.entries(roomPrices)
+        .filter(([, v]) => v !== "" && Number(v) >= 0 && Number.isFinite(Number(v)))
+        .map(([roomClassId, v]) => ({ roomClassId, price: Number(v) }));
       const body = {
         itemName: name.trim(), itemCode: code.trim() || undefined,
         price: Number(price), taxPercent: tax === "" ? undefined : Number(tax),
-        unit: unit.trim() || undefined, isActive,
+        unit: unit.trim() || undefined, isActive, roomPrices: roomPricesArr,
       };
       if (mode === "add") {
         await axiosInstance.post("/hospital/soc/items", { chargeCategoryId: categoryId, ...body });
@@ -375,16 +409,100 @@ function ItemDialog({ mode, item, categoryId, categoryName, onClose, onDone }: {
             <TextField label="Unit (optional)" placeholder="e.g. per day" value={unit} onChange={(e) => setUnit(e.target.value)} fullWidth />
           </Stack>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <TextField label="Price (₹)" type="number" value={price} onChange={(e) => setPrice(e.target.value)} fullWidth
+            <TextField label="Base price (₹)" type="number" value={price} onChange={(e) => setPrice(e.target.value)} fullWidth
               InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
             <TextField label="Tax % (optional)" type="number" value={tax} onChange={(e) => setTax(e.target.value)} fullWidth />
           </Stack>
+
+          {roomClasses.length > 0 && (
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>Room-wise pricing (optional)</Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
+                Set a price per room class; leave blank to use the base price.
+              </Typography>
+              <Stack spacing={1.5}>
+                {roomClasses.map((rc) => (
+                  <TextField
+                    key={rc.roomClassId} size="small" type="number" label={rc.name} fullWidth
+                    value={roomPrices[rc.roomClassId] ?? ""}
+                    onChange={(e) => setRoomPrices((m) => ({ ...m, [rc.roomClassId]: e.target.value }))}
+                    placeholder={`Base ₹${price || "0"}`}
+                    InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }}
+                  />
+                ))}
+              </Stack>
+            </Box>
+          )}
+
           <FormControlLabel control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />} label="Active" />
         </Stack>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button color="inherit" onClick={onClose} disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={save} disabled={saving} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Save</Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// ── Room classes manager (the pricing-matrix columns) ────────────────────────
+function RoomClassesDialog({ roomClasses, onClose, onChanged }: { roomClasses: RoomClass[]; onClose: () => void; onChanged: () => void }) {
+  const toast = useToast();
+  const confirm = useConfirm();
+  const [newName, setNewName] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const add = async () => {
+    if (!newName.trim()) return;
+    setBusy(true);
+    try { await axiosInstance.post("/hospital/soc/room-classes", { name: newName.trim() }); setNewName(""); onChanged(); toast.success("Room class added"); }
+    catch (e) { toast.error(getApiErrorMessage(e, "Failed to add room class")); }
+    finally { setBusy(false); }
+  };
+  const toggle = async (rc: RoomClass) => {
+    try { await axiosInstance.put(`/hospital/soc/room-classes/${rc.roomClassId}`, { isActive: !rc.isActive }); onChanged(); }
+    catch (e) { toast.error(getApiErrorMessage(e, "Failed to update")); }
+  };
+  const rename = async (rc: RoomClass) => {
+    const name = window.prompt("Room class name", rc.name);
+    if (name == null || !name.trim() || name.trim() === rc.name) return;
+    try { await axiosInstance.put(`/hospital/soc/room-classes/${rc.roomClassId}`, { name: name.trim() }); onChanged(); }
+    catch (e) { toast.error(getApiErrorMessage(e, "Failed to rename")); }
+  };
+  const remove = async (rc: RoomClass) => {
+    const ok = await confirm({ title: "Delete room class?", message: `Delete "${rc.name}"? Any per-room prices set for this class will be removed (charges fall back to their base price).`, confirmText: "Delete", danger: true });
+    if (!ok) return;
+    try { await axiosInstance.delete(`/hospital/soc/room-classes/${rc.roomClassId}`); onChanged(); toast.success("Room class deleted"); }
+    catch (e) { toast.error(getApiErrorMessage(e, "Failed to delete")); }
+  };
+
+  return (
+    <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>Room Classes</DialogTitle>
+      <DialogContent>
+        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
+          These become the price columns when adding a charge (e.g. General, Semi-Private, Private, Deluxe, ICU).
+        </Typography>
+        <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+          <TextField size="small" fullWidth placeholder="New room class name" value={newName}
+            onChange={(e) => setNewName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") add(); }} />
+          <Button variant="contained" onClick={add} disabled={busy || !newName.trim()} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Add</Button>
+        </Box>
+        <Stack spacing={0.5}>
+          {roomClasses.length === 0 && <Typography variant="body2" sx={{ color: "text.secondary", textAlign: "center", py: 2 }}>No room classes yet.</Typography>}
+          {roomClasses.map((rc) => (
+            <Box key={rc.roomClassId} sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.5, borderBottom: "1px solid", borderColor: "divider" }}>
+              <Typography sx={{ flex: 1, fontWeight: 600, color: rc.isActive ? "text.primary" : "text.disabled" }}>{rc.name}</Typography>
+              {!rc.isActive && <Chip label="Inactive" size="small" sx={{ height: 18, fontSize: "0.65rem" }} />}
+              <Tooltip title="Rename"><IconButton size="small" onClick={() => rename(rc)}><EditRounded fontSize="small" /></IconButton></Tooltip>
+              <Switch size="small" checked={rc.isActive} onChange={() => toggle(rc)} />
+              <Tooltip title="Delete"><IconButton size="small" onClick={() => remove(rc)}><DeleteRounded fontSize="small" sx={{ color: "error.main" }} /></IconButton></Tooltip>
+            </Box>
+          ))}
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button variant="contained" onClick={onClose} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Done</Button>
       </DialogActions>
     </Dialog>
   );
