@@ -13,15 +13,19 @@ const inr = formatINRAuto;
 type RoomPrice = { roomClassId: string; price: number | string };
 type Category = { chargeCategoryId: string; categoryName: string; isActive: boolean };
 type Item = { chargeItemId: string; itemName: string; itemCode: string | null; price: number | string; unit: string | null; isActive: boolean; roomPrices?: RoomPrice[] };
-export type PickedCharge = { chargeItemId: string; itemName: string; price: number };
+// `basePrice` + `roomPrices` are returned so a caller (e.g. discharge) can re-derive
+// the effective price if its room class changes after the pick; `price` is the
+// effective price at pick time. The server always re-prices authoritatively.
+export type PickedCharge = { chargeItemId: string; itemName: string; price: number; basePrice: number; roomPrices: RoomPrice[] };
 
 // Reusable picker for the hospital's Schedule of Charges. Lets billing screens
 // choose a rate-card charge; the caller sends only the chargeItemId — the server
 // prices the line from the catalog. `accent` themes it to the host panel.
 // When `roomClassId` is given, the displayed/returned price reflects that room
 // class's matrix price (falling back to base); the server re-prices authoritatively.
-export default function SocChargePicker({ open, onClose, onPick, accent = "#6366f1", roomClassId }: {
-  open: boolean; onClose: () => void; onPick: (c: PickedCharge) => void; accent?: string; roomClassId?: string | null;
+// `roomClassName` (optional) is shown so the operator knows which class the prices reflect.
+export default function SocChargePicker({ open, onClose, onPick, accent = "#6366f1", roomClassId, roomClassName }: {
+  open: boolean; onClose: () => void; onPick: (c: PickedCharge) => void; accent?: string; roomClassId?: string | null; roomClassName?: string | null;
 }) {
   const [categoryId, setCategoryId] = useState("");
   const [search, setSearch] = useState("");
@@ -59,6 +63,11 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#6366
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <ReceiptLongRounded sx={{ color: accent }} /> Pick from Schedule of Charges
+        {roomClassId && roomClassName && (
+          <Typography component="span" variant="caption" sx={{ ml: "auto", px: 1, py: 0.25, borderRadius: 1, bgcolor: `${accent}18`, color: accent, fontWeight: 700 }}>
+            {roomClassName} pricing
+          </Typography>
+        )}
       </DialogTitle>
       <DialogContent dividers>
         <Box sx={{ display: "flex", gap: 1.5, mb: 1.5, flexWrap: "wrap" }}>
@@ -87,7 +96,7 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#6366
             {filtered.map((it) => (
               <ListItemButton
                 key={it.chargeItemId}
-                onClick={() => { onPick({ chargeItemId: it.chargeItemId, itemName: it.itemName, price: effPrice(it) }); onClose(); }}
+                onClick={() => { onPick({ chargeItemId: it.chargeItemId, itemName: it.itemName, price: effPrice(it), basePrice: Number(it.price), roomPrices: it.roomPrices ?? [] }); onClose(); }}
                 sx={{ borderRadius: 1.5, mb: 0.25 }}
               >
                 <ListItemText

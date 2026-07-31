@@ -25,8 +25,10 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const toast = useToast();
   const [summary, setSummary] = useState("");
   // A row is either a free-text charge (editable description + amount) or one picked
-  // from the Schedule of Charges (carries chargeItemId; the server prices it).
-  const [extras, setExtras] = useState<{ description: string; amount: string; chargeItemId?: string }[]>([]);
+  // from the Schedule of Charges (carries chargeItemId + its base/room-class prices so
+  // the preview can re-derive when the room class changes; the server prices it).
+  type Extra = { description: string; amount: string; chargeItemId?: string; basePrice?: number; roomPrices?: { roomClassId: string; price: number | string }[] };
+  const [extras, setExtras] = useState<Extra[]>([]);
   const [saving, setSaving] = useState(false);
   const [socPickerOpen, setSocPickerOpen] = useState(false);
   // Room class used to price picked SOC charges. `null` = follow the patient's bed
@@ -34,7 +36,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const [roomClassOverride, setRoomClassOverride] = useState<string | null>(null);
 
   // Pull the admission detail for the bed-charge preview.
-  const { data: detail } = useQuery({
+  const { data: detail, isLoading: detailLoading, isError: detailError, refetch: refetchDetail } = useQuery({
     queryKey: ["ipd-admission", admissionId],
     queryFn: async () => (await axiosInstance.get(`/ipd/admissions/${admissionId}`)).data.data,
     enabled: open,
@@ -58,6 +60,22 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   });
   // The class actually used for pricing: the operator's override, else the bed's class.
   const billRoomClassId: string = roomClassOverride !== null ? roomClassOverride : (detail?.roomClassId || "");
+  // Only active classes are selectable, but keep the currently-selected one even if it
+  // was later deactivated (so the Select never renders an out-of-range/blank value).
+  const roomClassOptions: any[] = roomClasses.filter((rc) => rc.isActive || rc.roomClassId === billRoomClassId);
+  const billRoomClassName: string | null = roomClasses.find((rc) => rc.roomClassId === billRoomClassId)?.name ?? detail?.roomClassName ?? null;
+
+  // Effective preview amount for a row. Picked SOC rows re-derive from the CURRENT
+  // room class (matrix price else base), so the preview matches what the server will
+  // bill even after the class is changed; free-text rows use their typed amount.
+  const lineAmount = (e: Extra): number => {
+    if (!e.chargeItemId) return Number(e.amount) || 0;
+    if (billRoomClassId) {
+      const rp = e.roomPrices?.find((r) => r.roomClassId === billRoomClassId);
+      if (rp != null) return Number(rp.price);
+    }
+    return Number(e.basePrice ?? e.amount) || 0;
+  };
 
   const bedCharge = Number(detail?.estimatedBedCharge || 0);
   const bedSegments: any[] = detail?.bedSegments || [];
@@ -65,7 +83,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // that will roll onto the final bill — previewed so the total is honest.
   const pendingCharges: any[] = detail?.pendingCharges || [];
   const pendingTotal = Number(detail?.pendingChargesTotal || 0);
-  const extrasTotal = extras.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+  const extrasTotal = extras.reduce((s, e) => s + lineAmount(e), 0);
   const total = bedCharge + pendingTotal + extrasTotal;
   const deposit = Number(detail?.depositBalance || 0);
   const depositApplied = Math.min(deposit, total);
@@ -101,6 +119,14 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
         <LogoutRounded sx={{ color: SEMANTIC.danger }} /> Discharge — {detail?.patientName || "Patient"}
       </DialogTitle>
       <DialogContent dividers>
+        {detailLoading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}><HeartbeatLoader size={30} /></Box>
+        ) : detailError || !detail ? (
+          <Box sx={{ textAlign: "center", py: 4 }}>
+            <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>Couldn't load the discharge bill preview.</Typography>
+            <Button size="small" variant="outlined" onClick={() => refetchDetail()}>Retry</Button>
+          </Box>
+        ) : (
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>
           <Box sx={{ p: 2, borderRadius: 2, bgcolor: "action.hover" }}>
             {bedSegments.length > 1 ? (
@@ -158,22 +184,23 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
                 <Button size="small" startIcon={<AddRounded />} onClick={() => setExtras((x) => [...x, { description: "", amount: "" }])} sx={{ textTransform: "none", color: ACCENTS.ipd }}>Custom</Button>
               </Box>
             </Box>
-            {roomClasses.length > 0 && (
+            {roomClassOptions.length > 0 && (
               <TextField
                 select size="small" fullWidth label="Room class (for Schedule-of-Charges pricing)" value={billRoomClassId}
                 onChange={(e) => setRoomClassOverride(e.target.value)} sx={{ mb: 1.5 }}
                 helperText={detail?.roomClassName ? `Defaults to the patient's bed (${detail.roomClassName}); change to re-price rate-card charges.` : "Sets which price column applies to picked rate-card charges."}
               >
                 <MenuItem value=""><em>None (base price)</em></MenuItem>
-                {roomClasses.map((rc: any) => <MenuItem key={rc.roomClassId} value={rc.roomClassId}>{rc.name}</MenuItem>)}
+                {roomClassOptions.map((rc: any) => <MenuItem key={rc.roomClassId} value={rc.roomClassId}>{rc.name}{rc.isActive ? "" : " (inactive)"}</MenuItem>)}
               </TextField>
             )}
             {extras.map((e, i) => (
               <Box key={i} sx={{ display: "flex", gap: 1, mb: 1 }}>
-                {/* Rate-card rows are priced by the server, so name + amount are read-only here. */}
+                {/* Rate-card rows are priced by the server, so name + amount are read-only here.
+                    Picked rows show the CURRENT room-class price so the preview tracks the server. */}
                 <TextField size="small" fullWidth placeholder="Description" value={e.description} disabled={!!e.chargeItemId}
                   onChange={(ev) => setExtras((x) => x.map((r, ri) => ri === i ? { ...r, description: ev.target.value } : r))} />
-                <TextField size="small" type="number" sx={{ width: 130 }} placeholder="Amount" value={e.amount} disabled={!!e.chargeItemId}
+                <TextField size="small" type="number" sx={{ width: 130 }} placeholder="Amount" value={e.chargeItemId ? String(lineAmount(e)) : e.amount} disabled={!!e.chargeItemId}
                   onChange={(ev) => setExtras((x) => x.map((r, ri) => ri === i ? { ...r, amount: ev.target.value } : r))} />
                 <IconButton size="small" onClick={() => setExtras((x) => x.filter((_, ri) => ri !== i))}><DeleteOutlineRounded fontSize="small" /></IconButton>
               </Box>
@@ -231,10 +258,13 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
 
           <TextField fullWidth label="Discharge summary" value={summary} onChange={(e) => setSummary(e.target.value)} multiline rows={3} placeholder="Condition at discharge, instructions, follow-up…" />
         </Stack>
+        )}
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
-        <Button variant="contained" onClick={submit} disabled={saving}
+        {/* Block discharge until the bill preview has actually loaded — otherwise the
+            operator could confirm on a misleading ₹0 total. */}
+        <Button variant="contained" onClick={submit} disabled={saving || !detail}
           startIcon={saving ? <HeartbeatLoader size={22} /> : <LogoutRounded />}
           sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: SEMANTIC.dangerDark } }}>
           Discharge & Bill
@@ -244,9 +274,10 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
     <SocChargePicker
       open={socPickerOpen}
       onClose={() => setSocPickerOpen(false)}
-      onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), chargeItemId: c.chargeItemId }])}
+      onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), chargeItemId: c.chargeItemId, basePrice: c.basePrice, roomPrices: c.roomPrices }])}
       accent={ACCENTS.ipd}
       roomClassId={billRoomClassId || undefined}
+      roomClassName={billRoomClassName || undefined}
     />
     </>
   );

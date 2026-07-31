@@ -227,7 +227,8 @@ function SetupDialog({ kind, edit, wards, roomClasses, onClose, onDone }: { kind
             <TextField select fullWidth label="Room class (pricing)" value={f.roomClassId || ""} onChange={(e) => set("roomClassId", e.target.value)}
               helperText="Sets which Schedule-of-Charges price column applies to this bed's charges at discharge.">
               <MenuItem value=""><em>None (base price)</em></MenuItem>
-              {roomClasses.map((rc: any) => <MenuItem key={rc.roomClassId} value={rc.roomClassId}>{rc.name}</MenuItem>)}
+              {/* Active classes, plus the bed's current class even if later deactivated. */}
+              {roomClasses.filter((rc: any) => rc.isActive || rc.roomClassId === f.roomClassId).map((rc: any) => <MenuItem key={rc.roomClassId} value={rc.roomClassId}>{rc.name}{rc.isActive ? "" : " (inactive)"}</MenuItem>)}
             </TextField>
           </>)}
           <Divider />
