@@ -61,7 +61,9 @@ export default function ScheduleOfCharges() {
     queryFn: async () => (await axiosInstance.get("/hospital/soc/room-classes")).data.data,
   });
   const activeRoomClasses = useMemo(() => roomClasses.filter((r) => r.isActive), [roomClasses]);
-  const roomClassName = useMemo(() => new Map(roomClasses.map((r) => [r.roomClassId, r.name])), [roomClasses]);
+  // Charges table columns: Charge + Base + one per active room class + Status + actions.
+  const colCount = 4 + activeRoomClasses.length;
+  const headCellSx = { fontWeight: 700, color: "text.secondary", fontSize: "0.72rem", textTransform: "uppercase", bgcolor: "background.paper", whiteSpace: "nowrap" } as const;
 
   // Default-select the first category once loaded.
   const selected = categories.find((c) => c.chargeCategoryId === selectedId) ?? categories[0];
@@ -284,22 +286,26 @@ export default function ScheduleOfCharges() {
                 sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Add Charge</Button>
             </Box>
             <Divider />
-            <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
-              <Table stickyHeader size="small">
+            <TableContainer sx={{ maxHeight: "calc(100vh - 300px)", overflowX: "auto" }}>
+              <Table stickyHeader size="small" sx={{ minWidth: 520 + activeRoomClasses.length * 90 }}>
                 <TableHead>
                   <TableRow>
-                    {["Charge / Procedure", "Price", "Status", ""].map((h, i) => (
-                      <TableCell key={h || i} align={i === 1 ? "right" : i === 2 ? "center" : "left"} sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.72rem", textTransform: "uppercase", bgcolor: "background.paper" }}>{h}</TableCell>
+                    <TableCell sx={headCellSx}>Charge / Procedure</TableCell>
+                    <TableCell align="right" sx={headCellSx}>Base</TableCell>
+                    {activeRoomClasses.map((rc) => (
+                      <TableCell key={rc.roomClassId} align="right" sx={headCellSx}>{rc.name}</TableCell>
                     ))}
+                    <TableCell align="center" sx={headCellSx}>Status</TableCell>
+                    <TableCell sx={headCellSx} />
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {itemsLoading ? (
-                    <TableRowsSkeleton rows={5} columns={4} />
+                    <TableRowsSkeleton rows={5} columns={colCount} />
                   ) : itemsError ? (
-                    <TableRow><TableCell colSpan={4}><ErrorState message={apiErrorText(itemsErr)} onRetry={() => refetchItems()} /></TableCell></TableRow>
+                    <TableRow><TableCell colSpan={colCount}><ErrorState message={apiErrorText(itemsErr)} onRetry={() => refetchItems()} /></TableCell></TableRow>
                   ) : items.length === 0 ? (
-                    <TableRow><TableCell colSpan={4}>
+                    <TableRow><TableCell colSpan={colCount}>
                       <Box sx={{ py: 4 }}>
                         <Mascot pose="nothing-here-yet" title="No charges yet" subtitle="Add the charges/procedures under this category and set their prices." size={120} />
                       </Box>
@@ -308,20 +314,22 @@ export default function ScheduleOfCharges() {
                     items.map((it) => {
                       // Code / unit / tax collapse into one muted subtitle under the name.
                       const meta = [it.itemCode, it.unit, Number(it.taxPercent) > 0 ? `${Number(it.taxPercent)}% tax` : null].filter(Boolean).join(" · ");
+                      const priced = new Map((it.roomPrices ?? []).map((rp) => [rp.roomClassId, Number(rp.price)]));
                       return (
                         <TableRow key={it.chargeItemId} hover>
                           <TableCell>
                             <Typography sx={{ fontWeight: 600, fontSize: "0.87rem" }}>{it.itemName}</Typography>
                             {meta && <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>{meta}</Typography>}
                           </TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 700 }}>
-                            <Box sx={{ whiteSpace: "nowrap" }}>{inr(Number(it.price))}</Box>
-                            {(it.roomPrices?.length ?? 0) > 0 && (
-                              <Typography sx={{ fontSize: "0.7rem", fontWeight: 500, color: ACCENT, mt: 0.25, lineHeight: 1.4 }}>
-                                {it.roomPrices!.map((rp) => `${roomClassName.get(rp.roomClassId) ?? "Room"} ${inr(Number(rp.price))}`).join(" · ")}
-                              </Typography>
-                            )}
-                          </TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>{inr(Number(it.price))}</TableCell>
+                          {activeRoomClasses.map((rc) => {
+                            const has = priced.has(rc.roomClassId);
+                            return (
+                              <TableCell key={rc.roomClassId} align="right" sx={{ whiteSpace: "nowrap", fontWeight: has ? 600 : 400, color: has ? ACCENT : "text.disabled" }}>
+                                {has ? inr(priced.get(rc.roomClassId)!) : "—"}
+                              </TableCell>
+                            );
+                          })}
                           <TableCell align="center">
                             <Chip label={it.isActive ? "Active" : "Inactive"} size="small"
                               sx={{ height: 20, fontSize: "0.7rem", fontWeight: 600, bgcolor: it.isActive ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", color: it.isActive ? "success.main" : "error.main" }} />
