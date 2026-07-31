@@ -11,7 +11,7 @@ import {
 import {
   AddRounded, EditRounded, DeleteRounded, SearchRounded, ReceiptLongRounded,
   ExpandMoreRounded, ChevronRightRounded, MeetingRoomRounded, TuneRounded,
-  UnfoldMoreRounded, UnfoldLessRounded,
+  UnfoldMoreRounded, UnfoldLessRounded, HistoryRounded,
 } from "@mui/icons-material";
 import { MenuItem, Menu } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
@@ -45,6 +45,7 @@ export default function ScheduleOfCharges() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [catDialog, setCatDialog] = useState<{ mode: "add" | "edit"; cat?: Category; parentId?: string | null } | null>(null);
   const [itemDialog, setItemDialog] = useState<{ mode: "add" | "edit"; item?: Item } | null>(null);
+  const [historyItem, setHistoryItem] = useState<Item | null>(null);
   const [roomDialogOpen, setRoomDialogOpen] = useState(false);
   const [showEmpty, setShowEmpty] = useState(false);          // reveal the seeded, still-empty categories
   const [manageAnchor, setManageAnchor] = useState<null | HTMLElement>(null);
@@ -325,6 +326,7 @@ export default function ScheduleOfCharges() {
                               sx={{ height: 20, fontSize: "0.7rem", fontWeight: 600, bgcolor: it.isActive ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", color: it.isActive ? "success.main" : "error.main" }} />
                           </TableCell>
                           <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                            <Tooltip title="Price history"><IconButton size="small" onClick={() => setHistoryItem(it)}><HistoryRounded fontSize="small" /></IconButton></Tooltip>
                             <Tooltip title="Edit"><IconButton size="small" onClick={() => setItemDialog({ mode: "edit", item: it })}><EditRounded fontSize="small" /></IconButton></Tooltip>
                             <Tooltip title="Delete"><IconButton size="small" onClick={() => deleteItem(it)}><DeleteRounded fontSize="small" sx={{ color: "error.main" }} /></IconButton></Tooltip>
                           </TableCell>
@@ -357,7 +359,65 @@ export default function ScheduleOfCharges() {
       {roomDialogOpen && (
         <RoomClassesDialog roomClasses={roomClasses} onClose={() => setRoomDialogOpen(false)} onChanged={() => { refetchRoomClasses(); refetchItems(); }} />
       )}
+      {historyItem && (
+        <PriceHistoryDialog item={historyItem} onClose={() => setHistoryItem(null)} />
+      )}
     </Box>
+  );
+}
+
+// ── Price history (append-only audit of price changes) ───────────────────────
+type PriceHistoryRow = { chargeItemPriceHistoryId: string; scope: string; oldPrice: string | number | null; newPrice: string | number | null; changeType: "CREATE" | "UPDATE" | "REMOVE"; changedByName: string | null; changedAt: string };
+function PriceHistoryDialog({ item, onClose }: { item: Item; onClose: () => void }) {
+  const { data: rows = [], isLoading, isError, refetch } = useQuery<PriceHistoryRow[]>({
+    queryKey: ["soc-price-history", item.chargeItemId],
+    queryFn: async () => (await axiosInstance.get(`/hospital/soc/items/${item.chargeItemId}/price-history`)).data.data,
+  });
+  const when = (d: string) => new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const change = (r: PriceHistoryRow) => {
+    if (r.changeType === "CREATE") return <><Chip label="Set" size="small" sx={{ height: 18, fontSize: "0.62rem", bgcolor: "rgba(16,185,129,0.12)", color: "success.main", mr: 0.75 }} />{inr(Number(r.newPrice))}</>;
+    if (r.changeType === "REMOVE") return <><Chip label="Removed" size="small" sx={{ height: 18, fontSize: "0.62rem", bgcolor: "rgba(239,68,68,0.1)", color: "error.main", mr: 0.75 }} /><Typography component="span" sx={{ color: "text.disabled", textDecoration: "line-through" }}>{inr(Number(r.oldPrice))}</Typography></>;
+    return <><Typography component="span" sx={{ color: "text.disabled", textDecoration: "line-through" }}>{inr(Number(r.oldPrice))}</Typography> → <b>{inr(Number(r.newPrice))}</b></>;
+  };
+  return (
+    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <HistoryRounded sx={{ color: ACCENT }} /> Price history
+        <Typography variant="caption" sx={{ display: "block", color: "text.secondary", width: "100%" }}>{item.itemName}</Typography>
+      </DialogTitle>
+      <DialogContent dividers>
+        {isLoading ? (
+          <TableRowsSkeleton rows={4} columns={4} />
+        ) : isError ? (
+          <ErrorState message="Couldn't load price history." onRetry={() => refetch()} />
+        ) : rows.length === 0 ? (
+          <Typography variant="body2" sx={{ color: "text.secondary", py: 3, textAlign: "center" }}>No price changes recorded yet.</Typography>
+        ) : (
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                {["When", "Scope", "Change", "By"].map((h) => (
+                  <TableCell key={h} sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.7rem", textTransform: "uppercase" }}>{h}</TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {rows.map((r) => (
+                <TableRow key={r.chargeItemPriceHistoryId}>
+                  <TableCell sx={{ whiteSpace: "nowrap", color: "text.secondary", fontSize: "0.8rem" }}>{when(r.changedAt)}</TableCell>
+                  <TableCell sx={{ fontSize: "0.83rem" }}>{r.scope}</TableCell>
+                  <TableCell sx={{ fontSize: "0.83rem" }}>{change(r)}</TableCell>
+                  <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem" }}>{r.changedByName || "—"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button variant="contained" onClick={onClose} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Done</Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
