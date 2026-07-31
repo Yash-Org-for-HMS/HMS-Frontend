@@ -135,6 +135,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                     subtotal: Number(invoice.grossAmount || 0),
                     discount: Number(invoice.discountAmount || 0),
                     tax: Number(invoice.taxAmount || 0), taxLabel: "Tax (CGST+SGST)",
+                    cgst: Number(invoice.cgstAmount || 0), sgst: Number(invoice.sgstAmount || 0),
                     total: Number(invoice.netAmount || 0), paid: totalPaid, refunded: totalRefunded, balance,
                   }}
                   afterTotals={invoice.Payment?.length > 0 ? (

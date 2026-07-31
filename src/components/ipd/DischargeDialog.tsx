@@ -27,7 +27,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // A row is either a free-text charge (editable description + amount) or one picked
   // from the Schedule of Charges (carries chargeItemId + its base/room-class prices so
   // the preview can re-derive when the room class changes; the server prices it).
-  type Extra = { description: string; amount: string; chargeItemId?: string; basePrice?: number; roomPrices?: { roomClassId: string; price: number | string }[] };
+  type Extra = { description: string; amount: string; chargeItemId?: string; basePrice?: number; roomPrices?: { roomClassId: string; price: number | string }[]; taxPercent?: number };
   const [extras, setExtras] = useState<Extra[]>([]);
   const [saving, setSaving] = useState(false);
   const [socPickerOpen, setSocPickerOpen] = useState(false);
@@ -84,7 +84,10 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const pendingCharges: any[] = detail?.pendingCharges || [];
   const pendingTotal = Number(detail?.pendingChargesTotal || 0);
   const extrasTotal = extras.reduce((s, e) => s + lineAmount(e), 0);
-  const total = bedCharge + pendingTotal + extrasTotal;
+  // Per-line GST on picked charges (0% = exempt; bed/clinical/free-text carry none).
+  // Mirrors the server, which re-taxes authoritatively from the rate card.
+  const taxTotal = extras.reduce((s, e) => s + lineAmount(e) * ((e.taxPercent || 0) / 100), 0);
+  const total = bedCharge + pendingTotal + extrasTotal + taxTotal;
   const deposit = Number(detail?.depositBalance || 0);
   const depositApplied = Math.min(deposit, total);
   const payable = Math.max(0, total - depositApplied);
@@ -227,6 +230,18 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
           )}
 
           <Divider />
+          {taxTotal > 0 && (
+            <>
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>Subtotal</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(total - taxTotal)}</Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>Tax (CGST + SGST)</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(taxTotal)}</Typography>
+              </Box>
+            </>
+          )}
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>Bill total (estimated)</Typography>
             <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(total)}</Typography>
@@ -274,7 +289,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
     <SocChargePicker
       open={socPickerOpen}
       onClose={() => setSocPickerOpen(false)}
-      onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), chargeItemId: c.chargeItemId, basePrice: c.basePrice, roomPrices: c.roomPrices }])}
+      onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), chargeItemId: c.chargeItemId, basePrice: c.basePrice, roomPrices: c.roomPrices, taxPercent: c.taxPercent }])}
       accent={ACCENTS.ipd}
       roomClassId={billRoomClassId || undefined}
       roomClassName={billRoomClassName || undefined}

@@ -12,11 +12,12 @@ const inr = formatINRAuto;
 
 type RoomPrice = { roomClassId: string; price: number | string };
 type Category = { chargeCategoryId: string; categoryName: string; isActive: boolean };
-type Item = { chargeItemId: string; itemName: string; itemCode: string | null; price: number | string; unit: string | null; isActive: boolean; roomPrices?: RoomPrice[] };
+type Item = { chargeItemId: string; itemName: string; itemCode: string | null; price: number | string; unit: string | null; isActive: boolean; taxPercent?: number | string; roomPrices?: RoomPrice[] };
 // `basePrice` + `roomPrices` are returned so a caller (e.g. discharge) can re-derive
 // the effective price if its room class changes after the pick; `price` is the
-// effective price at pick time. The server always re-prices authoritatively.
-export type PickedCharge = { chargeItemId: string; itemName: string; price: number; basePrice: number; roomPrices: RoomPrice[] };
+// effective price at pick time. `taxPercent` lets the caller preview per-line GST.
+// The server always re-prices and re-taxes authoritatively.
+export type PickedCharge = { chargeItemId: string; itemName: string; price: number; basePrice: number; roomPrices: RoomPrice[]; taxPercent: number };
 
 // Reusable picker for the hospital's Schedule of Charges. Lets billing screens
 // choose a rate-card charge; the caller sends only the chargeItemId — the server
@@ -96,7 +97,7 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#6366
             {filtered.map((it) => (
               <ListItemButton
                 key={it.chargeItemId}
-                onClick={() => { onPick({ chargeItemId: it.chargeItemId, itemName: it.itemName, price: effPrice(it), basePrice: Number(it.price), roomPrices: it.roomPrices ?? [] }); onClose(); }}
+                onClick={() => { onPick({ chargeItemId: it.chargeItemId, itemName: it.itemName, price: effPrice(it), basePrice: Number(it.price), roomPrices: it.roomPrices ?? [], taxPercent: Number(it.taxPercent) || 0 }); onClose(); }}
                 sx={{ borderRadius: 1.5, mb: 0.25 }}
               >
                 <ListItemText

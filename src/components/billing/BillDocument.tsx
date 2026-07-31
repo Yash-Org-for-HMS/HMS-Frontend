@@ -23,6 +23,7 @@ export interface BillHospital {
   postalCode?: string | null;
   officialPhone?: string | null;
   officialEmail?: string | null;
+  gstNumber?: string | null;
 }
 
 export interface BillMetaItem {
@@ -33,8 +34,10 @@ export interface BillMetaItem {
 export interface BillTotals {
   subtotal?: number; // gross
   discount?: number;
-  tax?: number;
+  tax?: number;      // combined tax (fallback when cgst/sgst not supplied)
   taxLabel?: string;
+  cgst?: number;     // when supplied (and non-zero), CGST + SGST print as two lines
+  sgst?: number;
   total: number; // net payable
   paid?: number;
   refunded?: number;
@@ -79,12 +82,16 @@ export default function BillDocument({
   return (
     <div style={{ fontFamily: "'Inter', Arial, sans-serif", color: INK, position: "relative" }}>
       {variant === "letterhead" ? (
-        <div style={{ height: "40mm" }} aria-hidden />
+        <>
+          <div style={{ height: "40mm" }} aria-hidden />
+          {hospital?.gstNumber && <div style={{ textAlign: "right", fontSize: 11.5, color: SUB, marginBottom: 6 }}>GSTIN: {hospital.gstNumber}</div>}
+        </>
       ) : (
         <div style={{ textAlign: "center", borderBottom: `2px solid ${INK}`, paddingBottom: 12, marginBottom: 14 }}>
           <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 0.5 }}>{hospital?.hospitalName || "Hospital"}</div>
           {addressLine && <div style={{ fontSize: 12, color: SUB, marginTop: 2 }}>{addressLine}</div>}
           {contactLine && <div style={{ fontSize: 12, color: SUB }}>{contactLine}</div>}
+          {hospital?.gstNumber && <div style={{ fontSize: 12, color: SUB, marginTop: 2 }}>GSTIN: {hospital.gstNumber}</div>}
         </div>
       )}
 
@@ -105,7 +112,16 @@ export default function BillDocument({
         <div style={{ width: 300, borderTop: `2px solid ${INK}`, paddingTop: 8 }}>
           {totals.subtotal != null && <TotalLine label="Subtotal" value={money(totals.subtotal)} />}
           {totals.discount ? <TotalLine label="Discount" value={`- ${money(totals.discount)}`} color={POS} /> : null}
-          {totals.tax ? <TotalLine label={totals.taxLabel || "Tax"} value={`+ ${money(totals.tax)}`} /> : null}
+          {/* CGST/SGST as separate lines when supplied and non-zero; otherwise the
+              combined tax line; nothing when the bill is fully exempt (all zero). */}
+          {totals.cgst || totals.sgst ? (
+            <>
+              <TotalLine label="CGST" value={`+ ${money(totals.cgst)}`} />
+              <TotalLine label="SGST" value={`+ ${money(totals.sgst)}`} />
+            </>
+          ) : totals.tax ? (
+            <TotalLine label={totals.taxLabel || "Tax"} value={`+ ${money(totals.tax)}`} />
+          ) : null}
           <TotalLine label="Total" value={money(totals.total)} bold />
           {totals.paid != null && <TotalLine label="Paid" value={money(totals.paid)} />}
           {totals.refunded ? <TotalLine label="Refunded" value={`- ${money(totals.refunded)}`} color={REFUND} /> : null}
@@ -152,3 +168,4 @@ function TotalLine({ label, value, bold, color }: { label: string; value: string
     </div>
   );
 }
+  

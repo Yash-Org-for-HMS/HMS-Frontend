@@ -58,7 +58,7 @@ export default function BillReceipt({ invoice, hospitalProfile, hospital, patien
         hospitalName: hospitalProfile?.hospitalName || hospital?.name,
         addressLine1: hospitalProfile?.addressLine1, addressLine2: hospitalProfile?.addressLine2,
         postalCode: hospitalProfile?.postalCode, officialPhone: hospitalProfile?.officialPhone,
-        officialEmail: hospitalProfile?.officialEmail,
+        officialEmail: hospitalProfile?.officialEmail, gstNumber: hospitalProfile?.gstNumber,
       }}
       title="Payment Receipt"
       metaLeft={[
@@ -73,6 +73,7 @@ export default function BillReceipt({ invoice, hospitalProfile, hospital, patien
         subtotal: Number(invoice?.grossAmount || 0),
         discount: Number(invoice?.discountAmount || 0),
         tax: Number(invoice?.taxAmount || 0), taxLabel: "Tax (CGST + SGST)",
+        cgst: Number(invoice?.cgstAmount || 0), sgst: Number(invoice?.sgstAmount || 0),
         total: netAmount, paid: totalPaid, refunded: totalRefunded, balance,
       }}
       afterTotals={afterTotals}

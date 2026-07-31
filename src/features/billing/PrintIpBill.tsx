@@ -116,6 +116,7 @@ export default function PrintIpBill() {
     }}>
       <BillDocument
         variant="letterhead"
+        hospital={{ gstNumber: inv.hospital?.gstNumber }}
         title="Final IP Bill"
         metaLeft={[
           { label: "UHID", value: patient?.uhidNumber },
@@ -134,6 +135,7 @@ export default function PrintIpBill() {
           subtotal: Number(inv.grossAmount || 0),
           discount: Number(inv.discountAmount || 0),
           tax: Number(inv.taxAmount || 0), taxLabel: "Tax (CGST+SGST)",
+          cgst: Number(inv.cgstAmount || 0), sgst: Number(inv.sgstAmount || 0),
           total: Number(inv.netAmount || 0), paid: totalPaid, refunded: totalRefunded, balance,
         }}
         footer={
