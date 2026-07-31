@@ -10,9 +10,10 @@ import {
 } from "@mui/material";
 import {
   AddRounded, EditRounded, DeleteRounded, SearchRounded, ReceiptLongRounded,
-  ExpandMoreRounded, ChevronRightRounded, MeetingRoomRounded,
+  ExpandMoreRounded, ChevronRightRounded, MeetingRoomRounded, TuneRounded,
+  UnfoldMoreRounded, UnfoldLessRounded,
 } from "@mui/icons-material";
-import { MenuItem } from "@mui/material";
+import { MenuItem, Menu } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
@@ -35,14 +36,18 @@ type RoomClass = { roomClassId: string; name: string; code: string; sortOrder: n
 // Hospital's Schedule of Charges (rate card): categories on the left (seeded from
 // a default template on first open, then editable), priced charges/procedures on
 // the right. Standalone price master — not yet wired into billing.
+type SearchItem = Item & { category: { chargeCategoryId: string; categoryName: string } };
+
 export default function ScheduleOfCharges() {
   const toast = useToast();
   const confirm = useConfirm();
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [catDialog, setCatDialog] = useState<{ mode: "add" | "edit"; cat?: Category } | null>(null);
+  const [catDialog, setCatDialog] = useState<{ mode: "add" | "edit"; cat?: Category; parentId?: string | null } | null>(null);
   const [itemDialog, setItemDialog] = useState<{ mode: "add" | "edit"; item?: Item } | null>(null);
   const [roomDialogOpen, setRoomDialogOpen] = useState(false);
+  const [showEmpty, setShowEmpty] = useState(false);          // reveal the seeded, still-empty categories
+  const [manageAnchor, setManageAnchor] = useState<null | HTMLElement>(null);
 
   const { data: categories = [], isLoading, isError, error, refetch } = useQuery<Category[]>({
     queryKey: ["soc-categories"],
@@ -60,11 +65,6 @@ export default function ScheduleOfCharges() {
   const selected = categories.find((c) => c.chargeCategoryId === selectedId) ?? categories[0];
   const activeCategoryId = selected?.chargeCategoryId ?? null;
 
-  const filtered = useMemo(() => {
-    const s = search.trim().toLowerCase();
-    return s ? categories.filter((c) => c.categoryName.toLowerCase().includes(s)) : categories;
-  }, [categories, search]);
-
   // Group categories by parent for the nested tree.
   const childrenOf = useMemo(() => {
     const m = new Map<string | null, Category[]>();
@@ -76,6 +76,24 @@ export default function ScheduleOfCharges() {
     for (const arr of m.values()) arr.sort((a, b) => a.sortOrder - b.sortOrder || a.categoryName.localeCompare(b.categoryName));
     return m;
   }, [categories]);
+
+  // Subtree charge totals — a category is "in use" if it or any descendant holds
+  // charges. Drives hiding the seeded-but-empty categories by default.
+  const rollup = useMemo(() => {
+    const m = new Map<string, number>();
+    const calc = (c: Category): number => {
+      let total = c._count?.items ?? 0;
+      for (const k of childrenOf.get(c.chargeCategoryId) ?? []) total += calc(k);
+      m.set(c.chargeCategoryId, total);
+      return total;
+    };
+    for (const root of childrenOf.get(null) ?? []) calc(root);
+    return m;
+  }, [childrenOf]);
+  const anyInUse = useMemo(() => categories.some((c) => (rollup.get(c.chargeCategoryId) ?? 0) > 0), [categories, rollup]);
+  const emptyCount = useMemo(() => categories.filter((c) => (rollup.get(c.chargeCategoryId) ?? 0) === 0).length, [categories, rollup]);
+  const effShowEmpty = showEmpty || !anyInUse;                // never leave the list blank on a fresh hospital
+  const inView = (c: Category) => effShowEmpty || (rollup.get(c.chargeCategoryId) ?? 0) > 0;
 
   // Expand top-level groups once, on first load.
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -94,6 +112,14 @@ export default function ScheduleOfCharges() {
     enabled: !!activeCategoryId,
   });
 
+  // One search across the whole rate card: matching charges + categories.
+  const q = search.trim();
+  const { data: searchRes, isFetching: searching } = useQuery<{ categories: Category[]; items: SearchItem[] }>({
+    queryKey: ["soc-search", q],
+    queryFn: async () => (await axiosInstance.get("/hospital/soc/search", { params: { q } })).data.data,
+    enabled: q.length >= 1,
+  });
+
   const deleteItem = async (item: Item) => {
     const ok = await confirm({ title: "Remove charge?", message: `Delete "${item.itemName}" from this category?`, confirmText: "Delete", danger: true });
     if (!ok) return;
@@ -107,13 +133,20 @@ export default function ScheduleOfCharges() {
     }
   };
 
-  // Recursive tree node.
+  // Jump from a search hit straight to editing the charge in its category.
+  const openCharge = (catId: string, item: Item) => { setSelectedId(catId); setItemDialog({ mode: "edit", item }); };
+
+  // Breadcrumb path for the selected category (parent › child).
+  const parentName = selected?.parentId ? categories.find((c) => c.chargeCategoryId === selected.parentId)?.categoryName : null;
+
+  // Recursive tree node (respects the in-use filter).
   const renderNode = (cat: Category, depth: number): React.ReactNode => {
-    const kids = childrenOf.get(cat.chargeCategoryId) ?? [];
+    const kids = (childrenOf.get(cat.chargeCategoryId) ?? []).filter(inView);
     const hasKids = kids.length > 0;
     const isOpen = expanded.has(cat.chargeCategoryId);
     const isSel = cat.chargeCategoryId === activeCategoryId;
-    const secondary = !cat.isActive ? "Inactive" : hasKids ? `${kids.length} subcategor${kids.length === 1 ? "y" : "ies"}` : `${cat._count?.items ?? 0} charge${(cat._count?.items ?? 0) === 1 ? "" : "s"}`;
+    const count = rollup.get(cat.chargeCategoryId) ?? 0;
+    const secondary = !cat.isActive ? "Inactive" : hasKids ? `${kids.length} subcategor${kids.length === 1 ? "y" : "ies"} · ${count}` : `${count} charge${count === 1 ? "" : "s"}`;
     return (
       <Box key={cat.chargeCategoryId}>
         <ListItemButton
@@ -143,14 +176,20 @@ export default function ScheduleOfCharges() {
     <Box>
       <PageHeader
         title="Schedule of Charges"
-        subtitle="Your hospital's rate card — define charges and procedures under each category and set their prices."
+        subtitle="Your hospital's rate card — charges and prices, grouped by category."
         actions={
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="outlined" startIcon={<MeetingRoomRounded />} onClick={() => setRoomDialogOpen(true)}
-              sx={{ textTransform: "none", color: ACCENT, borderColor: `${ACCENT}66` }}>Room Classes</Button>
-            <Button variant="contained" startIcon={<AddRounded />} onClick={() => setCatDialog({ mode: "add" })}
-              sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Add Category</Button>
-          </Box>
+          <>
+            <Button variant="outlined" startIcon={<TuneRounded />} onClick={(e) => setManageAnchor(e.currentTarget)}
+              sx={{ textTransform: "none", color: ACCENT, borderColor: `${ACCENT}66` }}>Manage</Button>
+            <Menu anchorEl={manageAnchor} open={Boolean(manageAnchor)} onClose={() => setManageAnchor(null)}>
+              <MenuItem onClick={() => { setManageAnchor(null); setCatDialog({ mode: "add", parentId: null }); }}>
+                <AddRounded fontSize="small" sx={{ mr: 1.25, color: "text.secondary" }} /> New category
+              </MenuItem>
+              <MenuItem onClick={() => { setManageAnchor(null); setRoomDialogOpen(true); }}>
+                <MeetingRoomRounded fontSize="small" sx={{ mr: 1.25, color: "text.secondary" }} /> Room classes &amp; pricing
+              </MenuItem>
+            </Menu>
+          </>
         }
       />
 
@@ -159,32 +198,63 @@ export default function ScheduleOfCharges() {
         <Paper elevation={0} sx={{ width: { xs: "100%", md: 300 }, flexShrink: 0, borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden", position: { md: "sticky" }, top: { md: 16 } }}>
           <Box sx={{ p: 1.5 }}>
             <TextField
-              fullWidth size="small" placeholder="Search categories…" value={search} onChange={(e) => setSearch(e.target.value)}
+              fullWidth size="small" placeholder="Search charges or categories…" value={search} onChange={(e) => setSearch(e.target.value)}
               InputProps={{ startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> }}
             />
           </Box>
           <Divider />
           <List dense disablePadding sx={{ maxHeight: "calc(100vh - 260px)", overflowY: "auto" }}>
-            {search.trim() ? (
-              // Search: flat matches across the whole tree.
-              filtered.length ? filtered.map((c) => {
-                const isSel = c.chargeCategoryId === activeCategoryId;
-                return (
-                  <ListItemButton
-                    key={c.chargeCategoryId} selected={isSel} onClick={() => setSelectedId(c.chargeCategoryId)}
-                    sx={{ py: 0.6, "&.Mui-selected": { bgcolor: `${ACCENT}14`, borderRight: `3px solid ${ACCENT}` } }}
-                  >
+            {q ? (
+              // ── Search results: charges (jump to edit) + categories ──
+              !searchRes && searching ? (
+                <Typography variant="body2" sx={{ color: "text.secondary", p: 2, textAlign: "center" }}>Searching…</Typography>
+              ) : (searchRes && (searchRes.items.length || searchRes.categories.length)) ? (
+                <>
+                  {searchRes.items.length > 0 && (
+                    <>
+                      <Typography sx={{ px: 1.5, pt: 1.25, pb: 0.5, fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.disabled" }}>Charges</Typography>
+                      {searchRes.items.map((it) => (
+                        <ListItemButton key={it.chargeItemId} onClick={() => openCharge(it.category.chargeCategoryId, it)} sx={{ py: 0.6 }}>
+                          <ListItemText
+                            primary={it.itemName} secondary={`${it.category.categoryName} · ${inr(Number(it.price))}`}
+                            primaryTypographyProps={{ fontSize: "0.86rem", fontWeight: 600, noWrap: true }}
+                            secondaryTypographyProps={{ fontSize: "0.72rem", color: "text.secondary", noWrap: true }}
+                          />
+                        </ListItemButton>
+                      ))}
+                    </>
+                  )}
+                  {searchRes.categories.length > 0 && (
+                    <>
+                      <Typography sx={{ px: 1.5, pt: 1.25, pb: 0.5, fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.disabled" }}>Categories</Typography>
+                      {searchRes.categories.map((c) => (
+                        <ListItemButton key={c.chargeCategoryId} selected={c.chargeCategoryId === activeCategoryId} onClick={() => { setSelectedId(c.chargeCategoryId); setSearch(""); }}
+                          sx={{ py: 0.6, "&.Mui-selected": { bgcolor: `${ACCENT}14`, borderRight: `3px solid ${ACCENT}` } }}>
+                          <ListItemText
+                            primary={c.categoryName} secondary={!c.isActive ? "Inactive" : `${c._count?.items ?? 0} charge${(c._count?.items ?? 0) === 1 ? "" : "s"}`}
+                            primaryTypographyProps={{ fontSize: "0.86rem", fontWeight: 500 }}
+                            secondaryTypographyProps={{ fontSize: "0.72rem", color: !c.isActive ? "warning.main" : "text.secondary" }}
+                          />
+                        </ListItemButton>
+                      ))}
+                    </>
+                  )}
+                </>
+              ) : <Typography variant="body2" sx={{ color: "text.secondary", p: 2, textAlign: "center" }}>No charges or categories match.</Typography>
+            ) : (
+              // ── Tree (in-use categories by default) ──
+              <>
+                {(childrenOf.get(null) ?? []).filter(inView).map((root) => renderNode(root, 0))}
+                {anyInUse && emptyCount > 0 && (
+                  <ListItemButton onClick={() => setShowEmpty((v) => !v)} sx={{ mt: 0.5, borderTop: "1px solid", borderColor: "divider", color: "text.secondary" }}>
+                    {effShowEmpty ? <UnfoldLessRounded fontSize="small" sx={{ mr: 1 }} /> : <UnfoldMoreRounded fontSize="small" sx={{ mr: 1 }} />}
                     <ListItemText
-                      primary={c.categoryName}
-                      secondary={!c.isActive ? "Inactive" : `${c._count?.items ?? 0} charge${(c._count?.items ?? 0) === 1 ? "" : "s"}`}
-                      primaryTypographyProps={{ fontSize: "0.86rem", fontWeight: isSel ? 700 : 500, color: isSel ? ACCENT : "text.primary" }}
-                      secondaryTypographyProps={{ fontSize: "0.72rem", color: !c.isActive ? "warning.main" : "text.secondary" }}
+                      primary={effShowEmpty ? "Show only categories in use" : `Show all ${categories.length} categories`}
+                      primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 600 }}
                     />
                   </ListItemButton>
-                );
-              }) : <Typography variant="body2" sx={{ color: "text.secondary", p: 2, textAlign: "center" }}>No categories match.</Typography>
-            ) : (
-              (childrenOf.get(null) ?? []).map((root) => renderNode(root, 0))
+                )}
+              </>
             )}
           </List>
         </Paper>
@@ -195,7 +265,10 @@ export default function ScheduleOfCharges() {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 2, flexWrap: "wrap" }}>
               <ReceiptLongRounded sx={{ color: ACCENT }} />
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700 }} noWrap>{selected?.categoryName ?? "—"}</Typography>
+                <Typography sx={{ fontWeight: 700 }} noWrap>
+                  {parentName && <Typography component="span" sx={{ fontWeight: 500, color: "text.disabled" }}>{parentName} › </Typography>}
+                  {selected?.categoryName ?? "—"}
+                </Typography>
                 {selected && !selected.isActive && <Chip label="Inactive category" size="small" sx={{ height: 18, fontSize: "0.65rem", bgcolor: "rgba(245,158,11,0.12)", color: "warning.main" }} />}
               </Box>
               <Box sx={{ flex: 1 }} />
@@ -213,47 +286,51 @@ export default function ScheduleOfCharges() {
               <Table stickyHeader size="small">
                 <TableHead>
                   <TableRow>
-                    {["Charge / Procedure", "Code", "Unit", "Tax %", "Price", "Status", ""].map((h, i) => (
-                      <TableCell key={h || i} align={i === 4 ? "right" : i >= 5 ? "center" : "left"} sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.72rem", textTransform: "uppercase", bgcolor: "background.paper" }}>{h}</TableCell>
+                    {["Charge / Procedure", "Price", "Status", ""].map((h, i) => (
+                      <TableCell key={h || i} align={i === 1 ? "right" : i === 2 ? "center" : "left"} sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.72rem", textTransform: "uppercase", bgcolor: "background.paper" }}>{h}</TableCell>
                     ))}
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {itemsLoading ? (
-                    <TableRowsSkeleton rows={5} columns={7} />
+                    <TableRowsSkeleton rows={5} columns={4} />
                   ) : itemsError ? (
-                    <TableRow><TableCell colSpan={7}><ErrorState message={apiErrorText(itemsErr)} onRetry={() => refetchItems()} /></TableCell></TableRow>
+                    <TableRow><TableCell colSpan={4}><ErrorState message={apiErrorText(itemsErr)} onRetry={() => refetchItems()} /></TableCell></TableRow>
                   ) : items.length === 0 ? (
-                    <TableRow><TableCell colSpan={7}>
+                    <TableRow><TableCell colSpan={4}>
                       <Box sx={{ py: 4 }}>
                         <Mascot pose="nothing-here-yet" title="No charges yet" subtitle="Add the charges/procedures under this category and set their prices." size={120} />
                       </Box>
                     </TableCell></TableRow>
                   ) : (
-                    items.map((it) => (
-                      <TableRow key={it.chargeItemId} hover>
-                        <TableCell sx={{ fontWeight: 600 }}>{it.itemName}</TableCell>
-                        <TableCell sx={{ color: "text.secondary" }}>{it.itemCode || "—"}</TableCell>
-                        <TableCell sx={{ color: "text.secondary" }}>{it.unit || "—"}</TableCell>
-                        <TableCell sx={{ color: "text.secondary" }}>{Number(it.taxPercent) > 0 ? `${Number(it.taxPercent)}%` : "—"}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700 }}>
-                          {inr(Number(it.price))}
-                          {(it.roomPrices?.length ?? 0) > 0 && (
-                            <Tooltip title={`Room-wise: ${it.roomPrices!.map((rp) => inr(Number(rp.price))).join(" / ")}`}>
-                              <Chip label={`+${it.roomPrices!.length} room`} size="small" sx={{ ml: 0.75, height: 18, fontSize: "0.62rem", bgcolor: `${ACCENT}14`, color: ACCENT }} />
-                            </Tooltip>
-                          )}
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip label={it.isActive ? "Active" : "Inactive"} size="small"
-                            sx={{ height: 20, fontSize: "0.7rem", fontWeight: 600, bgcolor: it.isActive ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", color: it.isActive ? "success.main" : "error.main" }} />
-                        </TableCell>
-                        <TableCell align="center">
-                          <Tooltip title="Edit"><IconButton size="small" onClick={() => setItemDialog({ mode: "edit", item: it })}><EditRounded fontSize="small" /></IconButton></Tooltip>
-                          <Tooltip title="Delete"><IconButton size="small" onClick={() => deleteItem(it)}><DeleteRounded fontSize="small" sx={{ color: "error.main" }} /></IconButton></Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    items.map((it) => {
+                      // Code / unit / tax collapse into one muted subtitle under the name.
+                      const meta = [it.itemCode, it.unit, Number(it.taxPercent) > 0 ? `${Number(it.taxPercent)}% tax` : null].filter(Boolean).join(" · ");
+                      return (
+                        <TableRow key={it.chargeItemId} hover>
+                          <TableCell>
+                            <Typography sx={{ fontWeight: 600, fontSize: "0.87rem" }}>{it.itemName}</Typography>
+                            {meta && <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>{meta}</Typography>}
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+                            {inr(Number(it.price))}
+                            {(it.roomPrices?.length ?? 0) > 0 && (
+                              <Tooltip title={`Room-wise: ${it.roomPrices!.map((rp) => inr(Number(rp.price))).join(" / ")}`}>
+                                <Chip label={`+${it.roomPrices!.length} room`} size="small" sx={{ ml: 0.75, height: 18, fontSize: "0.62rem", bgcolor: `${ACCENT}14`, color: ACCENT }} />
+                              </Tooltip>
+                            )}
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip label={it.isActive ? "Active" : "Inactive"} size="small"
+                              sx={{ height: 20, fontSize: "0.7rem", fontWeight: 600, bgcolor: it.isActive ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", color: it.isActive ? "success.main" : "error.main" }} />
+                          </TableCell>
+                          <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                            <Tooltip title="Edit"><IconButton size="small" onClick={() => setItemDialog({ mode: "edit", item: it })}><EditRounded fontSize="small" /></IconButton></Tooltip>
+                            <Tooltip title="Delete"><IconButton size="small" onClick={() => deleteItem(it)}><DeleteRounded fontSize="small" sx={{ color: "error.main" }} /></IconButton></Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>
@@ -264,7 +341,7 @@ export default function ScheduleOfCharges() {
 
       {catDialog && (
         <CategoryDialog
-          mode={catDialog.mode} cat={catDialog.cat} categories={categories} defaultParentId={selected?.chargeCategoryId ?? null}
+          mode={catDialog.mode} cat={catDialog.cat} categories={categories} defaultParentId={catDialog.parentId ?? null}
           onClose={() => setCatDialog(null)}
           onDone={(newId) => { setCatDialog(null); refetch(); if (newId) setSelectedId(newId); }}
         />
