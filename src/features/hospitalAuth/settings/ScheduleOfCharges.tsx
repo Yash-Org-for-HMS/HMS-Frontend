@@ -61,6 +61,7 @@ export default function ScheduleOfCharges() {
     queryFn: async () => (await axiosInstance.get("/hospital/soc/room-classes")).data.data,
   });
   const activeRoomClasses = useMemo(() => roomClasses.filter((r) => r.isActive), [roomClasses]);
+  const roomClassName = useMemo(() => new Map(roomClasses.map((r) => [r.roomClassId, r.name])), [roomClasses]);
 
   // Default-select the first category once loaded.
   const selected = categories.find((c) => c.chargeCategoryId === selectedId) ?? categories[0];
@@ -313,12 +314,12 @@ export default function ScheduleOfCharges() {
                             <Typography sx={{ fontWeight: 600, fontSize: "0.87rem" }}>{it.itemName}</Typography>
                             {meta && <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>{meta}</Typography>}
                           </TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>
-                            {inr(Number(it.price))}
+                          <TableCell align="right" sx={{ fontWeight: 700 }}>
+                            <Box sx={{ whiteSpace: "nowrap" }}>{inr(Number(it.price))}</Box>
                             {(it.roomPrices?.length ?? 0) > 0 && (
-                              <Tooltip title={`Room-wise: ${it.roomPrices!.map((rp) => inr(Number(rp.price))).join(" / ")}`}>
-                                <Chip label={`+${it.roomPrices!.length} room`} size="small" sx={{ ml: 0.75, height: 18, fontSize: "0.62rem", bgcolor: `${ACCENT}14`, color: ACCENT }} />
-                              </Tooltip>
+                              <Typography sx={{ fontSize: "0.7rem", fontWeight: 500, color: ACCENT, mt: 0.25, lineHeight: 1.4 }}>
+                                {it.roomPrices!.map((rp) => `${roomClassName.get(rp.roomClassId) ?? "Room"} ${inr(Number(rp.price))}`).join(" · ")}
+                              </Typography>
                             )}
                           </TableCell>
                           <TableCell align="center">
