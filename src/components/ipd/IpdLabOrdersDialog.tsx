@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Autocomplete,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
   Stack, Typography, Box, Table, TableHead, TableBody, TableRow, TableCell,
   TableContainer, IconButton, Chip, Tabs, Tab, MenuItem, Collapse,
 } from "@mui/material";
@@ -18,6 +18,7 @@ import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import SoftChip from "../SoftChip";
+import LabTestPicker, { type PickedLabTest } from "@/components/lab/LabTestPicker";
 
 interface Props {
   open: boolean;
@@ -43,9 +44,8 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
   const confirm = useConfirm();
   const qc = useQueryClient();
   const [tab, setTab] = useState<"order" | "results">("order");
-  const [search, setSearch] = useState("");
-  const [picked, setPicked] = useState<any>(null);
-  const [basket, setBasket] = useState<any[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [basket, setBasket] = useState<PickedLabTest[]>([]);
   const [priorityId, setPriorityId] = useState(1);
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -57,19 +57,9 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
     enabled: open && !!admission?.admissionId,
   });
 
-  const { data: catalog = [], isFetching: catLoading } = useQuery<any[]>({
-    queryKey: ["ipd-lab-tests", search],
-    queryFn: async () => (await axiosInstance.get("/ipd/lab-tests", { params: { q: search || undefined } })).data.data,
-    enabled: open,
-  });
-
-  const addToBasket = (t: any) => {
-    if (!t) return;
-    if (!basket.some((b) => b.labTestId === t.labTestId)) setBasket([...basket, t]);
-    setPicked(null);
-    setSearch("");
-  };
-  const removeFromBasket = (id: string) => setBasket(basket.filter((b) => b.labTestId !== id));
+  const selectedIds = new Set(basket.map((b) => b.chargeItemId));
+  const toggleTest = (t: PickedLabTest) =>
+    setBasket((prev) => prev.some((b) => b.chargeItemId === t.chargeItemId) ? prev.filter((b) => b.chargeItemId !== t.chargeItemId) : [...prev, t]);
   const basketTotal = basket.reduce((s, b) => s + Number(b.price || 0), 0);
 
   const afterChange = () => {
@@ -84,12 +74,10 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
     try {
       await axiosInstance.post(`/ipd/admissions/${admission.admissionId}/lab-orders`, {
         priorityId,
-        testIds: basket.map((b) => b.labTestId),
+        chargeItemIds: basket.map((b) => b.chargeItemId),
       });
       toast.success("Lab order sent to the lab");
       setBasket([]);
-      setPicked(null);
-      setSearch("");
       afterChange();
       setTab("results");
     } catch (err: unknown) {
@@ -136,30 +124,17 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
 
         {tab === "order" ? (
           <Stack spacing={2}>
-            <Autocomplete
-              options={catalog}
-              loading={catLoading}
-              value={picked}
-              onChange={(_, v) => addToBasket(v)}
-              onInputChange={(_, v, reason) => { if (reason === "input") setSearch(v); }}
-              getOptionLabel={(o: any) => (o ? `${o.testName || o.testCode}` : "")}
-              isOptionEqualToValue={(o: any, v: any) => o.labTestId === v?.labTestId}
-              renderOption={(props, o: any) => (
-                <li {...props} key={o.labTestId}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-                    <span>{o.testName || o.testCode}{o.isProfile ? " · profile" : ""}</span>
-                    <span style={{ color: NEUTRAL.muted, fontSize: "0.8rem" }}>{formatINR(o.price)}</span>
-                  </Box>
-                </li>
-              )}
-              renderInput={(params) => <TextField {...params} label="Add test / profile" placeholder="Search by name or code…" />}
-            />
+            <Box>
+              <Button variant="outlined" startIcon={<ScienceRounded />} onClick={() => setPickerOpen(true)} sx={{ textTransform: "none" }}>
+                {basket.length ? `${basket.length} test${basket.length === 1 ? "" : "s"} selected — add / change` : "Select lab tests"}
+              </Button>
+            </Box>
 
             {basket.length > 0 && (
               <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 1.5 }}>
                 <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
                   {basket.map((b) => (
-                    <Chip key={b.labTestId} label={`${b.testName || b.testCode} · ${formatINR(b.price)}`} onDelete={() => removeFromBasket(b.labTestId)} sx={{ fontWeight: 600 }} />
+                    <Chip key={b.chargeItemId} label={`${b.testName} · ${formatINR(Number(b.price))}`} onDelete={() => toggleTest(b)} sx={{ fontWeight: 600 }} />
                   ))}
                 </Stack>
                 <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
@@ -243,6 +218,14 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
           </Button>
         )}
       </DialogActions>
+      <LabTestPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onToggle={toggleTest}
+        selectedIds={selectedIds}
+        catalogUrl="/ipd/lab-tests"
+        accent={ACCENTS.ipd}
+      />
     </Dialog>
   );
 }

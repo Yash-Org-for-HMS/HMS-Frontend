@@ -321,6 +321,7 @@ export default function ScheduleOfCharges() {
                             <Typography sx={{ fontWeight: 600, fontSize: "0.87rem" }}>
                               {it.itemName}
                               {it.itemType === "RADIOLOGY" && <Chip label="Radiology" size="small" sx={{ ml: 0.75, height: 17, fontSize: "0.6rem", fontWeight: 700, bgcolor: `${ACCENT}14`, color: ACCENT }} />}
+                              {it.itemType === "LAB" && <Chip label="Lab" size="small" sx={{ ml: 0.75, height: 17, fontSize: "0.6rem", fontWeight: 700, bgcolor: "rgba(16,185,129,0.14)", color: "success.main" }} />}
                             </Typography>
                             {meta && <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>{meta}</Typography>}
                           </TableCell>
@@ -555,9 +556,12 @@ function ItemDialog({ mode, item, categoryId, categoryName, roomClasses, onClose
         <Stack spacing={2} sx={{ mt: 1 }}>
           <TextField label="Charge / procedure name" value={name} onChange={(e) => setName(e.target.value)} fullWidth autoFocus />
           <TextField select label="Type" value={itemType} onChange={(e) => setItemType(e.target.value)} fullWidth
-            helperText={itemType === "RADIOLOGY" ? "Appears in the radiology order pickers; radiology orders price from this charge." : "A plain billable charge."}>
+            helperText={itemType === "RADIOLOGY" ? "Appears in the radiology order pickers; radiology orders price from this charge."
+              : itemType === "LAB" ? "Appears in the lab order pickers; lab orders price from this charge."
+              : "A plain billable charge."}>
             <MenuItem value="GENERAL">General charge</MenuItem>
             <MenuItem value="RADIOLOGY">Radiology test</MenuItem>
+            <MenuItem value="LAB">Lab test</MenuItem>
           </TextField>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <TextField label="Code (optional)" value={code} onChange={(e) => setCode(e.target.value)} fullWidth />

@@ -2,14 +2,15 @@ import { useState } from "react";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
-  Autocomplete, MenuItem, Box, Typography,
+  Autocomplete, MenuItem, Box, Typography, Chip,
 } from "@mui/material";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
 import { formatINR } from "@/utils/format";
-import { CameraAltRounded } from "@mui/icons-material";
+import { CameraAltRounded, ScienceRounded } from "@mui/icons-material";
 import RadiologyTestPicker, { type PickedRadTest } from "@/components/lab/RadiologyTestPicker";
+import LabTestPicker, { type PickedLabTest } from "@/components/lab/LabTestPicker";
 import { useToast } from "@/providers/ToastContext";
 
 interface WalkInOrderDialogProps {
@@ -43,12 +44,16 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
   const [priority, setPriority] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
-  // Lab-specific
-  const [selectedTests, setSelectedTests] = useState<any[]>([]);
+  // Lab-specific — a basket of SOC lab tests picked via the browse picker.
+  const [labBasket, setLabBasket] = useState<PickedLabTest[]>([]);
+  const [labPickerOpen, setLabPickerOpen] = useState(false);
   // Radiology-specific — the test is chosen from the SOC radiology catalogue.
   const [selectedTest, setSelectedTest] = useState<PickedRadTest | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [notes, setNotes] = useState("");
+  const labSelectedIds = new Set(labBasket.map((t) => t.chargeItemId));
+  const toggleLabTest = (t: PickedLabTest) =>
+    setLabBasket((prev) => prev.some((i) => i.chargeItemId === t.chargeItemId) ? prev.filter((i) => i.chargeItemId !== t.chargeItemId) : [...prev, t]);
 
   // Patient search (shared endpoint used by the billing screen). Only fires
   // once the user has typed enough to narrow results.
@@ -58,18 +63,11 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
     enabled: open && patientQuery.trim().length >= 2,
   });
 
-  // Lab test catalog (only loaded for the lab variant while the dialog is open).
-  const { data: labTests = [] } = useQuery<any[]>({
-    queryKey: ["lab-tests-catalog"],
-    queryFn: async () => (await axiosInstance.get("/lab/tests")).data.data || [],
-    enabled: open && kind === "lab",
-  });
-
   const reset = () => {
     setPatientQuery("");
     setSelectedPatient(null);
     setPriority(1);
-    setSelectedTests([]);
+    setLabBasket([]);
     setSelectedTest(null);
     setNotes("");
   };
@@ -85,7 +83,7 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
       toast.error("Please select a patient.");
       return;
     }
-    if (kind === "lab" && selectedTests.length === 0) {
+    if (kind === "lab" && labBasket.length === 0) {
       toast.error("Please add at least one test.");
       return;
     }
@@ -100,7 +98,7 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
         await axiosInstance.post("/lab/orders", {
           patientId: selectedPatient.patientId,
           priorityId: priority,
-          testIds: selectedTests.map((t) => t.labTestId),
+          chargeItemIds: labBasket.map((t) => t.chargeItemId),
         });
       } else {
         await axiosInstance.post("/lab/radiology-orders", {
@@ -155,17 +153,18 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
           />
 
           {kind === "lab" ? (
-            <Autocomplete
-              multiple
-              options={labTests}
-              value={selectedTests}
-              getOptionLabel={(t) => `${t.testName} (${t.testCode})`}
-              isOptionEqualToValue={(o, v) => o.labTestId === v.labTestId}
-              onChange={(_, v) => setSelectedTests(v)}
-              renderInput={(params) => (
-                <TextField {...params} label="Tests" placeholder="Select lab tests" />
+            <Box>
+              <Button variant="outlined" startIcon={<ScienceRounded />} onClick={() => setLabPickerOpen(true)} sx={{ textTransform: "none" }}>
+                {labBasket.length ? `${labBasket.length} test${labBasket.length === 1 ? "" : "s"} selected — add / change` : "Select lab tests"}
+              </Button>
+              {labBasket.length > 0 && (
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1 }}>
+                  {labBasket.map((t) => (
+                    <Chip key={t.chargeItemId} label={`${t.testName} · ${formatINR(Number(t.price))}`} size="small" onDelete={() => toggleLabTest(t)} />
+                  ))}
+                </Box>
               )}
-            />
+            </Box>
           ) : (
             <>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
@@ -212,6 +211,13 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
         onClose={() => setPickerOpen(false)}
         onPick={(t) => setSelectedTest(t)}
         catalogUrl="/lab/radiology-catalog"
+      />
+      <LabTestPicker
+        open={labPickerOpen}
+        onClose={() => setLabPickerOpen(false)}
+        onToggle={toggleLabTest}
+        selectedIds={labSelectedIds}
+        catalogUrl="/lab/tests"
       />
     </Dialog>
   );

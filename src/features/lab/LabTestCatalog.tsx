@@ -1,349 +1,105 @@
-import { useState } from "react";
-import { SEMANTIC } from "@/styles/accents";
-import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
+import { useMemo, useState } from "react";
+import { apiErrorText } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Button, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, IconButton, Tooltip, Switch, FormControlLabel, Chip, useTheme,
-  Fade, Zoom, alpha
+  Chip, useTheme, Fade, alpha,
 } from "@mui/material";
-import { EditRounded, DeleteRounded, AddRounded } from "@mui/icons-material";
-import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { InfoOutlined } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
+import { formatINR } from "@/utils/format";
 import Mascot from "@/components/Mascot";
 import ErrorState from "@/components/ErrorState";
 import PageHeader from "@/components/layout/PageHeader";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
-import { useTableSort } from "@/components/table/useTableSort";
-import SortableHeadCell from "@/components/table/SortableHeadCell";
-import { useConfirm } from "@/providers/ConfirmContext";
-import { useToast } from "@/providers/ToastContext";
 
+// Lab tests are mastered in the Schedule of Charges (a charge with Type = "Lab
+// test"), organized into categories. This screen is a read-only view of that
+// catalogue, grouped by category. Parameters/ranges live in the lab result flow.
 export default function LabTestCatalog() {
-  const toast = useToast();
   const theme = useTheme();
-  const confirm = useConfirm();
-
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editTest, setEditTest] = useState<any>(null);
-  
-  const [testCode, setTestCode] = useState("");
-  const [testName, setTestName] = useState("");
-  const [price, setPrice] = useState("");
-  const [isProfile, setIsProfile] = useState(false);
-  const [defaultNormalRange, setDefaultNormalRange] = useState("");
-  const [unit, setUnit] = useState("");
-  const [saving, setSaving] = useState(false);
-  
-  const [errorMsg, setErrorMsg] = useState("");
+  const [activeCat, setActiveCat] = useState<string>("");
 
   const { data: tests = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
     queryKey: ["lab-tests"],
     queryFn: async () => (await axiosInstance.get("/lab/tests")).data.data || [],
   });
 
-  const { sorted, orderBy, order, onSort } = useTableSort(tests, {
-    type: (t) => (t.isProfile ? "Profile" : "Parameter"),
-    testCode: (t) => t.testCode,
-    testName: (t) => t.testName,
-    price: (t) => Number(t.price),
-    normalRange: (t) => t.defaultNormalRange ?? null,
-  });
-
-  const handleOpenNew = () => {
-    setEditTest(null);
-    setTestCode("");
-    setTestName("");
-    setPrice("");
-    setIsProfile(false);
-    setDefaultNormalRange("");
-    setUnit("");
-    setErrorMsg("");
-    setOpenDialog(true);
-  };
-
-  const handleOpenEdit = (test: any) => {
-    setEditTest(test);
-    setTestCode(test.testCode);
-    setTestName(test.testName || "");
-    setPrice(test.price.toString());
-    setIsProfile(test.isProfile || false);
-    setDefaultNormalRange(test.defaultNormalRange || "");
-    setUnit(test.unit || "");
-    setErrorMsg("");
-    setOpenDialog(true);
-  };
-
-  const handleClose = () => {
-    setOpenDialog(false);
-  };
-
-  const handleSave = async () => {
-    if (!testCode || !testName || !price) {
-      setErrorMsg("Please fill in all fields.");
-      return;
+  const groups = useMemo(() => {
+    const by = new Map<string, any[]>();
+    for (const t of tests) {
+      const c = t.category || "Laboratory";
+      if (!by.has(c)) by.set(c, []);
+      by.get(c)!.push(t);
     }
+    return [...by.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([cat, items]) => ({ cat, items: items.slice().sort((a, b) => String(a.testName).localeCompare(String(b.testName))) }));
+  }, [tests]);
 
-    try {
-      setSaving(true);
-      setErrorMsg("");
-      if (editTest) {
-        await axiosInstance.put(`/lab/tests/${editTest.labTestId}`, {
-          testCode,
-          testName,
-          price: parseFloat(price),
-          isProfile,
-          defaultNormalRange,
-          unit
-        });
-      } else {
-        await axiosInstance.post("/lab/tests", {
-          testCode,
-          testName,
-          price: parseFloat(price),
-          isProfile,
-          defaultNormalRange,
-          unit
-        });
-      }
-      handleClose();
-      refetch();
-    } catch (err: unknown) {
-      console.error("Failed to save lab test", err);
-      setErrorMsg(getApiErrorMessage(err, "Failed to save the lab test."));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    const ok = await confirm({
-      title: "Delete lab test",
-      message: "Are you sure you want to delete this lab test? This cannot be undone.",
-      confirmText: "Delete",
-      destructive: true,
-    });
-    if (!ok) return;
-    try {
-      await axiosInstance.delete(`/lab/tests/${id}`);
-      refetch();
-    } catch (err: unknown) {
-      toast.error(getApiErrorMessage(err, "Failed to delete the lab test."));
-    }
-  };
+  const visible = activeCat ? groups.filter((g) => g.cat === activeCat) : groups;
 
   return (
     <Box>
-      <PageHeader
-        title="Lab Test Catalog"
-        subtitle="Manage available lab tests, profiles, and their reference ranges."
-        actions={
-          <Button
-            variant="contained"
-            startIcon={<AddRounded />}
-            onClick={handleOpenNew}
-            sx={{
-              borderRadius: '12px',
-              textTransform: 'none',
-              fontWeight: 600,
-              px: 3,
-              py: 1.2,
-              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-              boxShadow: '0 8px 16px -4px rgba(16, 185, 129, 0.4)',
-              transition: 'all 0.2s',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: '0 12px 20px -4px rgba(16, 185, 129, 0.5)',
-              }
-            }}
-          >
-            Add New Test
-          </Button>
-        }
-      />
+      <PageHeader title="Lab Test Catalog" subtitle="The lab tests available for ordering, grouped by category." />
 
-      <Paper sx={{ 
-        borderRadius: 4,
-        overflow: 'hidden',
-        border: '1px solid',
-        borderColor: 'divider',
-        boxShadow: '0 10px 30px -10px rgba(0,0,0,0.05)',
-      }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, p: 1.5, mb: 2, borderRadius: 2, bgcolor: alpha(theme.palette.info.main, 0.08), border: "1px solid", borderColor: alpha(theme.palette.info.main, 0.25) }}>
+        <InfoOutlined fontSize="small" color="info" />
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          Lab tests are managed in <b>Schedule of Charges</b> — add a charge with <b>Type: Lab test</b> under a category and it appears here and in the order screens, priced from the rate card.
+        </Typography>
+      </Box>
+
+      {groups.length > 0 && (
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
+          <Chip label={`All (${tests.length})`} onClick={() => setActiveCat("")} color={activeCat === "" ? "primary" : "default"} variant={activeCat === "" ? "filled" : "outlined"} size="small" />
+          {groups.map((g) => (
+            <Chip key={g.cat} label={`${g.cat} (${g.items.length})`} onClick={() => setActiveCat(g.cat)} color={activeCat === g.cat ? "primary" : "default"} variant={activeCat === g.cat ? "filled" : "outlined"} size="small" />
+          ))}
+        </Box>
+      )}
+
+      <Paper sx={{ borderRadius: 4, overflow: "hidden", border: "1px solid", borderColor: "divider", boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)" }}>
         {loading ? (
           <ListSkeleton rows={6} />
         ) : isError ? (
           <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
         ) : tests.length === 0 ? (
-          <Mascot pose="nothing-here-yet" title="No lab tests found" subtitle="Get started by creating your first lab test."
-            action={<Button variant="contained" startIcon={<AddRounded />} onClick={handleOpenNew}>Add lab test</Button>} />
+          <Mascot pose="nothing-here-yet" title="No lab tests yet" subtitle="Add them in Schedule of Charges (Type: Lab test)." />
         ) : (
           <Fade in timeout={500}>
-            <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
-            <Table stickyHeader>
-              <TableHead>
-                <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
-                  <SortableHeadCell label="Type" sortKey="type" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
-                  <SortableHeadCell label="Test Code" sortKey="testCode" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
-                  <SortableHeadCell label="Test Name" sortKey="testName" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
-                  <SortableHeadCell label="Price" sortKey="price" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
-                  <SortableHeadCell label="Normal Range" sortKey="normalRange" orderBy={orderBy} order={order} onSort={onSort} sx={{ fontWeight: 700, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 2, color: "text.primary" }} />
-                  <TableCell align="right" sx={{ fontWeight: 700, py: 2 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {sorted.map((test, index) => (
-                  <TableRow key={test.labTestId} hover>
-                    <TableCell>
-                      {test.isProfile ? (
-                        <Chip label="Profile" size="small" sx={{ bgcolor: alpha('#7C3AED', 0.1), color: '#7C3AED', fontWeight: 600, borderRadius: '6px' }} />
-                      ) : (
-                        <Chip label="Parameter" size="small" sx={{ bgcolor: alpha(SEMANTIC.infoDark, 0.1), color: SEMANTIC.infoDark, fontWeight: 600, borderRadius: '6px' }} />
-                      )}
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontFamily: 'monospace' }}>{test.testCode}</TableCell>
-                    <TableCell sx={{ fontWeight: 500 }}>{test.testName}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: SEMANTIC.success }}>${parseFloat(test.price).toFixed(2)}</TableCell>
-                    <TableCell>
-                      {test.defaultNormalRange ? (
-                        <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.secondary' }}>
-                          {test.defaultNormalRange} <Box component="span" sx={{ opacity: 0.7, fontSize: '0.8em' }}>{test.unit || ""}</Box>
-                        </Typography>
-                      ) : (
-                        <Typography variant="body2" color="text.disabled" fontStyle="italic">N/A</Typography>
-                      )}
-                    </TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Edit">
-                        <IconButton 
-                          color="primary" 
-                          onClick={() => handleOpenEdit(test)}
-                          sx={{ '&:hover': { bgcolor: alpha(SEMANTIC.infoDark, 0.1) } }}
-                        >
-                          <EditRounded fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton 
-                          color="error" 
-                          onClick={() => handleDelete(test.labTestId)}
-                          sx={{ '&:hover': { bgcolor: alpha(SEMANTIC.danger, 0.1) } }}
-                        >
-                          <DeleteRounded fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
+            <TableContainer sx={{ maxHeight: "calc(100vh - 360px)" }}>
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
+                    <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Test Name</TableCell>
+                    <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Code</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, py: 1.5 }}>Price</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHead>
+                <TableBody>
+                  {visible.flatMap((g) => [
+                    <TableRow key={`h-${g.cat}`}>
+                      <TableCell colSpan={3} sx={{ bgcolor: alpha(theme.palette.primary.main, 0.06), py: 0.75 }}>
+                        <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "primary.main" }}>
+                          {g.cat} · {g.items.length}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>,
+                    ...g.items.map((t) => (
+                      <TableRow key={t.chargeItemId || t.testName} hover>
+                        <TableCell sx={{ fontWeight: 500 }}>{t.testName}</TableCell>
+                        <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{t.testCode || "—"}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(Number(t.price))}</TableCell>
+                      </TableRow>
+                    )),
+                  ])}
+                </TableBody>
+              </Table>
             </TableContainer>
           </Fade>
         )}
       </Paper>
-
-      {/* Add/Edit Dialog */}
-      <Dialog 
-        open={openDialog} 
-        onClose={handleClose} 
-        maxWidth="sm" 
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            boxShadow: '0 24px 48px -12px rgba(0,0,0,0.18)',
-          }
-        }}
-        TransitionComponent={Zoom}
-      >
-        <DialogTitle sx={{ pb: 1 }}>
-          <Typography variant="h6" fontWeight="700">
-            {editTest ? "Edit Lab Test" : "Add New Lab Test"}
-          </Typography>
-        </DialogTitle>
-        <DialogContent dividers sx={{ p: 3 }}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-            {errorMsg && (
-              <Box sx={{ p: 1.5, bgcolor: alpha(SEMANTIC.danger, 0.1), borderRadius: 2, border: '1px solid', borderColor: alpha(SEMANTIC.danger, 0.2) }}>
-                <Typography color="error" variant="body2" fontWeight="500">{errorMsg}</Typography>
-              </Box>
-            )}
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField
-                label="Test Code"
-                placeholder="e.g., CBC"
-                value={testCode}
-                onChange={(e) => setTestCode(e.target.value)}
-                fullWidth
-                variant="outlined"
-              />
-              <TextField
-                label="Price ($)"
-                type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                fullWidth
-                variant="outlined"
-              />
-            </Box>
-            <TextField
-              label="Test Name"
-              placeholder="e.g., Complete Blood Count"
-              value={testName}
-              onChange={(e) => setTestName(e.target.value)}
-              fullWidth
-              variant="outlined"
-            />
-            
-            <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-              <FormControlLabel
-                control={<Switch checked={isProfile} onChange={(e) => setIsProfile(e.target.checked)} color="primary" />}
-                label={<Typography fontWeight="500">Is this a Profile/Panel? (e.g. CBC contains multiple parameters)</Typography>}
-              />
-            </Box>
-
-            {!isProfile && (
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  label="Default Normal Range"
-                  placeholder="e.g., 4.5 - 5.9"
-                  value={defaultNormalRange}
-                  onChange={(e) => setDefaultNormalRange(e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                />
-                <TextField
-                  label="Unit"
-                  placeholder="e.g., g/dL, /mcL"
-                  value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                />
-              </Box>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, gap: 1 }}>
-          <Button onClick={handleClose} color="inherit" sx={{ fontWeight: 600, borderRadius: '8px' }}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSave} 
-            variant="contained" 
-            disabled={saving}
-            sx={{ 
-              fontWeight: 600, 
-              borderRadius: '8px',
-              px: 3,
-              boxShadow: 'none',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }
-            }}
-          >
-            {saving ? <HeartbeatLoader size={22} /> : "Save Changes"}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }

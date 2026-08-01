@@ -1,18 +1,20 @@
 import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Box, Typography, Button, TextField, IconButton, Autocomplete,
-  Paper, Grid, Alert, Table, TableBody, TableCell, TableHead, TableRow, MenuItem
+  Box, Typography, Button, TextField, IconButton,
+  Paper, Table, TableBody, TableCell, TableHead, TableRow, MenuItem
 } from "@mui/material";
-import { DeleteRounded, SaveRounded, AddRounded, ScienceRounded } from "@mui/icons-material";
+import { DeleteRounded, SaveRounded, ScienceRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import LabTestPicker, { type PickedLabTest } from "@/components/lab/LabTestPicker";
+import { formatINR } from "@/utils/format";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
 
@@ -33,15 +35,11 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
   const toast = useToast();
   const qc = useQueryClient();
 
-  // Search state
-  const [testQuery, setTestQuery] = useState("");
-  const [testOptions, setTestOptions] = useState<any[]>([]);
-  const [testLoading, setTestLoading] = useState(false);
-
-  // Form state
-  const [selectedTest, setSelectedTest] = useState<any | null>(null);
+  // Basket of picked SOC lab tests + the browse picker.
+  const [items, setItems] = useState<PickedLabTest[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedPriority, setSelectedPriority] = useState(1);
-  const [items, setItems] = useState<any[]>([]);
+  const selectedIds = new Set(items.map((i) => i.chargeItemId));
 
   const { data: existingOrders = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
     queryKey: ["lab-orders", consultationId],
@@ -49,48 +47,9 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
     enabled: !!consultationId,
   });
 
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      if (testQuery.length >= 2) {
-        try {
-          setTestLoading(true);
-          const res = await axiosInstance.get(`/doctor/lab-orders/tests?q=${testQuery}`);
-          setTestOptions(res.data.data);
-        } catch (err) {
-          console.error("Failed to fetch lab tests", err);
-        } finally {
-          setTestLoading(false);
-        }
-      } else {
-        setTestOptions([]);
-      }
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [testQuery]);
-
-  const handleAddItem = () => {
-    if (!selectedTest) {
-      toast.error("Please select a lab test to add.");
-      return;
-    }
-    
-    // Check if already in the list
-    if (items.some(item => item.labTestId === selectedTest.labTestId)) {
-      toast.error("This test is already added.");
-      return;
-    }
-
-    setItems([...items, selectedTest]);
-    setSelectedTest(null);
-    setTestQuery("");
-  };
-
-  const handleRemoveItem = (index: number) => {
-    const newItems = [...items];
-    newItems.splice(index, 1);
-    setItems(newItems);
-  };
+  const toggleTest = (t: PickedLabTest) =>
+    setItems((prev) => prev.some((i) => i.chargeItemId === t.chargeItemId) ? prev.filter((i) => i.chargeItemId !== t.chargeItemId) : [...prev, t]);
+  const handleRemoveItem = (index: number) => setItems((prev) => prev.filter((_, i) => i !== index));
 
   const handleSubmit = async () => {
     if (items.length === 0) {
@@ -112,7 +71,7 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
       await axiosInstance.post(`/doctor/lab-orders/consultations/${targetConsultationId}`, {
         patientId,
         priorityId: selectedPriority,
-        testIds: items.map(i => i.labTestId)
+        chargeItemIds: items.map(i => i.chargeItemId)
       });
 
       toast.success("Lab order created successfully!");
@@ -132,32 +91,9 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
 <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, borderColor: "divider" }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>Create New Lab Order</Typography>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <Autocomplete
-            options={testOptions}
-            getOptionLabel={(option) => `${option.testName} (${option.testCode})`}
-            loading={testLoading}
-            noOptionsText={<Mascot pose="no-matches" subtitle="No matching tests" size={72} sx={{ py: 1 }} />}
-            value={selectedTest}
-            onInputChange={(e, newInputValue) => setTestQuery(newInputValue)}
-            onChange={(e, newValue) => setSelectedTest(newValue)}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Search Lab Test"
-                placeholder="e.g. CBC, Lipid Profile"
-                size="small"
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {testLoading ? <HeartbeatLoader size={22} /> : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
-          />
+          <Button fullWidth variant="outlined" startIcon={<ScienceRounded />} onClick={() => setPickerOpen(true)} sx={{ textTransform: "none", justifyContent: "flex-start" }}>
+            {items.length ? `${items.length} test${items.length === 1 ? "" : "s"} selected — add / change` : "Select lab tests"}
+          </Button>
           <TextField
             select
             fullWidth
@@ -170,31 +106,23 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
               <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>
             ))}
           </TextField>
-          <Button 
-            fullWidth variant="contained" 
-            startIcon={<AddRounded />}
-            sx={{ bgcolor: DOCTOR_BLUE }} 
-            onClick={handleAddItem}
-          >
-            Add Test
-          </Button>
         </Box>
-        
+
         {items.length > 0 && (
           <Box sx={{ mt: 3 }}>
             <Table size="small">
               <TableHead sx={{ bgcolor: "background.default" }}>
                 <TableRow>
                   <TableCell>Test Name</TableCell>
-                  <TableCell>Test Code</TableCell>
+                  <TableCell align="right">Price</TableCell>
                   <TableCell align="center">Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {items.map((item, index) => (
-                  <TableRow key={index}>
+                  <TableRow key={item.chargeItemId}>
                     <TableCell>{item.testName}</TableCell>
-                    <TableCell>{item.testCode}</TableCell>
+                    <TableCell align="right">{formatINR(Number(item.price))}</TableCell>
                     <TableCell align="center">
                       <IconButton size="small" color="error" onClick={() => handleRemoveItem(index)}>
                         <DeleteRounded fontSize="small" />
@@ -266,6 +194,15 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
           </Box>
         )}
       </Box>
+
+      <LabTestPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onToggle={toggleTest}
+        selectedIds={selectedIds}
+        catalogUrl="/doctor/lab-orders/tests"
+        accent={DOCTOR_BLUE}
+      />
     </Box>
   );
 }
