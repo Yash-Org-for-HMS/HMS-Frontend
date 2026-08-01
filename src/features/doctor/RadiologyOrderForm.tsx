@@ -6,6 +6,7 @@ import {
   Box, Typography, Button, TextField,
   Paper, Grid, Alert, MenuItem, Link
 } from "@mui/material";
+import { renderRadiologyOptions } from "@/components/lab/radiologyOptions";
 import { SaveRounded, CameraAltRounded, DescriptionRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -107,11 +108,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
             onChange={(e) => setSelectedScanType(e.target.value)}
             helperText={catalog.length === 0 ? "No radiology tests configured — add them in Schedule of Charges (Type: Radiology test)" : undefined}
           >
-            {catalog.map((t: any) => (
-              <MenuItem key={t.chargeItemId || t.testName} value={t.chargeItemId}>
-                {t.testName}{t.price != null ? ` — ₹${Number(t.price).toFixed(0)}` : ""}
-              </MenuItem>
-            ))}
+            {renderRadiologyOptions(catalog, (p) => p != null ? ` — ₹${Number(p).toFixed(0)}` : "")}
           </TextField>
           <TextField
             select

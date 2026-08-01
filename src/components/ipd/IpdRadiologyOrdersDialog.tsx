@@ -13,6 +13,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { formatINR } from "@/utils/format";
+import { renderRadiologyOptions } from "@/components/lab/radiologyOptions";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
@@ -144,11 +145,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
             <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 2fr auto" }, gap: 2, alignItems: "start" }}>
               <TextField select label="Scan type" value={scanType} onChange={(e) => setScanType(e.target.value)}
                 helperText={scanOptions.length === 0 ? "No radiology tests configured — add them in Schedule of Charges (Type: Radiology test)." : undefined}>
-                {scanOptions.map((o) => (
-                  <MenuItem key={o.id} value={o.id}>
-                    {o.name}{o.price != null ? ` · ${formatINR(o.price)}` : ""}
-                  </MenuItem>
-                ))}
+                {renderRadiologyOptions(catalog, (p) => p != null ? ` · ${formatINR(Number(p))}` : "")}
               </TextField>
               <TextField label="Clinical note (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. R/O chest infection" />
               <Button onClick={addToBasket} disabled={!scanType} startIcon={<AddRounded />} sx={{ textTransform: "none", mt: 0.5, color: ACCENTS.ipd }}>Add</Button>

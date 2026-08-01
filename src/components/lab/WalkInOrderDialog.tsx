@@ -8,6 +8,7 @@ import HeartbeatLoader from "../HeartbeatLoader";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
 import { formatINR } from "@/utils/format";
+import { renderRadiologyOptions } from "@/components/lab/radiologyOptions";
 import { useToast } from "@/providers/ToastContext";
 
 interface WalkInOrderDialogProps {
@@ -186,11 +187,7 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
                 onChange={(e) => setScanType(e.target.value)}
                 helperText={scanOptions.length === 0 ? "No radiology tests configured — add them in Schedule of Charges (Type: Radiology test)." : undefined}
               >
-                {scanOptions.map((o) => (
-                  <MenuItem key={o.id} value={o.id}>
-                    {o.name}{o.price != null ? ` · ${formatINR(o.price)}` : ""}
-                  </MenuItem>
-                ))}
+                {renderRadiologyOptions(scanCatalog, (p) => p != null ? ` · ${formatINR(Number(p))}` : "")}
               </TextField>
               <TextField
                 fullWidth
