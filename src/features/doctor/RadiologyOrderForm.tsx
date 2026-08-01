@@ -6,7 +6,7 @@ import {
   Box, Typography, Button, TextField,
   Paper, Grid, Alert, MenuItem, Link
 } from "@mui/material";
-import { renderRadiologyOptions } from "@/components/lab/radiologyOptions";
+import RadiologyTestPicker, { type PickedRadTest } from "@/components/lab/RadiologyTestPicker";
 import { SaveRounded, CameraAltRounded, DescriptionRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -35,15 +35,10 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
   const toast = useToast();
   const qc = useQueryClient();
 
-  // The priced radiology catalog — the doctor picks a REAL test so its name matches
-  // the catalog and billing charges the correct price (not the flat fallback).
-  const { data: catalog = [] } = useQuery<any[]>({
-    queryKey: ["radiology-catalog"],
-    queryFn: async () => (await axiosInstance.get("/doctor/radiology-orders/catalog")).data.data || [],
-  });
-
-  // Form state
-  const [selectedScanType, setSelectedScanType] = useState<string>("");
+  // Form state — the test is chosen from the SOC radiology catalogue via a picker,
+  // so its chargeItemId is the price master.
+  const [selectedTest, setSelectedTest] = useState<PickedRadTest | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedPriority, setSelectedPriority] = useState(1);
   const [radiologistNotes, setRadiologistNotes] = useState("");
 
@@ -54,8 +49,8 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
   });
 
   const handleSubmit = async () => {
-    if (!selectedScanType) {
-      toast.error("Please select a scan type.");
+    if (!selectedTest) {
+      toast.error("Please select a radiology test.");
       return;
     }
 
@@ -70,19 +65,17 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
         }
       }
 
-      // selectedScanType holds the SOC test's chargeItemId; send it (price master)
-      // plus the name for display/back-compat.
-      const picked = catalog.find((t: any) => t.chargeItemId === selectedScanType);
+      // Send the SOC test's chargeItemId (price master) + its name for display.
       await axiosInstance.post(`/doctor/radiology-orders/consultations/${targetConsultationId}`, {
         patientId,
         priorityId: selectedPriority,
-        chargeItemId: selectedScanType,
-        scanType: picked?.testName ?? selectedScanType,
+        chargeItemId: selectedTest.chargeItemId,
+        scanType: selectedTest.testName,
         radiologistNotes
       });
 
       toast.success("Radiology order created successfully!");
-      setSelectedScanType("");
+      setSelectedTest(null);
       setSelectedPriority(1);
       setRadiologistNotes("");
       // Refresh list (covers both the existing consultation and a freshly-created one)
@@ -99,17 +92,17 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
 <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, borderColor: "divider" }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>Create Radiology Order</Typography>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <TextField
-            select
-            fullWidth
-            size="small"
-            label="Scan Type"
-            value={selectedScanType}
-            onChange={(e) => setSelectedScanType(e.target.value)}
-            helperText={catalog.length === 0 ? "No radiology tests configured — add them in Schedule of Charges (Type: Radiology test)" : undefined}
-          >
-            {renderRadiologyOptions(catalog, (p) => p != null ? ` — ₹${Number(p).toFixed(0)}` : "")}
-          </TextField>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+            <Button variant="outlined" startIcon={<CameraAltRounded />} onClick={() => setPickerOpen(true)}
+              sx={{ textTransform: "none" }}>
+              {selectedTest ? "Change test" : "Select radiology test"}
+            </Button>
+            {selectedTest && (
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {selectedTest.testName} <Typography component="span" sx={{ color: "text.secondary" }}>· ₹{Number(selectedTest.price).toFixed(0)}</Typography>
+              </Typography>
+            )}
+          </Box>
           <TextField
             select
             fullWidth
@@ -139,7 +132,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
             startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             sx={{ bgcolor: DOCTOR_BLUE }}
             onClick={handleSubmit}
-            disabled={saving}
+            disabled={saving || !selectedTest}
           >
             Submit Radiology Order
           </Button>
@@ -212,6 +205,14 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
           </Box>
         )}
       </Box>
+
+      <RadiologyTestPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onPick={(t) => setSelectedTest(t)}
+        catalogUrl="/doctor/radiology-orders/catalog"
+        accent={DOCTOR_BLUE}
+      />
     </Box>
   );
 }

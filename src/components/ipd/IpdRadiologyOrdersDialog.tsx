@@ -9,11 +9,11 @@ import {
 } from "@mui/material";
 import {
   MonitorHeartRounded, AddRounded, DeleteOutlineRounded, HourglassTopRounded,
-  CheckCircleRounded, PendingActionsRounded, ExpandMoreRounded, ExpandLessRounded,
+  CheckCircleRounded, PendingActionsRounded, ExpandMoreRounded, ExpandLessRounded, CameraAltRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { formatINR } from "@/utils/format";
-import { renderRadiologyOptions } from "@/components/lab/radiologyOptions";
+import RadiologyTestPicker, { type PickedRadTest } from "@/components/lab/RadiologyTestPicker";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
@@ -41,7 +41,8 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
   const confirm = useConfirm();
   const qc = useQueryClient();
   const [tab, setTab] = useState<"order" | "results">("order");
-  const [scanType, setScanType] = useState(""); // holds the selected SOC test's chargeItemId
+  const [selectedTest, setSelectedTest] = useState<PickedRadTest | null>(null); // current pick
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [basket, setBasket] = useState<{ chargeItemId: string; scanType: string; notes: string; price: number | null }[]>([]);
   const [priorityId, setPriorityId] = useState(1);
@@ -55,32 +56,20 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
     enabled: open && !!admission?.admissionId,
   });
 
-  // Priced scan catalog. Ordering from it keeps the scanType aligned with a
-  // catalog entry so the bill uses its real price (not a flat fallback).
-  const { data: catalog = [] } = useQuery<any[]>({
-    queryKey: ["ipd-radiology-catalog"],
-    queryFn: async () => (await axiosInstance.get("/ipd/radiology-catalog")).data.data,
-    enabled: open,
-  });
-  // SOC is the master: options are the RADIOLOGY-typed charges (id + name + price).
-  const scanOptions: { id: string; name: string; price: number | null }[] =
-    catalog.map((c: any) => ({ id: c.chargeItemId, name: c.testName, price: Number(c.price) }));
-  const optFor = (id: string) => scanOptions.find((o) => o.id === id);
-  const lineFor = (id: string) => { const o = optFor(id); return { chargeItemId: id, scanType: o?.name ?? id, notes: notes.trim(), price: o?.price ?? null }; };
+  const lineFor = (t: PickedRadTest) => ({ chargeItemId: t.chargeItemId, scanType: t.testName, notes: notes.trim(), price: Number(t.price) });
 
   const addToBasket = () => {
-    if (!scanType) return;
-    setBasket([...basket, lineFor(scanType)]);
-    setScanType("");
+    if (!selectedTest) return;
+    setBasket([...basket, lineFor(selectedTest)]);
+    setSelectedTest(null);
     setNotes("");
   };
   const removeFromBasket = (idx: number) => setBasket(basket.filter((_, i) => i !== idx));
 
   // A scan chosen in the picker but not yet "added" still counts — so ordering a
   // single scan needs no extra Add click. Add stays useful for stacking several.
-  const effectiveScans = scanType ? [...basket, lineFor(scanType)] : basket;
+  const effectiveScans = selectedTest ? [...basket, lineFor(selectedTest)] : basket;
   const estTotal = effectiveScans.reduce((s, x) => s + (x.price || 0), 0);
-  const hasPricing = catalog.length > 0;
 
   const afterChange = () => {
     refetch();
@@ -142,13 +131,15 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
 
         {tab === "order" ? (
           <Stack spacing={2}>
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 2fr auto" }, gap: 2, alignItems: "start" }}>
-              <TextField select label="Scan type" value={scanType} onChange={(e) => setScanType(e.target.value)}
-                helperText={scanOptions.length === 0 ? "No radiology tests configured — add them in Schedule of Charges (Type: Radiology test)." : undefined}>
-                {renderRadiologyOptions(catalog, (p) => p != null ? ` · ${formatINR(Number(p))}` : "")}
-              </TextField>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1.2fr 2fr auto" }, gap: 2, alignItems: "start" }}>
+              <Box>
+                <Button variant="outlined" fullWidth startIcon={<CameraAltRounded />} onClick={() => setPickerOpen(true)} sx={{ textTransform: "none", justifyContent: "flex-start" }}>
+                  {selectedTest ? selectedTest.testName : "Select radiology test"}
+                </Button>
+                {selectedTest && <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>{formatINR(Number(selectedTest.price))}</Typography>}
+              </Box>
               <TextField label="Clinical note (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. R/O chest infection" />
-              <Button onClick={addToBasket} disabled={!scanType} startIcon={<AddRounded />} sx={{ textTransform: "none", mt: 0.5, color: ACCENTS.ipd }}>Add</Button>
+              <Button onClick={addToBasket} disabled={!selectedTest} startIcon={<AddRounded />} sx={{ textTransform: "none", mt: 0.5, color: ACCENTS.ipd }}>Add</Button>
             </Box>
 
             {basket.length > 0 && (
@@ -165,7 +156,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
                     </Box>
                   ))}
                 </Stack>
-                {hasPricing && <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>Estimated <strong>{formatINR(estTotal)}</strong></Typography>}
+                {estTotal > 0 && <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>Estimated <strong>{formatINR(estTotal)}</strong></Typography>}
               </Box>
             )}
 
@@ -242,6 +233,13 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
           </Button>
         )}
       </DialogActions>
+      <RadiologyTestPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onPick={(t) => setSelectedTest(t)}
+        catalogUrl="/ipd/radiology-catalog"
+        accent={ACCENTS.ipd}
+      />
     </Dialog>
   );
 }

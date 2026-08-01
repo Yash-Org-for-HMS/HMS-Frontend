@@ -8,7 +8,8 @@ import HeartbeatLoader from "../HeartbeatLoader";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
 import { formatINR } from "@/utils/format";
-import { renderRadiologyOptions } from "@/components/lab/radiologyOptions";
+import { CameraAltRounded } from "@mui/icons-material";
+import RadiologyTestPicker, { type PickedRadTest } from "@/components/lab/RadiologyTestPicker";
 import { useToast } from "@/providers/ToastContext";
 
 interface WalkInOrderDialogProps {
@@ -44,8 +45,9 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
 
   // Lab-specific
   const [selectedTests, setSelectedTests] = useState<any[]>([]);
-  // Radiology-specific
-  const [scanType, setScanType] = useState("");
+  // Radiology-specific — the test is chosen from the SOC radiology catalogue.
+  const [selectedTest, setSelectedTest] = useState<PickedRadTest | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [notes, setNotes] = useState("");
 
   // Patient search (shared endpoint used by the billing screen). Only fires
@@ -63,23 +65,12 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
     enabled: open && kind === "lab",
   });
 
-  // Priced scan catalog — ordering from it keeps the scanType aligned with a
-  // catalog entry so billing uses its real price (not a flat fallback).
-  const { data: scanCatalog = [] } = useQuery<any[]>({
-    queryKey: ["radiology-catalog-walkin"],
-    queryFn: async () => (await axiosInstance.get("/lab/radiology-catalog")).data.data || [],
-    enabled: open && kind === "radiology",
-  });
-  // SOC is the master: options are the RADIOLOGY-typed charges (id + name + price).
-  const scanOptions: { id: string; name: string; price: number | null }[] =
-    scanCatalog.map((c: any) => ({ id: c.chargeItemId, name: c.testName, price: Number(c.price) }));
-
   const reset = () => {
     setPatientQuery("");
     setSelectedPatient(null);
     setPriority(1);
     setSelectedTests([]);
-    setScanType("");
+    setSelectedTest(null);
     setNotes("");
   };
 
@@ -98,8 +89,8 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
       toast.error("Please add at least one test.");
       return;
     }
-    if (kind === "radiology" && !scanType) {
-      toast.error("Please select a scan type.");
+    if (kind === "radiology" && !selectedTest) {
+      toast.error("Please select a radiology test.");
       return;
     }
 
@@ -112,13 +103,11 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
           testIds: selectedTests.map((t) => t.labTestId),
         });
       } else {
-        // `scanType` state holds the SOC test's chargeItemId; send it + the name.
-        const picked = scanOptions.find((o) => o.id === scanType);
         await axiosInstance.post("/lab/radiology-orders", {
           patientId: selectedPatient.patientId,
           priorityId: priority,
-          chargeItemId: scanType,
-          scanType: picked?.name ?? scanType,
+          chargeItemId: selectedTest!.chargeItemId,
+          scanType: selectedTest!.testName,
           radiologistNotes: notes,
         });
       }
@@ -179,16 +168,16 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
             />
           ) : (
             <>
-              <TextField
-                select
-                fullWidth
-                label="Scan Type"
-                value={scanType}
-                onChange={(e) => setScanType(e.target.value)}
-                helperText={scanOptions.length === 0 ? "No radiology tests configured — add them in Schedule of Charges (Type: Radiology test)." : undefined}
-              >
-                {renderRadiologyOptions(scanCatalog, (p) => p != null ? ` · ${formatINR(Number(p))}` : "")}
-              </TextField>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                <Button variant="outlined" startIcon={<CameraAltRounded />} onClick={() => setPickerOpen(true)} sx={{ textTransform: "none" }}>
+                  {selectedTest ? "Change test" : "Select radiology test"}
+                </Button>
+                {selectedTest && (
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {selectedTest.testName} <Typography component="span" sx={{ color: "text.secondary" }}>· {formatINR(Number(selectedTest.price))}</Typography>
+                  </Typography>
+                )}
+              </Box>
               <TextField
                 fullWidth
                 multiline
@@ -218,6 +207,12 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
           {submitting ? <HeartbeatLoader size={22} /> : "Create Order"}
         </Button>
       </DialogActions>
+      <RadiologyTestPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onPick={(t) => setSelectedTest(t)}
+        catalogUrl="/lab/radiology-catalog"
+      />
     </Dialog>
   );
 }
