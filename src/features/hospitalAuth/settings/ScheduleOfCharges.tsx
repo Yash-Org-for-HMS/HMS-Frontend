@@ -11,7 +11,7 @@ import {
 import {
   AddRounded, EditRounded, DeleteRounded, SearchRounded, ReceiptLongRounded,
   ExpandMoreRounded, ChevronRightRounded, MeetingRoomRounded, TuneRounded,
-  UnfoldMoreRounded, UnfoldLessRounded, HistoryRounded,
+  UnfoldMoreRounded, UnfoldLessRounded, HistoryRounded, ScienceRounded,
 } from "@mui/icons-material";
 import { MenuItem, Menu } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
@@ -19,6 +19,7 @@ import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import LabStructureDialog from "@/components/soc/LabStructureDialog";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import PageHeader from "@/components/layout/PageHeader";
@@ -46,6 +47,7 @@ export default function ScheduleOfCharges() {
   const [catDialog, setCatDialog] = useState<{ mode: "add" | "edit"; cat?: Category; parentId?: string | null } | null>(null);
   const [itemDialog, setItemDialog] = useState<{ mode: "add" | "edit"; item?: Item } | null>(null);
   const [historyItem, setHistoryItem] = useState<Item | null>(null);
+  const [structureItem, setStructureItem] = useState<Item | null>(null);
   const [roomDialogOpen, setRoomDialogOpen] = useState(false);
   const [showEmpty, setShowEmpty] = useState(false);          // reveal the seeded, still-empty categories
   const [manageAnchor, setManageAnchor] = useState<null | HTMLElement>(null);
@@ -339,6 +341,7 @@ export default function ScheduleOfCharges() {
                               sx={{ height: 20, fontSize: "0.7rem", fontWeight: 600, bgcolor: it.isActive ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", color: it.isActive ? "success.main" : "error.main" }} />
                           </TableCell>
                           <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                            {it.itemType === "LAB" && <Tooltip title="Lab structure (single / profile parameters)"><IconButton size="small" onClick={() => setStructureItem(it)}><ScienceRounded fontSize="small" sx={{ color: "success.main" }} /></IconButton></Tooltip>}
                             <Tooltip title="Price history"><IconButton size="small" onClick={() => setHistoryItem(it)}><HistoryRounded fontSize="small" /></IconButton></Tooltip>
                             <Tooltip title="Edit"><IconButton size="small" onClick={() => setItemDialog({ mode: "edit", item: it })}><EditRounded fontSize="small" /></IconButton></Tooltip>
                             <Tooltip title="Delete"><IconButton size="small" onClick={() => deleteItem(it)}><DeleteRounded fontSize="small" sx={{ color: "error.main" }} /></IconButton></Tooltip>
@@ -374,6 +377,9 @@ export default function ScheduleOfCharges() {
       )}
       {historyItem && (
         <PriceHistoryDialog item={historyItem} onClose={() => setHistoryItem(null)} />
+      )}
+      {structureItem && (
+        <LabStructureDialog chargeItemId={structureItem.chargeItemId} itemName={structureItem.itemName} onClose={() => setStructureItem(null)} />
       )}
     </Box>
   );
