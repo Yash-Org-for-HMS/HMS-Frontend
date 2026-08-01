@@ -26,7 +26,6 @@ const PRIORITIES = [
 
 // Mirrors the doctor's RadiologyOrderForm scan list so walk-ins and
 // consultation orders use the same scan vocabulary.
-const SCAN_TYPES = ["X-Ray", "CT Scan", "MRI Scan", "Ultrasound", "PET Scan", "Mammography"];
 
 /**
  * Create a walk-in lab or radiology order (no originating consultation) for a
@@ -70,9 +69,9 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
     queryFn: async () => (await axiosInstance.get("/lab/radiology-catalog")).data.data || [],
     enabled: open && kind === "radiology",
   });
-  const scanOptions: { name: string; price: number | null }[] = scanCatalog.length
-    ? scanCatalog.map((c: any) => ({ name: c.testName, price: Number(c.price) }))
-    : SCAN_TYPES.map((s) => ({ name: s, price: null }));
+  // SOC is the master: options are the RADIOLOGY-typed charges (id + name + price).
+  const scanOptions: { id: string; name: string; price: number | null }[] =
+    scanCatalog.map((c: any) => ({ id: c.chargeItemId, name: c.testName, price: Number(c.price) }));
 
   const reset = () => {
     setPatientQuery("");
@@ -112,10 +111,13 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
           testIds: selectedTests.map((t) => t.labTestId),
         });
       } else {
+        // `scanType` state holds the SOC test's chargeItemId; send it + the name.
+        const picked = scanOptions.find((o) => o.id === scanType);
         await axiosInstance.post("/lab/radiology-orders", {
           patientId: selectedPatient.patientId,
           priorityId: priority,
-          scanType,
+          chargeItemId: scanType,
+          scanType: picked?.name ?? scanType,
           radiologistNotes: notes,
         });
       }
@@ -182,9 +184,10 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
                 label="Scan Type"
                 value={scanType}
                 onChange={(e) => setScanType(e.target.value)}
+                helperText={scanOptions.length === 0 ? "No radiology tests configured — add them in Schedule of Charges (Type: Radiology test)." : undefined}
               >
                 {scanOptions.map((o) => (
-                  <MenuItem key={o.name} value={o.name}>
+                  <MenuItem key={o.id} value={o.id}>
                     {o.name}{o.price != null ? ` · ${formatINR(o.price)}` : ""}
                   </MenuItem>
                 ))}

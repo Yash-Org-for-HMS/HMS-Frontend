@@ -69,10 +69,14 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
         }
       }
 
+      // selectedScanType holds the SOC test's chargeItemId; send it (price master)
+      // plus the name for display/back-compat.
+      const picked = catalog.find((t: any) => t.chargeItemId === selectedScanType);
       await axiosInstance.post(`/doctor/radiology-orders/consultations/${targetConsultationId}`, {
         patientId,
         priorityId: selectedPriority,
-        scanType: selectedScanType,
+        chargeItemId: selectedScanType,
+        scanType: picked?.testName ?? selectedScanType,
         radiologistNotes
       });
 
@@ -101,10 +105,10 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
             label="Scan Type"
             value={selectedScanType}
             onChange={(e) => setSelectedScanType(e.target.value)}
-            helperText={catalog.length === 0 ? "No radiology tests configured — add them in Lab settings" : undefined}
+            helperText={catalog.length === 0 ? "No radiology tests configured — add them in Schedule of Charges (Type: Radiology test)" : undefined}
           >
             {catalog.map((t: any) => (
-              <MenuItem key={t.radiologyTestId || t.testName} value={t.testName}>
+              <MenuItem key={t.chargeItemId || t.testName} value={t.chargeItemId}>
                 {t.testName}{t.price != null ? ` — ₹${Number(t.price).toFixed(0)}` : ""}
               </MenuItem>
             ))}

@@ -30,7 +30,7 @@ const inr = formatINRAuto;
 
 type Category = { chargeCategoryId: string; categoryName: string; categoryCode: string; parentId: string | null; description: string | null; iconName: string | null; sortOrder: number; isActive: boolean; _count?: { items: number } };
 type RoomPrice = { roomClassId: string; price: number | string };
-type Item = { chargeItemId: string; chargeCategoryId: string; itemName: string; itemCode: string | null; price: number | string; taxPercent: number | string; unit: string | null; isActive: boolean; roomPrices?: RoomPrice[] };
+type Item = { chargeItemId: string; chargeCategoryId: string; itemName: string; itemCode: string | null; price: number | string; taxPercent: number | string; unit: string | null; isActive: boolean; itemType?: string; roomPrices?: RoomPrice[] };
 type RoomClass = { roomClassId: string; name: string; code: string; sortOrder: number; isActive: boolean };
 
 // Hospital's Schedule of Charges (rate card): categories on the left (seeded from
@@ -318,7 +318,10 @@ export default function ScheduleOfCharges() {
                       return (
                         <TableRow key={it.chargeItemId} hover>
                           <TableCell>
-                            <Typography sx={{ fontWeight: 600, fontSize: "0.87rem" }}>{it.itemName}</Typography>
+                            <Typography sx={{ fontWeight: 600, fontSize: "0.87rem" }}>
+                              {it.itemName}
+                              {it.itemType === "RADIOLOGY" && <Chip label="Radiology" size="small" sx={{ ml: 0.75, height: 17, fontSize: "0.6rem", fontWeight: 700, bgcolor: `${ACCENT}14`, color: ACCENT }} />}
+                            </Typography>
                             {meta && <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>{meta}</Typography>}
                           </TableCell>
                           <TableCell align="right" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>{inr(Number(it.price))}</TableCell>
@@ -510,6 +513,7 @@ function ItemDialog({ mode, item, categoryId, categoryName, roomClasses, onClose
   const [tax, setTax] = useState(item && Number(item.taxPercent) > 0 ? String(item.taxPercent) : "");
   const [unit, setUnit] = useState(item?.unit ?? "");
   const [isActive, setIsActive] = useState(item?.isActive ?? true);
+  const [itemType, setItemType] = useState(item?.itemType ?? "GENERAL");
   // Per-room-class prices keyed by roomClassId (blank = use the base price).
   const [roomPrices, setRoomPrices] = useState<Record<string, string>>(() => {
     const m: Record<string, string> = {};
@@ -529,7 +533,7 @@ function ItemDialog({ mode, item, categoryId, categoryName, roomClasses, onClose
       const body = {
         itemName: name.trim(), itemCode: code.trim() || undefined,
         price: Number(price), taxPercent: tax === "" ? undefined : Number(tax),
-        unit: unit.trim() || undefined, isActive, roomPrices: roomPricesArr,
+        unit: unit.trim() || undefined, isActive, itemType, roomPrices: roomPricesArr,
       };
       if (mode === "add") {
         await axiosInstance.post("/hospital/soc/items", { chargeCategoryId: categoryId, ...body });
@@ -550,6 +554,11 @@ function ItemDialog({ mode, item, categoryId, categoryName, roomClasses, onClose
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <TextField label="Charge / procedure name" value={name} onChange={(e) => setName(e.target.value)} fullWidth autoFocus />
+          <TextField select label="Type" value={itemType} onChange={(e) => setItemType(e.target.value)} fullWidth
+            helperText={itemType === "RADIOLOGY" ? "Appears in the radiology order pickers; radiology orders price from this charge." : "A plain billable charge."}>
+            <MenuItem value="GENERAL">General charge</MenuItem>
+            <MenuItem value="RADIOLOGY">Radiology test</MenuItem>
+          </TextField>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <TextField label="Code (optional)" value={code} onChange={(e) => setCode(e.target.value)} fullWidth />
             <TextField label="Unit (optional)" placeholder="e.g. per day" value={unit} onChange={(e) => setUnit(e.target.value)} fullWidth />

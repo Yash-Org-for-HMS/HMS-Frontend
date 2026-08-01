@@ -24,9 +24,6 @@ interface Props {
   admission: any; // { admissionId, patientName }
 }
 
-// Fallback scan list, used only if the hospital hasn't set up a priced radiology
-// catalog yet (those scans bill at a flat fallback until the catalog is filled).
-const SCAN_TYPES = ["X-Ray", "CT Scan", "MRI Scan", "Ultrasound", "PET Scan", "Mammography"];
 const PRIORITIES = [
   { value: 1, label: "Routine" },
   { value: 2, label: "Urgent" },
@@ -43,9 +40,9 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
   const confirm = useConfirm();
   const qc = useQueryClient();
   const [tab, setTab] = useState<"order" | "results">("order");
-  const [scanType, setScanType] = useState("");
+  const [scanType, setScanType] = useState(""); // holds the selected SOC test's chargeItemId
   const [notes, setNotes] = useState("");
-  const [basket, setBasket] = useState<{ scanType: string; notes: string; price: number | null }[]>([]);
+  const [basket, setBasket] = useState<{ chargeItemId: string; scanType: string; notes: string; price: number | null }[]>([]);
   const [priorityId, setPriorityId] = useState(1);
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -64,15 +61,15 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
     queryFn: async () => (await axiosInstance.get("/ipd/radiology-catalog")).data.data,
     enabled: open,
   });
-  // Catalog names (with price) when set up; otherwise the fixed fallback list.
-  const scanOptions: { name: string; price: number | null }[] = catalog.length
-    ? catalog.map((c: any) => ({ name: c.testName, price: Number(c.price) }))
-    : SCAN_TYPES.map((s) => ({ name: s, price: null }));
-  const priceFor = (name: string) => scanOptions.find((o) => o.name === name)?.price ?? null;
+  // SOC is the master: options are the RADIOLOGY-typed charges (id + name + price).
+  const scanOptions: { id: string; name: string; price: number | null }[] =
+    catalog.map((c: any) => ({ id: c.chargeItemId, name: c.testName, price: Number(c.price) }));
+  const optFor = (id: string) => scanOptions.find((o) => o.id === id);
+  const lineFor = (id: string) => { const o = optFor(id); return { chargeItemId: id, scanType: o?.name ?? id, notes: notes.trim(), price: o?.price ?? null }; };
 
   const addToBasket = () => {
     if (!scanType) return;
-    setBasket([...basket, { scanType, notes: notes.trim(), price: priceFor(scanType) }]);
+    setBasket([...basket, lineFor(scanType)]);
     setScanType("");
     setNotes("");
   };
@@ -80,7 +77,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
 
   // A scan chosen in the picker but not yet "added" still counts — so ordering a
   // single scan needs no extra Add click. Add stays useful for stacking several.
-  const effectiveScans = scanType ? [...basket, { scanType, notes: notes.trim(), price: priceFor(scanType) }] : basket;
+  const effectiveScans = scanType ? [...basket, lineFor(scanType)] : basket;
   const estTotal = effectiveScans.reduce((s, x) => s + (x.price || 0), 0);
   const hasPricing = catalog.length > 0;
 
@@ -145,9 +142,10 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
         {tab === "order" ? (
           <Stack spacing={2}>
             <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 2fr auto" }, gap: 2, alignItems: "start" }}>
-              <TextField select label="Scan type" value={scanType} onChange={(e) => setScanType(e.target.value)}>
+              <TextField select label="Scan type" value={scanType} onChange={(e) => setScanType(e.target.value)}
+                helperText={scanOptions.length === 0 ? "No radiology tests configured — add them in Schedule of Charges (Type: Radiology test)." : undefined}>
                 {scanOptions.map((o) => (
-                  <MenuItem key={o.name} value={o.name}>
+                  <MenuItem key={o.id} value={o.id}>
                     {o.name}{o.price != null ? ` · ${formatINR(o.price)}` : ""}
                   </MenuItem>
                 ))}
