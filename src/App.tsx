@@ -78,6 +78,7 @@ const FormTemplatesList = lazy(() => import("@/features/hospitalAuth/formBuilder
 const FormBuilder = lazy(() => import("@/features/hospitalAuth/formBuilder/FormBuilder"));
 const AuditLogs = lazy(() => import("@/features/hospitalAuth/settings/AuditLogs"));
 const FinancialDashboard = lazy(() => import("@/features/billing/FinancialDashboard"));
+const GstReport = lazy(() => import("@/features/billing/GstReport"));
 
 // Reception
 const ReceptionDashboard = lazy(() => import("@/features/reception/ReceptionDashboard"));
@@ -237,6 +238,7 @@ function App() {
             <Route path="/hospital/roles/new" element={el(HospitalRoleForm)} />
             <Route path="/hospital/roles/:id/edit" element={el(HospitalRoleForm)} />
             <Route path="/hospital/financials" element={elGated(FinancialDashboard, "Billing", "Financial Analytics")} />
+            <Route path="/hospital/gst-report" element={elGated(GstReport, "Billing", "GST Report")} />
             <Route path="/hospital/reports" element={el(Reports)} />
             <Route path="/hospital/permissions-matrix" element={el(PermissionMatrix)} />
             <Route path="/hospital/module-access" element={el(ModuleAccess)} />

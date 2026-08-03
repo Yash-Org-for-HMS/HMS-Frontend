@@ -12,7 +12,6 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import ErrorState from "@/components/ErrorState";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
-import { useHospitalTaxRate } from "@/hooks/useHospitalTaxRate";
 import { useToast } from "@/providers/ToastContext";
 import StatusChip from "@/components/StatusChip";
 import InvoiceViewDialog from "@/components/reception/InvoiceViewDialog";
@@ -31,11 +30,9 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   // Billing Items
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
 
-  // Invoice Calculator — tax defaults to the hospital's configured GST rate.
+  // Invoice Calculator — GST is now computed per line from each charge's rate card
+  // (0 = exempt), mirroring the server. No manual flat rate.
   const [discount, setDiscount] = useState<number | "">("");
-  const taxRate = useHospitalTaxRate();
-  const [taxPercent, setTaxPercent] = useState<number | "">(0);
-  useEffect(() => { setTaxPercent(taxRate); }, [taxRate]);
   
   // Modal State
   const [isGenerating, setIsGenerating] = useState(false);
@@ -122,7 +119,9 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   const grossAmount = selectedItemsList.reduce((sum, item) => sum + item.amount, 0);
   const discountAmount = Number(discount || 0);
   const taxableAmount = grossAmount - discountAmount;
-  const taxAmount = taxableAmount * (Number(taxPercent || 0) / 100);
+  // Per-line GST from the rate card (server is authoritative; this only mirrors it
+  // for the preview). Tax is on each line's gross; the invoice discount reduces net.
+  const taxAmount = selectedItemsList.reduce((sum, item) => sum + item.amount * (Number(item.taxPercent || 0) / 100), 0);
   const netAmount = taxableAmount + taxAmount;
   // Amount the payment dialog collects against. Once the invoice is created the
   // selected items are refetched away (no longer "unbilled"), so the derived
@@ -136,7 +135,6 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
       const payload = {
         selectedItems: selectedItemsList,
         discountAmount,
-        taxPercentage: Number(taxPercent || 0)
       };
       const res = await axiosInstance.post(`/billing/invoices/${selectedPatient.patientId}`, payload);
       setGeneratedInvoice(res.data.data);
@@ -292,20 +290,10 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                 />
               </Box>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-                <Typography color="text.secondary">Tax (%)</Typography>
-                <TextField 
-                  size="small" type="number" 
-                  value={taxPercent} onChange={e => setTaxPercent(e.target.value === "" ? "" : Number(e.target.value))}
-                  sx={{ width: 100 }}
-                  inputProps={{ style: { textAlign: 'right' } }}
-                />
-              </Box>
-
               <Divider sx={{ mb: 2 }} />
-              
+
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography color="text.secondary">Tax Amount</Typography>
+                <Typography color="text.secondary">GST (CGST + SGST)</Typography>
                 <Typography fontWeight={600}>₹{taxAmount.toFixed(2)}</Typography>
               </Box>
               

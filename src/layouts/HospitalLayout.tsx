@@ -82,6 +82,7 @@ export default function HospitalLayout() {
     // Admin-only: its endpoint (/billing/analytics) is admin-gated, so don't show
     // a tab non-admins can't actually open.
     { text: "Financial Analytics", icon: <AccountBalanceRounded />, path: "/hospital/financials", permission: null, adminOnly: true, module: "Billing", section: "Overview" },
+    { text: "GST Report", icon: <AssessmentRounded />, path: "/hospital/gst-report", permission: null, adminOnly: true, module: "Billing", section: "Overview" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/hospital/reports", permission: null, section: "Overview" },
     // Operations: hospital-wide, read-oriented windows into day-to-day activity.
     // Admin-only (mirrors the backend org-wide data view for H_ADMIN); these

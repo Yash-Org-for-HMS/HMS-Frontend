@@ -138,14 +138,16 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
           setPaymentAmount(remaining.toString());
         }
 
-        // Prefill the discount/tax fields: existing discount, and either the
-        // tax rate already on the invoice or the hospital's configured default.
+        // Prefill the discount/tax fields: existing discount, and the tax rate
+        // already on the invoice if any. Consultations are GST-exempt, so a fresh
+        // consult invoice defaults to 0% (the field stays editable for the rare
+        // taxable case) rather than the hospital's flat rate.
         const g = Number(currentInvoice.grossAmount || 0);
         const d = Number(currentInvoice.discountAmount || 0);
         const t = Number(currentInvoice.taxAmount || 0);
         setDiscountInput(d > 0 ? String(d) : "");
         const taxable = g - d;
-        const currentRate = taxable > 0 && t > 0 ? Math.round((t / taxable) * 10000) / 100 : hospitalTaxPct;
+        const currentRate = taxable > 0 && t > 0 ? Math.round((t / taxable) * 10000) / 100 : 0;
         setTaxInput(currentRate ? String(currentRate) : "");
       }
 

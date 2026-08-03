@@ -150,9 +150,13 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                     </div>
                   ) : undefined}
                 >
+                  {(() => {
+                    const showHsn = invoice.InvoiceItem?.some((it: any) => it.hsnCode);
+                    return (
                   <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
                     <thead><tr>
                       <th style={{ ...cell, textAlign: "left", fontWeight: 700 }}>Description</th>
+                      {showHsn && <th style={{ ...cell, textAlign: "left", fontWeight: 700 }}>HSN/SAC</th>}
                       <th style={{ ...cell, textAlign: "center", fontWeight: 700 }}>Qty</th>
                       <th style={{ ...cell, textAlign: "right", fontWeight: 700 }}>Amount</th>
                     </tr></thead>
@@ -160,12 +164,15 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                       {invoice.InvoiceItem?.map((it: any, i: number) => (
                         <tr key={i}>
                           <td style={cell}>{it.description}</td>
+                          {showHsn && <td style={cell}>{it.hsnCode || "—"}</td>}
                           <td style={{ ...cell, textAlign: "center" }}>{it.quantity}</td>
                           <td style={{ ...cell, textAlign: "right" }}>{formatINR(it.totalPrice)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                    );
+                  })()}
                 </BillDocument>
               </Box>
 

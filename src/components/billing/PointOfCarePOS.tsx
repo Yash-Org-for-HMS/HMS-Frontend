@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { 
   Dialog, DialogTitle, DialogContent, DialogActions, 
@@ -8,7 +8,6 @@ import {
 import { CheckCircleRounded, PointOfSaleRounded, ReceiptLongRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
-import { useHospitalTaxRate } from "@/hooks/useHospitalTaxRate";
 
 interface PointOfCarePOSProps {
   open: boolean;
@@ -21,6 +20,7 @@ interface PointOfCarePOSProps {
     type: "LAB" | "RADIOLOGY" | "PHARMACY" | "CONSULTATION";
     description: string;
     amount: number;
+    taxPercent?: number; // per-line GST rate from the rate card (0 = exempt)
     date: Date | string;
   };
 }
@@ -29,23 +29,19 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
   const theme = useTheme();
   
   const [discount, setDiscount] = useState<number | "">("");
-  // Default the tax to the hospital's configured GST rate (was hardcoded 0, so
-  // sales were never taxed). Staff can still override it for this collection.
-  const taxRate = useHospitalTaxRate();
-  const [taxPercent, setTaxPercent] = useState<number | "">(0);
-  useEffect(() => { setTaxPercent(taxRate); }, [taxRate]);
   const [paymentMethod, setPaymentMethod] = useState("Cash");
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [receiptData, setReceiptData] = useState<any>(null);
 
-  // Financial Math
+  // Financial Math — GST comes from the item's rate-card taxPercent (0 = exempt),
+  // computed on gross; the server re-derives it authoritatively at collection.
   const grossAmount = Number(item?.amount || 0);
   const discountAmount = Number(discount || 0);
   const taxableAmount = grossAmount - discountAmount;
-  const taxAmount = taxableAmount * (Number(taxPercent || 0) / 100);
+  const taxAmount = grossAmount * (Number(item?.taxPercent || 0) / 100);
   const netAmount = taxableAmount + taxAmount;
 
   const handleProcessPayment = async () => {
@@ -57,7 +53,6 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
         patientId: patientId === "Walk-in" ? null : patientId,
         item,
         discountAmount,
-        taxPercentage: Number(taxPercent),
         paymentMethod
       };
 
@@ -130,14 +125,6 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
             value={discount}
             onChange={(e) => setDiscount(Number(e.target.value))}
           />
-          <TextField
-            label="Tax (%)"
-            type="number"
-            size="small"
-            fullWidth
-            value={taxPercent}
-            onChange={(e) => setTaxPercent(Number(e.target.value))}
-          />
         </Box>
 
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
@@ -149,7 +136,7 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
           <Typography variant="body2" color="error.main">-₹{discountAmount.toFixed(2)}</Typography>
         </Box>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-          <Typography variant="body2" color="text.secondary">Tax:</Typography>
+          <Typography variant="body2" color="text.secondary">GST (CGST + SGST):</Typography>
           <Typography variant="body2">₹{taxAmount.toFixed(2)}</Typography>
         </Box>
 

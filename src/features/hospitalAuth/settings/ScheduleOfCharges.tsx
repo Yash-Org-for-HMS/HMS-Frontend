@@ -31,7 +31,7 @@ const inr = formatINRAuto;
 
 type Category = { chargeCategoryId: string; categoryName: string; categoryCode: string; parentId: string | null; description: string | null; iconName: string | null; sortOrder: number; isActive: boolean; _count?: { items: number } };
 type RoomPrice = { roomClassId: string; price: number | string };
-type Item = { chargeItemId: string; chargeCategoryId: string; itemName: string; itemCode: string | null; price: number | string; taxPercent: number | string; unit: string | null; isActive: boolean; itemType?: string; roomPrices?: RoomPrice[] };
+type Item = { chargeItemId: string; chargeCategoryId: string; itemName: string; itemCode: string | null; price: number | string; taxPercent: number | string; hsnCode?: string | null; unit: string | null; isActive: boolean; itemType?: string; roomPrices?: RoomPrice[] };
 type RoomClass = { roomClassId: string; name: string; code: string; sortOrder: number; isActive: boolean };
 
 // Hospital's Schedule of Charges (rate card): categories on the left (seeded from
@@ -315,7 +315,7 @@ export default function ScheduleOfCharges() {
                   ) : (
                     items.map((it) => {
                       // Code / unit / tax collapse into one muted subtitle under the name.
-                      const meta = [it.itemCode, it.unit, Number(it.taxPercent) > 0 ? `${Number(it.taxPercent)}% tax` : null].filter(Boolean).join(" · ");
+                      const meta = [it.itemCode, it.unit, Number(it.taxPercent) > 0 ? `${Number(it.taxPercent)}% tax` : null, it.hsnCode ? `HSN ${it.hsnCode}` : null].filter(Boolean).join(" · ");
                       const priced = new Map((it.roomPrices ?? []).map((rp) => [rp.roomClassId, Number(rp.price)]));
                       return (
                         <TableRow key={it.chargeItemId} hover>
@@ -518,6 +518,7 @@ function ItemDialog({ mode, item, categoryId, categoryName, roomClasses, onClose
   const [code, setCode] = useState(item?.itemCode ?? "");
   const [price, setPrice] = useState(item ? String(item.price) : "");
   const [tax, setTax] = useState(item && Number(item.taxPercent) > 0 ? String(item.taxPercent) : "");
+  const [hsn, setHsn] = useState(item?.hsnCode ?? "");
   const [unit, setUnit] = useState(item?.unit ?? "");
   const [isActive, setIsActive] = useState(item?.isActive ?? true);
   const [itemType, setItemType] = useState(item?.itemType ?? "GENERAL");
@@ -540,6 +541,7 @@ function ItemDialog({ mode, item, categoryId, categoryName, roomClasses, onClose
       const body = {
         itemName: name.trim(), itemCode: code.trim() || undefined,
         price: Number(price), taxPercent: tax === "" ? undefined : Number(tax),
+        hsnCode: hsn.trim() || undefined,
         unit: unit.trim() || undefined, isActive, itemType, roomPrices: roomPricesArr,
       };
       if (mode === "add") {
@@ -576,7 +578,10 @@ function ItemDialog({ mode, item, categoryId, categoryName, roomClasses, onClose
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <TextField label="Base price (₹)" type="number" value={price} onChange={(e) => setPrice(e.target.value)} fullWidth
               InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
-            <TextField label="Tax % (optional)" type="number" value={tax} onChange={(e) => setTax(e.target.value)} fullWidth />
+            <TextField label="Tax % (optional)" type="number" value={tax} onChange={(e) => setTax(e.target.value)} fullWidth
+              helperText="0 / blank = GST-exempt" />
+            <TextField label="HSN/SAC (optional)" value={hsn} onChange={(e) => setHsn(e.target.value)} fullWidth
+              inputProps={{ maxLength: 10 }} />
           </Stack>
 
           {roomClasses.length > 0 && (

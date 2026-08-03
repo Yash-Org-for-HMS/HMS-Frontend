@@ -85,6 +85,7 @@ export default function HospitalSettings() {
     // Billing Defaults
     currencyCode: "INR",
     taxPercentage: 0,
+    pharmacyGstPercent: 0,
     invoicePrefix: "INV-",
 
     // Clinical Workflow
@@ -114,6 +115,7 @@ export default function HospitalSettings() {
       whatsappEnabled: settings.whatsappEnabled ?? false,
       currencyCode: settings.currencyCode || "INR",
       taxPercentage: settings.taxPercentage ?? 0,
+      pharmacyGstPercent: settings.pharmacyGstPercent ?? 0,
       invoicePrefix: settings.invoicePrefix || "INV-",
       vitalsCollector: (settings.vitalsCollector as "RECEPTIONIST" | "NURSE") || "RECEPTIONIST",
       billingStrategy: (settings.billingStrategy as "PRE_PAID" | "POST_PAID") || "PRE_PAID",
@@ -340,10 +342,11 @@ export default function HospitalSettings() {
                 <TextField
                   fullWidth
                   type="number"
-                  label="Tax Percentage (%)"
-                  name="taxPercentage"
-                  value={formData.taxPercentage}
+                  label="Pharmacy / Medicine GST (%)"
+                  name="pharmacyGstPercent"
+                  value={formData.pharmacyGstPercent}
                   onChange={handleChange}
+                  helperText="Applied to all pharmacy invoice lines. Other charges are taxed per-item from the Schedule of Charges (0 = exempt)."
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
