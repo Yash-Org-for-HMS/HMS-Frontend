@@ -7,7 +7,7 @@ import {
   Box, Typography, Paper, Chip, Avatar, Button, Alert,
   Divider, Skeleton, Tabs, Tab, Table, TableHead, TableBody, TableRow, TableCell,
   TableContainer, TablePagination, Menu, MenuItem, IconButton, Stack, Tooltip,
-  ListItemIcon, ListItemText,
+  ListItemIcon, ListItemText, alpha,
 } from "@mui/material";
 import {
   EditRounded, ArrowBackRounded, BadgeRounded, CakeRounded, LocalPhoneRounded,
@@ -59,13 +59,13 @@ interface Patient extends PatientBase {
 // ── Info row inside the overview cards ───────────────────────────────────────
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | null }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, py: 1.1 }}>
-      <Box sx={{ color: ACCENT, mt: 0.3, flexShrink: 0, display: "flex" }}>{icon}</Box>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.75, py: 1.15 }}>
+      <Box sx={{ width: 34, height: 34, borderRadius: 1.5, flexShrink: 0, display: "grid", placeItems: "center", bgcolor: alpha(ACCENT, 0.1), color: ACCENT }}>{icon}</Box>
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block" }}>
+        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", fontSize: "0.64rem" }}>
           {label}
         </Typography>
-        <Typography variant="body2" sx={{ color: value ? "text.primary" : "text.disabled", mt: 0.3, wordBreak: "break-word" }}>
+        <Typography variant="body2" sx={{ color: value ? "text.primary" : "text.disabled", mt: 0.1, fontWeight: value ? 600 : 400, wordBreak: "break-word" }}>
           {value || "—"}
         </Typography>
       </Box>
@@ -77,8 +77,8 @@ function SectionCard({ title, icon, action, children }: { title: string; icon: R
   return (
     <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5, mb: 1.5 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box sx={{ color: ACCENT, display: "flex" }}>{icon}</Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+          <Box sx={{ width: 30, height: 30, borderRadius: 1.25, display: "grid", placeItems: "center", bgcolor: alpha(ACCENT, 0.12), color: ACCENT }}>{icon}</Box>
           <Typography variant="subtitle1" sx={{ color: "text.primary", fontWeight: 700 }}>{title}</Typography>
         </Box>
         {action}
@@ -218,86 +218,92 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
 
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto" }}>
-      {/* Back + primary actions */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 2, flexWrap: "wrap" }}>
-        <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ color: "text.secondary", textTransform: "none" }}>Back to patients</Button>
-        <Stack direction="row" spacing={1.5}>
-          {canEdit && (
-            <Button variant="outlined" startIcon={<EventAvailableRounded />} onClick={() => navigate(`/reception/appointments/new?patientId=${id}`)}
-              sx={{ color: ACCENT, borderColor: "rgba(8,145,178,0.3)", textTransform: "none", borderRadius: 2, "&:hover": { bgcolor: "rgba(8,145,178,0.08)", borderColor: ACCENT } }}>
-              Book Appointment
-            </Button>
-          )}
-          {canEdit && (
-            <Button variant="contained" startIcon={<EditRounded />} onClick={() => navigate(`/reception/patients/${id}/edit`)}
-              sx={{ background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)", fontWeight: 600, textTransform: "none", borderRadius: 2, px: 3 }}>
-              Edit
-            </Button>
-          )}
-          <Tooltip title="More actions">
-            <IconButton onClick={(e) => setMenuAnchor(e.currentTarget)} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
-              <MoreVertRounded />
-            </IconButton>
+      {/* Top nav */}
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, gap: 1, flexWrap: "wrap" }}>
+        <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ color: "text.secondary", textTransform: "none", fontWeight: 600 }}>Back to patients</Button>
+        {readOnly && (
+          <Tooltip title="You're viewing this record; booking, editing and billing happen in the reception/clinical panels.">
+            <Chip label="Read-only oversight view" size="small" sx={{ bgcolor: alpha(ACCENT, 0.1), color: ACCENT, fontWeight: 600 }} />
           </Tooltip>
-          <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}
-            anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}>
-            <MenuItem onClick={() => { setMenuAnchor(null); setIdCardOpen(true); }}>
-              <ListItemIcon><QrCode2Rounded fontSize="small" /></ListItemIcon>
-              <ListItemText>Print ID Card</ListItemText>
-            </MenuItem>
-            {canEdit && (
-              <MenuItem onClick={handleSendWelcome} disabled={notifProcessing}>
-                <ListItemIcon>{notifProcessing ? <HeartbeatLoader size={22} /> : <NotificationsActiveRounded fontSize="small" />}</ListItemIcon>
-                <ListItemText>Send Welcome SMS</ListItemText>
-              </MenuItem>
-            )}
-          </Menu>
-        </Stack>
+        )}
       </Box>
 
-      {readOnly && (
-        <Alert severity="info" icon={false} sx={{ mb: 2.5, bgcolor: "rgba(8,145,178,0.06)", border: "1px solid rgba(8,145,178,0.2)", color: "text.secondary" }}>
-          Read-only oversight view — you're viewing this patient's record; booking, editing, billing, and other actions happen in the reception/clinical panels.
-        </Alert>
-      )}
+      {successMsg && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMsg(null)}>{successMsg}</Alert>}
 
-      {successMsg && <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMsg(null)}>{successMsg}</Alert>}
-
-      {/* ── Hero ── */}
-      <Paper elevation={0} sx={{ p: 2.5, mb: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", position: "relative", overflow: "hidden",
-        background: "linear-gradient(135deg, rgba(8,145,178,0.06) 0%, rgba(56,189,248,0.03) 100%)",
-        "&::before": { content: '""', position: "absolute", top: 0, left: 0, right: 0, height: "4px", background: "linear-gradient(90deg, #0891b2, #06b6d4, #38bdf8)" } }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2.5, flexWrap: "wrap" }}>
-          <Avatar sx={{ width: 68, height: 68, bgcolor: getColor(patient.patientId), fontSize: "1.6rem", fontWeight: 800, boxShadow: "0 8px 24px rgba(6,182,212,0.25)" }}>
+      {/* ── Header ── */}
+      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", overflow: "hidden", mb: 2 }}>
+        <Box sx={{ p: { xs: 2.5, sm: 3 }, display: "flex", gap: 2.5, alignItems: "flex-start", flexWrap: "wrap" }}>
+          <Avatar sx={{ width: 88, height: 88, bgcolor: getColor(patient.patientId), fontSize: "2rem", fontWeight: 800,
+            border: "3px solid", borderColor: alpha(getColor(patient.patientId), 0.4), boxShadow: `0 8px 22px ${alpha(getColor(patient.patientId), 0.28)}` }}>
             {getInitials(patient.firstName, patient.lastName)}
           </Avatar>
-          <Box sx={{ flex: 1, minWidth: 220 }}>
-            <Typography variant="h5" sx={{ color: "text.primary", fontWeight: 800, mb: 0.75 }}>
-              {patient.firstName} {patient.lastName}
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
-              <Chip icon={<BadgeRounded sx={{ fontSize: "14px !important" }} />} label={patient.uhidNumber} size="small"
-                sx={{ bgcolor: "rgba(6,182,212,0.12)", color: ACCENT, fontWeight: 700, fontFamily: "monospace" }} />
-              <Chip icon={<WcRounded sx={{ fontSize: "14px !important" }} />} label={patient.genderLabel} size="small"
-                sx={{ bgcolor: "rgba(139,92,246,0.1)", color: "#8b5cf6", fontWeight: 600 }} />
-              <Chip icon={<BloodtypeRounded sx={{ fontSize: "14px !important" }} />} label={patient.bloodGroupLabel} size="small"
-                sx={{ bgcolor: "rgba(239,68,68,0.1)", color: SEMANTIC.danger, fontWeight: 700 }} />
-              {patient.age !== null && (
-                <Chip label={`${patient.age} yrs`} size="small" sx={{ bgcolor: "rgba(16,185,129,0.1)", color: SEMANTIC.success, fontWeight: 600 }} />
-              )}
-              {patient.allergies && (
-                <Chip icon={<WarningAmberRounded sx={{ fontSize: "14px !important" }} />} label="Allergies" size="small"
-                  sx={{ bgcolor: "rgba(245,158,11,0.12)", color: SEMANTIC.warningDark, fontWeight: 700 }} />
-              )}
+
+          <Box sx={{ flex: 1, minWidth: 240 }}>
+            <Typography variant="h4" sx={{ fontWeight: 800, lineHeight: 1.15, mb: 1, wordBreak: "break-word" }}>{patient.firstName} {patient.lastName}</Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, alignItems: "center", mb: 1.25 }}>
+              <Chip icon={<BadgeRounded sx={{ fontSize: "14px !important" }} />} label={patient.uhidNumber} size="small" sx={{ bgcolor: alpha(ACCENT, 0.12), color: ACCENT, fontWeight: 700, fontFamily: "monospace" }} />
+              <Chip icon={<WcRounded sx={{ fontSize: "14px !important" }} />} label={patient.genderLabel} size="small" sx={{ bgcolor: alpha("#8b5cf6", 0.12), color: "#8b5cf6", fontWeight: 600 }} />
+              <Chip icon={<BloodtypeRounded sx={{ fontSize: "14px !important" }} />} label={patient.bloodGroupLabel} size="small" sx={{ bgcolor: alpha(SEMANTIC.danger, 0.1), color: SEMANTIC.danger, fontWeight: 700 }} />
+              {patient.age !== null && <Chip label={`${patient.age} yrs`} size="small" sx={{ bgcolor: alpha(SEMANTIC.success, 0.1), color: SEMANTIC.success, fontWeight: 600 }} />}
             </Box>
+            <Stack direction="row" sx={{ flexWrap: "wrap", gap: { xs: 1, sm: 2.5 }, color: "text.secondary" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, minWidth: 0 }}>
+                <LocalPhoneRounded sx={{ fontSize: 16 }} /><Typography variant="body2" noWrap>{patient.phone}</Typography>
+              </Box>
+              {patient.email && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, minWidth: 0 }}>
+                  <EmailRounded sx={{ fontSize: 16 }} /><Typography variant="body2" noWrap>{patient.email}</Typography>
+                </Box>
+              )}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                <CalendarTodayRounded sx={{ fontSize: 16 }} /><Typography variant="body2">Registered {new Date(patient.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</Typography>
+              </Box>
+            </Stack>
           </Box>
-          <Box sx={{ textAlign: "right" }}>
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>Registered</Typography>
-            <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
-              {new Date(patient.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+
+          <Stack direction="row" spacing={0} sx={{ flexWrap: "wrap", gap: 1, justifyContent: "flex-end", alignItems: "center" }}>
+            {canEdit && (
+              <Button variant="outlined" startIcon={<EventAvailableRounded />} onClick={() => navigate(`/reception/appointments/new?patientId=${id}`)}
+                sx={{ color: ACCENT, borderColor: alpha(ACCENT, 0.4), textTransform: "none", borderRadius: 2, "&:hover": { bgcolor: alpha(ACCENT, 0.08), borderColor: ACCENT } }}>
+                Book
+              </Button>
+            )}
+            {canEdit && (
+              <Button variant="contained" startIcon={<EditRounded />} onClick={() => navigate(`/reception/patients/${id}/edit`)}
+                sx={{ bgcolor: ACCENT, fontWeight: 600, textTransform: "none", borderRadius: 2, px: 2.5, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>
+                Edit
+              </Button>
+            )}
+            <Tooltip title="More actions">
+              <IconButton onClick={(e) => setMenuAnchor(e.currentTarget)} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
+                <MoreVertRounded />
+              </IconButton>
+            </Tooltip>
+            <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}>
+              <MenuItem onClick={() => { setMenuAnchor(null); setIdCardOpen(true); }}>
+                <ListItemIcon><QrCode2Rounded fontSize="small" /></ListItemIcon>
+                <ListItemText>Print ID Card</ListItemText>
+              </MenuItem>
+              {canEdit && (
+                <MenuItem onClick={handleSendWelcome} disabled={notifProcessing}>
+                  <ListItemIcon>{notifProcessing ? <HeartbeatLoader size={22} /> : <NotificationsActiveRounded fontSize="small" />}</ListItemIcon>
+                  <ListItemText>Send Welcome SMS</ListItemText>
+                </MenuItem>
+              )}
+            </Menu>
+          </Stack>
+        </Box>
+
+        {/* Allergy strip — clinically critical, always visible when present */}
+        {patient.allergies && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, px: { xs: 2.5, sm: 3 }, py: 1.25, bgcolor: alpha(SEMANTIC.danger, 0.07), borderTop: "1px solid", borderColor: alpha(SEMANTIC.danger, 0.2) }}>
+            <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 20, flexShrink: 0 }} />
+            <Typography variant="body2" sx={{ color: SEMANTIC.danger, fontWeight: 500 }}>
+              <Box component="span" sx={{ fontWeight: 800 }}>Allergies:</Box> {patient.allergies}
             </Typography>
           </Box>
-        </Box>
+        )}
       </Paper>
 
       {/* ── Stat tiles ── */}
@@ -318,12 +324,12 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
         )}
       </Box>
 
-      {/* ── Tabs ── */}
-      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", mb: 2 }}>
+      {/* ── Tabs (sticky so they stay reachable while scrolling long sections) ── */}
+      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", mb: 2, position: "sticky", top: 8, zIndex: 3 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
-          sx={{ px: 1, borderBottom: "1px solid", borderColor: "divider",
-            "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 56 },
-            "& .Mui-selected": { color: `${ACCENT} !important` }, "& .MuiTabs-indicator": { bgcolor: ACCENT } }}>
+          sx={{ px: 1,
+            "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 52 },
+            "& .Mui-selected": { color: `${ACCENT} !important` }, "& .MuiTabs-indicator": { bgcolor: ACCENT, height: 3, borderRadius: "3px 3px 0 0" } }}>
           <Tab icon={<PersonRounded fontSize="small" />} iconPosition="start" label="Overview" />
           <Tab icon={<CalendarTodayRounded fontSize="small" />} iconPosition="start" label={`Appointments${stats.total ? ` (${stats.total})` : ""}`} />
           <Tab icon={<ReceiptLongRounded fontSize="small" />} iconPosition="start" label={`Billing${invoices.length ? ` (${invoices.length})` : ""}`} disabled={!billingEnabled} />
