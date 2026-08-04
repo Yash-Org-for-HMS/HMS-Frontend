@@ -46,6 +46,7 @@ export default function DoctorForm() {
     specializationId: "",
     licenseNumber: "",
     consultationFee: "",
+    ipdVisitCharge: "",
     qualification: "",
     experienceYears: "",
   });
@@ -91,6 +92,7 @@ export default function DoctorForm() {
       specializationId: d.specializationId || "",
       licenseNumber: d.licenseNumber || "",
       consultationFee: d.consultationFee || "",
+      ipdVisitCharge: d.ipdVisitCharge || "",
       qualification: d.qualification || "",
       experienceYears: d.experienceYears || "",
     });
@@ -321,7 +323,7 @@ export default function DoctorForm() {
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Consultation Fee ($)"
+                  label="Consultation Fee (₹)"
                   name="consultationFee"
                   type="number"
                   value={formData.consultationFee}
@@ -329,6 +331,17 @@ export default function DoctorForm() {
                   required
                   error={!!errors.consultationFee}
                   helperText={errors.consultationFee}
+                  {...textFieldProps}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  label="IPD Routine Visit Charge (₹)"
+                  name="ipdVisitCharge"
+                  type="number"
+                  value={formData.ipdVisitCharge}
+                  onChange={handleChange}
+                  helperText="Billed per logged ward visit during an admission"
                   {...textFieldProps}
                 />
               </Grid>
