@@ -6,13 +6,13 @@ import {
   Box, Typography, Paper, Button, Chip, IconButton, Tooltip, InputAdornment,
   List, ListItemButton, ListItemText, TextField, Divider,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
-  Dialog, DialogTitle, DialogContent, DialogActions, Stack, Switch, FormControlLabel,
+  Dialog, DialogTitle, DialogContent, DialogActions, Stack, Switch, FormControlLabel, alpha,
 } from "@mui/material";
 import {
   AddRounded, EditRounded, DeleteRounded, SearchRounded, ReceiptLongRounded,
   ExpandMoreRounded, ChevronRightRounded, MeetingRoomRounded, TuneRounded,
   UnfoldMoreRounded, UnfoldLessRounded, HistoryRounded, ScienceRounded,
-  ArrowUpwardRounded, ArrowDownwardRounded,
+  ArrowUpwardRounded, ArrowDownwardRounded, CloseRounded,
 } from "@mui/icons-material";
 import { MenuItem, Menu } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
@@ -446,9 +446,19 @@ function PriceHistoryDialog({ item, onClose }: { item: Item; onClose: () => void
 
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <HistoryRounded sx={{ color: ACCENT }} /> Price history
-        <Typography variant="caption" sx={{ display: "block", color: "text.secondary", width: "100%" }}>{item.itemName}</Typography>
+      <DialogTitle sx={{ p: 0 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2.5, py: 2 }}>
+          <Box sx={{ width: 40, height: 40, borderRadius: 2, flex: "none", display: "grid", placeItems: "center", bgcolor: alpha(ACCENT, 0.12), color: ACCENT }}>
+            <HistoryRounded />
+          </Box>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", lineHeight: 1.2 }}>Price history</Typography>
+            <Typography variant="body2" noWrap sx={{ color: "text.secondary" }}>{item.itemName}</Typography>
+          </Box>
+          <IconButton onClick={onClose} size="small" sx={{ color: "text.secondary", flex: "none" }} aria-label="Close">
+            <CloseRounded fontSize="small" />
+          </IconButton>
+        </Box>
       </DialogTitle>
       <DialogContent dividers sx={{ p: 0 }}>
         {isLoading ? (
