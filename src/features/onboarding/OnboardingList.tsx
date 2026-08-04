@@ -83,12 +83,16 @@ export default function OnboardingList() {
     .filter((t) => t.trialStatus === "active" && daysUntil(t.trialEndDate) <= EXPIRY_WINDOW_DAYS)
     .sort((a, b) => daysUntil(a.trialEndDate) - daysUntil(b.trialEndDate));
   const expired = trials.filter((t) => t.trialStatus === "expired");
-  const suspended = hospitals.filter((h) => h.status === "suspended");
+  // Suspended = the DB status column OR the computed subscription state (a tenant
+  // past its grace window whose status hasn't been flipped at login yet).
+  const suspended = hospitals.filter((h) => h.status === "suspended" || h.subscriptionState === "suspended");
+  // Overdue but not yet suspended — in the grace window, action needed before cut-off.
+  const overdue = hospitals.filter((h) => h.subscriptionState === "overdue" && h.status !== "suspended");
   const incomplete = hospitals.filter(
     (h) => h.status === "active" && (!h.officialPhone || !h.addressLine1 || !h.registrationNumber),
   );
 
-  const total = expiring.length + expired.length + suspended.length + incomplete.length;
+  const total = expiring.length + expired.length + suspended.length + overdue.length + incomplete.length;
 
   if (loading) {
     return (
@@ -113,6 +117,7 @@ export default function OnboardingList() {
     { label: "Trials expiring", value: expiring.length, color: SEMANTIC.warning },
     { label: "Expired trials", value: expired.length, color: SEMANTIC.danger },
     { label: "Suspended", value: suspended.length, color: SEMANTIC.danger },
+    { label: "Payment overdue", value: overdue.length, color: SEMANTIC.warning },
     { label: "Incomplete profiles", value: incomplete.length, color: SEMANTIC.info },
   ];
 
@@ -185,6 +190,17 @@ export default function OnboardingList() {
                 key={h.hospitalId}
                 primary={h.hospitalName}
                 secondary={`Code ${h.hospitalCode} · logins blocked`}
+                actions={<Button size="small" variant="outlined" startIcon={<VisibilityRounded />} onClick={() => navigate(`/hospitals/${h.hospitalId}/overview`)} sx={{ textTransform: "none" }}>View</Button>}
+              />
+            ))}
+          </Section>
+
+          <Section icon={<HourglassBottomRounded />} title="Payment overdue — grace period" color={SEMANTIC.warning} items={overdue.length}>
+            {overdue.map((h) => (
+              <Row
+                key={h.hospitalId}
+                primary={h.hospitalName}
+                secondary={`Code ${h.hospitalCode} · subscription payment overdue — suspends after the grace period`}
                 actions={<Button size="small" variant="outlined" startIcon={<VisibilityRounded />} onClick={() => navigate(`/hospitals/${h.hospitalId}/overview`)} sx={{ textTransform: "none" }}>View</Button>}
               />
             ))}
