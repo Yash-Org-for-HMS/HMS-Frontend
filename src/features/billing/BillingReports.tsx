@@ -86,6 +86,7 @@ export function Receipts() {
               money("amount", "Amount"),
             ]}
             rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
           />
         </Box>
       )}
@@ -131,6 +132,7 @@ export function Outstanding() {
               { key: "statusLabel", label: "Status" },
             ]}
             rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
           />
         </Box>
       )}
@@ -212,6 +214,7 @@ export function PharmacyExpense() {
             ]}
             rows={rows}
             emptyText="No purchase orders in this period."
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
           />
         </Box>
       )}

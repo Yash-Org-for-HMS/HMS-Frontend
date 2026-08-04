@@ -20,6 +20,7 @@ import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import PageHeader from "@/components/layout/PageHeader";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
+import { ReportTruncationNote } from "@/features/reports/kit";
 
 const NURSE_PURPLE = ACCENTS.nurse;
 
@@ -47,7 +48,7 @@ function Kpi({ icon, label, value, color }: { icon: React.ReactNode; label: stri
 }
 
 // Downloadable table — every report on this page ends in one of these.
-function SimpleTable({ title, head, rows, dense }: { title: string; head: string[]; rows: (string | number)[][]; dense?: boolean }) {
+function SimpleTable({ title, head, rows, dense, note }: { title: string; head: string[]; rows: (string | number)[][]; dense?: boolean; note?: React.ReactNode }) {
   return (
     <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
       <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
@@ -58,6 +59,7 @@ function SimpleTable({ title, head, rows, dense }: { title: string; head: string
             sx={{ textTransform: "none", color: NURSE_PURPLE }}>Excel</Button>
         )}
       </Box>
+      {note && <Box sx={{ mb: 1.5 }}>{note}</Box>}
       {rows.length === 0 ? (
         <Typography variant="body2" sx={{ color: "text.secondary", py: 2, textAlign: "center" }}>No data in this range</Typography>
       ) : (
@@ -112,6 +114,7 @@ function VitalsRegisterReport({ data }: { data: any }) {
       title="Vitals register"
       head={["Date", "Patient", "UHID", "BP", "Pulse", "Temp (°C)", "SpO2 (%)", "Weight (kg)", "Recorded by"]}
       rows={vitalsList.map((v) => [fmtDateTime(v.date), v.patientName, v.uhid, v.bp, v.pulse, v.temperatureC, v.oxygenSaturation, v.weightKg, v.recordedBy])}
+      note={<ReportTruncationNote truncated={data?.truncated} totalRows={data?.totalRows} shownRows={data?.shownRows} />}
     />
   );
 }

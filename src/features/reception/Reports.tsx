@@ -19,7 +19,7 @@ import { exportTableToExcel } from "@/utils/exportExcel";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportTable, ReportTruncationNote, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = ACCENTS.reception;
 const inr = formatINRAuto;
@@ -90,7 +90,8 @@ export function OpRegistration() {
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="Registrations" value={String(data.totals.registrations)} color={ACCENT} /></Grid>
           </Grid>
           <SimpleTable title="Registered patients" head={["UHID", "Name", "Phone", "Registered", "Referral"]}
-            rows={rows.map((r) => [r.uhid, r.name, r.phone, dayjs(r.registeredOn).format("DD MMM YYYY"), r.referral])} />
+            rows={rows.map((r) => [r.uhid, r.name, r.phone, dayjs(r.registeredOn).format("DD MMM YYYY"), r.referral])}
+            note={<ReportTruncationNote truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows} />} />
         </Box>
       )}
     </Box>
@@ -121,7 +122,8 @@ export function OpBills() {
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PaymentsRounded />} label="Collected" value={inr(data.totals.collected)} color={SEMANTIC.success} /></Grid>
           </Grid>
           <SimpleTable title="OPD invoices" head={["Invoice", "Patient", "UHID", "Date", "Net", "Paid", "Balance", "Status"]}
-            rows={rows.map((r) => [r.invoiceNumber, r.patientName, r.uhid, dayjs(r.invoiceDate).format("DD MMM YYYY"), inr(r.netAmount), inr(r.paidAmount), inr(r.balance), r.statusLabel])} />
+            rows={rows.map((r) => [r.invoiceNumber, r.patientName, r.uhid, dayjs(r.invoiceDate).format("DD MMM YYYY"), inr(r.netAmount), inr(r.paidAmount), inr(r.balance), r.statusLabel])}
+            note={<ReportTruncationNote truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows} />} />
         </Box>
       )}
     </Box>
@@ -420,7 +422,7 @@ function Toolbar({ children, onClear }: { children: React.ReactNode; onClear?: (
 
 function Loading() { return <ReportSkeleton />; }
 
-function SimpleTable({ title, head, rows }: { title: string; head: string[]; rows: string[][] }) {
+function SimpleTable({ title, head, rows, note }: { title: string; head: string[]; rows: string[][]; note?: React.ReactNode }) {
   return (
     <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
       <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
@@ -431,6 +433,7 @@ function SimpleTable({ title, head, rows }: { title: string; head: string[]; row
             sx={{ textTransform: "none", color: ACCENTS.reception }}>Excel</Button>
         )}
       </Box>
+      {note && <Box sx={{ mb: 1.5 }}>{note}</Box>}
       {rows.length === 0 ? (
         <Typography variant="body2" sx={{ color: "text.secondary", py: 2, textAlign: "center" }}>No data</Typography>
       ) : (

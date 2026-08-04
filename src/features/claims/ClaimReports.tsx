@@ -18,6 +18,7 @@ import { formatINR } from "@/utils/format";
 import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
 import PageHeader from "@/components/layout/PageHeader";
+import { ReportTruncationNote } from "@/features/reports/kit";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import { apiErrorText } from "@/utils/apiError";
@@ -44,7 +45,7 @@ function Kpi({ icon, label, value, color }: { icon: React.ReactNode; label: stri
   );
 }
 
-function SimpleTable({ title, head, rows, dense }: { title: string; head: string[]; rows: (string | number)[][]; dense?: boolean }) {
+function SimpleTable({ title, head, rows, dense, note }: { title: string; head: string[]; rows: (string | number)[][]; dense?: boolean; note?: React.ReactNode }) {
   return (
     <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
       <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
@@ -54,6 +55,7 @@ function SimpleTable({ title, head, rows, dense }: { title: string; head: string
           <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />} onClick={() => exportTableToExcel(title, head, rows)} sx={{ textTransform: "none", color: ACCENT }}>Excel</Button>
         )}
       </Box>
+      {note && <Box sx={{ mb: 1.5 }}>{note}</Box>}
       {rows.length === 0 ? (
         <Typography variant="body2" sx={{ color: "text.secondary", py: 2, textAlign: "center" }}>No data in this range</Typography>
       ) : (
@@ -160,7 +162,8 @@ function RejectionsReport({ data }: { data: any }) {
 function RegisterReport({ data }: { data: any }) {
   const rows: any[] = data?.register || [];
   return <SimpleTable title="Claims register" head={["Claim #", "Patient", "UHID", "Payer", "Scheme", "Status", "Billed", "Approved", "Settled", "Registered"]}
-    rows={rows.map((r) => [r.claimNumber, r.patientName, r.uhid, r.payerName, r.scheme, r.status, inr(r.billed), inr(r.approved), inr(r.settled), fmtDate(r.registeredAt)])} />;
+    rows={rows.map((r) => [r.claimNumber, r.patientName, r.uhid, r.payerName, r.scheme, r.status, inr(r.billed), inr(r.approved), inr(r.settled), fmtDate(r.registeredAt)])}
+    note={<ReportTruncationNote truncated={data?.truncated} totalRows={data?.totalRows} shownRows={data?.shownRows} />} />;
 }
 
 type ReportItem = { key: string; label: string; Comp: React.ComponentType<{ data: any }> };

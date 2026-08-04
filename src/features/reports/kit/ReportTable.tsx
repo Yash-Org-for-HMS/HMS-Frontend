@@ -6,6 +6,7 @@ import {
 import { FileDownloadRounded } from "@mui/icons-material";
 import Mascot from "@/components/Mascot";
 import { exportTableToExcel } from "@/utils/exportExcel";
+import ReportTruncationNote from "./ReportTruncationNote";
 
 export interface ReportColumn<T = any> {
   key: string;
@@ -23,13 +24,17 @@ export interface ReportColumn<T = any> {
  * report's tabular view looks and behaves the same. Replaces the ~7 copy-pasted
  * SimpleTable/DataTable implementations.
  */
-export default function ReportTable<T = any>({ columns, rows, filename, title, maxHeight = 460, emptyText = "No data for this period." }: {
+export default function ReportTable<T = any>({ columns, rows, filename, title, maxHeight = 460, emptyText = "No data for this period.", truncated, totalRows, shownRows }: {
   columns: ReportColumn<T>[];
   rows: T[];
   filename: string;
   title?: string;
   maxHeight?: number;
   emptyText?: string;
+  /** Detail-row cap signal from the report response — renders a notice when set. */
+  truncated?: boolean;
+  totalRows?: number;
+  shownRows?: number;
 }) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [dir, setDir] = useState<"asc" | "desc">("desc");
@@ -74,6 +79,11 @@ export default function ReportTable<T = any>({ columns, rows, filename, title, m
           Export CSV
         </Button>
       </Box>
+      {truncated && (
+        <Box sx={{ px: 2.5, pb: 1.5 }}>
+          <ReportTruncationNote truncated={truncated} totalRows={totalRows} shownRows={shownRows} />
+        </Box>
+      )}
       {rows.length === 0 ? (
         <Box sx={{ py: 4 }}><Mascot pose="nothing-here-yet" subtitle={emptyText} size={110} /></Box>
       ) : (

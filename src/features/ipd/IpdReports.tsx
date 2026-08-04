@@ -72,6 +72,7 @@ export function InPatients() {
               { key: "days", label: "Days", align: "right" },
             ]}
             rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
           />
         </Box>
       )}
@@ -110,6 +111,7 @@ export function Discharges() {
               { key: "lengthOfStay", label: "Stay (days)", align: "right" },
             ]}
             rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
           />
         </Box>
       )}
@@ -148,6 +150,7 @@ export function IpRegistrations() {
               { key: "status", label: "Status" },
             ]}
             rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
           />
         </Box>
       )}
@@ -185,6 +188,7 @@ export function IpAdvances() {
               { key: "amount", label: "Amount", align: "right", format: (v) => inr(v), value: (r) => Number(r.amount) },
             ]}
             rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
           />
         </Box>
       )}

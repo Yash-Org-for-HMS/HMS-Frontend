@@ -19,6 +19,7 @@ import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import PageHeader from "@/components/layout/PageHeader";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
+import { ReportTruncationNote } from "@/features/reports/kit";
 
 const DOCTOR_BLUE = ACCENTS.doctor;
 
@@ -46,7 +47,7 @@ function Kpi({ icon, label, value, color }: { icon: React.ReactNode; label: stri
 }
 
 // Downloadable table — every report on this page ends in one of these.
-function SimpleTable({ title, head, rows, dense }: { title: string; head: string[]; rows: (string | number)[][]; dense?: boolean }) {
+function SimpleTable({ title, head, rows, dense, note }: { title: string; head: string[]; rows: (string | number)[][]; dense?: boolean; note?: React.ReactNode }) {
   return (
     <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
       <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
@@ -57,6 +58,7 @@ function SimpleTable({ title, head, rows, dense }: { title: string; head: string
             sx={{ textTransform: "none", color: DOCTOR_BLUE }}>Excel</Button>
         )}
       </Box>
+      {note && <Box sx={{ mb: 1.5 }}>{note}</Box>}
       {rows.length === 0 ? (
         <Typography variant="body2" sx={{ color: "text.secondary", py: 2, textAlign: "center" }}>No data in this range</Typography>
       ) : (
@@ -155,6 +157,7 @@ function ConsultationsRegisterReport({ data }: { data: any }) {
       title="Consultations register"
       head={["Date", "Patient", "UHID", "Diagnosis", "Prescriptions"]}
       rows={consultationsList.map((c) => [fmtDateTime(c.date), c.patientName, c.uhid, c.diagnosis, Number(c.prescriptions)])}
+      note={<ReportTruncationNote truncated={data?.truncated} totalRows={data?.totalRows} shownRows={data?.shownRows} />}
     />
   );
 }
