@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -9,12 +9,13 @@ import {
   TextField,
   Button,
   Grid,
-  Alert,
   IconButton,
   Switch,
   FormControlLabel,
   MenuItem,
-  Divider,
+  Tooltip,
+  Chip,
+  alpha,
 } from "@mui/material";
 import { SaveRounded, DeleteRounded, AddCircleOutlineRounded, DragIndicatorRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
@@ -145,18 +146,10 @@ export default function FormBuilder() {
     return <Box sx={{ p: 4 }}><ErrorState message={getApiErrorMessage(error, "Failed to load template")} onRetry={refetch} /></Box>;
   }
 
+  // Focused fields adopt the hospital accent; everything else follows the theme.
   const textFieldProps = {
     fullWidth: true,
-    InputLabelProps: { style: { color: "text.secondary" } },
-    sx: {
-      "& .MuiOutlinedInput-root": {
-        color: "text.primary",
-        "& fieldset": { borderColor: "divider" },
-        "&:hover fieldset": { borderColor: "divider" },
-        "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
-      },
-      "& .MuiInputLabel-root": { color: "text.secondary" }
-    },
+    sx: { "& .MuiOutlinedInput-root.Mui-focused fieldset": { borderColor: ACCENTS.hospital } },
   };
 
   return (
@@ -178,7 +171,7 @@ export default function FormBuilder() {
         <Grid container spacing={4}>
           {/* Left Panel - Metadata */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 3, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
+            <Paper variant="outlined" sx={{ p: 3, bgcolor: "background.paper", borderRadius: 2, position: { md: "sticky" }, top: 16 }}>
               <Typography variant="h6" sx={{ color: "text.primary", mb: 3, fontWeight: 600 }}>Form Details</Typography>
               
               <TextField
@@ -219,113 +212,85 @@ export default function FormBuilder() {
 
           {/* Right Panel - Fields Builder */}
           <Grid size={{ xs: 12, md: 8 }}>
-            <Paper sx={{ p: 3, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, minHeight: 400 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-                <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600 }}>Form Fields</Typography>
+            <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, bgcolor: "background.paper", borderRadius: 2, minHeight: 400 }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1, mb: 2.5 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600 }}>Form Fields</Typography>
+                  {fields.length > 0 && (
+                    <Chip size="small" label={fields.length} sx={{ height: 22, fontWeight: 700, bgcolor: alpha(ACCENTS.hospital, 0.12), color: ACCENTS.hospital }} />
+                  )}
+                </Box>
                 <Button
                   startIcon={<AddCircleOutlineRounded />}
                   onClick={handleAddDataField}
-                  sx={{ color: "#38bdf8", textTransform: "none", fontWeight: 600 }}
+                  variant="contained"
+                  disableElevation
+                  sx={{ textTransform: "none", fontWeight: 600, bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark } }}
                 >
                   Add Field
                 </Button>
               </Box>
 
               {fields.length === 0 ? (
-                <Box sx={{ py: 3, textAlign: "center", border: "2px dashed rgba(255,255,255,0.1)", borderRadius: 2 }}>
+                <Box sx={{ py: 3, textAlign: "center", border: "2px dashed", borderColor: "divider", borderRadius: 2 }}>
                   <Mascot pose="nothing-here-yet" subtitle="No fields added yet." size={120} sx={{ py: 1 }} />
                   <Box sx={{ mb: 2 }} />
-                  <Button variant="outlined" onClick={handleAddDataField} sx={{ color: "#38bdf8", borderColor: "rgba(56, 189, 248, 0.5)" }}>
+                  <Button variant="outlined" startIcon={<AddCircleOutlineRounded />} onClick={handleAddDataField}
+                    sx={{ textTransform: "none", color: ACCENTS.hospital, borderColor: alpha(ACCENTS.hospital, 0.5), "&:hover": { borderColor: ACCENTS.hospital, bgcolor: alpha(ACCENTS.hospital, 0.06) } }}>
                     Add First Field
                   </Button>
                 </Box>
               ) : (
-                <Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                   {fields.map((field, idx) => (
-                    <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 2, mb: 3, p: 2, bgcolor: "action.hover", borderRadius: 1, border: "1px solid", borderColor: "divider" }}>
-                      <Box sx={{ pt: 2, color: "text.secondary" }}>
-                        <DragIndicatorRounded />
+                    <Paper key={idx} variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: "action.hover", borderColor: "divider" }}>
+                      {/* Card header: index + remove */}
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+                        <DragIndicatorRounded sx={{ color: "text.disabled", fontSize: 20, cursor: "grab" }} />
+                        <Typography sx={{ fontWeight: 700, fontSize: "0.72rem", letterSpacing: 0.5, textTransform: "uppercase", color: "text.secondary" }}>Field {idx + 1}</Typography>
+                        <Box sx={{ flex: 1 }} />
+                        <Tooltip title="Remove field">
+                          <IconButton size="small" onClick={() => handleRemoveField(idx)} sx={{ color: SEMANTIC.danger }}>
+                            <DeleteRounded fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </Box>
-                      
-                      <Grid container spacing={2} sx={{ flexGrow: 1 }}>
-                        <Grid size={{xs: 12, sm: 6}}>
-                          <TextField
-                            label="Field Label (Question)"
-                            value={field.fieldLabel}
-                            onChange={(e) => handleFieldChange(idx, "fieldLabel", e.target.value)}
-                            required
-                            {...textFieldProps}
-                          />
-                        </Grid>
-                        <Grid size={{xs: 12, sm: 6}}>
-                          <TextField
-                            select
-                            label="Input Type"
-                            value={field.fieldType}
-                            onChange={(e) => handleFieldChange(idx, "fieldType", e.target.value)}
-                            required
-                            {...textFieldProps}
-                          >
-                            {FIELD_TYPES.map(ft => (
-                              <MenuItem key={ft.value} value={ft.value}>{ft.label}</MenuItem>
-                            ))}
-                          </TextField>
-                        </Grid>
-                        
-                        {field.fieldType === "dropdown" && (
-                          <Grid size={{xs: 12}}>
-                            <TextField
-                              label="Dropdown Options (Comma separated)"
-                              value={field.validationRulesJson?.options?.join(", ") || ""}
-                              onChange={(e) => {
-                                const opts = e.target.value.split(",").map((s: string) => s.trim());
-                                handleFieldChange(idx, "validationRulesJson", { ...field.validationRulesJson, options: opts });
-                              }}
-                              placeholder="e.g. Option 1, Option 2, Option 3"
-                              {...textFieldProps}
-                            />
-                          </Grid>
-                        )}
 
-                        {field.fieldType === "text" && (
-                          <Grid size={{xs: 12}}>
-                            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-                              <TextField size="small" type="number" label="Min length" value={field.validationRulesJson?.minLength ?? ""} onChange={(e) => setRule(idx, "minLength", e.target.value)} sx={{ width: 130 }} />
-                              <TextField size="small" type="number" label="Max length" value={field.validationRulesJson?.maxLength ?? ""} onChange={(e) => setRule(idx, "maxLength", e.target.value)} sx={{ width: 130 }} />
-                              <TextField size="small" label="Pattern (regex)" value={field.validationRulesJson?.pattern ?? ""} onChange={(e) => setRule(idx, "pattern", e.target.value)} placeholder="e.g. ^[0-9]{10}$" sx={{ flex: 1, minWidth: 180 }} />
-                            </Box>
-                          </Grid>
-                        )}
-                        {field.fieldType === "number" && (
-                          <Grid size={{xs: 12}}>
-                            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-                              <TextField size="small" type="number" label="Min value" value={field.validationRulesJson?.min ?? ""} onChange={(e) => setRule(idx, "min", e.target.value)} sx={{ width: 140 }} />
-                              <TextField size="small" type="number" label="Max value" value={field.validationRulesJson?.max ?? ""} onChange={(e) => setRule(idx, "max", e.target.value)} sx={{ width: 140 }} />
-                            </Box>
-                          </Grid>
-                        )}
-                        
-                        <Grid size={{xs: 12}} sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={field.isRequired}
-                                onChange={(e) => handleFieldChange(idx, "isRequired", e.target.checked)}
-                                color="primary"
-                              />
-                            }
-                            label={<Typography sx={{ color: "text.secondary" }}>Required Field</Typography>}
-                          />
-                          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                            Auto-generated name: <code>{field.fieldName || "..."}</code>
-                          </Typography>
-                        </Grid>
-                      </Grid>
+                      {/* Label + input type (flex, not Grid-in-flex — minWidth:0 lets them shrink, no overflow) */}
+                      <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+                        <TextField label="Field Label (Question)" value={field.fieldLabel} onChange={(e) => handleFieldChange(idx, "fieldLabel", e.target.value)} required size="small" sx={{ flex: "2 1 220px", minWidth: 0 }} />
+                        <TextField select label="Input Type" value={field.fieldType} onChange={(e) => handleFieldChange(idx, "fieldType", e.target.value)} required size="small" sx={{ flex: "1 1 150px", minWidth: 0 }}>
+                          {FIELD_TYPES.map(ft => <MenuItem key={ft.value} value={ft.value}>{ft.label}</MenuItem>)}
+                        </TextField>
+                      </Box>
 
-                      <IconButton onClick={() => handleRemoveField(idx)} sx={{ color: "#f43f5e", mt: 1 }}>
-                        <DeleteRounded />
-                      </IconButton>
-                    </Box>
+                      {/* Type-specific validation */}
+                      {field.fieldType === "dropdown" && (
+                        <TextField label="Dropdown Options (comma separated)" value={field.validationRulesJson?.options?.join(", ") || ""}
+                          onChange={(e) => { const opts = e.target.value.split(",").map((s: string) => s.trim()); handleFieldChange(idx, "validationRulesJson", { ...field.validationRulesJson, options: opts }); }}
+                          placeholder="e.g. Option 1, Option 2, Option 3" fullWidth size="small" sx={{ mt: 1.5 }} />
+                      )}
+                      {field.fieldType === "text" && (
+                        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", mt: 1.5 }}>
+                          <TextField size="small" type="number" label="Min length" value={field.validationRulesJson?.minLength ?? ""} onChange={(e) => setRule(idx, "minLength", e.target.value)} sx={{ width: 120 }} />
+                          <TextField size="small" type="number" label="Max length" value={field.validationRulesJson?.maxLength ?? ""} onChange={(e) => setRule(idx, "maxLength", e.target.value)} sx={{ width: 120 }} />
+                          <TextField size="small" label="Pattern (regex)" value={field.validationRulesJson?.pattern ?? ""} onChange={(e) => setRule(idx, "pattern", e.target.value)} placeholder="e.g. ^[0-9]{10}$" sx={{ flex: "1 1 160px", minWidth: 0 }} />
+                        </Box>
+                      )}
+                      {field.fieldType === "number" && (
+                        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", mt: 1.5 }}>
+                          <TextField size="small" type="number" label="Min value" value={field.validationRulesJson?.min ?? ""} onChange={(e) => setRule(idx, "min", e.target.value)} sx={{ width: 130 }} />
+                          <TextField size="small" type="number" label="Max value" value={field.validationRulesJson?.max ?? ""} onChange={(e) => setRule(idx, "max", e.target.value)} sx={{ width: 130 }} />
+                        </Box>
+                      )}
+
+                      {/* Footer: required + generated name */}
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, mt: 1.5, flexWrap: "wrap" }}>
+                        <FormControlLabel control={<Switch size="small" checked={field.isRequired} onChange={(e) => handleFieldChange(idx, "isRequired", e.target.checked)} />}
+                          label={<Typography variant="body2" sx={{ color: "text.secondary" }}>Required</Typography>} />
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>name: <Box component="code" sx={{ color: "text.primary" }}>{field.fieldName || "—"}</Box></Typography>
+                      </Box>
+                    </Paper>
                   ))}
                 </Box>
               )}
