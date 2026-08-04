@@ -2,13 +2,15 @@ import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Avatar, Chip, Divider, Button,
+  Box, Typography, Paper, Avatar, Chip, Divider, Button, Stack, Tooltip, alpha,
 } from "@mui/material";
 import {
   ArrowBackRounded, PersonRounded, HistoryRounded, WarningAmberRounded,
-  LocalHospitalRounded, MedicationRounded, VaccinesRounded, MedicalServicesRounded,
-  TodayRounded,
+  LocalHospitalRounded, VaccinesRounded, MedicalServicesRounded,
+  TodayRounded, BadgeRounded, WcRounded, BloodtypeRounded, LocalPhoneRounded,
+  EmailRounded, LocationOnRounded,
 } from "@mui/icons-material";
+import { getInitials } from "@/utils/format";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
 import ErrorState from "@/components/ErrorState";
@@ -37,8 +39,8 @@ function Section({ title, icon, action, children }: { title: string; icon: React
   return (
     <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5, mb: 1.5 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box sx={{ color: DOCTOR_BLUE, display: "flex" }}>{icon}</Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+          <Box sx={{ width: 30, height: 30, borderRadius: 1.25, display: "grid", placeItems: "center", bgcolor: alpha(DOCTOR_BLUE, 0.12), color: DOCTOR_BLUE }}>{icon}</Box>
           <Typography variant="subtitle1" sx={{ color: "text.primary", fontWeight: 700 }}>{title}</Typography>
         </Box>
         {action}
@@ -107,37 +109,57 @@ export default function DoctorPatientProfile() {
 
   return (
     <Box sx={{ p: { xs: 0, md: 1 }, maxWidth: 1200, mx: "auto" }}>
-      {/* Back */}
-      <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ color: "text.secondary", textTransform: "none", mb: 1.5 }}>
-        Back to patients
-      </Button>
+      {/* Top nav */}
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, gap: 1, flexWrap: "wrap" }}>
+        <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ color: "text.secondary", textTransform: "none", fontWeight: 600 }}>Back to patients</Button>
+        <Tooltip title="You're viewing this record during consultation; edits happen in the reception/clinical panels.">
+          <Chip icon={<PersonRounded sx={{ fontSize: "15px !important" }} />} label="Read-only clinical view" size="small" sx={{ bgcolor: alpha(DOCTOR_BLUE, 0.12), color: DOCTOR_BLUE, fontWeight: 600 }} />
+        </Tooltip>
+      </Box>
 
-      {/* Hero */}
-      <Paper elevation={0} sx={{
-        p: 2.5, mb: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", position: "relative", overflow: "hidden",
-        background: `linear-gradient(135deg, ${DOCTOR_BLUE}0f 0%, ${DOCTOR_BLUE}05 100%)`,
-        "&::before": { content: '""', position: "absolute", top: 0, left: 0, right: 0, height: "4px", background: `linear-gradient(90deg, ${DOCTOR_BLUE}, #60a5fa)` },
-      }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2.5, flexWrap: "wrap" }}>
-          <Avatar sx={{ width: 68, height: 68, bgcolor: DOCTOR_BLUE, color: "#fff", fontWeight: 800, fontSize: "1.6rem", boxShadow: `0 8px 24px ${DOCTOR_BLUE}40` }}>
-            {p.firstName?.charAt(0) || "P"}
+      {/* ── Header ── */}
+      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", overflow: "hidden", mb: 2 }}>
+        <Box sx={{ p: { xs: 2.5, sm: 3 }, display: "flex", gap: 2.5, alignItems: "flex-start", flexWrap: "wrap" }}>
+          <Avatar sx={{ width: 88, height: 88, bgcolor: DOCTOR_BLUE, color: "#fff", fontWeight: 800, fontSize: "2rem",
+            border: "3px solid", borderColor: alpha(DOCTOR_BLUE, 0.4), boxShadow: `0 8px 22px ${alpha(DOCTOR_BLUE, 0.28)}` }}>
+            {getInitials(p.firstName, p.lastName)}
           </Avatar>
-          <Box sx={{ flex: 1, minWidth: 220 }}>
-            <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.75 }}>
-              {p.firstName} {p.lastName}
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
-              <Chip size="small" label={`UHID: ${p.uhidNumber}`} sx={{ fontFamily: "monospace", fontWeight: 700, bgcolor: `${DOCTOR_BLUE}1a`, color: DOCTOR_BLUE }} />
-              <Chip size="small" label={p.age != null ? `${p.age} yrs` : "Age unknown"} sx={{ bgcolor: "action.hover" }} />
-              <Chip size="small" label={p.genderLabel} sx={{ bgcolor: "action.hover" }} />
-              <Chip size="small" icon={<MedicationRounded sx={{ fontSize: "14px !important" }} />} label={p.bloodGroupLabel} sx={{ bgcolor: "rgba(239,68,68,0.1)", color: SEMANTIC.danger, fontWeight: 700 }} />
-              {hasAllergy && (
-                <Chip size="small" icon={<WarningAmberRounded sx={{ fontSize: "14px !important" }} />} label="Allergies" sx={{ bgcolor: "rgba(245,158,11,0.12)", color: SEMANTIC.warningDark, fontWeight: 700 }} />
-              )}
+
+          <Box sx={{ flex: 1, minWidth: 240 }}>
+            <Typography variant="h4" sx={{ fontWeight: 800, lineHeight: 1.15, mb: 1, wordBreak: "break-word" }}>{p.firstName} {p.lastName}</Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, alignItems: "center", mb: 1.25 }}>
+              <Chip icon={<BadgeRounded sx={{ fontSize: "14px !important" }} />} label={p.uhidNumber} size="small" sx={{ bgcolor: alpha(DOCTOR_BLUE, 0.12), color: DOCTOR_BLUE, fontWeight: 700, fontFamily: "monospace" }} />
+              <Chip icon={<WcRounded sx={{ fontSize: "14px !important" }} />} label={p.genderLabel} size="small" sx={{ bgcolor: alpha("#8b5cf6", 0.12), color: "#8b5cf6", fontWeight: 600 }} />
+              <Chip icon={<BloodtypeRounded sx={{ fontSize: "14px !important" }} />} label={p.bloodGroupLabel} size="small" sx={{ bgcolor: alpha(SEMANTIC.danger, 0.1), color: SEMANTIC.danger, fontWeight: 700 }} />
+              {p.age != null && <Chip label={`${p.age} yrs`} size="small" sx={{ bgcolor: alpha(SEMANTIC.success, 0.1), color: SEMANTIC.success, fontWeight: 600 }} />}
             </Box>
+            <Stack direction="row" sx={{ flexWrap: "wrap", gap: { xs: 1, sm: 2.5 }, color: "text.secondary" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, minWidth: 0 }}>
+                <LocalPhoneRounded sx={{ fontSize: 16 }} /><Typography variant="body2" noWrap>{p.phone || "—"}</Typography>
+              </Box>
+              {p.email && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, minWidth: 0 }}>
+                  <EmailRounded sx={{ fontSize: 16 }} /><Typography variant="body2" noWrap>{p.email}</Typography>
+                </Box>
+              )}
+              {p.city && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  <LocationOnRounded sx={{ fontSize: 16 }} /><Typography variant="body2">{p.city}</Typography>
+                </Box>
+              )}
+            </Stack>
           </Box>
-          <Chip icon={<PersonRounded sx={{ fontSize: "16px !important" }} />} label="Read-only clinical view" size="small" sx={{ bgcolor: `${DOCTOR_BLUE}1a`, color: DOCTOR_BLUE, fontWeight: 700 }} />
         </Box>
+
+        {/* Allergy strip — clinically critical, always visible when present */}
+        {hasAllergy && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, px: { xs: 2.5, sm: 3 }, py: 1.25, bgcolor: alpha(SEMANTIC.danger, 0.07), borderTop: "1px solid", borderColor: alpha(SEMANTIC.danger, 0.2) }}>
+            <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 20, flexShrink: 0 }} />
+            <Typography variant="body2" sx={{ color: SEMANTIC.danger, fontWeight: 500 }}>
+              <Box component="span" sx={{ fontWeight: 800 }}>Allergies:</Box> {p.allergies}
+            </Typography>
+          </Box>
+        )}
       </Paper>
 
       {/* Stat tiles */}
