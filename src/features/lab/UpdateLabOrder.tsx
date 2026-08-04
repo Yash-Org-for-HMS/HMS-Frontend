@@ -39,6 +39,18 @@ export default function UpdateLabOrder() {
     enabled: !!id,
   });
 
+  // Authoritative amount + per-line GST for the POS come from /billing/unbilled
+  // (server-priced), not the client-summed report prices — same source the lab
+  // billing queue uses, so the collection preview matches the invoice.
+  const { data: posItem } = useQuery({
+    queryKey: ["lab-order-unbilled", order?.patientId, id],
+    enabled: showPOS && !!order?.patientId,
+    queryFn: async () => {
+      const items = (await axiosInstance.get(`/billing/unbilled/${order.patientId}`)).data.data || [];
+      return items.find((it: any) => it.id === order.labOrderId) || null;
+    },
+  });
+
   // Seed the editable result rows when the order loads (or after a refetch).
   useEffect(() => {
     if (!order) return;
@@ -250,8 +262,9 @@ export default function UpdateLabOrder() {
           item={{
             id: order.labOrderId,
             type: "LAB",
-            description: `Lab Tests: ${order.reports?.map((r: any) => r.labTest?.testName).filter(Boolean).join(', ') || 'Pending Tests'}`,
-            amount: order.reports?.reduce((sum: number, r: any) => sum + Number(r.labTest?.price || 0), 0) || 300,
+            description: posItem?.description || `Lab Tests: ${order.reports?.map((r: any) => r.labTest?.testName).filter(Boolean).join(', ') || 'Pending Tests'}`,
+            amount: Number(posItem?.amount ?? order.reports?.reduce((sum: number, r: any) => sum + Number(r.labTest?.price || 0), 0) ?? 300),
+            taxPercent: Number(posItem?.taxPercent ?? 0),
             date: order.createdAt
           }}
         />
