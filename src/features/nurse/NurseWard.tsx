@@ -2,21 +2,23 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Paper, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
-  Button, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, Typography,
+  Button, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, Typography, Stack,
 } from "@mui/material";
-import { SearchRounded, MedicationRounded } from "@mui/icons-material";
+import { SearchRounded, MedicationRounded, MedicalServicesRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import PageHeader from "@/components/layout/PageHeader";
 import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import MarChart from "@/components/ipd/MarChart";
+import IpdDoctorVisitsDialog from "@/components/ipd/IpdDoctorVisitsDialog";
 import { apiErrorText } from "@/utils/apiError";
 
 // Nurse ward view: current in-patients + their medication chart (MAR).
 export default function NurseWard() {
   const [search, setSearch] = useState("");
   const [chartFor, setChartFor] = useState<any>(null);
+  const [visitsFor, setVisitsFor] = useState<any>(null);
 
   const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<any[]>({
     queryKey: ["nurse-ward-admissions"],
@@ -63,8 +65,12 @@ export default function NurseWard() {
                     <TableCell>{a.bed?.label || "—"}</TableCell>
                     <TableCell sx={{ color: "text.secondary" }}>{a.doctorName || "—"}</TableCell>
                     <TableCell align="right">
-                      <Button size="small" variant="outlined" startIcon={<MedicationRounded />} onClick={() => setChartFor(a)}
-                        sx={{ textTransform: "none", borderColor: "divider", color: "#0891b2" }}>Medication chart</Button>
+                      <Stack direction="row" spacing={1} justifyContent="flex-end">
+                        <Button size="small" variant="outlined" startIcon={<MedicalServicesRounded />} onClick={() => setVisitsFor(a)}
+                          sx={{ textTransform: "none", borderColor: "divider", color: "#0891b2" }}>Doctor visits</Button>
+                        <Button size="small" variant="outlined" startIcon={<MedicationRounded />} onClick={() => setChartFor(a)}
+                          sx={{ textTransform: "none", borderColor: "divider", color: "#0891b2" }}>Medication chart</Button>
+                      </Stack>
                     </TableCell>
                   </TableRow>
                 ))
@@ -82,6 +88,8 @@ export default function NurseWard() {
           {chartFor && <MarChart admissionId={chartFor.admissionId} />}
         </DialogContent>
       </Dialog>
+
+      {visitsFor && <IpdDoctorVisitsDialog open admission={visitsFor} onClose={() => setVisitsFor(null)} />}
     </Box>
   );
 }
