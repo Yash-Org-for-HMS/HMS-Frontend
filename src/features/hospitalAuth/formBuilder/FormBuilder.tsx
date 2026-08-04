@@ -212,8 +212,8 @@ export default function FormBuilder() {
 
           {/* Right Panel - Fields Builder */}
           <Grid size={{ xs: 12, md: 8 }}>
-            <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, bgcolor: "background.paper", borderRadius: 2, minHeight: 400 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1, mb: 2.5 }}>
+            <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, bgcolor: "background.paper", borderRadius: 2, display: "flex", flexDirection: "column", height: { md: "calc(100vh - 232px)" }, minHeight: 460 }}>
+              <Box sx={{ flex: "none", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1, mb: 2.5 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600 }}>Form Fields</Typography>
                   {fields.length > 0 && (
@@ -231,8 +231,11 @@ export default function FormBuilder() {
                 </Button>
               </Box>
 
+              {/* Fixed-height scroll area: the panel stays the same size whether
+                  it's empty or holds many fields — the list scrolls inside it. */}
+              <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", mr: -1, pr: 1 }}>
               {fields.length === 0 ? (
-                <Box sx={{ py: 3, textAlign: "center", border: "2px dashed", borderColor: "divider", borderRadius: 2 }}>
+                <Box sx={{ height: "100%", minHeight: 300, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", border: "2px dashed", borderColor: "divider", borderRadius: 2 }}>
                   <Mascot pose="nothing-here-yet" subtitle="No fields added yet." size={120} sx={{ py: 1 }} />
                   <Box sx={{ mb: 2 }} />
                   <Button variant="outlined" startIcon={<AddCircleOutlineRounded />} onClick={handleAddDataField}
@@ -294,6 +297,7 @@ export default function FormBuilder() {
                   ))}
                 </Box>
               )}
+              </Box>
             </Paper>
           </Grid>
         </Grid>
