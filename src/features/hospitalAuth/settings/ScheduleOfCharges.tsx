@@ -12,6 +12,7 @@ import {
   AddRounded, EditRounded, DeleteRounded, SearchRounded, ReceiptLongRounded,
   ExpandMoreRounded, ChevronRightRounded, MeetingRoomRounded, TuneRounded,
   UnfoldMoreRounded, UnfoldLessRounded, HistoryRounded, ScienceRounded,
+  ArrowUpwardRounded, ArrowDownwardRounded,
 } from "@mui/icons-material";
 import { MenuItem, Menu } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
@@ -387,50 +388,143 @@ export default function ScheduleOfCharges() {
 
 // ── Price history (append-only audit of price changes) ───────────────────────
 type PriceHistoryRow = { chargeItemPriceHistoryId: string; scope: string; oldPrice: string | number | null; newPrice: string | number | null; changeType: "CREATE" | "UPDATE" | "REMOVE"; changedByName: string | null; changedAt: string };
+
+// Compact relative time ("3 days ago") for the timeline; the exact timestamp is
+// shown on hover.
+function relTime(iso: string): string {
+  const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} hr ago`;
+  const d = Math.round(h / 24);
+  if (d < 30) return `${d} day${d === 1 ? "" : "s"} ago`;
+  const mo = Math.round(d / 30);
+  if (mo < 12) return `${mo} mo ago`;
+  return `${Math.round(mo / 12)} yr ago`;
+}
+
+const CHANGE_META = {
+  CREATE: { dot: "#10b981" },
+  UPDATE: { dot: ACCENT },
+  REMOVE: { dot: "#ef4444" },
+} as const;
+
+// The change delta as a compact pill: New / Removed, or ±amount·% with a direction
+// arrow (a rise reads amber, a cut reads green — cheaper).
+function DeltaPill({ r }: { r: PriceHistoryRow }) {
+  const base = { height: 20, fontSize: "0.66rem", fontWeight: 700, "& .MuiChip-icon": { color: "inherit", ml: 0.5 } };
+  if (r.changeType === "CREATE") return <Chip label="New" size="small" sx={{ ...base, bgcolor: "rgba(16,185,129,0.14)", color: "#0f9d78" }} />;
+  if (r.changeType === "REMOVE") return <Chip label="Removed" size="small" sx={{ ...base, bgcolor: "rgba(239,68,68,0.12)", color: "#ef4444" }} />;
+  const oldP = Number(r.oldPrice), newP = Number(r.newPrice);
+  const diff = newP - oldP;
+  if (!diff) return null;
+  const up = diff > 0;
+  const pct = oldP > 0 ? Math.round((Math.abs(diff) / oldP) * 100) : null;
+  return (
+    <Chip size="small"
+      icon={up ? <ArrowUpwardRounded sx={{ fontSize: "0.9rem !important" }} /> : <ArrowDownwardRounded sx={{ fontSize: "0.9rem !important" }} />}
+      label={`${up ? "+" : "−"}${inr(Math.abs(diff))}${pct != null ? ` · ${pct}%` : ""}`}
+      sx={{ ...base, bgcolor: up ? "rgba(245,158,11,0.16)" : "rgba(16,185,129,0.14)", color: up ? "#b45309" : "#0f9d78" }}
+    />
+  );
+}
+
 function PriceHistoryDialog({ item, onClose }: { item: Item; onClose: () => void }) {
-  const { data: rows = [], isLoading, isError, refetch } = useQuery<PriceHistoryRow[]>({
+  const { data: raw = [], isLoading, isError, refetch } = useQuery<PriceHistoryRow[]>({
     queryKey: ["soc-price-history", item.chargeItemId],
     queryFn: async () => (await axiosInstance.get(`/hospital/soc/items/${item.chargeItemId}/price-history`)).data.data,
   });
+  const [scope, setScope] = useState<string>("All");
+
+  // Newest first; the distinct scopes (Base price + each room class) drive the filter.
+  const rows = useMemo(() => [...raw].sort((a, b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime()), [raw]);
+  const scopes = useMemo(() => Array.from(new Set(rows.map((r) => r.scope))), [rows]);
+  const filtered = scope === "All" ? rows : rows.filter((r) => r.scope === scope);
+  const lastChanged = rows[0]?.changedAt;
   const when = (d: string) => new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-  const change = (r: PriceHistoryRow) => {
-    if (r.changeType === "CREATE") return <><Chip label="Set" size="small" sx={{ height: 18, fontSize: "0.62rem", bgcolor: "rgba(16,185,129,0.12)", color: "success.main", mr: 0.75 }} />{inr(Number(r.newPrice))}</>;
-    if (r.changeType === "REMOVE") return <><Chip label="Removed" size="small" sx={{ height: 18, fontSize: "0.62rem", bgcolor: "rgba(239,68,68,0.1)", color: "error.main", mr: 0.75 }} /><Typography component="span" sx={{ color: "text.disabled", textDecoration: "line-through" }}>{inr(Number(r.oldPrice))}</Typography></>;
-    return <><Typography component="span" sx={{ color: "text.disabled", textDecoration: "line-through" }}>{inr(Number(r.oldPrice))}</Typography> → <b>{inr(Number(r.newPrice))}</b></>;
-  };
+
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <HistoryRounded sx={{ color: ACCENT }} /> Price history
         <Typography variant="caption" sx={{ display: "block", color: "text.secondary", width: "100%" }}>{item.itemName}</Typography>
       </DialogTitle>
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ p: 0 }}>
         {isLoading ? (
-          <TableRowsSkeleton rows={4} columns={4} />
+          <Box sx={{ p: 2 }}><TableRowsSkeleton rows={4} columns={2} /></Box>
         ) : isError ? (
-          <ErrorState message="Couldn't load price history." onRetry={() => refetch()} />
+          <Box sx={{ p: 2 }}><ErrorState message="Couldn't load price history." onRetry={() => refetch()} /></Box>
         ) : rows.length === 0 ? (
-          <Typography variant="body2" sx={{ color: "text.secondary", py: 3, textAlign: "center" }}>No price changes recorded yet.</Typography>
+          <Box sx={{ textAlign: "center", py: 6, px: 2 }}>
+            <HistoryRounded sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>No price changes recorded yet.</Typography>
+            <Typography variant="caption" sx={{ color: "text.disabled" }}>Edits to this charge's price will show up here.</Typography>
+          </Box>
         ) : (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                {["When", "Scope", "Change", "By"].map((h) => (
-                  <TableCell key={h} sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.7rem", textTransform: "uppercase" }}>{h}</TableCell>
+          <>
+            {/* Summary strip */}
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, px: 2.5, py: 2,
+              bgcolor: (t) => (t.palette.mode === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)") }}>
+              <Box>
+                <Typography sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 700, fontSize: "0.62rem" }}>Current base price</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.15 }}>{inr(Number(item.price))}</Typography>
+              </Box>
+              <Box sx={{ textAlign: "right" }}>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>{rows.length} change{rows.length === 1 ? "" : "s"}</Typography>
+                {lastChanged && <Typography variant="caption" sx={{ color: "text.secondary" }}>last {relTime(lastChanged)}</Typography>}
+              </Box>
+            </Box>
+
+            {/* Scope filter (only when the charge has room-class prices too) */}
+            {scopes.length > 1 && (
+              <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", px: 2.5, py: 1.5, borderBottom: 1, borderColor: "divider" }}>
+                {["All", ...scopes].map((s) => (
+                  <Chip key={s} label={s} size="small" onClick={() => setScope(s)} variant={scope === s ? "filled" : "outlined"}
+                    sx={{ height: 24, fontSize: "0.7rem", fontWeight: 600, ...(scope === s ? { bgcolor: ACCENT, color: "#fff", "&:hover": { bgcolor: ACCENT_DARK } } : {}) }} />
                 ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((r) => (
-                <TableRow key={r.chargeItemPriceHistoryId}>
-                  <TableCell sx={{ whiteSpace: "nowrap", color: "text.secondary", fontSize: "0.8rem" }}>{when(r.changedAt)}</TableCell>
-                  <TableCell sx={{ fontSize: "0.83rem" }}>{r.scope}</TableCell>
-                  <TableCell sx={{ fontSize: "0.83rem" }}>{change(r)}</TableCell>
-                  <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem" }}>{r.changedByName || "—"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </Box>
+            )}
+
+            {/* Timeline */}
+            <Box sx={{ px: 2.5, py: 2 }}>
+              {filtered.map((r, i) => {
+                const last = i === filtered.length - 1;
+                return (
+                  <Box key={r.chargeItemPriceHistoryId} sx={{ display: "flex", gap: 1.75 }}>
+                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", pt: 0.4 }}>
+                      <Box sx={{ width: 11, height: 11, borderRadius: "50%", flex: "none", bgcolor: CHANGE_META[r.changeType].dot,
+                        boxShadow: (t) => `0 0 0 3px ${t.palette.background.paper}` }} />
+                      {!last && <Box sx={{ width: 2, flex: 1, bgcolor: "divider", mt: 0.5 }} />}
+                    </Box>
+                    <Box sx={{ pb: last ? 0 : 2.25, minWidth: 0, flex: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{r.scope}</Typography>
+                        <DeltaPill r={r} />
+                      </Box>
+                      <Box sx={{ mt: 0.25 }}>
+                        {r.changeType === "UPDATE" ? (
+                          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                            <Box component="span" sx={{ textDecoration: "line-through", color: "text.disabled" }}>{inr(Number(r.oldPrice))}</Box>
+                            {" → "}<Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>{inr(Number(r.newPrice))}</Box>
+                          </Typography>
+                        ) : r.changeType === "CREATE" ? (
+                          <Typography variant="body2" sx={{ fontWeight: 700 }}>{inr(Number(r.newPrice))}</Typography>
+                        ) : (
+                          <Typography variant="body2" sx={{ textDecoration: "line-through", color: "text.disabled" }}>{inr(Number(r.oldPrice))}</Typography>
+                        )}
+                      </Box>
+                      <Tooltip title={when(r.changedAt)} placement="top-start">
+                        <Typography variant="caption" sx={{ color: "text.secondary", cursor: "default" }}>
+                          {relTime(r.changedAt)}{r.changedByName ? ` · ${r.changedByName}` : ""}
+                        </Typography>
+                      </Tooltip>
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Box>
+          </>
         )}
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
