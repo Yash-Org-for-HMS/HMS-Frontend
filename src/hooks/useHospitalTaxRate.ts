@@ -18,20 +18,3 @@ export function useHospitalTaxRate(): number {
   });
   return data ?? 0;
 }
-
-/**
- * The hospital's configured pharmacy/medicine GST rate (0 = untaxed). Used by the
- * dispensary POS to preview GST on a medicine sale; the server still re-derives it
- * authoritatively at collection. Reads the settings payload's `settings` block.
- */
-export function useHospitalPharmacyGstRate(): number {
-  const { data } = useQuery({
-    queryKey: ["hospital-pharmacy-gst-rate"],
-    queryFn: async () => {
-      const res = await axiosInstance.get("/hospital/settings");
-      return Number(res.data?.data?.settings?.pharmacyGstPercent ?? 0);
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-  return data ?? 0;
-}

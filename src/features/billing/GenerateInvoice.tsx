@@ -120,8 +120,9 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   const discountAmount = Number(discount || 0);
   const taxableAmount = grossAmount - discountAmount;
   // Per-line GST from the rate card (server is authoritative; this only mirrors it
-  // for the preview). Tax is on each line's gross; the invoice discount reduces net.
-  const taxAmount = selectedItemsList.reduce((sum, item) => sum + item.amount * (Number(item.taxPercent || 0) / 100), 0);
+  // for the preview). Tax is on each line's gross; a pharmacy order carries a
+  // precomputed taxAmount (per-medicine, mixed rates). The discount reduces net.
+  const taxAmount = selectedItemsList.reduce((sum, item) => sum + (item.taxAmount != null ? Number(item.taxAmount) : item.amount * (Number(item.taxPercent || 0) / 100)), 0);
   const netAmount = taxableAmount + taxAmount;
   // Amount the payment dialog collects against. Once the invoice is created the
   // selected items are refetched away (no longer "unbilled"), so the derived

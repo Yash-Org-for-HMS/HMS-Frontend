@@ -19,7 +19,6 @@ import PharmacyPage, { ROWS_PER_PAGE } from "./components/PharmacyPage";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
-import { useHospitalPharmacyGstRate } from "@/hooks/useHospitalTaxRate";
 import { QUEUE_POLL_MS } from "@/constants/intervals";
 
 export default function DispensaryPOS() {
@@ -31,7 +30,6 @@ export default function DispensaryPOS() {
   // (consolidated) have no active branch, so the backend rejects the sale — guide
   // them to pick a concrete branch here instead of failing at checkout.
   const { activeBranchId, availableBranches, setActiveBranch } = useHospitalAuth();
-  const taxRate = useHospitalPharmacyGstRate();
   const { data, isLoading: loading, refetch: fetchData } = useQuery({
     queryKey: ["dispensary-pos-data"],
     queryFn: async () => {
@@ -273,8 +271,9 @@ export default function DispensaryPOS() {
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-  // GST preview so the cart total matches what the payment dialog actually collects.
-  const cartTax = cartTotal * (taxRate / 100);
+  // Per-medicine GST: each line taxes at its own medicine's rate (0 = untaxed), so
+  // the cart preview matches what the payment dialog / invoice actually collect.
+  const cartTax = cart.reduce((sum, item) => sum + (item.quantity * item.unitPrice) * (Number(item.gstPercent || 0) / 100), 0);
   const cartGrandTotal = cartTotal + cartTax;
 
   const handleCheckout = async () => {
@@ -550,7 +549,7 @@ export default function DispensaryPOS() {
               <Box sx={{ flexShrink: 0, p: 2, bgcolor: alpha(theme.palette.primary.main, 0.02), borderRadius: 2, border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, flexDirection: { xs: 'column', md: 'row' } }}>
                 <Box>
                   <Typography color="text.secondary" variant="body2" sx={{ mb: 0.5 }}>
-                    Subtotal: ₹{cartTotal.toFixed(2)} | Tax ({taxRate}%): ₹{cartTax.toFixed(2)}
+                    Subtotal: ₹{cartTotal.toFixed(2)} | GST: ₹{cartTax.toFixed(2)}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
                     <Typography variant="h5" fontWeight={800}>Total:</Typography>
@@ -704,7 +703,7 @@ export default function DispensaryPOS() {
             type: "PHARMACY",
             description: `Pharmacy Sale: ${cart.map((c: any) => c.medicineName).join(', ')}`,
             amount: createdOrder.totalAmount,
-            taxPercent: taxRate,
+            taxAmount: cartTax,
             date: createdOrder.createdAt || new Date()
           }}
         />

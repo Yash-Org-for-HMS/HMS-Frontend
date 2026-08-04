@@ -21,6 +21,7 @@ interface PointOfCarePOSProps {
     description: string;
     amount: number;
     taxPercent?: number; // per-line GST rate from the rate card (0 = exempt)
+    taxAmount?: number;  // precomputed total tax (pharmacy: per-medicine, mixed rates)
     date: Date | string;
   };
 }
@@ -36,12 +37,13 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
   const [success, setSuccess] = useState(false);
   const [receiptData, setReceiptData] = useState<any>(null);
 
-  // Financial Math — GST comes from the item's rate-card taxPercent (0 = exempt),
-  // computed on gross; the server re-derives it authoritatively at collection.
+  // Financial Math — GST comes from the item's rate-card taxPercent (0 = exempt), or
+  // a precomputed taxAmount for a mixed-rate pharmacy order (per-medicine). Computed
+  // on gross; the server re-derives it authoritatively at collection.
   const grossAmount = Number(item?.amount || 0);
   const discountAmount = Number(discount || 0);
   const taxableAmount = grossAmount - discountAmount;
-  const taxAmount = grossAmount * (Number(item?.taxPercent || 0) / 100);
+  const taxAmount = item?.taxAmount != null ? Number(item.taxAmount) : grossAmount * (Number(item?.taxPercent || 0) / 100);
   const netAmount = taxableAmount + taxAmount;
 
   const handleProcessPayment = async () => {

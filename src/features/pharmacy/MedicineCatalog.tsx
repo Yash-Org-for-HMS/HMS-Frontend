@@ -48,6 +48,8 @@ export default function MedicineCatalog() {
   const [genericName, setGenericName] = useState("");
   const [manufacturer, setManufacturer] = useState("");
   const [sellingPrice, setSellingPrice] = useState("");
+  const [gstPercent, setGstPercent] = useState("");
+  const [hsnCode, setHsnCode] = useState("");
   const [minStockLevel, setMinStockLevel] = useState("10");
   const [defaultSupplierId, setDefaultSupplierId] = useState("");
   const [saving, setSaving] = useState(false);
@@ -92,6 +94,8 @@ export default function MedicineCatalog() {
     setGenericName("");
     setManufacturer("");
     setSellingPrice("");
+    setGstPercent("");
+    setHsnCode("");
     setMinStockLevel("10");
     setDefaultSupplierId("");
     setErrorMsg("");
@@ -105,6 +109,8 @@ export default function MedicineCatalog() {
     setGenericName(med.genericName || "");
     setManufacturer(med.manufacturer || "");
     setSellingPrice(med.sellingPrice.toString());
+    setGstPercent(med.gstPercent != null && Number(med.gstPercent) > 0 ? med.gstPercent.toString() : "");
+    setHsnCode(med.hsnCode || "");
     setMinStockLevel(med.minStockLevel?.toString() || "10");
     setDefaultSupplierId(med.defaultSupplierId || "");
     setErrorMsg("");
@@ -140,6 +146,8 @@ export default function MedicineCatalog() {
         genericName,
         manufacturer,
         sellingPrice: parseFloat(sellingPrice),
+        gstPercent: gstPercent === "" ? 0 : parseFloat(gstPercent),
+        hsnCode: hsnCode.trim() || null,
         minStockLevel: parseInt(minStockLevel) || 10,
         defaultSupplierId: defaultSupplierId || null
       };
@@ -275,7 +283,14 @@ export default function MedicineCatalog() {
                       <TableCell sx={{ fontWeight: 600, color: ACCENTS.pharmacy }}>{med.medicineName}</TableCell>
                       <TableCell sx={{ fontWeight: 500 }}>{med.genericName}</TableCell>
                       <TableCell sx={{ color: 'text.secondary' }}>{med.manufacturer || 'N/A'}</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: SEMANTIC.success }}>₹{parseFloat(med.sellingPrice).toFixed(2)}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: SEMANTIC.success }}>
+                        ₹{parseFloat(med.sellingPrice).toFixed(2)}
+                        {Number(med.gstPercent) > 0 && (
+                          <Typography component="span" sx={{ ml: 0.5, fontSize: 11, color: 'text.secondary', fontWeight: 500 }}>
+                            +{Number(med.gstPercent)}% GST
+                          </Typography>
+                        )}
+                      </TableCell>
                       <TableCell align="right">
                         <Tooltip title="Edit">
                           <IconButton
@@ -385,6 +400,26 @@ export default function MedicineCatalog() {
               fullWidth
               variant="outlined"
             />
+
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                label="GST % (optional)"
+                type="number"
+                value={gstPercent}
+                onChange={(e) => setGstPercent(e.target.value)}
+                fullWidth
+                variant="outlined"
+                helperText="Blank / 0 = untaxed"
+              />
+              <TextField
+                label="HSN/SAC (optional)"
+                value={hsnCode}
+                onChange={(e) => setHsnCode(e.target.value)}
+                fullWidth
+                variant="outlined"
+                inputProps={{ maxLength: 10 }}
+              />
+            </Box>
 
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
