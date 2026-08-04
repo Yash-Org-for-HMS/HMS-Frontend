@@ -280,6 +280,7 @@ export default function LabOrdersQueue() {
             type: "LAB",
             description: posItem?.description || `Lab Tests: ${collectOrder.reports?.map((r: any) => r.labTest?.testName).filter(Boolean).join(', ') || 'Pending Tests'}`,
             amount: Number(posItem?.amount ?? 0),
+            taxPercent: Number(posItem?.taxPercent ?? 0),
             date: collectOrder.createdAt
           }}
         />

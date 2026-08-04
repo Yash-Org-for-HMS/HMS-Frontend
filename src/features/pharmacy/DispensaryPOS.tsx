@@ -19,7 +19,7 @@ import PharmacyPage, { ROWS_PER_PAGE } from "./components/PharmacyPage";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
-import { useHospitalTaxRate } from "@/hooks/useHospitalTaxRate";
+import { useHospitalPharmacyGstRate } from "@/hooks/useHospitalTaxRate";
 import { QUEUE_POLL_MS } from "@/constants/intervals";
 
 export default function DispensaryPOS() {
@@ -31,7 +31,7 @@ export default function DispensaryPOS() {
   // (consolidated) have no active branch, so the backend rejects the sale — guide
   // them to pick a concrete branch here instead of failing at checkout.
   const { activeBranchId, availableBranches, setActiveBranch } = useHospitalAuth();
-  const taxRate = useHospitalTaxRate();
+  const taxRate = useHospitalPharmacyGstRate();
   const { data, isLoading: loading, refetch: fetchData } = useQuery({
     queryKey: ["dispensary-pos-data"],
     queryFn: async () => {
@@ -704,6 +704,7 @@ export default function DispensaryPOS() {
             type: "PHARMACY",
             description: `Pharmacy Sale: ${cart.map((c: any) => c.medicineName).join(', ')}`,
             amount: createdOrder.totalAmount,
+            taxPercent: taxRate,
             date: createdOrder.createdAt || new Date()
           }}
         />

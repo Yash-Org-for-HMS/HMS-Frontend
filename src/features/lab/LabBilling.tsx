@@ -46,7 +46,7 @@ interface BillableOrder {
   admissionNumber?: string | null;
 }
 
-interface UnbilledInfo { amount: number; description: string }
+interface UnbilledInfo { amount: number; description: string; taxPercent: number }
 
 const ACCENT = SEMANTIC.success;
 
@@ -123,7 +123,7 @@ export default function LabBilling() {
         patientIds.map(async (pid) => {
           const items = (await axiosInstance.get(`/billing/unbilled/${pid}`)).data.data || [];
           for (const it of items) {
-            if (it?.id) map[it.id] = { amount: Number(it.amount || 0), description: it.description || "" };
+            if (it?.id) map[it.id] = { amount: Number(it.amount || 0), description: it.description || "", taxPercent: Number(it.taxPercent || 0) };
           }
         }),
       );
@@ -281,6 +281,7 @@ export default function LabBilling() {
             type: payOrder.kind,
             description: unbilled[payOrder.id]?.description || payOrder.description,
             amount: amountOf(payOrder) || 0,
+            taxPercent: unbilled[payOrder.id]?.taxPercent || 0,
             date: payOrder.date,
           }}
         />
