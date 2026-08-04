@@ -87,6 +87,24 @@ export default function PrintIpBill() {
     }).filter(Boolean) as { cat: string; dates: { date: string; rows: any[] }[]; taxable: number; tax: number; amount: number }[];
   }, [items]);
 
+  // Date-first itemisation: every charge grouped by the day it was raised
+  // (chronological), rows within a day ordered by charge group, with a per-day
+  // subtotal — the day-by-day statement the reference bill uses.
+  const byDate = useMemo(() => {
+    const m = new Map<string, any[]>();
+    for (const it of items) {
+      const key = it.itemDate ? new Date(it.itemDate).toISOString().slice(0, 10) : "—";
+      (m.get(key) ?? m.set(key, []).get(key)!).push(it);
+    }
+    const rank = (it: any) => { const i = CATEGORY_ORDER.indexOf(deriveCategory(it)); return i < 0 ? 99 : i; };
+    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([date, rows]) => {
+      const sorted = [...rows].sort((a, b) => rank(a) - rank(b));
+      const taxable = rows.reduce((s, it) => s + n(it.totalPrice), 0);
+      const tax = rows.reduce((s, it) => s + n(it.taxAmount), 0);
+      return { date, rows: sorted, taxable, tax, amount: taxable + tax };
+    });
+  }, [items]);
+
   if (loading) return <DetailSkeleton />;
   if (error) return <Typography color="error" sx={{ p: 4 }}>{error}</Typography>;
   if (!inv) return <Typography sx={{ p: 4 }}>Bill not found</Typography>;
@@ -206,65 +224,65 @@ export default function PrintIpBill() {
           </tbody>
         </table>
 
-        {/* ── Detailed itemisation ── */}
-        {mode === "detailed" && groups.map((g) => (
-          <div key={g.cat} style={{ marginBottom: 12, breakInside: "avoid" }}>
-            <div style={{ background: "#0e7490", color: "white", fontSize: 11, fontWeight: 700, letterSpacing: 0.4, padding: "4px 8px", borderRadius: "4px 4px 0 0" }}>
-              {CATEGORY_LABEL[g.cat]}
-            </div>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr>
-                  <th style={{ ...th, textAlign: "left", width: "5%" }}>#</th>
-                  <th style={{ ...th, textAlign: "left" }}>Description</th>
-                  <th style={{ ...th, width: "8%" }}>HSN</th>
-                  <th style={{ ...th, ...num, width: "6%" }}>Qty</th>
-                  <th style={{ ...th, ...num, width: "10%" }}>Rate</th>
-                  <th style={{ ...th, ...num, width: "12%" }}>Taxable</th>
-                  <th style={{ ...th, ...num, width: "12%" }}>CGST</th>
-                  <th style={{ ...th, ...num, width: "12%" }}>SGST</th>
-                  <th style={{ ...th, ...num, width: "13%" }}>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {g.dates.map((d) => (
-                  <Fragment key={`d-${g.cat}-${d.date}`}>
-                    <tr>
-                      <td colSpan={9} style={{ ...td, background: "#f8fafc", fontWeight: 700, fontSize: 10.5, color: SUB, borderBottom: `1px solid ${LINE}` }}>{fmtDate(d.date)}</td>
-                    </tr>
-                    {d.rows.map((it, i) => {
-                      const taxable = n(it.totalPrice), tax = n(it.taxAmount);
-                      const sub = [it.batchNo ? `Batch ${it.batchNo}` : null, it.expiryDate ? `Exp ${fmtDate(it.expiryDate)}` : null, it.manufacturer, it.orderingDoctor ? `by ${it.orderingDoctor}` : null].filter(Boolean).join(" · ");
-                      return (
-                        <tr key={it.invoiceItemId || `${d.date}-${i}`}>
-                          <td style={{ ...td, color: SUB }}>{i + 1}</td>
-                          <td style={td}>
-                            {it.description}
-                            {sub && <div style={{ fontSize: 9.5, color: SUB, marginTop: 1 }}>{sub}</div>}
-                          </td>
-                          <td style={{ ...td, textAlign: "center", color: SUB, fontSize: 10 }}>{it.hsnCode || "—"}</td>
-                          <td style={{ ...td, ...num }}>{it.quantity}</td>
-                          <td style={{ ...td, ...num }}>{inr(it.unitPrice)}</td>
-                          <td style={{ ...td, ...num }}>{inr(taxable)}</td>
-                          <td style={{ ...td, ...num, color: SUB }}>{tax ? inr(tax / 2) : "—"}</td>
-                          <td style={{ ...td, ...num, color: SUB }}>{tax ? inr(tax / 2) : "—"}</td>
-                          <td style={{ ...td, ...num, fontWeight: 600 }}>{inr(taxable + tax)}</td>
-                        </tr>
-                      );
-                    })}
-                  </Fragment>
-                ))}
-                <tr>
-                  <td colSpan={5} style={{ ...td, textAlign: "right", fontWeight: 700, background: "#f8fafc" }}>{CATEGORY_LABEL[g.cat]} subtotal</td>
-                  <td style={{ ...td, ...num, fontWeight: 700, background: "#f8fafc" }}>{inr(g.taxable)}</td>
-                  <td style={{ ...td, ...num, fontWeight: 700, background: "#f8fafc" }}>{inr(g.tax / 2)}</td>
-                  <td style={{ ...td, ...num, fontWeight: 700, background: "#f8fafc" }}>{inr(g.tax / 2)}</td>
-                  <td style={{ ...td, ...num, fontWeight: 800, background: "#f8fafc" }}>{inr(g.amount)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        ))}
+        {/* ── Detailed itemisation — day by day ── */}
+        {mode === "detailed" && (
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                <th style={{ ...th, textAlign: "left", width: "4%" }}>#</th>
+                <th style={{ ...th, textAlign: "left" }}>Description</th>
+                <th style={{ ...th, width: "8%" }}>HSN</th>
+                <th style={{ ...th, ...num, width: "6%" }}>Qty</th>
+                <th style={{ ...th, ...num, width: "10%" }}>Rate</th>
+                <th style={{ ...th, ...num, width: "12%" }}>Taxable</th>
+                <th style={{ ...th, ...num, width: "11%" }}>CGST</th>
+                <th style={{ ...th, ...num, width: "11%" }}>SGST</th>
+                <th style={{ ...th, ...num, width: "13%" }}>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {byDate.map((day) => (
+                <Fragment key={`day-${day.date}`}>
+                  <tr>
+                    <td colSpan={9} style={{ padding: "5px 8px", background: ACCENT, color: "white", fontSize: 11, fontWeight: 700, letterSpacing: 0.4 }}>
+                      {day.date === "—" ? "Undated" : fmtDate(day.date)}
+                    </td>
+                  </tr>
+                  {day.rows.map((it, i) => {
+                    const taxable = n(it.totalPrice), tax = n(it.taxAmount);
+                    const sub = [it.batchNo ? `Batch ${it.batchNo}` : null, it.expiryDate ? `Exp ${fmtDate(it.expiryDate)}` : null, it.manufacturer, it.orderingDoctor ? `by ${it.orderingDoctor}` : null].filter(Boolean).join(" · ");
+                    return (
+                      <tr key={it.invoiceItemId || `${day.date}-${i}`}>
+                        <td style={{ ...td, color: SUB }}>{i + 1}</td>
+                        <td style={td}>
+                          {it.description}
+                          <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 1, flexWrap: "wrap" }}>
+                            <span style={{ fontSize: 8.5, fontWeight: 700, color: ACCENT, background: "#ecfeff", border: "1px solid #cffafe", borderRadius: 3, padding: "0 4px", letterSpacing: 0.3, textTransform: "uppercase" }}>{CATEGORY_LABEL[deriveCategory(it)]}</span>
+                            {sub && <span style={{ fontSize: 9.5, color: SUB }}>{sub}</span>}
+                          </div>
+                        </td>
+                        <td style={{ ...td, textAlign: "center", color: SUB, fontSize: 10 }}>{it.hsnCode || "—"}</td>
+                        <td style={{ ...td, ...num }}>{it.quantity}</td>
+                        <td style={{ ...td, ...num }}>{inr(it.unitPrice)}</td>
+                        <td style={{ ...td, ...num }}>{inr(taxable)}</td>
+                        <td style={{ ...td, ...num, color: SUB }}>{tax ? inr(tax / 2) : "—"}</td>
+                        <td style={{ ...td, ...num, color: SUB }}>{tax ? inr(tax / 2) : "—"}</td>
+                        <td style={{ ...td, ...num, fontWeight: 600 }}>{inr(taxable + tax)}</td>
+                      </tr>
+                    );
+                  })}
+                  <tr>
+                    <td colSpan={5} style={{ ...td, textAlign: "right", fontWeight: 700, background: "#f8fafc", fontSize: 10.5 }}>{day.date === "—" ? "Undated" : fmtDate(day.date)} subtotal</td>
+                    <td style={{ ...td, ...num, fontWeight: 700, background: "#f8fafc" }}>{inr(day.taxable)}</td>
+                    <td style={{ ...td, ...num, fontWeight: 700, background: "#f8fafc" }}>{inr(day.tax / 2)}</td>
+                    <td style={{ ...td, ...num, fontWeight: 700, background: "#f8fafc" }}>{inr(day.tax / 2)}</td>
+                    <td style={{ ...td, ...num, fontWeight: 800, background: "#f8fafc" }}>{inr(day.amount)}</td>
+                  </tr>
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+        )}
 
         {/* ── Totals panel ── */}
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6, breakInside: "avoid" }}>
