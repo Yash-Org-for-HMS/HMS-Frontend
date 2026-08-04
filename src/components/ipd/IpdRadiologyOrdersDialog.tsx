@@ -83,7 +83,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
       await axiosInstance.post(`/ipd/admissions/${admission.admissionId}/radiology-orders`, { priorityId, scans: effectiveScans });
       toast.success(`${effectiveScans.length} scan${effectiveScans.length === 1 ? "" : "s"} sent to radiology`);
       setBasket([]);
-      setScanType("");
+      setSelectedTest(null);
       setNotes("");
       afterChange();
       setTab("results");
