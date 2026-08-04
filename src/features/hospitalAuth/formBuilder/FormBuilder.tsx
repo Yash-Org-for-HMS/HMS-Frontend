@@ -170,7 +170,7 @@ export default function FormBuilder() {
 <form onSubmit={handleSave}>
         <Grid container spacing={4}>
           {/* Left Panel - Metadata */}
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 4 }} sx={{ minWidth: 0 }}>
             <Paper variant="outlined" sx={{ p: 3, bgcolor: "background.paper", borderRadius: 2, position: { md: "sticky" }, top: 16 }}>
               <Typography variant="h6" sx={{ color: "text.primary", mb: 3, fontWeight: 600 }}>Form Details</Typography>
               
@@ -210,10 +210,11 @@ export default function FormBuilder() {
             </Paper>
           </Grid>
 
-          {/* Right Panel - Fields Builder */}
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, bgcolor: "background.paper", borderRadius: 2, display: "flex", flexDirection: "column", height: { md: "calc(100vh - 232px)" }, minHeight: 460 }}>
-              <Box sx={{ flex: "none", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1, mb: 2.5 }}>
+          {/* Right Panel - Fields Builder. minWidth:0 so wide field content can't
+              stretch this column horizontally (MUI Grid items default to min-width:auto). */}
+          <Grid size={{ xs: 12, md: 8 }} sx={{ minWidth: 0 }}>
+            <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, bgcolor: "background.paper", borderRadius: 2, minHeight: 400, overflow: "hidden" }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1, mb: 2.5 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600 }}>Form Fields</Typography>
                   {fields.length > 0 && (
@@ -231,11 +232,8 @@ export default function FormBuilder() {
                 </Button>
               </Box>
 
-              {/* Fixed-height scroll area: the panel stays the same size whether
-                  it's empty or holds many fields — the list scrolls inside it. */}
-              <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", mr: -1, pr: 1 }}>
               {fields.length === 0 ? (
-                <Box sx={{ height: "100%", minHeight: 300, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", border: "2px dashed", borderColor: "divider", borderRadius: 2 }}>
+                <Box sx={{ py: 3, textAlign: "center", border: "2px dashed", borderColor: "divider", borderRadius: 2 }}>
                   <Mascot pose="nothing-here-yet" subtitle="No fields added yet." size={120} sx={{ py: 1 }} />
                   <Box sx={{ mb: 2 }} />
                   <Button variant="outlined" startIcon={<AddCircleOutlineRounded />} onClick={handleAddDataField}
@@ -291,13 +289,12 @@ export default function FormBuilder() {
                       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, mt: 1.5, flexWrap: "wrap" }}>
                         <FormControlLabel control={<Switch size="small" checked={field.isRequired} onChange={(e) => handleFieldChange(idx, "isRequired", e.target.checked)} />}
                           label={<Typography variant="body2" sx={{ color: "text.secondary" }}>Required</Typography>} />
-                        <Typography variant="caption" sx={{ color: "text.secondary" }}>name: <Box component="code" sx={{ color: "text.primary" }}>{field.fieldName || "—"}</Box></Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", minWidth: 0, wordBreak: "break-word" }}>name: <Box component="code" sx={{ color: "text.primary" }}>{field.fieldName || "—"}</Box></Typography>
                       </Box>
                     </Paper>
                   ))}
                 </Box>
               )}
-              </Box>
             </Paper>
           </Grid>
         </Grid>
