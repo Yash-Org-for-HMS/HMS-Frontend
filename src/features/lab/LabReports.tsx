@@ -12,7 +12,7 @@ import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import PageHeader from "@/components/layout/PageHeader";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, useReportFilterOptions, type DateRange } from "@/features/reports/kit";
 import dayjs from "dayjs";
 
 const inr = formatINRAuto;
@@ -69,16 +69,20 @@ export function LabOverview() {
 // Per-test / per-scan drill-down: volume, revenue, turnaround, critical results.
 export function TestWise() {
   const [range, setRange] = useState<DateRange>(initialRange);
+  const [doctorId, setDoctorId] = useState("");
+  const { data: opts } = useReportFilterOptions();
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["lab-test-wise", range.from, range.to],
-    queryFn: async () => (await axiosInstance.get("/lab/reports/test-wise", { params: { from: range.from, to: range.to } })).data.data,
+    queryKey: ["lab-test-wise", range.from, range.to, doctorId],
+    queryFn: async () => (await axiosInstance.get("/lab/reports/test-wise", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined } })).data.data,
   });
   const labRows: any[] = data?.labRows ?? [];
   const radRows: any[] = data?.radRows ?? [];
 
   return (
     <Box>
-      <ReportFilters value={range} onChange={setRange} />
+      <ReportFilters value={range} onChange={setRange}>
+        <ReportFilterSelect label="Ordering doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
+      </ReportFilters>
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>

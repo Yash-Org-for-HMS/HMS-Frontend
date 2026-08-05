@@ -102,10 +102,13 @@ export function OpRegistration() {
 export function OpBills() {
   const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
   const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
+  const [doctorId, setDoctorId] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const { data: opts } = useFilterOptions();
   const ref = useRef<HTMLDivElement>(null);
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["report-op-bills", from, to],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/op-bills", { params: { from, to } })).data.data,
+    queryKey: ["report-op-bills", from, to, doctorId, departmentId],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/op-bills", { params: { from, to, doctorId: doctorId || undefined, departmentId: departmentId || undefined } })).data.data,
   });
   const rows: any[] = data?.rows ?? [];
   return (
@@ -113,6 +116,8 @@ export function OpBills() {
       <Toolbar>
         <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
         <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
+        <FilterSelect label="Doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
+        <FilterSelect label="Department" value={departmentId} onChange={setDepartmentId} options={opts?.departments} />
       </Toolbar>
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>

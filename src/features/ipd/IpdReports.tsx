@@ -10,7 +10,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, useReportFilterOptions, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = ACCENTS.ipd;
 const inr = formatINRAuto;
@@ -82,17 +82,20 @@ export function InPatients() {
 
 export function Discharges() {
   const [range, setRange] = useState<DateRange>(initialRange);
+  const [doctorId, setDoctorId] = useState("");
+  const { data: opts } = useReportFilterOptions();
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["ipd-report-discharges", range.from, range.to],
-    queryFn: async () => (await axiosInstance.get("/ipd/reports/discharges", { params: { from: range.from, to: range.to } })).data.data,
+    queryKey: ["ipd-report-discharges", range.from, range.to, doctorId],
+    queryFn: async () => (await axiosInstance.get("/ipd/reports/discharges", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined } })).data.data,
   });
   const rows: any[] = data?.rows ?? [];
-  const trend: any[] = data?.trend ?? [];
   const prev = data?.previous;
 
   return (
     <Box>
-      <ReportFilters value={range} onChange={setRange} />
+      <ReportFilters value={range} onChange={setRange}>
+        <ReportFilterSelect label="Doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
+      </ReportFilters>
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>

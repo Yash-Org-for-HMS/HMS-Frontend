@@ -316,15 +316,19 @@ export function CancelledInvoices() {
 // ── Doctor productivity & earnings (admin, cross-doctor) ───────────────────────
 export function DoctorProductivity() {
   const [range, setRange] = useState<DateRange>(() => rangeFrom(29));
+  const [doctorId, setDoctorId] = useState("");
+  const { data: opts } = useReportFilterOptions();
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["finance-doctor-productivity", range.from, range.to],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/doctor-productivity", { params: { from: range.from, to: range.to } })).data.data,
+    queryKey: ["finance-doctor-productivity", range.from, range.to, doctorId],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/doctor-productivity", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined } })).data.data,
   });
   const rows: any[] = data?.rows ?? [];
 
   return (
     <Box>
-      <ReportFilters value={range} onChange={setRange} />
+      <ReportFilters value={range} onChange={setRange}>
+        <ReportFilterSelect label="Doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
+      </ReportFilters>
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
