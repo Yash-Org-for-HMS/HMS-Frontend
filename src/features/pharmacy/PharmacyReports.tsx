@@ -7,6 +7,7 @@ import {
   ReceiptLongRounded, CurrencyRupeeRounded, TrendingUpRounded,
   WarningAmberRounded, EventBusyRounded, LocalPharmacyRounded,
   Inventory2Rounded, ShoppingCartRounded, ReplayRounded,
+  LocalShippingRounded, SwapVertRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -16,7 +17,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
-import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList } from "./InventoryReports";
+import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList, SupplierLedger, Movers } from "./InventoryReports";
 
 const inr = formatINRAuto;
 const fmtDate = (v: any) => (v ? dayjs(v).format("DD MMM YYYY") : "—");
@@ -122,6 +123,8 @@ export default function PharmacyReports() {
           <Tab icon={<EventBusyRounded fontSize="small" />} iconPosition="start" label="Expiry & Loss" />
           <Tab icon={<ShoppingCartRounded fontSize="small" />} iconPosition="start" label="Purchase vs Consumption" />
           <Tab icon={<ReplayRounded fontSize="small" />} iconPosition="start" label="Reorder List" />
+          <Tab icon={<LocalShippingRounded fontSize="small" />} iconPosition="start" label="Supplier Ledger" />
+          <Tab icon={<SwapVertRounded fontSize="small" />} iconPosition="start" label="Fast / Slow Movers" />
         </Tabs>
       </Paper>
       {tab === 0 && <PharmacyOverview />}
@@ -129,6 +132,8 @@ export default function PharmacyReports() {
       {tab === 2 && <ExpiryLoss />}
       {tab === 3 && <PurchaseConsumption />}
       {tab === 4 && <ReorderList />}
+      {tab === 5 && <SupplierLedger />}
+      {tab === 6 && <Movers />}
     </Box>
   );
 }

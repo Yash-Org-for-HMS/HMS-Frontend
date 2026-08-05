@@ -4,6 +4,7 @@ import { Box, Grid } from "@mui/material";
 import {
   Inventory2Rounded, SavingsRounded, TrendingUpRounded, CategoryRounded, WidgetsRounded,
   EventBusyRounded, WarningAmberRounded, ShoppingCartRounded, LocalShippingRounded, ReplayRounded,
+  TrendingDownRounded, BlockRounded, ReceiptLongRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
@@ -161,6 +162,84 @@ export function ReorderList() {
               num("available", "Available"),
               num("reorderLevel", "Reorder level"),
               num("shortfall", "Shortfall"),
+            ]}
+            rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ── Supplier Ledger (date-ranged) ─────────────────────────────────────────────
+export function SupplierLedger() {
+  const [range, setRange] = useState<DateRange>(() => rangeFrom(89));
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["inv-supplier-ledger", range.from, range.to],
+    queryFn: async () => (await axiosInstance.get("/pharmacy/reports/supplier-ledger", { params: { from: range.from, to: range.to } })).data.data,
+  });
+  const rows: any[] = data?.rows ?? [];
+
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={setRange} />
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalShippingRounded />} accent="#8b5cf6" label="Suppliers" value={String(data.totals.suppliers)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={SEMANTIC.info} label="Purchase orders" value={String(data.totals.purchaseOrders)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ShoppingCartRounded />} accent={SEMANTIC.warning} label="Ordered value" value={inr(data.totals.orderedValue)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<Inventory2Rounded />} accent={SEMANTIC.success} label="Received value" value={inr(data.totals.receivedValue)} /></Grid>
+          </Grid>
+          <ReportTable
+            title="Supplier ledger"
+            filename={`supplier_ledger_${range.from}_${range.to}`}
+            columns={[
+              { key: "supplier", label: "Supplier" },
+              num("purchaseOrders", "POs"),
+              num("items", "Line items"),
+              money("orderedValue", "Ordered ₹"),
+              money("receivedValue", "Received ₹"),
+            ]}
+            rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ── Fast / Slow Movers (date-ranged) ──────────────────────────────────────────
+export function Movers() {
+  const [range, setRange] = useState<DateRange>(() => rangeFrom(29));
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["inv-movers", range.from, range.to],
+    queryFn: async () => (await axiosInstance.get("/pharmacy/reports/movers", { params: { from: range.from, to: range.to } })).data.data,
+  });
+  const rows: any[] = data?.rows ?? [];
+
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={setRange} />
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Moving items" value={String(data.totals.movingItems)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.info} label="Consumed value" value={inr(data.totals.consumedValue)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<BlockRounded />} accent={SEMANTIC.danger} label="Dead-stock items" value={String(data.totals.deadStockItems)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingDownRounded />} accent={SEMANTIC.danger} label="Dead-stock value" value={inr(data.totals.deadStockValue)} sub="on-hand, no movement" /></Grid>
+          </Grid>
+          <ReportTable
+            title="Fast / slow movers"
+            filename={`movers_${range.from}_${range.to}`}
+            columns={[
+              { key: "medicine", label: "Medicine" },
+              num("consumedQty", "Consumed qty"),
+              money("consumedValue", "Consumed ₹"),
+              num("onHandQty", "On hand"),
+              { key: "status", label: "Movement" },
             ]}
             rows={rows}
             truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
