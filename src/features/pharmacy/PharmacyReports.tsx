@@ -2,10 +2,11 @@ import { useState } from "react";
 import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { Box, Grid } from "@mui/material";
+import { Box, Grid, Paper, Tabs, Tab } from "@mui/material";
 import {
   ReceiptLongRounded, CurrencyRupeeRounded, TrendingUpRounded,
   WarningAmberRounded, EventBusyRounded, LocalPharmacyRounded,
+  Inventory2Rounded, ShoppingCartRounded, ReplayRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -15,14 +16,17 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
+import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList } from "./InventoryReports";
 
 const inr = formatINRAuto;
 const fmtDate = (v: any) => (v ? dayjs(v).format("DD MMM YYYY") : "—");
 
-export default function PharmacyReports() {
+// The sales + stock-health dashboard (also embedded as the "Overview" tab and
+// reused as the Pharmacy Overview item in the shared reports hub).
+export function PharmacyOverview() {
   const [range, setRange] = useState<DateRange>(() => ({ from: dayjs().subtract(29, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") }));
 
-  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["pharmacy-reports", range.from, range.to],
     queryFn: async () => (await axiosInstance.get("/pharmacy/reports", { params: { from: range.from, to: range.to } })).data.data,
     placeholderData: keepPreviousData,
@@ -38,12 +42,7 @@ export default function PharmacyReports() {
   const supplierWise: any[] = data?.supplierWise || [];
 
   return (
-    <Box sx={{ p: { xs: 0, md: 1 } }}>
-      <PageHeader
-        title="Pharmacy Reports"
-        subtitle="Dispensary sales over a date range, plus current stock health."
-        actions={isFetching ? <HeartbeatLoader size={22} /> : undefined}
-      />
+    <Box>
       <ReportFilters value={range} onChange={setRange} />
 
       {isLoading ? (
@@ -103,6 +102,33 @@ export default function PharmacyReports() {
             ]} rows={supplierWise} emptyText="No purchase orders in this period." />
         </Box>
       )}
+    </Box>
+  );
+}
+
+// The pharmacy panel's reports page: the sales/stock Overview plus the inventory
+// reports (stock valuation, expiry & loss, purchase vs consumption, reorder).
+export default function PharmacyReports() {
+  const [tab, setTab] = useState(0);
+  const ACCENT = ACCENTS.pharmacy;
+  return (
+    <Box>
+      <PageHeader title="Pharmacy Reports" subtitle="Sales, stock valuation, expiry, purchasing and reorder." />
+      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2.5 }}>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
+          sx={{ px: 1, "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 56 }, "& .Mui-selected": { color: `${ACCENT} !important` }, "& .MuiTabs-indicator": { bgcolor: ACCENT } }}>
+          <Tab icon={<LocalPharmacyRounded fontSize="small" />} iconPosition="start" label="Overview" />
+          <Tab icon={<Inventory2Rounded fontSize="small" />} iconPosition="start" label="Stock Valuation" />
+          <Tab icon={<EventBusyRounded fontSize="small" />} iconPosition="start" label="Expiry & Loss" />
+          <Tab icon={<ShoppingCartRounded fontSize="small" />} iconPosition="start" label="Purchase vs Consumption" />
+          <Tab icon={<ReplayRounded fontSize="small" />} iconPosition="start" label="Reorder List" />
+        </Tabs>
+      </Paper>
+      {tab === 0 && <PharmacyOverview />}
+      {tab === 1 && <StockValuation />}
+      {tab === 2 && <ExpiryLoss />}
+      {tab === 3 && <PurchaseConsumption />}
+      {tab === 4 && <ReorderList />}
     </Box>
   );
 }

@@ -13,7 +13,7 @@ import { InPatients, Discharges, IpRegistrations, IpAdvances, Occupancy } from "
 import { Outstanding, PatientStatement, Receipts, ServiceWise, PharmacyExpense } from "../billing/BillingReports";
 import { DayBook, RevenueAnalytics, RefundRegister, DiscountRegister, CancelledInvoices, DoctorProductivity } from "../billing/FinanceReports";
 import LabReports from "../lab/LabReports";
-import PharmacyReports from "../pharmacy/PharmacyReports";
+import { PharmacyOverview } from "../pharmacy/PharmacyReports";
 import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList } from "../pharmacy/InventoryReports";
 import { ACCENTS } from "@/styles/accents";
 
@@ -79,7 +79,7 @@ const GROUPS: ReportGroup[] = [
     module: "Pharmacy",
     adminOnly: true,
     items: [
-      { key: "pharmacy-reports", label: "Pharmacy Overview", Comp: PharmacyReports },
+      { key: "pharmacy-reports", label: "Pharmacy Overview", Comp: PharmacyOverview },
       { key: "stock-valuation", label: "Stock Valuation", Comp: StockValuation },
       { key: "expiry-loss", label: "Expiry & Loss", Comp: ExpiryLoss },
       { key: "purchase-consumption", label: "Purchase vs Consumption", Comp: PurchaseConsumption },
