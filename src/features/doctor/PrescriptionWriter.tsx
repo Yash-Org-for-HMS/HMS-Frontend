@@ -3,7 +3,7 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Button, TextField, IconButton, Autocomplete,
+  Box, Typography, Button, TextField, IconButton, Autocomplete, MenuItem,
   Paper, Grid, Alert, Divider, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Switch, FormControlLabel, Chip
 } from "@mui/material";
 import { DeleteRounded, SaveRounded, AddRounded, PrintRounded, ReplayRounded, WarningAmberRounded } from "@mui/icons-material";
@@ -36,6 +36,9 @@ interface PrescriptionWriterProps {
   diagnosis?: string;
   onRequireSave: () => Promise<string | undefined>;
 }
+
+// Dosage strength units the doctor can pick (instead of typing the unit by hand).
+const DOSE_UNITS = ["mg", "mcg", "g", "ml", "IU", "drops", "%", "units", "puff", "tsp"];
 
 // Frequency shorthand → doses/day + a human meaning. Lets the doctor type any
 // standard format (OD, BD, TDS, Q8H, 1-0-1, …) and still get the quantity
@@ -126,8 +129,11 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   const [medicineLoading, setMedicineLoading] = useState(false);
   const [selectedMedicine, setSelectedMedicine] = useState<any | null>(null);
 
-  // New item state
-  const [dosage, setDosage] = useState("");
+  // New item state — dosage is entered as a numeric value + a unit picked from a
+  // dropdown (no more typing "mg" by hand), then combined into "500 mg" on save.
+  const [doseValue, setDoseValue] = useState("");
+  const [doseUnit, setDoseUnit] = useState("mg");
+  const dosage = doseValue.trim() ? `${doseValue.trim()} ${doseUnit}` : "";
   const [frequency, setFrequency] = useState("1-0-1");
   const [durationDays, setDurationDays] = useState<number | "">("");
   const [quantity, setQuantity] = useState<number | "">("");
@@ -231,7 +237,8 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
     setSelectedMedicine(null);
     setMedicineQuery("");
     setMedicineQuery("");
-    setDosage("");
+    setDoseValue("");
+    setDoseUnit("mg");
     setFrequency("1-0-1");
     setDurationDays("");
     setQuantity("");
@@ -551,19 +558,28 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
               />
             )}
           />
-          <TextField
-            fullWidth size="small" label="Dosage" placeholder="e.g. 500mg"
-            value={dosage} onChange={e => setDosage(e.target.value)}
-            InputProps={{
-              endAdornment: (
-                <DoseCalculator
-                  ageYears={patientInfo?.age ?? null}
-                  weightKg={patientWeightKg ?? null}
-                  onApply={(mg) => setDosage(`${mg}mg`)}
-                />
-              ),
-            }}
-          />
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <TextField
+              sx={{ flex: 1 }} size="small" label="Dose" placeholder="e.g. 500"
+              value={doseValue} onChange={e => setDoseValue(e.target.value)}
+              InputProps={{
+                endAdornment: (
+                  <DoseCalculator
+                    ageYears={patientInfo?.age ?? null}
+                    weightKg={patientWeightKg ?? null}
+                    onApply={(mg) => { setDoseValue(String(mg)); setDoseUnit("mg"); }}
+                  />
+                ),
+              }}
+            />
+            <TextField
+              select size="small" label="Unit" value={doseUnit}
+              onChange={e => setDoseUnit(e.target.value)}
+              sx={{ width: 110 }}
+            >
+              {DOSE_UNITS.map(u => <MenuItem key={u} value={u}>{u}</MenuItem>)}
+            </TextField>
+          </Box>
           <Autocomplete
             freeSolo fullWidth size="small"
             options={FREQ_OPTIONS}
