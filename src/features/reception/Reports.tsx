@@ -9,7 +9,7 @@ import {
   EventRounded, CheckCircleRounded, CancelRounded, PaymentsRounded,
   PersonAddRounded, TrendingUpRounded, AccessTimeRounded, ReplayRounded, AccountBalanceWalletRounded,
   HotelRounded, LocalHotelRounded, MeetingRoomRounded, CallSplitRounded, MedicalInformationRounded,
-  FileDownloadRounded,
+  FileDownloadRounded, GroupRounded, HowToRegRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
@@ -153,6 +153,43 @@ export function DiagnosisWise() {
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<TrendingUpRounded />} label="Distinct diagnoses" value={String(data.totals.distinctDiagnoses)} color="#8b5cf6" /></Grid>
           </Grid>
           <SimpleTable title="Diagnoses" head={["Diagnosis", "Consultations"]} rows={rows.map((r) => [r.diagnosis, String(r.count)])} />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ── OPD Footfall (new vs returning) ───────────────────────────────────────────
+export function Footfall() {
+  const [range, setRange] = useState<DateRange>(() => ({ from: dayjs().subtract(29, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") }));
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["report-footfall", range.from, range.to],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/footfall", { params: { from: range.from, to: range.to } })).data.data,
+  });
+  const rows: any[] = data?.rows ?? [];
+  const prev = data?.previous;
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={setRange} />
+      {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} accent={ACCENT} label="Footfall (visits)" value={String(data.totals.visits)} current={data.totals.visits} previous={prev?.visits} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupRounded />} accent="#8b5cf6" label="Unique patients" value={String(data.totals.uniquePatients)} sub={`${data.totals.avgVisitsPerPatient} visits / patient`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} accent={SEMANTIC.success} label="New patients" value={String(data.totals.newPatients)} sub={`${data.totals.newVisits} visits`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HowToRegRounded />} accent={SEMANTIC.info} label="Returning" value={String(data.totals.returningPatients)} sub={`${data.totals.returningVisits} visits`} /></Grid>
+          </Grid>
+          <ReportTable
+            title="Daily footfall"
+            filename={`footfall_${range.from}_${range.to}`}
+            columns={[
+              { key: "date", label: "Date", format: (v) => dayjs(v).format("DD MMM YYYY"), value: (r) => new Date(r.date).getTime() },
+              { key: "visits", label: "Visits", align: "right" },
+              { key: "newVisits", label: "New", align: "right" },
+              { key: "returningVisits", label: "Returning", align: "right" },
+            ]}
+            rows={rows}
+          />
         </Box>
       )}
     </Box>
