@@ -12,7 +12,7 @@ import {
 import { InPatients, Discharges, IpRegistrations, IpAdvances, Occupancy } from "../ipd/IpdReports";
 import { Outstanding, PatientStatement, Receipts, ServiceWise, PharmacyExpense } from "../billing/BillingReports";
 import { DayBook, RevenueAnalytics, RefundRegister, DiscountRegister, CancelledInvoices, DoctorProductivity } from "../billing/FinanceReports";
-import LabReports from "../lab/LabReports";
+import { LabOverview, TestWise } from "../lab/LabReports";
 import { PharmacyOverview } from "../pharmacy/PharmacyReports";
 import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList } from "../pharmacy/InventoryReports";
 import { ACCENTS } from "@/styles/accents";
@@ -71,7 +71,8 @@ const GROUPS: ReportGroup[] = [
     module: "Laboratory",
     adminOnly: true,
     items: [
-      { key: "lab-reports", label: "Lab & Radiology", Comp: LabReports },
+      { key: "lab-reports", label: "Lab & Radiology Overview", Comp: LabOverview },
+      { key: "lab-test-wise", label: "Test-Wise (Lab & Radiology)", Comp: TestWise },
     ],
   },
   {
