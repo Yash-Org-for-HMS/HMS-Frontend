@@ -14,7 +14,7 @@ import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 import { SEMANTIC } from "@/styles/accents";
-import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, useReportFilterOptions, type DateRange } from "@/features/reports/kit";
 
 const inr = formatINRAuto;
 const rangeFrom = (days: number): DateRange => ({ from: dayjs().subtract(days, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
@@ -122,9 +122,12 @@ export function DayBook() {
 // from the Day Book's cash. By category, OPD doctor, and department.
 export function RevenueAnalytics() {
   const [range, setRange] = useState<DateRange>(() => rangeFrom(29));
+  const [doctorId, setDoctorId] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const { data: opts } = useReportFilterOptions();
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["finance-revenue", range.from, range.to],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/revenue", { params: { from: range.from, to: range.to } })).data.data,
+    queryKey: ["finance-revenue", range.from, range.to, doctorId, departmentId],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/revenue", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined, departmentId: departmentId || undefined } })).data.data,
   });
   const byCategory: any[] = data?.byCategory ?? [];
   const byDoctor: any[] = data?.byDoctor ?? [];
@@ -133,7 +136,10 @@ export function RevenueAnalytics() {
 
   return (
     <Box>
-      <ReportFilters value={range} onChange={setRange} />
+      <ReportFilters value={range} onChange={setRange}>
+        <ReportFilterSelect label="Doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
+        <ReportFilterSelect label="Department" value={departmentId} onChange={setDepartmentId} options={opts?.departments} />
+      </ReportFilters>
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>

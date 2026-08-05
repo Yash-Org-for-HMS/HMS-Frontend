@@ -162,15 +162,21 @@ export function DiagnosisWise() {
 // ── OPD Footfall (new vs returning) ───────────────────────────────────────────
 export function Footfall() {
   const [range, setRange] = useState<DateRange>(() => ({ from: dayjs().subtract(29, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") }));
+  const [doctorId, setDoctorId] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const { data: opts } = useFilterOptions();
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["report-footfall", range.from, range.to],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/footfall", { params: { from: range.from, to: range.to } })).data.data,
+    queryKey: ["report-footfall", range.from, range.to, doctorId, departmentId],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/footfall", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined, departmentId: departmentId || undefined } })).data.data,
   });
   const rows: any[] = data?.rows ?? [];
   const prev = data?.previous;
   return (
     <Box>
-      <ReportFilters value={range} onChange={setRange} />
+      <ReportFilters value={range} onChange={setRange}>
+        <FilterSelect label="Doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
+        <FilterSelect label="Department" value={departmentId} onChange={setDepartmentId} options={opts?.departments} />
+      </ReportFilters>
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>

@@ -5,6 +5,8 @@ export type { DateRange } from "./ReportFilters";
 export { default as ReportTable } from "./ReportTable";
 export type { ReportColumn } from "./ReportTable";
 export { default as ReportTruncationNote } from "./ReportTruncationNote";
+export { default as ReportFilterSelect, useReportFilterOptions } from "./ReportFilterSelect";
+export type { FilterOpt, ReportFilterOptions } from "./ReportFilterSelect";
 export { ChartCard, TrendChart, BreakdownBar, DonutChart } from "./ReportCharts";
 export type { Series } from "./ReportCharts";
 export { CHART_SERIES, seriesColor, computeDelta, CHART_INK, DELTA_GOOD, DELTA_BAD } from "./chartTheme";
