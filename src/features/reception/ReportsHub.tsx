@@ -11,7 +11,7 @@ import {
 } from "./Reports";
 import { InPatients, Discharges, IpRegistrations, IpAdvances, Occupancy } from "../ipd/IpdReports";
 import { Outstanding, PatientStatement, Receipts, ServiceWise, PharmacyExpense } from "../billing/BillingReports";
-import { DayBook, RevenueAnalytics, RefundRegister, DiscountRegister, CancelledInvoices } from "../billing/FinanceReports";
+import { DayBook, RevenueAnalytics, RefundRegister, DiscountRegister, CancelledInvoices, DoctorProductivity } from "../billing/FinanceReports";
 import LabReports from "../lab/LabReports";
 import PharmacyReports from "../pharmacy/PharmacyReports";
 import { ACCENTS } from "@/styles/accents";
@@ -53,6 +53,7 @@ const GROUPS: ReportGroup[] = [
     items: [
       { key: "day-book", label: "Day Book (Cash Book)", Comp: DayBook },
       { key: "revenue", label: "Revenue Analytics", Comp: RevenueAnalytics },
+      { key: "doctor-productivity", label: "Doctor Productivity & Earnings", Comp: DoctorProductivity },
       { key: "refund-register", label: "Refund Register", Comp: RefundRegister },
       { key: "discount-register", label: "Discount Register", Comp: DiscountRegister },
       { key: "cancelled-invoices", label: "Cancelled Invoices", Comp: CancelledInvoices },

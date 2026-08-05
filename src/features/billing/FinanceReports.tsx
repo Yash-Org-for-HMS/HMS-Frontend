@@ -5,6 +5,7 @@ import {
   SouthEastRounded, NorthEastRounded, AccountBalanceRounded, SwapVertRounded,
   TrendingUpRounded, ReceiptLongRounded, LocalOfferRounded, AccountBalanceWalletRounded,
   ReplayRounded, PercentRounded, BlockRounded, NumbersRounded,
+  GroupsRounded, EventAvailableRounded, MedicalServicesRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
@@ -294,6 +295,46 @@ export function CancelledInvoices() {
               { key: "cancelledOn", label: "Cancelled on", format: (v) => (v ? dayjs(v).format("DD MMM YY HH:mm") : "—"), value: (r) => ts(r.cancelledOn) },
               money("amount", "Value"),
               { key: "cancelledBy", label: "Cancelled by" },
+            ]}
+            rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ── Doctor productivity & earnings (admin, cross-doctor) ───────────────────────
+export function DoctorProductivity() {
+  const [range, setRange] = useState<DateRange>(() => rangeFrom(29));
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["finance-doctor-productivity", range.from, range.to],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/doctor-productivity", { params: { from: range.from, to: range.to } })).data.data,
+  });
+  const rows: any[] = data?.rows ?? [];
+
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={setRange} />
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupsRounded />} accent="#8b5cf6" label="Active doctors" value={String(data.totals.doctors)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventAvailableRounded />} accent={SEMANTIC.info} label="Appointments" value={String(data.totals.appointments)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicalServicesRounded />} accent={SEMANTIC.success} label="Consultations" value={String(data.totals.consultations)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Revenue (billed)" value={inr(data.totals.revenue)} /></Grid>
+          </Grid>
+          <ReportTable
+            title="Doctor productivity & earnings"
+            filename={`doctor_productivity_${range.from}_${range.to}`}
+            columns={[
+              { key: "doctor", label: "Doctor" },
+              { key: "appointments", label: "Appts", align: "right" },
+              { key: "completed", label: "Completed", align: "right" },
+              { key: "completionRate", label: "Completion %", align: "right", format: (v) => `${v}%`, value: (r) => Number(r.completionRate) },
+              { key: "consultations", label: "Consults", align: "right" },
+              money("revenue", "Revenue (billed)"),
             ]}
             rows={rows}
             truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
