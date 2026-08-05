@@ -14,6 +14,7 @@ import { Outstanding, PatientStatement, Receipts, ServiceWise, PharmacyExpense }
 import { DayBook, RevenueAnalytics, RefundRegister, DiscountRegister, CancelledInvoices, DoctorProductivity } from "../billing/FinanceReports";
 import LabReports from "../lab/LabReports";
 import PharmacyReports from "../pharmacy/PharmacyReports";
+import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList } from "../pharmacy/InventoryReports";
 import { ACCENTS } from "@/styles/accents";
 
 const ACCENT = ACCENTS.reception;
@@ -74,11 +75,15 @@ const GROUPS: ReportGroup[] = [
     ],
   },
   {
-    heading: "Pharmacy",
+    heading: "Pharmacy & Inventory",
     module: "Pharmacy",
     adminOnly: true,
     items: [
-      { key: "pharmacy-reports", label: "Pharmacy", Comp: PharmacyReports },
+      { key: "pharmacy-reports", label: "Pharmacy Overview", Comp: PharmacyReports },
+      { key: "stock-valuation", label: "Stock Valuation", Comp: StockValuation },
+      { key: "expiry-loss", label: "Expiry & Loss", Comp: ExpiryLoss },
+      { key: "purchase-consumption", label: "Purchase vs Consumption", Comp: PurchaseConsumption },
+      { key: "reorder-list", label: "Reorder List", Comp: ReorderList },
     ],
   },
 ];
