@@ -90,6 +90,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   });
 
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [allSlotsPassedToday, setAllSlotsPassedToday] = useState(false);
 
   // Ticks every 30s so today's slot list keeps dropping times as they pass
   // (e.g. a 9:00 AM slot disappears once it's afternoon) without needing a
@@ -192,17 +193,27 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
         currentTotal += sched.slotDurationMinutes || 15;
       }
     } else {
-      // Fallback generic slots if no strict schedule.
-      rawSlots = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "14:00", "14:30", "15:00", "15:30"];
+      // Fallback generic slots when the doctor has no schedule for this weekday —
+      // a full working day (09:00–19:30) so afternoon/evening bookings still work.
+      rawSlots = [];
+      for (let t = 9 * 60; t < 20 * 60; t += 30) {
+        rawSlots.push(`${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`);
+      }
     }
 
+    // How many slots the schedule/fallback yielded, before the "today" cut — used
+    // to tell "today's times have passed" apart from "no schedule at all".
+    const scheduledCount = rawSlots.length;
+
     // For today, drop slots that have already passed — booking a 9:00 AM slot
-    // at 2:00 PM makes no sense. Other dates are unaffected. A currently-
-    // selected slot stays selectable regardless (see the render-time fallback
-    // below), so editing an existing today-dated appointment never breaks.
-    const today = new Date().toISOString().split('T')[0];
-    if (formData.appointmentDate === today) {
-      const now = new Date();
+    // at 2:00 PM makes no sense. Other dates are unaffected. A currently-selected
+    // slot stays selectable regardless (see the render-time fallback below), so
+    // editing an existing today-dated appointment never breaks. Uses the LOCAL
+    // date (not UTC) so the cut is correct around midnight.
+    const now = new Date();
+    const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const isToday = formData.appointmentDate === localToday;
+    if (isToday) {
       const nowHM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       rawSlots = rawSlots.filter((s) => s > nowHM);
     }
@@ -215,7 +226,10 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
         new Date(iso).toLocaleTimeString("en-US", { hour12: false, hour: '2-digit', minute: '2-digit' })
       )
     );
-    setAvailableSlots(rawSlots.filter((s) => !bookedTimes.has(s)));
+    const openSlots = rawSlots.filter((s) => !bookedTimes.has(s));
+    setAvailableSlots(openSlots);
+    // "Today ran out" = the day had slots, but none are left after now/booked.
+    setAllSlotsPassedToday(isToday && scheduledCount > 0 && openSlots.length === 0);
   }, [formData.doctorId, formData.appointmentDate, dropdowns, availability, nowTick]);
 
   useEffect(() => {
@@ -417,7 +431,9 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
                 availability?.onLeave
                   ? "Doctor is on leave on this date — pick another date or doctor."
                   : (formData.doctorId && formData.appointmentDate && availableSlots.length === 0
-                      ? "No open slots for this doctor on this date."
+                      ? (allSlotsPassedToday
+                          ? "Today's remaining slots are all past or booked — pick a later time today or another date."
+                          : "No open slots for this doctor on this date.")
                       : "")
               }
               sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
