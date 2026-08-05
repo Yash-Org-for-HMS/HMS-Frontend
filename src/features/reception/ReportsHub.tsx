@@ -11,7 +11,7 @@ import {
 } from "./Reports";
 import { InPatients, Discharges, IpRegistrations, IpAdvances } from "../ipd/IpdReports";
 import { Outstanding, PatientStatement, Receipts, ServiceWise, PharmacyExpense } from "../billing/BillingReports";
-import { DayBook } from "../billing/FinanceReports";
+import { DayBook, RevenueAnalytics } from "../billing/FinanceReports";
 import LabReports from "../lab/LabReports";
 import PharmacyReports from "../pharmacy/PharmacyReports";
 import { ACCENTS } from "@/styles/accents";
@@ -50,6 +50,7 @@ const GROUPS: ReportGroup[] = [
     adminOnly: true,
     items: [
       { key: "day-book", label: "Day Book (Cash Book)", Comp: DayBook },
+      { key: "revenue", label: "Revenue Analytics", Comp: RevenueAnalytics },
     ],
   },
   {
