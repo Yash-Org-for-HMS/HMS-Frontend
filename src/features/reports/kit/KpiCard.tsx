@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { Box, Paper, Typography, Tooltip } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { ArrowUpwardRounded, ArrowDownwardRounded, RemoveRounded } from "@mui/icons-material";
-import { ResponsiveContainer, AreaChart, Area } from "recharts";
 import { computeDelta, seriesColor } from "./chartTheme";
 
 export interface KpiCardProps {
@@ -15,8 +14,6 @@ export interface KpiCardProps {
   previous?: number | null;
   /** Whether a higher value is good (drives delta colour). Default true. */
   higherIsBetter?: boolean;
-  /** Optional sparkline series (current-period trend). */
-  spark?: number[];
   icon?: ReactNode;
   /** Accent for the icon tile (panel accent by default via caller). */
   accent?: string;
@@ -26,11 +23,11 @@ export interface KpiCardProps {
 
 /**
  * The single KPI tile for reports: a headline number that also answers "which
- * way is it moving?" via a delta vs the previous period and an optional
- * sparkline — so a metric reads as insight, not a bare figure.
+ * way is it moving?" via a delta vs the previous period — so a metric reads as
+ * insight, not a bare figure.
  */
 export default function KpiCard({
-  label, value, current, previous, higherIsBetter = true, spark, icon, accent = seriesColor(0), sub,
+  label, value, current, previous, higherIsBetter = true, icon, accent = seriesColor(0), sub,
 }: KpiCardProps) {
   const delta = current != null ? computeDelta(current, previous, higherIsBetter) : null;
   const showDelta = delta != null && delta.pct != null;
@@ -66,22 +63,6 @@ export default function KpiCard({
       </Typography>
 
       {sub && <Typography variant="caption" sx={{ color: "text.secondary" }}>{sub}</Typography>}
-
-      {spark && spark.length > 1 && (
-        <Box sx={{ height: 34, mt: "auto" }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={spark.map((v, i) => ({ i, v }))} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id={`spark-${label.replace(/\W/g, "")}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={accent} stopOpacity={0.35} />
-                  <stop offset="100%" stopColor={accent} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <Area type="monotone" dataKey="v" stroke={accent} strokeWidth={2} fill={`url(#spark-${label.replace(/\W/g, "")})`} dot={false} isAnimationActive={false} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </Box>
-      )}
     </Paper>
   );
 }

@@ -13,7 +13,7 @@ import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 import { SEMANTIC } from "@/styles/accents";
-import { KpiCard, ReportFilters, ReportTable, TrendChart, BreakdownBar, DonutChart, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
 
 const inr = formatINRAuto;
 const rangeFrom = (days: number): DateRange => ({ from: dayjs().subtract(days, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
@@ -32,10 +32,8 @@ export function DayBook() {
   const byMode: any[] = data?.byMode ?? [];
   const bySource: any[] = data?.bySource ?? [];
   const byCollector: any[] = data?.byCollector ?? [];
-  const trend: any[] = data?.trend ?? [];
   const rows: any[] = data?.rows ?? [];
   const prev = data?.previous;
-  const modeDonut = byMode.map((m) => ({ mode: m.mode, amount: Number(m.in) })).filter((m) => m.amount > 0);
 
   return (
     <Box>
@@ -47,16 +45,6 @@ export function DayBook() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<NorthEastRounded />} accent={SEMANTIC.danger} label="Money out" value={inr(data.totals.cashOut)} current={Number(data.totals.cashOut)} previous={prev ? Number(prev.cashOut) : undefined} higherIsBetter={false} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceRounded />} accent={SEMANTIC.info} label="Net position" value={inr(data.totals.net)} current={Number(data.totals.net)} previous={prev ? Number(prev.net) : undefined} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SwapVertRounded />} accent="#8b5cf6" label="Movements" value={String(data.totals.movements)} /></Grid>
-          </Grid>
-
-          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, md: 8 }}>
-              <TrendChart title="Cash flow over time" subtitle="Money in vs out, per day" data={trend} xKey="date"
-                series={[{ key: "in", label: "In (₹)" }, { key: "out", label: "Out (₹)" }]} valueFormatter={inr} height={280} />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <DonutChart title="Collections by tender" data={modeDonut} nameKey="mode" valueKey="amount" valueFormatter={inr} height={280} />
-            </Grid>
           </Grid>
 
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
@@ -140,10 +128,7 @@ export function RevenueAnalytics() {
   const byCategory: any[] = data?.byCategory ?? [];
   const byDoctor: any[] = data?.byDoctor ?? [];
   const byDepartment: any[] = data?.byDepartment ?? [];
-  const trend: any[] = data?.trend ?? [];
   const prev = data?.previous;
-  const catDonut = byCategory.map((c) => ({ category: c.category, amount: Number(c.amount) })).filter((c) => c.amount > 0);
-  const topDoctors = byDoctor.slice(0, 10).map((d) => ({ doctor: d.doctor, amount: Number(d.amount) }));
 
   return (
     <Box>
@@ -156,21 +141,6 @@ export function RevenueAnalytics() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalOfferRounded />} accent={SEMANTIC.warning} label="Discount" value={inr(data.totals.discount)} current={Number(data.totals.discount)} previous={prev ? Number(prev.discount) : undefined} higherIsBetter={false} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.info} label="Tax (GST)" value={inr(data.totals.tax)} current={Number(data.totals.tax)} previous={prev ? Number(prev.tax) : undefined} /></Grid>
           </Grid>
-
-          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, md: 8 }}>
-              <TrendChart title="Billed revenue over time" subtitle="Net per day" data={trend} xKey="date" series={[{ key: "net", label: "Net (₹)" }]} valueFormatter={inr} height={280} />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <DonutChart title="Revenue by category" data={catDonut} nameKey="category" valueKey="amount" valueFormatter={inr} height={280} />
-            </Grid>
-          </Grid>
-
-          {topDoctors.length > 0 && (
-            <Box sx={{ mb: 2.5 }}>
-              <BreakdownBar title="Top doctors by billed revenue" data={topDoctors} categoryKey="doctor" valueKey="amount" valueName="Revenue" colorIndex={2} valueFormatter={inr} height={300} />
-            </Box>
-          )}
 
           <Grid container spacing={2.5}>
             <Grid size={{ xs: 12, md: 6 }}>

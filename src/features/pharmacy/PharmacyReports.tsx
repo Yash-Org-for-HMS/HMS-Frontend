@@ -53,8 +53,8 @@ export default function PharmacyReports() {
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENTS.pharmacy} label="Orders dispensed" value={s?.totalOrders || 0} current={s?.totalOrders} previous={p?.totalOrders} spark={trend.map((t) => t.orders)} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Total sales" value={inr(s?.totalSales)} current={s?.totalSales} previous={p?.totalSales} spark={trend.map((t) => t.sales)} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENTS.pharmacy} label="Orders dispensed" value={s?.totalOrders || 0} current={s?.totalOrders} previous={p?.totalOrders} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Total sales" value={inr(s?.totalSales)} current={s?.totalSales} previous={p?.totalSales} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.info} label="Avg order value" value={inr(s?.avgOrderValue)} current={s?.avgOrderValue} previous={p?.avgOrderValue} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<LocalPharmacyRounded />} accent={ACCENTS.ipd} label="IPD meds issued" value={inr(s?.ipdMedicationValue)} current={s?.ipdMedicationValue} previous={p?.ipdMedicationValue} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.warning} label="Low stock items" value={s?.lowStockCount || 0} /></Grid>

@@ -13,7 +13,7 @@ import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 import { ACCENTS, SEMANTIC } from "@/styles/accents";
-import { KpiCard, ReportFilters, ReportTable, TrendChart, BreakdownBar, DonutChart, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = ACCENTS.reception;
 const inr = formatINRAuto;
@@ -53,8 +53,6 @@ export function Receipts() {
     queryFn: async () => (await axiosInstance.get("/reception/reports/receipts", { params: { from: range.from, to: range.to } })).data.data,
   });
   const rows: any[] = data?.rows ?? [];
-  const trend: any[] = data?.trend ?? [];
-  const byMethod: any[] = (data?.byMethod ?? []).map((m: any) => ({ method: m.method, amount: Number(m.amount) }));
   const prev = data?.previous;
 
   return (
@@ -63,14 +61,8 @@ export function Receipts() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Collected" value={inr(data.totals.gross)} current={Number(data.totals.gross)} previous={prev ? Number(prev.gross) : undefined} spark={trend.map((t) => t.amount)} /></Grid>
-                <Grid size={{ xs: 12 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Receipts" value={String(data.totals.count)} current={data.totals.count} previous={prev?.count} /></Grid>
-              </Grid>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}><TrendChart title="Collection over time" subtitle="Per day" data={trend} xKey="date" series={[{ key: "amount", label: "Collected (₹)" }]} valueFormatter={inr} height={260} /></Grid>
-            <Grid size={{ xs: 12, md: 4 }}><DonutChart title="By payment method" data={byMethod} nameKey="method" valueKey="amount" valueFormatter={inr} height={260} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Collected" value={inr(data.totals.gross)} current={Number(data.totals.gross)} previous={prev ? Number(prev.gross) : undefined} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Receipts" value={String(data.totals.count)} current={data.totals.count} previous={prev?.count} /></Grid>
           </Grid>
           <ReportTable
             title="Receipt ledger"
@@ -101,7 +93,6 @@ export function Outstanding() {
     queryFn: async () => (await axiosInstance.get("/reception/reports/outstanding", { params: { from: range.from, to: range.to } })).data.data,
   });
   const rows: any[] = data?.rows ?? [];
-  const topDebtors = rows.slice(0, 8).map((r) => ({ name: r.patientName, balance: Number(r.balance) }));
 
   return (
     <Box>
@@ -109,14 +100,9 @@ export function Outstanding() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.danger} label="Total dues" value={inr(data.totals.totalDues)} /></Grid>
-                <Grid size={{ xs: 6 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Invoices" value={String(data.totals.invoices)} /></Grid>
-                <Grid size={{ xs: 6 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.info} label="Billed" value={inr(data.totals.totalBilled)} /></Grid>
-              </Grid>
-            </Grid>
-            <Grid size={{ xs: 12, md: 8 }}><BreakdownBar title="Top outstanding balances" subtitle="Most-owed patients" data={topDebtors} categoryKey="name" valueKey="balance" valueName="Balance" colorIndex={7} valueFormatter={inr} height={280} /></Grid>
+            <Grid size={{ xs: 12, sm: 4, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.danger} label="Total dues" value={inr(data.totals.totalDues)} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Invoices" value={String(data.totals.invoices)} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.info} label="Billed" value={inr(data.totals.totalBilled)} /></Grid>
           </Grid>
           <ReportTable
             title="Outstanding invoices"
@@ -147,7 +133,6 @@ export function ServiceWise() {
     queryFn: async () => (await axiosInstance.get("/reception/reports/service-wise", { params: { from: range.from, to: range.to } })).data.data,
   });
   const rows: any[] = data?.rows ?? [];
-  const topServices = rows.slice(0, 10).map((r) => ({ service: r.service, amount: Number(r.amount) }));
 
   return (
     <Box>
@@ -155,13 +140,8 @@ export function ServiceWise() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Total revenue" value={inr(data.totals.total)} /></Grid>
-                <Grid size={{ xs: 12 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Services" value={String(data.totals.services)} /></Grid>
-              </Grid>
-            </Grid>
-            <Grid size={{ xs: 12, md: 8 }}><BreakdownBar title="Top services by revenue" data={topServices} categoryKey="service" valueKey="amount" valueName="Revenue" colorIndex={2} valueFormatter={inr} height={320} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Total revenue" value={inr(data.totals.total)} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Services" value={String(data.totals.services)} /></Grid>
           </Grid>
           <ReportTable
             title="Service-wise revenue"
@@ -186,7 +166,6 @@ export function PharmacyExpense() {
     queryFn: async () => (await axiosInstance.get("/reception/reports/pharmacy-expense", { params: { from: range.from, to: range.to } })).data.data,
   });
   const rows: any[] = data?.rows ?? [];
-  const trend: any[] = data?.trend ?? [];
   const prev = data?.previous;
 
   return (
@@ -195,13 +174,8 @@ export function PharmacyExpense() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}><KpiCard icon={<Inventory2Rounded />} accent={SEMANTIC.warning} label="Total spend" value={inr(data.totals.total)} current={Number(data.totals.total)} previous={prev ? Number(prev.total) : undefined} higherIsBetter={false} spark={trend.map((t) => t.amount)} /></Grid>
-                <Grid size={{ xs: 12 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Purchase orders" value={String(data.totals.purchaseOrders)} current={data.totals.purchaseOrders} previous={prev?.purchaseOrders} higherIsBetter={false} /></Grid>
-              </Grid>
-            </Grid>
-            <Grid size={{ xs: 12, md: 8 }}><TrendChart title="Procurement over time" subtitle="Purchase-order spend per day" data={trend} xKey="date" series={[{ key: "amount", label: "Spend (₹)" }]} valueFormatter={inr} height={280} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<Inventory2Rounded />} accent={SEMANTIC.warning} label="Total spend" value={inr(data.totals.total)} current={Number(data.totals.total)} previous={prev ? Number(prev.total) : undefined} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Purchase orders" value={String(data.totals.purchaseOrders)} current={data.totals.purchaseOrders} previous={prev?.purchaseOrders} higherIsBetter={false} /></Grid>
           </Grid>
           <ReportTable
             title="Purchase orders"

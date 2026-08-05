@@ -195,7 +195,7 @@ export function ReferralsByDoctor() {
         <Box>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicalInformationRounded />} accent={ACCENT} label="Referring doctors" value={String(s.referringDoctors)} current={s.referringDoctors} previous={prev?.referringDoctors} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} accent={SEMANTIC.success} label="Referred patients" value={String(s.referredPatients)} current={s.referredPatients} previous={prev?.referredPatients} spark={trend.map((t) => t.patients)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} accent={SEMANTIC.success} label="Referred patients" value={String(s.referredPatients)} current={s.referredPatients} previous={prev?.referredPatients} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CallSplitRounded />} accent={SEMANTIC.info} label="Internal / External" value={`${s.internal ?? 0} / ${s.external ?? 0}`} sub="referrers" /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} accent="#8b5cf6" label="Total visits" value={String(s.totalVisits)} current={s.totalVisits} previous={prev?.totalVisits} /></Grid>
           </Grid>
@@ -331,7 +331,7 @@ export function Analytics() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} accent={ACCENT} label="Total appointments" value={String(t.appointments)} current={t.appointments} previous={p?.appointments} spark={(data.trend || []).map((x: any) => x.total)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} accent={ACCENT} label="Total appointments" value={String(t.appointments)} current={t.appointments} previous={p?.appointments} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} accent={SEMANTIC.success} label="Completion rate" value={`${t.completionRate}%`} current={t.completionRate} previous={p?.completionRate} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CancelRounded />} accent={SEMANTIC.danger} label="Cancellation rate" value={`${t.cancellationRate}%`} current={t.cancellationRate} previous={p?.cancellationRate} higherIsBetter={false} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent="#8b5cf6" label="Avg / day" value={String(t.avgPerDay)} current={t.avgPerDay} previous={p?.avgPerDay} /></Grid>
@@ -371,7 +371,7 @@ export function Collection() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Gross collected" value={inr(t.gross)} current={t.gross} previous={p?.gross} spark={(data.byDay || []).map((d: any) => d.amount)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Gross collected" value={inr(t.gross)} current={t.gross} previous={p?.gross} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} accent={SEMANTIC.danger} label="Refunds" value={inr(t.refunded)} current={t.refunded} previous={p?.refunded} higherIsBetter={false} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={ACCENT} label="Net" value={inr(t.net)} current={t.net} previous={p?.net} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent="#8b5cf6" label="Transactions" value={String(t.transactions)} current={t.transactions} previous={p?.transactions} /></Grid>
