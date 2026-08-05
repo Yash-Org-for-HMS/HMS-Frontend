@@ -4,6 +4,7 @@ import { Box, Grid } from "@mui/material";
 import {
   SouthEastRounded, NorthEastRounded, AccountBalanceRounded, SwapVertRounded,
   TrendingUpRounded, ReceiptLongRounded, LocalOfferRounded, AccountBalanceWalletRounded,
+  ReplayRounded, PercentRounded, BlockRounded, NumbersRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
@@ -185,6 +186,148 @@ export function RevenueAnalytics() {
                 columns={[{ key: "doctor", label: "Doctor" }, money("amount", "Revenue")]} rows={byDoctor} />
             </Grid>
           </Grid>
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ── Refund register ───────────────────────────────────────────────────────────
+export function RefundRegister() {
+  const [range, setRange] = useState<DateRange>(() => rangeFrom(29));
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["finance-refunds", range.from, range.to],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/refund-register", { params: { from: range.from, to: range.to } })).data.data,
+  });
+  const byReason: any[] = data?.byReason ?? [];
+  const byProcessor: any[] = data?.byProcessor ?? [];
+  const rows: any[] = data?.rows ?? [];
+
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={setRange} />
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} accent={SEMANTIC.danger} label="Total refunded" value={inr(data.totals.total)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<NumbersRounded />} accent="#8b5cf6" label="Refunds" value={String(data.totals.count)} /></Grid>
+          </Grid>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <ReportTable title="By reason" filename={`refunds_by_reason_${range.from}_${range.to}`} maxHeight={300}
+                columns={[{ key: "reason", label: "Reason" }, { key: "count", label: "Count", align: "right" }, money("amount", "Amount")]} rows={byReason} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <ReportTable title="By processed by" filename={`refunds_by_processor_${range.from}_${range.to}`} maxHeight={300}
+                columns={[{ key: "processor", label: "Processed by" }, { key: "count", label: "Count", align: "right" }, money("amount", "Amount")]} rows={byProcessor} />
+            </Grid>
+          </Grid>
+          <ReportTable
+            title="Refund register"
+            filename={`refund_register_${range.from}_${range.to}`}
+            columns={[
+              { key: "date", label: "Date", format: (v) => (v ? dayjs(v).format("DD MMM YY HH:mm") : "—"), value: (r) => ts(r.date) },
+              { key: "patientName", label: "Patient" },
+              { key: "uhid", label: "UHID" },
+              { key: "invoiceNumber", label: "Invoice" },
+              money("amount", "Amount"),
+              { key: "reason", label: "Reason" },
+              { key: "processedBy", label: "Processed by" },
+              { key: "status", label: "Status" },
+            ]}
+            rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ── Discount / concession register ────────────────────────────────────────────
+export function DiscountRegister() {
+  const [range, setRange] = useState<DateRange>(() => rangeFrom(29));
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["finance-discounts", range.from, range.to],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/discount-register", { params: { from: range.from, to: range.to } })).data.data,
+  });
+  const byUser: any[] = data?.byUser ?? [];
+  const rows: any[] = data?.rows ?? [];
+
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={setRange} />
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalOfferRounded />} accent={SEMANTIC.warning} label="Total discount" value={inr(data.totals.totalDiscount)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<NumbersRounded />} accent="#8b5cf6" label="Discounted invoices" value={String(data.totals.count)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PercentRounded />} accent={SEMANTIC.info} label="Avg discount" value={`${data.totals.avgPct}%`} /></Grid>
+          </Grid>
+          <Box sx={{ mb: 2.5 }}>
+            <ReportTable title="By staff (who applied)" filename={`discounts_by_user_${range.from}_${range.to}`} maxHeight={300}
+              columns={[{ key: "user", label: "Staff" }, { key: "count", label: "Count", align: "right" }, money("amount", "Discount")]} rows={byUser} />
+          </Box>
+          <ReportTable
+            title="Discount / concession register"
+            filename={`discount_register_${range.from}_${range.to}`}
+            columns={[
+              { key: "date", label: "Date", format: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "—"), value: (r) => ts(r.date) },
+              { key: "invoiceNumber", label: "Invoice" },
+              { key: "patientName", label: "Patient" },
+              money("gross", "Gross"),
+              money("discount", "Discount"),
+              money("net", "Net"),
+              { key: "discountPct", label: "Disc %", align: "right", format: (v) => `${v}%`, value: (r) => Number(r.discountPct) },
+              { key: "appliedBy", label: "Applied by" },
+            ]}
+            rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ── Cancelled / void invoice register ─────────────────────────────────────────
+export function CancelledInvoices() {
+  const [range, setRange] = useState<DateRange>(() => rangeFrom(29));
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["finance-cancelled", range.from, range.to],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/cancelled-invoices", { params: { from: range.from, to: range.to } })).data.data,
+  });
+  const byUser: any[] = data?.byUser ?? [];
+  const rows: any[] = data?.rows ?? [];
+
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={setRange} />
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<BlockRounded />} accent={SEMANTIC.danger} label="Cancelled invoices" value={String(data.totals.count)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceRounded />} accent={SEMANTIC.warning} label="Value voided" value={inr(data.totals.totalValue)} /></Grid>
+          </Grid>
+          <Box sx={{ mb: 2.5 }}>
+            <ReportTable title="By staff (who cancelled)" filename={`cancelled_by_user_${range.from}_${range.to}`} maxHeight={300}
+              columns={[{ key: "user", label: "Staff" }, { key: "count", label: "Count", align: "right" }, money("amount", "Value")]} rows={byUser} />
+          </Box>
+          <ReportTable
+            title="Cancelled / void invoice register"
+            filename={`cancelled_invoices_${range.from}_${range.to}`}
+            columns={[
+              { key: "invoiceNumber", label: "Invoice" },
+              { key: "patientName", label: "Patient" },
+              { key: "uhid", label: "UHID" },
+              { key: "invoiceDate", label: "Invoice date", format: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "—"), value: (r) => ts(r.invoiceDate) },
+              { key: "cancelledOn", label: "Cancelled on", format: (v) => (v ? dayjs(v).format("DD MMM YY HH:mm") : "—"), value: (r) => ts(r.cancelledOn) },
+              money("amount", "Value"),
+              { key: "cancelledBy", label: "Cancelled by" },
+            ]}
+            rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+          />
         </Box>
       )}
     </Box>
