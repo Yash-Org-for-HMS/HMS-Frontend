@@ -257,6 +257,7 @@ export function DiscountRegister() {
               money("net", "Net"),
               { key: "discountPct", label: "Disc %", align: "right", format: (v) => `${v}%`, value: (r) => Number(r.discountPct) },
               { key: "appliedBy", label: "Applied by" },
+              { key: "reason", label: "Reason" },
             ]}
             rows={rows}
             truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
@@ -301,6 +302,7 @@ export function CancelledInvoices() {
               { key: "cancelledOn", label: "Cancelled on", format: (v) => (v ? dayjs(v).format("DD MMM YY HH:mm") : "—"), value: (r) => ts(r.cancelledOn) },
               money("amount", "Value"),
               { key: "cancelledBy", label: "Cancelled by" },
+              { key: "reason", label: "Reason" },
             ]}
             rows={rows}
             truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}

@@ -62,8 +62,14 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   // Discount & Tax
   const [defaultTaxPct, setDefaultTaxPct] = useState(0);
   const [discountInput, setDiscountInput] = useState("");
+  const [discountReasonInput, setDiscountReasonInput] = useState("");
   const [taxInput, setTaxInput] = useState("");
   const [adjusting, setAdjusting] = useState(false);
+
+  // Void / cancel invoice
+  const [showVoid, setShowVoid] = useState(false);
+  const [voidReason, setVoidReason] = useState("");
+  const [voiding, setVoiding] = useState(false);
 
   // Refund
   const [showRefund, setShowRefund] = useState(false);
@@ -247,6 +253,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       const res = await axiosInstance.put(`/reception/billing/invoices/${invoice.invoiceId}/adjust`, {
         discountAmount: Number(discountInput || 0),
         taxPercent: Number(taxInput || 0),
+        discountReason: discountReasonInput.trim() || undefined,
       });
       if (res.data.success) {
         toast.success("Discount & tax applied");
@@ -256,6 +263,24 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       toast.error(getApiErrorMessage(err, "Failed to update invoice"));
     } finally {
       setAdjusting(false);
+    }
+  };
+
+  const handleVoid = async () => {
+    if (!invoice) return;
+    try {
+      setVoiding(true);
+      const res = await axiosInstance.post(`/reception/billing/invoices/${invoice.invoiceId}/cancel`, { reason: voidReason.trim() });
+      if (res.data.success) {
+        toast.success("Invoice voided");
+        setShowVoid(false);
+        setVoidReason("");
+        await fetchBillingData();
+      }
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Failed to void invoice"));
+    } finally {
+      setVoiding(false);
     }
   };
 
@@ -633,6 +658,15 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                           helperText={defaultTaxPct ? `Hospital default: ${defaultTaxPct}%` : undefined}
                         />
                       </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <TextField
+                          fullWidth size="small"
+                          label="Reason for discount (optional)"
+                          placeholder="e.g. Camp concession, staff waiver, goodwill"
+                          value={discountReasonInput}
+                          onChange={(e) => setDiscountReasonInput(e.target.value)}
+                        />
+                      </Grid>
                     </Grid>
                     <Button
                       fullWidth variant="outlined"
@@ -642,6 +676,48 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                     >
                       {adjusting ? "Applying..." : "Apply Discount & Tax"}
                     </Button>
+                  </Box>
+                )}
+
+                {!isFullyPaid && !invoice?.admissionId && invoice?.invoiceStatus !== "CANCELLED" && (
+                  <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(239,68,68,0.05)", borderRadius: 2, border: "1px dashed rgba(239,68,68,0.3)" }}>
+                    <Typography variant="subtitle2" sx={{ color: SEMANTIC.danger, fontWeight: 700, mb: showVoid ? 2 : 1 }}>
+                      Void invoice
+                    </Typography>
+                    {!showVoid ? (
+                      <>
+                        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
+                          Cancels this invoice and frees its charges to be re-billed. Not available once any payment is collected (refund first).
+                        </Typography>
+                        <Button fullWidth variant="outlined" onClick={() => setShowVoid(true)}
+                          sx={{ color: SEMANTIC.danger, borderColor: "rgba(239,68,68,0.5)", fontWeight: 600 }}>
+                          Void invoice
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <TextField
+                          fullWidth size="small"
+                          label="Reason (required)"
+                          placeholder="e.g. Billed in error, duplicate invoice"
+                          value={voidReason}
+                          onChange={(e) => setVoidReason(e.target.value)}
+                          multiline rows={2}
+                          sx={{ mb: 2 }}
+                        />
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          <Button fullWidth variant="outlined" onClick={() => { setShowVoid(false); setVoidReason(""); }} disabled={voiding}
+                            sx={{ color: "text.secondary", borderColor: "divider", fontWeight: 600 }}>
+                            Cancel
+                          </Button>
+                          <Button fullWidth variant="contained" onClick={handleVoid}
+                            disabled={voiding || voidReason.trim().length < 3}
+                            sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: "#dc2626" }, fontWeight: 700 }}>
+                            {voiding ? "Voiding..." : "Confirm Void"}
+                          </Button>
+                        </Box>
+                      </>
+                    )}
                   </Box>
                 )}
 
