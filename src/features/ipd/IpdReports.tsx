@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import { Box, Paper, Grid, TextField, Tabs, Tab } from "@mui/material";
-import { LocalHotelRounded, ReplayRounded, AccessTimeRounded, PersonAddRounded, SavingsRounded } from "@mui/icons-material";
+import { LocalHotelRounded, ReplayRounded, AccessTimeRounded, PersonAddRounded, SavingsRounded, SpeedRounded, HeightRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import ErrorState from "@/components/ErrorState";
@@ -189,6 +189,42 @@ export function IpAdvances() {
             ]}
             rows={rows}
             truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+export function Occupancy() {
+  const [range, setRange] = useState<DateRange>(initialRange);
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["ipd-report-occupancy", range.from, range.to],
+    queryFn: async () => (await axiosInstance.get("/ipd/reports/occupancy", { params: { from: range.from, to: range.to } })).data.data,
+  });
+  const rows: any[] = data?.rows ?? [];
+  const prev = data?.previous;
+
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={setRange} />
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHotelRounded />} accent={ACCENT} label="Avg occupancy" value={`${data.totals.avgOccupancy}%`} sub={`${data.totals.totalBeds} beds`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent={SEMANTIC.info} label="Avg stay (ALOS)" value={`${data.totals.alos} d`} current={data.totals.alos} previous={prev?.alos} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SpeedRounded />} accent={SEMANTIC.success} label="Bed turnover" value={String(data.totals.turnover)} sub={`${data.totals.discharges} discharges`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HeightRounded />} accent="#8b5cf6" label="Peak occupied" value={String(data.totals.peakOccupied)} sub={`of ${data.totals.totalBeds}`} /></Grid>
+          </Grid>
+          <ReportTable
+            title="Daily occupancy"
+            filename={`occupancy_${range.from}_${range.to}`}
+            columns={[
+              { key: "date", label: "Date", format: fmtDate, value: (r) => ts(r.date) },
+              { key: "occupied", label: "Occupied beds", align: "right" },
+              { key: "occupancyRate", label: "Occupancy %", align: "right", format: (v) => `${v}%`, value: (r) => Number(r.occupancyRate) },
+            ]}
+            rows={rows}
           />
         </Box>
       )}

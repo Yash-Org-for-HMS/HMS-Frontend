@@ -9,7 +9,7 @@ import { isAdmin as isAdminRole } from "@/constants/roles";
 import {
   DailyOpd, Analytics, Collection, ReferralsByDoctor, OpRegistration, OpBills, DiagnosisWise, Census,
 } from "./Reports";
-import { InPatients, Discharges, IpRegistrations, IpAdvances } from "../ipd/IpdReports";
+import { InPatients, Discharges, IpRegistrations, IpAdvances, Occupancy } from "../ipd/IpdReports";
 import { Outstanding, PatientStatement, Receipts, ServiceWise, PharmacyExpense } from "../billing/BillingReports";
 import { DayBook, RevenueAnalytics, RefundRegister, DiscountRegister, CancelledInvoices } from "../billing/FinanceReports";
 import LabReports from "../lab/LabReports";
@@ -39,6 +39,7 @@ const GROUPS: ReportGroup[] = [
     module: "IPD",
     items: [
       { key: "ipd-census", label: "Ward Census & Occupancy", Comp: Census },
+      { key: "ipd-occupancy", label: "Occupancy Trend & ALOS", Comp: Occupancy },
       { key: "inpatient-list", label: "In-Patient List", Comp: InPatients },
       { key: "discharges", label: "Discharges", Comp: Discharges },
       { key: "ip-registrations", label: "IP Registrations", Comp: IpRegistrations },
