@@ -104,6 +104,12 @@ export default function CommandPalette() {
   // /hospitals — which would otherwise flip this flag and, combined with the
   // early return below, change the hook count between renders (crash).
   const isClinicalRoute = /^\/(reception|doctor|nurse|lab|pharmacy|hospital\/)/.test(location.pathname);
+  // The hospital login + forced change-password pages match the `hospital/`
+  // prefix above but are PRE-app: no real session yet (change-password holds
+  // only a temp token), so the palette must not open there — it would pop an
+  // empty dialog and, worse, offer a navigation escape from the password gate
+  // if a stale session lingered. Mirrors AdminCommandPalette's auth-route guard.
+  const isAuthRoute = location.pathname === "/hospital/login" || location.pathname.startsWith("/hospital/change-password");
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -135,7 +141,7 @@ export default function CommandPalette() {
   // including the super-admin portal and every non-clinical page. Bail out
   // before doing any of the sessionStorage parsing or list filtering below;
   // only the keydown listener above needs to always be alive.
-  if (!isClinicalRoute) return null;
+  if (!isClinicalRoute || isAuthRoute) return null;
 
   const handleSearchChange = (val: string) => {
     setSearch(val);
@@ -401,7 +407,7 @@ export default function CommandPalette() {
                   <ListItemIcon sx={{ minWidth: 40, color: "#06b6d4" }}><PersonRounded /></ListItemIcon>
                   <ListItemText
                     primary={`${p.firstName} ${p.lastName}`}
-                    secondary={`MRN: ${p.uhidNumber} • ${p.phone}`}
+                    secondary={`MRN: ${p.uhidNumber || "—"}${p.phone ? ` • ${p.phone}` : ""}`}
                     primaryTypographyProps={{ fontWeight: 600, color: "text.primary" }}
                   />
                 </ListItemButton>
