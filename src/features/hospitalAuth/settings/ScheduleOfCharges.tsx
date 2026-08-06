@@ -307,11 +307,27 @@ export default function ScheduleOfCharges() {
             <TableContainer sx={{ maxHeight: "calc(100vh - 300px)", overflowX: "auto" }}>
               <Table stickyHeader size="small" sx={{ minWidth: 520 + activeRoomClasses.length * 90 }}>
                 <TableHead>
+                  {activeRoomClasses.length > 0 && (
+                    // Group row: OPD = the base price · IPD = the per-room-class columns.
+                    // Kept static (non-sticky) so it scrolls away, leaving only the
+                    // column-name row pinned — avoids two overlapping sticky rows.
+                    <TableRow>
+                      <TableCell sx={{ ...headCellSx, position: "static", borderBottom: "none" }} />
+                      <TableCell align="right" sx={{ ...headCellSx, position: "static", borderBottom: "none" }}>OPD</TableCell>
+                      <TableCell align="center" colSpan={activeRoomClasses.length}
+                        sx={{ ...headCellSx, position: "static", borderBottom: "none", color: ACCENT, borderLeft: "1px solid", borderColor: "divider" }}>
+                        IPD · by room class
+                      </TableCell>
+                      <TableCell sx={{ ...headCellSx, position: "static", borderBottom: "none" }} />
+                      <TableCell sx={{ ...headCellSx, position: "static", borderBottom: "none" }} />
+                    </TableRow>
+                  )}
                   <TableRow>
                     <TableCell sx={headCellSx}>Charge / Procedure</TableCell>
-                    <TableCell align="right" sx={headCellSx}>Base</TableCell>
-                    {activeRoomClasses.map((rc) => (
-                      <TableCell key={rc.roomClassId} align="right" sx={headCellSx}>{rc.name}</TableCell>
+                    <TableCell align="right" sx={headCellSx}>{activeRoomClasses.length > 0 ? "OPD (Base)" : "Base (OPD)"}</TableCell>
+                    {activeRoomClasses.map((rc, i) => (
+                      <TableCell key={rc.roomClassId} align="right"
+                        sx={{ ...headCellSx, ...(i === 0 ? { borderLeft: "1px solid", borderColor: "divider" } : {}) }}>{rc.name}</TableCell>
                     ))}
                     <TableCell align="center" sx={headCellSx}>Status</TableCell>
                     <TableCell sx={headCellSx} />
@@ -344,10 +360,10 @@ export default function ScheduleOfCharges() {
                             {meta && <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>{meta}</Typography>}
                           </TableCell>
                           <TableCell align="right" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>{inr(Number(it.price))}</TableCell>
-                          {activeRoomClasses.map((rc) => {
+                          {activeRoomClasses.map((rc, i) => {
                             const has = priced.has(rc.roomClassId);
                             return (
-                              <TableCell key={rc.roomClassId} align="right" sx={{ whiteSpace: "nowrap", fontWeight: has ? 600 : 400, color: has ? ACCENT : "text.disabled" }}>
+                              <TableCell key={rc.roomClassId} align="right" sx={{ whiteSpace: "nowrap", fontWeight: has ? 600 : 400, color: has ? ACCENT : "text.disabled", ...(i === 0 ? { borderLeft: "1px solid", borderColor: "divider" } : {}) }}>
                                 {has ? inr(priced.get(rc.roomClassId)!) : "—"}
                               </TableCell>
                             );
@@ -500,7 +516,7 @@ function PriceHistoryDialog({ item, onClose }: { item: Item; onClose: () => void
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, px: 2.5, py: 2,
               bgcolor: (t) => (t.palette.mode === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)") }}>
               <Box>
-                <Typography sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 700, fontSize: "0.62rem" }}>Current base price</Typography>
+                <Typography sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 700, fontSize: "0.62rem" }}>Current OPD (base) price</Typography>
                 <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.15 }}>{inr(Number(item.price))}</Typography>
               </Box>
               <Box sx={{ textAlign: "right" }}>
@@ -816,7 +832,8 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
             <TextField label="Unit (optional)" placeholder="e.g. per day" value={unit} onChange={(e) => setUnit(e.target.value)} fullWidth />
           </Stack>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <TextField label="Base price (₹)" type="number" value={price} onChange={(e) => setPrice(e.target.value)} fullWidth
+            <TextField label="OPD price (₹)" type="number" value={price} onChange={(e) => setPrice(e.target.value)} fullWidth
+              helperText="Outpatient rate · IPD fallback"
               InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
             <TextField label="Tax % (optional)" type="number" value={tax} onChange={(e) => setTax(e.target.value)} fullWidth
               helperText="0 / blank = GST-exempt" />
@@ -826,9 +843,9 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
 
           {roomClasses.length > 0 && (
             <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>Room-wise pricing (optional)</Typography>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>IPD pricing — by room class (optional)</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
-                Set a price per room class; leave blank to use the base price.
+                Rate for admitted (IPD) patients, per room class. Leave blank to use the OPD (base) price.
               </Typography>
               <Stack spacing={1.5}>
                 {roomClasses.map((rc) => (
@@ -836,7 +853,7 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
                     key={rc.roomClassId} size="small" type="number" label={rc.name} fullWidth
                     value={roomPrices[rc.roomClassId] ?? ""}
                     onChange={(e) => setRoomPrices((m) => ({ ...m, [rc.roomClassId]: e.target.value }))}
-                    placeholder={`Base ₹${price || "0"}`}
+                    placeholder={`OPD ₹${price || "0"}`}
                     InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }}
                   />
                 ))}
@@ -891,7 +908,7 @@ function RoomClassesDialog({ roomClasses, onClose, onChanged }: { roomClasses: R
       <DialogTitle>Room Classes</DialogTitle>
       <DialogContent>
         <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
-          These become the price columns when adding a charge (e.g. General, Semi-Private, Private, Deluxe, ICU).
+          Room classes are your IPD room tiers — each becomes a per-room IPD price column when adding a charge (e.g. General, Semi-Private, Private, Deluxe, ICU). OPD bills use the base price.
         </Typography>
         <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
           <TextField size="small" fullWidth placeholder="New room class name" value={newName}
