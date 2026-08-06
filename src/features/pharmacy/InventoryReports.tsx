@@ -270,7 +270,7 @@ export function OpdIpdSplit() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<StorefrontRounded />} accent={ACCENTS.pharmacy} label="OPD sales" value={inr(data.totals.opd.value)} sub={`${data.totals.opd.orders} orders · ${data.totals.opd.qty} units`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<StorefrontRounded />} accent={ACCENTS.pharmacy} label="OPD billed" value={inr(data.totals.opd.value)} sub={`${data.totals.opd.orders} orders · ${data.totals.opd.qty} units`} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalPharmacyRounded />} accent={ACCENTS.ipd} label="IPD meds issued" value={inr(data.totals.ipd.value)} sub={`${data.totals.ipd.orders} orders · ${data.totals.ipd.qty} units`} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Combined value" value={inr(data.totals.combined.value)} sub={`${data.totals.combined.qty} units`} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<DonutLargeRounded />} accent={SEMANTIC.info} label="IPD share" value={`${ipdShare}%`} sub="of pharmacy value" /></Grid>
