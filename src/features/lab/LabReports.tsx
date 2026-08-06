@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { Box, Grid, Paper, Tabs, Tab } from "@mui/material";
+import { Box, Grid, Paper, Tabs, Tab, TextField, MenuItem, Typography } from "@mui/material";
 import {
   ScienceRounded, CheckCircleRounded, HourglassEmptyRounded, BiotechRounded,
   MonitorHeartRounded, WarningAmberRounded, AccessTimeRounded, CurrencyRupeeRounded,
+  SpeedRounded, VerifiedRounded, PendingActionsRounded, TimelapseRounded,
+  CrisisAlertRounded, PersonRounded, ReportProblemRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -129,6 +131,175 @@ export function TestWise() {
   );
 }
 
+// ── Turnaround & SLA ──────────────────────────────────────────────────────────
+// TAT distribution, SLA compliance, avg/median/p90, and the slowest orders — the
+// core lab quality view, for lab and radiology side by side.
+export function Turnaround() {
+  const [range, setRange] = useState<DateRange>(initialRange);
+  const [doctorId, setDoctorId] = useState("");
+  const [sla, setSla] = useState("24");
+  const { data: opts } = useReportFilterOptions();
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["lab-turnaround", range.from, range.to, doctorId, sla],
+    queryFn: async () => (await axiosInstance.get("/lab/reports/turnaround", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined, slaHours: sla } })).data.data,
+  });
+  const dist: any[] = data?.distribution ?? [];
+  const slowest: any[] = data?.slowest ?? [];
+
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={setRange}>
+        <ReportFilterSelect label="Ordering doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
+        <TextField select size="small" label="SLA target" value={sla} onChange={(e) => setSla(e.target.value)} sx={{ minWidth: 120 }}>
+          {["12", "24", "48", "72"].map((h) => <MenuItem key={h} value={h}>{h}h</MenuItem>)}
+        </TextField>
+      </ReportFilters>
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SpeedRounded />} accent={ACCENTS.lab} label="Lab avg TAT" value={`${data.lab.avg}h`} sub={`median ${data.lab.median}h · p90 ${data.lab.p90}h`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<VerifiedRounded />} accent={data.lab.slaPct >= 90 ? SEMANTIC.success : data.lab.slaPct >= 75 ? SEMANTIC.warning : SEMANTIC.danger} label={`Lab SLA (≤${sla}h)`} value={`${data.lab.slaPct}%`} sub={`${data.lab.count} completed`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={ACCENTS.labDark} label="Radiology avg TAT" value={`${data.radiology.avg}h`} sub={`median ${data.radiology.median}h · p90 ${data.radiology.p90}h`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<VerifiedRounded />} accent={data.radiology.slaPct >= 90 ? SEMANTIC.success : data.radiology.slaPct >= 75 ? SEMANTIC.warning : SEMANTIC.danger} label={`Radiology SLA (≤${sla}h)`} value={`${data.radiology.slaPct}%`} sub={`${data.radiology.count} reported`} /></Grid>
+          </Grid>
+
+          <Box sx={{ mb: 2.5 }}>
+            <ReportTable title="Turnaround-time distribution" filename={`lab_tat_distribution_${range.from}_${range.to}`}
+              columns={[
+                { key: "bucket", label: "Turnaround" },
+                num("lab", "Lab orders"),
+                num("radiology", "Radiology orders"),
+              ]} rows={dist} />
+          </Box>
+
+          <ReportTable
+            title={`Slowest orders${data.slowestTotal > data.slowestShown ? ` (top ${data.slowestShown} of ${data.slowestTotal})` : ""}`}
+            filename={`lab_slowest_${range.from}_${range.to}`}
+            emptyText="No completed orders with a measurable turnaround in this period."
+            columns={[
+              { key: "patient", label: "Patient" },
+              { key: "uhid", label: "UHID" },
+              { key: "modality", label: "Modality" },
+              { key: "detail", label: "Test / scan" },
+              { key: "doctor", label: "Ordering doctor" },
+              { key: "tatHours", label: "TAT (h)", align: "right", value: (r) => Number(r.tatHours) },
+              { key: "completedOn", label: "Completed" },
+            ]}
+            rows={slowest}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ── Pending & Backlog (live snapshot) ─────────────────────────────────────────
+// What's open right now: lab orders awaiting collection / in process and
+// radiology awaiting a report, with aging buckets and the oldest offenders.
+export function Pending() {
+  const [doctorId, setDoctorId] = useState("");
+  const { data: opts } = useReportFilterOptions();
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["lab-pending", doctorId],
+    queryFn: async () => (await axiosInstance.get("/lab/reports/pending", { params: { doctorId: doctorId || undefined } })).data.data,
+  });
+  const rows: any[] = data?.rows ?? [];
+  const byStage: any[] = data?.byStage ?? [];
+  const aging: any[] = data?.aging ?? [];
+
+  return (
+    <Box>
+      <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, alignItems: "center", flexWrap: "wrap" }}>
+        <ReportFilterSelect label="Ordering doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
+        {data && <Typography variant="caption" sx={{ color: "text.secondary" }}>Live snapshot as of {data.asOf} · open orders from the last {data.lookbackDays} days</Typography>}
+      </Box>
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PendingActionsRounded />} accent={SEMANTIC.warning} label="Lab pending" value={String(data.totals.pendingLab)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={ACCENTS.lab} label="Radiology pending" value={String(data.totals.pendingRadiology)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Breaching (> 48h)" value={String(data.totals.breaching)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimelapseRounded />} accent={ACCENTS.labDark} label="Oldest pending" value={`${data.totals.oldestHours}h`} /></Grid>
+          </Grid>
+
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <ReportTable title="By stage" filename="lab_pending_by_stage"
+                columns={[{ key: "stage", label: "Stage" }, num("count", "Orders"), { key: "oldestHours", label: "Oldest (h)", align: "right", value: (r) => Number(r.oldestHours) }]}
+                rows={byStage} emptyText="Nothing pending — the queue is clear." />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <ReportTable title="Aging" filename="lab_pending_aging"
+                columns={[{ key: "bucket", label: "Age" }, num("lab", "Lab"), num("radiology", "Radiology")]}
+                rows={aging} />
+            </Grid>
+          </Grid>
+
+          <ReportTable title="Oldest pending orders" filename="lab_pending_detail"
+            emptyText="Nothing pending — the queue is clear."
+            columns={[
+              { key: "patient", label: "Patient" },
+              { key: "uhid", label: "UHID" },
+              { key: "modality", label: "Modality" },
+              { key: "stage", label: "Stage" },
+              { key: "detail", label: "Test / scan" },
+              { key: "doctor", label: "Ordering doctor" },
+              { key: "ageHours", label: "Age (h)", align: "right", value: (r) => Number(r.ageHours) },
+              { key: "orderedOn", label: "Ordered" },
+            ]}
+            rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ── Critical Results register (patient safety) ────────────────────────────────
+export function CriticalResults() {
+  const [range, setRange] = useState<DateRange>(initialRange);
+  const [doctorId, setDoctorId] = useState("");
+  const { data: opts } = useReportFilterOptions();
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["lab-critical", range.from, range.to, doctorId],
+    queryFn: async () => (await axiosInstance.get("/lab/reports/critical", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined } })).data.data,
+  });
+  const rows: any[] = data?.rows ?? [];
+
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={setRange}>
+        <ReportFilterSelect label="Ordering doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
+      </ReportFilters>
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 4 }}><KpiCard icon={<CrisisAlertRounded />} accent={SEMANTIC.danger} label="Critical results" value={String(data.totals.critical)} /></Grid>
+            <Grid size={{ xs: 6, md: 4 }}><KpiCard icon={<PersonRounded />} accent={ACCENTS.lab} label="Patients affected" value={String(data.totals.patients)} /></Grid>
+            <Grid size={{ xs: 6, md: 4 }}><KpiCard icon={<ReportProblemRounded />} accent={SEMANTIC.warning} label="Unverified" value={String(data.totals.unverified)} /></Grid>
+          </Grid>
+          <ReportTable title="Critical results" filename={`lab_critical_${range.from}_${range.to}`}
+            emptyText="No critical results flagged in this period."
+            columns={[
+              { key: "date", label: "Date" },
+              { key: "patient", label: "Patient" },
+              { key: "uhid", label: "UHID" },
+              { key: "test", label: "Test" },
+              { key: "result", label: "Result" },
+              { key: "normalRange", label: "Reference range" },
+              { key: "doctor", label: "Ordering doctor" },
+              { key: "verified", label: "Status" },
+            ]}
+            rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 // The lab panel's reports page: aggregate Overview + the test-wise drill-down.
 export default function LabReports() {
   const [tab, setTab] = useState(0);
@@ -141,10 +312,16 @@ export default function LabReports() {
           sx={{ px: 1, "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 56 }, "& .Mui-selected": { color: `${ACCENT} !important` }, "& .MuiTabs-indicator": { bgcolor: ACCENT } }}>
           <Tab icon={<ScienceRounded fontSize="small" />} iconPosition="start" label="Overview" />
           <Tab icon={<BiotechRounded fontSize="small" />} iconPosition="start" label="Test-Wise" />
+          <Tab icon={<SpeedRounded fontSize="small" />} iconPosition="start" label="Turnaround & SLA" />
+          <Tab icon={<PendingActionsRounded fontSize="small" />} iconPosition="start" label="Pending & Backlog" />
+          <Tab icon={<CrisisAlertRounded fontSize="small" />} iconPosition="start" label="Critical Results" />
         </Tabs>
       </Paper>
       {tab === 0 && <LabOverview />}
       {tab === 1 && <TestWise />}
+      {tab === 2 && <Turnaround />}
+      {tab === 3 && <Pending />}
+      {tab === 4 && <CriticalResults />}
     </Box>
   );
 }

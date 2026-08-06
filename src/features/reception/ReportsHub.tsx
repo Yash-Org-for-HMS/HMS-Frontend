@@ -13,7 +13,7 @@ import {
 import { InPatients, Discharges, IpRegistrations, IpAdvances, Occupancy } from "../ipd/IpdReports";
 import { Outstanding, PatientStatement, Receipts, ServiceWise, PharmacyExpense } from "../billing/BillingReports";
 import { DayBook, RevenueAnalytics, RefundRegister, DiscountRegister, CancelledInvoices, DoctorProductivity } from "../billing/FinanceReports";
-import { LabOverview, TestWise } from "../lab/LabReports";
+import { LabOverview, TestWise, Turnaround, Pending, CriticalResults } from "../lab/LabReports";
 import { PharmacyOverview } from "../pharmacy/PharmacyReports";
 import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList, SupplierLedger, Movers, OpdIpdSplit } from "../pharmacy/InventoryReports";
 import { ACCENTS } from "@/styles/accents";
@@ -74,6 +74,9 @@ const GROUPS: ReportGroup[] = [
     items: [
       { key: "lab-reports", label: "Lab & Radiology Overview", Comp: LabOverview },
       { key: "lab-test-wise", label: "Test-Wise (Lab & Radiology)", Comp: TestWise },
+      { key: "lab-turnaround", label: "Turnaround & SLA", Comp: Turnaround },
+      { key: "lab-pending", label: "Pending & Backlog", Comp: Pending },
+      { key: "lab-critical", label: "Critical Results", Comp: CriticalResults },
     ],
   },
   {
