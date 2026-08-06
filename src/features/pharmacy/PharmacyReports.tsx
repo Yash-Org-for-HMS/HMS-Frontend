@@ -7,7 +7,7 @@ import {
   ReceiptLongRounded, CurrencyRupeeRounded, TrendingUpRounded,
   WarningAmberRounded, EventBusyRounded, LocalPharmacyRounded,
   Inventory2Rounded, ShoppingCartRounded, ReplayRounded,
-  LocalShippingRounded, SwapVertRounded,
+  LocalShippingRounded, SwapVertRounded, CompareArrowsRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -17,7 +17,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
-import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList, SupplierLedger, Movers } from "./InventoryReports";
+import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList, SupplierLedger, Movers, OpdIpdSplit } from "./InventoryReports";
 
 const inr = formatINRAuto;
 const fmtDate = (v: any) => (v ? dayjs(v).format("DD MMM YYYY") : "—");
@@ -119,6 +119,7 @@ export default function PharmacyReports() {
         <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
           sx={{ px: 1, "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 56 }, "& .Mui-selected": { color: `${ACCENT} !important` }, "& .MuiTabs-indicator": { bgcolor: ACCENT } }}>
           <Tab icon={<LocalPharmacyRounded fontSize="small" />} iconPosition="start" label="Overview" />
+          <Tab icon={<CompareArrowsRounded fontSize="small" />} iconPosition="start" label="OPD vs IPD" />
           <Tab icon={<Inventory2Rounded fontSize="small" />} iconPosition="start" label="Stock Valuation" />
           <Tab icon={<EventBusyRounded fontSize="small" />} iconPosition="start" label="Expiry & Loss" />
           <Tab icon={<ShoppingCartRounded fontSize="small" />} iconPosition="start" label="Purchase vs Consumption" />
@@ -128,12 +129,13 @@ export default function PharmacyReports() {
         </Tabs>
       </Paper>
       {tab === 0 && <PharmacyOverview />}
-      {tab === 1 && <StockValuation />}
-      {tab === 2 && <ExpiryLoss />}
-      {tab === 3 && <PurchaseConsumption />}
-      {tab === 4 && <ReorderList />}
-      {tab === 5 && <SupplierLedger />}
-      {tab === 6 && <Movers />}
+      {tab === 1 && <OpdIpdSplit />}
+      {tab === 2 && <StockValuation />}
+      {tab === 3 && <ExpiryLoss />}
+      {tab === 4 && <PurchaseConsumption />}
+      {tab === 5 && <ReorderList />}
+      {tab === 6 && <SupplierLedger />}
+      {tab === 7 && <Movers />}
     </Box>
   );
 }

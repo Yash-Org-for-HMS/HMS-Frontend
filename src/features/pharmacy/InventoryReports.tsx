@@ -5,6 +5,7 @@ import {
   Inventory2Rounded, SavingsRounded, TrendingUpRounded, CategoryRounded, WidgetsRounded,
   EventBusyRounded, WarningAmberRounded, ShoppingCartRounded, LocalShippingRounded, ReplayRounded,
   TrendingDownRounded, BlockRounded, ReceiptLongRounded,
+  StorefrontRounded, LocalPharmacyRounded, CurrencyRupeeRounded, DonutLargeRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
@@ -12,7 +13,7 @@ import ErrorState from "@/components/ErrorState";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { SEMANTIC } from "@/styles/accents";
+import { SEMANTIC, ACCENTS } from "@/styles/accents";
 import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
 
 const inr = formatINRAuto;
@@ -240,6 +241,51 @@ export function Movers() {
               money("consumedValue", "Consumed ₹"),
               num("onHandQty", "On hand"),
               { key: "status", label: "Movement" },
+            ]}
+            rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ── OPD vs IPD dispensing (date-ranged) ───────────────────────────────────────
+// Splits pharmacy value by patient type: OPD/dispensary counter sales vs IPD ward
+// medication issues, per medicine, so each stream can be read on its own.
+export function OpdIpdSplit() {
+  const [range, setRange] = useState<DateRange>(() => rangeFrom(29));
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["inv-opd-ipd", range.from, range.to],
+    queryFn: async () => (await axiosInstance.get("/pharmacy/reports/opd-ipd", { params: { from: range.from, to: range.to } })).data.data,
+  });
+  const rows: any[] = data?.rows ?? [];
+  const combined = Number(data?.totals?.combined?.value ?? 0);
+  const ipdShare = combined > 0 ? Math.round((Number(data?.totals?.ipd?.value ?? 0) / combined) * 100) : 0;
+
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={setRange} />
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<StorefrontRounded />} accent={ACCENTS.pharmacy} label="OPD sales" value={inr(data.totals.opd.value)} sub={`${data.totals.opd.orders} orders · ${data.totals.opd.qty} units`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalPharmacyRounded />} accent={ACCENTS.ipd} label="IPD meds issued" value={inr(data.totals.ipd.value)} sub={`${data.totals.ipd.orders} orders · ${data.totals.ipd.qty} units`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Combined value" value={inr(data.totals.combined.value)} sub={`${data.totals.combined.qty} units`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<DonutLargeRounded />} accent={SEMANTIC.info} label="IPD share" value={`${ipdShare}%`} sub="of pharmacy value" /></Grid>
+          </Grid>
+          <ReportTable
+            title="OPD vs IPD dispensing, by medicine"
+            filename={`opd_ipd_pharmacy_${range.from}_${range.to}`}
+            columns={[
+              { key: "medicine", label: "Medicine" },
+              num("opdQty", "OPD qty"),
+              money("opdValue", "OPD ₹"),
+              num("ipdQty", "IPD qty"),
+              money("ipdValue", "IPD ₹"),
+              num("totalQty", "Total qty"),
+              money("totalValue", "Total ₹"),
             ]}
             rows={rows}
             truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
