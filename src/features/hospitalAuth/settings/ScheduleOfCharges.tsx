@@ -696,22 +696,22 @@ function CatalogDialog({ categoryId, categoryCode, categoryName, existing, onClo
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Add from catalog<Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>{categoryName}</Typography></DialogTitle>
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ height: "62vh", display: "flex", flexDirection: "column", p: 2 }}>
         {catalog === null ? (
-          <Box sx={{ py: 4, textAlign: "center", color: "text.secondary" }}><Typography variant="body2">Loading catalog…</Typography></Box>
+          <Box sx={{ flex: 1, display: "grid", placeItems: "center", color: "text.secondary" }}><Typography variant="body2">Loading catalog…</Typography></Box>
         ) : candidates.length === 0 ? (
-          <Box sx={{ py: 3, textAlign: "center" }}>
+          <Box sx={{ flex: 1, display: "grid", placeItems: "center" }}>
             <Mascot pose="all-caught-up" title={catalog.length ? "All added" : "No predefined names"}
               subtitle={catalog.length ? "Every predefined name for this category is already in your rate card." : "This category has no predefined name list — use Add Charge."} size={110} />
           </Box>
         ) : (
-          <Stack spacing={1.25} sx={{ mt: 0.5 }}>
+          <Stack spacing={1.25} sx={{ flex: 1, minHeight: 0 }}>
             <TextField size="small" fullWidth placeholder="Search predefined names…" value={search} onChange={(e) => setSearch(e.target.value)}
               InputProps={{ startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" sx={{ color: "text.secondary" }} /></InputAdornment> }} />
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
               {ready.length} priced{q ? ` · showing ${shown.length} of ${candidates.length}` : ` · ${candidates.length} available`}
             </Typography>
-            <Box sx={{ maxHeight: "46vh", overflowY: "auto", border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
+            <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
               {shown.map((c) => (
                 <CatalogRow key={c.name} entry={c} checked={!!picked[c.name]} price={picked[c.name]?.price ?? ""} onToggle={toggle} onPrice={setPrice} />
               ))}
