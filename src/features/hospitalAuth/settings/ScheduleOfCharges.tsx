@@ -4,7 +4,7 @@ import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Button, Chip, IconButton, Tooltip, InputAdornment,
-  List, ListItemButton, ListItemText, TextField, Divider,
+  List, ListItemButton, ListItemText, TextField, Divider, Autocomplete, Checkbox,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
   Dialog, DialogTitle, DialogContent, DialogActions, Stack, Switch, FormControlLabel, alpha,
 } from "@mui/material";
@@ -12,8 +12,17 @@ import {
   AddRounded, EditRounded, DeleteRounded, SearchRounded, ReceiptLongRounded,
   ExpandMoreRounded, ChevronRightRounded, MeetingRoomRounded, TuneRounded,
   UnfoldMoreRounded, UnfoldLessRounded, HistoryRounded, ScienceRounded,
-  ArrowUpwardRounded, ArrowDownwardRounded, CloseRounded,
+  ArrowUpwardRounded, ArrowDownwardRounded, CloseRounded, LibraryAddRounded,
 } from "@mui/icons-material";
+import type { CatalogEntry } from "./socCatalog";
+
+// The predefined name catalog is large (~250 KB) — load it only when a dialog
+// that needs it opens, and cache it after the first load.
+let _socCatalog: Record<string, CatalogEntry[]> | null = null;
+async function loadSocCatalog(): Promise<Record<string, CatalogEntry[]>> {
+  if (!_socCatalog) _socCatalog = (await import("./socCatalog")).SOC_CATALOG;
+  return _socCatalog;
+}
 import { MenuItem, Menu } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -49,6 +58,7 @@ export default function ScheduleOfCharges() {
   const [itemDialog, setItemDialog] = useState<{ mode: "add" | "edit"; item?: Item } | null>(null);
   const [historyItem, setHistoryItem] = useState<Item | null>(null);
   const [structureItem, setStructureItem] = useState<Item | null>(null);
+  const [catalogOpen, setCatalogOpen] = useState(false);
   const [roomDialogOpen, setRoomDialogOpen] = useState(false);
   const [showEmpty, setShowEmpty] = useState(false);          // reveal the seeded, still-empty categories
   const [manageAnchor, setManageAnchor] = useState<null | HTMLElement>(null);
@@ -284,6 +294,9 @@ export default function ScheduleOfCharges() {
                   <IconButton size="small" onClick={() => setCatDialog({ mode: "edit", cat: selected })}><EditRounded fontSize="small" /></IconButton>
                 </Tooltip>
               )}
+              <Button variant="outlined" size="small" startIcon={<LibraryAddRounded />} disabled={!selected}
+                onClick={() => setCatalogOpen(true)}
+                sx={{ textTransform: "none", borderColor: alpha(ACCENT, 0.5), color: ACCENT }}>Add from catalog</Button>
               <Button variant="contained" size="small" startIcon={<AddRounded />} disabled={!selected}
                 onClick={() => setItemDialog({ mode: "add" })}
                 sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Add Charge</Button>
@@ -365,9 +378,17 @@ export default function ScheduleOfCharges() {
           onDone={(newId) => { setCatDialog(null); refetch(); if (newId) setSelectedId(newId); }}
         />
       )}
+      {catalogOpen && selected && (
+        <CatalogDialog
+          categoryId={selected.chargeCategoryId} categoryCode={selected.categoryCode} categoryName={selected.categoryName}
+          existing={items}
+          onClose={() => setCatalogOpen(false)}
+          onDone={() => { setCatalogOpen(false); refetchItems(); refetch(); }}
+        />
+      )}
       {itemDialog && selected && (
         <ItemDialog
-          mode={itemDialog.mode} item={itemDialog.item} categoryId={selected.chargeCategoryId} categoryName={selected.categoryName}
+          mode={itemDialog.mode} item={itemDialog.item} categoryId={selected.chargeCategoryId} categoryCode={selected.categoryCode} categoryName={selected.categoryName}
           roomClasses={activeRoomClasses}
           onClose={() => setItemDialog(null)}
           onDone={() => { setItemDialog(null); refetchItems(); refetch(); }}
@@ -616,9 +637,97 @@ function CategoryDialog({ mode, cat, categories, defaultParentId, onClose, onDon
 }
 
 // ── Charge item add/edit ─────────────────────────────────────────────────────
-function ItemDialog({ mode, item, categoryId, categoryName, roomClasses, onClose, onDone }: { mode: "add" | "edit"; item?: Item; categoryId: string; categoryName: string; roomClasses: RoomClass[]; onClose: () => void; onDone: () => void }) {
+// Bulk "Add from catalog": search the predefined names for this category (minus
+// ones already added), tick + price the ones offered, add them all at once.
+function CatalogDialog({ categoryId, categoryCode, categoryName, existing, onClose, onDone }: {
+  categoryId: string; categoryCode: string; categoryName: string; existing: Item[]; onClose: () => void; onDone: () => void;
+}) {
+  const toast = useToast();
+  const [catalog, setCatalog] = useState<CatalogEntry[] | null>(null);
+  const [search, setSearch] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [picked, setPicked] = useState<Record<string, { price: string; itemType?: string }>>({});
+
+  useEffect(() => { let alive = true; loadSocCatalog().then((c) => { if (alive) setCatalog(c[categoryCode] || []); }); return () => { alive = false; }; }, [categoryCode]);
+
+  const existingNames = useMemo(() => new Set(existing.map((i) => i.itemName.trim().toLowerCase())), [existing]);
+  const candidates = useMemo(() => (catalog || []).filter((c) => !existingNames.has(c.name.trim().toLowerCase())), [catalog, existingNames]);
+  const q = search.trim().toLowerCase();
+  const shown = useMemo(() => (q ? candidates.filter((c) => c.name.toLowerCase().includes(q)) : candidates).slice(0, 200), [candidates, q]);
+
+  const toggle = (c: CatalogEntry) => setPicked((p) => { const n = { ...p }; if (n[c.name]) delete n[c.name]; else n[c.name] = { price: "", itemType: c.itemType }; return n; });
+  const setPrice = (name: string, itemType: string | undefined, price: string) => setPicked((p) => ({ ...p, [name]: { itemType: p[name]?.itemType ?? itemType, price } }));
+
+  const ready = Object.entries(picked).filter(([, v]) => v.price !== "" && Number(v.price) >= 0 && Number.isFinite(Number(v.price)));
+
+  const submit = async () => {
+    if (!ready.length) { toast.error("Tick some names and enter their prices"); return; }
+    setSaving(true);
+    try {
+      const items = ready.map(([itemName, v]) => ({ itemName, price: Number(v.price), itemType: v.itemType }));
+      const res = await axiosInstance.post("/hospital/soc/items/bulk", { chargeCategoryId: categoryId, items });
+      const { created, skipped } = res.data.data;
+      toast.success(`Added ${created} charge${created === 1 ? "" : "s"}${skipped ? ` · ${skipped} skipped (already present)` : ""}`);
+      onDone();
+    } catch (err) { toast.error(getApiErrorMessage(err, "Failed to add charges")); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Add from catalog<Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>{categoryName}</Typography></DialogTitle>
+      <DialogContent dividers>
+        {catalog === null ? (
+          <Box sx={{ py: 4, textAlign: "center", color: "text.secondary" }}><Typography variant="body2">Loading catalog…</Typography></Box>
+        ) : candidates.length === 0 ? (
+          <Box sx={{ py: 3, textAlign: "center" }}>
+            <Mascot pose="all-caught-up" title={catalog.length ? "All added" : "No predefined names"}
+              subtitle={catalog.length ? "Every predefined name for this category is already in your rate card." : "This category has no predefined name list — use Add Charge."} size={110} />
+          </Box>
+        ) : (
+          <Stack spacing={1.25} sx={{ mt: 0.5 }}>
+            <TextField size="small" fullWidth placeholder="Search predefined names…" value={search} onChange={(e) => setSearch(e.target.value)}
+              InputProps={{ startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" sx={{ color: "text.secondary" }} /></InputAdornment> }} />
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              {ready.length} priced{q ? ` · showing ${shown.length} of ${candidates.length}` : ` · ${candidates.length} available`}
+            </Typography>
+            <Box sx={{ maxHeight: "46vh", overflowY: "auto", border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
+              {shown.map((c) => {
+                const on = !!picked[c.name];
+                return (
+                  <Box key={c.name} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1, py: 0.4, borderBottom: "1px solid", borderColor: "divider", "&:last-of-type": { borderBottom: "none" }, bgcolor: on ? alpha(ACCENT, 0.06) : "transparent" }}>
+                    <Checkbox size="small" checked={on} onChange={() => toggle(c)} sx={{ p: 0.5, color: ACCENT, "&.Mui-checked": { color: ACCENT } }} />
+                    <Typography sx={{ flex: 1, minWidth: 0, fontSize: "0.85rem" }} noWrap title={c.name}>{c.name}</Typography>
+                    <TextField size="small" type="number" placeholder="Price" value={picked[c.name]?.price ?? ""}
+                      onFocus={() => { if (!picked[c.name]) toggle(c); }}
+                      onChange={(e) => setPrice(c.name, c.itemType, e.target.value)}
+                      sx={{ width: 108 }} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
+                  </Box>
+                );
+              })}
+              {q && shown.length === 0 && <Box sx={{ p: 2, textAlign: "center", color: "text.secondary" }}><Typography variant="body2">No match for "{search}"</Typography></Box>}
+              {!q && candidates.length > shown.length && <Box sx={{ p: 1, textAlign: "center", color: "text.disabled" }}><Typography variant="caption">Search to see all {candidates.length} names</Typography></Box>}
+            </Box>
+          </Stack>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} sx={{ textTransform: "none", color: "text.secondary" }}>Cancel</Button>
+        <Button variant="contained" onClick={submit} disabled={saving || ready.length === 0}
+          sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>
+          {saving ? "Adding…" : `Add ${ready.length} charge${ready.length === 1 ? "" : "s"}`}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomClasses, onClose, onDone }: { mode: "add" | "edit"; item?: Item; categoryId: string; categoryCode: string; categoryName: string; roomClasses: RoomClass[]; onClose: () => void; onDone: () => void }) {
   const toast = useToast();
   const [name, setName] = useState(item?.itemName ?? "");
+  // Predefined names for this category power the name autocomplete.
+  const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
+  useEffect(() => { let alive = true; loadSocCatalog().then((c) => { if (alive) setCatalog(c[categoryCode] || []); }); return () => { alive = false; }; }, [categoryCode]);
   const [code, setCode] = useState(item?.itemCode ?? "");
   const [price, setPrice] = useState(item ? String(item.price) : "");
   const [tax, setTax] = useState(item && Number(item.taxPercent) > 0 ? String(item.taxPercent) : "");
@@ -666,7 +775,24 @@ function ItemDialog({ mode, item, categoryId, categoryName, roomClasses, onClose
       <DialogTitle>{mode === "add" ? "Add charge" : "Edit charge"}<Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>{categoryName}</Typography></DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
-          <TextField label="Charge / procedure name" value={name} onChange={(e) => setName(e.target.value)} fullWidth autoFocus />
+          <Autocomplete
+            freeSolo
+            options={catalog.map((c) => c.name)}
+            inputValue={name}
+            onInputChange={(_, v) => setName(v)}
+            onChange={(_, v) => {
+              if (typeof v === "string") {
+                setName(v);
+                const e = catalog.find((c) => c.name === v);
+                if (e?.itemType) setItemType(e.itemType);
+              }
+            }}
+            filterOptions={(opts, state) => {
+              const q = state.inputValue.trim().toLowerCase();
+              return (q ? opts.filter((o) => o.toLowerCase().includes(q)) : opts).slice(0, 50);
+            }}
+            renderInput={(params) => <TextField {...params} label="Charge / procedure name" placeholder={catalog.length ? "Type or pick a predefined name…" : ""} autoFocus />}
+          />
           <TextField select label="Type" value={itemType} onChange={(e) => setItemType(e.target.value)} fullWidth
             helperText={itemType === "RADIOLOGY" ? "Appears in the radiology order pickers; radiology orders price from this charge."
               : itemType === "LAB" ? "Appears in the lab order pickers; lab orders price from this charge."
