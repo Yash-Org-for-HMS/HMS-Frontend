@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, memo, useCallback } from "react";
 import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
@@ -34,6 +34,7 @@ import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import PageHeader from "@/components/layout/PageHeader";
 import { formatINRAuto } from "@/utils/format";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const ACCENT = ACCENTS.hospital;
 const ACCENT_DARK = ACCENTS.hospitalDark;
@@ -130,7 +131,8 @@ export default function ScheduleOfCharges() {
   });
 
   // One search across the whole rate card: matching charges + categories.
-  const q = search.trim();
+  // Debounced so it fires once the user pauses, not on every keystroke.
+  const q = useDebouncedValue(search.trim(), 300);
   const { data: searchRes, isFetching: searching } = useQuery<{ categories: Category[]; items: SearchItem[] }>({
     queryKey: ["soc-search", q],
     queryFn: async () => (await axiosInstance.get("/hospital/soc/search", { params: { q } })).data.data,
@@ -637,6 +639,24 @@ function CategoryDialog({ mode, cat, categories, defaultParentId, onClose, onDon
 }
 
 // ── Charge item add/edit ─────────────────────────────────────────────────────
+// One catalog row — memoized so typing a price only re-renders the edited row,
+// not the whole (up-to-50) list. Receives primitives + stable callbacks.
+const CatalogRow = memo(function CatalogRow({ entry, checked, price, onToggle, onPrice }: {
+  entry: CatalogEntry; checked: boolean; price: string;
+  onToggle: (e: CatalogEntry) => void; onPrice: (name: string, itemType: string | undefined, v: string) => void;
+}) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1, py: 0.4, borderBottom: "1px solid", borderColor: "divider", "&:last-of-type": { borderBottom: "none" }, bgcolor: checked ? alpha(ACCENT, 0.06) : "transparent" }}>
+      <Checkbox size="small" checked={checked} onChange={() => onToggle(entry)} sx={{ p: 0.5, color: ACCENT, "&.Mui-checked": { color: ACCENT } }} />
+      <Typography sx={{ flex: 1, minWidth: 0, fontSize: "0.85rem" }} noWrap title={entry.name}>{entry.name}</Typography>
+      <TextField size="small" type="number" placeholder="Price" value={price}
+        onFocus={() => { if (!checked) onToggle(entry); }}
+        onChange={(e) => onPrice(entry.name, entry.itemType, e.target.value)}
+        sx={{ width: 108 }} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
+    </Box>
+  );
+});
+
 // Bulk "Add from catalog": search the predefined names for this category (minus
 // ones already added), tick + price the ones offered, add them all at once.
 function CatalogDialog({ categoryId, categoryCode, categoryName, existing, onClose, onDone }: {
@@ -652,11 +672,11 @@ function CatalogDialog({ categoryId, categoryCode, categoryName, existing, onClo
 
   const existingNames = useMemo(() => new Set(existing.map((i) => i.itemName.trim().toLowerCase())), [existing]);
   const candidates = useMemo(() => (catalog || []).filter((c) => !existingNames.has(c.name.trim().toLowerCase())), [catalog, existingNames]);
-  const q = search.trim().toLowerCase();
-  const shown = useMemo(() => (q ? candidates.filter((c) => c.name.toLowerCase().includes(q)) : candidates).slice(0, 200), [candidates, q]);
+  const q = useDebouncedValue(search, 200).trim().toLowerCase();
+  const shown = useMemo(() => (q ? candidates.filter((c) => c.name.toLowerCase().includes(q)) : candidates).slice(0, 50), [candidates, q]);
 
-  const toggle = (c: CatalogEntry) => setPicked((p) => { const n = { ...p }; if (n[c.name]) delete n[c.name]; else n[c.name] = { price: "", itemType: c.itemType }; return n; });
-  const setPrice = (name: string, itemType: string | undefined, price: string) => setPicked((p) => ({ ...p, [name]: { itemType: p[name]?.itemType ?? itemType, price } }));
+  const toggle = useCallback((c: CatalogEntry) => setPicked((p) => { const n = { ...p }; if (n[c.name]) delete n[c.name]; else n[c.name] = { price: "", itemType: c.itemType }; return n; }), []);
+  const setPrice = useCallback((name: string, itemType: string | undefined, price: string) => setPicked((p) => ({ ...p, [name]: { itemType: p[name]?.itemType ?? itemType, price } })), []);
 
   const ready = Object.entries(picked).filter(([, v]) => v.price !== "" && Number(v.price) >= 0 && Number.isFinite(Number(v.price)));
 
@@ -692,19 +712,9 @@ function CatalogDialog({ categoryId, categoryCode, categoryName, existing, onClo
               {ready.length} priced{q ? ` · showing ${shown.length} of ${candidates.length}` : ` · ${candidates.length} available`}
             </Typography>
             <Box sx={{ maxHeight: "46vh", overflowY: "auto", border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
-              {shown.map((c) => {
-                const on = !!picked[c.name];
-                return (
-                  <Box key={c.name} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1, py: 0.4, borderBottom: "1px solid", borderColor: "divider", "&:last-of-type": { borderBottom: "none" }, bgcolor: on ? alpha(ACCENT, 0.06) : "transparent" }}>
-                    <Checkbox size="small" checked={on} onChange={() => toggle(c)} sx={{ p: 0.5, color: ACCENT, "&.Mui-checked": { color: ACCENT } }} />
-                    <Typography sx={{ flex: 1, minWidth: 0, fontSize: "0.85rem" }} noWrap title={c.name}>{c.name}</Typography>
-                    <TextField size="small" type="number" placeholder="Price" value={picked[c.name]?.price ?? ""}
-                      onFocus={() => { if (!picked[c.name]) toggle(c); }}
-                      onChange={(e) => setPrice(c.name, c.itemType, e.target.value)}
-                      sx={{ width: 108 }} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
-                  </Box>
-                );
-              })}
+              {shown.map((c) => (
+                <CatalogRow key={c.name} entry={c} checked={!!picked[c.name]} price={picked[c.name]?.price ?? ""} onToggle={toggle} onPrice={setPrice} />
+              ))}
               {q && shown.length === 0 && <Box sx={{ p: 2, textAlign: "center", color: "text.secondary" }}><Typography variant="body2">No match for "{search}"</Typography></Box>}
               {!q && candidates.length > shown.length && <Box sx={{ p: 1, textAlign: "center", color: "text.disabled" }}><Typography variant="caption">Search to see all {candidates.length} names</Typography></Box>}
             </Box>
