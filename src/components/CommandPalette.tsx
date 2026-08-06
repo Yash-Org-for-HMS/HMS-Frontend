@@ -4,7 +4,7 @@ import {
   SearchRounded, DashboardRounded, ScienceRounded, LocalPharmacyRounded, PersonalVideoRounded,
   ArrowForwardRounded, PersonRounded, PersonAddRounded, CalendarMonthRounded, QueueRounded,
   ReceiptLongRounded, AssessmentRounded, LocalHotelRounded, HotelRounded, MedicalServicesRounded,
-  ApartmentRounded, CallSplitRounded, BoltRounded,
+  ApartmentRounded, CallSplitRounded, BoltRounded, HistoryRounded,
 } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
@@ -74,13 +74,81 @@ const SECTION_PERMISSIONS: Record<string, string[]> = {
   Nurse: ["PATIENT_VIEW", "APPOINTMENT_VIEW"],
 };
 
+// Everyday aliases so common terms find the right destination (keyed by path so
+// the route lists above stay clean). e.g. "pos" → Pharmacy POS, "xray" → Radiology.
+const ALIASES: Record<string, string[]> = {
+  "/reception/dashboard": ["opd", "front desk", "reception"],
+  "/reception/patients/new": ["opd", "new patient", "register", "signup", "add patient"],
+  "/reception/appointments/new": ["opd", "appt", "booking", "schedule", "new appointment"],
+  "/reception/queue": ["opd", "waiting", "token"],
+  "/reception/billing": ["bill", "invoice", "payment", "collect", "cashier"],
+  "/reception/ipd/admissions": ["admit", "ipd", "inpatient", "admission"],
+  "/reception/ipd/beds": ["bed", "ward", "occupancy"],
+  "/reception/reports": ["report", "analytics", "mis"],
+  "/hospital/billing": ["bill", "invoice", "payment", "collect"],
+  "/hospital/ipd/admissions": ["admit", "ipd", "inpatient", "admission"],
+  "/hospital/ipd/beds": ["bed", "ward", "occupancy", "bed board"],
+  "/hospital/reports": ["report", "analytics", "mis"],
+  "/hospital/users": ["staff", "users", "employees"],
+  "/lab/dashboard": ["lab", "pathology", "test", "sample"],
+  "/lab/radiology": ["xray", "x-ray", "scan", "ct", "mri", "imaging", "radiology"],
+  "/pharmacy/pos": ["pos", "dispense", "sell", "counter", "medicine"],
+  "/pharmacy/inventory": ["stock", "medicine", "drug", "inventory"],
+  "/doctor/results": ["results", "lab", "radiology", "reports"],
+};
+
+// Fuzzy scorer: exact > prefix > substring > subsequence; higher wins, 0 = no match.
+function fieldScore(q: string, t: string): number {
+  if (!q) return 1;
+  if (!t) return 0;
+  if (t === q) return 120;
+  if (t.startsWith(q)) return 100;
+  const idx = t.indexOf(q);
+  if (idx >= 0) return 70 - Math.min(idx, 40);
+  // Subsequence: every query char appears in order (typos/skips tolerated).
+  let ti = 0, qi = 0, gaps = 0, started = false;
+  while (qi < q.length && ti < t.length) {
+    if (t[ti] === q[qi]) { qi++; started = true; }
+    else if (started) gaps++;
+    ti++;
+  }
+  return qi === q.length ? Math.max(1, 28 - gaps) : 0;
+}
+function scoreItem(name: string, section: string, keywords: string[], q: string): number {
+  if (!q) return 1;
+  let best = fieldScore(q, name);
+  for (const k of keywords) best = Math.max(best, fieldScore(q, k.toLowerCase()) * 0.92);
+  if (section && section.toLowerCase().includes(q)) best = Math.max(best, 18);
+  return best;
+}
+
+// Path → route metadata, for rehydrating a saved "recent" item's icon/label.
+const ROUTE_INDEX = new Map<string, { name: string; icon: React.ReactNode; section?: string; module?: string }>(
+  [...STATIC_ROUTES, ...QUICK_ACTIONS].map((r) => [r.path, r as any]),
+);
+
+// Recently-opened items (per browser) so the palette opens onto your last picks.
+type RecentEntry = { kind: "route" | "patient"; path?: string; patientId?: string; name: string };
+const RECENTS_KEY = "cmdk-recents";
+function loadRecents(): RecentEntry[] {
+  try { const v = JSON.parse(localStorage.getItem(RECENTS_KEY) || "[]"); return Array.isArray(v) ? v : []; }
+  catch { return []; }
+}
+function pushRecent(e: RecentEntry) {
+  const id = (r: RecentEntry) => (r.kind === "patient" ? `p:${r.patientId}` : r.path);
+  const cur = loadRecents().filter((r) => id(r) !== id(e));
+  cur.unshift(e);
+  try { localStorage.setItem(RECENTS_KEY, JSON.stringify(cur.slice(0, 6))); } catch { /* quota / private mode */ }
+}
+
 interface PaletteItem {
   key: string;
   path: string;
   name: string;
   icon: React.ReactNode;
   section?: string;
-  kind: "action" | "route" | "patient";
+  kind: "action" | "route" | "patient" | "recent";
+  recent?: RecentEntry;
 }
 
 export default function CommandPalette() {
@@ -161,7 +229,7 @@ export default function CommandPalette() {
         try {
           // Extremely lightweight search, limit to 3 results
           const res = await axiosInstance.get("/reception/patients", {
-            params: { search: val, page: 1, limit: 3 }
+            params: { search: val, page: 1, limit: 6 }
           });
           if (reqId !== searchReqId.current) return; // a newer search already superseded this one
           setPatients(res.data?.data || []);
@@ -180,7 +248,8 @@ export default function CommandPalette() {
     }
   };
 
-  const handleSelect = (path: string) => {
+  const handleSelect = (path: string, recent?: RecentEntry) => {
+    if (recent) pushRecent(recent);
     navigate(path);
     setOpen(false);
   };
@@ -227,14 +296,6 @@ export default function CommandPalette() {
     if (section === "Admin") return isAdmin;
     return true;
   };
-  const matches = (name: string, section: string) =>
-    name.toLowerCase().includes(search.toLowerCase()) || section.toLowerCase().includes(search.toLowerCase());
-
-  // Skip the filtering passes entirely while the palette is closed — they only
-  // matter for what gets rendered in the (unmounted) list below.
-  const filteredActions = open ? QUICK_ACTIONS.filter((a) => allowSection(a.section) && isModuleEnabled((a as any).module) && matches(a.name, a.section)) : [];
-  const filteredRoutes = open ? STATIC_ROUTES.filter((r) => allowSection(r.section) && isModuleEnabled((r as any).module) && matches(r.name, r.section)) : [];
-
   // Route to a shell the caller actually owns. Doctors and nurses get their
   // own confined profile view (nurses previously fell through to
   // /reception/patients/:id, which rendered inside the FULL Reception
@@ -249,6 +310,39 @@ export default function CommandPalette() {
     isAdmin ? `/hospital/patients/${p.patientId}` :
     `/reception/patients/${p.patientId}`;
 
+  // Fuzzy-rank a route/action list against the query, keeping only what the
+  // caller may see (role/section + module gating unchanged). Empty query keeps
+  // everything (menu mode), scored 1 so the source order is preserved.
+  const q = search.trim().toLowerCase();
+  const rank = <T extends { name: string; path: string; section?: string; module?: string }>(list: T[]): T[] =>
+    list
+      .filter((it) => allowSection(it.section || "") && isModuleEnabled(it.module))
+      .map((it) => ({ it, s: scoreItem(it.name.toLowerCase(), it.section || "", ALIASES[it.path] || [], q) }))
+      .filter((x) => x.s > 0)
+      .sort((a, b) => b.s - a.s)
+      .map((x) => x.it);
+
+  // Recently-opened items — only when idle (empty query), re-gated in case the
+  // role/modules changed since they were saved, and re-pathed for the caller.
+  const recentItems: PaletteItem[] = (open && q === "" ? loadRecents() : [])
+    .map((r): PaletteItem | null => {
+      if (r.kind === "patient") {
+        if (!canSearchPatients || !r.patientId) return null;
+        return { key: `recent-p-${r.patientId}`, path: patientPath({ patientId: r.patientId }), name: r.name, icon: <PersonRounded />, kind: "recent", recent: r };
+      }
+      const meta = r.path ? ROUTE_INDEX.get(r.path) : undefined;
+      if (!meta || !allowSection(meta.section || "") || !isModuleEnabled(meta.module)) return null;
+      return { key: `recent-r-${r.path}`, path: r.path!, name: meta.name, icon: meta.icon, section: meta.section, kind: "recent", recent: r };
+    })
+    .filter((x): x is PaletteItem => x !== null)
+    .slice(0, 6);
+  const recentPaths = new Set(recentItems.map((i) => i.path));
+
+  // Skip the filtering passes entirely while the palette is closed. When idle,
+  // hide items already surfaced in Recent to avoid duplicates.
+  const filteredActions = open ? rank(QUICK_ACTIONS).filter((a) => !(q === "" && recentPaths.has(a.path))) : [];
+  const filteredRoutes = open ? rank(STATIC_ROUTES).filter((r) => !(q === "" && recentPaths.has(r.path))) : [];
+
   // Single flat, ordered list mirroring what's rendered below — drives
   // keyboard navigation (arrow keys select by index, Enter activates).
   // NOT a useMemo: this sits after the `if (!isClinicalRoute) return null`
@@ -256,9 +350,10 @@ export default function CommandPalette() {
   // Rules of Hooks (the crash this file previously hit). A plain const is
   // safe here — the list is tiny and only built while the palette is open.
   const allItems: PaletteItem[] = [
-    ...filteredActions.map((a) => ({ key: `action-${a.path}`, path: a.path, name: a.name, icon: a.icon, section: a.section, kind: "action" as const })),
-    ...filteredRoutes.map((r) => ({ key: `route-${r.path}`, path: r.path, name: r.name, icon: r.icon, section: r.section, kind: "route" as const })),
-    ...patients.map((p) => ({ key: `patient-${p.patientId}`, path: patientPath(p), name: `${p.firstName} ${p.lastName}`, icon: <PersonRounded />, kind: "patient" as const })),
+    ...recentItems,
+    ...filteredActions.map((a) => ({ key: `action-${a.path}`, path: a.path, name: a.name, icon: a.icon, section: a.section, kind: "action" as const, recent: { kind: "route" as const, path: a.path, name: a.name } })),
+    ...filteredRoutes.map((r) => ({ key: `route-${r.path}`, path: r.path, name: r.name, icon: r.icon, section: r.section, kind: "route" as const, recent: { kind: "route" as const, path: r.path, name: r.name } })),
+    ...patients.map((p) => ({ key: `patient-${p.patientId}`, path: patientPath(p), name: `${p.firstName} ${p.lastName}`, icon: <PersonRounded />, kind: "patient" as const, recent: { kind: "patient" as const, patientId: p.patientId, name: `${p.firstName} ${p.lastName}` } })),
   ];
 
   const clampedIndex = Math.min(selectedIndex, Math.max(allItems.length - 1, 0));
@@ -282,7 +377,7 @@ export default function CommandPalette() {
     } else if (e.key === "Enter") {
       e.preventDefault();
       const item = allItems[clampedIndex];
-      if (item) handleSelect(item.path);
+      if (item) handleSelect(item.path, item.recent);
     }
   };
 
@@ -311,7 +406,7 @@ export default function CommandPalette() {
         <InputBase
           autoFocus
           fullWidth
-          placeholder="Search patients, jump to modules... (e.g. Lab, POS)"
+          placeholder="Search patients or jump anywhere… (e.g. POS, admit, x-ray, bill)"
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -328,6 +423,32 @@ export default function CommandPalette() {
           </Box>
         )}
 
+        {recentItems.length > 0 && (
+          <>
+            <Typography variant="overline" sx={{ px: 2, py: 1, color: "text.secondary", display: "block", lineHeight: 1 }}>
+              Recent
+            </Typography>
+            {recentItems.map((item) => {
+              renderIndex++;
+              const isSelected = renderIndex === clampedIndex;
+              return (
+                <ListItemButton
+                  key={item.key}
+                  ref={(el) => { itemRefs.current[renderIndex] = el; }}
+                  selected={isSelected}
+                  onMouseEnter={() => setSelectedIndex(renderIndex)}
+                  onClick={() => handleSelect(item.path, item.recent)}
+                  sx={{ borderRadius: 2, mb: 0.5, "&:hover": { bgcolor: "rgba(6, 182, 212, 0.08)" }, "&.Mui-selected": { bgcolor: "rgba(6, 182, 212, 0.14)" }, "&.Mui-selected:hover": { bgcolor: "rgba(6, 182, 212, 0.18)" } }}
+                >
+                  <ListItemIcon sx={{ minWidth: 40, color: "text.secondary" }}>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.name} secondary={item.section} primaryTypographyProps={{ fontWeight: 600, color: "text.primary" }} secondaryTypographyProps={{ fontSize: "0.75rem" }} />
+                  <HistoryRounded sx={{ color: "text.secondary", opacity: 0.45, fontSize: "1.1rem" }} />
+                </ListItemButton>
+              );
+            })}
+          </>
+        )}
+
         {filteredActions.length > 0 && (
           <>
             <Typography variant="overline" sx={{ px: 2, py: 1, color: "text.secondary", display: "block", lineHeight: 1 }}>
@@ -342,7 +463,7 @@ export default function CommandPalette() {
                   ref={(el) => { itemRefs.current[renderIndex] = el; }}
                   selected={isSelected}
                   onMouseEnter={() => setSelectedIndex(renderIndex)}
-                  onClick={() => handleSelect(action.path)}
+                  onClick={() => handleSelect(action.path, { kind: "route", path: action.path, name: action.name })}
                   sx={{ borderRadius: 2, mb: 0.5, "&:hover": { bgcolor: "rgba(245,158,11,0.1)" }, "&.Mui-selected": { bgcolor: "rgba(245,158,11,0.16)" }, "&.Mui-selected:hover": { bgcolor: "rgba(245,158,11,0.2)" } }}
                 >
                   <ListItemIcon sx={{ minWidth: 40, color: "#f59e0b" }}>{action.icon}</ListItemIcon>
@@ -368,7 +489,7 @@ export default function CommandPalette() {
                   ref={(el) => { itemRefs.current[renderIndex] = el; }}
                   selected={isSelected}
                   onMouseEnter={() => setSelectedIndex(renderIndex)}
-                  onClick={() => handleSelect(route.path)}
+                  onClick={() => handleSelect(route.path, { kind: "route", path: route.path, name: route.name })}
                   sx={{ borderRadius: 2, mb: 0.5, "&:hover": { bgcolor: "rgba(6, 182, 212, 0.08)" }, "&.Mui-selected": { bgcolor: "rgba(6, 182, 212, 0.14)" }, "&.Mui-selected:hover": { bgcolor: "rgba(6, 182, 212, 0.18)" } }}
                 >
                   <ListItemIcon sx={{ minWidth: 40, color: "#0891b2" }}>{route.icon}</ListItemIcon>
@@ -401,7 +522,7 @@ export default function CommandPalette() {
                   ref={(el) => { itemRefs.current[idx] = el; }}
                   selected={isSelected}
                   onMouseEnter={() => setSelectedIndex(idx)}
-                  onClick={() => handleSelect(routePath)}
+                  onClick={() => handleSelect(routePath, { kind: "patient", patientId: p.patientId, name: `${p.firstName} ${p.lastName}` })}
                   sx={{ borderRadius: 2, mb: 0.5, "&:hover": { bgcolor: "rgba(6, 182, 212, 0.08)" }, "&.Mui-selected": { bgcolor: "rgba(6, 182, 212, 0.14)" }, "&.Mui-selected:hover": { bgcolor: "rgba(6, 182, 212, 0.18)" } }}
                 >
                   <ListItemIcon sx={{ minWidth: 40, color: "#06b6d4" }}><PersonRounded /></ListItemIcon>
