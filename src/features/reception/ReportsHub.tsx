@@ -15,7 +15,7 @@ import { Outstanding, PatientStatement, Receipts, ServiceWise, PharmacyExpense }
 import { DayBook, RevenueAnalytics, RefundRegister, DiscountRegister, CancelledInvoices, DoctorProductivity } from "../billing/FinanceReports";
 import { LabOverview, TestWise } from "../lab/LabReports";
 import { PharmacyOverview } from "../pharmacy/PharmacyReports";
-import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList, SupplierLedger, Movers } from "../pharmacy/InventoryReports";
+import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList, SupplierLedger, Movers, OpdIpdSplit } from "../pharmacy/InventoryReports";
 import { ACCENTS } from "@/styles/accents";
 
 const ACCENT = ACCENTS.reception;
@@ -82,6 +82,7 @@ const GROUPS: ReportGroup[] = [
     adminOnly: true,
     items: [
       { key: "pharmacy-reports", label: "Pharmacy Overview", Comp: PharmacyOverview },
+      { key: "opd-ipd-pharmacy", label: "OPD vs IPD Dispensing", Comp: OpdIpdSplit },
       { key: "stock-valuation", label: "Stock Valuation", Comp: StockValuation },
       { key: "expiry-loss", label: "Expiry & Loss", Comp: ExpiryLoss },
       { key: "purchase-consumption", label: "Purchase vs Consumption", Comp: PurchaseConsumption },
