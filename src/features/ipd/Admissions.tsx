@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import {
   LocalHotelRounded, SearchRounded, SwapHorizRounded, LogoutRounded, MoreVertRounded,
-  CancelRounded, SavingsRounded, UndoRounded, MedicalServicesRounded, MedicationRounded,
+  CancelRounded, SavingsRounded, UndoRounded, MedicalServicesRounded, MedicationRounded, DescriptionRounded,
   ScienceRounded, MonitorHeartRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -28,6 +28,7 @@ import IpdMedicinesDialog from "@/components/ipd/IpdMedicinesDialog";
 import IpdLabOrdersDialog from "@/components/ipd/IpdLabOrdersDialog";
 import IpdRadiologyOrdersDialog from "@/components/ipd/IpdRadiologyOrdersDialog";
 import IpdDoctorVisitsDialog from "@/components/ipd/IpdDoctorVisitsDialog";
+import NursingNotesDialog from "@/components/ipd/NursingNotesDialog";
 import PageHeader from "@/components/layout/PageHeader";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
@@ -59,6 +60,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
   const [labsFor, setLabsFor] = useState<any>(null);
   const [radiologyFor, setRadiologyFor] = useState<any>(null);
   const [visitsFor, setVisitsFor] = useState<any>(null);
+  const [notesFor, setNotesFor] = useState<any>(null);
   const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: any }>({ anchor: null, row: null });
 
   const status = TABS[tab];
@@ -177,6 +179,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                           <Tooltip title="Lab tests"><IconButton size="small" onClick={() => setLabsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><ScienceRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Radiology / imaging"><IconButton size="small" onClick={() => setRadiologyFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MonitorHeartRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Doctor visits"><IconButton size="small" onClick={() => setVisitsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MedicalServicesRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Nursing notes"><IconButton size="small" onClick={() => setNotesFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><DescriptionRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Surgery details"><IconButton size="small" onClick={() => setSurgeryFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MedicalServicesRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Transfer bed"><IconButton size="small" onClick={() => setTransferFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><SwapHorizRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Discharge"><IconButton size="small" onClick={() => setDischargeFor(a)} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}><LogoutRounded fontSize="small" /></IconButton></Tooltip>
@@ -225,6 +228,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
       {labsFor && <IpdLabOrdersDialog open admission={labsFor} onClose={() => setLabsFor(null)} />}
       {radiologyFor && <IpdRadiologyOrdersDialog open admission={radiologyFor} onClose={() => setRadiologyFor(null)} />}
       {visitsFor && <IpdDoctorVisitsDialog open admission={visitsFor} onClose={() => setVisitsFor(null)} />}
+      {notesFor && <NursingNotesDialog open admission={notesFor} onClose={() => setNotesFor(null)} />}
     </Box>
   );
 }
