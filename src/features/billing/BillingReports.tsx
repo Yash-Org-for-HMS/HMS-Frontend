@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, Paper, Grid, TextField, Tabs, Tab, Autocomplete } from "@mui/material";
+import { Box, Paper, Grid, TextField, Tabs, Tab, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions, Button, Chip, InputAdornment, Typography } from "@mui/material";
+import { useToast } from "@/providers/ToastContext";
 import {
   AccountBalanceWalletRounded, ReceiptLongRounded, PaymentsRounded,
   TrendingUpRounded, PersonRounded, SavingsRounded, Inventory2Rounded,
@@ -126,9 +127,19 @@ export function Outstanding() {
   );
 }
 
+// Refund status chip — derived from the ledger, so it can't drift from reality.
+function refundStatusChip(s: string) {
+  const c = s === "Refunded" ? { bg: "rgba(16,185,129,0.14)", fg: "#0f9d78" }
+    : s === "Partially refunded" ? { bg: "rgba(245,158,11,0.16)", fg: "#b45309" }
+    : { bg: "rgba(239,68,68,0.12)", fg: "#dc2626" };
+  return <Chip label={s} size="small" sx={{ height: 20, fontSize: "0.68rem", fontWeight: 700, bgcolor: c.bg, color: c.fg }} />;
+}
+
 // Advance deposits owed BACK to patients: closed (discharged/cancelled) admissions
-// that still hold a positive deposit balance. Snapshot, not date-ranged.
+// with a held deposit. Shows a ledger-derived refund status (Pending / Partially
+// refunded / Refunded) and lets the desk process the refund inline. Snapshot.
 export function UnreturnedAdvances() {
+  const [refundTarget, setRefundTarget] = useState<any | null>(null);
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["billing-report-unreturned-advances"],
     queryFn: async () => (await axiosInstance.get("/reception/reports/unreturned-advances")).data.data,
@@ -140,8 +151,9 @@ export function UnreturnedAdvances() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.danger} label="Owed to patients" value={inr(data.totals.totalOwed)} /></Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Closed admissions" value={String(data.totals.admissions)} /></Grid>
+            <Grid size={{ xs: 12, sm: 4, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.danger} label="Owed to patients" value={inr(data.totals.totalOwed)} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={SEMANTIC.warning} label="Pending refunds" value={String(data.totals.pending)} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Refunded" value={String(data.totals.refunded)} /></Grid>
           </Grid>
           <ReportTable
             title="Unreturned advances (deposits to refund)"
@@ -151,16 +163,63 @@ export function UnreturnedAdvances() {
               { key: "admissionNumber", label: "Admission" },
               { key: "patientName", label: "Patient" },
               { key: "uhid", label: "UHID" },
-              { key: "status", label: "Status" },
               { key: "closedOn", label: "Closed", format: fmtDate, value: (r) => ts(r.closedOn) },
+              money("collected", "Collected"),
+              money("refunded", "Refunded"),
               money("amountOwed", "Owed back"),
+              { key: "refundStatus", label: "Status", format: (v) => refundStatusChip(v), value: (r) => r.refundStatus },
+              { key: "action", label: "", format: (_v, r) => (Number(r.amountOwed) > 0 ? <Button size="small" variant="outlined" onClick={() => setRefundTarget(r)} sx={{ textTransform: "none" }}>Refund</Button> : null) },
             ]}
             rows={rows}
             truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
           />
         </Box>
       )}
+      {refundTarget && <RefundAdvanceDialog row={refundTarget} onClose={() => setRefundTarget(null)} onDone={() => { setRefundTarget(null); refetch(); }} />}
     </Box>
+  );
+}
+
+// Process a deposit refund for a closed admission (server caps it at the held
+// balance and is advisory-locked, so a double-submit can't over-refund).
+function RefundAdvanceDialog({ row, onClose, onDone }: { row: any; onClose: () => void; onDone: () => void }) {
+  const toast = useToast();
+  const owed = Number(row.amountOwed);
+  const [amount, setAmount] = useState(String(owed));
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    const amt = Number(amount);
+    if (!(amt > 0) || amt > owed + 0.001) { toast.error(`Enter an amount between 0 and ${inr(owed)}`); return; }
+    setSaving(true);
+    try {
+      await axiosInstance.post(`/ipd/admissions/${row.admissionId}/deposit/refund`, { amount: amt, reason: reason.trim() || undefined });
+      toast.success(`Refunded ${inr(amt)} to ${row.patientName}`);
+      onDone();
+    } catch (e) { toast.error(apiErrorText(e)); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <Dialog open onClose={saving ? undefined : onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>
+        Refund advance
+        <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>{row.patientName} · {row.admissionNumber}</Typography>
+      </DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>Held advance owed back: <b>{inr(owed)}</b></Typography>
+        <TextField label="Refund amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} fullWidth autoFocus
+          InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
+        <TextField label="Reason (optional)" value={reason} onChange={(e) => setReason(e.target.value)} fullWidth multiline rows={2} sx={{ mt: 2 }} />
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button color="inherit" onClick={onClose} disabled={saving}>Cancel</Button>
+        <Button variant="contained" onClick={submit} disabled={saving} sx={{ bgcolor: SEMANTIC.success, "&:hover": { bgcolor: "#0e9f6e" } }}>
+          {saving ? "Refunding…" : "Refund"}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
