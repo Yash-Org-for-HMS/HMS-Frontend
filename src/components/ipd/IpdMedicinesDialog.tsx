@@ -10,9 +10,10 @@ import {
   TableContainer, IconButton, Divider, Tooltip, Tabs, Tab, MenuItem,
 } from "@mui/material";
 import {
-  MedicationRounded, AddRounded, DeleteOutlineRounded, ReceiptLongRounded, HourglassTopRounded, CheckCircleRounded,
+  MedicationRounded, AddRounded, DeleteOutlineRounded, ReceiptLongRounded, HourglassTopRounded, CheckCircleRounded, WarningAmberRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
+import { allergyHitsFor } from "@/utils/allergyMatch";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
@@ -55,12 +56,15 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
   const [view, setView] = useState<"assign" | "chart">("assign");
 
   const medsKey = ["ipd-admission-meds", admission?.admissionId];
-  const { data, isFetching, refetch } = useQuery<{ medications: any[]; total: number }>({
+  const { data, isFetching, refetch } = useQuery<{ medications: any[]; total: number; allergies?: { allergen: string; severity?: string }[] }>({
     queryKey: medsKey,
     queryFn: async () => (await axiosInstance.get(`/ipd/admissions/${admission.admissionId}/medications`)).data.data,
     enabled: open && !!admission?.admissionId,
   });
   const meds = data?.medications || [];
+  // Documented allergies for the advisory safety net (same matcher as OPD Rx).
+  const allergens = (data?.allergies || []).map((a) => a.allergen).filter(Boolean);
+  const selectedConflicts = form.medicine ? allergyHitsFor(allergens, form.medicine.medicineName, form.medicine.genericName) : [];
 
   const { data: catalog = [], isFetching: catLoading } = useQuery<any[]>({
     queryKey: ["ipd-medicine-catalog", search],
@@ -96,7 +100,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
     if (!canAdd) return;
     setSaving(true);
     try {
-      await axiosInstance.post(`/ipd/admissions/${admission.admissionId}/medications`, {
+      const res = await axiosInstance.post(`/ipd/admissions/${admission.admissionId}/medications`, {
         medicineId: form.medicine.medicineId,
         quantity: qty,
         dosage: form.dosage || undefined,
@@ -105,7 +109,12 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
         route: form.route || undefined,
         notes: form.notes || undefined,
       });
-      toast.success("Medicine assigned");
+      const warns: string[] = res.data?.allergyWarnings || [];
+      if (warns.length) {
+        toast.error(`⚠ Allergy alert: patient is allergic to ${warns.join(", ")}. Assigned — review with the prescriber.`);
+      } else {
+        toast.success("Medicine assigned");
+      }
       setForm(emptyForm);
       setSearch("");
       afterChange();
@@ -153,6 +162,15 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
           {admission?.patientName} — assigning a medicine sends a request to the pharmacy; once they confirm it (dispensed from stock), it's added to the discharge bill.
         </Typography>
 
+        {allergens.length > 0 && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, p: 1.25, borderRadius: 2, bgcolor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)" }}>
+            <WarningAmberRounded sx={{ fontSize: 18, color: SEMANTIC.danger }} />
+            <Typography variant="caption" sx={{ color: SEMANTIC.danger, fontWeight: 700 }}>
+              Known allergies: {allergens.join(", ")}
+            </Typography>
+          </Box>
+        )}
+
         {view === "chart" ? (
           <MarChart admissionId={admission.admissionId} />
         ) : (
@@ -172,10 +190,19 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
                 </TableRow>
               </TableHead>
               <TableBody>
-                {meds.map((m) => (
-                  <TableRow key={m.ipMedOrderId}>
+                {meds.map((m) => {
+                  const rowHits = allergyHitsFor(allergens, m.medicineName);
+                  return (
+                  <TableRow key={m.ipMedOrderId} sx={{ bgcolor: rowHits.length ? "rgba(239,68,68,0.06)" : "transparent" }}>
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>{m.medicineName || "—"}</Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        {rowHits.length > 0 && (
+                          <Tooltip title={`Allergy match: ${rowHits.join(", ")}`}>
+                            <WarningAmberRounded sx={{ fontSize: 16, color: SEMANTIC.danger }} />
+                          </Tooltip>
+                        )}
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{m.medicineName || "—"}</Typography>
+                      </Box>
                       {m.route && <Typography variant="caption" sx={{ color: "text.secondary" }}>{m.route}</Typography>}
                     </TableCell>
                     <TableCell>
@@ -206,7 +233,8 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
                       )}
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
                 <TableRow>
                   <TableCell colSpan={3} sx={{ fontWeight: 700, borderBottom: 0 }}>Total</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700, borderBottom: 0 }}>{formatINR(data?.total || 0)}</TableCell>
@@ -242,6 +270,14 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
             )}
             renderInput={(params) => <TextField {...params} required label="Medicine" placeholder="Search by name or generic…" />}
           />
+          {selectedConflicts.length > 0 && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.25, borderRadius: 2, bgcolor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)" }}>
+              <WarningAmberRounded sx={{ fontSize: 18, color: SEMANTIC.danger }} />
+              <Typography variant="caption" sx={{ color: SEMANTIC.danger, fontWeight: 700 }}>
+                Allergy alert: patient is allergic to {selectedConflicts.join(", ")}. Review before assigning.
+              </Typography>
+            </Box>
+          )}
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" }, gap: 2 }}>
             <TextField select label="Frequency" value={form.frequency} onChange={(e) => setForm({ ...form, frequency: e.target.value })} helperText="Drives the dose chart & quantity">
               {FREQUENCY_OPTIONS.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}

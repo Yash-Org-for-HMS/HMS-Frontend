@@ -1,5 +1,6 @@
 import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
+import { allergyHitsFor } from "@/utils/allergyMatch";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -108,19 +109,10 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   const [bulkBuyOutside, setBulkBuyOutside] = useState(false);
 
   // Lightweight allergy safety net: direct name/generic match against the
-  // patient's recorded allergies. This is NOT a drug-interaction engine — it
-  // won't catch class cross-reactivity (e.g. penicillin → amoxicillin) — but it
-  // reliably flags prescribing exactly what the patient is allergic to.
-  const normalize = (s?: string | null) => (s || "").toLowerCase().trim();
-  const allergyHitsFor = (medName?: string | null, generic?: string | null): string[] => {
-    const names = [normalize(medName), normalize(generic)].filter(Boolean);
-    return patientAllergies.filter((al) => {
-      const a = normalize(al);
-      if (a.length < 3) return false;
-      return names.some((n) => n.length >= 3 && (n.includes(a) || a.includes(n)));
-    });
-  };
-  const itemConflicts = items.map((it) => allergyHitsFor(it.medicineName, it.genericName));
+  // patient's recorded allergies (shared matcher — mirrored on the IPD med path).
+  // NOT a drug-interaction engine; advisory only.
+  const allergyHits = (medName?: string | null, generic?: string | null) => allergyHitsFor(patientAllergies, medName, generic);
+  const itemConflicts = items.map((it) => allergyHits(it.medicineName, it.genericName));
   const hasAnyConflict = itemConflicts.some((c) => c.length > 0);
 
   // Autocomplete state
@@ -226,7 +218,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
       buyOutside: bulkBuyOutside
     };
 
-    const hits = allergyHitsFor(medName, genName);
+    const hits = allergyHits(medName, genName);
     if (hits.length) {
       toast.error(`⚠ Allergy alert: patient is allergic to ${hits.join(", ")}. Added — review before saving.`);
     }
