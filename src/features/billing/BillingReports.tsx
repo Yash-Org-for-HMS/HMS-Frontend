@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, Paper, Grid, TextField, Tabs, Tab, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions, Button, Chip, InputAdornment, Typography } from "@mui/material";
-import { useToast } from "@/providers/ToastContext";
+import { Box, Paper, Grid, TextField, Tabs, Tab, Autocomplete, Chip } from "@mui/material";
 import {
   AccountBalanceWalletRounded, ReceiptLongRounded, PaymentsRounded,
   TrendingUpRounded, PersonRounded, SavingsRounded, Inventory2Rounded,
@@ -136,10 +135,10 @@ function refundStatusChip(s: string) {
 }
 
 // Advance deposits owed BACK to patients: closed (discharged/cancelled) admissions
-// with a held deposit. Shows a ledger-derived refund status (Pending / Partially
-// refunded / Refunded) and lets the desk process the refund inline. Snapshot.
+// with a held deposit. Read-only oversight — shows a ledger-derived refund status
+// (Pending / Partially refunded / Refunded); refunds are processed in the admission
+// deposit flow, and this reflects them automatically. Snapshot.
 export function UnreturnedAdvances() {
-  const [refundTarget, setRefundTarget] = useState<any | null>(null);
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["billing-report-unreturned-advances"],
     queryFn: async () => (await axiosInstance.get("/reception/reports/unreturned-advances")).data.data,
@@ -168,58 +167,13 @@ export function UnreturnedAdvances() {
               money("refunded", "Refunded"),
               money("amountOwed", "Owed back"),
               { key: "refundStatus", label: "Status", format: (v) => refundStatusChip(v), value: (r) => r.refundStatus },
-              { key: "action", label: "", format: (_v, r) => (Number(r.amountOwed) > 0 ? <Button size="small" variant="outlined" onClick={() => setRefundTarget(r)} sx={{ textTransform: "none" }}>Refund</Button> : null) },
             ]}
             rows={rows}
             truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
           />
         </Box>
       )}
-      {refundTarget && <RefundAdvanceDialog row={refundTarget} onClose={() => setRefundTarget(null)} onDone={() => { setRefundTarget(null); refetch(); }} />}
     </Box>
-  );
-}
-
-// Process a deposit refund for a closed admission (server caps it at the held
-// balance and is advisory-locked, so a double-submit can't over-refund).
-function RefundAdvanceDialog({ row, onClose, onDone }: { row: any; onClose: () => void; onDone: () => void }) {
-  const toast = useToast();
-  const owed = Number(row.amountOwed);
-  const [amount, setAmount] = useState(String(owed));
-  const [reason, setReason] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  const submit = async () => {
-    const amt = Number(amount);
-    if (!(amt > 0) || amt > owed + 0.001) { toast.error(`Enter an amount between 0 and ${inr(owed)}`); return; }
-    setSaving(true);
-    try {
-      await axiosInstance.post(`/ipd/admissions/${row.admissionId}/deposit/refund`, { amount: amt, reason: reason.trim() || undefined });
-      toast.success(`Refunded ${inr(amt)} to ${row.patientName}`);
-      onDone();
-    } catch (e) { toast.error(apiErrorText(e)); }
-    finally { setSaving(false); }
-  };
-
-  return (
-    <Dialog open onClose={saving ? undefined : onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>
-        Refund advance
-        <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>{row.patientName} · {row.admissionNumber}</Typography>
-      </DialogTitle>
-      <DialogContent>
-        <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>Held advance owed back: <b>{inr(owed)}</b></Typography>
-        <TextField label="Refund amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} fullWidth autoFocus
-          InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
-        <TextField label="Reason (optional)" value={reason} onChange={(e) => setReason(e.target.value)} fullWidth multiline rows={2} sx={{ mt: 2 }} />
-      </DialogContent>
-      <DialogActions sx={{ p: 2 }}>
-        <Button color="inherit" onClick={onClose} disabled={saving}>Cancel</Button>
-        <Button variant="contained" onClick={submit} disabled={saving} sx={{ bgcolor: SEMANTIC.success, "&:hover": { bgcolor: "#0e9f6e" } }}>
-          {saving ? "Refunding…" : "Refund"}
-        </Button>
-      </DialogActions>
-    </Dialog>
   );
 }
 
