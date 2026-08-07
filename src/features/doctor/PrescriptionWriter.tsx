@@ -1,6 +1,5 @@
 import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
-import { allergyHitsFor } from "@/utils/allergyMatch";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -108,13 +107,6 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   const pharmacyEnabled = isModuleEnabled("Pharmacy");
   const [bulkBuyOutside, setBulkBuyOutside] = useState(false);
 
-  // Lightweight allergy safety net: direct name/generic match against the
-  // patient's recorded allergies (shared matcher — mirrored on the IPD med path).
-  // NOT a drug-interaction engine; advisory only.
-  const allergyHits = (medName?: string | null, generic?: string | null) => allergyHitsFor(patientAllergies, medName, generic);
-  const itemConflicts = items.map((it) => allergyHits(it.medicineName, it.genericName));
-  const hasAnyConflict = itemConflicts.some((c) => c.length > 0);
-
   // Autocomplete state
   const [medicineQuery, setMedicineQuery] = useState("");
   const [medicineOptions, setMedicineOptions] = useState<any[]>([]);
@@ -217,11 +209,6 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
       unit,
       buyOutside: bulkBuyOutside
     };
-
-    const hits = allergyHits(medName, genName);
-    if (hits.length) {
-      toast.error(`⚠ Allergy alert: patient is allergic to ${hits.join(", ")}. Added — review before saving.`);
-    }
 
     setItems([...items, newItem]);
     
@@ -473,12 +460,6 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
         </Button>
       </Box>
 
-      {hasAnyConflict && (
-        <Alert severity="error" icon={<WarningAmberRounded />}>
-          <strong>Allergy alert:</strong> this prescription includes medicine(s) matching the patient's recorded allergies. Review highlighted rows before saving.
-        </Alert>
-      )}
-
 {dispensingStatus && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Typography variant="subtitle2" fontWeight={700}>Status:</Typography>
@@ -634,18 +615,11 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
             </TableHead>
             <TableBody>
               {items.map((item, index) => (
-                <TableRow key={index} sx={{ opacity: item.buyOutside ? 0.7 : 1, bgcolor: itemConflicts[index]?.length ? "rgba(239,68,68,0.06)" : "transparent" }}>
+                <TableRow key={index} sx={{ opacity: item.buyOutside ? 0.7 : 1 }}>
                   <TableCell>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                      {itemConflicts[index]?.length > 0 && (
-                        <Tooltip title={`Allergy match: ${itemConflicts[index].join(", ")}`}>
-                          <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 18 }} />
-                        </Tooltip>
-                      )}
-                      <Box>
-                        <Typography variant="body2" fontWeight={600}>{item.medicineName || "Custom"}</Typography>
-                        {item.genericName && <Typography variant="caption" color="text.secondary">{item.genericName}</Typography>}
-                      </Box>
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>{item.medicineName || "Custom"}</Typography>
+                      {item.genericName && <Typography variant="caption" color="text.secondary">{item.genericName}</Typography>}
                     </Box>
                   </TableCell>
                   <TableCell>{item.dosage}</TableCell>
