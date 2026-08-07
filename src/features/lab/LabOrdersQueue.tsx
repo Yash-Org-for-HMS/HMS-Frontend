@@ -3,7 +3,7 @@ import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { orderStatusColor } from "@/utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab, Pagination } from "@mui/material";
-import { VisibilityRounded, BloodtypeRounded, AddRounded, CancelRounded } from "@mui/icons-material";
+import { VisibilityRounded, BloodtypeRounded, AddRounded, CancelRounded, VerifiedRounded } from "@mui/icons-material";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { axiosInstance } from "@/api/axios";
@@ -174,7 +174,16 @@ export default function LabOrdersQueue() {
                   <TableCell>{order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</TableCell>
                   <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status) as any} size="small" />
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+                      <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status) as any} size="small" />
+                      {order.status === "COMPLETED" && (
+                        order.verified ? (
+                          <Chip icon={<VerifiedRounded sx={{ fontSize: "14px !important" }} />} label="Verified" size="small" color="success" variant="outlined" sx={{ height: 22, fontWeight: 700 }} />
+                        ) : (
+                          <Chip label="To verify" size="small" color="warning" variant="outlined" sx={{ height: 22, fontWeight: 700 }} />
+                        )
+                      )}
+                    </Box>
                   </TableCell>
                   <TableCell align="right">
                     {order.status === "PENDING" && !order.admissionId && order.paymentStatus !== "PAID" && order.paymentStatus !== "BILLED" && (
@@ -199,10 +208,22 @@ export default function LabOrdersQueue() {
                       >
                         Collect Sample
                       </Button>
+                    ) : order.status === "COMPLETED" && !order.verified ? (
+                      // Results in, but nobody has signed off — make verification the
+                      // obvious next action instead of a plain "View".
+                      <Button
+                        variant="contained"
+                        size="small"
+                        color="success"
+                        startIcon={<VerifiedRounded />}
+                        onClick={() => navigate(`/lab/orders/${order.labOrderId}`)}
+                      >
+                        Verify
+                      </Button>
                     ) : (
-                      <Button 
-                        variant="outlined" 
-                        size="small" 
+                      <Button
+                        variant="outlined"
+                        size="small"
                         startIcon={<VisibilityRounded />}
                         onClick={() => navigate(`/lab/orders/${order.labOrderId}`)}
                       >
