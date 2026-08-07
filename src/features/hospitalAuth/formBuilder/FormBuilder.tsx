@@ -34,6 +34,19 @@ const FIELD_TYPES = [
   { value: "checkbox", label: "Checkbox" },
 ];
 
+// Friendly "what should this accept?" presets for a text field, so a non-technical
+// admin picks a format instead of hand-writing a regex. The value IS the regex
+// stored in validationRulesJson.pattern (the renderer already validates against it).
+const FORMAT_PRESETS: { value: string; label: string }[] = [
+  { value: "", label: "Any text" },
+  { value: "^[0-9]+$", label: "Numbers only" },
+  { value: "^[A-Za-z ]+$", label: "Letters only" },
+  { value: "^[A-Za-z0-9 ]+$", label: "Letters & numbers" },
+  { value: "^[0-9]{10}$", label: "Phone (10 digits)" },
+  { value: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$", label: "Email address" },
+];
+const CUSTOM = "__custom__";
+
 export default function FormBuilder() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -275,7 +288,21 @@ export default function FormBuilder() {
                         <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", mt: 1.5 }}>
                           <TextField size="small" type="number" label="Min length" value={field.validationRulesJson?.minLength ?? ""} onChange={(e) => setRule(idx, "minLength", e.target.value)} sx={{ width: 120 }} />
                           <TextField size="small" type="number" label="Max length" value={field.validationRulesJson?.maxLength ?? ""} onChange={(e) => setRule(idx, "maxLength", e.target.value)} sx={{ width: 120 }} />
-                          <TextField size="small" label="Pattern (regex)" value={field.validationRulesJson?.pattern ?? ""} onChange={(e) => setRule(idx, "pattern", e.target.value)} placeholder="e.g. ^[0-9]{10}$" sx={{ flex: "1 1 160px", minWidth: 0 }} />
+                          {(() => {
+                            const cur = field.validationRulesJson?.pattern ?? "";
+                            const isPreset = FORMAT_PRESETS.some((p) => p.value === cur);
+                            return (
+                              <TextField
+                                select size="small" label="Accepted format"
+                                value={isPreset ? cur : CUSTOM}
+                                onChange={(e) => { if (e.target.value !== CUSTOM) setRule(idx, "pattern", e.target.value); }}
+                                sx={{ flex: "1 1 180px", minWidth: 0 }}
+                              >
+                                {FORMAT_PRESETS.map((p) => <MenuItem key={p.label} value={p.value}>{p.label}</MenuItem>)}
+                                {!isPreset && <MenuItem value={CUSTOM}>Custom rule</MenuItem>}
+                              </TextField>
+                            );
+                          })()}
                         </Box>
                       )}
                       {field.fieldType === "number" && (
