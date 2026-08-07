@@ -11,7 +11,7 @@ import {
   DailyOpd, Analytics, Collection, ReferralsByDoctor, OpRegistration, OpBills, DiagnosisWise, Census, Footfall,
 } from "./Reports";
 import { InPatients, Discharges, IpRegistrations, IpAdvances, Occupancy } from "../ipd/IpdReports";
-import { Outstanding, PatientStatement, Receipts, ServiceWise, PharmacyExpense } from "../billing/BillingReports";
+import { Outstanding, PatientStatement, Receipts, ServiceWise, PharmacyExpense, UnreturnedAdvances } from "../billing/BillingReports";
 import { DayBook, RevenueAnalytics, RefundRegister, DiscountRegister, CancelledInvoices, DoctorProductivity } from "../billing/FinanceReports";
 import { LabOverview, TestWise, Turnaround, Pending, CriticalResults } from "../lab/LabReports";
 import { PharmacyOverview } from "../pharmacy/PharmacyReports";
@@ -57,6 +57,7 @@ const GROUPS: ReportGroup[] = [
       { key: "collection", label: "Daily Collection", Comp: Collection },
       { key: "receipts", label: "Receipts", Comp: Receipts },
       { key: "outstanding", label: "Outstanding Dues", Comp: Outstanding },
+      { key: "unreturned-advances", label: "Unreturned Advances (to refund)", Comp: UnreturnedAdvances },
       { key: "patient-statement", label: "Patient Account Statement", Comp: PatientStatement },
       { key: "revenue", label: "Revenue Analytics", Comp: RevenueAnalytics },
       { key: "service-wise", label: "Service-Wise Revenue", Comp: ServiceWise },

@@ -126,6 +126,44 @@ export function Outstanding() {
   );
 }
 
+// Advance deposits owed BACK to patients: closed (discharged/cancelled) admissions
+// that still hold a positive deposit balance. Snapshot, not date-ranged.
+export function UnreturnedAdvances() {
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["billing-report-unreturned-advances"],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/unreturned-advances")).data.data,
+  });
+  const rows: any[] = data?.rows ?? [];
+
+  return (
+    <Box>
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.danger} label="Owed to patients" value={inr(data.totals.totalOwed)} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Closed admissions" value={String(data.totals.admissions)} /></Grid>
+          </Grid>
+          <ReportTable
+            title="Unreturned advances (deposits to refund)"
+            filename="unreturned_advances"
+            emptyText="No unreturned advances — every closed admission's deposit is settled."
+            columns={[
+              { key: "admissionNumber", label: "Admission" },
+              { key: "patientName", label: "Patient" },
+              { key: "uhid", label: "UHID" },
+              { key: "status", label: "Status" },
+              { key: "closedOn", label: "Closed", format: fmtDate, value: (r) => ts(r.closedOn) },
+              money("amountOwed", "Owed back"),
+            ]}
+            rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 export function ServiceWise() {
   const [range, setRange] = useState<DateRange>(() => rangeFrom(29));
   const { data, isLoading, isError, error, refetch } = useQuery({
