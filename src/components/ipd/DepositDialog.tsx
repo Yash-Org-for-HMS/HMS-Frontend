@@ -5,7 +5,7 @@ import { formatINR } from "@/utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem,
-  Stack, Typography, Box,
+  Stack, Typography, Box, InputAdornment,
 } from "@mui/material";
 import { SavingsRounded, UndoRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -71,7 +71,17 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
           </Box>
           <TextField fullWidth required type="number" label={`Amount (₹)`} value={amount} onChange={(e) => setAmount(e.target.value)}
             helperText={isRefund ? `Max refundable: ${formatINR(held)}` : undefined}
-            error={isRefund && Number(amount) > held + 0.005} />
+            error={isRefund && Number(amount) > held + 0.005}
+            InputProps={isRefund && held > 0 ? {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Button size="small" onClick={() => setAmount(String(held))}
+                    sx={{ textTransform: "none", minWidth: 0, px: 1, fontWeight: 700, color: "#8b5cf6" }}>
+                    Full
+                  </Button>
+                </InputAdornment>
+              ),
+            } : undefined} />
           {!isRefund && (
             <TextField select fullWidth label="Payment method" value={methodId} onChange={(e) => setMethodId(e.target.value)}>
               <MenuItem value="">—</MenuItem>
