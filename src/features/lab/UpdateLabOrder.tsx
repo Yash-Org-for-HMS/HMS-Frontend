@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import ErrorState from "@/components/ErrorState";
 import {
   Box, Typography, Paper, Grid, TextField, Button, Alert, Chip, Divider, Avatar,
-  Table, TableHead, TableBody, TableRow, TableCell, TableContainer, Tooltip, LinearProgress,
+  Tooltip, LinearProgress,
 } from "@mui/material";
 import {
   SaveRounded, ArrowBackRounded, ScienceRounded, AccessTimeRounded, PrintRounded, VerifiedRounded,
@@ -276,76 +276,70 @@ export default function UpdateLabOrder() {
           )}
         </Box>
 
-        <TableContainer sx={{ px: { xs: 1, sm: 2 } }}>
-          <Table sx={{ minWidth: 640 }}>
-            <TableHead>
-              <TableRow sx={{ "& th": { ...typeScale.sectionLabel, borderBottom: "2px solid", borderColor: "divider", py: 1 } }}>
-                <TableCell sx={{ width: "30%" }}>Test</TableCell>
-                <TableCell sx={{ width: "22%" }}>Result</TableCell>
-                <TableCell sx={{ width: "22%" }}>Reference Range</TableCell>
-                <TableCell sx={{ width: "26%" }}>Remarks</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {reports.map((report: any) => {
-                const rid = report.labReportId;
-                const val = results[rid]?.value || "";
-                const isCriticalNow = evaluateCriticalValue(report.labTest?.testCode || "", val);
-                return (
-                  <TableRow key={rid} sx={{
-                    bgcolor: isCriticalNow ? "rgba(239,68,68,0.05)" : "transparent",
-                    "& td": { borderBottom: "1px solid", borderColor: "divider", py: 1.5, verticalAlign: "top" },
-                    transition: "background-color 0.2s",
-                  }}>
-                    <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                        {isCriticalNow && (
-                          <Tooltip title="Critical panic value — the ordering doctor is alerted on save">
-                            <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 18 }} />
-                          </Tooltip>
-                        )}
-                        <Box>
-                          <Typography sx={{ ...typeScale.bodyStrong, color: isCriticalNow ? SEMANTIC.danger : "text.primary" }}>
-                            {report.labTest?.testName || "Test"}
-                          </Typography>
-                          {report.labTest?.testCode && (
-                            <Typography sx={{ ...typeScale.caption, fontFamily: "monospace" }}>{report.labTest.testCode}</Typography>
-                          )}
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <TextField
-                        fullWidth size="small" placeholder="—"
-                        value={results[rid]?.value || ""}
-                        onChange={(e) => set(rid, "value", e.target.value)}
-                        disabled={!canEdit}
-                        error={isCriticalNow}
-                        InputProps={{ sx: { fontWeight: 700, ...(isCriticalNow && { color: SEMANTIC.danger }) } }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <TextField
-                        fullWidth size="small" placeholder="e.g. 4.0–6.0"
-                        value={results[rid]?.range || ""}
-                        onChange={(e) => set(rid, "range", e.target.value)}
-                        disabled={!canEdit}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <TextField
-                        fullWidth size="small" placeholder="Optional"
-                        value={results[rid]?.remarks || ""}
-                        onChange={(e) => set(rid, "remarks", e.target.value)}
-                        disabled={!canEdit}
-                      />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Box sx={{ px: 3, pb: 1, display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {reports.map((report: any) => {
+            const rid = report.labReportId;
+            const val = results[rid]?.value || "";
+            const isCriticalNow = evaluateCriticalValue(report.labTest?.testCode || "", val);
+            return (
+              <Paper key={rid} elevation={0} sx={{
+                p: 2, borderRadius: 2,
+                border: "1px solid",
+                borderColor: isCriticalNow ? SEMANTIC.danger : "divider",
+                borderLeftWidth: isCriticalNow ? 4 : 1,
+                borderLeftColor: isCriticalNow ? SEMANTIC.danger : "divider",
+                bgcolor: isCriticalNow ? "rgba(239,68,68,0.04)" : "background.paper",
+                transition: "border-color 0.2s, background-color 0.2s",
+              }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                    {isCriticalNow && (
+                      <Tooltip title="Critical panic value — the ordering doctor is alerted on save">
+                        <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 18 }} />
+                      </Tooltip>
+                    )}
+                    <Typography sx={{ ...typeScale.bodyStrong, color: isCriticalNow ? SEMANTIC.danger : "text.primary" }}>
+                      {report.labTest?.testName || "Test"}
+                    </Typography>
+                    {report.labTest?.testCode && (
+                      <Chip label={report.labTest.testCode} size="small" variant="outlined"
+                        sx={{ height: 20, fontFamily: "monospace", "& .MuiChip-label": { px: 0.75, ...typeScale.chip } }} />
+                    )}
+                  </Box>
+                  {isCriticalNow && <Chip label="CRITICAL" size="small" color="error" sx={{ height: 22, fontWeight: 700 }} />}
+                </Box>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <TextField
+                      fullWidth size="small" label="Result" placeholder="—"
+                      value={results[rid]?.value || ""}
+                      onChange={(e) => set(rid, "value", e.target.value)}
+                      disabled={!canEdit}
+                      error={isCriticalNow}
+                      InputProps={{ sx: { fontWeight: 700, ...(isCriticalNow && { color: SEMANTIC.danger }) } }}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <TextField
+                      fullWidth size="small" label="Reference range" placeholder="e.g. 4.0–6.0"
+                      value={results[rid]?.range || ""}
+                      onChange={(e) => set(rid, "range", e.target.value)}
+                      disabled={!canEdit}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <TextField
+                      fullWidth size="small" label="Remarks" placeholder="Optional"
+                      value={results[rid]?.remarks || ""}
+                      onChange={(e) => set(rid, "remarks", e.target.value)}
+                      disabled={!canEdit}
+                    />
+                  </Grid>
+                </Grid>
+              </Paper>
+            );
+          })}
+        </Box>
 
         <Box sx={{ p: 3, pt: 2.5, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
           <Typography sx={{ ...typeScale.caption }}>
