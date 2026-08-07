@@ -5,7 +5,7 @@ import { useQuery, keepPreviousData, useQueryClient } from "@tanstack/react-quer
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Chip, TextField, InputAdornment, Pagination, Tabs, Tab,
-  IconButton, Collapse, Button, Tooltip,
+  IconButton, Collapse, Button, Tooltip, Grid,
 } from "@mui/material";
 import {
   SearchRounded, KeyboardArrowDownRounded, KeyboardArrowUpRounded,
@@ -285,38 +285,57 @@ function LabDetail({ reports }: { reports: any[] }) {
     return <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>No test lines on this order.</Typography>;
   }
   return (
-    <Table size="small">
-      <TableHead>
-        <TableRow>
-          {["Test", "Result", "Normal range", "Remarks"].map((h, i) => (
-            <TableCell key={i} sx={{ color: "text.secondary", fontWeight: 600 }}>{h}</TableCell>
-          ))}
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {reports.map((rep: any) => (
-          <TableRow key={rep.labReportId} sx={{ bgcolor: rep.isCritical && !rep.pending ? "rgba(239,68,68,0.06)" : "transparent" }}>
-            <TableCell sx={{ fontWeight: 600 }}>
-              {rep.testName || "Test"}
-              {rep.testCode && <Typography component="span" variant="caption" sx={{ color: "text.secondary", ml: 0.5 }}>({rep.testCode})</Typography>}
-            </TableCell>
-            <TableCell>
-              {rep.pending ? (
-                <Chip label="Pending" size="small" sx={{ bgcolor: "rgba(245,158,11,0.15)", color: SEMANTIC.warningDark, fontWeight: 600, height: 20 }} />
-              ) : (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700, color: rep.isCritical ? SEMANTIC.danger : "text.primary" }}>{rep.resultValue}</Typography>
-                  {rep.isCritical && <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 16 }} />}
-                  {rep.isCritical && !rep.pending && <AckButton report={rep} />}
+    <Grid container spacing={1.5}>
+      {reports.map((rep: any) => {
+        const critical = rep.isCritical && !rep.pending;
+        return (
+          <Grid key={rep.labReportId} size={{ xs: 12, md: 6 }}>
+            <Paper elevation={0} sx={{
+              p: 1.75, borderRadius: 2, height: "100%",
+              border: "1px solid",
+              borderColor: critical ? SEMANTIC.danger : "divider",
+              borderLeftWidth: critical ? 3 : 1,
+              borderLeftColor: critical ? SEMANTIC.danger : "divider",
+              bgcolor: critical ? "rgba(239,68,68,0.04)" : "background.paper",
+            }}>
+              {/* Test name + prominent result value */}
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>{rep.testName || "Test"}</Typography>
+                  {rep.testCode && <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>{rep.testCode}</Typography>}
+                </Box>
+                {rep.pending ? (
+                  <Chip label="Pending" size="small" sx={{ bgcolor: "rgba(245,158,11,0.15)", color: SEMANTIC.warningDark, fontWeight: 600, height: 22 }} />
+                ) : (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
+                    {critical && <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 18 }} />}
+                    <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.1, color: critical ? SEMANTIC.danger : "text.primary" }}>
+                      {rep.resultValue}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+
+              {/* Reference range + acknowledge */}
+              {!rep.pending && (
+                <Box sx={{ mt: 1.25, pt: 1, borderTop: "1px dashed", borderColor: "divider", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, flexWrap: "wrap" }}>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    Normal range: <Box component="span" sx={{ color: "text.primary", fontWeight: 600 }}>{rep.normalRange || "—"}</Box>
+                  </Typography>
+                  {critical && <AckButton report={rep} />}
                 </Box>
               )}
-            </TableCell>
-            <TableCell sx={{ color: "text.secondary" }}>{rep.normalRange || "—"}</TableCell>
-            <TableCell sx={{ color: "text.secondary" }}>{rep.remarks || "—"}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+
+              {rep.remarks && (
+                <Typography variant="caption" sx={{ display: "block", mt: 0.75, color: "text.secondary" }}>
+                  <Box component="span" sx={{ fontWeight: 600 }}>Remarks:</Box> {rep.remarks}
+                </Typography>
+              )}
+            </Paper>
+          </Grid>
+        );
+      })}
+    </Grid>
   );
 }
 
