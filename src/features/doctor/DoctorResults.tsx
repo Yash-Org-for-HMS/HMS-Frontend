@@ -198,7 +198,7 @@ export default function DoctorResults() {
                             ) : (
                               <Chip label={r.type === "LAB" && r.progress ? `Pending ${r.progress}` : "Pending"} size="small" sx={{ bgcolor: "rgba(245,158,11,0.15)", color: SEMANTIC.warningDark, fontWeight: 600 }} />
                             )}
-                            {r.type === "LAB" && r.status === "READY" && (
+                            {(r.type === "LAB" || r.type === "RADIOLOGY") && r.status === "READY" && (
                               r.verified ? (
                                 <Chip icon={<VerifiedRounded sx={{ fontSize: "14px !important" }} />} label="Verified" size="small" sx={{ height: 20, bgcolor: "rgba(16,185,129,0.12)", color: "#0f9d78", fontWeight: 700 }} />
                               ) : (

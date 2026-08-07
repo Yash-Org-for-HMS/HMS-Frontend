@@ -3,7 +3,7 @@ import { ACCENTS } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { orderStatusColor } from "@/utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab, Pagination } from "@mui/material";
-import { VisibilityRounded, CheckCircleRounded, InsertDriveFileRounded, EditRounded, CloudUploadRounded, AddRounded } from "@mui/icons-material";
+import { VisibilityRounded, CheckCircleRounded, InsertDriveFileRounded, EditRounded, CloudUploadRounded, AddRounded, VerifiedRounded } from "@mui/icons-material";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
@@ -50,6 +50,7 @@ export default function RadiologyOrdersQueue() {
   const [notes, setNotes] = useState("");
   const [reportUrl, setReportUrl] = useState("");
   const [saving, setSaving] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showPOS, setShowPOS] = useState(false);
   const [walkInOpen, setWalkInOpen] = useState(false);
@@ -126,6 +127,23 @@ export default function RadiologyOrdersQueue() {
   const handleDrop = (e: any) => {
     e.preventDefault();
     handleFileUpload(e);
+  };
+
+  // Radiologist sign-off on a completed report. Non-blocking: the report is
+  // already visible to the ordering doctor; verifying flips it to "Verified".
+  const handleVerify = async () => {
+    if (!editOrder) return;
+    try {
+      setVerifying(true);
+      await axiosInstance.put(`/lab/radiology-orders/${editOrder.radiologyOrderId}/verify`);
+      toast.success("Report verified");
+      handleClose();
+      fetchOrders();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Failed to verify report"));
+    } finally {
+      setVerifying(false);
+    }
   };
 
   const handleSave = async () => {
@@ -215,6 +233,9 @@ export default function RadiologyOrdersQueue() {
                   <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status) as any} size="small" />
+                    {order.verified && (
+                      <Chip icon={<VerifiedRounded sx={{ fontSize: "14px !important" }} />} label="Verified" size="small" color="success" variant="outlined" sx={{ ml: 0.5, height: 22 }} />
+                    )}
                   </TableCell>
                   <TableCell align="right">
                     <Button 
@@ -357,6 +378,15 @@ export default function RadiologyOrdersQueue() {
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
+          {editOrder?.verified ? (
+            <Chip icon={<VerifiedRounded />} color="success" variant="outlined" sx={{ mr: "auto" }}
+              label={`Verified${editOrder.verifiedByName ? ` · ${editOrder.verifiedByName}` : ""}`} />
+          ) : editOrder?.status === "COMPLETED" && (
+            <Button color="success" variant="contained" startIcon={<VerifiedRounded />} sx={{ mr: "auto" }}
+              onClick={handleVerify} disabled={verifying || editOrder?.billingLockActive}>
+              {verifying ? <HeartbeatLoader size={22} /> : "Verify Report"}
+            </Button>
+          )}
           {editOrder?.billingLockActive && (
             <Button color="success" variant="outlined" onClick={() => setShowPOS(true)}>Collect Payment</Button>
           )}
