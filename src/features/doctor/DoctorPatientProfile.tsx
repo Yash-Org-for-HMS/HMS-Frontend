@@ -139,6 +139,7 @@ export default function DoctorPatientProfile() {
               <Chip icon={<WcRounded sx={{ fontSize: "14px !important" }} />} label={p.genderLabel} size="small" sx={{ bgcolor: alpha("#8b5cf6", 0.12), color: "#8b5cf6", fontWeight: 600 }} />
               <Chip icon={<BloodtypeRounded sx={{ fontSize: "14px !important" }} />} label={p.bloodGroupLabel} size="small" sx={{ bgcolor: alpha(SEMANTIC.danger, 0.1), color: SEMANTIC.danger, fontWeight: 700 }} />
               {p.age != null && <Chip label={`${p.age} yrs`} size="small" sx={{ bgcolor: alpha(SEMANTIC.success, 0.1), color: SEMANTIC.success, fontWeight: 600 }} />}
+              {!hasAllergy && <Chip label="No known allergies" size="small" sx={{ bgcolor: alpha(SEMANTIC.success, 0.1), color: SEMANTIC.successDark, fontWeight: 600 }} />}
             </Box>
             <Stack direction="row" sx={{ flexWrap: "wrap", gap: { xs: 1, sm: 2.5 }, color: "text.secondary" }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, minWidth: 0 }}>
@@ -183,21 +184,15 @@ export default function DoctorPatientProfile() {
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "320px 1fr" }, gap: 2, alignItems: "start" }}>
         {/* Demographics + allergies */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <Section title="Demographics" icon={<PersonRounded fontSize="small" />}>
-            <InfoRow label="Phone" value={p.phone} />
-            <InfoRow label="Email" value={p.email} />
-            <InfoRow label="City" value={p.city} />
-            <InfoRow label="Date of Birth" value={p.dateOfBirth ? new Date(p.dateOfBirth).toLocaleDateString("en-GB") : "—"} />
-          </Section>
-
-          <Section title="Allergies" icon={<WarningAmberRounded fontSize="small" sx={{ color: hasAllergy ? SEMANTIC.danger : DOCTOR_BLUE }} />}>
-            {hasAllergy ? (
-              <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                <Typography variant="body2" sx={{ color: SEMANTIC.dangerDark, fontWeight: 600, lineHeight: 1.6 }}>{p.allergies}</Typography>
-              </Box>
-            ) : (
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>None reported</Typography>
+          {/* Details not already surfaced in the header (which carries name,
+              phone, email, city, and the UHID/gender/blood/age chips). */}
+          <Section title="Patient details" icon={<PersonRounded fontSize="small" />}>
+            <InfoRow label="Date of birth" value={p.dateOfBirth ? new Date(p.dateOfBirth).toLocaleDateString("en-GB") : "—"} />
+            <InfoRow label="Address" value={[p.addressLine1, p.addressLine2, p.city, p.district, p.state, p.postalCode].filter(Boolean).join(", ") || "—"} />
+            {(p.emergencyContactName || p.emergencyContactPhone) && (
+              <InfoRow label="Emergency contact" value={[p.emergencyContactName, p.emergencyContactPhone, p.emergencyContactRelation ? `(${p.emergencyContactRelation})` : ""].filter(Boolean).join(" ")} />
             )}
+            <InfoRow label="Registered" value={p.createdAt ? new Date(p.createdAt).toLocaleDateString("en-GB") : "—"} />
           </Section>
 
           {/* Read-only immunization snapshot — full schedule + administer/skip
