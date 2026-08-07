@@ -1,14 +1,14 @@
 import { ACCENTS, SEMANTIC } from "@/styles/accents";
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Chip, TextField, InputAdornment, Pagination, Tabs, Tab,
-  IconButton, Collapse, Button, Tooltip, Grid,
+  IconButton, Button, Tooltip, Grid, Dialog, DialogTitle, DialogContent, DialogActions, Divider,
 } from "@mui/material";
 import {
-  SearchRounded, KeyboardArrowDownRounded, KeyboardArrowUpRounded,
+  SearchRounded, CloseRounded,
   WarningAmberRounded, BiotechRounded, MonitorHeartRounded, OpenInNewRounded, PersonRounded, VerifiedRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -52,7 +52,7 @@ export default function DoctorResults() {
   const [searchInput, setSearchInput] = useState("");
   const search = useDebouncedValue(searchInput.trim(), 350);
   const [page, setPage] = useState(1);
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [selected, setSelected] = useState<any | null>(null);
 
   // Server-side column sorting (the list is paginated, so sorting happens server-side).
   const { orderBy, order, onSort } = useServerSort();
@@ -62,7 +62,7 @@ export default function DoctorResults() {
   // Reset to page 1 whenever the (debounced) search term changes.
   useEffect(() => { setPage(1); }, [search]);
 
-  useEffect(() => { setPage(1); setExpanded(null); }, [tab]);
+  useEffect(() => { setPage(1); setSelected(null); }, [tab]);
 
   // Jump back to the first page whenever the sort changes.
   useEffect(() => { setPage(1); }, [orderBy, order]);
@@ -135,7 +135,6 @@ export default function DoctorResults() {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={HEAD_SX} />
                 <SortableHeadCell label="Type" sortKey="type" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
                 <SortableHeadCell label="Patient" sortKey="patient" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
                 <SortableHeadCell label="Test / Scan" sortKey="title" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
@@ -146,33 +145,29 @@ export default function DoctorResults() {
             </TableHead>
             <TableBody>
               {isLoading ? (
-                <TableRowsSkeleton rows={6} columns={7} />
+                <TableRowsSkeleton rows={6} columns={6} />
               ) : isError ? (
                 <TableRow>
-                  <TableCell colSpan={7} sx={{ py: 4, borderBottom: "none" }}>
+                  <TableCell colSpan={6} sx={{ py: 4, borderBottom: "none" }}>
                     <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} sx={{ py: 4, borderBottom: "none" }}>
+                  <TableCell colSpan={6} sx={{ py: 4, borderBottom: "none" }}>
                     <Mascot pose="nothing-here-yet" subtitle={search ? "No results match your search." : status === "ready" ? "No results waiting for review." : "Nothing here yet."} size={130} />
                   </TableCell>
                 </TableRow>
               ) : (
                 rows.map((r) => {
                   const key = `${r.type}-${r.orderId}`;
-                  const isOpen = expanded === key;
                   return (
-                    <Fragment key={key}>
                       <TableRow
+                        key={key}
                         hover
-                        onClick={() => setExpanded(isOpen ? null : key)}
-                        sx={{ cursor: "pointer", "& > td": { borderBottom: isOpen ? "none" : "1px solid", borderColor: "divider" } }}
+                        onClick={() => setSelected(r)}
+                        sx={{ cursor: "pointer" }}
                       >
-                        <TableCell>
-                          <IconButton size="small">{isOpen ? <KeyboardArrowUpRounded /> : <KeyboardArrowDownRounded />}</IconButton>
-                        </TableCell>
                         <TableCell>
                           <Chip
                             icon={r.type === "LAB" ? <BiotechRounded sx={{ fontSize: "16px !important" }} /> : <MonitorHeartRounded sx={{ fontSize: "16px !important" }} />}
@@ -222,21 +217,6 @@ export default function DoctorResults() {
                           </Tooltip>
                         </TableCell>
                       </TableRow>
-
-                      <TableRow>
-                        <TableCell colSpan={7} sx={{ py: 0, borderBottom: "1px solid", borderColor: "divider" }}>
-                          <Collapse in={isOpen} timeout="auto" unmountOnExit>
-                            <Box sx={{ py: 2, px: 1 }}>
-                              {r.type === "LAB" ? (
-                                <LabDetail reports={r.reports} />
-                              ) : (
-                                <RadiologyDetail item={r} />
-                              )}
-                            </Box>
-                          </Collapse>
-                        </TableCell>
-                      </TableRow>
-                    </Fragment>
                   );
                 })
               )}
@@ -251,6 +231,58 @@ export default function DoctorResults() {
           </Box>
         )}
       </Paper>
+
+      {/* Results popup — opens on row click */}
+      <Dialog open={!!selected} onClose={() => setSelected(null)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+        {selected && (
+          <>
+            <DialogTitle sx={{ pb: 1.5 }}>
+              <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+                <Box sx={{ minWidth: 0 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.75, flexWrap: "wrap" }}>
+                    <Chip
+                      icon={selected.type === "LAB" ? <BiotechRounded sx={{ fontSize: "16px !important" }} /> : <MonitorHeartRounded sx={{ fontSize: "16px !important" }} />}
+                      label={selected.type === "LAB" ? "Lab" : "Radiology"}
+                      size="small"
+                      sx={{ bgcolor: selected.type === "LAB" ? "rgba(59,130,246,0.1)" : "rgba(139,92,246,0.1)", color: selected.type === "LAB" ? DOCTOR_BLUE : "#8b5cf6", fontWeight: 600 }}
+                    />
+                    {selected.status === "READY" ? (
+                      <Chip label="Ready" size="small" sx={{ bgcolor: "rgba(16,185,129,0.15)", color: "#16a34a", fontWeight: 700 }} />
+                    ) : (
+                      <Chip label={selected.type === "LAB" && selected.progress ? `Pending ${selected.progress}` : "Pending"} size="small" sx={{ bgcolor: "rgba(245,158,11,0.15)", color: SEMANTIC.warningDark, fontWeight: 600 }} />
+                    )}
+                    {(selected.type === "LAB" || selected.type === "RADIOLOGY") && selected.status === "READY" && (
+                      selected.verified ? (
+                        <Chip icon={<VerifiedRounded sx={{ fontSize: "14px !important" }} />} label="Verified" size="small" sx={{ height: 20, bgcolor: "rgba(16,185,129,0.12)", color: "#0f9d78", fontWeight: 700 }} />
+                      ) : (
+                        <Chip label="Unverified" size="small" sx={{ height: 20, bgcolor: "rgba(148,163,184,0.2)", color: SEMANTIC.warningDark, fontWeight: 600 }} />
+                      )
+                    )}
+                    {selected.isCritical && (
+                      <Chip icon={<WarningAmberRounded sx={{ fontSize: "14px !important" }} />} label="Critical" size="small" color="error" sx={{ height: 20, fontWeight: 700 }} />
+                    )}
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.25 }}>{selected.title}</Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    {selected.patientName}{selected.uhidNumber ? ` · ${selected.uhidNumber}` : ""} · Ordered {fmt(selected.orderDate)}
+                  </Typography>
+                </Box>
+                <IconButton onClick={() => setSelected(null)} size="small"><CloseRounded /></IconButton>
+              </Box>
+            </DialogTitle>
+            <Divider />
+            <DialogContent sx={{ pt: 2.5 }}>
+              {selected.type === "LAB" ? <LabDetail reports={selected.reports} /> : <RadiologyDetail item={selected} />}
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+              <Button startIcon={<PersonRounded />} onClick={() => navigate(`/doctor/patients/${selected.patientId}`)} sx={{ textTransform: "none", mr: "auto" }}>
+                Open patient record
+              </Button>
+              <Button variant="contained" onClick={() => setSelected(null)}>Close</Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
     </Box>
   );
 }
