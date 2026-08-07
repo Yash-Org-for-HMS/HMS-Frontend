@@ -1,18 +1,24 @@
 import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Avatar, Chip, Divider, Button, Stack, Tooltip, alpha,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, IconButton, CircularProgress,
 } from "@mui/material";
 import {
   ArrowBackRounded, PersonRounded, HistoryRounded, WarningAmberRounded,
   LocalHospitalRounded, VaccinesRounded, MedicalServicesRounded,
   TodayRounded, BadgeRounded, WcRounded, BloodtypeRounded, LocalPhoneRounded,
   EmailRounded, LocationOnRounded, TimelineRounded,
+  FolderSharedRounded, UploadFileRounded, DescriptionRounded, OpenInNewRounded, DeleteOutlineRounded,
 } from "@mui/icons-material";
 import { getInitials } from "@/utils/format";
 import { axiosInstance } from "@/api/axios";
+import { assetUrl } from "@/utils/assetUrl";
+import { useToast } from "@/providers/ToastContext";
+import { useConfirm } from "@/providers/ConfirmContext";
+import { getApiErrorMessage } from "@/utils/apiError";
 import Mascot from "@/components/Mascot";
 import ErrorState from "@/components/ErrorState";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
@@ -244,6 +250,9 @@ export default function DoctorPatientProfile() {
           <ClinicalTimeline patientId={id!} />
         </Section>
 
+        {/* Clinical documents — typed, uploaded files (discharge summaries, referrals, …) */}
+        <ClinicalDocuments patientId={id!} />
+
         {/* Consultation history */}
         <Section title="Consultation History" icon={<HistoryRounded fontSize="small" />}>
           {historyQ.isLoading ? (
@@ -351,5 +360,127 @@ function ClinicalTimeline({ patientId }: { patientId: string }) {
         })}
       </Box>
     </>
+  );
+}
+
+// Typed clinical documents (discharge summaries, referrals, external reports, …):
+// upload, list, open, and uploader-only soft-delete. Distinct from the timeline's
+// transactional events — these are files the workflow doesn't otherwise capture.
+function ClinicalDocuments({ patientId }: { patientId: string }) {
+  const toast = useToast();
+  const confirm = useConfirm();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [typeId, setTypeId] = useState<string>("");
+  const [title, setTitle] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["clinical-documents", patientId],
+    queryFn: async () => (await axiosInstance.get(`/doctor/patients/${patientId}/records`)).data.data,
+  });
+  const types: { id: number; name: string }[] = data?.types ?? [];
+  const records: any[] = data?.records ?? [];
+
+  const reset = () => { setTypeId(""); setTitle(""); setFile(null); };
+  const submit = async () => {
+    if (!typeId) { toast.error("Choose a document type"); return; }
+    if (!title.trim()) { toast.error("Enter a title"); return; }
+    if (!file) { toast.error("Choose a file to upload"); return; }
+    setSaving(true);
+    try {
+      const fd = new FormData();
+      fd.append("recordTypeId", String(typeId));
+      fd.append("title", title.trim());
+      fd.append("file", file);
+      await axiosInstance.post(`/doctor/patients/${patientId}/records`, fd);
+      toast.success("Document uploaded");
+      qc.invalidateQueries({ queryKey: ["clinical-documents", patientId] });
+      setOpen(false); reset();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Upload failed"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async (r: any) => {
+    const ok = await confirm({
+      title: "Remove this document?",
+      message: `"${r.title}" will be removed from view but kept for the record. You can only remove a document you uploaded.`,
+      confirmText: "Remove", destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await axiosInstance.delete(`/doctor/patients/${patientId}/records/${r.medicalRecordId}`);
+      toast.success("Document removed");
+      qc.invalidateQueries({ queryKey: ["clinical-documents", patientId] });
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Could not remove document"));
+    }
+  };
+
+  return (
+    <Section
+      title="Clinical Documents"
+      icon={<FolderSharedRounded fontSize="small" />}
+      action={<Button size="small" startIcon={<UploadFileRounded />} variant="outlined" onClick={() => setOpen(true)}>Upload</Button>}
+    >
+      {isLoading ? (
+        <ListSkeleton rows={3} />
+      ) : records.length === 0 ? (
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>No documents on record yet.</Typography>
+      ) : (
+        <Stack spacing={1}>
+          {records.map((r) => (
+            <Paper key={r.medicalRecordId} elevation={0} sx={{ p: 1.25, border: "1px solid", borderColor: "divider", borderRadius: 2, display: "flex", alignItems: "center", gap: 1.25 }}>
+              <DescriptionRounded sx={{ color: DOCTOR_BLUE, fontSize: 22 }} />
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.title}</Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  {r.type} · {new Date(r.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} · {r.uploadedBy}
+                </Typography>
+              </Box>
+              {r.attachmentUrl && (
+                <Tooltip title="Open">
+                  <IconButton size="small" component="a" href={assetUrl(r.attachmentUrl)} target="_blank" rel="noopener">
+                    <OpenInNewRounded fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {r.mine && (
+                <Tooltip title="Remove (you uploaded this)">
+                  <IconButton size="small" color="error" onClick={() => remove(r)}>
+                    <DeleteOutlineRounded fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Paper>
+          ))}
+        </Stack>
+      )}
+
+      <Dialog open={open} onClose={() => !saving && setOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Upload clinical document</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 0.5 }}>
+            <TextField select label="Document type" value={typeId} onChange={(e) => setTypeId(e.target.value)} fullWidth size="small">
+              {types.map((t) => <MenuItem key={t.id} value={String(t.id)}>{t.name}</MenuItem>)}
+            </TextField>
+            <TextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth size="small" placeholder="e.g. Discharge summary — 04 Aug 2026" inputProps={{ maxLength: 300 }} />
+            <Button component="label" variant="outlined" startIcon={<UploadFileRounded />}>
+              {file ? file.name : "Choose file"}
+              <input hidden type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+            </Button>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>PDF, image, or Word document, up to 15 MB.</Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)} disabled={saving}>Cancel</Button>
+          <Button variant="contained" onClick={submit} disabled={saving} startIcon={saving ? <CircularProgress size={16} /> : undefined}>Upload</Button>
+        </DialogActions>
+      </Dialog>
+    </Section>
   );
 }
