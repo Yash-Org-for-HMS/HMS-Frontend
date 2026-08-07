@@ -2,14 +2,26 @@ import { useState, useEffect } from "react";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "@/components/ErrorState";
-import { Box, Typography, Paper, Grid, TextField, Button, Alert, Chip, Divider } from "@mui/material";
-import { SaveRounded, ArrowBackRounded, ScienceRounded, AccessTimeRounded, PrintRounded, VerifiedRounded } from "@mui/icons-material";
+import {
+  Box, Typography, Paper, Grid, TextField, Button, Alert, Chip, Divider, Avatar,
+  Table, TableHead, TableBody, TableRow, TableCell, TableContainer, Tooltip, LinearProgress,
+} from "@mui/material";
+import {
+  SaveRounded, ArrowBackRounded, ScienceRounded, AccessTimeRounded, PrintRounded, VerifiedRounded,
+  PersonRounded, BadgeRounded, LocalHospitalRounded, WarningAmberRounded, CheckCircleRounded,
+  ReceiptLongRounded, PaymentsRounded,
+} from "@mui/icons-material";
+import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { typeScale } from "@/styles/typography";
+import { getInitials } from "@/utils/format";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import { axiosInstance } from "@/api/axios";
 import { useParams, useNavigate } from "react-router-dom";
 import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
-import PageHeader from "@/components/layout/PageHeader";
+
+const LAB = ACCENTS.lab;
+const LAB_DARK = ACCENTS.labDark;
 
 const evaluateCriticalValue = (testCode: string, resultValue: string): boolean => {
   const val = parseFloat(resultValue);
@@ -24,6 +36,19 @@ const evaluateCriticalValue = (testCode: string, resultValue: string): boolean =
 
   return false;
 };
+
+// A small label/value stack for the summary facts row.
+function Fact({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+  return (
+    <Box sx={{ display: "flex", gap: 1.25, alignItems: "flex-start" }}>
+      <Box sx={{ color: LAB, mt: 0.25, display: "flex" }}>{icon}</Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography sx={{ ...typeScale.sectionLabel, mb: 0.25 }}>{label}</Typography>
+        <Box sx={{ ...typeScale.bodyStrong, color: "text.primary" }}>{children}</Box>
+      </Box>
+    </Box>
+  );
+}
 
 export default function UpdateLabOrder() {
   const { id } = useParams();
@@ -70,7 +95,7 @@ export default function UpdateLabOrder() {
     try {
       setSaving(true);
       setMessage(null);
-      
+
       const payload = Object.entries(results).map(([labReportId, data]) => ({
         labReportId,
         resultValue: data.value || "PENDING",
@@ -110,175 +135,230 @@ export default function UpdateLabOrder() {
     return <ErrorState title="Couldn't load lab order" message={getApiErrorMessage(error, "Order not found")} onRetry={() => refetch()} />;
   }
 
+  const reports: any[] = order.reports ?? [];
+  const patientName = `${order.patient?.firstName || ""} ${order.patient?.lastName || ""}`.trim() || "Unknown patient";
+  const doctorName = `${order.doctor?.user?.firstName || ""} ${order.doctor?.user?.lastName || ""}`.trim() || "—";
+  const paid = order.paymentStatus === "PAID";
+  const collected = !!order.sampleCollectedAt;
+  const locked = !!order.billingLockActive;
+  const gatedByCollection = order.status === "PENDING" && !collected;
+  const canEdit = !locked && !gatedByCollection;
+
+  const enteredCount = reports.filter((r) => (results[r.labReportId]?.value || "").trim()).length;
+  const criticalCount = reports.filter((r) => evaluateCriticalValue(r.labTest?.testCode || "", results[r.labReportId]?.value || "")).length;
+  const total = reports.length;
+  const pct = total ? Math.round((enteredCount / total) * 100) : 0;
+
+  const set = (rid: string, key: "value" | "range" | "remarks", v: string) =>
+    setResults({ ...results, [rid]: { ...results[rid], [key]: v } });
+
   return (
-    <Box>
-      <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/lab/orders")} sx={{ mb: 2 }}>
+    <Box sx={{ maxWidth: 1100, mx: "auto" }}>
+      <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/lab/orders")} sx={{ mb: 2, color: "text.secondary" }}>
         Back to Queue
       </Button>
-      
-      <PageHeader
-        title={`Update Lab Order: ${order.sampleBarcode}`}
-        actions={
-          <>
-            <Chip label={order.paymentStatus === "PAID" ? "PAID" : "UNPAID"} color={order.paymentStatus === "PAID" ? "success" : "error"} />
-            {order.paymentStatus !== "PAID" && (
-              <Button size="small" variant="outlined" color="success" onClick={() => setShowPOS(true)}>
-                Collect Payment (Cash)
-              </Button>
-            )}
-            <Chip label={order.status || "PENDING"} color={order.status === "COMPLETED" || order.status === "VERIFIED" ? "success" : "warning"} />
-            {order.verified ? (
-              <Chip
-                icon={<VerifiedRounded />}
-                color="success"
-                variant="outlined"
-                label={`Verified${order.verifiedByName ? ` · ${order.verifiedByName}` : ""}`}
-              />
-            ) : order.status === "COMPLETED" && (
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<VerifiedRounded />}
-                onClick={handleVerify}
-                disabled={verifying || order.billingLockActive}
-              >
-                {verifying ? "Verifying…" : "Verify Results"}
-              </Button>
-            )}
-            {(order.status === "COMPLETED" || order.status === "VERIFIED") && (
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<PrintRounded />}
-                onClick={() => window.open(`/lab/orders/${id}/print`, '_blank')}
-              >
-                Print Report
-              </Button>
-            )}
-          </>
-        }
-      />
 
-      {message && <Alert severity={message.type} sx={{ mb: 3 }}>{message.text}</Alert>}
+      {/* ── Header: title + primary actions ─────────────────────────────── */}
+      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 2, mb: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Avatar sx={{ bgcolor: `${LAB}1a`, color: LAB_DARK, width: 44, height: 44 }}>
+            <ScienceRounded />
+          </Avatar>
+          <Box>
+            <Typography sx={{ ...typeScale.pageTitle }}>Lab Order</Typography>
+            <Typography sx={{ ...typeScale.caption, fontFamily: "monospace", letterSpacing: "0.02em" }}>{order.sampleBarcode}</Typography>
+          </Box>
+        </Box>
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
+          {!paid && (
+            <Button size="small" variant="outlined" color="success" startIcon={<PaymentsRounded />} onClick={() => setShowPOS(true)}>
+              Collect Payment
+            </Button>
+          )}
+          {order.verified ? (
+            <Chip icon={<VerifiedRounded />} color="success" variant="outlined"
+              label={`Verified${order.verifiedByName ? ` · ${order.verifiedByName}` : ""}`} sx={{ fontWeight: 700 }} />
+          ) : order.status === "COMPLETED" && (
+            <Button variant="contained" color="success" startIcon={<VerifiedRounded />} onClick={handleVerify} disabled={verifying || locked}>
+              {verifying ? "Verifying…" : "Verify Results"}
+            </Button>
+          )}
+          {(order.status === "COMPLETED" || order.status === "VERIFIED") && (
+            <Button variant="contained" startIcon={<PrintRounded />}
+              onClick={() => window.open(`/lab/orders/${id}/print`, '_blank')}
+              sx={{ bgcolor: LAB_DARK, "&:hover": { bgcolor: LAB } }}>
+              Print Report
+            </Button>
+          )}
+        </Box>
+      </Box>
 
-      <Paper sx={{ p: 3, borderRadius: 3, mb: 3 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Patient Information</Typography>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Typography variant="body2" color="text.secondary">Name</Typography>
-            <Typography variant="body1">{order.patient?.firstName} {order.patient?.lastName}</Typography>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Typography variant="body2" color="text.secondary">UHID</Typography>
-            <Typography variant="body1">{order.patient?.uhidNumber}</Typography>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Typography variant="body2" color="text.secondary">Referring Doctor</Typography>
-            <Typography variant="body1">{order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</Typography>
-          </Grid>
-        </Grid>
+      {message && <Alert severity={message.type} sx={{ mb: 3, borderRadius: 2 }}>{message.text}</Alert>}
 
-        <Divider sx={{ my: 2 }} />
-
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
-          <ScienceRounded fontSize="small" /> Sample Details
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Typography variant="body2" color="text.secondary">Barcode</Typography>
-            <Typography variant="body1" sx={{ fontWeight: 600 }}>{order.sampleBarcode}</Typography>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Typography variant="body2" color="text.secondary">Collection Status</Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Chip 
-                label={order.sampleCollectedAt ? "Collected" : "Not Collected"} 
-                color={order.sampleCollectedAt ? "success" : "default"} 
-                size="small" 
-              />
+      {/* ── Summary card ────────────────────────────────────────────────── */}
+      <Paper elevation={0} sx={{ borderRadius: 3, mb: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+        <Box sx={{ height: 4, bgcolor: LAB }} />
+        <Box sx={{ p: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2, mb: 2.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Avatar sx={{ bgcolor: `${LAB}14`, color: LAB_DARK, fontWeight: 700 }}>{getInitials(patientName)}</Avatar>
+              <Box>
+                <Typography sx={{ ...typeScale.cardTitle }}>{patientName}</Typography>
+                <Typography sx={{ ...typeScale.caption }}>UHID {order.patient?.uhidNumber || "—"}</Typography>
+              </Box>
             </Box>
+            <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+              <Chip size="small" label={paid ? "Paid" : "Unpaid"} color={paid ? "success" : "error"}
+                variant={paid ? "filled" : "outlined"} sx={{ fontWeight: 700 }} />
+              <Chip size="small" icon={collected ? <CheckCircleRounded /> : undefined}
+                label={order.status || "PENDING"}
+                color={order.status === "COMPLETED" || order.status === "VERIFIED" ? "success" : "warning"}
+                sx={{ fontWeight: 700 }} />
+            </Box>
+          </Box>
+
+          <Divider sx={{ mb: 2.5 }} />
+
+          <Grid container spacing={2.5}>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Fact icon={<LocalHospitalRounded fontSize="small" />} label="Referring Doctor">{doctorName}</Fact>
+            </Grid>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Fact icon={<BadgeRounded fontSize="small" />} label="Sample">
+                {collected
+                  ? <Chip size="small" icon={<CheckCircleRounded />} label="Collected" color="success" variant="outlined" sx={{ height: 22 }} />
+                  : <Chip size="small" label="Not collected" color="default" variant="outlined" sx={{ height: 22 }} />}
+              </Fact>
+            </Grid>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Fact icon={<AccessTimeRounded fontSize="small" />} label="Collected At">
+                {collected ? new Date(order.sampleCollectedAt).toLocaleString() : "—"}
+              </Fact>
+            </Grid>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Fact icon={<ReceiptLongRounded fontSize="small" />} label="Tests">{total} test{total === 1 ? "" : "s"}</Fact>
+            </Grid>
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Typography variant="body2" color="text.secondary">Collected At</Typography>
-            <Typography variant="body1" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <AccessTimeRounded fontSize="small" color="disabled" />
-              {order.sampleCollectedAt ? new Date(order.sampleCollectedAt).toLocaleString() : "N/A"}
-            </Typography>
-          </Grid>
-        </Grid>
+        </Box>
       </Paper>
 
-      <Paper sx={{ p: 3, borderRadius: 3 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Test Results</Typography>
-
-        {order.billingLockActive && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            Billing Lock Active: The invoice for these tests has not been paid. Processing is disabled.
-          </Alert>
-        )}
-        {order.status === "PENDING" && !order.sampleCollectedAt && !order.billingLockActive && (
-          <Alert severity="warning" sx={{ mb: 3 }}>
-            Sample collection is pending. You cannot enter test results until the sample is collected and verified.
-          </Alert>
-        )}
-        {order.reports?.map((report: any) => {
-          const val = results[report.labReportId]?.value || "";
-          const isCriticalNow = evaluateCriticalValue(report.labTest?.testCode || "", val);
-          
-          return (
-          <Box key={report.labReportId} sx={{ 
-            p: 2, mb: 2, 
-            border: "2px solid", 
-            borderColor: isCriticalNow ? "error.main" : "divider", 
-            borderRadius: 2, 
-            bgcolor: isCriticalNow ? "error.50" : "transparent",
-            transition: "all 0.3s"
-          }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: isCriticalNow ? "error.main" : "text.primary" }}>
-                {report.labTest?.testName} ({report.labTest?.testCode})
-              </Typography>
-              {isCriticalNow && (
-                <Chip label="CRITICAL PANIC VALUE" color="error" size="small" sx={{ animation: "pulse 1.5s infinite" }} />
-              )}
-            </Box>
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <TextField 
-                  fullWidth label="Result Value" size="small"
-                  value={results[report.labReportId]?.value || ""}
-                  onChange={(e) => setResults({...results, [report.labReportId]: {...results[report.labReportId], value: e.target.value}})}
-                  disabled={order.billingLockActive || (order.status === "PENDING" && !order.sampleCollectedAt)}
-                  error={isCriticalNow}
-                  helperText={isCriticalNow ? "Immediate doctor notification will be sent upon saving." : ""}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <TextField 
-                  fullWidth label="Normal Range" size="small"
-                  value={results[report.labReportId]?.range || ""}
-                  onChange={(e) => setResults({...results, [report.labReportId]: {...results[report.labReportId], range: e.target.value}})}
-                  disabled={order.billingLockActive || (order.status === "PENDING" && !order.sampleCollectedAt)}
-                />
-              </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                <TextField 
-                  fullWidth label="Remarks" size="small"
-                  value={results[report.labReportId]?.remarks || ""}
-                  onChange={(e) => setResults({...results, [report.labReportId]: {...results[report.labReportId], remarks: e.target.value}})}
-                  disabled={order.billingLockActive || (order.status === "PENDING" && !order.sampleCollectedAt)}
-                />
-              </Grid>
-            </Grid>
+      {/* ── Results worksheet ───────────────────────────────────────────── */}
+      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+        <Box sx={{ p: 3, pb: 2, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography sx={{ ...typeScale.cardTitle }}>Test Results</Typography>
+            {criticalCount > 0 && (
+              <Chip size="small" icon={<WarningAmberRounded />} color="error"
+                label={`${criticalCount} critical`} sx={{ height: 22, fontWeight: 700 }} />
+            )}
           </Box>
-        )})}
-        
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
-          <Button 
-            variant="contained" 
+          <Box sx={{ minWidth: 160 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+              <Typography sx={{ ...typeScale.caption }}>Entered</Typography>
+              <Typography sx={{ ...typeScale.caption, fontWeight: 700, color: "text.primary" }}>{enteredCount}/{total}</Typography>
+            </Box>
+            <LinearProgress variant="determinate" value={pct}
+              sx={{ height: 6, borderRadius: 3, bgcolor: "action.hover",
+                "& .MuiLinearProgress-bar": { bgcolor: enteredCount === total && total > 0 ? SEMANTIC.success : LAB } }} />
+          </Box>
+        </Box>
+
+        <Box sx={{ px: 3 }}>
+          {locked && (
+            <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+              <strong>Billing lock active.</strong> The invoice for these tests hasn't been paid — result entry is disabled until payment is collected.
+            </Alert>
+          )}
+          {gatedByCollection && !locked && (
+            <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
+              <strong>Sample not collected.</strong> Collect the sample before entering results.
+            </Alert>
+          )}
+        </Box>
+
+        <TableContainer sx={{ px: { xs: 1, sm: 2 } }}>
+          <Table sx={{ minWidth: 640 }}>
+            <TableHead>
+              <TableRow sx={{ "& th": { ...typeScale.sectionLabel, borderBottom: "2px solid", borderColor: "divider", py: 1 } }}>
+                <TableCell sx={{ width: "30%" }}>Test</TableCell>
+                <TableCell sx={{ width: "22%" }}>Result</TableCell>
+                <TableCell sx={{ width: "22%" }}>Reference Range</TableCell>
+                <TableCell sx={{ width: "26%" }}>Remarks</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {reports.map((report: any) => {
+                const rid = report.labReportId;
+                const val = results[rid]?.value || "";
+                const isCriticalNow = evaluateCriticalValue(report.labTest?.testCode || "", val);
+                return (
+                  <TableRow key={rid} sx={{
+                    bgcolor: isCriticalNow ? "rgba(239,68,68,0.05)" : "transparent",
+                    "& td": { borderBottom: "1px solid", borderColor: "divider", py: 1.5, verticalAlign: "top" },
+                    transition: "background-color 0.2s",
+                  }}>
+                    <TableCell>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                        {isCriticalNow && (
+                          <Tooltip title="Critical panic value — the ordering doctor is alerted on save">
+                            <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 18 }} />
+                          </Tooltip>
+                        )}
+                        <Box>
+                          <Typography sx={{ ...typeScale.bodyStrong, color: isCriticalNow ? SEMANTIC.danger : "text.primary" }}>
+                            {report.labTest?.testName || "Test"}
+                          </Typography>
+                          {report.labTest?.testCode && (
+                            <Typography sx={{ ...typeScale.caption, fontFamily: "monospace" }}>{report.labTest.testCode}</Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        fullWidth size="small" placeholder="—"
+                        value={results[rid]?.value || ""}
+                        onChange={(e) => set(rid, "value", e.target.value)}
+                        disabled={!canEdit}
+                        error={isCriticalNow}
+                        InputProps={{ sx: { fontWeight: 700, ...(isCriticalNow && { color: SEMANTIC.danger }) } }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        fullWidth size="small" placeholder="e.g. 4.0–6.0"
+                        value={results[rid]?.range || ""}
+                        onChange={(e) => set(rid, "range", e.target.value)}
+                        disabled={!canEdit}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        fullWidth size="small" placeholder="Optional"
+                        value={results[rid]?.remarks || ""}
+                        onChange={(e) => set(rid, "remarks", e.target.value)}
+                        disabled={!canEdit}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <Box sx={{ p: 3, pt: 2.5, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
+          <Typography sx={{ ...typeScale.caption }}>
+            {criticalCount > 0
+              ? <Box component="span" sx={{ color: SEMANTIC.danger, fontWeight: 700 }}>Critical value(s) present — the doctor is notified on save.</Box>
+              : "Results are visible to the ordering doctor as soon as they're saved."}
+          </Typography>
+          <Button
+            variant="contained"
             startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             onClick={handleSave}
-            disabled={saving || order.billingLockActive || (order.status === "PENDING" && !order.sampleCollectedAt)}
+            disabled={saving || !canEdit}
+            sx={{ bgcolor: LAB_DARK, "&:hover": { bgcolor: LAB }, px: 3 }}
           >
             Save Results
           </Button>
