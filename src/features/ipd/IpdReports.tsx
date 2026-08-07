@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import { Box, Paper, Grid, TextField, Tabs, Tab } from "@mui/material";
-import { LocalHotelRounded, ReplayRounded, AccessTimeRounded, PersonAddRounded, SavingsRounded, SpeedRounded, HeightRounded } from "@mui/icons-material";
+import { LocalHotelRounded, ReplayRounded, AccessTimeRounded, PersonAddRounded, SavingsRounded, SpeedRounded, HeightRounded, WarningAmberRounded, MedicationRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import ErrorState from "@/components/ErrorState";
@@ -228,6 +228,48 @@ export function Occupancy() {
               { key: "occupancyRate", label: "Occupancy %", align: "right", format: (v) => `${v}%`, value: (r) => Number(r.occupancyRate) },
             ]}
             rows={rows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// Patient safety: scheduled medication doses that are past due and still
+// uncharted (PENDING) for current + recently-closed inpatients — surfacing
+// missed/undocumented administrations so the ward can act. Snapshot.
+export function OverdueDoses() {
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["ipd-overdue-doses"],
+    queryFn: async () => (await axiosInstance.get("/ipd/reports/overdue-doses")).data.data,
+  });
+  const rows: any[] = data?.rows ?? [];
+
+  return (
+    <Box>
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Overdue doses" value={String(data.totals.overdueDoses)} sub={`> ${data.graceMins}m past due`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicationRounded />} accent={ACCENTS.ipd} label="Patients affected" value={String(data.totals.patients)} /></Grid>
+          </Grid>
+          <ReportTable
+            title="Overdue / uncharted medication doses"
+            filename="overdue_doses"
+            emptyText="No overdue doses — every scheduled dose is charted."
+            columns={[
+              { key: "patientName", label: "Patient" },
+              { key: "uhid", label: "UHID" },
+              { key: "admissionStatus", label: "Admission" },
+              { key: "bed", label: "Bed" },
+              { key: "medicine", label: "Medicine" },
+              { key: "dosage", label: "Dose" },
+              { key: "route", label: "Route" },
+              { key: "scheduledAt", label: "Scheduled", format: (v) => (v ? dayjs(v).format("DD MMM HH:mm") : "—"), value: (r) => ts(r.scheduledAt) },
+              { key: "hoursOverdue", label: "Overdue (h)", align: "right", value: (r) => Number(r.hoursOverdue) },
+            ]}
+            rows={rows}
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
           />
         </Box>
       )}

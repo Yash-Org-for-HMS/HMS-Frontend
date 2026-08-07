@@ -10,7 +10,7 @@ import { isAdmin as isAdminRole } from "@/constants/roles";
 import {
   DailyOpd, Analytics, Collection, ReferralsByDoctor, OpRegistration, OpBills, DiagnosisWise, Census, Footfall,
 } from "./Reports";
-import { InPatients, Discharges, IpRegistrations, IpAdvances, Occupancy } from "../ipd/IpdReports";
+import { InPatients, Discharges, IpRegistrations, IpAdvances, Occupancy, OverdueDoses } from "../ipd/IpdReports";
 import { Outstanding, PatientStatement, Receipts, ServiceWise, PharmacyExpense, UnreturnedAdvances } from "../billing/BillingReports";
 import { DayBook, RevenueAnalytics, RefundRegister, DiscountRegister, CancelledInvoices, DoctorProductivity } from "../billing/FinanceReports";
 import { LabOverview, TestWise, Turnaround, Pending, CriticalResults } from "../lab/LabReports";
@@ -43,6 +43,7 @@ const GROUPS: ReportGroup[] = [
     items: [
       { key: "ipd-census", label: "Ward Census & Occupancy", Comp: Census },
       { key: "ipd-occupancy", label: "Occupancy Trend & ALOS", Comp: Occupancy },
+      { key: "ipd-overdue-doses", label: "Overdue Medication Doses", Comp: OverdueDoses },
       { key: "inpatient-list", label: "In-Patient List", Comp: InPatients },
       { key: "discharges", label: "Discharges", Comp: Discharges },
       { key: "ip-registrations", label: "IP Registrations", Comp: IpRegistrations },
