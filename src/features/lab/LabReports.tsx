@@ -275,9 +275,10 @@ export function CriticalResults() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 4 }}><KpiCard icon={<CrisisAlertRounded />} accent={SEMANTIC.danger} label="Critical results" value={String(data.totals.critical)} /></Grid>
-            <Grid size={{ xs: 6, md: 4 }}><KpiCard icon={<PersonRounded />} accent={ACCENTS.lab} label="Patients affected" value={String(data.totals.patients)} /></Grid>
-            <Grid size={{ xs: 6, md: 4 }}><KpiCard icon={<ReportProblemRounded />} accent={SEMANTIC.warning} label="Unverified" value={String(data.totals.unverified)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CrisisAlertRounded />} accent={SEMANTIC.danger} label="Critical results" value={String(data.totals.critical)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonRounded />} accent={ACCENTS.lab} label="Patients affected" value={String(data.totals.patients)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReportProblemRounded />} accent={SEMANTIC.warning} label="Unacknowledged" value={String(data.totals.unacknowledged ?? 0)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReportProblemRounded />} accent={SEMANTIC.info} label="Unverified" value={String(data.totals.unverified)} /></Grid>
           </Grid>
           <ReportTable title="Critical results" filename={`lab_critical_${range.from}_${range.to}`}
             emptyText="No critical results flagged in this period."
@@ -289,7 +290,8 @@ export function CriticalResults() {
               { key: "result", label: "Result" },
               { key: "normalRange", label: "Reference range" },
               { key: "doctor", label: "Ordering doctor" },
-              { key: "verified", label: "Status" },
+              { key: "acknowledged", label: "Acknowledged" },
+              { key: "verified", label: "Verified" },
             ]}
             rows={rows}
             truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}

@@ -22,6 +22,7 @@ import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
+import { useToast } from "@/providers/ToastContext";
 
 // Match this page's existing table-head styling so SortableHeadCell blends in.
 const HEAD_SX = { bgcolor: "background.paper", color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" } as const;
@@ -245,6 +246,31 @@ export default function DoctorResults() {
   );
 }
 
+// Closed-loop acknowledgement of a critical result by the ordering clinician.
+function AckButton({ report }: { report: any }) {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const [saving, setSaving] = useState(false);
+  if (report.acknowledgedAt) {
+    return <Chip label="Acknowledged" size="small" sx={{ height: 18, fontSize: "0.6rem", fontWeight: 700, bgcolor: "rgba(16,185,129,0.14)", color: "#0f9d78", ml: 0.5 }} />;
+  }
+  const ack = async () => {
+    setSaving(true);
+    try {
+      await axiosInstance.post(`/lab/reports/${report.labReportId}/acknowledge`);
+      toast.success("Critical result acknowledged");
+      qc.invalidateQueries({ queryKey: ["doctor-results"] });
+    } catch (e) { toast.error(apiErrorText(e)); }
+    finally { setSaving(false); }
+  };
+  return (
+    <Button size="small" variant="outlined" color="error" disabled={saving} onClick={ack}
+      sx={{ textTransform: "none", py: 0, px: 1, minWidth: 0, fontSize: "0.65rem", ml: 0.5 }}>
+      {saving ? "…" : "Acknowledge"}
+    </Button>
+  );
+}
+
 function LabDetail({ reports }: { reports: any[] }) {
   if (!reports || reports.length === 0) {
     return <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>No test lines on this order.</Typography>;
@@ -272,6 +298,7 @@ function LabDetail({ reports }: { reports: any[] }) {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <Typography variant="body2" sx={{ fontWeight: 700, color: rep.isCritical ? SEMANTIC.danger : "text.primary" }}>{rep.resultValue}</Typography>
                   {rep.isCritical && <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 16 }} />}
+                  {rep.isCritical && !rep.pending && <AckButton report={rep} />}
                 </Box>
               )}
             </TableCell>
