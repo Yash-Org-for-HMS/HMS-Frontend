@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Avatar, Chip, Divider, Button, Stack, Tooltip, alpha,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, IconButton, CircularProgress,
+  Tabs, Tab,
 } from "@mui/material";
 import {
   ArrowBackRounded, PersonRounded, HistoryRounded, WarningAmberRounded,
@@ -86,6 +87,7 @@ export default function DoctorPatientProfile() {
     enabled: !!id,
   });
 
+  const [mainTab, setMainTab] = useState(0);
   const p = patientQ.data;
   const history: any[] = historyQ.data || [];
   const dueRows: any[] = (vaccinationQ.data?.rows || []).filter((r: any) => r.state === "OVERDUE" || r.state === "DUE_SOON");
@@ -240,61 +242,80 @@ export default function DoctorPatientProfile() {
           </Section>
         </Box>
 
-        {/* Unified clinical record — every event in time order */}
-        <Section title="Clinical Record" icon={<TimelineRounded fontSize="small" />}>
-          <ClinicalTimeline patientId={id!} />
-        </Section>
-
-        {/* Clinical documents — typed, uploaded files (discharge summaries, referrals, …) */}
-        <ClinicalDocuments patientId={id!} />
-
-        {/* Consultation history */}
-        <Section title="Consultation History" icon={<HistoryRounded fontSize="small" />}>
-          {historyQ.isLoading ? (
-            <ListSkeleton rows={4} />
-          ) : history.length === 0 ? (
-            <Box sx={{ py: 2 }}>
-              <Mascot pose="nothing-here-yet" title="No consultations yet" subtitle="No past consultations on record for this patient." size={110} />
-            </Box>
-          ) : (
-            <Box sx={{ position: "relative", pl: 2, mt: 1, "&::before": { content: '""', position: "absolute", top: 10, bottom: 10, left: 15, width: 2, bgcolor: "divider" } }}>
-              {history.map((h, i) => (
-                <Box key={i} sx={{ position: "relative", mb: 3, pl: 3, "&:last-child": { mb: 0 } }}>
-                  <Box sx={{ position: "absolute", left: -21, top: 4, width: 14, height: 14, borderRadius: "50%", bgcolor: "background.paper", border: `3px solid ${DOCTOR_BLUE}`, zIndex: 1 }} />
-                  <Paper elevation={0} sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 3, bgcolor: "background.default" }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1, alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-                        {new Date(h.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                      </Typography>
-                      <Chip label={h.doctorName} size="small" sx={{ height: 20, ...typeScale.chip, bgcolor: `${DOCTOR_BLUE}1a`, color: DOCTOR_BLUE }} />
-                    </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
-                      <LocalHospitalRounded sx={{ fontSize: 16, color: DOCTOR_BLUE }} />
-                      {h.diagnosis || "No diagnosis recorded"}
-                    </Typography>
-                    {h.soapAssessment && (
-                      <Box
-                        sx={{ color: "text.secondary", ...typeScale.body, lineHeight: 1.5, "& p": { m: 0 } }}
-                        dangerouslySetInnerHTML={{ __html: sanitizeRichText(h.soapAssessment) }}
-                      />
-                    )}
-                    {h.prescribedMedicines && h.prescribedMedicines.length > 0 && (
-                      <Box sx={{ mt: 1.5, pt: 1.5, borderTop: "1px dashed", borderColor: "divider" }}>
-                        <Typography variant="caption" sx={{ fontWeight: 700, display: "block", mb: 0.5 }}>Prescribed:</Typography>
-                        {h.prescribedMedicines.map((med: any, idx: number) => (
-                          <Typography key={idx} variant="caption" sx={{ color: "text.secondary", display: "block" }}>
-                            • {med.medicineName || "Medicine"} — {med.dosage} ({med.frequency}) × {med.durationDays}d
-                          </Typography>
-                        ))}
-                      </Box>
-                    )}
-                  </Paper>
-                </Box>
-              ))}
-            </Box>
-          )}
-        </Section>
+        {/* Clinical narrative — tabbed so a long timeline/history doesn't run the
+            column way past the sidebar. Body scrolls inside a bounded height. */}
+        <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
+          <Tabs
+            value={mainTab}
+            onChange={(_, v) => setMainTab(v)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ px: 1, borderBottom: "1px solid", borderColor: "divider",
+              "& .MuiTab-root": { textTransform: "none", fontWeight: 700, minHeight: 52 },
+              "& .Mui-selected": { color: `${DOCTOR_BLUE} !important` },
+              "& .MuiTabs-indicator": { bgcolor: DOCTOR_BLUE } }}
+          >
+            <Tab icon={<TimelineRounded fontSize="small" />} iconPosition="start" label="Clinical Record" />
+            <Tab icon={<HistoryRounded fontSize="small" />} iconPosition="start" label={`Consultations${history.length ? ` (${history.length})` : ""}`} />
+            <Tab icon={<FolderSharedRounded fontSize="small" />} iconPosition="start" label="Documents" />
+          </Tabs>
+          <Box sx={{ p: 2.5, maxHeight: 620, overflowY: "auto" }}>
+            {mainTab === 0 && <ClinicalTimeline patientId={id!} />}
+            {mainTab === 1 && <ConsultationHistoryBody history={history} loading={historyQ.isLoading} />}
+            {mainTab === 2 && <ClinicalDocuments patientId={id!} bare />}
+          </Box>
+        </Paper>
       </Box>
+    </Box>
+  );
+}
+
+// Detailed consultation history (SOAP + diagnosis + prescribed meds), rendered as
+// a vertical timeline. Lives in the "Consultations" tab of the clinical narrative.
+function ConsultationHistoryBody({ history, loading }: { history: any[]; loading: boolean }) {
+  if (loading) return <ListSkeleton rows={4} />;
+  if (!history.length) {
+    return (
+      <Box sx={{ py: 2 }}>
+        <Mascot pose="nothing-here-yet" title="No consultations yet" subtitle="No past consultations on record for this patient." size={110} />
+      </Box>
+    );
+  }
+  return (
+    <Box sx={{ position: "relative", pl: 2, "&::before": { content: '""', position: "absolute", top: 10, bottom: 10, left: 15, width: 2, bgcolor: "divider" } }}>
+      {history.map((h, i) => (
+        <Box key={i} sx={{ position: "relative", mb: 3, pl: 3, "&:last-child": { mb: 0 } }}>
+          <Box sx={{ position: "absolute", left: -21, top: 4, width: 14, height: 14, borderRadius: "50%", bgcolor: "background.paper", border: `3px solid ${DOCTOR_BLUE}`, zIndex: 1 }} />
+          <Paper elevation={0} sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 3, bgcolor: "background.default" }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1, alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                {new Date(h.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+              </Typography>
+              <Chip label={h.doctorName} size="small" sx={{ height: 20, ...typeScale.chip, bgcolor: `${DOCTOR_BLUE}1a`, color: DOCTOR_BLUE }} />
+            </Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
+              <LocalHospitalRounded sx={{ fontSize: 16, color: DOCTOR_BLUE }} />
+              {h.diagnosis || "No diagnosis recorded"}
+            </Typography>
+            {h.soapAssessment && (
+              <Box
+                sx={{ color: "text.secondary", ...typeScale.body, lineHeight: 1.5, "& p": { m: 0 } }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichText(h.soapAssessment) }}
+              />
+            )}
+            {h.prescribedMedicines && h.prescribedMedicines.length > 0 && (
+              <Box sx={{ mt: 1.5, pt: 1.5, borderTop: "1px dashed", borderColor: "divider" }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, display: "block", mb: 0.5 }}>Prescribed:</Typography>
+                {h.prescribedMedicines.map((med: any, idx: number) => (
+                  <Typography key={idx} variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                    • {med.medicineName || "Medicine"} — {med.dosage} ({med.frequency}) × {med.durationDays}d
+                  </Typography>
+                ))}
+              </Box>
+            )}
+          </Paper>
+        </Box>
+      ))}
     </Box>
   );
 }
@@ -361,7 +382,7 @@ function ClinicalTimeline({ patientId }: { patientId: string }) {
 // Typed clinical documents (discharge summaries, referrals, external reports, …):
 // upload, list, open, and uploader-only soft-delete. Distinct from the timeline's
 // transactional events — these are files the workflow doesn't otherwise capture.
-function ClinicalDocuments({ patientId }: { patientId: string }) {
+function ClinicalDocuments({ patientId, bare = false }: { patientId: string; bare?: boolean }) {
   const toast = useToast();
   const confirm = useConfirm();
   const qc = useQueryClient();
@@ -416,12 +437,10 @@ function ClinicalDocuments({ patientId }: { patientId: string }) {
     }
   };
 
-  return (
-    <Section
-      title="Clinical Documents"
-      icon={<FolderSharedRounded fontSize="small" />}
-      action={<Button size="small" startIcon={<UploadFileRounded />} variant="outlined" onClick={() => setOpen(true)}>Upload</Button>}
-    >
+  const uploadBtn = <Button size="small" startIcon={<UploadFileRounded />} variant="outlined" onClick={() => setOpen(true)}>Upload</Button>;
+
+  const body = (
+    <>
       {isLoading ? (
         <ListSkeleton rows={3} />
       ) : records.length === 0 ? (
@@ -476,6 +495,23 @@ function ClinicalDocuments({ patientId }: { patientId: string }) {
           <Button variant="contained" onClick={submit} disabled={saving} startIcon={saving ? <CircularProgress size={16} /> : undefined}>Upload</Button>
         </DialogActions>
       </Dialog>
+    </>
+  );
+
+  // Bare mode: rendered inside the clinical-narrative tab (no own card), with the
+  // upload action pinned top-right.
+  if (bare) {
+    return (
+      <Box>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1.5 }}>{uploadBtn}</Box>
+        {body}
+      </Box>
+    );
+  }
+
+  return (
+    <Section title="Clinical Documents" icon={<FolderSharedRounded fontSize="small" />} action={uploadBtn}>
+      {body}
     </Section>
   );
 }
