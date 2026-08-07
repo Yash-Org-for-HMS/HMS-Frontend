@@ -182,7 +182,12 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                           <Tooltip title="Discharge"><IconButton size="small" onClick={() => setDischargeFor(a)} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}><LogoutRounded fontSize="small" /></IconButton></Tooltip>
                         </>
                       )}
-                      {!readOnly && (a.status === "ADMITTED" || Number(a.depositBalance) > 0) && (
+                      {!readOnly && Number(a.depositBalance) > 0 && (
+                        <Tooltip title={`Refund deposit (${inr(a.depositBalance)})`}>
+                          <IconButton size="small" onClick={() => setDepositFor({ row: a, mode: "refund" })} sx={{ color: "#8b5cf6", "&:hover": { color: "#7c3aed" } }}><UndoRounded fontSize="small" /></IconButton>
+                        </Tooltip>
+                      )}
+                      {!readOnly && a.status === "ADMITTED" && (
                         <IconButton size="small" onClick={(e) => setMenu({ anchor: e.currentTarget, row: a })} sx={{ color: "text.secondary" }}><MoreVertRounded fontSize="small" /></IconButton>
                       )}
                     </TableCell>
@@ -204,11 +209,6 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
         {menu.row?.status === "ADMITTED" && (
           <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setDepositFor({ row: r, mode: "collect" }); }}>
             <SavingsRounded fontSize="small" sx={{ mr: 1, color: ACCENTS.ipd }} /> Collect deposit
-          </MenuItem>
-        )}
-        {Number(menu.row?.depositBalance) > 0 && (
-          <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setDepositFor({ row: r, mode: "refund" }); }}>
-            <UndoRounded fontSize="small" sx={{ mr: 1, color: "#8b5cf6" }} /> Refund deposit{menu.row?.status !== "ADMITTED" ? ` (${inr(menu.row?.depositBalance)})` : ""}
           </MenuItem>
         )}
         {menu.row?.status === "ADMITTED" && (
