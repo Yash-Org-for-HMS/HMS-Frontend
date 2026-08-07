@@ -131,6 +131,7 @@ export default function MyLeaves() {
               ) : (
                 sorted.map((leave) => {
                   const inactive = INACTIVE.includes((leave.status || "").toLowerCase());
+                  const past = dayjs(leave.leaveDate).isBefore(dayjs(), "day");
                   return (
                     <TableRow key={leave.doctorLeaveId} hover sx={{ "&:last-child td": { border: 0 } }}>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary", fontWeight: 600 }}>
@@ -142,16 +143,18 @@ export default function MyLeaves() {
                           sx={{ bgcolor: inactive ? "rgba(148,163,184,0.15)" : "rgba(16,185,129,0.15)", color: inactive ? "text.secondary" : "#16a34a", fontWeight: 600 }} />
                       </TableCell>
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                        <Tooltip title="Remove leave">
-                          <IconButton size="small"
-                            onClick={async () => {
-                              const ok = await confirm({ title: "Remove leave", message: "Remove this leave day? Your slots for that day re-open.", confirmText: "Remove", destructive: true });
-                              if (ok) removeLeave.mutate(leave.doctorLeaveId);
-                            }}
-                            disabled={removeLeave.isPending}
-                            sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}>
-                            <DeleteOutlineRounded fontSize="small" />
-                          </IconButton>
+                        <Tooltip title={past ? "A past leave day can't be removed" : "Remove leave"}>
+                          <span>
+                            <IconButton size="small"
+                              onClick={async () => {
+                                const ok = await confirm({ title: "Remove leave", message: "Remove this leave day? Your slots for that day re-open.", confirmText: "Remove", destructive: true });
+                                if (ok) removeLeave.mutate(leave.doctorLeaveId);
+                              }}
+                              disabled={past || removeLeave.isPending}
+                              sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}>
+                              <DeleteOutlineRounded fontSize="small" />
+                            </IconButton>
+                          </span>
                         </Tooltip>
                       </TableCell>
                     </TableRow>
