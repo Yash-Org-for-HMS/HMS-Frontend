@@ -4,11 +4,12 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography, Box, Divider,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography, Box, Divider, IconButton, Tooltip,
 } from "@mui/material";
-import { DescriptionRounded, AddRounded, PersonRounded } from "@mui/icons-material";
+import { DescriptionRounded, AddRounded, PersonRounded, DeleteOutlineRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
+import { useConfirm } from "@/providers/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 
 interface Props {
@@ -21,6 +22,7 @@ interface Props {
 // never edited or deleted (a nursing record is medico-legal).
 export default function NursingNotesDialog({ open, onClose, admission }: Props) {
   const toast = useToast();
+  const confirm = useConfirm();
   const [text, setText] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -42,6 +44,23 @@ export default function NursingNotesDialog({ open, onClose, admission }: Props) 
       toast.error(getApiErrorMessage(err, "Failed to add note"));
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Void one's own note (wrong entry / wrong patient). The record is retained.
+  const remove = async (n: any) => {
+    const ok = await confirm({
+      title: "Remove this note?",
+      message: "The note will be removed from view but kept for the record. You can only remove a note you added yourself.",
+      confirmText: "Remove", destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await axiosInstance.delete(`/ipd/admissions/${admission.admissionId}/nursing-notes/${n.nursingNoteId}`);
+      toast.success("Note removed");
+      refetch();
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Failed to remove note"));
     }
   };
 
@@ -82,6 +101,12 @@ export default function NursingNotesDialog({ open, onClose, admission }: Props) 
                   <PersonRounded sx={{ fontSize: 15, color: "text.disabled" }} />
                   <Typography variant="caption" sx={{ fontWeight: 700 }}>{n.author}</Typography>
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>· {dayjs(n.createdAt).format("DD MMM YYYY · HH:mm")}</Typography>
+                  <Box sx={{ flex: 1 }} />
+                  {n.mine && (
+                    <Tooltip title="Remove this note">
+                      <IconButton size="small" onClick={() => remove(n)} sx={{ color: "error.main", p: 0.25 }}><DeleteOutlineRounded sx={{ fontSize: 16 }} /></IconButton>
+                    </Tooltip>
+                  )}
                 </Box>
                 <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>{n.noteText}</Typography>
               </Box>
