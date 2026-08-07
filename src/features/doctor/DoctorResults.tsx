@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import {
   SearchRounded, KeyboardArrowDownRounded, KeyboardArrowUpRounded,
-  WarningAmberRounded, BiotechRounded, MonitorHeartRounded, OpenInNewRounded, PersonRounded,
+  WarningAmberRounded, BiotechRounded, MonitorHeartRounded, OpenInNewRounded, PersonRounded, VerifiedRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -197,6 +197,15 @@ export default function DoctorResults() {
                               <Chip label="Ready" size="small" sx={{ bgcolor: "rgba(16,185,129,0.15)", color: "#16a34a", fontWeight: 700 }} />
                             ) : (
                               <Chip label={r.type === "LAB" && r.progress ? `Pending ${r.progress}` : "Pending"} size="small" sx={{ bgcolor: "rgba(245,158,11,0.15)", color: SEMANTIC.warningDark, fontWeight: 600 }} />
+                            )}
+                            {r.type === "LAB" && r.status === "READY" && (
+                              r.verified ? (
+                                <Chip icon={<VerifiedRounded sx={{ fontSize: "14px !important" }} />} label="Verified" size="small" sx={{ height: 20, bgcolor: "rgba(16,185,129,0.12)", color: "#0f9d78", fontWeight: 700 }} />
+                              ) : (
+                                <Tooltip title="Results not yet verified by a pathologist">
+                                  <Chip label="Unverified" size="small" sx={{ height: 20, bgcolor: "rgba(148,163,184,0.2)", color: SEMANTIC.warningDark, fontWeight: 600 }} />
+                                </Tooltip>
+                              )
                             )}
                             {r.isCritical && (
                               <Tooltip title="Critical value flagged">

@@ -3,7 +3,7 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "@/components/ErrorState";
 import { Box, Typography, Paper, Grid, TextField, Button, Alert, Chip, Divider } from "@mui/material";
-import { SaveRounded, ArrowBackRounded, ScienceRounded, AccessTimeRounded, PrintRounded } from "@mui/icons-material";
+import { SaveRounded, ArrowBackRounded, ScienceRounded, AccessTimeRounded, PrintRounded, VerifiedRounded } from "@mui/icons-material";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import { axiosInstance } from "@/api/axios";
@@ -29,6 +29,7 @@ export default function UpdateLabOrder() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [showPOS, setShowPOS] = useState(false);
   const [results, setResults] = useState<Record<string, { value: string, range: string, remarks: string }>>({});
   const [message, setMessage] = useState<{type: "success" | "error", text: string} | null>(null);
@@ -87,6 +88,23 @@ export default function UpdateLabOrder() {
     }
   };
 
+  // Pathologist sign-off: stamps every result of this order as verified. Results
+  // are already visible to the ordering doctor before this; verifying flips them
+  // from "Unverified" to "Verified" (advisory, non-blocking).
+  const handleVerify = async () => {
+    try {
+      setVerifying(true);
+      setMessage(null);
+      await axiosInstance.put(`/lab/orders/${id}/verify`);
+      setMessage({ type: "success", text: "Results verified." });
+      setTimeout(() => refetch(), 800);
+    } catch (err) {
+      setMessage({ type: "error", text: getApiErrorMessage(err, "Failed to verify results.") });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   if (loading) return <DetailSkeleton />;
   if (isError || !order) {
     return <ErrorState title="Couldn't load lab order" message={getApiErrorMessage(error, "Order not found")} onRetry={() => refetch()} />;
@@ -108,8 +126,26 @@ export default function UpdateLabOrder() {
                 Collect Payment (Cash)
               </Button>
             )}
-            <Chip label={order.status || "PENDING"} color={order.status === "COMPLETED" ? "success" : "warning"} />
-            {order.status === "COMPLETED" && (
+            <Chip label={order.status || "PENDING"} color={order.status === "COMPLETED" || order.status === "VERIFIED" ? "success" : "warning"} />
+            {order.verified ? (
+              <Chip
+                icon={<VerifiedRounded />}
+                color="success"
+                variant="outlined"
+                label={`Verified${order.verifiedByName ? ` · ${order.verifiedByName}` : ""}`}
+              />
+            ) : order.status === "COMPLETED" && (
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<VerifiedRounded />}
+                onClick={handleVerify}
+                disabled={verifying || order.billingLockActive}
+              >
+                {verifying ? "Verifying…" : "Verify Results"}
+              </Button>
+            )}
+            {(order.status === "COMPLETED" || order.status === "VERIFIED") && (
               <Button
                 variant="contained"
                 color="primary"
