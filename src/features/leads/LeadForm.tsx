@@ -195,23 +195,27 @@ export default function LeadForm() {
                 helperText={errors.phone}
               />
             </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                select
-                fullWidth
-                label={t("leads.status")}
-                name="leadStatus"
-                value={formData.leadStatus}
-                onChange={handleChange}
-                
-              >
-                <MenuItem value="new">{t("leads.statusNew")}</MenuItem>
-                <MenuItem value="contacted">{t("leads.statusContacted")}</MenuItem>
-                <MenuItem value="qualified">{t("leads.statusQualified")}</MenuItem>
-                <MenuItem value="demo_done">{t("leads.statusDemoDone")}</MenuItem>
-                <MenuItem value="converted">{t("leads.statusConverted")}</MenuItem>
-              </TextField>
-            </Grid>
+            {/* Starting stage is set only when creating; an existing lead's status
+                is managed from the leads list (and system stages like Trial/
+                Converted are set by their own actions), so it isn't edited here. */}
+            {!isEdit && (
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label={t("leads.status")}
+                  name="leadStatus"
+                  value={formData.leadStatus}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="new">{t("leads.statusNew")}</MenuItem>
+                  <MenuItem value="contacted">{t("leads.statusContacted")}</MenuItem>
+                  <MenuItem value="qualified">{t("leads.statusQualified")}</MenuItem>
+                  <MenuItem value="demo_done">{t("leads.statusDemoDone")}</MenuItem>
+                  <MenuItem value="lost">{t("leads.statusLost")}</MenuItem>
+                </TextField>
+              </Grid>
+            )}
             <Grid size={{ xs: 12 }}>
               <TextField
                 select

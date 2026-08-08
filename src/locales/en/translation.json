@@ -101,6 +101,7 @@
     "statusQualified": "Qualified",
     "statusDemoDone": "Demo Done",
     "statusConverted": "Converted",
+    "statusLost": "Lost",
     "searchPlaceholder": "Search by name, email, or phone...",
     "assignLead": "Assign Lead",
     "deleteLead": "Delete Lead",
