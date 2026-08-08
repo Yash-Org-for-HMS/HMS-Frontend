@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
@@ -7,7 +7,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, Divider, Tooltip, InputAdornment,
 } from "@mui/material";
 import {
-  HotelRounded, AddRounded, PersonRounded, MeetingRoomRounded, ApartmentRounded, EditRounded, SyncRounded,
+  HotelRounded, AddRounded, PersonRounded, MeetingRoomRounded, ApartmentRounded, EditRounded, SyncRounded, PaymentsRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -34,6 +34,7 @@ export default function FacilitySetup() {
   const toast = useToast();
   const [setupAnchor, setSetupAnchor] = useState<null | HTMLElement>(null);
   const [dialog, setDialog] = useState<null | { kind: "ward" | "room" | "bed"; edit?: any }>(null);
+  const [rentOpen, setRentOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -78,11 +79,15 @@ export default function FacilitySetup() {
         subtitle="Define the wards, rooms, and beds available for admission. Day-to-day bed status is managed from the Reception panel."
         actions={
           <>
-            <Tooltip title="Update every bed's daily charge from the current Schedule-of-Charges room-rent prices">
+            <Button variant="outlined" startIcon={<PaymentsRounded />} onClick={() => setRentOpen(true)}
+              sx={{ textTransform: "none", mr: 1, borderColor: ACCENT, color: ACCENT }}>
+              Room rent
+            </Button>
+            <Tooltip title="Re-apply the current room-rent prices to every bed (e.g. after editing prices in the Schedule of Charges)">
               <span>
-                <Button variant="outlined" startIcon={<SyncRounded />} onClick={resyncRents} disabled={syncing}
-                  sx={{ textTransform: "none", mr: 1, borderColor: "divider", color: "text.secondary" }}>
-                  {syncing ? "Syncing…" : "Sync rents"}
+                <Button variant="text" startIcon={<SyncRounded />} onClick={resyncRents} disabled={syncing}
+                  sx={{ textTransform: "none", mr: 1, color: "text.secondary" }}>
+                  {syncing ? "Syncing…" : "Sync"}
                 </Button>
               </span>
             </Tooltip>
@@ -165,7 +170,97 @@ export default function FacilitySetup() {
         )}
 
       {dialog && <SetupDialog kind={dialog.kind} edit={dialog.edit} wards={wards} roomClasses={roomClasses} onClose={() => setDialog(null)} onDone={() => { setDialog(null); refetch(); }} />}
+      {rentOpen && <RoomRentDialog onClose={() => setRentOpen(false)} onDone={() => { setRentOpen(false); refetch(); }} />}
     </Box>
+  );
+}
+
+// Simple room-rent editor: a daily rate per room class, in one place. Saving
+// writes the SOC "Room rent" item + its per-class prices AND applies them to every
+// bed — so nobody has to build a charge item or matrix by hand.
+function RoomRentDialog({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+  const toast = useToast();
+  const [saving, setSaving] = useState(false);
+  const [newClass, setNewClass] = useState("");
+  const [rents, setRents] = useState<Record<string, string>>({});
+
+  const { data, isLoading, refetch } = useQuery<any>({
+    queryKey: ["room-class-rents"],
+    queryFn: async () => (await axiosInstance.get("/ipd/room-class-rents")).data.data,
+  });
+  const classes: any[] = data?.rents || [];
+
+  useEffect(() => {
+    if (!data) return;
+    const m: Record<string, string> = {};
+    for (const c of data.rents || []) m[c.roomClassId] = c.rent != null ? String(c.rent) : "";
+    setRents(m);
+  }, [data]);
+
+  const addClass = async () => {
+    const name = newClass.trim();
+    if (!name) return;
+    try { await axiosInstance.post("/hospital/soc/room-classes", { name }); setNewClass(""); refetch(); toast.success("Class added"); }
+    catch (e) { toast.error(getApiErrorMessage(e, "Couldn't add class")); }
+  };
+
+  const save = async () => {
+    const payload = classes
+      .map((c) => ({ roomClassId: c.roomClassId, rent: Number(rents[c.roomClassId]) }))
+      .filter((r) => Number.isFinite(r.rent) && r.rent >= 0);
+    if (!payload.length) { toast.error("Enter a rent for at least one class"); return; }
+    setSaving(true);
+    try {
+      await axiosInstance.put("/ipd/room-class-rents", { rents: payload });
+      await axiosInstance.post("/ipd/beds/resync-rents");
+      toast.success("Room rents saved and applied to beds");
+      onDone();
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Couldn't save rents"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open onClose={saving ? undefined : onClose} maxWidth="xs" fullWidth>
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <PaymentsRounded sx={{ color: ACCENT }} /> Room rent — daily charge per class
+      </DialogTitle>
+      <DialogContent dividers>
+        {isLoading ? (
+          <ListSkeleton rows={3} />
+        ) : classes.length === 0 ? (
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>No room classes yet — add one below (e.g. General, Private).</Typography>
+        ) : (
+          <Stack spacing={2} sx={{ pt: 0.5 }}>
+            {classes.map((c) => (
+              <Box key={c.roomClassId} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Typography sx={{ flex: 1, fontWeight: 600, minWidth: 0 }}>{c.name}</Typography>
+                <TextField size="small" type="number" value={rents[c.roomClassId] ?? ""} onChange={(e) => setRents({ ...rents, [c.roomClassId]: e.target.value })}
+                  sx={{ width: 140 }} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment>, endAdornment: <InputAdornment position="end">/day</InputAdornment> }} />
+              </Box>
+            ))}
+          </Stack>
+        )}
+        <Divider sx={{ my: 2 }} />
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <TextField size="small" fullWidth placeholder="Add a class (e.g. Deluxe)" value={newClass}
+            onChange={(e) => setNewClass(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addClass(); } }} />
+          <Button onClick={addClass} startIcon={<AddRounded />} sx={{ textTransform: "none", flexShrink: 0 }}>Add</Button>
+        </Box>
+        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1.5 }}>
+          Saving updates every bed's daily charge to match its room class.
+        </Typography>
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
+        <Button variant="contained" onClick={save} disabled={saving || classes.length === 0} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>
+          {saving ? "Saving…" : "Save rents"}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
