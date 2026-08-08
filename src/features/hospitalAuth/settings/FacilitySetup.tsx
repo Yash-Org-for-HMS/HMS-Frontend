@@ -4,10 +4,10 @@ import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Grid, Button, Chip, Menu, MenuItem, IconButton,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, Divider, Tooltip,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, Divider, Tooltip, InputAdornment,
 } from "@mui/material";
 import {
-  HotelRounded, AddRounded, PersonRounded, MeetingRoomRounded, ApartmentRounded, EditRounded,
+  HotelRounded, AddRounded, PersonRounded, MeetingRoomRounded, ApartmentRounded, EditRounded, SyncRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -34,6 +34,7 @@ export default function FacilitySetup() {
   const toast = useToast();
   const [setupAnchor, setSetupAnchor] = useState<null | HTMLElement>(null);
   const [dialog, setDialog] = useState<null | { kind: "ward" | "room" | "bed"; edit?: any }>(null);
+  const [syncing, setSyncing] = useState(false);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["ipd-structure"],
@@ -49,6 +50,20 @@ export default function FacilitySetup() {
     queryFn: async () => (await axiosInstance.get("/hospital/soc/room-classes")).data.data,
   });
 
+  // Push the current SOC room-rent prices onto every bed's daily charge.
+  const resyncRents = async () => {
+    setSyncing(true);
+    try {
+      const res = await axiosInstance.post("/ipd/beds/resync-rents");
+      toast.success(res.data?.message || "Bed rents synced from the Schedule of Charges");
+      refetch();
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Couldn't sync rents"));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const Tile = ({ label, value, color }: { label: string; value: number; color: string }) => (
     <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", textAlign: "center" }}>
       <Typography variant="h5" sx={{ fontWeight: 800, color }}>{value}</Typography>
@@ -63,6 +78,14 @@ export default function FacilitySetup() {
         subtitle="Define the wards, rooms, and beds available for admission. Day-to-day bed status is managed from the Reception panel."
         actions={
           <>
+            <Tooltip title="Update every bed's daily charge from the current Schedule-of-Charges room-rent prices">
+              <span>
+                <Button variant="outlined" startIcon={<SyncRounded />} onClick={resyncRents} disabled={syncing}
+                  sx={{ textTransform: "none", mr: 1, borderColor: "divider", color: "text.secondary" }}>
+                  {syncing ? "Syncing…" : "Sync rents"}
+                </Button>
+              </span>
+            </Tooltip>
             <Button variant="contained" startIcon={<AddRounded />} onClick={(e) => setSetupAnchor(e.currentTarget)}
               sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Add</Button>
             <Menu anchorEl={setupAnchor} open={Boolean(setupAnchor)} onClose={() => setSetupAnchor(null)}>
@@ -171,6 +194,24 @@ function SetupDialog({ kind, edit, wards, roomClasses, onClose, onDone }: { kind
   });
   const set = (k: string, v: any) => setF((p: any) => ({ ...p, [k]: v }));
 
+  // SOC-driven daily rent per room class — used to auto-fill the bed's daily charge.
+  const { data: rentInfo } = useQuery<any>({
+    queryKey: ["room-class-rents"],
+    queryFn: async () => (await axiosInstance.get("/ipd/room-class-rents")).data.data,
+    enabled: kind === "bed",
+  });
+  const rentFor = (rcId: string): number | null => {
+    if (!rentInfo?.configured) return null;
+    const row = (rentInfo.rents || []).find((r: any) => r.roomClassId === rcId);
+    return row && row.rent != null ? Number(row.rent) : (rentInfo.baseRent ?? null);
+  };
+  // Picking a room class fills the daily rent from SOC (still editable afterwards).
+  const pickClass = (rcId: string) => {
+    set("roomClassId", rcId);
+    const r = rentFor(rcId);
+    if (r != null) set("dailyCharge", String(r));
+  };
+
   const rooms = (wards.find((w) => w.wardId === f.wardId)?.rooms) || [];
   const editingWard = kind === "ward" && isEdit;
   const editingRoom = kind === "room" && isEdit;
@@ -223,13 +264,25 @@ function SetupDialog({ kind, edit, wards, roomClasses, onClose, onDone }: { kind
             <TextField select fullWidth required label="Room" value={f.roomId || ""} disabled={editingBed || !f.wardId} onChange={(e) => set("roomId", e.target.value)} helperText={!editingBed && f.wardId && rooms.length === 0 ? "Add a room to this ward first" : undefined}>{rooms.map((r: any) => <MenuItem key={r.roomId} value={r.roomId}>Room {r.roomNumber}</MenuItem>)}</TextField>
             <TextField fullWidth required label="Bed number" value={f.bedNumber || ""} onChange={(e) => set("bedNumber", e.target.value)} />
             <TextField select fullWidth label="Bed type" value={f.bedType} onChange={(e) => set("bedType", e.target.value)}>{BED_TYPES.map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField>
-            <TextField fullWidth type="number" label="Daily charge (₹)" value={f.dailyCharge || ""} onChange={(e) => set("dailyCharge", e.target.value)} />
-            <TextField select fullWidth label="Room class (pricing)" value={f.roomClassId || ""} onChange={(e) => set("roomClassId", e.target.value)}
-              helperText="Sets which Schedule-of-Charges price column applies to this bed's charges at discharge.">
+            <TextField select fullWidth label="Room class (pricing)" value={f.roomClassId || ""} onChange={(e) => pickClass(e.target.value)}
+              helperText="Sets the price tier for this bed's charges — and fills the daily rent from the Schedule of Charges.">
               <MenuItem value=""><em>None (base price)</em></MenuItem>
               {/* Active classes, plus the bed's current class even if later deactivated. */}
               {roomClasses.filter((rc: any) => rc.isActive || rc.roomClassId === f.roomClassId).map((rc: any) => <MenuItem key={rc.roomClassId} value={rc.roomClassId}>{rc.name}{rc.isActive ? "" : " (inactive)"}</MenuItem>)}
             </TextField>
+            <TextField fullWidth type="number" label="Daily charge (₹)" value={f.dailyCharge || ""} onChange={(e) => set("dailyCharge", e.target.value)}
+              helperText={rentInfo?.configured
+                ? (rentFor(f.roomClassId) != null ? `Auto-filled from Schedule of Charges (₹${rentFor(f.roomClassId)}) — editable` : "Editable")
+                : "Tip: add a 'Room rent' charge (type Bed) in the Schedule of Charges to auto-fill this."}
+              InputProps={rentInfo?.configured && rentFor(f.roomClassId) != null ? {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Tooltip title="Reset to the SOC price for this room class">
+                      <Button size="small" onClick={() => set("dailyCharge", String(rentFor(f.roomClassId)))} sx={{ textTransform: "none", minWidth: 0, px: 1 }}>SOC</Button>
+                    </Tooltip>
+                  </InputAdornment>
+                ),
+              } : undefined} />
           </>)}
           <Divider />
         </Stack>

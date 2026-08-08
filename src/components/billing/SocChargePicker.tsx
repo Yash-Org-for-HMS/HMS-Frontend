@@ -12,7 +12,7 @@ const inr = formatINRAuto;
 
 type RoomPrice = { roomClassId: string; price: number | string };
 type Category = { chargeCategoryId: string; categoryName: string; isActive: boolean };
-type Item = { chargeItemId: string; itemName: string; itemCode: string | null; price: number | string; unit: string | null; isActive: boolean; taxPercent?: number | string; roomPrices?: RoomPrice[] };
+type Item = { chargeItemId: string; itemName: string; itemCode: string | null; price: number | string; unit: string | null; isActive: boolean; taxPercent?: number | string; itemType?: string; roomPrices?: RoomPrice[] };
 // `basePrice` + `roomPrices` are returned so a caller (e.g. discharge) can re-derive
 // the effective price if its room class changes after the pick; `price` is the
 // effective price at pick time. `taxPercent` lets the caller preview per-line GST.
@@ -47,7 +47,9 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#6366
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    return items.filter((it) => it.isActive && (!s || it.itemName.toLowerCase().includes(s) || (it.itemCode || "").toLowerCase().includes(s)));
+    // Exclude the "Room rent" item (itemType BED): the daily bed rent is billed
+    // automatically per stay day, so it must never be pickable as an extra charge.
+    return items.filter((it) => it.isActive && it.itemType !== "BED" && (!s || it.itemName.toLowerCase().includes(s) || (it.itemCode || "").toLowerCase().includes(s)));
   }, [items, search]);
 
   // Effective price for the selected room class: the matrix price when a class is

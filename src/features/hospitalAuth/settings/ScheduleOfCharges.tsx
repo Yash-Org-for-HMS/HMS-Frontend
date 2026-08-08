@@ -822,10 +822,12 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
           <TextField select label="Type" value={itemType} onChange={(e) => setItemType(e.target.value)} fullWidth
             helperText={itemType === "RADIOLOGY" ? "Appears in the radiology order pickers; radiology orders price from this charge."
               : itemType === "LAB" ? "Appears in the lab order pickers; lab orders price from this charge."
+              : itemType === "BED" ? "The daily room rent. Set a price per room class below — each bed's daily charge is filled from it. Billed automatically per stay day (not pickable as an extra charge)."
               : "A plain billable charge."}>
             <MenuItem value="GENERAL">General charge</MenuItem>
             <MenuItem value="RADIOLOGY">Radiology test</MenuItem>
             <MenuItem value="LAB">Lab test</MenuItem>
+            <MenuItem value="BED">Room rent (per day)</MenuItem>
           </TextField>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <TextField label="Code (optional)" value={code} onChange={(e) => setCode(e.target.value)} fullWidth />
