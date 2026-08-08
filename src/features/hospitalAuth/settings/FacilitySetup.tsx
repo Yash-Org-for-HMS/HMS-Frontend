@@ -7,7 +7,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, Divider, Tooltip, InputAdornment,
 } from "@mui/material";
 import {
-  HotelRounded, AddRounded, PersonRounded, MeetingRoomRounded, ApartmentRounded, EditRounded, SyncRounded, PaymentsRounded,
+  HotelRounded, AddRounded, PersonRounded, MeetingRoomRounded, ApartmentRounded, EditRounded, SyncRounded, PaymentsRounded, InfoOutlined,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -181,10 +181,9 @@ export default function FacilitySetup() {
 function RoomRentDialog({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const toast = useToast();
   const [saving, setSaving] = useState(false);
-  const [newClass, setNewClass] = useState("");
   const [rents, setRents] = useState<Record<string, string>>({});
 
-  const { data, isLoading, refetch } = useQuery<any>({
+  const { data, isLoading } = useQuery<any>({
     queryKey: ["room-class-rents"],
     queryFn: async () => (await axiosInstance.get("/ipd/room-class-rents")).data.data,
   });
@@ -196,13 +195,6 @@ function RoomRentDialog({ onClose, onDone }: { onClose: () => void; onDone: () =
     for (const c of data.rents || []) m[c.roomClassId] = c.rent != null ? String(c.rent) : "";
     setRents(m);
   }, [data]);
-
-  const addClass = async () => {
-    const name = newClass.trim();
-    if (!name) return;
-    try { await axiosInstance.post("/hospital/soc/room-classes", { name }); setNewClass(""); refetch(); toast.success("Class added"); }
-    catch (e) { toast.error(getApiErrorMessage(e, "Couldn't add class")); }
-  };
 
   const save = async () => {
     const payload = classes
@@ -231,28 +223,38 @@ function RoomRentDialog({ onClose, onDone }: { onClose: () => void; onDone: () =
         {isLoading ? (
           <ListSkeleton rows={3} />
         ) : classes.length === 0 ? (
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>No room classes yet — add one below (e.g. General, Private).</Typography>
+          <Box sx={{ display: "flex", gap: 1.25, p: 1.5, borderRadius: 2, bgcolor: "action.hover" }}>
+            <InfoOutlined sx={{ fontSize: 20, color: "text.secondary", mt: 0.1, flexShrink: 0 }} />
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              No room classes yet. Room classes are your pricing tiers (e.g. General, Private) and are managed in{" "}
+              <Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>Schedule of Charges → Room classes</Box>. Add them there, then set each one's daily rent here.
+            </Typography>
+          </Box>
         ) : (
-          <Stack spacing={2} sx={{ pt: 0.5 }}>
-            {classes.map((c) => (
-              <Box key={c.roomClassId} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Typography sx={{ flex: 1, fontWeight: 600, minWidth: 0 }}>{c.name}</Typography>
-                <TextField size="small" type="number" value={rents[c.roomClassId] ?? ""} onChange={(e) => setRents({ ...rents, [c.roomClassId]: e.target.value })}
-                  sx={{ width: 140 }} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment>, endAdornment: <InputAdornment position="end">/day</InputAdornment> }} />
+          <>
+            <Stack spacing={2} sx={{ pt: 0.5 }}>
+              {classes.map((c) => (
+                <Box key={c.roomClassId} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Typography sx={{ flex: 1, fontWeight: 600, minWidth: 0 }}>{c.name}</Typography>
+                  <TextField size="small" type="number" value={rents[c.roomClassId] ?? ""} onChange={(e) => setRents({ ...rents, [c.roomClassId]: e.target.value })}
+                    sx={{ width: 140 }} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment>, endAdornment: <InputAdornment position="end">/day</InputAdornment> }} />
+                </Box>
+              ))}
+            </Stack>
+            <Box sx={{ display: "flex", gap: 1.25, mt: 2.5, p: 1.5, borderRadius: 2, bgcolor: "action.hover" }}>
+              <InfoOutlined sx={{ fontSize: 18, color: "text.secondary", mt: 0.15, flexShrink: 0 }} />
+              <Box>
+                <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                  Saving sets every bed's daily charge to match its room class.
+                </Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
+                  Need another tier (e.g. Deluxe)? Add it in{" "}
+                  <Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>Schedule of Charges → Room classes</Box>, then it'll appear here.
+                </Typography>
               </Box>
-            ))}
-          </Stack>
+            </Box>
+          </>
         )}
-        <Divider sx={{ my: 2 }} />
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <TextField size="small" fullWidth placeholder="Add a class (e.g. Deluxe)" value={newClass}
-            onChange={(e) => setNewClass(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addClass(); } }} />
-          <Button onClick={addClass} startIcon={<AddRounded />} sx={{ textTransform: "none", flexShrink: 0 }}>Add</Button>
-        </Box>
-        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1.5 }}>
-          Saving updates every bed's daily charge to match its room class.
-        </Typography>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
