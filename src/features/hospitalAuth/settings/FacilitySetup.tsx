@@ -7,7 +7,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, Divider, Tooltip, InputAdornment,
 } from "@mui/material";
 import {
-  HotelRounded, AddRounded, PersonRounded, MeetingRoomRounded, ApartmentRounded, EditRounded, SyncRounded, PaymentsRounded, InfoOutlined,
+  HotelRounded, AddRounded, PersonRounded, MeetingRoomRounded, ApartmentRounded, EditRounded, PaymentsRounded, InfoOutlined,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -35,7 +35,6 @@ export default function FacilitySetup() {
   const [setupAnchor, setSetupAnchor] = useState<null | HTMLElement>(null);
   const [dialog, setDialog] = useState<null | { kind: "ward" | "room" | "bed"; edit?: any }>(null);
   const [rentOpen, setRentOpen] = useState(false);
-  const [syncing, setSyncing] = useState(false);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["ipd-structure"],
@@ -50,20 +49,6 @@ export default function FacilitySetup() {
     queryKey: ["soc-room-classes"],
     queryFn: async () => (await axiosInstance.get("/hospital/soc/room-classes")).data.data,
   });
-
-  // Push the current SOC room-rent prices onto every bed's daily charge.
-  const resyncRents = async () => {
-    setSyncing(true);
-    try {
-      const res = await axiosInstance.post("/ipd/beds/resync-rents");
-      toast.success(res.data?.message || "Bed rents synced from the Schedule of Charges");
-      refetch();
-    } catch (e) {
-      toast.error(getApiErrorMessage(e, "Couldn't sync rents"));
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   const Tile = ({ label, value, color }: { label: string; value: number; color: string }) => (
     <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", textAlign: "center" }}>
@@ -83,14 +68,6 @@ export default function FacilitySetup() {
               sx={{ textTransform: "none", mr: 1, borderColor: ACCENT, color: ACCENT }}>
               Room rent
             </Button>
-            <Tooltip title="Re-apply the current room-rent prices to every bed (e.g. after editing prices in the Schedule of Charges)">
-              <span>
-                <Button variant="text" startIcon={<SyncRounded />} onClick={resyncRents} disabled={syncing}
-                  sx={{ textTransform: "none", mr: 1, color: "text.secondary" }}>
-                  {syncing ? "Syncing…" : "Sync"}
-                </Button>
-              </span>
-            </Tooltip>
             <Button variant="contained" startIcon={<AddRounded />} onClick={(e) => setSetupAnchor(e.currentTarget)}
               sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Add</Button>
             <Menu anchorEl={setupAnchor} open={Boolean(setupAnchor)} onClose={() => setSetupAnchor(null)}>
