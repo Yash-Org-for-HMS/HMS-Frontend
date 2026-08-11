@@ -12,6 +12,7 @@ import ErrorState from "@/components/ErrorState";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import { useToast } from "@/providers/ToastContext";
+import { useConfirm } from "@/providers/ConfirmContext";
 import PageHeader from "@/components/layout/PageHeader";
 
 interface ModuleRow { key: string; label: string; entitled: boolean }
@@ -37,6 +38,7 @@ export default function HospitalModules() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const confirm = useConfirm();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [planId, setPlanId] = useState<string>("");
 
@@ -94,6 +96,35 @@ export default function HospitalModules() {
       return next;
     });
 
+  const labelOf = (key: string) => modules.find((m) => m.key === key)?.label || key;
+
+  // Cards just flip LOCAL selection — nothing happens until Save, so confirming
+  // per-click would fire while someone's still deciding. The real point of
+  // consequence is Save, so confirm there instead, summarizing exactly what
+  // changes. Removing a module is the entitlement CEILING for the hospital (the
+  // admin can no longer even turn it back on themselves), so it's framed as a
+  // warning; pure additions get a plain confirm.
+  const requestSave = async () => {
+    const toEnable = [...selected].filter((k) => !baselineSel.has(k)).map(labelOf);
+    const toDisable = [...baselineSel].filter((k) => !selected.has(k)).map(labelOf);
+    const planChanged = planId !== (data?.planId || "");
+
+    const lines: string[] = [];
+    if (toEnable.length) lines.push(`Enable: ${toEnable.join(", ")}`);
+    if (toDisable.length) lines.push(`Disable: ${toDisable.join(", ")}`);
+    if (planChanged) lines.push(`Plan: ${plans.find((p) => p.planId === planId)?.planName || "— No plan —"}`);
+
+    const ok = await confirm({
+      title: toDisable.length ? "Confirm module access changes" : "Confirm module access",
+      message: toDisable.length
+        ? `${lines.join(". ")}. Disabling a module removes it as an option hospital-wide — their admin won't be able to turn it back on themselves.`
+        : `${lines.join(". ")}.`,
+      confirmText: "Save changes",
+      destructive: toDisable.length > 0,
+    });
+    if (ok) save.mutate();
+  };
+
   // Picking a plan sets the module selection to that plan's included modules, so
   // the plan actually drives the entitlement (you can still fine-tune afterwards).
   const onPlanChange = (newPlanId: string) => {
@@ -119,7 +150,7 @@ export default function HospitalModules() {
             variant="contained"
             startIcon={save.isPending ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             disabled={!dirty || save.isPending}
-            onClick={() => save.mutate()}
+            onClick={requestSave}
             sx={{ bgcolor: SEMANTIC.info, "&:hover": { bgcolor: SEMANTIC.infoDark }, textTransform: "none", fontWeight: 600 }}
           >
             Save changes
