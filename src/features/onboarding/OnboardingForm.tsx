@@ -15,9 +15,10 @@ import {
   Alert,
   Switch,
   FormControlLabel,
+  Chip,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
+import { ArrowBackRounded, SaveRounded, ReceiptLongRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -25,6 +26,10 @@ import FormSkeleton from "@/components/skeletons/FormSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import FormHeader from "@/components/layout/FormHeader";
 import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
+import { formatINRAuto } from "@/utils/format";
+
+const fmtDate = (d: unknown) =>
+  d ? new Date(d as string).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
 export default function OnboardingForm() {
   const { t } = useTranslation();
@@ -130,6 +135,80 @@ export default function OnboardingForm() {
                 />
               </Box>
             </Grid>
+
+            {/* Billing evidence: "Payment Verified" is a manual attestation with no
+                audit trail — this cross-references it against the platform's own
+                subscription billing records so it's an informed check, not a blind
+                toggle. Informational only; doesn't change what's allowed to save. */}
+            {onboardingData && (
+              <Grid size={{ xs: 12 }}>
+                <Box sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", flexDirection: "column", gap: 1.5 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <ReceiptLongRounded fontSize="small" sx={{ color: "text.secondary" }} />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Billing evidence (Subscription Billing)</Typography>
+                  </Box>
+
+                  {onboardingData.paymentMismatch && (
+                    <Alert severity="warning" sx={{ borderRadius: 2 }}>
+                      Marked as verified, but no payment is on file for this hospital in Subscription Billing.
+                    </Alert>
+                  )}
+                  {onboardingData.paymentUnverifiedButPaid && (
+                    <Alert severity="info" sx={{ borderRadius: 2 }}>
+                      {formatINRAuto(onboardingData.billing?.totalPaid)} has been collected from this hospital, but Payment Verified isn't checked yet.
+                    </Alert>
+                  )}
+
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Total collected</Typography>
+                      <Typography sx={{ fontWeight: 700 }}>
+                        {formatINRAuto(onboardingData.billing?.totalPaid)}
+                        {onboardingData.billing?.paymentsCount > 0 && (
+                          <Typography component="span" variant="caption" sx={{ color: "text.secondary", ml: 0.75 }}>
+                            ({onboardingData.billing.paymentsCount} payment{onboardingData.billing.paymentsCount === 1 ? "" : "s"})
+                          </Typography>
+                        )}
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Last payment</Typography>
+                      <Typography sx={{ fontWeight: 700 }}>
+                        {onboardingData.billing?.lastPaymentAt
+                          ? `${fmtDate(onboardingData.billing.lastPaymentAt)} · ${onboardingData.billing.lastPaymentMethod || "—"}`
+                          : "—"}
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Latest invoice</Typography>
+                      {onboardingData.billing?.latestInvoiceStatus ? (
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                          <Chip
+                            size="small"
+                            label={onboardingData.billing.latestInvoiceStatus}
+                            color={onboardingData.billing.latestInvoiceStatus === "PAID" ? "success" : onboardingData.billing.latestInvoiceOverdue ? "error" : "default"}
+                            sx={{ fontWeight: 700, height: 20 }}
+                          />
+                          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                            {formatINRAuto(onboardingData.billing.latestInvoiceAmount)} · due {fmtDate(onboardingData.billing.latestInvoiceDueDate)}
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <Typography sx={{ fontWeight: 700 }}>No invoices yet</Typography>
+                      )}
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Primary admin</Typography>
+                      <Typography sx={{ fontWeight: 700 }}>{onboardingData.primaryAdmin?.name || "—"}</Typography>
+                      {onboardingData.primaryAdmin?.email && (
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>{onboardingData.primaryAdmin.email}</Typography>
+                      )}
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Grid>
+            )}
+
             <Grid size={{ xs: 12 }}>
               <TextField
                 select

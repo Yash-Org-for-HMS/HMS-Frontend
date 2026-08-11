@@ -1,14 +1,15 @@
 import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import {
-  Box, Paper, Tabs, Tab, Typography, Button, Grid,
+  Box, Paper, Tabs, Tab, Typography, Button, Grid, Chip, Tooltip,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
 } from "@mui/material";
 import {
   FileDownloadRounded, LocalHospitalRounded, PeopleAltRounded,
   TimerRounded, CardMembershipRounded, RocketLaunchRounded, AccountBalanceWalletRounded,
-  CheckCircleRounded, HighlightOffRounded,
+  CheckCircleRounded, HighlightOffRounded, WarningAmberRounded, InfoOutlined, ArrowForwardRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { exportTableToExcel } from "@/utils/exportExcel";
@@ -307,8 +308,31 @@ function SubscriptionsReport() {
 }
 
 // ── Onboarding (from /onboarding) ────────────────────────────────────────────
+// "Payment verified" is a manual attestation with no audit trail — it has never
+// been checked against the platform's own subscription billing records. The
+// backend now cross-references it (see onboarding.service.ts) so this register
+// can surface the mismatches: hospitals marked verified with nothing on file,
+// and hospitals that HAVE paid but aren't marked verified yet.
+
+const STATUS_FILTERS = [
+  { key: "all", label: "All" },
+  { key: "pending", label: "Pending" },
+  { key: "in_progress", label: "In progress" },
+  { key: "completed", label: "Completed" },
+  { key: "stalled", label: "Stalled" },
+];
+
+const GATE_LABELS: [string, string][] = [
+  ["tenantSetupCompleted", "Tenant setup"],
+  ["defaultRolesSeeded", "Roles seeded"],
+  ["paymentVerified", "Payment verified"],
+];
 
 function OnboardingReport() {
+  const navigate = useNavigate();
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [attentionOnly, setAttentionOnly] = useState(false);
+
   const { data = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-report-onboarding"],
     queryFn: () => fetchAllRows("/onboarding"),
@@ -317,60 +341,178 @@ function OnboardingReport() {
   if (isLoading) return <ReportSkeleton />;
   if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
-  const rows = data.map((o: any) => [
+  const completed = data.filter((o: any) => o.onboardingStatus === "completed").length;
+  const inProgress = data.filter((o: any) => o.onboardingStatus === "pending" || o.onboardingStatus === "in_progress").length;
+  const stalled = data.filter((o: any) => o.onboardingStatus === "stalled").length;
+  const verifiedCount = data.filter((o: any) => o.paymentVerified).length;
+  const mismatchCount = data.filter((o: any) => o.paymentMismatch).length;
+  const unverifiedPaidCount = data.filter((o: any) => o.paymentUnverifiedButPaid).length;
+  const totalCollected = data.reduce((sum: number, o: any) => sum + Number(o.billing?.totalPaid || 0), 0);
+
+  const filtered = data.filter((o: any) => {
+    if (statusFilter !== "all" && o.onboardingStatus !== statusFilter) return false;
+    if (attentionOnly && !o.paymentMismatch && !o.paymentUnverifiedButPaid) return false;
+    return true;
+  });
+
+  const blockedOn = (o: any) =>
+    o.onboardingStatus === "completed" ? "—" : GATE_LABELS.filter(([key]) => !o[key]).map(([, label]) => label).join(", ") || "—";
+
+  const exportRows = filtered.map((o: any) => [
     o.hospital?.hospitalName || "—",
     o.hospital?.hospitalCode || "—",
+    o.hospital?.city || "—",
+    o.hospital?.planName || "—",
+    o.primaryAdmin?.name || "—",
+    o.primaryAdmin?.email || "—",
+    fmtDate(o.hospital?.createdAt),
     o.tenantSetupCompleted ? "Yes" : "No",
     o.defaultRolesSeeded ? "Yes" : "No",
     o.paymentVerified ? "Yes" : "No",
+    Number(o.billing?.totalPaid || 0),
+    o.billing?.lastPaymentAt ? fmtDate(o.billing.lastPaymentAt) : "—",
+    o.billing?.latestInvoiceStatus || "—",
     cap(o.onboardingStatus),
+    blockedOn(o),
+    o.paymentMismatch ? "Verified, nothing on file" : o.paymentUnverifiedButPaid ? "Paid, not verified" : "—",
   ]);
-  const completed = data.filter((o: any) => o.onboardingStatus === "completed").length;
-  const stalled = data.filter((o: any) => o.onboardingStatus === "stalled").length;
+  const exportHead = [
+    "Hospital", "Code", "City", "Plan", "Primary admin", "Admin email", "Registered",
+    "Tenant setup", "Roles seeded", "Payment verified", "Collected (₹)", "Last payment", "Latest invoice",
+    "Status", "Blocked on", "Billing flag",
+  ];
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<RocketLaunchRounded />} label="Onboarding records" value={data.length} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<RocketLaunchRounded />} label="Onboarding records" value={data.length} sub={`${inProgress} in progress`} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Completed" value={completed} color={SEMANTIC.success} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Stalled" value={stalled} color={SEMANTIC.danger} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Payment verified" value={data.filter((o: any) => o.paymentVerified).length} color="#0891b2" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Collected to date" value={inr(totalCollected)} color={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Payment verified" value={verifiedCount} color="#0891b2" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Tooltip title="Marked Payment Verified, but no payment is on file in Subscription Billing">
+            <Box><KpiTile icon={<WarningAmberRounded />} label="Verified w/o payment" value={mismatchCount} color={mismatchCount ? SEMANTIC.danger : NEUTRAL.muted} /></Box>
+          </Tooltip>
+        </Grid>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Tooltip title="Has a real payment on file, but Payment Verified isn't checked yet">
+            <Box><KpiTile icon={<InfoOutlined />} label="Paid, not verified" value={unverifiedPaidCount} color={unverifiedPaidCount ? SEMANTIC.warning : NEUTRAL.muted} /></Box>
+          </Tooltip>
+        </Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Showing" value={filtered.length} sub={`of ${data.length}`} color={NEUTRAL.muted} /></Grid>
       </Grid>
-      {/* Custom table so the boolean checkpoints render as icons on-screen while the
-          Excel export (below, same data) uses plain Yes/No. */}
+
+      {/* Filters */}
+      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
+        {STATUS_FILTERS.map((f) => (
+          <Chip
+            key={f.key}
+            label={f.label}
+            size="small"
+            onClick={() => setStatusFilter(f.key)}
+            variant={statusFilter === f.key ? "filled" : "outlined"}
+            sx={statusFilter === f.key ? { bgcolor: ACCENT, color: "#fff", fontWeight: 700 } : { fontWeight: 600 }}
+          />
+        ))}
+        <Box sx={{ width: 1, height: 20, bgcolor: "divider", mx: 0.5 }} />
+        <Chip
+          icon={<WarningAmberRounded sx={{ fontSize: "16px !important" }} />}
+          label={`Needs attention${mismatchCount + unverifiedPaidCount ? ` (${mismatchCount + unverifiedPaidCount})` : ""}`}
+          size="small"
+          onClick={() => setAttentionOnly((v) => !v)}
+          variant={attentionOnly ? "filled" : "outlined"}
+          color="warning"
+          sx={{ fontWeight: 700 }}
+        />
+      </Box>
+
       <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
         <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Onboarding register</Typography>
           <Box sx={{ flex: 1 }} />
-          {rows.length > 0 && (
+          {exportRows.length > 0 && (
             <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />}
-              onClick={() => exportTableToExcel("Onboarding register", ["Hospital", "Code", "Tenant setup", "Roles seeded", "Payment verified", "Status"], rows)}
+              onClick={() => exportTableToExcel("Onboarding register", exportHead, exportRows)}
               sx={{ textTransform: "none", color: ACCENT }}>Excel</Button>
           )}
         </Box>
-        {data.length === 0 ? (
+        {filtered.length === 0 ? (
           <Typography variant="body2" sx={{ color: "text.secondary", py: 2, textAlign: "center" }}>No data</Typography>
         ) : (
-          <TableContainer sx={{ maxHeight: 560 }}>
-            <Table size="small" stickyHeader>
+          <TableContainer sx={{ maxHeight: 620, overflowX: "auto" }}>
+            <Table size="small" stickyHeader sx={{ minWidth: 1180 }}>
               <TableHead>
                 <TableRow>
-                  {["Hospital", "Code", "Tenant setup", "Roles seeded", "Payment verified", "Status"].map((h, i) => (
-                    <TableCell key={h} align={i === 0 ? "left" : i >= 2 && i <= 4 ? "center" : "right"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider", bgcolor: "background.paper" }}>{h}</TableCell>
+                  {["Hospital", "City", "Plan", "Primary admin", "Registered", "Setup", "Payment", "Collected", "Latest invoice", "Status", "Blocked on", ""].map((h) => (
+                    <TableCell key={h} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider", bgcolor: "background.paper", whiteSpace: "nowrap" }}>{h}</TableCell>
                   ))}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {data.map((o: any) => (
-                  <TableRow key={o.hospitalOnboardingId} hover>
-                    <TableCell sx={{ borderColor: "divider", color: "text.primary", fontWeight: 600 }}>{o.hospital?.hospitalName || "—"}</TableCell>
-                    <TableCell align="right" sx={{ borderColor: "divider", color: "text.secondary", fontFamily: "monospace" }}>{o.hospital?.hospitalCode || "—"}</TableCell>
-                    <TableCell align="center" sx={{ borderColor: "divider" }}><YesNo v={!!o.tenantSetupCompleted} /></TableCell>
-                    <TableCell align="center" sx={{ borderColor: "divider" }}><YesNo v={!!o.defaultRolesSeeded} /></TableCell>
-                    <TableCell align="center" sx={{ borderColor: "divider" }}><YesNo v={!!o.paymentVerified} /></TableCell>
-                    <TableCell align="right" sx={{ borderColor: "divider", color: "text.secondary", fontWeight: 600 }}>{cap(o.onboardingStatus)}</TableCell>
-                  </TableRow>
-                ))}
+                {filtered.map((o: any) => {
+                  const flagBg = o.paymentMismatch ? "rgba(239,68,68,0.05)" : o.paymentUnverifiedButPaid ? "rgba(2,132,199,0.05)" : "transparent";
+                  return (
+                    <TableRow key={o.hospitalOnboardingId} hover sx={{ bgcolor: flagBg }}>
+                      <TableCell sx={{ borderColor: "divider" }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>{o.hospital?.hospitalName || "—"}</Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>{o.hospital?.hospitalCode || "—"}</Typography>
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider", color: "text.secondary" }}>{o.hospital?.city || "—"}</TableCell>
+                      <TableCell sx={{ borderColor: "divider", color: "text.secondary" }}>{o.hospital?.planName || "—"}</TableCell>
+                      <TableCell sx={{ borderColor: "divider" }}>
+                        <Typography variant="body2" sx={{ color: "text.primary" }}>{o.primaryAdmin?.name || "—"}</Typography>
+                        {o.primaryAdmin?.email && <Typography variant="caption" sx={{ color: "text.secondary" }}>{o.primaryAdmin.email}</Typography>}
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider", color: "text.secondary", whiteSpace: "nowrap" }}>{fmtDate(o.hospital?.createdAt)}</TableCell>
+                      <TableCell sx={{ borderColor: "divider" }}>
+                        <Box sx={{ display: "flex", gap: 0.5 }}>
+                          <Tooltip title={`Tenant setup ${o.tenantSetupCompleted ? "done" : "pending"}`}><Box sx={{ display: "flex" }}><YesNo v={!!o.tenantSetupCompleted} /></Box></Tooltip>
+                          <Tooltip title={`Roles seeded ${o.defaultRolesSeeded ? "done" : "pending"}`}><Box sx={{ display: "flex" }}><YesNo v={!!o.defaultRolesSeeded} /></Box></Tooltip>
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <Chip label={o.paymentVerified ? "Verified" : "Not verified"} size="small"
+                            sx={{ height: 20, fontWeight: 700, fontSize: "0.68rem", bgcolor: o.paymentVerified ? "rgba(16,185,129,0.14)" : "rgba(148,163,184,0.18)", color: o.paymentVerified ? SEMANTIC.successDark : "text.secondary" }} />
+                          {o.paymentMismatch && (
+                            <Tooltip title="No payment on file for this hospital"><WarningAmberRounded sx={{ fontSize: 16, color: SEMANTIC.danger }} /></Tooltip>
+                          )}
+                          {o.paymentUnverifiedButPaid && (
+                            <Tooltip title="Payment on file — not yet verified"><InfoOutlined sx={{ fontSize: 16, color: SEMANTIC.warning }} /></Tooltip>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider", whiteSpace: "nowrap" }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>{inr(o.billing?.totalPaid)}</Typography>
+                        {o.billing?.lastPaymentAt && <Typography variant="caption" sx={{ color: "text.secondary" }}>{fmtDate(o.billing.lastPaymentAt)}</Typography>}
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider", whiteSpace: "nowrap" }}>
+                        {o.billing?.latestInvoiceStatus ? (
+                          <Chip label={o.billing.latestInvoiceOverdue ? "Overdue" : cap(o.billing.latestInvoiceStatus)} size="small"
+                            sx={{ height: 20, fontWeight: 700, fontSize: "0.68rem",
+                              bgcolor: o.billing.latestInvoiceStatus === "PAID" ? "rgba(16,185,129,0.14)" : o.billing.latestInvoiceOverdue ? "rgba(239,68,68,0.14)" : "rgba(245,158,11,0.14)",
+                              color: o.billing.latestInvoiceStatus === "PAID" ? SEMANTIC.successDark : o.billing.latestInvoiceOverdue ? SEMANTIC.dangerDark : SEMANTIC.warningDark }} />
+                        ) : <Typography variant="caption" sx={{ color: "text.disabled" }}>None</Typography>}
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider" }}>
+                        <Chip label={cap(o.onboardingStatus)} size="small" sx={{ height: 20, fontWeight: 700, fontSize: "0.68rem",
+                          bgcolor: o.onboardingStatus === "completed" ? "rgba(16,185,129,0.14)" : o.onboardingStatus === "stalled" ? "rgba(239,68,68,0.14)" : "rgba(148,163,184,0.18)",
+                          color: o.onboardingStatus === "completed" ? SEMANTIC.successDark : o.onboardingStatus === "stalled" ? SEMANTIC.dangerDark : "text.secondary" }} />
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider", color: "text.secondary", maxWidth: 200 }}>
+                        <Typography variant="caption">{blockedOn(o)}</Typography>
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider" }} align="right">
+                        <Tooltip title="Review onboarding">
+                          <Button size="small" onClick={() => navigate(`/onboarding/${o.hospitalOnboardingId}/edit`)}
+                            endIcon={<ArrowForwardRounded sx={{ fontSize: "14px !important" }} />}
+                            sx={{ textTransform: "none", minWidth: 0, color: ACCENT }}>Review</Button>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>
