@@ -33,7 +33,7 @@ export default function StatCard({
   const clickable = Boolean(onClick);
   const horizontal = layout === "horizontal";
   const displayValue = typeof value === "number" ? value.toLocaleString() : value;
-  const tileSize = horizontal ? 44 : 48;
+  const tileSize = horizontal ? 44 : 40;
 
   const IconTile = (
     <Box
@@ -56,7 +56,7 @@ export default function StatCard({
       elevation={0}
       onClick={onClick}
       sx={{
-        p: horizontal ? 2 : 3,
+        p: horizontal ? 2 : 2.5,
         borderRadius: horizontal ? 3 : 4,
         height: "100%",
         bgcolor: "background.paper",
@@ -75,14 +75,20 @@ export default function StatCard({
         // reading as an uneven row. Horizontal cards keep space-between (icon
         // and value sit side by side, not stacked, so this doesn't apply there).
         justifyContent: horizontal ? "space-between" : "flex-start",
-        minHeight: horizontal ? 0 : 160,
+        // Was 160 — a fixed floor much taller than the actual content (icon +
+        // number + label, ~130px with the tightened padding/icon below), which
+        // left a visible dead zone under cards that don't have a `sub` line.
+        // 128 fits the common case snugly; a card WITH a sub line still grows
+        // past it naturally (minHeight is a floor, not a cap), and Grid's
+        // row-stretch keeps every card in a row equal to the tallest one.
+        minHeight: horizontal ? 0 : 128,
         "&:hover": clickable || !horizontal
           ? { boxShadow: "0 8px 30px rgba(0,0,0,0.06)", transform: "translateY(-2px)" }
           : undefined,
       }}
     >
       {horizontal ? IconTile : (
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5 }}>
           {IconTile}
         </Box>
       )}
