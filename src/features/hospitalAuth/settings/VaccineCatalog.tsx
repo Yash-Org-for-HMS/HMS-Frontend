@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -6,9 +6,10 @@ import {
   Box, Typography, Paper, Button, Chip, IconButton, Tooltip,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, Switch, FormControlLabel,
+  InputAdornment,
 } from "@mui/material";
 import {
-  AddRounded, EditRounded, VaccinesRounded, DeleteRounded, ListAltRounded, PublicRounded,
+  AddRounded, EditRounded, VaccinesRounded, DeleteRounded, ListAltRounded, PublicRounded, SearchRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -35,11 +36,26 @@ export default function VaccineCatalog() {
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Vaccine | null>(null);
   const [dosesTarget, setDosesTarget] = useState<Vaccine | null>(null);
+  const [search, setSearch] = useState("");
 
   const { data: vaccines = [], isLoading, isError, error, refetch } = useQuery<Vaccine[]>({
     queryKey: ["vaccine-catalog-admin"],
     queryFn: async () => (await axiosInstance.get("/vaccination/admin/vaccines")).data.data,
   });
+
+  // Filtered client-side: the endpoint returns the whole catalog in one go
+  // (no pagination), and it includes the shared national schedule on top of the
+  // hospital's own entries, so the list is long enough to need finding but
+  // small enough that a round trip per keystroke would be wasteful.
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return vaccines;
+    return vaccines.filter((v) =>
+      v.vaccineName.toLowerCase().includes(q) ||
+      v.vaccineCode.toLowerCase().includes(q) ||
+      (v.description ?? "").toLowerCase().includes(q)
+    );
+  }, [vaccines, search]);
 
   const invalidate = () => {
     refetch();
@@ -64,6 +80,27 @@ export default function VaccineCatalog() {
         <Mascot pose="all-caught-up" title="No vaccines yet" subtitle="Use Add Vaccine to create your first one." />
       ) : (
         <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+          <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 2, borderBottom: "1px solid", borderColor: "divider" }}>
+            <TextField
+              size="small"
+              placeholder="Search by vaccine name, code, or description..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ minWidth: 360 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchRounded fontSize="small" sx={{ color: "text.secondary" }} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              {search.trim()
+                ? `${filtered.length} of ${vaccines.length} vaccines`
+                : `${vaccines.length} vaccine${vaccines.length === 1 ? "" : "s"}`}
+            </Typography>
+          </Box>
           <TableContainer>
             <Table size="small">
               <TableHead>
@@ -74,7 +111,14 @@ export default function VaccineCatalog() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {vaccines.map((v) => (
+                {filtered.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} sx={{ border: 0, py: 3 }}>
+                      <Mascot pose="nothing-here-yet" subtitle={`No vaccines match "${search.trim()}".`} size={110} />
+                    </TableCell>
+                  </TableRow>
+                )}
+                {filtered.map((v) => (
                   <TableRow key={v.vaccineId} hover>
                     <TableCell sx={{ borderColor: "divider", fontWeight: 600 }}>{v.vaccineName}</TableCell>
                     <TableCell sx={{ borderColor: "divider", fontFamily: "monospace", color: "text.secondary" }}>{v.vaccineCode}</TableCell>
