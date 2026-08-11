@@ -368,18 +368,28 @@ export default function InventoryManagement() {
                     <TableCell sx={{ fontWeight: 700 }}>PO Number</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Supplier</TableCell>
                     <SortableHeadCell label="Date" sortKey="date" orderBy={poSort.orderBy} order={poSort.order} onSort={poSort.onSort} sx={HEAD_SX} />
+                    <TableCell sx={{ fontWeight: 700 }}>Qty (received / ordered)</TableCell>
                     <SortableHeadCell label="Status" sortKey="status" orderBy={poSort.orderBy} order={poSort.order} onSort={poSort.onSort} sx={HEAD_SX} />
                     <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {purchaseOrders.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No purchase orders." size={110} /></TableCell></TableRow>
-                  ) : purchaseOrders.map(po => (
+                    <TableRow><TableCell colSpan={6} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No purchase orders." size={110} /></TableCell></TableRow>
+                  ) : purchaseOrders.map(po => {
+                    // Not shown anywhere else on this list — without it, "did receiving
+                    // actually add anything?" had no persistent answer once the
+                    // post-receive toast faded, only the (unlabeled) status pill.
+                    const totalOrdered = (po.items || []).reduce((s: number, i: any) => s + i.orderedQuantity, 0);
+                    const totalReceived = (po.items || []).reduce((s: number, i: any) => s + i.receivedQuantity, 0);
+                    return (
                     <TableRow key={po.purchaseOrderId} hover>
                       <TableCell sx={{ fontFamily: 'monospace' }}>{po.purchaseOrderId.split('-')[0].toUpperCase()}</TableCell>
                       <TableCell sx={{ fontWeight: 500 }}>{getSupplierName(po.supplierId)}</TableCell>
                       <TableCell>{new Date(po.orderDate).toLocaleDateString()}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: totalReceived === 0 ? 'text.secondary' : totalReceived >= totalOrdered ? 'success.main' : 'warning.main' }}>
+                        {totalReceived} / {totalOrdered}
+                      </TableCell>
                       <TableCell>
                         <Box sx={{
                           display: 'inline-block', px: 1.5, py: 0.5, borderRadius: 2, fontSize: '0.875rem', fontWeight: 600,
@@ -402,7 +412,8 @@ export default function InventoryManagement() {
                         )}
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
               </TableContainer>
