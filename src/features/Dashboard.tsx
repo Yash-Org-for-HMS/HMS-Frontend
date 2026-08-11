@@ -104,7 +104,7 @@ export default function Dashboard() {
     <Paper
       elevation={0}
       sx={{
-        p: 2.25,
+        p: 2,
         borderRadius: 3,
         bgcolor: "background.paper",
         border: "1px solid", borderColor: "divider",
@@ -113,15 +113,15 @@ export default function Dashboard() {
         "&:hover": { boxShadow: "0 6px 24px rgba(0,0,0,0.06)" },
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.25 }}>
-        <Box sx={{ width: 30, height: 30, borderRadius: 2, bgcolor: `${color}15`, color, display: "grid", placeItems: "center", "& svg": { fontSize: 17 } }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+        <Box sx={{ width: 28, height: 28, borderRadius: 2, bgcolor: `${color}15`, color, display: "grid", placeItems: "center", "& svg": { fontSize: 16 } }}>
           {icon}
         </Box>
         <Typography variant="caption" fontWeight={700} sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.4 }}>{title}</Typography>
       </Box>
       <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary", lineHeight: 1.05 }}>{primary.value}</Typography>
       <Typography variant="caption" sx={{ color: "text.secondary" }}>{primary.label}</Typography>
-      <Box sx={{ borderTop: "1px solid", borderColor: "divider", my: 1.25 }} />
+      <Box sx={{ borderTop: "1px solid", borderColor: "divider", my: 1 }} />
       <Box sx={{ display: "flex", gap: 1 }}>
         {subs.map((s: any) => (
           <Box key={s.label} sx={{ flex: 1, minWidth: 0 }}>
@@ -242,6 +242,9 @@ export default function Dashboard() {
           <ChartCard
             title="Lead Conversion Funnel"
             subtitle={`${stats.convertedLeads} of ${stats.totalLeads} leads converted`}
+            // 5 fixed stages — content-sized instead of the 340 default, which
+            // left a lot of dead space below/around a short 5-row bar list.
+            height={280}
             right={
               <Box sx={{ textAlign: "right" }}>
                 <Typography variant="h5" sx={{ fontWeight: 800, color: INDIGO, lineHeight: 1 }}>{convRate}%</Typography>
@@ -264,7 +267,7 @@ export default function Dashboard() {
 
         {/* Tenant status — state palette (good/warning/critical), always labelled */}
         <Grid size={{ xs: 12, lg: 4 }}>
-          <ChartCard title="Tenant Status" subtitle={`${stats.totalHospitals} hospital${stats.totalHospitals === 1 ? "" : "s"}`}>
+          <ChartCard title="Tenant Status" subtitle={`${stats.totalHospitals} hospital${stats.totalHospitals === 1 ? "" : "s"}`} height={280}>
             <Box sx={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "center", gap: 2.5 }}>
               <Box sx={{ display: "flex", gap: "2px", height: 14, borderRadius: 99, overflow: "hidden", bgcolor: "action.hover" }}>
                 {tenantSeg.filter((t) => t.value > 0).map((t) => (
@@ -287,7 +290,7 @@ export default function Dashboard() {
 
         {/* Hospitals by plan — magnitude by category, single hue, sorted desc */}
         <Grid size={{ xs: 12 }}>
-          <ChartCard title="Hospitals by Plan" subtitle="Active subscriptions by plan" height={Math.max(200, 96 + planData.length * 42)}>
+          <ChartCard title="Hospitals by Plan" subtitle="Active subscriptions by plan" height={Math.max(140, 96 + planData.length * 42)}>
             {planData.length === 0 ? (
               <Box sx={{ display: "grid", placeItems: "center", height: "100%" }}>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>No active plans yet.</Typography>
