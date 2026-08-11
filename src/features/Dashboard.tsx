@@ -7,11 +7,7 @@ import {
   Container,
   Typography,
   Paper,
-  Avatar,
-  Chip,
   Button,
-  Tabs,
-  Tab,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import {
@@ -19,11 +15,9 @@ import {
   PeopleAltRounded,
   TimerRounded,
   CardMembershipRounded,
-  TrendingUpRounded,
   AdminPanelSettingsRounded,
   AssignmentTurnedInRounded,
   CheckCircleRounded,
-  ArrowForwardIosRounded,
   MedicalServicesRounded,
   TimerOffRounded,
   AccountBalanceRounded,
@@ -35,14 +29,9 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  AreaChart,
-  Area,
+  LabelList,
 } from "recharts";
 import { axiosInstance } from "@/api/axios";
 import { useAuth } from "@/providers/AuthContext";
@@ -70,9 +59,6 @@ interface DashboardStats {
   hospitalsTrend: Array<{ month: string; count: number }>;
   recentActivities: Array<any>;
 }
-
-const COLORS = ["#4F46E5", "#10B981", "#EC4899", "#F59E0B", "#3B82F6", "#8B5CF6"];
-const PLAN_COLORS = ["#8B5CF6", "#3B82F6", "#14B8A6", "#F59E0B", "#EF4444"];
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -147,6 +133,46 @@ export default function Dashboard() {
     </Paper>
   );
 
+  // ── Derived chart data ───────────────────────────────────────────────────
+  const INDIGO = "#6366f1";  // single-hue for the lead funnel (magnitude)
+  const TEAL = "#14b8a6";    // single-hue for plan mix (distinct from the funnel)
+  const tooltipStyle = { backgroundColor: "#FFFFFF", border: "1px solid rgba(15,23,42,0.1)", borderRadius: 8, color: "#0F172A", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", fontSize: 13 } as const;
+
+  const FUNNEL = [
+    { key: "new", label: "New" },
+    { key: "contacted", label: "Contacted" },
+    { key: "qualified", label: "Qualified" },
+    { key: "demo_done", label: "Demo done" },
+    { key: "converted", label: "Converted" },
+  ];
+  const leadCounts: Record<string, number> = Object.fromEntries(stats.leadsByStatus.map((s) => [s.status, s.count]));
+  const funnelData = FUNNEL.map((f) => ({ stage: f.label, count: leadCounts[f.key] || 0 }));
+  const convRate = stats.totalLeads ? Math.round((stats.convertedLeads / stats.totalLeads) * 100) : 0;
+
+  // Tenant health — status palette (good / warning / critical), always with labels.
+  const tenantSeg = [
+    { label: "Active", value: stats.activeHospitals, color: "#10b981" },
+    { label: "In trial", value: stats.trialHospitals, color: "#f59e0b" },
+    { label: "Expired", value: stats.expiredHospitals, color: "#ef4444" },
+  ];
+  const tenantTotal = tenantSeg.reduce((s, t) => s + t.value, 0);
+
+  const planData = [...stats.hospitalsByPlan].sort((a, b) => b.count - a.count);
+
+  // Shared chart card (title + optional right-slot headline + plot area).
+  const ChartCard = ({ title, subtitle, right, height = 340, children }: any) => (
+    <Paper elevation={0} sx={{ p: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, height, display: "flex", flexDirection: "column" }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 2, mb: 2 }}>
+        <Box>
+          <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>{title}</Typography>
+          {subtitle && <Typography variant="caption" sx={{ color: "text.secondary" }}>{subtitle}</Typography>}
+        </Box>
+        {right}
+      </Box>
+      <Box sx={{ flexGrow: 1, minHeight: 0 }}>{children}</Box>
+    </Paper>
+  );
+
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       
@@ -209,276 +235,78 @@ export default function Dashboard() {
         </Grid>
       </Grid>
 
-      {/* Charts Section */}
-      <Grid container spacing={3} sx={{ mb: 5 }}>
-        {/* Trend Chart */}
+      {/* ── Charts ────────────────────────────────────────────────────────── */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {/* Lead conversion funnel — ordered pipeline stages, single hue, direct labels */}
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Paper
-            elevation={2}
-            sx={{
-              p: 3,
-              bgcolor: "#FFFFFF",
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 3,
-              height: 400,
-              display: "flex",
-              flexDirection: "column",
-            }}
+          <ChartCard
+            title="Lead Conversion Funnel"
+            subtitle={`${stats.convertedLeads} of ${stats.totalLeads} leads converted`}
+            right={
+              <Box sx={{ textAlign: "right" }}>
+                <Typography variant="h5" sx={{ fontWeight: 800, color: INDIGO, lineHeight: 1 }}>{convRate}%</Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>conversion</Typography>
+              </Box>
+            }
           >
-            <Typography variant="h6" sx={{ color: "text.primary", mb: 3, fontWeight: 700 }}>
-              Hospitals Growth Trend
-            </Typography>
-            <Box sx={{ flexGrow: 1, minHeight: 0 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={stats.hospitalsTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorTrend" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#4F46E5" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,23,42,0.05)" vertical={false} />
-                  <XAxis dataKey="month" stroke="#64748B" tick={{ fill: "#64748B", fontSize: 12 }} axisLine={false} tickLine={false} dy={10} />
-                  <YAxis stroke="#64748B" tick={{ fill: "#64748B", fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "#FFFFFF", border: "1px solid rgba(15,23,42,0.1)", borderRadius: 8, color: "#0F172A", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
-                    itemStyle={{ color: "#4F46E5", fontWeight: 600 }}
-                  />
-                  <Area type="monotone" dataKey="count" stroke="#4F46E5" strokeWidth={3} fillOpacity={1} fill="url(#colorTrend)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </Box>
-          </Paper>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={funnelData} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
+                <XAxis type="number" hide />
+                <YAxis type="category" dataKey="stage" width={92} tick={{ fill: "#475569", fontSize: 13 }} axisLine={false} tickLine={false} />
+                <Tooltip cursor={{ fill: "rgba(99,102,241,0.06)" }} contentStyle={tooltipStyle} formatter={(v) => [v, "Leads"]} />
+                <Bar dataKey="count" fill={INDIGO} radius={[0, 4, 4, 0]} barSize={22}>
+                  <LabelList dataKey="count" position="right" style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
         </Grid>
 
-        {/* Hospitals By Plan Pie Chart */}
+        {/* Tenant status — state palette (good/warning/critical), always labelled */}
         <Grid size={{ xs: 12, lg: 4 }}>
-          <Paper
-            elevation={2}
-            sx={{
-              p: 3,
-              bgcolor: "#FFFFFF",
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 3,
-              height: 400,
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <Typography variant="h6" sx={{ color: "text.primary", mb: 3, fontWeight: 700 }}>
-              Hospitals By Plan
-            </Typography>
-            <Box sx={{ flexGrow: 1, minHeight: 0, position: "relative" }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={stats.hospitalsByPlan}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70}
-                    outerRadius={100}
-                    paddingAngle={2}
-                    dataKey="count"
-                    nameKey="planName"
-                    stroke="none"
-                  >
-                    {stats.hospitalsByPlan.map((_entry, index) => (
-                      <Cell key={`cell-${index}`} fill={PLAN_COLORS[index % PLAN_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "#FFFFFF", border: "1px solid rgba(15,23,42,0.1)", borderRadius: 8, color: "#0F172A", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
-                    itemStyle={{ fontWeight: 600 }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-                <Box sx={{ textAlign: "center" }}>
-                  <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700 }}>
-                    {stats.hospitalsByPlan.reduce((sum, item) => sum + item.count, 0)}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: "text.secondary" }}>Total</Typography>
-                </Box>
+          <ChartCard title="Tenant Status" subtitle={`${stats.totalHospitals} hospital${stats.totalHospitals === 1 ? "" : "s"}`}>
+            <Box sx={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "center", gap: 2.5 }}>
+              <Box sx={{ display: "flex", gap: "2px", height: 14, borderRadius: 99, overflow: "hidden", bgcolor: "action.hover" }}>
+                {tenantSeg.filter((t) => t.value > 0).map((t) => (
+                  <Box key={t.label} sx={{ flexGrow: t.value, bgcolor: t.color }} />
+                ))}
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                {tenantSeg.map((t) => (
+                  <Box key={t.label} sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+                    <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: t.color, flexShrink: 0 }} />
+                    <Typography variant="body2" sx={{ flex: 1, color: "text.primary", fontWeight: 500 }}>{t.label}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 800, color: "text.primary" }}>{t.value}</Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary", width: 42, textAlign: "right" }}>{tenantTotal ? Math.round((t.value / tenantTotal) * 100) : 0}%</Typography>
+                  </Box>
+                ))}
               </Box>
             </Box>
-          </Paper>
+          </ChartCard>
         </Grid>
-        
-        {/* Leads By Status Bar Chart */}
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <Paper
-            elevation={2}
-            sx={{
-              p: 3,
-              bgcolor: "#FFFFFF",
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 3,
-              height: 400,
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <Typography variant="h6" sx={{ color: "text.primary", mb: 3, fontWeight: 700 }}>
-              {t("dashboard.leadsByStatus")}
-            </Typography>
-            <Box sx={{ flexGrow: 1, minHeight: 0 }}>
+
+        {/* Hospitals by plan — magnitude by category, single hue, sorted desc */}
+        <Grid size={{ xs: 12 }}>
+          <ChartCard title="Hospitals by Plan" subtitle="Active subscriptions by plan" height={Math.max(200, 96 + planData.length * 42)}>
+            {planData.length === 0 ? (
+              <Box sx={{ display: "grid", placeItems: "center", height: "100%" }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>No active plans yet.</Typography>
+              </Box>
+            ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats.leadsByStatus} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,23,42,0.05)" vertical={false} />
-                  <XAxis dataKey="status" stroke="#64748B" tick={{ fill: "#64748B", fontSize: 12 }} axisLine={false} tickLine={false} dy={10} />
-                  <YAxis stroke="#64748B" tick={{ fill: "#64748B", fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    cursor={{ fill: "rgba(15,23,42,0.02)" }}
-                    contentStyle={{ backgroundColor: "#FFFFFF", border: "1px solid rgba(15,23,42,0.1)", borderRadius: 8, color: "#0F172A", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
-                    itemStyle={{ color: "#3B82F6", fontWeight: 600 }}
-                  />
-                  <Bar dataKey="count" fill="#3B82F6" radius={[4, 4, 0, 0]} barSize={40} />
+                <BarChart data={planData} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="planName" width={150} tick={{ fill: "#475569", fontSize: 13 }} axisLine={false} tickLine={false} />
+                  <Tooltip cursor={{ fill: "rgba(20,184,166,0.06)" }} contentStyle={tooltipStyle} formatter={(v) => [v, "Hospitals"]} />
+                  <Bar dataKey="count" fill={TEAL} radius={[0, 4, 4, 0]} barSize={22}>
+                    <LabelList dataKey="count" position="right" style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            </Box>
-          </Paper>
-        </Grid>
-
-        {/* Onboarding Progress */}
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <Paper
-            elevation={2}
-            sx={{
-              p: 3,
-              bgcolor: "#FFFFFF",
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 3,
-              height: 400,
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <Typography variant="h6" sx={{ color: "text.primary", mb: 3, fontWeight: 700 }}>
-              {t("dashboard.onboardingProgress")}
-            </Typography>
-            <Box sx={{ flexGrow: 1, minHeight: 0, position: "relative" }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={stats.onboardingProgress}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70}
-                    outerRadius={100}
-                    paddingAngle={2}
-                    dataKey="count"
-                    nameKey="status"
-                    stroke="none"
-                  >
-                    {stats.onboardingProgress.map((_entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "#FFFFFF", border: "1px solid rgba(15,23,42,0.1)", borderRadius: 8, color: "#0F172A", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
-                    itemStyle={{ fontWeight: 600 }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-                <Box sx={{ textAlign: "center" }}>
-                  <Typography variant="h4" sx={{ color: "text.primary", fontWeight: 700 }}>
-                    {stats.onboardingProgress.reduce((sum, item) => sum + item.count, 0)}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: "text.secondary" }}>Total</Typography>
-                </Box>
-              </Box>
-            </Box>
-          </Paper>
+            )}
+          </ChartCard>
         </Grid>
       </Grid>
-
-      {/* Recent Activity List */}
-      <Paper
-        elevation={2}
-        sx={{
-          bgcolor: "#FFFFFF",
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: 3,
-          overflow: "hidden",
-        }}
-      >
-        <Box sx={{ p: 3, borderBottom: "1px solid", borderColor: "divider", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>
-            {t("dashboard.recentActivity")}
-          </Typography>
-          <Button 
-            endIcon={<ArrowForwardIosRounded sx={{ fontSize: 12 }} />} 
-            sx={{ color: "primary.main", textTransform: "none", fontWeight: 600 }}
-          >
-            View All
-          </Button>
-        </Box>
-        <Box sx={{ p: 0 }}>
-          {stats.recentActivities.length === 0 ? (
-            <Box sx={{ py: 6, display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-              <Typography sx={{ color: "text.secondary", textAlign: "center" }}>
-                {t("common.noData")}
-              </Typography>
-            </Box>
-          ) : (
-            stats.recentActivities.map((activity, index) => (
-              <Box 
-                key={activity.activityLogId}
-                sx={{ 
-                  px: 3, 
-                  py: 2, 
-                  display: "flex", 
-                  alignItems: "center", 
-                  gap: 2,
-                  "&:hover": { bgcolor: "background.paper" },
-                  borderBottom: index < stats.recentActivities.length - 1 ? "1px solid" : "none",
-                  borderColor: "divider"
-                }}
-              >
-                <Avatar
-                  sx={{
-                    bgcolor: "rgba(79, 70, 229, 0.1)",
-                    color: "#4F46E5",
-                    width: 40,
-                    height: 40,
-                    fontSize: "1rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  {activity.moduleName.charAt(0).toUpperCase()}
-                </Avatar>
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography sx={{ color: "text.primary", fontWeight: 500, fontSize: "0.875rem" }}>
-                    {activity.description}
-                  </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 0.5 }}>
-                    <Chip
-                      label={activity.moduleName}
-                      size="small"
-                      sx={{
-                        bgcolor: "background.paper",
-                        color: "text.secondary",
-                        height: 20,
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                      }}
-                    />
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                      {new Date(activity.createdAt).toLocaleString()}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            ))
-          )}
-        </Box>
-      </Paper>
       
     </Container>
   );
