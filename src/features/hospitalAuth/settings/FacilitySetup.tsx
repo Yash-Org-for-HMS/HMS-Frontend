@@ -152,26 +152,77 @@ export default function FacilitySetup() {
   );
 }
 
+// The tiers most hospitals start from — offered as one-click adds so first-time
+// setup doesn't begin with a blank box and a trip to another screen.
+const COMMON_TIERS = ["General", "Semi-Private", "Private", "Deluxe", "ICU"];
+
 // Simple room-rent editor: a daily rate per room class, in one place. Saving
 // writes the SOC "Room rent" item + its per-class prices AND applies them to every
 // bed — so nobody has to build a charge item or matrix by hand.
+//
+// Tiers can also be CREATED here. Keeping this dialog "purely about rent" meant
+// that with no tiers it was a dead end (Save disabled, pointing you to Schedule
+// of Charges), so the common job — "Private rooms are ₹3000/day" — cost eight
+// steps across two screens. Schedule of Charges → Room classes is still the full
+// manager (rename, reorder, deactivate, delete); this just removes the detour
+// for the one action people actually start with.
 function RoomRentDialog({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const toast = useToast();
   const [saving, setSaving] = useState(false);
   const [rents, setRents] = useState<Record<string, string>>({});
+  const [newName, setNewName] = useState("");
+  const [newRent, setNewRent] = useState("");
+  const [adding, setAdding] = useState(false);
 
-  const { data, isLoading } = useQuery<any>({
+  const { data, isLoading, refetch } = useQuery<any>({
     queryKey: ["room-class-rents"],
     queryFn: async () => (await axiosInstance.get("/ipd/room-class-rents")).data.data,
   });
   const classes: any[] = data?.rents || [];
+  const missingTiers = COMMON_TIERS.filter(
+    (t) => !classes.some((c) => String(c.name).toLowerCase() === t.toLowerCase()),
+  );
 
   useEffect(() => {
     if (!data) return;
-    const m: Record<string, string> = {};
-    for (const c of data.rents || []) m[c.roomClassId] = c.rent != null ? String(c.rent) : "";
-    setRents(m);
+    // Merge rather than replace: adding a tier refetches, and a wholesale reset
+    // would wipe rents the user has already typed but not yet saved.
+    setRents((prev) => {
+      const m: Record<string, string> = {};
+      for (const c of data.rents || []) {
+        m[c.roomClassId] = prev[c.roomClassId] !== undefined
+          ? prev[c.roomClassId]
+          : (c.rent != null ? String(c.rent) : "");
+      }
+      return m;
+    });
   }, [data]);
+
+  // Create a tier, then park the typed rent against it so the row lands ready
+  // to save. The tier itself is a structural record so it's written immediately;
+  // rents still commit together under "Save rents".
+  const addTier = async (name: string, rent?: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    if (classes.some((c) => String(c.name).toLowerCase() === trimmed.toLowerCase())) {
+      toast.error(`"${trimmed}" already exists`);
+      return;
+    }
+    setAdding(true);
+    try {
+      const created = (await axiosInstance.post("/hospital/soc/room-classes", { name: trimmed })).data?.data;
+      await refetch();
+      if (created?.roomClassId && rent?.trim()) {
+        setRents((m) => ({ ...m, [created.roomClassId]: rent.trim() }));
+      }
+      setNewName("");
+      setNewRent("");
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Couldn't add that tier"));
+    } finally {
+      setAdding(false);
+    }
+  };
 
   const save = async () => {
     const payload = classes
@@ -199,25 +250,55 @@ function RoomRentDialog({ onClose, onDone }: { onClose: () => void; onDone: () =
       <DialogContent dividers>
         {isLoading ? (
           <ListSkeleton rows={3} />
-        ) : classes.length === 0 ? (
-          <Box sx={{ display: "flex", gap: 1.25, p: 1.5, borderRadius: 2, bgcolor: "action.hover" }}>
-            <InfoOutlined sx={{ fontSize: 20, color: "text.secondary", mt: 0.1, flexShrink: 0 }} />
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              No room classes yet. Room classes are your pricing tiers (e.g. General, Private) and are managed in{" "}
-              <Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>Schedule of Charges → Room classes</Box>. Add them there, then set each one's daily rent here.
-            </Typography>
-          </Box>
         ) : (
           <>
-            <Stack spacing={2} sx={{ pt: 0.5 }}>
-              {classes.map((c) => (
-                <Box key={c.roomClassId} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Typography sx={{ flex: 1, fontWeight: 600, minWidth: 0 }}>{c.name}</Typography>
-                  <TextField size="small" type="number" value={rents[c.roomClassId] ?? ""} onChange={(e) => setRents({ ...rents, [c.roomClassId]: e.target.value })}
-                    sx={{ width: 140 }} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment>, endAdornment: <InputAdornment position="end">/day</InputAdornment> }} />
+            {classes.length === 0 ? (
+              <Typography variant="body2" sx={{ color: "text.secondary", pb: 0.5 }}>
+                Room classes are your pricing tiers. Add one below with its daily rate — that's the whole setup.
+              </Typography>
+            ) : (
+              <Stack spacing={2} sx={{ pt: 0.5 }}>
+                {classes.map((c) => (
+                  <Box key={c.roomClassId} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Typography sx={{ flex: 1, fontWeight: 600, minWidth: 0 }}>{c.name}</Typography>
+                    <TextField size="small" type="number" value={rents[c.roomClassId] ?? ""} onChange={(e) => setRents({ ...rents, [c.roomClassId]: e.target.value })}
+                      sx={{ width: 140 }} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment>, endAdornment: <InputAdornment position="end">/day</InputAdornment> }} />
+                  </Box>
+                ))}
+              </Stack>
+            )}
+
+            {/* Add a tier without leaving the dialog. */}
+            <Box sx={{ mt: classes.length ? 2.5 : 1.5, pt: classes.length ? 2 : 0, borderTop: classes.length ? "1px solid" : "none", borderColor: "divider" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <TextField
+                  size="small" placeholder="Add a tier (e.g. Deluxe)" value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTier(newName, newRent); } }}
+                  sx={{ flex: 1, minWidth: 0 }} disabled={adding}
+                />
+                <TextField
+                  size="small" type="number" placeholder="Rate" value={newRent}
+                  onChange={(e) => setNewRent(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTier(newName, newRent); } }}
+                  sx={{ width: 140 }} disabled={adding}
+                  InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment>, endAdornment: <InputAdornment position="end">/day</InputAdornment> }}
+                />
+                <Button onClick={() => addTier(newName, newRent)} disabled={adding || !newName.trim()} sx={{ flexShrink: 0 }}>
+                  Add
+                </Button>
+              </Box>
+
+              {missingTiers.length > 0 && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap", mt: 1.5 }}>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>Quick add:</Typography>
+                  {missingTiers.map((t) => (
+                    <Chip key={t} label={t} size="small" variant="outlined" onClick={() => addTier(t)} disabled={adding} sx={{ cursor: "pointer" }} />
+                  ))}
                 </Box>
-              ))}
-            </Stack>
+              )}
+            </Box>
+
             <Box sx={{ display: "flex", gap: 1.25, mt: 2.5, p: 1.5, borderRadius: 2, bgcolor: "action.hover" }}>
               <InfoOutlined sx={{ fontSize: 18, color: "text.secondary", mt: 0.15, flexShrink: 0 }} />
               <Box>
@@ -225,8 +306,8 @@ function RoomRentDialog({ onClose, onDone }: { onClose: () => void; onDone: () =
                   Saving sets every bed's daily charge to match its room class.
                 </Typography>
                 <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
-                  Need another tier (e.g. Deluxe)? Add it in{" "}
-                  <Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>Schedule of Charges → Room classes</Box>, then it'll appear here.
+                  To rename, reorder or remove a tier, use{" "}
+                  <Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>Schedule of Charges → Room classes</Box>.
                 </Typography>
               </Box>
             </Box>
