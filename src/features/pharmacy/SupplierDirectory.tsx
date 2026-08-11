@@ -229,7 +229,7 @@ export default function SupplierDirectory() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             fullWidth
-            sx={{ maxWidth: 400, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+            sx={{ maxWidth: 440, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             InputProps={{
               startAdornment: <InputAdornment position="start"><SearchRounded color="action" /></InputAdornment>
             }}

@@ -126,6 +126,7 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
       <DialogContent dividers>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
           <Autocomplete
+            fullWidth
             options={patients}
             value={selectedPatient}
             loading={searchingPatients}

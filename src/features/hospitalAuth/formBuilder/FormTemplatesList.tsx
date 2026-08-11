@@ -101,7 +101,7 @@ export default function FormTemplatesList() {
         placeholder="Search forms by name, type, or description…"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        sx={{ mb: 2, width: "100%", maxWidth: 400 }}
+        sx={{ mb: 2, width: "100%", maxWidth: 440 }}
         InputProps={{ startAdornment: <InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary" }} /></InputAdornment> }}
       />
 

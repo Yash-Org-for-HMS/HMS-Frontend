@@ -27,7 +27,7 @@ import SurgeryDialog from "@/components/ipd/SurgeryDialog";
 import IpdMedicinesDialog from "@/components/ipd/IpdMedicinesDialog";
 import IpdLabOrdersDialog from "@/components/ipd/IpdLabOrdersDialog";
 import IpdRadiologyOrdersDialog from "@/components/ipd/IpdRadiologyOrdersDialog";
-import IpdDoctorVisitsDialog from "@/components/ipd/IpdDoctorVisitsDialog";
+import IpdDoctorVisitsDialog from "@/components/ipd/IpdDoctorVisitsDialog";
 import PageHeader from "@/components/layout/PageHeader";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
@@ -58,7 +58,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
   const [medsFor, setMedsFor] = useState<any>(null);
   const [labsFor, setLabsFor] = useState<any>(null);
   const [radiologyFor, setRadiologyFor] = useState<any>(null);
-  const [visitsFor, setVisitsFor] = useState<any>(null);
+  const [visitsFor, setVisitsFor] = useState<any>(null);
   const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: any }>({ anchor: null, row: null });
 
   const status = TABS[tab];
@@ -121,7 +121,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
           <Tab label="Current" /><Tab label="Discharged" /><Tab label="All" />
         </Tabs>
         <TextField placeholder="Search patient, IPD#, diagnosis…" value={search} onChange={(e) => setSearch(e.target.value)} size="small"
-          InputProps={{ startAdornment: (<InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary", fontSize: 20 }} /></InputAdornment>) }} sx={{ minWidth: 280 }} />
+          InputProps={{ startAdornment: (<InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary", fontSize: 20 }} /></InputAdornment>) }} sx={{ minWidth: 340 }} />
       </Box>
 
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
@@ -176,7 +176,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                           <Tooltip title="Medicines"><IconButton size="small" onClick={() => setMedsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MedicationRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Lab tests"><IconButton size="small" onClick={() => setLabsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><ScienceRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Radiology / imaging"><IconButton size="small" onClick={() => setRadiologyFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MonitorHeartRounded fontSize="small" /></IconButton></Tooltip>
-                          <Tooltip title="Doctor visits"><IconButton size="small" onClick={() => setVisitsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MedicalServicesRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Doctor visits"><IconButton size="small" onClick={() => setVisitsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MedicalServicesRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Surgery details"><IconButton size="small" onClick={() => setSurgeryFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MedicalServicesRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Transfer bed"><IconButton size="small" onClick={() => setTransferFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><SwapHorizRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Discharge"><IconButton size="small" onClick={() => setDischargeFor(a)} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}><LogoutRounded fontSize="small" /></IconButton></Tooltip>
@@ -224,7 +224,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
       {medsFor && <IpdMedicinesDialog open admission={medsFor} onClose={() => setMedsFor(null)} />}
       {labsFor && <IpdLabOrdersDialog open admission={labsFor} onClose={() => setLabsFor(null)} />}
       {radiologyFor && <IpdRadiologyOrdersDialog open admission={radiologyFor} onClose={() => setRadiologyFor(null)} />}
-      {visitsFor && <IpdDoctorVisitsDialog open admission={visitsFor} onClose={() => setVisitsFor(null)} />}
+      {visitsFor && <IpdDoctorVisitsDialog open admission={visitsFor} onClose={() => setVisitsFor(null)} />}
     </Box>
   );
 }

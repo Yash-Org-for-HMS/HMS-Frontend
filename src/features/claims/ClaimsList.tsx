@@ -64,7 +64,7 @@ export default function ClaimsList() {
           ))}
         </TextField>
         <TextField
-          size="small" placeholder="Search claim #, patient, UHID, policy…" value={search} onChange={(e) => setSearch(e.target.value)} sx={{ minWidth: 280, flex: 1 }}
+          size="small" placeholder="Search claim #, patient, UHID, policy…" value={search} onChange={(e) => setSearch(e.target.value)} sx={{ minWidth: 340, flex: 1 }}
           InputProps={{ startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> }}
         />
       </Paper>

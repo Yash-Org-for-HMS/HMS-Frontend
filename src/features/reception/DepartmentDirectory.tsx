@@ -47,7 +47,7 @@ export default function DepartmentDirectory() {
             onChange={(e) => setSearch(e.target.value)}
             size="small"
             InputProps={{ startAdornment: (<InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary", fontSize: 20 }} /></InputAdornment>) }}
-            sx={{ minWidth: 280 }}
+            sx={{ minWidth: 320 }}
           />
         }
       />

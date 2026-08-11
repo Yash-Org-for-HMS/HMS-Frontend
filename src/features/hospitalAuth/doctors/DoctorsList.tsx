@@ -116,7 +116,7 @@ export default function DoctorsList() {
         placeholder="Search by name, email, license, specialization, department…"
         value={searchInput}
         onChange={(e) => setSearchInput(e.target.value)}
-        sx={{ mb: 2, width: "100%", maxWidth: 460 }}
+        sx={{ mb: 2, width: "100%", maxWidth: 560 }}
         InputProps={{
           startAdornment: <InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary" }} /></InputAdornment>,
           endAdornment: isFetching ? <HeartbeatLoader size={22} /> : undefined,

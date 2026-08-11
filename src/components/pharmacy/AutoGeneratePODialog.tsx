@@ -109,6 +109,7 @@ export default function AutoGeneratePODialog({ open, onClose, lowStockAlerts, me
         </Typography>
 
         <Autocomplete
+          fullWidth
           options={medicines.filter((m) => !rows.some((r) => r.medicineId === m.medicineId))}
           getOptionLabel={(m: any) => (m ? `${m.medicineName}${m.genericName ? ` (${m.genericName})` : ""}` : "")}
           isOptionEqualToValue={(o: any, v: any) => o.medicineId === v?.medicineId}

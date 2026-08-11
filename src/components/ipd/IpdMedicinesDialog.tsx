@@ -223,6 +223,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
 
         <Stack spacing={2}>
           <Autocomplete
+            fullWidth
             options={catalog}
             loading={catLoading}
             value={form.medicine}

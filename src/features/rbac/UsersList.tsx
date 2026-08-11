@@ -161,7 +161,7 @@ export default function UsersList() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           sx={{
-            width: 350,
+            width: 420,
             "& .MuiOutlinedInput-root": {
               color: "text.primary",
               bgcolor: "background.paper",

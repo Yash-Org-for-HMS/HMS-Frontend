@@ -133,7 +133,7 @@ export default function ClaimForm() {
                 filterOptions={(x) => x}
                 onInputChange={(_, v) => setPSearch(v)}
                 onChange={(_, v: any) => { set("patientId", v?.patientId || ""); }}
-                renderInput={(p) => <TextField {...p} label="Patient *" placeholder="Search by name or UHID…" />}
+                renderInput={(p) => <TextField {...p} fullWidth label="Patient *" placeholder="Search by name or UHID…" />}
                 isOptionEqualToValue={(o: any, v: any) => o.patientId === v.patientId}
               />
             )}

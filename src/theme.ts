@@ -188,7 +188,15 @@ const themeOptions: ThemeOptions = {
             borderWidth: "1px",
             boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.15)}`,
           }
-        })
+        }),
+        // A search box narrower than its placeholder (common with long hints
+        // like "Search by name, email, or employee code...") was hard-cropping
+        // the text mid-character with no indication there was more. One fix at
+        // the input level covers every field in the app: fade the overflow into
+        // an ellipsis instead, same as a truncated table cell.
+        input: {
+          textOverflow: "ellipsis",
+        },
       }
     },
     MuiTableContainer: {
