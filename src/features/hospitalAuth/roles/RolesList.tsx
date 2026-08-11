@@ -18,8 +18,7 @@ import {
   TextField,
   InputAdornment,
 } from "@mui/material";
-import { AddRounded, EditRounded, BlockRounded, CheckCircleRounded, ContentCopyRounded, SearchRounded } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
+import { BlockRounded, CheckCircleRounded, SearchRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
 import ErrorState from "@/components/ErrorState";
@@ -43,7 +42,6 @@ interface Role extends RoleBase {
 }
 
 export default function RolesList() {
-  const navigate = useNavigate();
   const toast = useToast();
   const [q, setQ] = useState("");
 
@@ -86,23 +84,7 @@ export default function RolesList() {
     <Box>
       <PageHeader
         title="Role Management (RBAC)"
-        subtitle="Manage hospital roles, system permissions, and view user assignments."
-        actions={
-          <Button
-            variant="contained"
-            startIcon={<AddRounded />}
-            onClick={() => navigate("/hospital/roles/new")}
-            sx={{
-              bgcolor: ACCENTS.hospital,
-              "&:hover": { bgcolor: ACCENTS.hospitalDark },
-              textTransform: "none",
-              fontWeight: 600,
-              px: 3,
-            }}
-          >
-            Create Custom Role
-          </Button>
-        }
+        subtitle="Your hospital uses a fixed set of standard roles. Grant access by assigning staff to a role from the Users screen."
       />
 
       <TextField
@@ -172,29 +154,6 @@ export default function RolesList() {
                     />
                   </TableCell>
                   <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                    <Tooltip title="Clone Role">
-                      <IconButton
-                        size="small"
-                        onClick={() => navigate(`/hospital/roles/new?clone=${role.roleId}`)}
-                        sx={{ color: "text.secondary", "&:hover": { color: "#38bdf8", bgcolor: "rgba(56, 189, 248, 0.1)" } }}
-                      >
-                        <ContentCopyRounded fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    
-                    <Tooltip title={role.isSystemRole ? "System Roles Cannot Be Edited" : "Edit Role"}>
-                      <span>
-                        <IconButton
-                          size="small"
-                          disabled={role.isSystemRole}
-                          onClick={() => navigate(`/hospital/roles/${role.roleId}/edit`)}
-                          sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.hospital, bgcolor: "rgba(99, 102, 241, 0.1)" } }}
-                        >
-                          <EditRounded fontSize="small" />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-
                     <Tooltip title={role.status === 'active' ? "Disable Role" : "Enable Role"}>
                       <span>
                         <IconButton
