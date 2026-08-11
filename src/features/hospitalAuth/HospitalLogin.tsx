@@ -73,8 +73,10 @@ export default function HospitalLogin() {
       borderRadius: "999px",
       backgroundColor: "#F5F5F7",
       transition: "box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease",
-      "& fieldset": { borderColor: "transparent" },
-      "&:hover fieldset": { borderColor: "rgba(15,23,42,0.14)" },
+      // A visible-but-subtle border at rest — the fill alone read as invisible
+      // against a similarly light page background.
+      "& fieldset": { borderColor: "rgba(15,23,42,0.16)" },
+      "&:hover fieldset": { borderColor: "rgba(15,23,42,0.30)" },
       "&.Mui-focused": { backgroundColor: "#fff" },
       "&.Mui-focused fieldset": { borderColor: ACCENT, borderWidth: "1.5px", boxShadow: `0 0 0 4px ${ACCENT}1a` },
       "&.Mui-error fieldset": { borderColor: "#ef4444" },
