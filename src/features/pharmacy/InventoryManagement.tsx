@@ -178,6 +178,17 @@ export default function InventoryManagement() {
   const getMedicineName = (id: string) => medicines.find(m => m.medicineId === id)?.medicineName || 'Unknown';
   const getSupplierName = (id: string) => suppliers.find(s => s.supplierId === id)?.supplierName || 'Unknown';
 
+  // Which medicines are ACTUALLY low, per the same definition Low Stock Alerts
+  // uses (total available across every batch vs. that medicine's own
+  // minStockLevel) — not a single batch's own remaining quantity against the
+  // fixed reorderLevel every batch is created with. A batch with 2 units left
+  // isn't "low stock" if the medicine has 200 more sitting in a newer batch;
+  // coloring by the per-batch number was flagging dozens of nearly-depleted
+  // (but individually fine) batches as warnings while Low Stock Alerts —
+  // correctly looking at the real total — showed nothing, which read as the
+  // alert being broken.
+  const lowStockMedicineIds = new Set(lowStockAlerts.map((a: any) => a.medicineId));
+
   const stockPageCount = Math.ceil(stockTotal / ROWS_PER_PAGE);
   const poPageCount = Math.ceil(poTotal / ROWS_PER_PAGE);
 
@@ -312,12 +323,24 @@ export default function InventoryManagement() {
                     <TableRow><TableCell colSpan={6} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No stock available." size={110} /></TableCell></TableRow>
                   ) : inventory.map(inv => (
                     <TableRow key={inv.inventoryId} hover>
-                      <TableCell sx={{ fontWeight: 600, color: ACCENTS.pharmacy }}>{getMedicineName(inv.medicineId)}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: ACCENTS.pharmacy }}>
+                        {getMedicineName(inv.medicineId)}
+                        {lowStockMedicineIds.has(inv.medicineId) && (
+                          <Tooltip title="This medicine's total stock across all batches is at or below its reorder threshold">
+                            <Box component="span" sx={{
+                              ml: 1, px: 0.75, py: 0.1, borderRadius: 1.5, fontSize: '0.7rem', fontWeight: 700,
+                              bgcolor: alpha(theme.palette.warning.main, 0.15), color: 'warning.dark',
+                            }}>
+                              Low stock
+                            </Box>
+                          </Tooltip>
+                        )}
+                      </TableCell>
                       <TableCell>{inv.batchNumber}</TableCell>
                       <TableCell sx={{ color: new Date(inv.expiryDate) < new Date() ? 'error.main' : 'inherit' }}>
                         {new Date(inv.expiryDate).toLocaleDateString()}
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: inv.availableQuantity <= inv.reorderLevel ? 'warning.main' : 'success.main' }}>
+                      <TableCell sx={{ fontWeight: 700, color: lowStockMedicineIds.has(inv.medicineId) ? 'warning.main' : 'success.main' }}>
                         {inv.availableQuantity}
                       </TableCell>
                       <TableCell>{getSupplierName(inv.supplierId)}</TableCell>

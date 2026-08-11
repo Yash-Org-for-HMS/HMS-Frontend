@@ -23,15 +23,25 @@ interface Props {
 
 // Suggested order qty / cost mirror the server's auto-generate formulas so the
 // pre-filled numbers match what one-click generation would have produced.
-const suggestedQty = (minStock: number, currentStock: number) => Math.max((minStock || 0) * 2 - (currentStock || 0), minStock || 0) || 1;
+// Nets out stock already on a pending PO — otherwise this would suggest
+// ordering the full gap again on top of a delivery that's already in motion.
+const suggestedQty = (minStock: number, currentStock: number, pendingStock: number) =>
+  Math.max((minStock || 0) * 2 - (currentStock || 0) - (pendingStock || 0), 0);
 const suggestedPrice = (sellingPrice: any) => Number(((Number(sellingPrice) || 0) * 0.7).toFixed(2));
-const rowFromMedicine = (med: any, currentStock: number | null, low: boolean) => ({
+const rowFromMedicine = (med: any, currentStock: number | null, pendingStock: number, low: boolean) => ({
   medicineId: med.medicineId,
   medicineName: med.medicineName,
   genericName: med.genericName,
   currentStock,
+  pendingStock,
   minStockLevel: med.minStockLevel ?? 0,
-  orderedQuantity: suggestedQty(med.minStockLevel ?? 0, currentStock ?? 0),
+  // A low-stock row can legitimately suggest 0 (a pending PO already covers
+  // the gap) — that row gets filtered out before it ever reaches here. A
+  // hand-added row has no such "already covered" reading, so it always gets
+  // at least 1.
+  orderedQuantity: low
+    ? suggestedQty(med.minStockLevel ?? 0, currentStock ?? 0, pendingStock)
+    : Math.max(suggestedQty(med.minStockLevel ?? 0, currentStock ?? 0, pendingStock), med.minStockLevel || 1),
   unitPrice: suggestedPrice(med.sellingPrice),
   supplierId: med.defaultSupplierId || "",
   low,
@@ -49,15 +59,23 @@ export default function AutoGeneratePODialog({ open, onClose, lowStockAlerts, me
   const [rows, setRows] = useState<any[]>([]);
   const [generating, setGenerating] = useState(false);
 
-  // Pre-fill one row per low-stock alert whenever the dialog opens.
+  // Pre-fill one row per low-stock alert whenever the dialog opens — except
+  // one already fully covered by a pending PO (suggested qty nets to 0),
+  // which has nothing left to order.
   useEffect(() => {
-    if (open) setRows(lowStockAlerts.map((a) => rowFromMedicine(a, a.currentStock ?? 0, true)));
+    if (open) {
+      setRows(
+        lowStockAlerts
+          .map((a) => rowFromMedicine(a, a.currentStock ?? 0, a.pendingStock ?? 0, true))
+          .filter((r) => r.orderedQuantity > 0)
+      );
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const addMedicine = (med: any) => {
     if (!med || rows.some((r) => r.medicineId === med.medicineId)) return;
-    setRows((rs) => [...rs, rowFromMedicine(med, null, false)]);
+    setRows((rs) => [...rs, rowFromMedicine(med, null, 0, false)]);
   };
   const updateRow = (idx: number, patch: any) => setRows((rs) => rs.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
   const removeRow = (idx: number) => setRows((rs) => rs.filter((_, i) => i !== idx));
@@ -145,6 +163,11 @@ export default function AutoGeneratePODialog({ open, onClose, lowStockAlerts, me
                     </TableCell>
                     <TableCell align="center" sx={{ color: 'text.secondary' }}>
                       {r.currentStock == null ? "—" : r.currentStock} / {r.minStockLevel}
+                      {r.pendingStock > 0 && (
+                        <Typography variant="caption" sx={{ display: 'block', color: SEMANTIC.warning }}>
+                          +{r.pendingStock} already on order
+                        </Typography>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Select size="small" value={r.supplierId} displayEmpty onChange={(e) => updateRow(idx, { supplierId: e.target.value })} sx={{ minWidth: 150 }}>
