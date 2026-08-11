@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Tooltip,
-  Alert, Avatar, Menu, MenuItem
+  Alert, Avatar, Menu, MenuItem, alpha
 } from "@mui/material";
 import {
   MoreVertRounded, PlayArrowRounded, CheckCircleRounded,
@@ -21,6 +21,28 @@ import { useSocket } from "@/hooks/useSocket";
 import PageHeader from "@/components/layout/PageHeader";
 import { QUEUE_POLL_MS } from "@/constants/intervals";
 import { ACCENTS, SEMANTIC } from "@/styles/accents";
+
+// Shared cell styling for the Completed section's table.
+const COMPLETED_HEAD_SX = {
+  color: "text.secondary", fontWeight: 700, fontSize: "0.75rem",
+  textTransform: "uppercase", letterSpacing: 0.4, borderBottom: "1px solid",
+  borderColor: "rgba(16,185,129,0.15)",
+} as const;
+const COMPLETED_CELL_SX = { borderBottom: "1px solid", borderColor: "rgba(16,185,129,0.1)" } as const;
+
+const fmtTime = (iso?: string | null) =>
+  iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
+
+// How long the doctor actually spent with the patient. Only meaningful when both
+// ends were stamped — a token completed without a recorded start shows "—"
+// rather than a misleading 0m.
+const consultDuration = (t: any) => {
+  if (!t.consultationStartedAt || !t.consultationEndedAt) return "—";
+  const mins = Math.max(0, Math.round(
+    (new Date(t.consultationEndedAt).getTime() - new Date(t.consultationStartedAt).getTime()) / 60000
+  ));
+  return mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+};
 
 const getDoctorInitials = (doctorName?: string) => {
   if (!doctorName || doctorName === "Unknown") return "";
@@ -72,6 +94,17 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
     [tokens]
   );
   const skippedTokens = useMemo(() => tokens.filter((t: any) => t.statusCode === "SKIPPED"), [tokens]);
+  // Finished OPD patients. The backend already returns today's COMPLETED tokens,
+  // but nothing rendered them — they were filtered out of `activeTokens` and had
+  // no section of their own, so a patient simply vanished from the screen once
+  // seen, leaving no record of who was actually done today. Newest first, since
+  // "who just finished" is the question being asked.
+  const completedTokens = useMemo(
+    () => tokens
+      .filter((t: any) => t.statusCode === "COMPLETED")
+      .sort((a: any, b: any) => new Date(b.consultationEndedAt || b.updatedAt || 0).getTime() - new Date(a.consultationEndedAt || a.updatedAt || 0).getTime()),
+    [tokens]
+  );
 
   // ── Waiting-time monitor ──────────────────────────────────────────────
   // Minutes from joining the queue until seen by the doctor (or until now if
@@ -168,6 +201,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
           { label: "Patients Waiting", value: String(waitingTokens.length), color: "#06b6d4" },
           { label: "Avg Wait", value: fmtWait(avgWait), color: waitColor(avgWait) },
           { label: "Longest Wait", value: fmtWait(maxWait), color: waitColor(maxWait) },
+          { label: "Completed Today", value: String(completedTokens.length), color: SEMANTIC.success },
         ].map((s) => (
           <Paper key={s.label} elevation={0} sx={{ flex: "1 1 140px", minWidth: 140, p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
             <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4 }}>{s.label}</Typography>
@@ -328,6 +362,63 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
                         {!readOnly && <IconButton size="small" onClick={(e) => handleMenuClick(e, token)} sx={{ color: "#f97316" }}>
                           <MoreVertRounded fontSize="small" />
                         </IconButton>}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        </Box>
+      )}
+
+      {/* Completed Patients Section — today's finished OPD consultations. */}
+      {completedTokens.length > 0 && (
+        <Box sx={{ mt: 6 }}>
+          <Typography variant="h6" sx={{ color: "text.secondary", fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            Completed Patients
+            <Chip label={completedTokens.length} size="small" sx={{ bgcolor: alpha(SEMANTIC.success, 0.1), color: SEMANTIC.success, fontWeight: 800 }} />
+          </Typography>
+          <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: alpha(SEMANTIC.success, 0.2), bgcolor: alpha(SEMANTIC.success, 0.02), overflow: "hidden" }}>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ ...COMPLETED_HEAD_SX, width: '10%' }}>Token</TableCell>
+                    <TableCell sx={{ ...COMPLETED_HEAD_SX, width: '28%' }}>Patient</TableCell>
+                    <TableCell sx={{ ...COMPLETED_HEAD_SX, width: '24%' }}>Doctor</TableCell>
+                    <TableCell sx={{ ...COMPLETED_HEAD_SX, width: '14%' }}>Consult time</TableCell>
+                    <TableCell sx={{ ...COMPLETED_HEAD_SX, width: '14%' }}>Finished</TableCell>
+                    <TableCell sx={{ ...COMPLETED_HEAD_SX, width: '10%' }}>Checked out</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {completedTokens.map((token: any) => (
+                    <TableRow key={token.queueTokenId} sx={{ "&:hover": { bgcolor: alpha(SEMANTIC.success, 0.05) }, transition: 'all 0.2s' }}>
+                      <TableCell sx={COMPLETED_CELL_SX}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: SEMANTIC.success }}>{getDoctorInitials(token.doctorName)}-{token.displayNumber}</Typography>
+                      </TableCell>
+                      <TableCell sx={COMPLETED_CELL_SX}>
+                        <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{token.patientName}</Typography>
+                      </TableCell>
+                      <TableCell sx={{ ...COMPLETED_CELL_SX, color: "text.secondary", fontSize: "0.875rem" }}>
+                        {token.doctorName}
+                      </TableCell>
+                      <TableCell sx={{ ...COMPLETED_CELL_SX, color: "text.secondary", fontSize: "0.875rem" }}>
+                        {consultDuration(token)}
+                      </TableCell>
+                      <TableCell sx={{ ...COMPLETED_CELL_SX, color: "text.secondary", fontSize: "0.875rem" }}>
+                        {fmtTime(token.consultationEndedAt)}
+                      </TableCell>
+                      <TableCell sx={COMPLETED_CELL_SX}>
+                        {token.checkedOutAt ? (
+                          <Chip
+                            label={fmtTime(token.checkedOutAt)} size="small"
+                            sx={{ bgcolor: alpha(SEMANTIC.success, 0.1), color: SEMANTIC.success, border: `1px solid ${alpha(SEMANTIC.success, 0.3)}`, fontWeight: 600, fontSize: "0.75rem" }}
+                          />
+                        ) : (
+                          <Typography variant="caption" sx={{ color: "text.secondary" }}>Not yet</Typography>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
