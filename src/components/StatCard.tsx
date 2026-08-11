@@ -67,7 +67,14 @@ export default function StatCard({
         gap: horizontal ? 2 : 0,
         alignItems: horizontal ? "center" : "stretch",
         flexDirection: horizontal ? "row" : "column",
-        justifyContent: "space-between",
+        // Vertical cards pack from the TOP (icon, then value) so the number sits
+        // at the same height in every card of a row regardless of whether that
+        // card has a `sub` line — "space-between" was bottom-anchoring the value
+        // block, so a taller block (icon+value+label+sub) pushed its number up
+        // while a shorter one (icon+value+label) let its number sit lower,
+        // reading as an uneven row. Horizontal cards keep space-between (icon
+        // and value sit side by side, not stacked, so this doesn't apply there).
+        justifyContent: horizontal ? "space-between" : "flex-start",
         minHeight: horizontal ? 0 : 160,
         "&:hover": clickable || !horizontal
           ? { boxShadow: "0 8px 30px rgba(0,0,0,0.06)", transform: "translateY(-2px)" }
@@ -85,7 +92,12 @@ export default function StatCard({
           <Skeleton width={80} height={40} />
         ) : (
           <Typography
-            variant={horizontal ? "h6" : "h4"}
+            // h4 wrapped long currency values (e.g. "₹1,20,000.00") onto a
+            // second line at typical card widths, which re-introduced the same
+            // "numbers don't line up" look this component just fixed — h5 gives
+            // the row enough margin to stay on one line while still reading as
+            // the card's headline number.
+            variant={horizontal ? "h6" : "h5"}
             noWrap={horizontal}
             sx={{ fontWeight: 800, color: "text.primary", lineHeight: 1.1, wordBreak: horizontal ? undefined : "break-word" }}
           >
