@@ -139,6 +139,10 @@ export default function UpdateLabOrder() {
   const patientName = `${order.patient?.firstName || ""} ${order.patient?.lastName || ""}`.trim() || "Unknown patient";
   const doctorName = `${order.doctor?.user?.firstName || ""} ${order.doctor?.user?.lastName || ""}`.trim() || "—";
   const paid = order.paymentStatus === "PAID";
+  // Inpatient (admission-linked) orders are settled on the discharge bill against
+  // the deposit — they're never collected at the POS counter (the billing endpoint
+  // excludes them, so a POS attempt 400s "not a billable item").
+  const ipd = !!order.admissionId;
   const collected = !!order.sampleCollectedAt;
   const locked = !!order.billingLockActive;
   const gatedByCollection = order.status === "PENDING" && !collected;
@@ -170,7 +174,7 @@ export default function UpdateLabOrder() {
           </Box>
         </Box>
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
-          {!paid && (
+          {!paid && !ipd && (
             <Button size="small" variant="outlined" color="success" startIcon={<PaymentsRounded />} onClick={() => setShowPOS(true)}>
               Collect Payment
             </Button>
@@ -208,8 +212,12 @@ export default function UpdateLabOrder() {
               </Box>
             </Box>
             <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
-              <Chip size="small" label={paid ? "Paid" : "Unpaid"} color={paid ? "success" : "error"}
-                variant={paid ? "filled" : "outlined"} sx={{ fontWeight: 700 }} />
+              {ipd ? (
+                <Chip size="small" label="Inpatient · billed at discharge" color="info" variant="outlined" sx={{ fontWeight: 700 }} />
+              ) : (
+                <Chip size="small" label={paid ? "Paid" : "Unpaid"} color={paid ? "success" : "error"}
+                  variant={paid ? "filled" : "outlined"} sx={{ fontWeight: 700 }} />
+              )}
               <Chip size="small" icon={collected ? <CheckCircleRounded /> : undefined}
                 label={order.status || "PENDING"}
                 color={order.status === "COMPLETED" || order.status === "VERIFIED" ? "success" : "warning"}
