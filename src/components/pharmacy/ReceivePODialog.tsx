@@ -68,6 +68,14 @@ export default function ReceivePODialog({ po, onClose, suppliers, getMedicineNam
         })),
       });
       onClose();
+      // Explicit confirmation of what was added — Current Stock defaults to an
+      // expiry-sorted, paged view, so a fresh receipt (often the longest
+      // expiry in the list) can land off the visible first page. Without this,
+      // a successful receive looks indistinguishable from a silent no-op.
+      const summary = itemsToReceive
+        .map(item => `${item.receivedQuantity}x ${getMedicineName(item.medicineId)} (Batch ${item.batchNumber})`)
+        .join(", ");
+      toast.success(`Received: ${summary}. Search Current Stock if it's not on the first page.`);
       await onReceived();
     } catch (err: unknown) {
       console.error(err);

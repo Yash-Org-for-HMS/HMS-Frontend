@@ -3,9 +3,10 @@ import { ACCENTS, SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Button, useTheme, alpha, Tabs, Tab, MenuItem, Select, IconButton, Tooltip
+  Button, useTheme, alpha, Tabs, Tab, MenuItem, Select, IconButton, Tooltip, TextField, InputAdornment
 } from "@mui/material";
-import { AddRounded, InventoryRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded } from "@mui/icons-material";
+import { AddRounded, InventoryRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded, SearchRounded } from "@mui/icons-material";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
 import ErrorState from "@/components/ErrorState";
@@ -48,6 +49,13 @@ export default function InventoryManagement() {
   const [poPage, setPoPage] = useState(1);
   const [alertPage, setAlertPage] = useState(1);
 
+  // Current Stock search — a batch just received sorts wherever its expiry
+  // date lands (default sort is expiry ascending), so a fresh top-up can end
+  // up several pages in. Searching by medicine/batch finds it regardless of
+  // page or sort, instead of the receiving pharmacist having to page through.
+  const [stockSearch, setStockSearch] = useState("");
+  const debouncedStockSearch = useDebouncedValue(stockSearch.trim(), 350);
+
   // Server-side sort for the two genuinely server-paginated tabs.
   const stockSort = useServerSort();
   const poSort = useServerSort();
@@ -81,6 +89,7 @@ export default function InventoryManagement() {
       params: {
         page: p,
         limit: ROWS_PER_PAGE,
+        search: debouncedStockSearch || undefined,
         sortBy: stockSort.orderBy || undefined,
         sortOrder: stockSort.order,
       },
@@ -150,6 +159,14 @@ export default function InventoryManagement() {
     fetchInventory(1).catch(err => toast.error(getApiErrorMessage(err, "Failed to sort inventory")));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stockSort.orderBy, stockSort.order]);
+
+  // Same reset-to-page-1-and-refetch shape, for the (debounced) search box.
+  useEffect(() => {
+    if (!didMount.current) return;
+    setStockPage(1);
+    fetchInventory(1).catch(err => toast.error(getApiErrorMessage(err, "Failed to search inventory")));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedStockSearch]);
 
   useEffect(() => {
     if (!didMount.current) return;
@@ -233,11 +250,27 @@ export default function InventoryManagement() {
         {/* Shared action bar — always rendered so height never shifts between tabs */}
         <Box sx={{
           px: 2, py: 1.5,
-          display: 'flex', justifyContent: 'flex-end', alignItems: 'center',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           borderBottom: '1px solid', borderColor: 'divider',
           bgcolor: alpha(theme.palette.background.paper, 0.5),
           minHeight: 56
         }}>
+          {tabValue === 0 ? (
+            <TextField
+              size="small"
+              placeholder="Search by medicine or batch no..."
+              value={stockSearch}
+              onChange={(e) => setStockSearch(e.target.value)}
+              sx={{ minWidth: 320 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchRounded fontSize="small" sx={{ color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          ) : <Box />}
           {tabValue === 2 && (
             <Button
               variant="contained"
