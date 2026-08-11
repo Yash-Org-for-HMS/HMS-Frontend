@@ -20,6 +20,7 @@ import CreatePODialog from "@/components/pharmacy/CreatePODialog";
 import AutoGeneratePODialog from "@/components/pharmacy/AutoGeneratePODialog";
 import ReceivePODialog from "@/components/pharmacy/ReceivePODialog";
 import EditBatchDialog from "@/components/pharmacy/EditBatchDialog";
+import PurchaseOrderDetailDialog from "@/components/pharmacy/PurchaseOrderDetailDialog";
 
 // Match the existing plain (non-uppercase) table-head look, overriding
 // SortableHeadCell's default uppercase/secondary styling.
@@ -69,6 +70,7 @@ export default function InventoryManagement() {
   const [openAutoDialog, setOpenAutoDialog] = useState(false);
   const [receivePo, setReceivePo] = useState<any>(null);
   const [editInvItem, setEditInvItem] = useState<any>(null);
+  const [detailPoId, setDetailPoId] = useState<string | null>(null);
 
   // Reference data (full, not paginated) — used for name lookups and the
   // Create PO / Receive dialogs' dropdowns. Also includes low-stock alerts,
@@ -313,14 +315,17 @@ export default function InventoryManagement() {
                     <TableCell sx={{ fontWeight: 700 }}>Medicine</TableCell>
                     <SortableHeadCell label="Batch No." sortKey="batch" orderBy={stockSort.orderBy} order={stockSort.order} onSort={stockSort.onSort} sx={HEAD_SX} />
                     <SortableHeadCell label="Expiry Date" sortKey="expiry" orderBy={stockSort.orderBy} order={stockSort.order} onSort={stockSort.onSort} sx={HEAD_SX} />
-                    <SortableHeadCell label="Available Qty" sortKey="quantity" orderBy={stockSort.orderBy} order={stockSort.order} onSort={stockSort.onSort} sx={HEAD_SX} />
+                    <SortableHeadCell label="Batch Qty" sortKey="quantity" orderBy={stockSort.orderBy} order={stockSort.order} onSort={stockSort.onSort} sx={HEAD_SX} />
+                    <Tooltip title="This medicine's total usable stock across every non-expired batch — the number that goes up when you receive a PO into a new batch">
+                      <TableCell sx={{ fontWeight: 700 }}>Total (all batches)</TableCell>
+                    </Tooltip>
                     <TableCell sx={{ fontWeight: 700 }}>Supplier</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {inventory.length === 0 ? (
-                    <TableRow><TableCell colSpan={6} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No stock available." size={110} /></TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No stock available." size={110} /></TableCell></TableRow>
                   ) : inventory.map(inv => (
                     <TableRow key={inv.inventoryId} hover>
                       <TableCell sx={{ fontWeight: 600, color: ACCENTS.pharmacy }}>
@@ -342,6 +347,9 @@ export default function InventoryManagement() {
                       </TableCell>
                       <TableCell sx={{ fontWeight: 700, color: lowStockMedicineIds.has(inv.medicineId) ? 'warning.main' : 'success.main' }}>
                         {inv.availableQuantity}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: lowStockMedicineIds.has(inv.medicineId) ? 'warning.main' : 'text.primary' }}>
+                        {inv.medicineTotalStock ?? inv.availableQuantity}
                       </TableCell>
                       <TableCell>{getSupplierName(inv.supplierId)}</TableCell>
                       <TableCell align="right">
@@ -400,16 +408,21 @@ export default function InventoryManagement() {
                         </Box>
                       </TableCell>
                       <TableCell align="right">
-                        {(po.status === 'pending' || po.status === 'partial') && (
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            startIcon={<CheckCircleRounded />}
-                            onClick={() => setReceivePo(po)}
-                          >
-                            Receive
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                          <Button size="small" variant="text" onClick={() => setDetailPoId(po.purchaseOrderId)}>
+                            Details
                           </Button>
-                        )}
+                          {(po.status === 'pending' || po.status === 'partial') && (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<CheckCircleRounded />}
+                              onClick={() => setReceivePo(po)}
+                            >
+                              Receive
+                            </Button>
+                          )}
+                        </Box>
                       </TableCell>
                     </TableRow>
                     );
@@ -497,6 +510,11 @@ export default function InventoryManagement() {
         medicines={medicines}
         suppliers={suppliers}
         onGenerated={afterPoCreated}
+      />
+
+      <PurchaseOrderDetailDialog
+        purchaseOrderId={detailPoId}
+        onClose={() => setDetailPoId(null)}
       />
 
       <ReceivePODialog
