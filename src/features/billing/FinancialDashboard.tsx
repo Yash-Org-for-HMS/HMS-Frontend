@@ -7,7 +7,7 @@ import {
 } from "@mui/icons-material";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend
+  BarChart, Bar, LabelList
 } from "recharts";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -17,8 +17,10 @@ import StatCard from "@/components/StatCard";
 import { apiErrorText } from "@/utils/apiError";
 import { SEMANTIC, NEUTRAL } from "@/styles/accents";
 
-const COLORS = [SEMANTIC.info, SEMANTIC.success, SEMANTIC.warning, "#ec4899", "#8b5cf6"];
-const PAYMENT_COLORS = [SEMANTIC.success, SEMANTIC.info, "#8b5cf6", SEMANTIC.warning];
+// Each bar chart gets its own single hue (magnitude, not identity) — the two
+// charts are told apart by their titles, not by cycling colours within either.
+const SOURCE_BAR = "#0891b2";
+const METHOD_BAR = "#8b5cf6";
 
 export default function FinancialDashboard() {
   const theme = useTheme();
@@ -41,6 +43,10 @@ export default function FinancialDashboard() {
     );
   }
 
+  const collectionRate = analytics.expectedRevenue > 0
+    ? Math.round((analytics.totalCollected / analytics.expectedRevenue) * 100)
+    : null;
+
   return (
     <Box>
       <PageHeader
@@ -55,6 +61,7 @@ export default function FinancialDashboard() {
             value={`₹${(analytics.totalCollected || 0).toLocaleString()}`}
             icon={<AccountBalanceRounded />}
             color={SEMANTIC.success}
+            sub={collectionRate !== null ? `${collectionRate}% of expected revenue` : undefined}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -158,17 +165,17 @@ export default function FinancialDashboard() {
           </Paper>
         </Grid>
 
-        {/* Revenue By Department */}
+        {/* Revenue By Department — sorted magnitude bars, one hue, direct labels */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Paper 
-            elevation={0} 
-            sx={{ 
-              p: { xs: 2, md: 3 }, 
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, md: 3 },
               borderRadius: 4,
-              border: "1px solid", 
-              borderColor: "divider", 
-              height: 350, 
-              display: "flex", 
+              border: "1px solid",
+              borderColor: "divider",
+              height: 350,
+              display: "flex",
               flexDirection: "column",
               boxShadow: "0 4px 24px rgba(0,0,0,0.02)"
             }}
@@ -178,56 +185,40 @@ export default function FinancialDashboard() {
             </Typography>
             <Box sx={{ flexGrow: 1, minHeight: 0 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={analytics.departmentRevenue}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70}
-                    outerRadius={100}
-                    paddingAngle={4}
-                    dataKey="amount"
-                    nameKey="name"
-                    stroke="none"
-                    animationDuration={1500}
-                  >
-                    {analytics.departmentRevenue.map((_entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
+                <BarChart
+                  data={[...analytics.departmentRevenue].sort((a: any, b: any) => b.amount - a.amount)}
+                  layout="vertical"
+                  margin={{ top: 4, right: 56, left: 8, bottom: 4 }}
+                >
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="name" width={100} tick={{ fill: NEUTRAL.muted, fontSize: 13 }} axisLine={false} tickLine={false} />
                   <RechartsTooltip
-                    contentStyle={{ 
-                      backgroundColor: theme.palette.background.paper, 
-                      border: "none", 
-                      borderRadius: 12, 
-                      boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
-                      padding: "12px 16px"
-                    }}
-                    itemStyle={{ fontWeight: 800, fontSize: "1.1rem" }}
+                    cursor={{ fill: `${SOURCE_BAR}14` }}
+                    contentStyle={{ backgroundColor: theme.palette.background.paper, border: "none", borderRadius: 12, boxShadow: "0 10px 40px rgba(0,0,0,0.1)", padding: "12px 16px" }}
+                    itemStyle={{ fontWeight: 800, fontSize: "1rem", color: SOURCE_BAR }}
+                    formatter={(v: number) => [`₹${v.toLocaleString()}`, "Revenue"]}
                   />
-                  <Legend 
-                    verticalAlign="bottom" 
-                    height={48} 
-                    iconType="circle"
-                    wrapperStyle={{ paddingTop: "20px", fontWeight: 600 }}
-                  />
-                </PieChart>
+                  <Bar dataKey="amount" fill={SOURCE_BAR} radius={[0, 4, 4, 0]} barSize={22}>
+                    <LabelList dataKey="amount" position="right" formatter={(v: number) => `₹${v.toLocaleString()}`} style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </Box>
           </Paper>
         </Grid>
 
-        {/* Payment Methods */}
+        {/* Payment Methods — same treatment, its own hue so the two charts read
+            as distinct without cycling colours within either. */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Paper 
-            elevation={0} 
-            sx={{ 
-              p: { xs: 2, md: 3 }, 
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, md: 3 },
               borderRadius: 4,
-              border: "1px solid", 
-              borderColor: "divider", 
-              height: 350, 
-              display: "flex", 
+              border: "1px solid",
+              borderColor: "divider",
+              height: 350,
+              display: "flex",
               flexDirection: "column",
               boxShadow: "0 4px 24px rgba(0,0,0,0.02)"
             }}
@@ -237,39 +228,23 @@ export default function FinancialDashboard() {
             </Typography>
             <Box sx={{ flexGrow: 1, minHeight: 0 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={analytics.paymentMethods}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    dataKey="amount"
-                    nameKey="name"
-                    stroke={theme.palette.background.paper}
-                    strokeWidth={3}
-                    animationDuration={1500}
-                  >
-                    {analytics.paymentMethods.map((_entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={PAYMENT_COLORS[index % PAYMENT_COLORS.length]} />
-                    ))}
-                  </Pie>
+                <BarChart
+                  data={[...analytics.paymentMethods].sort((a: any, b: any) => b.amount - a.amount)}
+                  layout="vertical"
+                  margin={{ top: 4, right: 56, left: 8, bottom: 4 }}
+                >
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="name" width={100} tick={{ fill: NEUTRAL.muted, fontSize: 13 }} axisLine={false} tickLine={false} />
                   <RechartsTooltip
-                    contentStyle={{ 
-                      backgroundColor: theme.palette.background.paper, 
-                      border: "none", 
-                      borderRadius: 12, 
-                      boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
-                      padding: "12px 16px"
-                    }}
-                    itemStyle={{ fontWeight: 800, fontSize: "1.1rem" }}
+                    cursor={{ fill: `${METHOD_BAR}14` }}
+                    contentStyle={{ backgroundColor: theme.palette.background.paper, border: "none", borderRadius: 12, boxShadow: "0 10px 40px rgba(0,0,0,0.1)", padding: "12px 16px" }}
+                    itemStyle={{ fontWeight: 800, fontSize: "1rem", color: METHOD_BAR }}
+                    formatter={(v: number) => [`₹${v.toLocaleString()}`, "Collected"]}
                   />
-                  <Legend 
-                    verticalAlign="bottom" 
-                    height={48} 
-                    iconType="circle"
-                    wrapperStyle={{ paddingTop: "20px", fontWeight: 600 }}
-                  />
-                </PieChart>
+                  <Bar dataKey="amount" fill={METHOD_BAR} radius={[0, 4, 4, 0]} barSize={22}>
+                    <LabelList dataKey="amount" position="right" formatter={(v: number) => `₹${v.toLocaleString()}`} style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </Box>
           </Paper>
