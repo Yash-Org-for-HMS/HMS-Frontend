@@ -9,6 +9,7 @@ import {
 import { LockRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
+import { useConfirm } from "@/providers/ConfirmContext";
 import PageHeader from "@/components/layout/PageHeader";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 
@@ -22,6 +23,7 @@ interface ModuleAccessData {
 
 export default function ModuleAccess() {
   const toast = useToast();
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
 
   const { data, isLoading: loading, isError, error, refetch } = useQuery<ModuleAccessData>({
@@ -49,6 +51,21 @@ export default function ModuleAccess() {
   const allModules = [...(data?.enabledModules || []), ...(data?.disabledModules || [])];
   const isEnabled = (m: string) => data?.enabledModules.includes(m) ?? false;
   const inPlan = (m: string) => data?.planModules.includes(m) ?? false;
+
+  // Flipping a module affects every staff member at once, so confirm either
+  // direction before it takes effect — disabling reads as a warning (staff lose
+  // access immediately), enabling as a plain confirm.
+  const requestToggle = async (module: string, enabled: boolean) => {
+    const ok = await confirm({
+      title: enabled ? `Enable ${module}?` : `Disable ${module}?`,
+      message: enabled
+        ? `Staff with the matching role permission will be able to use ${module} right away.`
+        : `Staff will lose access to ${module} immediately, hospital-wide. You can turn it back on anytime.`,
+      confirmText: enabled ? "Enable" : "Disable",
+      destructive: !enabled,
+    });
+    if (ok) toggle.mutate({ module, enabled });
+  };
 
   return (
     <Box sx={{ maxWidth: 900, mx: "auto" }}>
@@ -90,7 +107,7 @@ export default function ModuleAccess() {
                   {toggleable ? (
                     <Switch
                       checked={enabled}
-                      onChange={(e) => toggle.mutate({ module, enabled: e.target.checked })}
+                      onChange={(e) => requestToggle(module, e.target.checked)}
                       disabled={toggle.isPending}
                       color="primary"
                     />
