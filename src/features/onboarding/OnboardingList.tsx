@@ -130,7 +130,7 @@ export default function OnboardingList() {
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {summary.map((s) => (
-          <Grid size={{ xs: 6, md: 3 }} key={s.label}>
+          <Grid size={{ xs: 6, md: 2.4 }} key={s.label}>
             <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
               <CardContent sx={{ py: 2.5 }}>
                 <Typography variant="h4" fontWeight={800} sx={{ color: s.value ? s.color : "text.disabled" }}>{s.value}</Typography>
