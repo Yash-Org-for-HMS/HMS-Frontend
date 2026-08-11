@@ -350,6 +350,96 @@ export function DailyOpd() {
   );
 }
 
+// ── OPD Visit Register ───────────────────────────────────────────────────────
+// Who attended OPD, on which day. Daily OPD Summary answers "how many" for one
+// day and OP Registration lists only NEWLY registered patients, so a returning
+// patient's visit appeared in neither. This is the OPD counterpart to IPD's
+// "IP Registrations" — same shape, so the two read alike.
+export function OpdVisitRegister() {
+  const [range, setRange] = useState<DateRange>({
+    from: dayjs().subtract(29, "day").format("YYYY-MM-DD"),
+    to: dayjs().format("YYYY-MM-DD"),
+  });
+  const [doctorId, setDoctorId] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [statusId, setStatusId] = useState("");
+  const { data: opts } = useFilterOptions();
+
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["report-opd-visits", range.from, range.to, doctorId, departmentId, statusId],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/opd-visits", {
+      params: {
+        from: range.from, to: range.to,
+        doctorId: doctorId || undefined, departmentId: departmentId || undefined, statusId: statusId || undefined,
+      },
+    })).data.data,
+  });
+
+  const rows: any[] = data?.rows ?? [];
+  const byDate: any[] = data?.byDate ?? [];
+  const t = data?.totals;
+
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={setRange}>
+        <FilterSelect label="Doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
+        <FilterSelect label="Department" value={departmentId} onChange={setDepartmentId} options={opts?.departments} />
+        <FilterSelect label="Status" value={statusId} onChange={setStatusId} options={opts?.appointmentStatuses} />
+      </ReportFilters>
+
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<EventRounded />} label="Visits" value={String(t.visits)} color={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<GroupRounded />} label="Unique patients" value={String(t.uniquePatients)} color="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Completed" value={String(t.completed)} color={SEMANTIC.success} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CancelRounded />} label="Cancelled" value={String(t.cancelled)} color={SEMANTIC.danger} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="First visits" value={String(t.firstVisits)} color="#ec4899" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ReplayRounded />} label="Repeat visits" value={String(t.repeatVisits)} color={SEMANTIC.info} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ReplayRounded />} label="Follow-ups" value={String(t.followUps)} color={SEMANTIC.warning} /></Grid>
+          </Grid>
+
+          <Box sx={{ mb: 2.5 }}>
+            <ReportTable
+              title="Day-wise summary"
+              filename={`opd_visits_by_day_${range.from}_${range.to}`}
+              maxHeight={300}
+              columns={[
+                { key: "date", label: "Date", format: (v: string) => dayjs(v).format("DD MMM YYYY") },
+                { key: "visits", label: "Visits", align: "right" },
+                { key: "uniquePatients", label: "Unique patients", align: "right" },
+                { key: "completed", label: "Completed", align: "right" },
+                { key: "cancelled", label: "Cancelled", align: "right" },
+              ]}
+              rows={byDate}
+              emptyText="No OPD visits in this period."
+            />
+          </Box>
+
+          <ReportTable
+            title="Visit detail"
+            filename={`opd_visits_${range.from}_${range.to}`}
+            columns={[
+              { key: "visitDate", label: "Date", format: (v: string) => dayjs(v).format("DD MMM YYYY"), value: (r: any) => new Date(r.visitDate).getTime() },
+              { key: "token", label: "Token", align: "right", format: (v: number | null) => (v ?? "—") },
+              { key: "patientName", label: "Patient" },
+              { key: "uhid", label: "UHID" },
+              { key: "phone", label: "Phone" },
+              { key: "doctorName", label: "Doctor" },
+              { key: "departmentName", label: "Department" },
+              { key: "visitType", label: "Type" },
+              { key: "status", label: "Status" },
+            ]}
+            rows={rows}
+            emptyText="No OPD visits in this period."
+            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 // ── Appointment Analytics ────────────────────────────────────────────────────
 export function Analytics() {
   const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));

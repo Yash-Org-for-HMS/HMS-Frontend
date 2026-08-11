@@ -8,7 +8,7 @@ import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { isAdmin as isAdminRole } from "@/constants/roles";
 import {
-  DailyOpd, Analytics, Collection, ReferralsByDoctor, OpRegistration, OpBills, DiagnosisWise, Census, Footfall,
+  DailyOpd, Analytics, Collection, ReferralsByDoctor, OpRegistration, OpBills, DiagnosisWise, Census, Footfall, OpdVisitRegister,
 } from "./Reports";
 import { InPatients, Discharges, IpRegistrations, IpAdvances, Occupancy, OverdueDoses } from "../ipd/IpdReports";
 import { Outstanding, PatientStatement, Receipts, ServiceWise, PharmacyExpense, UnreturnedAdvances } from "../billing/BillingReports";
@@ -29,6 +29,7 @@ const GROUPS: ReportGroup[] = [
     heading: "OPD",
     items: [
       { key: "daily-opd", label: "Daily OPD Summary", Comp: DailyOpd },
+      { key: "opd-visits", label: "OPD Visit Register (date-wise)", Comp: OpdVisitRegister },
       { key: "footfall", label: "Footfall (New vs Returning)", Comp: Footfall },
       { key: "appointment-analytics", label: "Appointment Analytics", Comp: Analytics },
       { key: "op-registration", label: "OP Registration", Comp: OpRegistration },
