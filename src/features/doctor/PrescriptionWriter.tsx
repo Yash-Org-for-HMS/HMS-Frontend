@@ -586,8 +586,9 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
             value={quantity} onChange={e => {
               setQuantity(e.target.value === "" ? "" : Number(e.target.value));
               setManualQuantity(true); // flag that user manually overrode quantity
-            }} 
-          />
+            }}
+                inputProps={{ min: 1, max: 100000 }}
+              />
           <Button 
             fullWidth variant="contained" 
             startIcon={<AddRounded />}

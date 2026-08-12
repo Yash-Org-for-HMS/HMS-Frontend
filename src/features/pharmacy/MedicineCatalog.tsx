@@ -365,6 +365,7 @@ export default function MedicineCatalog() {
                 required
                 error={!!fieldErrors.sellingPrice}
                 helperText={fieldErrors.sellingPrice}
+                inputProps={{ min: 0, max: 10000000 }}
               />
             </Box>
 
@@ -406,6 +407,7 @@ export default function MedicineCatalog() {
                 onChange={(e) => setGstPercent(e.target.value)}
                 fullWidth
                 variant="outlined"
+                inputProps={{ min: 0, max: 100 }}
                 helperText="Blank / 0 = untaxed"
               />
               <TextField
@@ -428,6 +430,7 @@ export default function MedicineCatalog() {
                 variant="outlined"
                 error={!!fieldErrors.minStockLevel}
                 helperText={fieldErrors.minStockLevel || "Triggers low stock alert"}
+                inputProps={{ min: 0, max: 100000 }}
               />
               <TextField
                 select

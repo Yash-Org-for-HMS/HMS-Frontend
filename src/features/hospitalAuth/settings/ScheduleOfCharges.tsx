@@ -838,6 +838,7 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
               helperText="Outpatient rate · IPD fallback"
               InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
             <TextField label="Tax % (optional)" type="number" value={tax} onChange={(e) => setTax(e.target.value)} fullWidth
+              inputProps={{ min: 0, max: 100 }}
               helperText="0 / blank = GST-exempt" />
             <TextField label="HSN/SAC (optional)" value={hsn} onChange={(e) => setHsn(e.target.value)} fullWidth
               inputProps={{ maxLength: 10 }} />

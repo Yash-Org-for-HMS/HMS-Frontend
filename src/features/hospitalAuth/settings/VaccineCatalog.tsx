@@ -188,7 +188,9 @@ function AddVaccineDialog({ onClose, onDone }: { onClose: () => void; onDone: ()
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>
           <TextField fullWidth required label="Vaccine name" placeholder="e.g. Seasonal Flu Shot" value={vaccineName} onChange={(e) => setVaccineName(e.target.value)} />
           <TextField fullWidth required label="Code" placeholder="e.g. FLU" helperText="Short unique code, letters/numbers only" value={vaccineCode} onChange={(e) => setVaccineCode(e.target.value.toUpperCase())} />
-          <TextField fullWidth type="number" label="Price (₹, optional)" placeholder="Leave blank if free" helperText="Administering this vaccine will raise a charge for this amount" value={price} onChange={(e) => setPrice(e.target.value)} />
+          <TextField fullWidth type="number" label="Price (₹, optional)" placeholder="Leave blank if free" helperText="Administering this vaccine will raise a charge for this amount" value={price} onChange={(e) => setPrice(e.target.value)}
+                inputProps={{ min: 0, max: 10000000 }}
+              />
           <TextField fullWidth multiline minRows={2} label="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} />
         </Stack>
       </DialogContent>
@@ -227,7 +229,9 @@ function EditVaccineDialog({ vaccine, onClose, onDone }: { vaccine: Vaccine; onC
       <DialogContent dividers>
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>
           <TextField fullWidth required label="Vaccine name" value={vaccineName} onChange={(e) => setVaccineName(e.target.value)} />
-          <TextField fullWidth type="number" label="Price (₹, optional)" placeholder="Leave blank if free" helperText="Administering this vaccine will raise a charge for this amount" value={price} onChange={(e) => setPrice(e.target.value)} />
+          <TextField fullWidth type="number" label="Price (₹, optional)" placeholder="Leave blank if free" helperText="Administering this vaccine will raise a charge for this amount" value={price} onChange={(e) => setPrice(e.target.value)}
+                inputProps={{ min: 0, max: 10000000 }}
+              />
           <TextField fullWidth multiline minRows={2} label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
           <FormControlLabel control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />}
             label={isActive ? "Active — assignable to patients" : "Inactive — hidden from the assign picker"} />

@@ -752,7 +752,8 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                           type="number"
                           value={newItemQty}
                           onChange={(e) => setNewItemQty(e.target.value)}
-                        />
+                inputProps={{ min: 1, max: 100000 }}
+              />
                       </Grid>
                       <Grid size={{ xs: 8 }}>
                         <TextField
@@ -761,7 +762,8 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                           type="number"
                           value={newItemPrice}
                           onChange={(e) => setNewItemPrice(e.target.value)}
-                        />
+                inputProps={{ min: 0, max: 10000000 }}
+              />
                       </Grid>
                     </Grid>
                     <Button 
