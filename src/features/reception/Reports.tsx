@@ -9,7 +9,7 @@ import {
   EventRounded, CheckCircleRounded, CancelRounded, PaymentsRounded,
   PersonAddRounded, TrendingUpRounded, AccessTimeRounded, ReplayRounded, AccountBalanceWalletRounded,
   HotelRounded, LocalHotelRounded, MeetingRoomRounded, CallSplitRounded, MedicalInformationRounded,
-  FileDownloadRounded, GroupRounded, HowToRegRounded,
+  FileDownloadRounded, GroupRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
@@ -163,50 +163,6 @@ export function DiagnosisWise() {
     </Box>
   );
 }
-
-// ── OPD Footfall (new vs returning) ───────────────────────────────────────────
-export function Footfall() {
-  const [range, setRange] = useState<DateRange>(() => ({ from: dayjs().subtract(29, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") }));
-  const [doctorId, setDoctorId] = useState("");
-  const [departmentId, setDepartmentId] = useState("");
-  const { data: opts } = useFilterOptions();
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["report-footfall", range.from, range.to, doctorId, departmentId],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/footfall", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined, departmentId: departmentId || undefined } })).data.data,
-  });
-  const rows: any[] = data?.rows ?? [];
-  const prev = data?.previous;
-  return (
-    <Box>
-      <ReportFilters value={range} onChange={setRange}>
-        <FilterSelect label="Doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
-        <FilterSelect label="Department" value={departmentId} onChange={setDepartmentId} options={opts?.departments} />
-      </ReportFilters>
-      {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
-        <Box>
-          <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} accent={ACCENT} label="Footfall (visits)" value={String(data.totals.visits)} current={data.totals.visits} previous={prev?.visits} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupRounded />} accent="#8b5cf6" label="Unique patients" value={String(data.totals.uniquePatients)} sub={`${data.totals.avgVisitsPerPatient} visits / patient`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} accent={SEMANTIC.success} label="New patients" value={String(data.totals.newPatients)} sub={`${data.totals.newVisits} visits`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HowToRegRounded />} accent={SEMANTIC.info} label="Returning" value={String(data.totals.returningPatients)} sub={`${data.totals.returningVisits} visits`} /></Grid>
-          </Grid>
-          <ReportTable
-            title="Daily footfall"
-            filename={`footfall_${range.from}_${range.to}`}
-            columns={[
-              { key: "date", label: "Date", format: (v) => dayjs(v).format("DD MMM YYYY"), value: (r) => new Date(r.date).getTime() },
-              { key: "visits", label: "Visits", align: "right" },
-              { key: "newVisits", label: "New", align: "right" },
-              { key: "returningVisits", label: "Returning", align: "right" },
-            ]}
-            rows={rows}
-          />
-        </Box>
-      )}
-    </Box>
-  );
-}
-
 // ── Referrals by Doctor ──────────────────────────────────────────────────────
 export function ReferralsByDoctor() {
   const [range, setRange] = useState<DateRange>({ from: dayjs().subtract(29, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
@@ -397,7 +353,7 @@ export function OpdVisitRegister() {
         <Box>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<EventRounded />} label="Visits" value={String(t.visits)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<GroupRounded />} label="Unique patients" value={String(t.uniquePatients)} color="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<GroupRounded />} label={`Unique patients · ${t.avgVisitsPerPatient} visits each`} value={String(t.uniquePatients)} color="#8b5cf6" /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Completed" value={String(t.completed)} color={SEMANTIC.success} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CancelRounded />} label="Cancelled" value={String(t.cancelled)} color={SEMANTIC.danger} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="First visits" value={String(t.firstVisits)} color="#ec4899" /></Grid>
@@ -413,6 +369,8 @@ export function OpdVisitRegister() {
               columns={[
                 { key: "date", label: "Date", format: (v: string) => dayjs(v).format("DD MMM YYYY") },
                 { key: "visits", label: "Visits", align: "right" },
+                { key: "firstVisits", label: "First visit", align: "right" },
+                { key: "repeatVisits", label: "Repeat", align: "right" },
                 { key: "uniquePatients", label: "Unique patients", align: "right" },
                 { key: "completed", label: "Completed", align: "right" },
                 { key: "cancelled", label: "Cancelled", align: "right" },
