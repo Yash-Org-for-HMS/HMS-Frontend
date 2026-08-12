@@ -52,6 +52,22 @@ export const ACCENTS = {
   ipdDark: "#6d28d9",
 } as const;
 
+/**
+ * The one action colour. Every button in every panel is painted with this, so
+ * "save" looks like "save" whether you're in Pharmacy or Reception — a primary
+ * action shouldn't change colour just because of which screen you're on.
+ *
+ * Panel accents above still brand each area (sidebar, icons, headings), so you
+ * can tell where you are; only the ACTIONS are unified. Indigo is deliberate:
+ * it sits mid-way along the cool range the panel accents span (teal → cyan →
+ * blue → indigo → violet), so it sits harmoniously against every one of them
+ * rather than clashing with the teal and violet ends.
+ */
+export const BRAND = {
+  action: "#6366f1",
+  actionDark: "#4f46e5",
+} as const;
+
 // ── Layer 2: semantic colours (mirror the MUI theme palette) ────────────────
 export const SEMANTIC = {
   success: "#10b981",

@@ -1,4 +1,5 @@
 import { createTheme, alpha, type ThemeOptions } from "@mui/material/styles";
+import { BRAND } from "./styles/accents";
 
 const themeOptions: ThemeOptions = {
   palette: {
@@ -128,17 +129,32 @@ const themeOptions: ThemeOptions = {
           fontSize: "0.95rem",
           boxShadow: "none",
         },
-        // Theme-aware so each per-panel theme's contained buttons follow that
-        // panel's accent (palette.primary) instead of a hardcoded indigo.
-        containedPrimary: ({ theme }) => ({
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-          color: theme.palette.primary.contrastText,
+        // ONE action colour for every panel. Buttons deliberately do NOT follow
+        // palette.primary (the panel accent) — a primary action should look the
+        // same everywhere, so "Save" in Pharmacy matches "Save" in Reception.
+        // Panel identity still comes through the sidebar, icons and headings,
+        // which keep their own accent.
+        containedPrimary: {
+          background: `linear-gradient(135deg, ${BRAND.action} 0%, ${BRAND.actionDark} 100%)`,
+          color: "#FFFFFF",
           border: "none",
           "&:hover": {
-            background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
-            boxShadow: `0 8px 20px -6px ${alpha(theme.palette.primary.main, 0.5)}`,
+            background: `linear-gradient(135deg, ${BRAND.actionDark} 0%, ${BRAND.action} 100%)`,
+            boxShadow: `0 8px 20px -6px ${alpha(BRAND.action, 0.5)}`,
           },
-        }),
+        },
+        // Secondary/tertiary actions follow the same action colour, so a dialog
+        // showing Cancel (text) beside Save (contained) reads as one control set
+        // instead of two different palettes.
+        outlinedPrimary: {
+          borderColor: alpha(BRAND.action, 0.5),
+          color: BRAND.action,
+          "&:hover": { borderColor: BRAND.action, backgroundColor: alpha(BRAND.action, 0.06) },
+        },
+        textPrimary: {
+          color: BRAND.action,
+          "&:hover": { backgroundColor: alpha(BRAND.action, 0.06) },
+        },
         containedSecondary: {
           background: "linear-gradient(135deg, #EC4899 0%, #DB2777 100%)",
           color: "#FFFFFF",
