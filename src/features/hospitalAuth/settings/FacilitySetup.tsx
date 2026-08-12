@@ -69,7 +69,7 @@ export default function FacilitySetup() {
               Room rent
             </Button>
             <Button variant="contained" startIcon={<AddRounded />} onClick={(e) => setSetupAnchor(e.currentTarget)}
-              sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Add</Button>
+              sx={{ textTransform: "none"}}>Add</Button>
             <Menu anchorEl={setupAnchor} open={Boolean(setupAnchor)} onClose={() => setSetupAnchor(null)}>
               <MenuItem onClick={() => { setSetupAnchor(null); setDialog({ kind: "ward" }); }}><ApartmentRounded fontSize="small" sx={{ mr: 1 }} /> Add ward</MenuItem>
               <MenuItem onClick={() => { setSetupAnchor(null); setDialog({ kind: "room" }); }}><MeetingRoomRounded fontSize="small" sx={{ mr: 1 }} /> Add room</MenuItem>
@@ -316,7 +316,7 @@ function RoomRentDialog({ onClose, onDone }: { onClose: () => void; onDone: () =
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
-        <Button variant="contained" onClick={save} disabled={saving || classes.length === 0} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>
+        <Button variant="contained" onClick={save} disabled={saving || classes.length === 0}>
           {saving ? "Saving…" : "Save rents"}
         </Button>
       </DialogActions>
@@ -444,7 +444,7 @@ function SetupDialog({ kind, edit, wards, roomClasses, onClose, onDone }: { kind
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
-        <Button variant="contained" onClick={submit} disabled={saving || !valid} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Save</Button>
+        <Button variant="contained" onClick={submit} disabled={saving || !valid}>Save</Button>
       </DialogActions>
     </Dialog>
   );

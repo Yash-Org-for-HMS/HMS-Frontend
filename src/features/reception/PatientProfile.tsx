@@ -270,7 +270,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
             )}
             {canEdit && (
               <Button variant="contained" startIcon={<EditRounded />} onClick={() => navigate(`/reception/patients/${id}/edit`)}
-                sx={{ bgcolor: ACCENT, fontWeight: 600, textTransform: "none", borderRadius: 2, px: 2.5, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>
+                sx={{ fontWeight: 600, textTransform: "none", borderRadius: 2, px: 2.5 }}>
                 Edit
               </Button>
             )}

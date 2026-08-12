@@ -513,8 +513,6 @@ export default function UserForm() {
                 disabled={loading}
                 startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                 sx={{
-                  bgcolor: ACCENTS.hospital,
-                  "&:hover": { bgcolor: ACCENTS.hospitalDark },
                   py: 1.5,
                   px: 4,
                   textTransform: "none",

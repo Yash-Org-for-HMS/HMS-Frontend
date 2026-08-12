@@ -171,7 +171,7 @@ export default function HospitalOverview() {
         <Box sx={{ display: "flex", alignItems: "center", gap: 2.5, flexWrap: "wrap" }}>
           <Avatar
             src={data.logoUrl ? assetUrl(data.logoUrl) : undefined}
-            sx={{ width: 68, height: 68, borderRadius: 3, bgcolor: ACCENT, fontSize: "1.5rem", fontWeight: 800 }}
+            sx={{ width: 68, height: 68, borderRadius: 3, fontSize: "1.5rem", fontWeight: 800 }}
             variant="rounded"
           >
             {data.logoUrl ? null : initials}

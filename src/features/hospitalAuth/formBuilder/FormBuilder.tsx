@@ -239,7 +239,7 @@ export default function FormBuilder() {
                   onClick={handleAddDataField}
                   variant="contained"
                   disableElevation
-                  sx={{ textTransform: "none", fontWeight: 600, bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark } }}
+                  sx={{ textTransform: "none", fontWeight: 600}}
                 >
                   Add Field
                 </Button>
@@ -332,7 +332,7 @@ export default function FormBuilder() {
             variant="contained"
             disabled={loading}
             startIcon={<SaveRounded />}
-            sx={{ bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark }, py: 1.5, px: 4, fontWeight: 600, fontSize: "1rem" }}
+            sx={{ py: 1.5, px: 4, fontWeight: 600, fontSize: "1rem" }}
           >
             {loading ? "Saving..." : "Save Form Template"}
           </Button>

@@ -415,7 +415,7 @@ export default function DoctorForm() {
               <Button
                 variant="contained"
                 onClick={() => setTabIndex(tabIndex + 1)}
-                sx={{ bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark }, py: 1.5, px: 4 }}
+                sx={{ py: 1.5, px: 4 }}
               >
                 {tabIndex === 0 ? "Next: Professional Details" : "Next: Branch Availability"}
               </Button>

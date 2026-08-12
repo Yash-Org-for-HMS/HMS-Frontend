@@ -101,7 +101,7 @@ export default function DoctorsList() {
                   startIcon={<AddRounded />}
                   disabled={atLimit}
                   onClick={() => navigate("/hospital/doctors/new")}
-                  sx={{ bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark }, textTransform: "none", fontWeight: 600, px: 3 }}
+                  sx={{ textTransform: "none", fontWeight: 600, px: 3 }}
                 >
                   Add Doctor
                 </Button>

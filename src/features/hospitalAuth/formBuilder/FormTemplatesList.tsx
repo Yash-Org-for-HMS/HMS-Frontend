@@ -84,8 +84,6 @@ export default function FormTemplatesList() {
             startIcon={<AddRounded />}
             onClick={() => navigate("/hospital/form-builder/new")}
             sx={{
-              bgcolor: ACCENTS.hospital,
-              "&:hover": { bgcolor: ACCENTS.hospitalDark },
               textTransform: "none",
               fontWeight: 600,
               px: 3,

@@ -146,7 +146,7 @@ export default function ReferralDialog({
 
           <Grid size={{ xs: 12 }}>
             <ToggleButtonGroup exclusive size="small" value={form.referralType} onChange={(_, v) => v && set("referralType", v)}
-              sx={{ "& .MuiToggleButton-root.Mui-selected": { bgcolor: ACCENTS.reception, color: "#fff", "&:hover": { bgcolor: ACCENTS.receptionDark } } }}>
+              sx={{ "& .MuiToggleButton-root.Mui-selected": { color: "#fff" } }}>
               <ToggleButton value="INTERNAL" sx={{ textTransform: "none", px: 2 }}>Internal (department)</ToggleButton>
               <ToggleButton value="EXTERNAL" sx={{ textTransform: "none", px: 2 }}>External (facility)</ToggleButton>
             </ToggleButtonGroup>
@@ -193,7 +193,7 @@ export default function ReferralDialog({
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={submit} disabled={saving || !canSubmit}
           startIcon={saving ? <HeartbeatLoader size={22} /> : <AddRounded />}
-          sx={{ bgcolor: ACCENTS.reception, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>
+>
           Create Referral
         </Button>
       </DialogActions>

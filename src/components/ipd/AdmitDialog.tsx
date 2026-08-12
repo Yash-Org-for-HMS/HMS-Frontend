@@ -233,7 +233,7 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
           <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
           <Button variant="contained" onClick={submit} disabled={saving || !canSubmit}
             startIcon={saving ? <HeartbeatLoader size={22} /> : <LocalHotelRounded />}
-            sx={{ bgcolor: ACCENTS.ipd, "&:hover": { bgcolor: ACCENTS.ipdDark } }}>Admit</Button>
+>Admit</Button>
         </DialogActions>
       </Dialog>
 

@@ -501,8 +501,6 @@ export default function UserForm() {
                   variant="contained"
                   disabled={saving}
                   sx={{
-                    bgcolor: ACCENTS.hospital,
-                    "&:hover": { bgcolor: ACCENTS.hospitalDark },
                     minWidth: 120,
                   }}
                 >

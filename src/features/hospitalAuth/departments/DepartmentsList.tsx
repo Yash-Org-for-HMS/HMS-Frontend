@@ -78,8 +78,6 @@ export default function DepartmentsList() {
             startIcon={<AddRounded />}
             onClick={() => navigate("/hospital/departments/new")}
             sx={{
-              bgcolor: ACCENTS.hospital,
-              "&:hover": { bgcolor: ACCENTS.hospitalDark },
               textTransform: "none",
               fontWeight: 600,
               px: 3,

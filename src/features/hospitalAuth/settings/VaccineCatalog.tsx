@@ -72,7 +72,7 @@ export default function VaccineCatalog() {
         subtitle="Vaccines available to assign to patients. The shared list (e.g. the national schedule) is read-only; add your own below."
         actions={
           <Button variant="contained" startIcon={<AddRounded />} onClick={() => setAddOpen(true)}
-            sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Add Vaccine</Button>
+            sx={{ textTransform: "none"}}>Add Vaccine</Button>
         }
       />
 
@@ -194,7 +194,7 @@ function AddVaccineDialog({ onClose, onDone }: { onClose: () => void; onDone: ()
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
-        <Button variant="contained" onClick={submit} disabled={saving || !vaccineName || !vaccineCode} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Add</Button>
+        <Button variant="contained" onClick={submit} disabled={saving || !vaccineName || !vaccineCode}>Add</Button>
       </DialogActions>
     </Dialog>
   );
@@ -235,7 +235,7 @@ function EditVaccineDialog({ vaccine, onClose, onDone }: { vaccine: Vaccine; onC
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
-        <Button variant="contained" onClick={submit} disabled={saving || !vaccineName} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Save</Button>
+        <Button variant="contained" onClick={submit} disabled={saving || !vaccineName}>Save</Button>
       </DialogActions>
     </Dialog>
   );
@@ -325,7 +325,7 @@ function DosesDialog({ vaccine, onClose, onChanged }: { vaccine: Vaccine; onClos
               <TextField size="small" fullWidth type="number" label="Age in days (from birth)" value={ageDays} onChange={(e) => setAgeDays(e.target.value)} />
               <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
                 <Button size="small" onClick={() => setAdding(false)} disabled={busy}>Cancel</Button>
-                <Button size="small" variant="contained" onClick={addItem} disabled={busy || !doseLabel || !ageLabel || ageDays === ""} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Add dose</Button>
+                <Button size="small" variant="contained" onClick={addItem} disabled={busy || !doseLabel || !ageLabel || ageDays === ""}>Add dose</Button>
               </Box>
             </Stack>
           ) : (
@@ -334,7 +334,7 @@ function DosesDialog({ vaccine, onClose, onChanged }: { vaccine: Vaccine; onClos
         )}
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose} variant="contained" sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Done</Button>
+        <Button onClick={onClose} variant="contained">Done</Button>
       </DialogActions>
     </Dialog>
   );

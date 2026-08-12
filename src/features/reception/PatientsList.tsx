@@ -296,7 +296,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
                           variant="contained"
                           startIcon={<PersonAddRounded />}
                           onClick={() => navigate("/reception/patients/new")}
-                          sx={{ bgcolor: ACCENTS.reception, "&:hover": { bgcolor: ACCENTS.receptionDark }, textTransform: "none", mt: 1 }}
+                          sx={{ textTransform: "none", mt: 1 }}
                         >
                           Register First Patient
                         </Button>

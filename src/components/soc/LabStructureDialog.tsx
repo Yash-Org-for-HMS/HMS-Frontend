@@ -180,7 +180,7 @@ export default function LabStructureDialog({ chargeItemId, itemName, onClose }: 
         <Button color="inherit" onClick={onClose} disabled={saving} sx={{ textTransform: "none", color: "text.secondary" }}>Cancel</Button>
         <Button variant="contained" onClick={save} disabled={saving || isLoading || (isProfile && validCount === 0)}
           startIcon={saving ? <CircularProgress size={16} sx={{ color: "inherit" }} /> : <CheckCircleRounded />}
-          sx={{ textTransform: "none", fontWeight: 700, bgcolor: ACCENT, "&:hover": { bgcolor: "#0e9f6e" } }}>
+          sx={{ textTransform: "none", fontWeight: 700, "&:hover": { bgcolor: "#0e9f6e" } }}>
           {saving ? "Saving…" : "Save structure"}
         </Button>
       </DialogActions>

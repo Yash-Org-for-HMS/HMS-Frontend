@@ -250,7 +250,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
         </Button>
         {!readOnly && (
           <Button variant="contained" size="small" startIcon={<AddRounded fontSize="small" />} onClick={openAddVaccine}
-            sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>
+            sx={{ textTransform: "none"}}>
             Add Vaccine
           </Button>
         )}
@@ -397,7 +397,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setActionTarget(null)} color="inherit" disabled={saving}>Cancel</Button>
-          <Button variant="contained" onClick={submitAction} disabled={saving} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>Save</Button>
+          <Button variant="contained" onClick={submitAction} disabled={saving}>Save</Button>
         </DialogActions>
       </Dialog>
 
@@ -433,7 +433,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setAddOpen(false)} color="inherit" disabled={addSaving}>Cancel</Button>
-          <Button variant="contained" onClick={submitAddVaccine} disabled={addSaving || !addVaccineId} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>
+          <Button variant="contained" onClick={submitAddVaccine} disabled={addSaving || !addVaccineId}>
             {addMode === "given" ? "Log vaccine" : "Schedule vaccine"}
           </Button>
         </DialogActions>

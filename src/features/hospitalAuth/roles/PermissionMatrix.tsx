@@ -195,8 +195,6 @@ export default function PermissionMatrix() {
             disabled={saving}
             startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             sx={{
-              bgcolor: ACCENTS.hospital,
-              "&:hover": { bgcolor: ACCENTS.hospitalDark },
               textTransform: "none",
               fontWeight: 700,
               px: 4,

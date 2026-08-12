@@ -307,7 +307,7 @@ export default function ConsultationWorkspace() {
             onClick={handleComplete}
             disabled={saving || completing}
             startIcon={completing ? <HeartbeatLoader size={22} /> : <CheckCircleRounded />}
-            sx={{ bgcolor: DOCTOR_BLUE, "&:hover": { bgcolor: ACCENTS.doctorDark }, textTransform: "none", fontWeight: 600, boxShadow: "0 4px 12px rgba(59,130,246,0.3)" }}
+            sx={{ textTransform: "none", fontWeight: 600, boxShadow: "0 4px 12px rgba(59,130,246,0.3)" }}
           >
             Complete Consultation
           </Button>

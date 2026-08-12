@@ -292,7 +292,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
         {view === "assign" && (
           <Button variant="contained" onClick={submit} disabled={saving || !canAdd}
             startIcon={saving ? <HeartbeatLoader size={22} /> : <AddRounded />}
-            sx={{ bgcolor: ACCENTS.ipd, "&:hover": { bgcolor: ACCENTS.ipdDark } }}>Assign Medicine</Button>
+>Assign Medicine</Button>
         )}
       </DialogActions>
     </Dialog>

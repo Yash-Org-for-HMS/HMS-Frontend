@@ -229,7 +229,7 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
         <Button onClick={onClose} color="inherit" disabled={saving}>Close</Button>
         <Button variant="contained" onClick={submit} disabled={saving || !form.procedureName.trim()}
           startIcon={saving ? <HeartbeatLoader size={22} /> : <AddRounded />}
-          sx={{ bgcolor: ACCENTS.ipd, "&:hover": { bgcolor: ACCENTS.ipdDark } }}>Add Surgery</Button>
+>Add Surgery</Button>
       </DialogActions>
     </Dialog>
   );

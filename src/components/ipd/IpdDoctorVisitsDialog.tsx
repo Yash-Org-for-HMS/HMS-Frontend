@@ -198,7 +198,7 @@ export default function IpdDoctorVisitsDialog({ open, onClose, admission }: Prop
         <Button onClick={onClose} color="inherit" disabled={saving}>Close</Button>
         <Button variant="contained" onClick={submit} disabled={saving || !doctor}
           startIcon={saving ? <HeartbeatLoader size={22} /> : <AddRounded />}
-          sx={{ bgcolor: ACCENTS.ipd, "&:hover": { bgcolor: ACCENTS.ipdDark } }}>Log Visit</Button>
+>Log Visit</Button>
       </DialogActions>
     </Dialog>
   );

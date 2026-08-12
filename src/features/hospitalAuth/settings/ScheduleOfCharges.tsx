@@ -301,7 +301,7 @@ export default function ScheduleOfCharges() {
                 sx={{ textTransform: "none", borderColor: alpha(ACCENT, 0.5), color: ACCENT }}>Add from catalog</Button>
               <Button variant="contained" size="small" startIcon={<AddRounded />} disabled={!selected}
                 onClick={() => setItemDialog({ mode: "add" })}
-                sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Add Charge</Button>
+                sx={{ textTransform: "none"}}>Add Charge</Button>
             </Box>
             <Divider />
             <TableContainer sx={{ maxHeight: "calc(100vh - 300px)", overflowX: "auto" }}>
@@ -530,7 +530,7 @@ function PriceHistoryDialog({ item, onClose }: { item: Item; onClose: () => void
               <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", px: 2.5, py: 1.5, borderBottom: 1, borderColor: "divider" }}>
                 {["All", ...scopes].map((s) => (
                   <Chip key={s} label={s} size="small" onClick={() => setScope(s)} variant={scope === s ? "filled" : "outlined"}
-                    sx={{ height: 24, fontSize: "0.7rem", fontWeight: 600, ...(scope === s ? { bgcolor: ACCENT, color: "#fff", "&:hover": { bgcolor: ACCENT_DARK } } : {}) }} />
+                    sx={{ height: 24, fontSize: "0.7rem", fontWeight: 600, ...(scope === s ? { color: "#fff" } : {}) }} />
                 ))}
               </Box>
             )}
@@ -577,7 +577,7 @@ function PriceHistoryDialog({ item, onClose }: { item: Item; onClose: () => void
         )}
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button variant="contained" onClick={onClose} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Done</Button>
+        <Button variant="contained" onClick={onClose}>Done</Button>
       </DialogActions>
     </Dialog>
   );
@@ -648,7 +648,7 @@ function CategoryDialog({ mode, cat, categories, defaultParentId, onClose, onDon
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button color="inherit" onClick={onClose} disabled={saving}>Cancel</Button>
-        <Button variant="contained" onClick={save} disabled={saving} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Save</Button>
+        <Button variant="contained" onClick={save} disabled={saving}>Save</Button>
       </DialogActions>
     </Dialog>
   );
@@ -740,7 +740,7 @@ function CatalogDialog({ categoryId, categoryCode, categoryName, existing, onClo
       <DialogActions>
         <Button onClick={onClose} sx={{ textTransform: "none", color: "text.secondary" }}>Cancel</Button>
         <Button variant="contained" onClick={submit} disabled={saving || ready.length === 0}
-          sx={{ textTransform: "none", bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>
+          sx={{ textTransform: "none"}}>
           {saving ? "Adding…" : `Add ${ready.length} charge${ready.length === 1 ? "" : "s"}`}
         </Button>
       </DialogActions>
@@ -868,7 +868,7 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button color="inherit" onClick={onClose} disabled={saving}>Cancel</Button>
-        <Button variant="contained" onClick={save} disabled={saving} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Save</Button>
+        <Button variant="contained" onClick={save} disabled={saving}>Save</Button>
       </DialogActions>
     </Dialog>
   );
@@ -915,7 +915,7 @@ function RoomClassesDialog({ roomClasses, onClose, onChanged }: { roomClasses: R
         <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
           <TextField size="small" fullWidth placeholder="New room class name" value={newName}
             onChange={(e) => setNewName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") add(); }} />
-          <Button variant="contained" onClick={add} disabled={busy || !newName.trim()} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Add</Button>
+          <Button variant="contained" onClick={add} disabled={busy || !newName.trim()}>Add</Button>
         </Box>
         <Stack spacing={0.5}>
           {roomClasses.length === 0 && <Typography variant="body2" sx={{ color: "text.secondary", textAlign: "center", py: 2 }}>No room classes yet.</Typography>}
@@ -931,7 +931,7 @@ function RoomClassesDialog({ roomClasses, onClose, onChanged }: { roomClasses: R
         </Stack>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button variant="contained" onClick={onClose} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENT_DARK } }}>Done</Button>
+        <Button variant="contained" onClick={onClose}>Done</Button>
       </DialogActions>
     </Dialog>
   );

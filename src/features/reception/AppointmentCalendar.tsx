@@ -153,7 +153,7 @@ export default function AppointmentCalendar() {
 
         <ToggleButtonGroup size="small" exclusive value={view}
           onChange={(_, v) => v && setView(v)}
-          sx={{ "& .MuiToggleButton-root.Mui-selected": { bgcolor: ACCENT, color: "#fff", "&:hover": { bgcolor: ACCENTS.receptionDark } } }}>
+          sx={{ "& .MuiToggleButton-root.Mui-selected": { color: "#fff" } }}>
           <ToggleButton value="day" sx={{ textTransform: "none", px: 2 }}>Day</ToggleButton>
           <ToggleButton value="week" sx={{ textTransform: "none", px: 2 }}>Week</ToggleButton>
         </ToggleButtonGroup>

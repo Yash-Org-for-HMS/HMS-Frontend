@@ -109,7 +109,7 @@ export default function PatientDocumentsSection({ patientId, readOnly = false }:
             variant="contained"
             startIcon={<CloudUploadRounded />}
             onClick={() => setUploadOpen(true)}
-            sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: ACCENTS.reception }, textTransform: "none", fontWeight: 600 }}
+            sx={{ bgcolor: "#06b6d4", textTransform: "none", fontWeight: 600 }}
           >
             Upload Document
           </Button>
@@ -219,7 +219,7 @@ export default function PatientDocumentsSection({ patientId, readOnly = false }:
             onClick={handleUpload} 
             disabled={!file || !selectedType || uploading}
             startIcon={uploading ? <HeartbeatLoader size={22} /> : <CloudUploadRounded />}
-            sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: ACCENTS.reception }, fontWeight: 600 }}
+            sx={{ bgcolor: "#06b6d4", fontWeight: 600 }}
           >
             Upload
           </Button>

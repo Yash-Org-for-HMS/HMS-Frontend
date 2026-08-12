@@ -126,8 +126,6 @@ export default function Login() {
             fullWidth type="submit" disableElevation disabled={!canSubmit}
             sx={{
               py: 1.4, mt: 2.5, fontWeight: 700, fontSize: "0.98rem", textTransform: "none", borderRadius: 2.5, color: "#fff",
-              bgcolor: ACCENT,
-              "&:hover": { bgcolor: ACCENT_DARK },
               "&.Mui-disabled": { bgcolor: "rgba(15,23,42,0.10)", color: "rgba(15,23,42,0.4)" },
               transition: "background-color 0.2s ease",
             }}

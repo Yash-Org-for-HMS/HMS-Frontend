@@ -47,7 +47,7 @@ export default function ClaimsList() {
             <Button variant="outlined" startIcon={<AssessmentRounded />} onClick={() => navigate("/reception/claims/reports")} sx={{ borderColor: "divider", color: "text.primary" }}>
               Reports
             </Button>
-            <Button variant="contained" startIcon={<AddRounded />} onClick={() => navigate("/reception/claims/new")} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>
+            <Button variant="contained" startIcon={<AddRounded />} onClick={() => navigate("/reception/claims/new")}>
               New Claim
             </Button>
           </Box>

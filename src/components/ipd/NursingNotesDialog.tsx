@@ -81,7 +81,7 @@ export default function NursingNotesDialog({ open, onClose, admission }: Props) 
           <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
             <Button variant="contained" onClick={submit} disabled={saving || !text.trim()}
               startIcon={saving ? <HeartbeatLoader size={20} /> : <AddRounded />}
-              sx={{ bgcolor: ACCENTS.ipd, "&:hover": { bgcolor: ACCENTS.ipdDark } }}>Add note</Button>
+>Add note</Button>
           </Box>
         </Stack>
 

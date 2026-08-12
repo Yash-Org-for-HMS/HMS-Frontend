@@ -330,8 +330,6 @@ export default function DepartmentForm() {
                   disabled={loading}
                   startIcon={<SaveRounded />}
                   sx={{
-                    bgcolor: ACCENTS.hospital,
-                    "&:hover": { bgcolor: ACCENTS.hospitalDark },
                     py: 1.5,
                     px: 4,
                   }}

@@ -228,7 +228,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
         {tab === "order" && (
           <Button variant="contained" onClick={submit} disabled={saving || effectiveScans.length === 0}
             startIcon={saving ? <HeartbeatLoader size={22} /> : <AddRounded />}
-            sx={{ bgcolor: ACCENTS.ipd, "&:hover": { bgcolor: ACCENTS.ipdDark } }}>
+>
             Order {effectiveScans.length || ""} scan{effectiveScans.length === 1 ? "" : "s"}
           </Button>
         )}

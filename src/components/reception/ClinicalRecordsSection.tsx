@@ -128,7 +128,7 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
           )}
           <Box sx={{ flex: 1 }} />
           <Button onClick={() => setPreview(null)} color="inherit">Close</Button>
-          <Button variant="contained" startIcon={<PrintRounded />} onClick={handlePrint} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>
+          <Button variant="contained" startIcon={<PrintRounded />} onClick={handlePrint}>
             Print
           </Button>
         </DialogActions>

@@ -66,7 +66,7 @@ export default function TransferDialog({ open, onClose, onDone, admission }: Pro
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={submit} disabled={saving || !toBedId}
           startIcon={saving ? <HeartbeatLoader size={22} /> : <SwapHorizRounded />}
-          sx={{ bgcolor: ACCENTS.ipd, "&:hover": { bgcolor: ACCENTS.ipdDark } }}>Transfer</Button>
+>Transfer</Button>
       </DialogActions>
     </Dialog>
   );

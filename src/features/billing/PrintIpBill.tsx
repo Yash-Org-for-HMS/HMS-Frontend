@@ -124,7 +124,7 @@ export default function PrintIpBill() {
           <ToggleButton value="detailed" sx={{ textTransform: "none" }}>Detailed</ToggleButton>
           <ToggleButton value="summary" sx={{ textTransform: "none" }}>Summary</ToggleButton>
         </ToggleButtonGroup>
-        <Button variant="contained" startIcon={<PrintRounded />} onClick={() => window.print()} sx={{ bgcolor: ACCENT, textTransform: "none", "&:hover": { bgcolor: "#0c5f76" } }}>Print</Button>
+        <Button variant="contained" startIcon={<PrintRounded />} onClick={() => window.print()} sx={{ textTransform: "none", "&:hover": { bgcolor: "#0c5f76" } }}>Print</Button>
       </Box>
 
       <Box sx={{

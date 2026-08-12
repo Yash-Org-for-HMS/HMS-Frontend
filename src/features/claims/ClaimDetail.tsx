@@ -58,7 +58,7 @@ export default function ClaimDetail() {
           <Stack direction="row" spacing={1}>
             <Button variant="outlined" startIcon={<EditRounded />} onClick={() => navigate(`/reception/claims/${id}/edit`)} sx={{ borderColor: "divider", color: "text.primary" }}>Edit</Button>
             {(claim.allowedTransitions?.length > 0) && (
-              <Button variant="contained" startIcon={<ArrowForwardRounded />} onClick={() => setAdvOpen(true)} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>Advance status</Button>
+              <Button variant="contained" startIcon={<ArrowForwardRounded />} onClick={() => setAdvOpen(true)}>Advance status</Button>
             )}
           </Stack>
         }

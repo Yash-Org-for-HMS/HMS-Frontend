@@ -182,7 +182,7 @@ export default function ClaimForm() {
 
         <Stack direction="row" spacing={1.5} justifyContent="flex-end" sx={{ mt: 3 }}>
           <Button color="inherit" onClick={() => navigate(-1)} disabled={saving}>Cancel</Button>
-          <Button variant="contained" onClick={submit} disabled={saving} startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: ACCENTS.receptionDark } }}>
+          <Button variant="contained" onClick={submit} disabled={saving} startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}>
             {isEdit ? "Save changes" : "Register claim"}
           </Button>
         </Stack>

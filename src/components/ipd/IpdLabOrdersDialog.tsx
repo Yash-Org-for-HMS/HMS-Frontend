@@ -213,7 +213,7 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
         {tab === "order" && (
           <Button variant="contained" onClick={submit} disabled={saving || basket.length === 0}
             startIcon={saving ? <HeartbeatLoader size={22} /> : <AddRounded />}
-            sx={{ bgcolor: ACCENTS.ipd, "&:hover": { bgcolor: ACCENTS.ipdDark } }}>
+>
             Order {basket.length || ""} test{basket.length === 1 ? "" : "s"}
           </Button>
         )}

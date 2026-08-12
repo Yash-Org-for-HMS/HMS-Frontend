@@ -193,7 +193,7 @@ export default function LookupManager() {
               variant="contained"
               startIcon={<AddRounded />}
               onClick={handleOpenAdd}
-              sx={{ bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark }, py: 1.5, px: 3, fontWeight: 600 }}
+              sx={{ py: 1.5, px: 3, fontWeight: 600 }}
             >
               Add New Record
             </Button>
@@ -323,7 +323,7 @@ export default function LookupManager() {
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 0 }}>
           <Button onClick={handleClose} sx={{ color: "text.secondary" }}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" sx={{ bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark } }}>
+          <Button onClick={handleSubmit} variant="contained">
             Save
           </Button>
         </DialogActions>

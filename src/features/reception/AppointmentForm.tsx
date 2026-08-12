@@ -487,7 +487,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
               <Button variant="outlined" onClick={() => { if (isEmbedded && onCancel) onCancel(); else navigate(-1); }} sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none" }}>
                 Cancel
               </Button>
-              <Button type="submit" variant="contained" disabled={saving || !formData.patientId} startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />} sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: ACCENTS.reception }, textTransform: "none", fontWeight: 600 }}>
+              <Button type="submit" variant="contained" disabled={saving || !formData.patientId} startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />} sx={{ bgcolor: "#06b6d4", textTransform: "none", fontWeight: 600 }}>
                 {id ? "Update Appointment" : "Confirm Booking"}
               </Button>
             </Box>

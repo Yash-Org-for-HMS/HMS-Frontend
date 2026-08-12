@@ -146,7 +146,7 @@ export default function DoctorSchedule() {
               {SLOT_OPTIONS.map((m) => <MenuItem key={m} value={m}>{m} min</MenuItem>)}
             </TextField>
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              <Button size="small" variant="contained" onClick={() => applyToDays([0, 1, 2, 3, 4, 5, 6], true)} sx={{ bgcolor: HOSP, "&:hover": { bgcolor: ACCENTS.hospitalDark }, textTransform: "none" }}>All days</Button>
+              <Button size="small" variant="contained" onClick={() => applyToDays([0, 1, 2, 3, 4, 5, 6], true)} sx={{ bgcolor: HOSP, textTransform: "none" }}>All days</Button>
               <Button size="small" variant="outlined" onClick={() => applyToDays(WEEKDAYS, true)} sx={{ textTransform: "none", borderColor: HOSP, color: HOSP }}>Mon–Fri</Button>
               <Button size="small" variant="outlined" onClick={() => applyToDays(WEEKEND, true)} sx={{ textTransform: "none", borderColor: HOSP, color: HOSP }}>Weekends</Button>
               <Tooltip title="Set these hours on the days already switched on">
@@ -215,7 +215,7 @@ export default function DoctorSchedule() {
 
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
           <Button type="submit" variant="contained" disabled={loading} startIcon={<SaveRounded />}
-            sx={{ bgcolor: HOSP, "&:hover": { bgcolor: ACCENTS.hospitalDark }, py: 1.25, px: 4 }}>
+            sx={{ bgcolor: HOSP, py: 1.25, px: 4 }}>
             {loading ? "Saving…" : "Save Schedule"}
           </Button>
         </Box>

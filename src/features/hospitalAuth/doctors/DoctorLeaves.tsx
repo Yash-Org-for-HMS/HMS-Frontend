@@ -120,7 +120,7 @@ export default function DoctorLeaves() {
             startIcon={addLeave.isPending ? <HeartbeatLoader size={22} /> : <AddRounded />}
             onClick={() => addLeave.mutate()}
             disabled={addLeave.isPending || !fromDate}
-            sx={{ bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark }, textTransform: "none", fontWeight: 600 }}
+            sx={{ textTransform: "none", fontWeight: 600 }}
           >
             Add Leave
           </Button>

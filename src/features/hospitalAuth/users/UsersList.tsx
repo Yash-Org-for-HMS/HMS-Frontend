@@ -458,8 +458,6 @@ export default function UsersList() {
               startIcon={<AddRounded />}
               onClick={() => navigate("/hospital/users/new")}
               sx={{
-                bgcolor: ACCENTS.hospital,
-                "&:hover": { bgcolor: ACCENTS.hospitalDark },
                 textTransform: "none",
                 fontWeight: 600,
                 px: 3,
@@ -509,7 +507,6 @@ export default function UsersList() {
                           sx={{
                             width: 34,
                             height: 34,
-                            bgcolor: ACCENTS.hospital,
                             fontSize: "0.875rem",
                             fontWeight: 700,
                           }}

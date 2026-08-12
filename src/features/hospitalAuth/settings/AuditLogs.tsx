@@ -178,7 +178,7 @@ export default function AuditLogs() {
               variant="contained"
               fullWidth
               startIcon={<SearchRounded />}
-              sx={{ bgcolor: ACCENTS.hospital, "&:hover": { bgcolor: ACCENTS.hospitalDark }, py: 1 }}
+              sx={{ py: 1 }}
             >
               Search
             </Button>
