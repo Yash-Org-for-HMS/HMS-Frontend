@@ -212,7 +212,7 @@ export default function HospitalLayout() {
                 <ListItemIcon
                   sx={{
                     minWidth: 40,
-                    color: isActive ? SEMANTIC.success : NEUTRAL.muted,
+                    color: isActive ? BRAND.action : NEUTRAL.muted,
                     opacity: locked ? 0.55 : 1,
                   }}
                 >
@@ -223,7 +223,7 @@ export default function HospitalLayout() {
                   primaryTypographyProps={{
                     fontSize: "0.875rem",
                     fontWeight: isActive ? 600 : 500,
-                    color: isActive ? SEMANTIC.success : NEUTRAL.muted,
+                    color: isActive ? BRAND.action : NEUTRAL.muted,
                     sx: { opacity: locked ? 0.6 : 1 },
                   }}
                 />
