@@ -1,7 +1,7 @@
-import { ACCENTS, SEMANTIC, alpha } from "@/styles/accents";
+import { SEMANTIC, alpha, BRAND } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
-const nurseTheme = createPanelTheme(ACCENTS.nurse, ACCENTS.nurseDark);
+const nurseTheme = createPanelTheme(BRAND.action, BRAND.actionDark);
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -29,7 +29,7 @@ import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
 
 const drawerWidth = 260;
-const NURSE_PURPLE = ACCENTS.nurse;
+const NURSE_PURPLE = BRAND.action;
 
 export default function NurseLayout() {
   useEffect(() => {
@@ -93,8 +93,8 @@ export default function NurseLayout() {
                 }}
                 sx={{
                   borderRadius: 2,
-                  bgcolor: isActive ? alpha(ACCENTS.nurse, 0.12) : "transparent",
-                  "&:hover": { bgcolor: alpha(ACCENTS.nurse, 0.08) },
+                  bgcolor: isActive ? alpha(BRAND.action, 0.12) : "transparent",
+                  "&:hover": { bgcolor: alpha(BRAND.action, 0.08) },
                   transition: "all 0.15s ease",
                 }}
               >
@@ -125,7 +125,7 @@ export default function NurseLayout() {
         })}
       </List>
 
-      <Divider sx={{ borderColor: alpha(ACCENTS.nurse, 0.1) }} />
+      <Divider sx={{ borderColor: alpha(BRAND.action, 0.1) }} />
 
       {/* Branch switcher (only shown to multi-branch users) */}
       <Box sx={{ px: 2, pt: 2 }}>
@@ -154,7 +154,7 @@ export default function NurseLayout() {
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
           bgcolor: "background.paper",
-          borderBottom: `1px solid ${alpha(ACCENTS.nurse, 0.12)}`,
+          borderBottom: `1px solid ${alpha(BRAND.action, 0.12)}`,
         }}
       >
         <Toolbar sx={{ justifyContent: "space-between", minHeight: "70px !important" }}>

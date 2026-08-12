@@ -13,7 +13,7 @@ import HeartbeatLoader from "../HeartbeatLoader";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
 import { useToast } from "@/providers/ToastContext";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 
 
 interface Props {
@@ -224,7 +224,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
         {invoice?.admissionId && (
           <Button variant="outlined" startIcon={<PrintRounded />} disabled={!invoice}
             onClick={() => window.open(`/reception/billing/invoices/${invoiceId}/ip-bill/print`, "_blank")}
-            sx={{ borderColor: ACCENTS.reception, color: ACCENTS.receptionDark }}>Print IP Bill</Button>
+            sx={{ borderColor: BRAND.action, color: BRAND.actionDark }}>Print IP Bill</Button>
         )}
         <Button variant="contained" startIcon={<PrintRounded />} disabled={!invoice} onClick={print}>{invoice?.admissionId ? "Receipt" : "Print"}</Button>
       </DialogActions>

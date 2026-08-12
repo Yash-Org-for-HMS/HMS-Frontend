@@ -24,8 +24,20 @@
  */
 
 // ── Layer 1: per-panel accents ────────────────────────────────────────────
-// NOTE: the first seven values (doctor…admin) are unchanged from the original
-// module and must keep their exact values — existing imports depend on them.
+// SUPERSEDED for theming. Every panel now themes from BRAND below, so buttons,
+// sidebars and chrome are identical app-wide; a panel is identified by its
+// title and logo ("Pharmacy Portal"), not by colour.
+//
+// Why: maintaining seven accents across ~700 colour literals drifted badly in
+// practice — Hospital Admin shipped an EMERALD sidebar beside an indigo button,
+// Lab was emerald too, Pharmacy's sidebar was indigo, and three panels painted
+// buttons in another panel's colour entirely. One accent removes that whole
+// class of bug.
+//
+// Kept because non-layout code still imports these, and because restoring
+// per-panel branding only means passing them back to createPanelTheme.
+// NOTE: the first seven values (doctor…admin) must keep their exact values —
+// existing imports depend on them.
 export const ACCENTS = {
   doctor: "#3b82f6",
   doctorDark: "#2563eb",

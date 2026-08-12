@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useLocation } from "react-router-dom";
 import { 
@@ -340,7 +340,7 @@ export default function DispensaryPOS() {
     <PharmacyPage
       title="Dispensary & POS"
       subtitle="Process sales, auto-load prescriptions, and auto-deduct inventory."
-      icon={<PointOfSaleRounded fontSize="large" sx={{ color: ACCENTS.pharmacy }} />}
+      icon={<PointOfSaleRounded fontSize="large" sx={{ color: BRAND.action }} />}
       action={
         <Button variant="outlined" onClick={() => { setCart([]); setSelectedPrescriptionId(null); setPatientId(""); }}>
           Clear Cart

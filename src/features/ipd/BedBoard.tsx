@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -65,7 +65,7 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
 
       {summary && (
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Total beds" value={summary.totalBeds} color={ACCENTS.ipd} /></Grid>
+          <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Total beds" value={summary.totalBeds} color={BRAND.action} /></Grid>
           <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Available" value={summary.available} color={STATUS_COLOR.AVAILABLE} /></Grid>
           <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Occupied" value={summary.occupied} color={STATUS_COLOR.OCCUPIED} /></Grid>
           <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Reserved" value={summary.reserved} color={STATUS_COLOR.RESERVED} /></Grid>
@@ -81,7 +81,7 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
             {wards.map((w) => (
               <Paper key={w.wardId} elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-                  <ApartmentRounded sx={{ color: ACCENTS.ipd }} fontSize="small" />
+                  <ApartmentRounded sx={{ color: BRAND.action }} fontSize="small" />
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{w.wardName}</Typography>
                   <Chip label={w.wardType} size="small" sx={{ bgcolor: "action.hover", fontWeight: 600 }} />
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>Floor {w.floorNumber}</Typography>

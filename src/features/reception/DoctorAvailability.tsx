@@ -18,7 +18,7 @@ import BillingModal from "./BillingModal";
 import { useToast } from "@/providers/ToastContext";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 
 const STATUS = {
   AVAILABLE: { label: "Available", color: SEMANTIC.success, icon: <EventAvailableRounded fontSize="small" /> },
@@ -138,7 +138,7 @@ export default function DoctorAvailability() {
                       <Button
                         size="small" startIcon={<AddRounded />}
                         onClick={() => setBookingDoctorId(doc.doctorId)}
-                        sx={{ textTransform: "none", color: ACCENTS.reception, fontWeight: 600 }}
+                        sx={{ textTransform: "none", color: BRAND.action, fontWeight: 600 }}
                       >
                         Book
                       </Button>

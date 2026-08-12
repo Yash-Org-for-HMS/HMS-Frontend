@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 import { Box, Paper, Typography, Skeleton } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import type { ReactNode } from "react";
@@ -19,7 +19,7 @@ export interface StatCardProps {
   layout?: "vertical" | "horizontal";
 }
 
-const DEFAULT_ACCENT = ACCENTS.doctor;
+const DEFAULT_ACCENT = BRAND.action;
 
 /**
  * The single stat/KPI card used across every dashboard. Replaces the ~8

@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +18,7 @@ import { assetUrl } from "@/utils/assetUrl";
 import DoseCalculator from "@/components/doctor/DoseCalculator";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 
-const DOCTOR_BLUE = ACCENTS.doctor;
+const DOCTOR_BLUE = BRAND.action;
 
 interface PatientPrintInfo {
   name?: string;

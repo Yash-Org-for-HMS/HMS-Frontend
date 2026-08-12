@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC, NEUTRAL, alpha } from "@/styles/accents";
+import { SEMANTIC, NEUTRAL, alpha, BRAND } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
-const pharmacyTheme = createPanelTheme(ACCENTS.pharmacy, ACCENTS.pharmacyDark);
+const pharmacyTheme = createPanelTheme(BRAND.action, BRAND.actionDark);
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import ModuleGate from "@/components/ModuleGate";
 import {
@@ -103,12 +103,12 @@ export default function PharmacyLayout() {
               <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => { navigate(item.path); if (isMobile) setMobileOpen(false); }}
-                sx={{ borderRadius: 2, bgcolor: isActive ? alpha(ACCENTS.pharmacy, 0.08) : "transparent", "&:hover": { bgcolor: "action.hover" } }}
+                sx={{ borderRadius: 2, bgcolor: isActive ? alpha(BRAND.action, 0.08) : "transparent", "&:hover": { bgcolor: "action.hover" } }}
               >
-                <ListItemIcon sx={{ minWidth: 40, color: isActive ? ACCENTS.pharmacy : NEUTRAL.muted, opacity: locked ? 0.55 : 1 }}>
+                <ListItemIcon sx={{ minWidth: 40, color: isActive ? BRAND.action : NEUTRAL.muted, opacity: locked ? 0.55 : 1 }}>
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: isActive ? 600 : 500, color: isActive ? ACCENTS.pharmacy : NEUTRAL.muted, sx: { opacity: locked ? 0.6 : 1 } }} />
+                <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: isActive ? 600 : 500, color: isActive ? BRAND.action : NEUTRAL.muted, sx: { opacity: locked ? 0.6 : 1 } }} />
                 {locked && <LockRounded sx={{ fontSize: 15, color: SEMANTIC.warning, ml: 1, flexShrink: 0 }} />}
               </ListItemButton>
             </ListItem>

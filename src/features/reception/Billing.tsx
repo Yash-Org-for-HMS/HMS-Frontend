@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { formatINR, formatDate } from "@/utils/format";
 import { useEffect, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
@@ -21,7 +21,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { useSearchParams } from "react-router-dom";
 import { apiErrorText } from "@/utils/apiError";
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 const STATUSES = [
   { code: "", label: "All statuses" },
   { code: "PENDING", label: "Pending" },

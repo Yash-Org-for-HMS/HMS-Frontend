@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -21,7 +21,7 @@ import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 import { KpiCard, ReportFilters, ReportTable, ReportTruncationNote, type DateRange } from "@/features/reports/kit";
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 const inr = formatINRAuto;
 
 function KpiTile({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
@@ -532,7 +532,7 @@ function SimpleTable({ title, head, rows, note }: { title: string; head: string[
         <Box sx={{ flex: 1 }} />
         {rows.length > 0 && (
           <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />} onClick={() => exportTableToExcel(title, head, rows)}
-            sx={{ textTransform: "none", color: ACCENTS.reception }}>Excel</Button>
+            sx={{ textTransform: "none", color: BRAND.action }}>Excel</Button>
         )}
       </Box>
       {note && <Box sx={{ mb: 1.5 }}>{note}</Box>}

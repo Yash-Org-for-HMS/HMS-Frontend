@@ -10,14 +10,14 @@ import {
   CloudUploadRounded, DeleteOutlineRounded, VisibilityRounded, CheckCircleRounded,
   RadioButtonUncheckedRounded, DescriptionRounded,
 } from "@mui/icons-material";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { CLAIM_DOC_CATALOG, DOC_STAGE_LABEL, docTypeLabel, type DocStage } from "./claimMeta";
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 const STAGES: DocStage[] = ["PREAUTH", "FINAL"];
 
 export default function ClaimDocumentsSection({ claimId }: { claimId: string }) {

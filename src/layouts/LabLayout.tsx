@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC, NEUTRAL, alpha } from "@/styles/accents";
+import { SEMANTIC, NEUTRAL, alpha, BRAND } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
-const labTheme = createPanelTheme(ACCENTS.lab, ACCENTS.labDark);
+const labTheme = createPanelTheme(BRAND.action, BRAND.actionDark);
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import ModuleGate from "@/components/ModuleGate";
 import {
@@ -103,7 +103,7 @@ export default function LabLayout() {
               <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => { navigate(item.path); if (isMobile) setMobileOpen(false); }}
-                sx={{ borderRadius: 2, bgcolor: isActive ? alpha(ACCENTS.lab, 0.08) : "transparent", "&:hover": { bgcolor: "action.hover" } }}
+                sx={{ borderRadius: 2, bgcolor: isActive ? alpha(BRAND.action, 0.08) : "transparent", "&:hover": { bgcolor: "action.hover" } }}
               >
                 <ListItemIcon sx={{ minWidth: 40, color: isActive ? SEMANTIC.success : NEUTRAL.muted, opacity: locked ? 0.55 : 1 }}>
                   {item.icon}

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -20,8 +20,8 @@ import { useConfirm } from "@/providers/ConfirmContext";
 import PageHeader from "@/components/layout/PageHeader";
 import { formatINRAuto } from "@/utils/format";
 
-const ACCENT = ACCENTS.hospital;
-const ACCENT_DARK = ACCENTS.hospitalDark;
+const ACCENT = BRAND.action;
+const ACCENT_DARK = BRAND.actionDark;
 
 type ScheduleItem = { scheduleItemId: string; doseLabel: string; ageLabel: string; recommendedAgeDays: number; sortOrder: number };
 type Vaccine = { vaccineId: string; vaccineCode: string; vaccineName: string; description: string | null; price: number | string | null; isActive: boolean; isGlobal: boolean; scheduleItems: ScheduleItem[] };

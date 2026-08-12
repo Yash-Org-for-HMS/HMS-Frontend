@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -99,8 +99,8 @@ export default function SuperAdminsList() {
         subtitle={t("superAdmins.subtitle", "Manage global system administrators")}
         actions={
           <ActionButton
-            accentFrom={ACCENTS.admin}
-            accentTo={ACCENTS.adminDark}
+            accentFrom={BRAND.action}
+            accentTo={BRAND.actionDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/super-admins/new")}
           >
@@ -251,7 +251,7 @@ const textFieldSx = {
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider" },
     "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: ACCENTS.admin },
+    "&.Mui-focused fieldset": { borderColor: BRAND.action },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
 };

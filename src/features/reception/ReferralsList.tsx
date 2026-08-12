@@ -15,7 +15,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import dayjs from "dayjs";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 
 // `basePath` keeps a row-click inside whatever shell renders the page (reception
 // by default; the admin oversight route can pass "/hospital").
@@ -98,7 +98,7 @@ export default function ReferralsList({ basePath = "/reception" }: { basePath?: 
                       </TableCell>
                       <TableCell>
                         <Chip label={isExternal ? "External" : "Internal"} size="small"
-                          sx={{ bgcolor: isExternal ? "rgba(139,92,246,0.12)" : "rgba(8,145,178,0.12)", color: isExternal ? "#8b5cf6" : ACCENTS.reception, fontWeight: 700 }} />
+                          sx={{ bgcolor: isExternal ? "rgba(139,92,246,0.12)" : "rgba(8,145,178,0.12)", color: isExternal ? "#8b5cf6" : BRAND.action, fontWeight: 700 }} />
                       </TableCell>
                       <TableCell sx={{ maxWidth: 320 }}>
                         <Typography variant="body2" sx={{ color: "text.primary" }}>{r.source}</Typography>

@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +19,7 @@ import ErrorState from "@/components/ErrorState";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 
-const ACCENT = ACCENTS.admin; // indigo #6366f1
+const ACCENT = BRAND.action; // indigo #6366f1
 
 const inr = formatINRAuto;
 const fmtDate = (d: unknown) =>
@@ -129,7 +129,7 @@ function OverviewReport() {
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(data.totalRevenue)} sub="monthly recurring" color={SEMANTIC.success} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CardMembershipRounded />} label="Plans" value={data.activePlans ?? 0} color="#0891b2" /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Patients" value={data.totalPatients ?? 0} color="#ec4899" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Doctors" value={data.totalDoctors ?? 0} color={ACCENTS.admin} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Doctors" value={data.totalDoctors ?? 0} color={BRAND.action} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Branches" value={data.totalBranches ?? 0} color={NEUTRAL.muted} /></Grid>
       </Grid>
 
@@ -250,7 +250,7 @@ function TrialsReport() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<TimerRounded />} label="Total trials" value={data.length} color={SEMANTIC.warning} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<RocketLaunchRounded />} label="Active" value={byState("active")} color={ACCENTS.admin} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<RocketLaunchRounded />} label="Active" value={byState("active")} color={BRAND.action} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Converted" value={byState("converted")} color={SEMANTIC.success} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Expired" value={byState("expired")} color={SEMANTIC.danger} /></Grid>
       </Grid>

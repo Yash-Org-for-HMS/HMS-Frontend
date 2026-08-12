@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -93,7 +93,7 @@ export default function IpdDoctorVisitsDialog({ open, onClose, admission }: Prop
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <MedicalServicesRounded sx={{ color: ACCENTS.ipd }} /> Doctor Visits
+        <MedicalServicesRounded sx={{ color: BRAND.action }} /> Doctor Visits
         {isFetching && <HeartbeatLoader size={18} />}
       </DialogTitle>
       <DialogContent dividers>
@@ -106,7 +106,7 @@ export default function IpdDoctorVisitsDialog({ open, onClose, admission }: Prop
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
             {byDoctor.map((d) => (
               <Chip key={d.doctorId} label={`Dr. ${d.doctorName || "Doctor"} · ${d.count} visit${d.count === 1 ? "" : "s"} · ${formatINR(d.total)}`}
-                sx={{ bgcolor: "rgba(8,145,178,0.1)", color: ACCENTS.ipd, fontWeight: 600 }} />
+                sx={{ bgcolor: "rgba(8,145,178,0.1)", color: BRAND.action, fontWeight: 600 }} />
             ))}
           </Box>
         )}
@@ -133,7 +133,7 @@ export default function IpdDoctorVisitsDialog({ open, onClose, admission }: Prop
                     <TableCell align="right">{formatINR(v.charge)}</TableCell>
                     <TableCell>
                       {v.status === "BILLED"
-                        ? <SoftChip icon={<ReceiptLongRounded sx={{ fontSize: 14 }} />} label="Billed" bg="rgba(8,145,178,0.12)" color={ACCENTS.ipd} />
+                        ? <SoftChip icon={<ReceiptLongRounded sx={{ fontSize: 14 }} />} label="Billed" bg="rgba(8,145,178,0.12)" color={BRAND.action} />
                         : <SoftChip label="Pending" bg="rgba(245,158,11,0.12)" color="#b45309" />}
                     </TableCell>
                     <TableCell align="right">

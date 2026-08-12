@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
@@ -35,7 +35,7 @@ import SortableHeadCell from "@/components/table/SortableHeadCell";
 const inr = (n: any) => formatINR(n, 0);
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
-  ADMITTED: { label: "Admitted", color: ACCENTS.ipd },
+  ADMITTED: { label: "Admitted", color: BRAND.action },
   DISCHARGED: { label: "Discharged", color: SEMANTIC.success },
   CANCELLED: { label: "Cancelled", color: NEUTRAL.muted },
 };
@@ -117,7 +117,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
       />
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2, mb: 2 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ "& .MuiTab-root": { textTransform: "none", fontWeight: 600 }, "& .Mui-selected": { color: "#7c3aed !important" }, "& .MuiTabs-indicator": { bgcolor: ACCENTS.ipd } }}>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ "& .MuiTab-root": { textTransform: "none", fontWeight: 600 }, "& .Mui-selected": { color: "#7c3aed !important" }, "& .MuiTabs-indicator": { bgcolor: BRAND.action } }}>
           <Tab label="Current" /><Tab label="Discharged" /><Tab label="All" />
         </Tabs>
         <TextField placeholder="Search patient, IPD#, diagnosis…" value={search} onChange={(e) => setSearch(e.target.value)} size="small"
@@ -166,19 +166,19 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                     <TableCell sx={{ color: "text.secondary" }}>{a.days ?? "—"}</TableCell>
                     <TableCell align="right">
                       {Number(a.depositBalance) > 0
-                        ? <Chip label={inr(a.depositBalance)} size="small" sx={{ bgcolor: "rgba(8,145,178,0.12)", color: ACCENTS.ipd, fontWeight: 700 }} />
+                        ? <Chip label={inr(a.depositBalance)} size="small" sx={{ bgcolor: "rgba(8,145,178,0.12)", color: BRAND.action, fontWeight: 700 }} />
                         : <Typography variant="caption" sx={{ color: "text.disabled" }}>—</Typography>}
                     </TableCell>
                     <TableCell><Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700 }} /></TableCell>
                     <TableCell align="right">
                       {!readOnly && a.status === "ADMITTED" && (
                         <>
-                          <Tooltip title="Medicines"><IconButton size="small" onClick={() => setMedsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MedicationRounded fontSize="small" /></IconButton></Tooltip>
-                          <Tooltip title="Lab tests"><IconButton size="small" onClick={() => setLabsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><ScienceRounded fontSize="small" /></IconButton></Tooltip>
-                          <Tooltip title="Radiology / imaging"><IconButton size="small" onClick={() => setRadiologyFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MonitorHeartRounded fontSize="small" /></IconButton></Tooltip>
-                          <Tooltip title="Doctor visits"><IconButton size="small" onClick={() => setVisitsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MedicalServicesRounded fontSize="small" /></IconButton></Tooltip>
-                          <Tooltip title="Surgery details"><IconButton size="small" onClick={() => setSurgeryFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><MedicalServicesRounded fontSize="small" /></IconButton></Tooltip>
-                          <Tooltip title="Transfer bed"><IconButton size="small" onClick={() => setTransferFor(a)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.ipd } }}><SwapHorizRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Medicines"><IconButton size="small" onClick={() => setMedsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: BRAND.action } }}><MedicationRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Lab tests"><IconButton size="small" onClick={() => setLabsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: BRAND.action } }}><ScienceRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Radiology / imaging"><IconButton size="small" onClick={() => setRadiologyFor(a)} sx={{ color: "text.secondary", "&:hover": { color: BRAND.action } }}><MonitorHeartRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Doctor visits"><IconButton size="small" onClick={() => setVisitsFor(a)} sx={{ color: "text.secondary", "&:hover": { color: BRAND.action } }}><MedicalServicesRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Surgery details"><IconButton size="small" onClick={() => setSurgeryFor(a)} sx={{ color: "text.secondary", "&:hover": { color: BRAND.action } }}><MedicalServicesRounded fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Transfer bed"><IconButton size="small" onClick={() => setTransferFor(a)} sx={{ color: "text.secondary", "&:hover": { color: BRAND.action } }}><SwapHorizRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Discharge"><IconButton size="small" onClick={() => setDischargeFor(a)} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}><LogoutRounded fontSize="small" /></IconButton></Tooltip>
                         </>
                       )}
@@ -208,7 +208,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
       <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={() => setMenu({ anchor: null, row: null })}>
         {menu.row?.status === "ADMITTED" && (
           <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setDepositFor({ row: r, mode: "collect" }); }}>
-            <SavingsRounded fontSize="small" sx={{ mr: 1, color: ACCENTS.ipd }} /> Collect deposit
+            <SavingsRounded fontSize="small" sx={{ mr: 1, color: BRAND.action }} /> Collect deposit
           </MenuItem>
         )}
         {menu.row?.status === "ADMITTED" && (

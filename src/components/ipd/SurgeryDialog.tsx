@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -121,7 +121,7 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <MedicalServicesRounded sx={{ color: ACCENTS.ipd }} /> Surgery Details
+        <MedicalServicesRounded sx={{ color: BRAND.action }} /> Surgery Details
         {isFetching && <HeartbeatLoader size={18} />}
       </DialogTitle>
       <DialogContent dividers>
@@ -163,7 +163,7 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
                         <Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700, mb: s.invoiceNumber ? 0.5 : 0 }} />
                         {s.invoiceNumber && (
                           <Chip icon={<ReceiptLongRounded sx={{ fontSize: 14 }} />} label={`Billed: ${s.invoiceNumber}`} size="small"
-                            sx={{ display: "block", mt: 0.5, bgcolor: "rgba(8,145,178,0.12)", color: ACCENTS.ipd, fontWeight: 700 }} />
+                            sx={{ display: "block", mt: 0.5, bgcolor: "rgba(8,145,178,0.12)", color: BRAND.action, fontWeight: 700 }} />
                         )}
                       </TableCell>
                       <TableCell align="right">

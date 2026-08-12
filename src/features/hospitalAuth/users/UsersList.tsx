@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -565,7 +565,7 @@ export default function UsersList() {
                         <IconButton
                           size="small"
                           onClick={() => navigate(`/hospital/users/${user.userId}/edit`)}
-                          sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.hospital, bgcolor: "rgba(99,102,241,0.1)" } }}
+                          sx={{ color: "text.secondary", "&:hover": { color: BRAND.action, bgcolor: "rgba(99,102,241,0.1)" } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>

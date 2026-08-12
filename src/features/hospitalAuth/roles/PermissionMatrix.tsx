@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box,
@@ -280,8 +280,8 @@ export default function PermissionMatrix() {
                               height: 22,
                               fontSize: "0.75rem",
                               fontWeight: 700,
-                              bgcolor: isAllActive ? alpha(SEMANTIC.success, 0.1) : alpha(ACCENTS.hospital, 0.1),
-                              color: isAllActive ? SEMANTIC.success : ACCENTS.hospital,
+                              bgcolor: isAllActive ? alpha(SEMANTIC.success, 0.1) : alpha(BRAND.action, 0.1),
+                              color: isAllActive ? SEMANTIC.success : BRAND.action,
                             }}
                           />
                         </Tooltip>
@@ -301,7 +301,7 @@ export default function PermissionMatrix() {
                   <TableRow
                     hover
                     onClick={() => toggleModule(moduleName)}
-                    sx={{ cursor: "pointer", "& > *": { borderBottom: "unset" }, bgcolor: isExpanded ? alpha(ACCENTS.hospital, 0.02) : "transparent" }}
+                    sx={{ cursor: "pointer", "& > *": { borderBottom: "unset" }, bgcolor: isExpanded ? alpha(BRAND.action, 0.02) : "transparent" }}
                   >
                     <TableCell
                       colSpan={roles.length + 1}

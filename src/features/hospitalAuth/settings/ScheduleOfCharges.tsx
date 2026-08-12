@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, memo, useCallback } from "react";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -36,8 +36,8 @@ import PageHeader from "@/components/layout/PageHeader";
 import { formatINRAuto } from "@/utils/format";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
-const ACCENT = ACCENTS.hospital;
-const ACCENT_DARK = ACCENTS.hospitalDark;
+const ACCENT = BRAND.action;
+const ACCENT_DARK = BRAND.actionDark;
 const inr = formatINRAuto;
 
 type Category = { chargeCategoryId: string; categoryName: string; categoryCode: string; parentId: string | null; description: string | null; iconName: string | null; sortOrder: number; isActive: boolean; _count?: { items: number } };

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
 import { useQuery } from "@tanstack/react-query";
@@ -183,8 +183,8 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1, gap: 1, flexWrap: "wrap" }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Additional charges</Typography>
               <Box sx={{ display: "flex", gap: 0.5 }}>
-                <Button size="small" onClick={() => setSocPickerOpen(true)} sx={{ textTransform: "none", color: ACCENTS.ipd }}>Pick from Schedule of Charges</Button>
-                <Button size="small" startIcon={<AddRounded />} onClick={() => setExtras((x) => [...x, { description: "", amount: "" }])} sx={{ textTransform: "none", color: ACCENTS.ipd }}>Custom</Button>
+                <Button size="small" onClick={() => setSocPickerOpen(true)} sx={{ textTransform: "none", color: BRAND.action }}>Pick from Schedule of Charges</Button>
+                <Button size="small" startIcon={<AddRounded />} onClick={() => setExtras((x) => [...x, { description: "", amount: "" }])} sx={{ textTransform: "none", color: BRAND.action }}>Custom</Button>
               </Box>
             </Box>
             {roomClassOptions.length > 0 && (
@@ -253,7 +253,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
             <>
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>Deposit held</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: ACCENTS.ipd }}>{formatINR(deposit)}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: BRAND.action }}>{formatINR(deposit)}</Typography>
               </Box>
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>Deposit applied</Typography>
@@ -290,7 +290,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
       open={socPickerOpen}
       onClose={() => setSocPickerOpen(false)}
       onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), chargeItemId: c.chargeItemId, basePrice: c.basePrice, roomPrices: c.roomPrices, taxPercent: c.taxPercent }])}
-      accent={ACCENTS.ipd}
+      accent={BRAND.action}
       roomClassId={billRoomClassId || undefined}
       roomClassName={billRoomClassName || undefined}
     />

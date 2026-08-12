@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -179,7 +179,7 @@ export default function LookupManager() {
                   color: "text.primary",
                   "& fieldset": { borderColor: "divider" },
                   "&:hover fieldset": { borderColor: "divider" },
-                  "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital }
+                  "&.Mui-focused fieldset": { borderColor: BRAND.action }
                 },
               }}
             >
@@ -313,7 +313,7 @@ export default function LookupManager() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+                    "&.Mui-focused fieldset": { borderColor: BRAND.action },
                   },
                   "& .MuiInputLabel-root": { color: "text.secondary" }
                 }}

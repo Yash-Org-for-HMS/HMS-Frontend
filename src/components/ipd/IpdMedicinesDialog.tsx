@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -141,10 +141,10 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <MedicationRounded sx={{ color: ACCENTS.ipd }} /> Medicines
+        <MedicationRounded sx={{ color: BRAND.action }} /> Medicines
         {isFetching && <HeartbeatLoader size={18} />}
       </DialogTitle>
-      <Tabs value={view} onChange={(_, v) => setView(v)} sx={{ px: 2, borderBottom: "1px solid", borderColor: "divider", "& .Mui-selected": { color: "#7c3aed !important" }, "& .MuiTabs-indicator": { bgcolor: ACCENTS.ipd } }}>
+      <Tabs value={view} onChange={(_, v) => setView(v)} sx={{ px: 2, borderBottom: "1px solid", borderColor: "divider", "& .Mui-selected": { color: "#7c3aed !important" }, "& .MuiTabs-indicator": { bgcolor: BRAND.action } }}>
         <Tab value="assign" label="Assign & Bill" sx={{ textTransform: "none", fontWeight: 600 }} />
         <Tab value="chart" label="Medication Chart" sx={{ textTransform: "none", fontWeight: 600 }} />
       </Tabs>
@@ -193,7 +193,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
                         <SoftChip icon={<CheckCircleRounded sx={{ fontSize: 14 }} />} label="Dispensed" bg="rgba(16,185,129,0.12)" color={SEMANTIC.successDark} />
                       )}
                       {m.status === "BILLED" && (
-                        <SoftChip icon={<ReceiptLongRounded sx={{ fontSize: 14 }} />} label="Billed" bg="rgba(8,145,178,0.12)" color={ACCENTS.ipd} />
+                        <SoftChip icon={<ReceiptLongRounded sx={{ fontSize: 14 }} />} label="Billed" bg="rgba(8,145,178,0.12)" color={BRAND.action} />
                       )}
                     </TableCell>
                     <TableCell align="right">

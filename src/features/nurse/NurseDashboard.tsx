@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Grid, Typography, Paper, Alert,
@@ -21,8 +21,8 @@ import { useNavigate } from "react-router-dom";
 import { apiErrorText } from "@/utils/apiError";
 import { QUEUE_POLL_MS } from "@/constants/intervals";
 
-const NURSE_PURPLE = ACCENTS.nurse;
-const NURSE_PURPLE_DARK = ACCENTS.nurseDark;
+const NURSE_PURPLE = BRAND.action;
+const NURSE_PURPLE_DARK = BRAND.actionDark;
 
 export default function NurseDashboard() {
   const { hospital, user } = useHospitalAuth();

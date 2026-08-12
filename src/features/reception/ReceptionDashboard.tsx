@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { formatINR } from "@/utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -37,7 +37,7 @@ interface DashboardStats {
   upcomingAppointments: AppointmentEntry[];
 }
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 const inr = (n: any) => formatINR(n, 0);
 const fmtWait = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`);
 

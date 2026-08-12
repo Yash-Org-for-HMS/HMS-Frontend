@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -19,7 +19,7 @@ import { apiErrorText } from "@/utils/apiError";
 
 type DocKind = "prescription" | "lab" | "radiology";
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 
 export default function ClinicalRecordsSection({ patientId }: { patientId: string }) {
   const { hospital } = useHospitalAuth();
@@ -110,7 +110,7 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
         <DialogContent dividers>
           <Box ref={printRef}>
             <Box sx={{ textAlign: "center", borderBottom: "2px solid #0891b2", pb: 1.5, mb: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: ACCENTS.receptionDark }}>{hospital?.name || "Hospital"}</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: BRAND.actionDark }}>{hospital?.name || "Hospital"}</Typography>
               <Typography variant="caption" sx={{ color: "#6b7280" }}>
                 {data?.patient?.name} • UHID {data?.patient?.uhid}
               </Typography>
@@ -160,9 +160,9 @@ function DocList({ items, empty, render, onView }: {
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Chip label={r.chip.label} size="small" sx={{ bgcolor: `${r.chip.color}22`, color: r.chip.color, fontWeight: 700, textTransform: "capitalize" }} />
                 {r.extra && (
-                  <Button size="small" startIcon={<OpenInNewRounded />} onClick={() => window.open(r.extra!.href, "_blank")} sx={{ textTransform: "none", color: ACCENTS.reception }}>File</Button>
+                  <Button size="small" startIcon={<OpenInNewRounded />} onClick={() => window.open(r.extra!.href, "_blank")} sx={{ textTransform: "none", color: BRAND.action }}>File</Button>
                 )}
-                <Button size="small" startIcon={<VisibilityRounded />} onClick={() => onView(item)} sx={{ textTransform: "none", color: ACCENTS.reception }}>View / Print</Button>
+                <Button size="small" startIcon={<VisibilityRounded />} onClick={() => onView(item)} sx={{ textTransform: "none", color: BRAND.action }}>View / Print</Button>
               </Box>
             </Box>
           </Box>

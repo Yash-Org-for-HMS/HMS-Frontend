@@ -27,7 +27,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import dayjs, { Dayjs } from "dayjs";
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 
 const getAppointmentType = (reason: string | null | undefined) => {
   if (!reason) return { label: "Standard", color: NEUTRAL.muted, bgcolor: "rgba(100,116,139,0.1)" };
@@ -93,15 +93,15 @@ function MiniCalendar({ selectedDate, onDateChange, highlightedDays }: { selecte
                 onClick={() => onDateChange(day)}
                 sx={{
                   minWidth: 0, width: 32, height: 32, p: 0, borderRadius: '50%',
-                  bgcolor: isSelected ? ACCENTS.reception : isToday ? 'rgba(8,145,178,0.1)' : 'transparent',
-                  color: isSelected ? '#fff' : isToday ? ACCENTS.reception : 'text.primary',
-                  "&:hover": { bgcolor: isSelected ? ACCENTS.receptionDark : 'rgba(8,145,178,0.2)' },
+                  bgcolor: isSelected ? BRAND.action : isToday ? 'rgba(8,145,178,0.1)' : 'transparent',
+                  color: isSelected ? '#fff' : isToday ? BRAND.action : 'text.primary',
+                  "&:hover": { bgcolor: isSelected ? BRAND.actionDark : 'rgba(8,145,178,0.2)' },
                   position: 'relative'
                 }}
               >
                 {day.date()}
                 {hasAppointments && !isSelected && (
-                  <Box sx={{ position: 'absolute', bottom: 2, width: 4, height: 4, borderRadius: '50%', bgcolor: ACCENTS.reception }} />
+                  <Box sx={{ position: 'absolute', bottom: 2, width: 4, height: 4, borderRadius: '50%', bgcolor: BRAND.action }} />
                 )}
                 {hasAppointments && isSelected && (
                   <Box sx={{ position: 'absolute', bottom: 2, width: 4, height: 4, borderRadius: '50%', bgcolor: '#fff' }} />
@@ -231,7 +231,7 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
     return appointments.map(a => dayjs(a.appointmentDate).format("YYYY-MM-DD"));
   }, [appointments]);
 
-  const avatarColors = [ACCENTS.reception, "#7c3aed", SEMANTIC.successDark, SEMANTIC.dangerDark, SEMANTIC.warningDark, SEMANTIC.infoDark, "#db2777", "#65a30d"];
+  const avatarColors = [BRAND.action, "#7c3aed", SEMANTIC.successDark, SEMANTIC.dangerDark, SEMANTIC.warningDark, SEMANTIC.infoDark, "#db2777", "#65a30d"];
   const getAvatarColor = (id: string) => avatarColors[(id || "A").charCodeAt(0) % avatarColors.length];
 
   return (
@@ -301,10 +301,10 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
             onClick={(e) => setCalendarAnchor(e.currentTarget)}
             sx={{ 
               ml: 2, mb: 1, textTransform: 'none', borderRadius: 2, 
-              bgcolor: tabValue === 'date' ? ACCENTS.reception : 'transparent',
-              borderColor: tabValue === 'date' ? ACCENTS.reception : 'divider',
+              bgcolor: tabValue === 'date' ? BRAND.action : 'transparent',
+              borderColor: tabValue === 'date' ? BRAND.action : 'divider',
               color: tabValue === 'date' ? '#fff' : 'text.secondary',
-              "&:hover": { bgcolor: tabValue === 'date' ? ACCENTS.receptionDark : 'rgba(8,145,178,0.08)' }
+              "&:hover": { bgcolor: tabValue === 'date' ? BRAND.actionDark : 'rgba(8,145,178,0.08)' }
             }}
           >
             {tabValue === 'date' ? selectedDate?.format("MMM DD") : "Filter by Date"}
@@ -438,7 +438,7 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
                         {appt.statusLabel === 'Completed' && (
                           <>
                             <Tooltip title="Book Follow-up">
-                              <IconButton size="small" onClick={() => navigate(`/reception/appointments/new?patientId=${appt.patientId}&doctorId=${appt.doctorId || ""}&followUpOf=${appt.appointmentId}`)} sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.reception, bgcolor: "rgba(8,145,178,0.08)" } }}>
+                              <IconButton size="small" onClick={() => navigate(`/reception/appointments/new?patientId=${appt.patientId}&doctorId=${appt.doctorId || ""}&followUpOf=${appt.appointmentId}`)} sx={{ color: "text.secondary", "&:hover": { color: BRAND.action, bgcolor: "rgba(8,145,178,0.08)" } }}>
                                 <EventRepeatRounded fontSize="small" />
                               </IconButton>
                             </Tooltip>

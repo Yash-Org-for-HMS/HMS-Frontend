@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, keepPreviousData, useQueryClient } from "@tanstack/react-query";
@@ -27,7 +27,7 @@ import { useToast } from "@/providers/ToastContext";
 // Match this page's existing table-head styling so SortableHeadCell blends in.
 const HEAD_SX = { bgcolor: "background.paper", color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" } as const;
 
-const DOCTOR_BLUE = ACCENTS.doctor;
+const DOCTOR_BLUE = BRAND.action;
 const PAGE_SIZE = 20;
 
 const TABS = [

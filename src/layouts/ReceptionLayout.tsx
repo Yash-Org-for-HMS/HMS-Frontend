@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
-import { ACCENTS, alpha } from "@/styles/accents";
-const receptionTheme = createPanelTheme(ACCENTS.reception, ACCENTS.receptionDark);
+import { alpha, BRAND } from "@/styles/accents";
+const receptionTheme = createPanelTheme(BRAND.action, BRAND.actionDark);
 import {
   Box,
   Drawer,
@@ -231,7 +231,7 @@ export default function ReceptionLayout() {
         ))}
       </List>
 
-      <Divider sx={{ borderColor: alpha(ACCENTS.reception, 0.1) }} />
+      <Divider sx={{ borderColor: alpha(BRAND.action, 0.1) }} />
 
       {/* Branch switcher (only shown to multi-branch users) */}
       <Box sx={{ px: 2, pt: 2 }}>
@@ -261,7 +261,7 @@ export default function ReceptionLayout() {
           ml: { md: `${drawerWidth}px` },
           bgcolor: "background.paper",
           backdropFilter: "blur(16px)",
-          borderBottom: `1px solid ${alpha(ACCENTS.reception, 0.12)}`,
+          borderBottom: `1px solid ${alpha(BRAND.action, 0.12)}`,
         }}
       >
         <Toolbar sx={{ justifyContent: "space-between", minHeight: "70px !important" }}>

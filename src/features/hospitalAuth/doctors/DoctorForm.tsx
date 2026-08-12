@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
   Box,
@@ -184,7 +184,7 @@ export default function DoctorForm() {
         color: "text.primary",
         "& fieldset": { borderColor: "divider" },
         "&:hover fieldset": { borderColor: "divider" },
-        "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+        "&.Mui-focused fieldset": { borderColor: BRAND.action },
         "& .MuiSvgIcon-root": { color: "text.secondary" }
       },
     },
@@ -212,8 +212,8 @@ export default function DoctorForm() {
           sx={{
             borderBottom: "1px solid", borderColor: "divider",
             "& .MuiTab-root": { color: "text.secondary", textTransform: "none", fontWeight: 600, fontSize: "1rem", minHeight: 64 },
-            "& .Mui-selected": { color: ACCENTS.hospital },
-            "& .MuiTabs-indicator": { backgroundColor: ACCENTS.hospital }
+            "& .Mui-selected": { color: BRAND.action },
+            "& .MuiTabs-indicator": { backgroundColor: BRAND.action }
           }}
         >
           <Tab icon={<PersonRounded />} iconPosition="start" label="Personal Details" />

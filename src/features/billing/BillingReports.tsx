@@ -12,10 +12,10 @@ import PageHeader from "@/components/layout/PageHeader";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 const inr = formatINRAuto;
 const rangeFrom = (days: number): DateRange => ({ from: dayjs().subtract(days, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
 const fmtDate = (v: any) => (v ? dayjs(v).format("DD MMM YYYY") : "—");

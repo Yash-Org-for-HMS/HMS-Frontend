@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
   Box,
@@ -146,7 +146,7 @@ export default function DepartmentsList() {
                       <IconButton
                         size="small"
                         onClick={() => navigate(`/hospital/departments/${dept.departmentId}/edit`)}
-                        sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.hospital, bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                        sx={{ color: "text.secondary", "&:hover": { color: BRAND.action, bgcolor: "rgba(99, 102, 241, 0.1)" } }}
                       >
                         <EditRounded fontSize="small" />
                       </IconButton>

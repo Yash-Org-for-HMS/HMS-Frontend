@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useNavigate } from "react-router-dom";
 import { 
   Box, Typography, Grid, Paper, Table, TableBody, TableCell, TableHead, TableRow, alpha, useTheme,
@@ -46,7 +46,7 @@ export default function PharmacyDashboard() {
     <PharmacyPage
       title="Dashboard Overview"
       subtitle="Pharmacy summary, low stock alerts, and recent activities."
-      icon={<DashboardRounded fontSize="large" sx={{ color: ACCENTS.pharmacy }} />}
+      icon={<DashboardRounded fontSize="large" sx={{ color: BRAND.action }} />}
     >
       {loading ? (
         <DashboardSkeleton />
@@ -59,8 +59,8 @@ export default function PharmacyDashboard() {
                   <StatCard
                     label="Total Medicines"
                     value={medicineCount}
-                    icon={<MedicationRounded sx={{ fontSize: 32, color: ACCENTS.pharmacy }} />} 
-                    color={ACCENTS.pharmacy}
+                    icon={<MedicationRounded sx={{ fontSize: 32, color: BRAND.action }} />} 
+                    color={BRAND.action}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>

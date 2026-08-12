@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -140,8 +140,8 @@ export default function UsersList() {
         subtitle="Global Support Mode: Manage hospital administrators and staff members across any tenant"
         actions={
           <ActionButton
-            accentFrom={ACCENTS.admin}
-            accentTo={ACCENTS.adminDark}
+            accentFrom={BRAND.action}
+            accentTo={BRAND.actionDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/rbac/users/add")}
           >
@@ -167,7 +167,7 @@ export default function UsersList() {
               bgcolor: "background.paper",
               "& fieldset": { borderColor: "divider" },
               "&:hover fieldset": { borderColor: "divider" },
-              "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+              "&.Mui-focused fieldset": { borderColor: BRAND.action },
             },
           }}
           InputProps={{
@@ -278,7 +278,7 @@ export default function UsersList() {
                       <Tooltip title="Edit">
                         <IconButton
                           onClick={() => navigate(`/rbac/users/edit/${user.userId}`)}
-                          sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.hospital, bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                          sx={{ color: "text.secondary", "&:hover": { color: BRAND.action, bgcolor: "rgba(99, 102, 241, 0.1)" } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>

@@ -1,3 +1,4 @@
+import { BRAND } from "@/styles/accents";
 import { TableCell, TableSortLabel } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material";
 import type { SortOrder } from "./useTableSort";
@@ -55,7 +56,7 @@ export default function SortableHeadCell({
           "&:hover": { color: "text.primary" },
           // Show a faint arrow even when inactive to hint the column is sortable.
           "& .MuiTableSortLabel-icon": {
-            color: "#06b6d4 !important",
+            color: `${BRAND.action} !important`,
             opacity: active ? 1 : 0.35,
           },
         }}

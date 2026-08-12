@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -61,7 +61,7 @@ export default function IpdMedicationRequests() {
     <PharmacyPage
       title="IPD Medication Requests"
       subtitle="Medicines the ward has requested for admitted patients — confirm to dispense (deducts stock), or reject with a reason."
-      icon={<LocalPharmacyRounded fontSize="large" sx={{ color: ACCENTS.pharmacy }} />}
+      icon={<LocalPharmacyRounded fontSize="large" sx={{ color: BRAND.action }} />}
     >
       <Paper sx={{ borderRadius: 4, overflow: "hidden", border: "1px solid", borderColor: "divider" }}>
         <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
@@ -94,7 +94,7 @@ export default function IpdMedicationRequests() {
                     <Box sx={{ fontSize: "0.75rem", color: "text.secondary" }}>{r.uhid}{r.admissionNumber ? ` · ${r.admissionNumber}` : ""}</Box>
                   </TableCell>
                   <TableCell sx={{ color: "text.secondary" }}>{r.bedLabel || "—"}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: ACCENTS.pharmacy }}>{r.medicineName || "—"}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: BRAND.action }}>{r.medicineName || "—"}</TableCell>
                   <TableCell>
                     {[r.dosage, r.frequency].filter(Boolean).join(" · ") || "—"}
                     {r.route ? <Chip label={r.route} size="small" sx={{ ml: 1, height: 18, fontSize: "0.7rem" }} /> : null}

@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -59,7 +59,7 @@ import StatCard from "@/components/StatCard";
 import { assetUrl } from "@/utils/assetUrl";
 import { formatINR } from "@/utils/format";
 
-const ACCENT = ACCENTS.admin;
+const ACCENT = BRAND.action;
 
 const InfoRow = ({ label, value }: { label: string; value: any }) => (
   <Grid size={{ xs: 12, sm: 6 }}>
@@ -190,7 +190,7 @@ export default function HospitalOverview() {
           </Box>
           <Box sx={{ display: "flex", gap: 1 }}>
             <Button variant="outlined" startIcon={<WidgetsRounded />} onClick={() => navigate(`/hospitals/${id}/modules`)} sx={{ textTransform: "none", borderColor: "divider", color: "text.primary" }}>Modules</Button>
-            <Button variant="contained" startIcon={<EditRounded />} onClick={() => navigate(`/hospitals/${id}/edit`)} sx={{ textTransform: "none", background: `linear-gradient(135deg, ${ACCENT}, ${ACCENTS.adminDark})` }}>Edit</Button>
+            <Button variant="contained" startIcon={<EditRounded />} onClick={() => navigate(`/hospitals/${id}/edit`)} sx={{ textTransform: "none", background: `linear-gradient(135deg, ${ACCENT}, ${BRAND.actionDark})` }}>Edit</Button>
           </Box>
         </Box>
 

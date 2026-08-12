@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,7 +16,7 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import LabTestPicker, { type PickedLabTest } from "@/components/lab/LabTestPicker";
 import { formatINR } from "@/utils/format";
 
-const DOCTOR_BLUE = ACCENTS.doctor;
+const DOCTOR_BLUE = BRAND.action;
 
 interface LabOrderFormProps {
   consultationId?: string | null;

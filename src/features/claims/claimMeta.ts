@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 // Presentation metadata for claim statuses / enums — shared across the claims
 // list, detail, and form so labels and colors stay consistent.
 
@@ -9,7 +9,7 @@ export const CLAIM_STATUS_META: Record<string, { label: string; color: string }>
   PREAUTH_APPROVED: { label: "Pre-auth Approved", color: SEMANTIC.info },
   PREAUTH_REJECTED: { label: "Pre-auth Rejected", color: SEMANTIC.danger },
   IN_TREATMENT: { label: "In Treatment", color: "#8b5cf6" },
-  CLAIM_SUBMITTED: { label: "Claim Submitted", color: ACCENTS.reception },
+  CLAIM_SUBMITTED: { label: "Claim Submitted", color: BRAND.action },
   CLAIM_QUERIED: { label: "Claim Queried", color: "#f97316" },
   SETTLED: { label: "Settled", color: SEMANTIC.success },
   PARTIALLY_SETTLED: { label: "Partially Settled", color: "#14b8a6" },

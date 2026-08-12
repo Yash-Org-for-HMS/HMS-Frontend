@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -29,8 +29,8 @@ const getDoctorInitials = (doctorName?: string) => {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 };
 
-const NURSE_PURPLE = ACCENTS.nurse;
-const NURSE_PURPLE_DARK = ACCENTS.nurseDark;
+const NURSE_PURPLE = BRAND.action;
+const NURSE_PURPLE_DARK = BRAND.actionDark;
 
 type ViewMode = "queue" | "station";
 

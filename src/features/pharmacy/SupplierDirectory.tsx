@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -187,7 +187,7 @@ export default function SupplierDirectory() {
     <PharmacyPage
       title="Supplier Directory"
       subtitle="Manage vendors, distributors, and pharmacy suppliers."
-      icon={<LocalShippingRounded fontSize="large" sx={{ color: ACCENTS.pharmacy }} />}
+      icon={<LocalShippingRounded fontSize="large" sx={{ color: BRAND.action }} />}
       action={
         <Button
           variant="contained"
@@ -274,7 +274,7 @@ export default function SupplierDirectory() {
                       }}
                     >
                       <TableCell sx={{ fontWeight: 600, fontFamily: 'monospace', color: 'text.secondary' }}>{sup.supplierCode}</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: ACCENTS.pharmacy }}>{sup.supplierName}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: BRAND.action }}>{sup.supplierName}</TableCell>
                       <TableCell sx={{ fontWeight: 500 }}>{sup.contactPersonName}</TableCell>
                       <TableCell sx={{ color: 'text.secondary' }}>{sup.phone}</TableCell>
                       <TableCell sx={{ color: 'text.secondary' }}>{sup.email}</TableCell>
@@ -283,7 +283,7 @@ export default function SupplierDirectory() {
                           <IconButton
                             color="primary"
                             onClick={() => handleOpenEdit(sup)}
-                            sx={{ '&:hover': { bgcolor: alpha(ACCENTS.pharmacy, 0.1) } }}
+                            sx={{ '&:hover': { bgcolor: alpha(BRAND.action, 0.1) } }}
                           >
                             <EditRounded fontSize="small" />
                           </IconButton>

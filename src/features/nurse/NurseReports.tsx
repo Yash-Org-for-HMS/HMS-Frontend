@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useMemo, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -22,7 +22,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
 import { ReportTruncationNote } from "@/features/reports/kit";
 
-const NURSE_PURPLE = ACCENTS.nurse;
+const NURSE_PURPLE = BRAND.action;
 
 const PRESETS = [
   { key: "today", label: "Today", from: () => dayjs(), to: () => dayjs() },
@@ -96,7 +96,7 @@ function SummaryReport({ data }: { data: any }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(4,1fr)" }, gap: 1.5 }}>
-        <Kpi icon={<MonitorHeartRounded />} label="Vitals recorded" value={s?.totalVitalsRecorded || 0} color={ACCENTS.nurse} />
+        <Kpi icon={<MonitorHeartRounded />} label="Vitals recorded" value={s?.totalVitalsRecorded || 0} color={BRAND.action} />
         <Kpi icon={<GroupRounded />} label="Unique patients" value={s?.uniquePatients || 0} color={SEMANTIC.info} />
         <Kpi icon={<WarningAmberRounded />} label="Abnormal readings" value={s?.abnormalReadings || 0} color={SEMANTIC.danger} />
         <Kpi icon={<BadgeRounded />} label="Staff recording" value={s?.staffRecording || 0} color={SEMANTIC.success} />

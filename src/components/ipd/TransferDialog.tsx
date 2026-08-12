@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -47,7 +47,7 @@ export default function TransferDialog({ open, onClose, onDone, admission }: Pro
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <SwapHorizRounded sx={{ color: ACCENTS.ipd }} /> Transfer Bed
+        <SwapHorizRounded sx={{ color: BRAND.action }} /> Transfer Bed
       </DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>

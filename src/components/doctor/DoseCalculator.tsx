@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 import { useState } from "react";
 import {
   IconButton, Popover, Box, Typography, TextField, Button, Chip, Divider, Tooltip,
@@ -6,7 +6,7 @@ import {
 } from "@mui/material";
 import { CalculateRounded } from "@mui/icons-material";
 
-const DOCTOR_BLUE = ACCENTS.doctor;
+const DOCTOR_BLUE = BRAND.action;
 
 interface Props {
   ageYears?: number | null;

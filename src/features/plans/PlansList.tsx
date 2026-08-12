@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -103,8 +103,8 @@ export default function PlansList() {
         subtitle={t("plans.subtitle", "Manage hospital subscription tiers and features")}
         actions={
           <ActionButton
-            accentFrom={ACCENTS.admin}
-            accentTo={ACCENTS.adminDark}
+            accentFrom={BRAND.action}
+            accentTo={BRAND.actionDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/plans/new")}
           >
@@ -205,7 +205,7 @@ function PlanCard({ plan, modules, onMenu }: { plan: any; modules: Module[]; onM
       sx={{
         borderRadius: 3, p: 0, display: "flex", flexDirection: "column", overflow: "hidden",
         transition: "border-color .15s, box-shadow .15s, transform .15s",
-        "&:hover": { borderColor: alpha(ACCENTS.admin, 0.5), boxShadow: 3, transform: "translateY(-2px)" },
+        "&:hover": { borderColor: alpha(BRAND.action, 0.5), boxShadow: 3, transform: "translateY(-2px)" },
       }}
     >
       {/* Header */}
@@ -227,7 +227,7 @@ function PlanCard({ plan, modules, onMenu }: { plan: any; modules: Module[]; onM
 
         {/* Price */}
         <Box sx={{ mt: 1.5, display: "flex", alignItems: "baseline", gap: 0.5 }}>
-          <Typography sx={{ fontWeight: 800, fontSize: "1.9rem", lineHeight: 1, color: ACCENTS.admin }}>{money(monthly)}</Typography>
+          <Typography sx={{ fontWeight: 800, fontSize: "1.9rem", lineHeight: 1, color: BRAND.action }}>{money(monthly)}</Typography>
           <Typography sx={{ color: "text.secondary", fontSize: "0.85rem" }}>/ month</Typography>
         </Box>
         <Box sx={{ mt: 0.5, display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
@@ -276,7 +276,7 @@ function PlanCard({ plan, modules, onMenu }: { plan: any; modules: Module[]; onM
       {/* Footer */}
       <Box sx={{ px: 2.5, py: 1.5, borderTop: 1, borderColor: "divider" }}>
         <Button fullWidth size="small" variant="outlined" startIcon={<EditRounded />} onClick={onMenu}
-          sx={{ textTransform: "none", borderColor: "divider", color: "text.primary", "&:hover": { borderColor: ACCENTS.admin, bgcolor: alpha(ACCENTS.admin, 0.06) } }}>
+          sx={{ textTransform: "none", borderColor: "divider", color: "text.primary", "&:hover": { borderColor: BRAND.action, bgcolor: alpha(BRAND.action, 0.06) } }}>
           Manage plan
         </Button>
       </Box>

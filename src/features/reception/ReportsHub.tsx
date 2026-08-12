@@ -16,9 +16,9 @@ import { DayBook, RevenueAnalytics, RefundRegister, DiscountRegister, CancelledI
 import { LabOverview, TestWise, Turnaround, Pending, CriticalResults } from "../lab/LabReports";
 import { PharmacyOverview } from "../pharmacy/PharmacyReports";
 import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList, SupplierLedger, Movers, OpdIpdSplit } from "../pharmacy/InventoryReports";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 
 type ReportItem = { key: string; label: string; Comp: React.ComponentType };
 type ReportGroup = { heading: string; module?: string; adminOnly?: boolean; items: ReportItem[] };

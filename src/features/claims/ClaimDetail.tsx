@@ -8,7 +8,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
 } from "@mui/material";
 import { ArrowBackRounded, EditRounded, TimelineRounded, ArrowForwardRounded, PaymentsRounded } from "@mui/icons-material";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { axiosInstance } from "@/api/axios";
 import { formatINR } from "@/utils/format";
 import { useToast } from "@/providers/ToastContext";
@@ -19,7 +19,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import ClaimDocumentsSection from "./ClaimDocumentsSection";
 import { statusMeta } from "./claimMeta";
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 
 function Field({ label, value }: { label: string; value: any }) {
   return (
@@ -98,7 +98,7 @@ export default function ClaimDetail() {
             {/* Reconciliation — what the payer owes vs what the patient must cover. */}
             <Grid container spacing={1.5} sx={{ mb: 1 }}>
               {[
-                ["Billed", claim.reconciliation?.billed, ACCENTS.reception],
+                ["Billed", claim.reconciliation?.billed, BRAND.action],
                 ["Approved", claim.reconciliation?.approved, SEMANTIC.info],
                 ["Settled", claim.reconciliation?.settled, SEMANTIC.success],
                 ["Patient pays", claim.reconciliation?.patientResponsibility, SEMANTIC.danger],

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -67,7 +67,7 @@ export default function NursingNotesDialog({ open, onClose, admission }: Props) 
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <DescriptionRounded sx={{ color: ACCENTS.ipd }} /> Nursing Notes
+        <DescriptionRounded sx={{ color: BRAND.action }} /> Nursing Notes
         {isFetching && <HeartbeatLoader size={18} />}
       </DialogTitle>
       <DialogContent dividers>

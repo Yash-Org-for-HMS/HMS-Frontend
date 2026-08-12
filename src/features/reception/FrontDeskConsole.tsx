@@ -20,7 +20,7 @@ import { useEnabledModules } from "@/hooks/useEnabledModules";
 import PageHeader from "@/components/layout/PageHeader";
 
 import type { Patient } from "@/types";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 
 export default function FrontDeskConsole() {
   const [search, setSearch] = useState("");
@@ -71,7 +71,7 @@ export default function FrontDeskConsole() {
   };
 
   const getAvatarColor = (id: string) => {
-    const avatarColors = [ACCENTS.reception, "#7c3aed", SEMANTIC.successDark, SEMANTIC.dangerDark, SEMANTIC.warningDark, SEMANTIC.infoDark, "#db2777", "#65a30d"];
+    const avatarColors = [BRAND.action, "#7c3aed", SEMANTIC.successDark, SEMANTIC.dangerDark, SEMANTIC.warningDark, SEMANTIC.infoDark, "#db2777", "#65a30d"];
     return avatarColors[id.charCodeAt(0) % avatarColors.length];
   };
 
@@ -183,7 +183,7 @@ export default function FrontDeskConsole() {
                       Recent Registrations
                     </Typography>
                     {recentPatients.length > 0 && (
-                      <Chip label={`${recentPatients.length} Recent`} size="small" sx={{ bgcolor: "rgba(6, 182, 212, 0.1)", color: ACCENTS.reception, fontWeight: 600, borderRadius: 2 }} />
+                      <Chip label={`${recentPatients.length} Recent`} size="small" sx={{ bgcolor: "rgba(6, 182, 212, 0.1)", color: BRAND.action, fontWeight: 600, borderRadius: 2 }} />
                     )}
                   </Box>
 
@@ -232,7 +232,7 @@ export default function FrontDeskConsole() {
                   background: "linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(14, 116, 144, 0.05) 100%)",
                   display: "flex", alignItems: "center", justifyContent: "center", mb: 3 
                 }}>
-                  <PersonAddRounded sx={{ fontSize: 64, color: ACCENTS.reception, opacity: 0.8 }} />
+                  <PersonAddRounded sx={{ fontSize: 64, color: BRAND.action, opacity: 0.8 }} />
                 </Box>
                 <Typography variant="h5" sx={{ color: "text.primary", fontWeight: 700, mb: 1 }}>
                   Front Desk Workspace

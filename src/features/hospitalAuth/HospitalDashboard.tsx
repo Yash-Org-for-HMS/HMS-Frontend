@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import {
   Box,
   Typography,
@@ -119,10 +119,10 @@ export default function HospitalDashboard() {
       </Typography>
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Appointments Today" value={stats?.todayAppointments ?? 0} icon={<EventAvailableRounded />} color={ACCENTS.reception} />
+          <StatCard label="Appointments Today" value={stats?.todayAppointments ?? 0} icon={<EventAvailableRounded />} color={BRAND.action} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Active Admissions" value={stats?.activeAdmissions ?? 0} icon={<BedRounded />} color={ACCENTS.ipd} />
+          <StatCard label="Active Admissions" value={stats?.activeAdmissions ?? 0} icon={<BedRounded />} color={BRAND.action} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label="Total Doctors" value={stats?.totalDoctors || 0} icon={<MedicalServicesRounded />} color={SEMANTIC.successLight} />

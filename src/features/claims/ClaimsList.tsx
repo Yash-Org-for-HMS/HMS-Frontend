@@ -7,7 +7,7 @@ import {
   Chip, Button, TextField, MenuItem, InputAdornment, Pagination,
 } from "@mui/material";
 import { AddRounded, SearchRounded, AssessmentRounded } from "@mui/icons-material";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 import { axiosInstance } from "@/api/axios";
 import { formatINR } from "@/utils/format";
 import PageHeader from "@/components/layout/PageHeader";
@@ -17,7 +17,7 @@ import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { CLAIM_STATUS_META, statusMeta } from "./claimMeta";
 import { apiErrorText } from "@/utils/apiError";
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 
 export default function ClaimsList() {
   const navigate = useNavigate();

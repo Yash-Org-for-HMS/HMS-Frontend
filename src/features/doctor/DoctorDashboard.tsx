@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Grid, Typography, Paper, Alert,
@@ -19,7 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { apiErrorText } from "@/utils/apiError";
 import { DASHBOARD_POLL_MS } from "@/constants/intervals";
 
-const DOCTOR_BLUE = ACCENTS.doctor;
+const DOCTOR_BLUE = BRAND.action;
 
 export default function DoctorDashboard() {
   const { hospital, user } = useHospitalAuth();

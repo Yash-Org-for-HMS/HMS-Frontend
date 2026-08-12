@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -224,7 +224,7 @@ export default function InventoryManagement() {
     <PharmacyPage
       title="Inventory & POs"
       subtitle="Manage stock levels, raise purchase orders, and receive goods."
-      icon={<InventoryRounded fontSize="large" sx={{ color: ACCENTS.pharmacy }} />}
+      icon={<InventoryRounded fontSize="large" sx={{ color: BRAND.action }} />}
       action={
         <Button
           variant="contained"
@@ -326,7 +326,7 @@ export default function InventoryManagement() {
                     <TableRow><TableCell colSpan={7} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No stock available." size={110} /></TableCell></TableRow>
                   ) : inventory.map(inv => (
                     <TableRow key={inv.inventoryId} hover>
-                      <TableCell sx={{ fontWeight: 600, color: ACCENTS.pharmacy }}>
+                      <TableCell sx={{ fontWeight: 600, color: BRAND.action }}>
                         {getMedicineName(inv.medicineId)}
                         {lowStockMedicineIds.has(inv.medicineId) && (
                           <Tooltip title="This medicine's total stock across all batches is at or below its reorder threshold">
@@ -449,7 +449,7 @@ export default function InventoryManagement() {
                     <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="all-caught-up" subtitle="No low stock alerts — stock is healthy." size={110} /></TableCell></TableRow>
                   ) : paginatedAlerts.map(alert => (
                     <TableRow key={alert.medicineId} hover>
-                      <TableCell sx={{ fontWeight: 600, color: ACCENTS.pharmacy }}>{alert.medicineName}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: BRAND.action }}>{alert.medicineName}</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{alert.minStockLevel}</TableCell>
                       <TableCell sx={{ fontWeight: 700, color: 'error.main' }}>{alert.currentStock}</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: 'warning.main' }}>{alert.pendingStock || 0}</TableCell>

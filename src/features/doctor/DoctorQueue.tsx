@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -30,8 +30,8 @@ const getDoctorInitials = (doctorName?: string) => {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 };
 
-const DOCTOR_BLUE = ACCENTS.doctor;
-const DOCTOR_BLUE_DARK = ACCENTS.doctorDark;
+const DOCTOR_BLUE = BRAND.action;
+const DOCTOR_BLUE_DARK = BRAND.actionDark;
 
 export default function DoctorQueue() {
   const navigate = useNavigate();
@@ -98,7 +98,7 @@ export default function DoctorQueue() {
         <Chip
           icon={<CheckCircleRounded sx={{ fontSize: "16px !important" }} />}
           label={`${inProgress} In Progress`}
-          sx={{ bgcolor: "rgba(59,130,246,0.1)", color: ACCENTS.doctor, border: "1px solid rgba(59,130,246,0.3)", fontWeight: 600 }}
+          sx={{ bgcolor: "rgba(59,130,246,0.1)", color: BRAND.action, border: "1px solid rgba(59,130,246,0.3)", fontWeight: 600 }}
         />
         {skipped > 0 && (
           <Chip

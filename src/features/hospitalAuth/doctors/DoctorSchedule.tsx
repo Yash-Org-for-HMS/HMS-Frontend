@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "@/components/ErrorState";
@@ -15,7 +15,7 @@ import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import FormSkeleton from "@/components/skeletons/FormSkeleton";
 
-const HOSP = ACCENTS.hospital;
+const HOSP = BRAND.action;
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 // Display Monday → Sunday (more natural), but keep the real dayOfWeek (0=Sun) as the value.
 const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];

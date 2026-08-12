@@ -11,7 +11,7 @@ import {
   DescriptionRounded, HourglassBottomRounded, PaidRounded, CancelRounded,
   AccountBalanceWalletRounded, GroupRounded, FileDownloadRounded, ArrowBackRounded,
 } from "@mui/icons-material";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { axiosInstance } from "@/api/axios";
 import { exportTableToExcel } from "@/utils/exportExcel";
 import { formatINR } from "@/utils/format";
@@ -23,7 +23,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import { apiErrorText } from "@/utils/apiError";
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 const fmtDate = (d: string) => (d ? dayjs(d).format("DD MMM YYYY") : "—");
 const inr = (v: any) => formatINR(Number(v || 0));
 
@@ -92,7 +92,7 @@ function OverviewReport({ data }: { data: any }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(3,1fr)", md: "repeat(6,1fr)" }, gap: 1.5 }}>
-        <Kpi icon={<DescriptionRounded />} label="Total claims" value={String(s.totalClaims || 0)} color={ACCENTS.reception} />
+        <Kpi icon={<DescriptionRounded />} label="Total claims" value={String(s.totalClaims || 0)} color={BRAND.action} />
         <Kpi icon={<HourglassBottomRounded />} label="Open" value={String(s.open || 0)} color={SEMANTIC.warning} />
         <Kpi icon={<PaidRounded />} label="Settled" value={String(s.settled || 0)} color={SEMANTIC.success} />
         <Kpi icon={<CancelRounded />} label="Rejected" value={String(s.rejected || 0)} color={SEMANTIC.danger} />

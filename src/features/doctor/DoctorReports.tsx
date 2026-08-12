@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useMemo, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -21,7 +21,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
 import { ReportTruncationNote } from "@/features/reports/kit";
 
-const DOCTOR_BLUE = ACCENTS.doctor;
+const DOCTOR_BLUE = BRAND.action;
 
 const PRESETS = [
   { key: "today", label: "Today", from: () => dayjs(), to: () => dayjs() },
@@ -97,7 +97,7 @@ function SummaryReport({ data }: { data: any }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(3,1fr)", md: "repeat(6,1fr)" }, gap: 1.5 }}>
-        <Kpi icon={<DescriptionRounded />} label="Consultations" value={s?.totalConsultations || 0} color={ACCENTS.doctor} />
+        <Kpi icon={<DescriptionRounded />} label="Consultations" value={s?.totalConsultations || 0} color={BRAND.action} />
         <Kpi icon={<GroupRounded />} label="Unique patients" value={s?.uniquePatients || 0} color="#8b5cf6" />
         <Kpi icon={<EventAvailableRounded />} label="Completed appts" value={s?.completedAppointments || 0} color={SEMANTIC.success} />
         <Kpi icon={<MedicationRounded />} label="Prescriptions" value={s?.prescriptions || 0} color="#ec4899" />

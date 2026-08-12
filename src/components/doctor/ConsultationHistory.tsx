@@ -1,8 +1,8 @@
 import { Box, Typography, Button, Paper, Chip } from "@mui/material";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 import { stripHtml } from "@/utils/format";
 
-const DOCTOR_BLUE = ACCENTS.doctor;
+const DOCTOR_BLUE = BRAND.action;
 
 interface Props {
   history: any[];

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -155,7 +155,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+                    "&.Mui-focused fieldset": { borderColor: BRAND.action },
                   },
                 }}
               />
@@ -177,7 +177,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+                    "&.Mui-focused fieldset": { borderColor: BRAND.action },
                   },
                 }}
               />
@@ -197,7 +197,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+                    "&.Mui-focused fieldset": { borderColor: BRAND.action },
                   },
                   "& .MuiSvgIcon-root": { color: "text.secondary" },
                 }}
@@ -226,7 +226,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+                    "&.Mui-focused fieldset": { borderColor: BRAND.action },
                   },
                   "& .MuiSvgIcon-root": { color: "text.secondary" },
                 }}
@@ -253,7 +253,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+                    "&.Mui-focused fieldset": { borderColor: BRAND.action },
                   },
                 }}
               />
@@ -272,7 +272,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+                    "&.Mui-focused fieldset": { borderColor: BRAND.action },
                   },
                 }}
               />
@@ -291,7 +291,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+                    "&.Mui-focused fieldset": { borderColor: BRAND.action },
                   },
                 }}
               />
@@ -312,7 +312,7 @@ export default function DepartmentForm() {
                     color: "text.primary",
                     "& fieldset": { borderColor: "divider" },
                     "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+                    "&.Mui-focused fieldset": { borderColor: BRAND.action },
                   },
                   "& .MuiSvgIcon-root": { color: "text.secondary" },
                 }}

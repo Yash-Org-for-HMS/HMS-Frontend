@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 import { useState } from "react";
 import { Box, Button, Dialog, DialogContent, IconButton, Tooltip, Typography } from "@mui/material";
 import { CheckCircleRounded, ContentCopyRounded, InfoOutlined } from "@mui/icons-material";
@@ -19,7 +19,7 @@ interface CredentialDialogProps {
 }
 
 const GREEN = "#10b981";
-const INDIGO = ACCENTS.admin;
+const INDIGO = BRAND.action;
 
 /**
  * One-time credentials dialog shown after creating a user/hospital or resetting

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { Box, Grid, Paper, Tabs, Tab, TextField, MenuItem, Typography } from "@mui/material";
 import {
@@ -46,9 +46,9 @@ export function LabOverview() {
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<HourglassEmptyRounded />} accent={SEMANTIC.warning} label="Pending" value={s?.pending || 0} current={s?.pending} previous={p?.pending} higherIsBetter={false} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<BiotechRounded />} accent={SEMANTIC.info} label="Sample collected" value={s?.sampleCollected || 0} current={s?.sampleCollected} previous={p?.sampleCollected} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<CheckCircleRounded />} accent={SEMANTIC.success} label="Completed" value={s?.completed || 0} current={s?.completed} previous={p?.completed} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={ACCENTS.lab} label="Radiology" value={s?.radiologyOrders || 0} current={s?.radiologyOrders} previous={p?.radiologyOrders} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology" value={s?.radiologyOrders || 0} current={s?.radiologyOrders} previous={p?.radiologyOrders} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Critical results" value={s?.criticalResults || 0} current={s?.criticalResults} previous={p?.criticalResults} higherIsBetter={false} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent={ACCENTS.labDark} label="Avg turnaround" value={`${s?.avgTurnaroundHours || 0}h`} current={s?.avgTurnaroundHours} previous={p?.avgTurnaroundHours} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent={BRAND.actionDark} label="Avg turnaround" value={`${s?.avgTurnaroundHours || 0}h`} current={s?.avgTurnaroundHours} previous={p?.avgTurnaroundHours} higherIsBetter={false} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Revenue estimate" value={inr(s?.revenueEstimate)} current={s?.revenueEstimate} previous={p?.revenueEstimate} /></Grid>
           </Grid>
 
@@ -90,7 +90,7 @@ export function TestWise() {
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ScienceRounded />} accent={SEMANTIC.success} label="Lab tests performed" value={String(data.totals.labPerformed)} sub={`${data.totals.labTests} distinct`} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Lab revenue" value={inr(data.totals.labRevenue)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={ACCENTS.lab} label="Radiology scans" value={String(data.totals.radScans)} sub={`${data.totals.radTypes} types`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology scans" value={String(data.totals.radScans)} sub={`${data.totals.radTypes} types`} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.info} label="Radiology revenue (est.)" value={inr(data.totals.radRevenue)} /></Grid>
           </Grid>
 
@@ -157,9 +157,9 @@ export function Turnaround() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SpeedRounded />} accent={ACCENTS.lab} label="Lab avg TAT" value={`${data.lab.avg}h`} sub={`median ${data.lab.median}h · p90 ${data.lab.p90}h`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SpeedRounded />} accent={BRAND.action} label="Lab avg TAT" value={`${data.lab.avg}h`} sub={`median ${data.lab.median}h · p90 ${data.lab.p90}h`} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<VerifiedRounded />} accent={data.lab.slaPct >= 90 ? SEMANTIC.success : data.lab.slaPct >= 75 ? SEMANTIC.warning : SEMANTIC.danger} label={`Lab SLA (≤${sla}h)`} value={`${data.lab.slaPct}%`} sub={`${data.lab.count} completed`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={ACCENTS.labDark} label="Radiology avg TAT" value={`${data.radiology.avg}h`} sub={`median ${data.radiology.median}h · p90 ${data.radiology.p90}h`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.actionDark} label="Radiology avg TAT" value={`${data.radiology.avg}h`} sub={`median ${data.radiology.median}h · p90 ${data.radiology.p90}h`} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<VerifiedRounded />} accent={data.radiology.slaPct >= 90 ? SEMANTIC.success : data.radiology.slaPct >= 75 ? SEMANTIC.warning : SEMANTIC.danger} label={`Radiology SLA (≤${sla}h)`} value={`${data.radiology.slaPct}%`} sub={`${data.radiology.count} reported`} /></Grid>
           </Grid>
 
@@ -217,9 +217,9 @@ export function Pending() {
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PendingActionsRounded />} accent={SEMANTIC.warning} label="Lab pending" value={String(data.totals.pendingLab)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={ACCENTS.lab} label="Radiology pending" value={String(data.totals.pendingRadiology)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology pending" value={String(data.totals.pendingRadiology)} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Breaching (> 48h)" value={String(data.totals.breaching)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimelapseRounded />} accent={ACCENTS.labDark} label="Oldest pending" value={`${data.totals.oldestHours}h`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimelapseRounded />} accent={BRAND.actionDark} label="Oldest pending" value={`${data.totals.oldestHours}h`} /></Grid>
           </Grid>
 
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
@@ -276,7 +276,7 @@ export function CriticalResults() {
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CrisisAlertRounded />} accent={SEMANTIC.danger} label="Critical results" value={String(data.totals.critical)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonRounded />} accent={ACCENTS.lab} label="Patients affected" value={String(data.totals.patients)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonRounded />} accent={BRAND.action} label="Patients affected" value={String(data.totals.patients)} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReportProblemRounded />} accent={SEMANTIC.warning} label="Unacknowledged" value={String(data.totals.unacknowledged ?? 0)} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReportProblemRounded />} accent={SEMANTIC.info} label="Unverified" value={String(data.totals.unverified)} /></Grid>
           </Grid>
@@ -305,7 +305,7 @@ export function CriticalResults() {
 // The lab panel's reports page: aggregate Overview + the test-wise drill-down.
 export default function LabReports() {
   const [tab, setTab] = useState(0);
-  const ACCENT = ACCENTS.lab;
+  const ACCENT = BRAND.action;
   return (
     <Box>
       <PageHeader title="Lab & Radiology Reports" subtitle="Order volume and turnaround, plus per-test / per-scan detail." />

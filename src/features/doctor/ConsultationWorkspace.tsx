@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { calculateAge } from "@/utils/format";
 import { useState, useEffect, useRef } from "react";
@@ -27,7 +27,7 @@ import RichTextEditor from "@/components/RichTextEditor";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { useToast } from "@/providers/ToastContext";
 
-const DOCTOR_BLUE = ACCENTS.doctor;
+const DOCTOR_BLUE = BRAND.action;
 
 function TabPanel(props: any) {
   const { children, value, index, ...other } = props;

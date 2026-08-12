@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Chip,
@@ -13,7 +13,7 @@ import Mascot from "../Mascot";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
   SCHEDULED: { label: "Scheduled", color: SEMANTIC.warning },

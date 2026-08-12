@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import { Box, Paper, Grid, TextField, Tabs, Tab } from "@mui/material";
 import { LocalHotelRounded, ReplayRounded, AccessTimeRounded, PersonAddRounded, SavingsRounded, SpeedRounded, HeightRounded, WarningAmberRounded, MedicationRounded } from "@mui/icons-material";
@@ -12,7 +12,7 @@ import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, useReportFilterOptions, type DateRange } from "@/features/reports/kit";
 
-const ACCENT = ACCENTS.ipd;
+const ACCENT = BRAND.action;
 const inr = formatINRAuto;
 const initialRange = (): DateRange => ({ from: dayjs().subtract(29, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
 const fmtDate = (v: any) => (v ? dayjs(v).format("DD MMM YYYY") : "—");
@@ -251,7 +251,7 @@ export function OverdueDoses() {
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Overdue doses" value={String(data.totals.overdueDoses)} sub={`> ${data.graceMins}m past due`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicationRounded />} accent={ACCENTS.ipd} label="Patients affected" value={String(data.totals.patients)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicationRounded />} accent={BRAND.action} label="Patients affected" value={String(data.totals.patients)} /></Grid>
           </Grid>
           <ReportTable
             title="Overdue / uncharted medication doses"

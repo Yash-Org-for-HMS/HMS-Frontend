@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import GeoAddressPicker from "@/components/GeoAddressPicker";
@@ -239,7 +239,7 @@ export default function UserForm() {
         color: "text.primary",
         "& fieldset": { borderColor: "divider" },
         "&:hover fieldset": { borderColor: "divider" },
-        "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+        "&.Mui-focused fieldset": { borderColor: BRAND.action },
       },
       "& .MuiSvgIcon-root": { color: "text.secondary" },
     },
@@ -274,8 +274,8 @@ export default function UserForm() {
                 borderBottom: 1,
                 borderColor: "divider",
                 "& .MuiTab-root": { color: "text.secondary", textTransform: "none", fontSize: "1rem" },
-                "& .Mui-selected": { color: ACCENTS.hospital },
-                "& .MuiTabs-indicator": { backgroundColor: ACCENTS.hospital },
+                "& .Mui-selected": { color: BRAND.action },
+                "& .MuiTabs-indicator": { backgroundColor: BRAND.action },
               }}
             >
               <Tab label="Personal & Role" />
@@ -456,7 +456,7 @@ export default function UserForm() {
                           color: "text.primary",
                           "& fieldset": { borderColor: "divider" },
                           "&:hover fieldset": { borderColor: "divider" },
-                          "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+                          "&.Mui-focused fieldset": { borderColor: BRAND.action },
                         },
                       }}
                     />
@@ -492,7 +492,7 @@ export default function UserForm() {
                                 : "rgba(255, 255, 255, 0.1)",
                           },
                           "&:hover fieldset": { borderColor: "divider" },
-                          "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+                          "&.Mui-focused fieldset": { borderColor: BRAND.action },
                         },
                       }}
                     />

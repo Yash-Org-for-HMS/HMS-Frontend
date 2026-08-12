@@ -14,7 +14,7 @@ import Mascot from "@/components/Mascot";
 import { CardGridSkeleton } from "@/components/TableRowsSkeleton";
 import PageHeader from "@/components/layout/PageHeader";
 import { apiErrorText } from "@/utils/apiError";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 
 export default function DepartmentDirectory() {
   const [search, setSearch] = useState("");
@@ -64,7 +64,7 @@ export default function DepartmentDirectory() {
             <Grid key={d.departmentId} size={{ xs: 12, sm: 6, lg: 4 }}>
               <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%", display: "flex", flexDirection: "column", gap: 1.5 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Avatar sx={{ bgcolor: ACCENTS.reception, width: 44, height: 44 }}><ApartmentRounded /></Avatar>
+                  <Avatar sx={{ bgcolor: BRAND.action, width: 44, height: 44 }}><ApartmentRounded /></Avatar>
                   <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }} noWrap>{d.departmentName}</Typography>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -106,7 +106,7 @@ export default function DepartmentDirectory() {
 function InfoRow({ icon, value, placeholder }: { icon: React.ReactNode; value: string | null; placeholder: string }) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: value ? "text.primary" : "text.disabled" }}>
-      <Box sx={{ color: value ? ACCENTS.reception : "text.disabled", display: "flex" }}>{icon}</Box>
+      <Box sx={{ color: value ? BRAND.action : "text.disabled", display: "flex" }}>{icon}</Box>
       <Typography variant="body2" sx={{ color: "inherit", fontStyle: value ? "normal" : "italic" }}>
         {value || placeholder}
       </Typography>

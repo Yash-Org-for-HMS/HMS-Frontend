@@ -17,7 +17,7 @@ import { useToast } from "@/providers/ToastContext";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BillReceipt from "@/components/reception/BillReceipt";
 import SocChargePicker from "@/components/billing/SocChargePicker";
-import { SEMANTIC, ACCENTS } from "@/styles/accents";
+import { SEMANTIC, ACCENTS, BRAND } from "@/styles/accents";
 
 interface BillingModalProps {
   open: boolean;
@@ -728,7 +728,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                         + Add Charge
                       </Typography>
                       <Button size="small" variant="outlined" onClick={() => setSocPickerOpen(true)} disabled={addingItem}
-                        sx={{ textTransform: "none", color: ACCENTS.reception, borderColor: "rgba(8,145,178,0.4)" }}>
+                        sx={{ textTransform: "none", color: BRAND.action, borderColor: "rgba(8,145,178,0.4)" }}>
                         Pick from Schedule of Charges
                       </Button>
                     </Box>
@@ -798,7 +798,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       open={socPickerOpen}
       onClose={() => setSocPickerOpen(false)}
       onPick={(c) => handleAddSocCharge(c.chargeItemId)}
-      accent={ACCENTS.reception}
+      accent={BRAND.action}
     />
     </>
   );

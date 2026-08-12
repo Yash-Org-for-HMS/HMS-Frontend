@@ -29,7 +29,7 @@ import { useToast } from "@/providers/ToastContext";
 import { validate, hasErrors, required, isEmail, type Errors } from "@/utils/validation";
 import FormHeader from "@/components/layout/FormHeader";
 import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 
 export default function TrialForm() {
   const { t } = useTranslation();
@@ -337,7 +337,7 @@ export default function TrialForm() {
               <Box sx={{ height: "100%", display: "flex", alignItems: "center", p: 2, bgcolor: "background.paper", borderRadius: "12px", border: "1px solid", borderColor: "divider" }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
                   <Typography sx={{ color: "text.secondary" }}>Days Remaining:</Typography>
-                  <Typography sx={{ color: ACCENTS.admin, fontWeight: 800, fontSize: "1.2rem" }}>
+                  <Typography sx={{ color: BRAND.action, fontWeight: 800, fontSize: "1.2rem" }}>
                     {calculateDaysRemaining()} Days
                   </Typography>
                 </Box>
@@ -375,7 +375,7 @@ export default function TrialForm() {
                   disabled={loading} 
                   startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
-                    background: `linear-gradient(135deg, ${ACCENTS.admin} 0%, ${ACCENTS.adminDark} 100%)`,
+                    background: `linear-gradient(135deg, ${BRAND.action} 0%, ${BRAND.actionDark} 100%)`,
                   }}
                 >
                   {loading ? t("common.saving") : t("common.save")}
@@ -413,8 +413,8 @@ const textFieldSx = {
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider", borderRadius: "12px" },
     "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: ACCENTS.admin },
+    "&.Mui-focused fieldset": { borderColor: BRAND.action },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: ACCENTS.admin },
+  "& .MuiInputLabel-root.Mui-focused": { color: BRAND.action },
 };

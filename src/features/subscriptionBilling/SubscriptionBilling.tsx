@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -134,8 +134,8 @@ export default function SubscriptionBilling() {
               <IconButton onClick={openSettings} sx={{ color: "text.secondary" }}><SettingsRounded /></IconButton>
             </Tooltip>
             <ActionButton
-              accentFrom={ACCENTS.admin}
-              accentTo={ACCENTS.adminDark}
+              accentFrom={BRAND.action}
+              accentTo={BRAND.actionDark}
               startIcon={<AutorenewRounded />}
               onClick={() => generateMutation.mutate()}
               disabled={generateMutation.isPending}
@@ -149,7 +149,7 @@ export default function SubscriptionBilling() {
       {/* Metrics */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="MRR" value={metrics ? formatINR(metrics.mrr) : "—"} icon={<TrendingUpRounded sx={{ fontSize: 30, color: ACCENTS.admin }} />} color={ACCENTS.admin} sub={metrics ? `${formatINR(metrics.arr)} ARR` : undefined} />
+          <StatCard label="MRR" value={metrics ? formatINR(metrics.mrr) : "—"} icon={<TrendingUpRounded sx={{ fontSize: 30, color: BRAND.action }} />} color={BRAND.action} sub={metrics ? `${formatINR(metrics.arr)} ARR` : undefined} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label="Collected" value={metrics ? formatINR(metrics.collected) : "—"} icon={<AccountBalanceWalletRounded sx={{ fontSize: 30, color: SEMANTIC.success }} />} color={SEMANTIC.success} />

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 import {
   Box,
   Container,
@@ -249,7 +249,7 @@ export default function SuperAdminForm() {
                   disabled={loading} 
                   startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
-                    background: `linear-gradient(135deg, ${ACCENTS.admin} 0%, ${ACCENTS.adminDark} 100%)`,
+                    background: `linear-gradient(135deg, ${BRAND.action} 0%, ${BRAND.actionDark} 100%)`,
                   }}
                 >
                   {loading ? t("common.saving", "Saving...") : t("common.save", "Save Admin")}
@@ -269,8 +269,8 @@ const textFieldSx = {
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider", borderRadius: "12px" },
     "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: ACCENTS.admin },
+    "&.Mui-focused fieldset": { borderColor: BRAND.action },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: ACCENTS.admin },
+  "& .MuiInputLabel-root.Mui-focused": { color: BRAND.action },
 };

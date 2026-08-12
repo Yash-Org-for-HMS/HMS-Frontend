@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -105,7 +105,7 @@ export default function AuditLogs() {
         color: "text.primary",
         "& fieldset": { borderColor: "divider" },
         "&:hover fieldset": { borderColor: "divider" },
-        "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+        "&.Mui-focused fieldset": { borderColor: BRAND.action },
         "& .MuiSvgIcon-root": { color: "text.secondary" }
       },
     },
@@ -243,7 +243,7 @@ export default function AuditLogs() {
                             <IconButton
                               size="small"
                               onClick={() => setSelectedLog(log)}
-                              sx={{ color: ACCENTS.hospital, "&:hover": { bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                              sx={{ color: BRAND.action, "&:hover": { bgcolor: "rgba(99, 102, 241, 0.1)" } }}
                             >
                               <InfoRounded fontSize="small" />
                             </IconButton>

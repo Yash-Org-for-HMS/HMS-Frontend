@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   Box,
@@ -193,7 +193,7 @@ export default function DoctorsList() {
                         <IconButton
                           size="small"
                           onClick={() => navigate(`/hospital/doctors/${doctor.doctorId}/edit`)}
-                          sx={{ color: ACCENTS.hospital, "&:hover": { bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                          sx={{ color: BRAND.action, "&:hover": { bgcolor: "rgba(99, 102, 241, 0.1)" } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>

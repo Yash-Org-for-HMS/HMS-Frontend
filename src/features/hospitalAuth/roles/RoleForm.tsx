@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -134,7 +134,7 @@ export default function RoleForm() {
         color: "text.primary",
         "& fieldset": { borderColor: "divider" },
         "&:hover fieldset": { borderColor: "divider" },
-        "&.Mui-focused fieldset": { borderColor: ACCENTS.hospital },
+        "&.Mui-focused fieldset": { borderColor: BRAND.action },
       },
     },
   };
@@ -205,7 +205,7 @@ export default function RoleForm() {
                           checked={allModulePermsSelected}
                           indeterminate={indeterminate}
                           onChange={(e) => handleModuleSelectAll(moduleName, e.target.checked)}
-                          sx={{ color: "rgba(255,255,255,0.3)", "&.Mui-checked": { color: ACCENTS.hospital }, "&.MuiCheckbox-indeterminate": { color: ACCENTS.hospital } }}
+                          sx={{ color: "rgba(255,255,255,0.3)", "&.Mui-checked": { color: BRAND.action }, "&.MuiCheckbox-indeterminate": { color: BRAND.action } }}
                         />
                       }
                     />
@@ -220,7 +220,7 @@ export default function RoleForm() {
                             size="small"
                             checked={selectedPermissions.includes(perm.permissionId)}
                             onChange={() => handlePermissionToggle(perm.permissionId)}
-                            sx={{ color: "rgba(255,255,255,0.2)", "&.Mui-checked": { color: ACCENTS.hospital } }}
+                            sx={{ color: "rgba(255,255,255,0.2)", "&.Mui-checked": { color: BRAND.action } }}
                           />
                         }
                         label={<Typography variant="body2" sx={{ color: "text.primary" }}>{perm.actionName}</Typography>}

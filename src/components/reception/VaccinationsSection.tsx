@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,7 +22,7 @@ import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import dayjs, { Dayjs } from "dayjs";
 import { formatINRAuto } from "@/utils/format";
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 const inr = formatINRAuto;
 
 const STATE_META: Record<string, { label: string; color: string }> = {

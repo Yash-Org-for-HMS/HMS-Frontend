@@ -20,7 +20,7 @@ import CheckoutDialog from "@/components/reception/CheckoutDialog";
 import { useSocket } from "@/hooks/useSocket";
 import PageHeader from "@/components/layout/PageHeader";
 import { QUEUE_POLL_MS } from "@/constants/intervals";
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 
 // Shared cell styling for the Completed section's table.
 const COMPLETED_HEAD_SX = {
@@ -221,7 +221,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
             onClick={invalidateQueue}
             sx={{
               color: "#06b6d4", borderColor: "rgba(6,182,212,0.5)", fontWeight: 600,
-              "&:hover": { borderColor: ACCENTS.reception, bgcolor: "rgba(6,182,212,0.1)" }
+              "&:hover": { borderColor: BRAND.action, bgcolor: "rgba(6,182,212,0.1)" }
             }}
           >
             Refresh

@@ -1,4 +1,4 @@
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -25,7 +25,7 @@ const SLOTS_PER_HOUR = 60 / SLOT_MINUTES;
 const TOTAL_SLOTS = (END_HOUR - START_HOUR) * SLOTS_PER_HOUR;
 const ROW_H = 52; // px per slot row
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 
 type View = "day" | "week";
 

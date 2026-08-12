@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,7 +29,7 @@ import { typeScale } from "@/styles/typography";
 import { sanitizeRichText } from "@/utils/sanitizeHtml";
 import { apiErrorText } from "@/utils/apiError";
 
-const DOCTOR_BLUE = ACCENTS.doctor;
+const DOCTOR_BLUE = BRAND.action;
 
 function InfoRow({ label, value }: { label: string; value: any }) {
   return (

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -110,10 +110,10 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <ScienceRounded sx={{ color: ACCENTS.ipd }} /> Labs & Investigations
+        <ScienceRounded sx={{ color: BRAND.action }} /> Labs & Investigations
         {isFetching && <HeartbeatLoader size={18} />}
       </DialogTitle>
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ px: 2, borderBottom: "1px solid", borderColor: "divider", "& .Mui-selected": { color: "#7c3aed !important" }, "& .MuiTabs-indicator": { bgcolor: ACCENTS.ipd } }}>
+      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ px: 2, borderBottom: "1px solid", borderColor: "divider", "& .Mui-selected": { color: "#7c3aed !important" }, "& .MuiTabs-indicator": { bgcolor: BRAND.action } }}>
         <Tab value="order" label="Order Investigations" sx={{ textTransform: "none", fontWeight: 600 }} />
         <Tab value="results" label={`Orders & Results${orders.length ? ` (${orders.length})` : ""}`} sx={{ textTransform: "none", fontWeight: 600 }} />
       </Tabs>
@@ -224,7 +224,7 @@ export default function IpdLabOrdersDialog({ open, onClose, admission }: Props) 
         onToggle={toggleTest}
         selectedIds={selectedIds}
         catalogUrl="/ipd/lab-tests"
-        accent={ACCENTS.ipd}
+        accent={BRAND.action}
       />
     </Dialog>
   );

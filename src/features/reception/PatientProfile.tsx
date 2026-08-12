@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR, getInitials } from "@/utils/format";
 import { useMemo, useState } from "react";
@@ -34,7 +34,7 @@ import InvoiceViewDialog from "@/components/reception/InvoiceViewDialog";
 import { useToast } from "@/providers/ToastContext";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 
 import type { Patient as PatientBase } from "@/types";
 
@@ -180,7 +180,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
     }
   };
 
-  const avatarColors = [ACCENTS.reception, "#7c3aed", SEMANTIC.successDark, SEMANTIC.dangerDark, SEMANTIC.warningDark, SEMANTIC.infoDark];
+  const avatarColors = [BRAND.action, "#7c3aed", SEMANTIC.successDark, SEMANTIC.dangerDark, SEMANTIC.warningDark, SEMANTIC.infoDark];
   const getColor = (pid: string) => avatarColors[pid.charCodeAt(0) % avatarColors.length];
   const formatAddress = (p: Patient) => [p.addressLine1, p.addressLine2, p.city, p.state, p.postalCode].filter(Boolean).join(", ") || null;
 
@@ -468,7 +468,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
             <Chip label={`Dues: ${formatINR(billing?.totals?.totalDues)}`}
               sx={{ bgcolor: Number(billing?.totals?.totalDues || 0) > 0 ? "rgba(239,68,68,0.12)" : "rgba(16,185,129,0.12)", color: Number(billing?.totals?.totalDues || 0) > 0 ? SEMANTIC.danger : SEMANTIC.success, fontWeight: 700 }} />
             <Chip label={`Deposits: ${formatINR(billing?.totals?.totalDeposit)}`}
-              sx={{ bgcolor: "rgba(8,145,178,0.12)", color: ACCENTS.reception, fontWeight: 700 }} />
+              sx={{ bgcolor: "rgba(8,145,178,0.12)", color: BRAND.action, fontWeight: 700 }} />
           </Stack>
           {invoices.length === 0 ? (
             <Box sx={{ py: 2 }}><Mascot pose="all-caught-up" title="No invoices" subtitle="This patient has no invoices yet." /></Box>
@@ -500,7 +500,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
                             onClick={() => setInvoiceView(inv.invoiceId)}
                             sx={!readOnly && Number(inv.balance) > 0
                               ? { textTransform: "none", bgcolor: SEMANTIC.success, "&:hover": { bgcolor: SEMANTIC.successDark } }
-                              : { textTransform: "none", color: ACCENTS.reception }}>
+                              : { textTransform: "none", color: BRAND.action }}>
                             {!readOnly && Number(inv.balance) > 0 ? "Pay" : "View"}
                           </Button>
                         </TableCell>

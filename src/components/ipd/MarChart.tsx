@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -58,7 +58,7 @@ export default function MarChart({ admissionId }: { admissionId: string }) {
               <Typography variant="body2" sx={{ fontWeight: 700 }}>{o.medicineName}</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>{[o.dosage, o.frequency, o.route].filter(Boolean).join(" · ")}</Typography>
             </Box>
-            {o.status === "BILLED" && <Chip label="Billed" size="small" sx={{ bgcolor: "rgba(8,145,178,0.12)", color: ACCENTS.ipd, fontWeight: 700 }} />}
+            {o.status === "BILLED" && <Chip label="Billed" size="small" sx={{ bgcolor: "rgba(8,145,178,0.12)", color: BRAND.action, fontWeight: 700 }} />}
           </Box>
           <Box sx={{ p: 1 }}>
             {o.doses.map((d: any, i: number) => {

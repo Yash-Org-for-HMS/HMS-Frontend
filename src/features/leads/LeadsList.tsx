@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -222,8 +222,8 @@ export default function LeadsList() {
         subtitle={t("leads.subtitle")}
         actions={
           <ActionButton
-            accentFrom={ACCENTS.admin}
-            accentTo={ACCENTS.adminDark}
+            accentFrom={BRAND.action}
+            accentTo={BRAND.actionDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/leads/new")}
           >
@@ -430,7 +430,7 @@ export default function LeadsList() {
         )}
         {selectedLead && selectedLead.assignedSalesAdminId !== user?.id && (
           <MenuItem onClick={handleAssignToMe}>
-            <AssignmentIndRounded sx={{ mr: 1.5, fontSize: 20, color: ACCENTS.admin }} /> Assign to Me
+            <AssignmentIndRounded sx={{ mr: 1.5, fontSize: 20, color: BRAND.action }} /> Assign to Me
           </MenuItem>
         )}
         <MenuItem onClick={() => { navigate(`/leads/${selectedLeadId}/edit`); setAnchorEl(null); }}>
@@ -526,9 +526,9 @@ const textFieldSx = {
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider" },
     "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: ACCENTS.admin },
+    "&.Mui-focused fieldset": { borderColor: BRAND.action },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: ACCENTS.admin },
+  "& .MuiInputLabel-root.Mui-focused": { color: BRAND.action },
   "& .MuiSvgIcon-root": { color: "text.secondary" },
 };

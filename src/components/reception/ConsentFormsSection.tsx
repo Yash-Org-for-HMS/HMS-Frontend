@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -20,7 +20,7 @@ import { assetUrl } from "@/utils/assetUrl";
 import dayjs from "dayjs";
 import DynamicFormRenderer, { validateFormResponses, type FormValues } from "../DynamicFormRenderer";
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 const STATUS_META: Record<string, { label: string; color: string }> = {
   ISSUED: { label: "Issued", color: SEMANTIC.warning },
   SIGNED: { label: "Signed", color: SEMANTIC.success },

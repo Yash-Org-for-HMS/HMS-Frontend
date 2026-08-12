@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -162,7 +162,7 @@ export default function FormBuilder() {
   // Focused fields adopt the hospital accent; everything else follows the theme.
   const textFieldProps = {
     fullWidth: true,
-    sx: { "& .MuiOutlinedInput-root.Mui-focused fieldset": { borderColor: ACCENTS.hospital } },
+    sx: { "& .MuiOutlinedInput-root.Mui-focused fieldset": { borderColor: BRAND.action } },
   };
 
   return (
@@ -231,7 +231,7 @@ export default function FormBuilder() {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600 }}>Form Fields</Typography>
                   {fields.length > 0 && (
-                    <Chip size="small" label={fields.length} sx={{ height: 22, fontWeight: 700, bgcolor: alpha(ACCENTS.hospital, 0.12), color: ACCENTS.hospital }} />
+                    <Chip size="small" label={fields.length} sx={{ height: 22, fontWeight: 700, bgcolor: alpha(BRAND.action, 0.12), color: BRAND.action }} />
                   )}
                 </Box>
                 <Button
@@ -250,7 +250,7 @@ export default function FormBuilder() {
                   <Mascot pose="nothing-here-yet" subtitle="No fields added yet." size={120} sx={{ py: 1 }} />
                   <Box sx={{ mb: 2 }} />
                   <Button variant="outlined" startIcon={<AddCircleOutlineRounded />} onClick={handleAddDataField}
-                    sx={{ textTransform: "none", color: ACCENTS.hospital, borderColor: alpha(ACCENTS.hospital, 0.5), "&:hover": { borderColor: ACCENTS.hospital, bgcolor: alpha(ACCENTS.hospital, 0.06) } }}>
+                    sx={{ textTransform: "none", color: BRAND.action, borderColor: alpha(BRAND.action, 0.5), "&:hover": { borderColor: BRAND.action, bgcolor: alpha(BRAND.action, 0.06) } }}>
                     Add First Field
                   </Button>
                 </Box>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -104,8 +104,8 @@ export default function FeatureFlagsList() {
         subtitle={t("flags.subtitle", "Manage hospital-specific feature toggles and overrides")}
         actions={
           <ActionButton
-            accentFrom={ACCENTS.admin}
-            accentTo={ACCENTS.adminDark}
+            accentFrom={BRAND.action}
+            accentTo={BRAND.actionDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/feature-flags/new")}
           >

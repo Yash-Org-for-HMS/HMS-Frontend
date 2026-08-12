@@ -42,10 +42,10 @@ import { useAuth } from "@/providers/AuthContext";
 import SidebarHeader from "@/components/layout/SidebarHeader";
 import SidebarSearch from "@/components/layout/SidebarSearch";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
-import { ACCENTS, NEUTRAL, alpha } from "@/styles/accents";
+import { NEUTRAL, alpha, BRAND } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
-const adminTheme = createPanelTheme(ACCENTS.admin, ACCENTS.adminDark);
+const adminTheme = createPanelTheme(BRAND.action, BRAND.actionDark);
 
 const drawerWidth = 260;
 
@@ -184,7 +184,7 @@ export default function AdminLayout() {
                     }}
                     sx={{
                       borderRadius: 2,
-                      bgcolor: isActive ? alpha(ACCENTS.admin, 0.08) : "transparent",
+                      bgcolor: isActive ? alpha(BRAND.action, 0.08) : "transparent",
                       "&:hover": {
                         bgcolor: "action.hover",
                       },
@@ -193,7 +193,7 @@ export default function AdminLayout() {
                     <ListItemIcon
                       sx={{
                         minWidth: 40,
-                        color: isActive ? ACCENTS.adminDark : NEUTRAL.muted,
+                        color: isActive ? BRAND.action : NEUTRAL.muted,
                       }}
                     >
                       {item.icon}
@@ -203,7 +203,7 @@ export default function AdminLayout() {
                       primaryTypographyProps={{
                         fontSize: "0.875rem",
                         fontWeight: isActive ? 600 : 500,
-                        color: isActive ? ACCENTS.adminDark : NEUTRAL.muted,
+                        color: isActive ? BRAND.action : NEUTRAL.muted,
                       }}
                     />
                   </ListItemButton>

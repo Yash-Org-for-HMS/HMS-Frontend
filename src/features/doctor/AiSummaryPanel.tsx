@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useRef, useState, useEffect } from "react";
 import { Box, Typography, Button, Chip, Alert, Fade, TextField, IconButton, Tooltip } from "@mui/material";
 import {
@@ -12,8 +12,8 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { typeScale } from "@/styles/typography";
 import { API_URL } from "@/api/axios";
 
-const BLUE = ACCENTS.doctor;
-const BLUE_DARK = ACCENTS.doctorDark;
+const BLUE = BRAND.action;
+const BLUE_DARK = BRAND.actionDark;
 
 // Signature gradients — the whole "premium AI" look hangs off these two. Kept in
 // the doctor panel's BLUE family (accent #3b82f6) with a sky sheen for depth, so
@@ -383,7 +383,7 @@ function StreamCursor() {
 
 // ── Section-aware markdown renderer ──────────────────────────────────────────
 const SECTION_STYLES: { match: RegExp; icon: any; color: string }[] = [
-  { match: /snapshot|overview/i, icon: PersonRounded, color: ACCENTS.doctor },
+  { match: /snapshot|overview/i, icon: PersonRounded, color: BRAND.action },
   { match: /problem|condition|active|recurring/i, icon: MedicalServicesRounded, color: SEMANTIC.warning },
   { match: /medication|drug|prescription/i, icon: MedicationRounded, color: "#8b5cf6" },
   { match: /trend|change|notable/i, icon: TrendingUpRounded, color: "#14b8a6" },

@@ -11,7 +11,7 @@ import {
   PersonRounded, BadgeRounded, LocalHospitalRounded, WarningAmberRounded, CheckCircleRounded,
   ReceiptLongRounded, PaymentsRounded,
 } from "@mui/icons-material";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { typeScale } from "@/styles/typography";
 import { getInitials } from "@/utils/format";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -20,8 +20,8 @@ import { axiosInstance } from "@/api/axios";
 import { useParams, useNavigate } from "react-router-dom";
 import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
 
-const LAB = ACCENTS.lab;
-const LAB_DARK = ACCENTS.labDark;
+const LAB = BRAND.action;
+const LAB_DARK = BRAND.actionDark;
 
 const evaluateCriticalValue = (testCode: string, resultValue: string): boolean => {
   const val = parseFloat(resultValue);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -16,8 +16,8 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 
-const ACCENT = ACCENTS.hospital;
-const ACCENT_DARK = ACCENTS.hospitalDark;
+const ACCENT = BRAND.action;
+const ACCENT_DARK = BRAND.actionDark;
 
 const WARD_TYPES = ["general", "surgical", "maternity", "pediatric", "ICU"];
 const ROOM_TYPES = ["general", "semi_private", "private_room", "ICU", "NICU"];

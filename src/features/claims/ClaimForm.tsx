@@ -7,7 +7,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Stack, Divider,
 } from "@mui/material";
 import { SaveRounded, AddRounded } from "@mui/icons-material";
-import { ACCENTS } from "@/styles/accents";
+import { ACCENTS, BRAND } from "@/styles/accents";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
@@ -15,7 +15,7 @@ import FormSkeleton from "@/components/skeletons/FormSkeleton";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { SCHEME_OPTIONS, PAYER_TYPE_OPTIONS, RELATION_OPTIONS } from "./claimMeta";
 
-const ACCENT = ACCENTS.reception;
+const ACCENT = BRAND.action;
 const empty = {
   patientId: "", schemeType: "INSURANCE", payerId: "", policyOrCardNumber: "", tpaName: "",
   patientRelation: "Self", estimatedCost: "", preAuthRequestedAmount: "", preAuthApprovedAmount: "",

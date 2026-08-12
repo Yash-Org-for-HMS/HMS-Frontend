@@ -59,7 +59,7 @@ import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 
 import type { Patient as PatientBase } from "@/types";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 
 interface Patient extends PatientBase {
   city: string;
@@ -155,7 +155,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
 
 
   const avatarColors = [
-    ACCENTS.reception, "#7c3aed", SEMANTIC.successDark, SEMANTIC.dangerDark, SEMANTIC.warningDark,
+    BRAND.action, "#7c3aed", SEMANTIC.successDark, SEMANTIC.dangerDark, SEMANTIC.warningDark,
     SEMANTIC.infoDark, "#db2777", "#65a30d",
   ];
 
@@ -420,7 +420,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
                         {!readOnly && <Tooltip title="Admit (IPD)">
                           <IconButton size="small"
                             onClick={(e) => { e.stopPropagation(); setAdmitPatient(patient); }}
-                            sx={{ color: "text.secondary", "&:hover": { color: ACCENTS.reception, bgcolor: "rgba(8,145,178,0.08)" } }}>
+                            sx={{ color: "text.secondary", "&:hover": { color: BRAND.action, bgcolor: "rgba(8,145,178,0.08)" } }}>
                             <LocalHotelRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>}

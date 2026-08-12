@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { trialStatusColor } from "@/utils/statusColors";
 import { useQuery } from "@tanstack/react-query";
@@ -165,8 +165,8 @@ export default function TrialsList() {
         subtitle={t("trials.subtitle")}
         actions={
           <ActionButton
-            accentFrom={ACCENTS.admin}
-            accentTo={ACCENTS.adminDark}
+            accentFrom={BRAND.action}
+            accentTo={BRAND.actionDark}
             startIcon={<AddRounded />}
             onClick={() => navigate("/trials/new")}
           >
@@ -338,9 +338,9 @@ const textFieldSx = {
     backgroundColor: "rgba(15, 23, 42, 0.4)",
     "& fieldset": { borderColor: "divider" },
     "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: ACCENTS.admin },
+    "&.Mui-focused fieldset": { borderColor: BRAND.action },
   },
   "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: ACCENTS.admin },
+  "& .MuiInputLabel-root.Mui-focused": { color: BRAND.action },
   "& .MuiSvgIcon-root": { color: "text.secondary" },
 };

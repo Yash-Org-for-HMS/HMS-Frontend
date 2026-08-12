@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -157,7 +157,7 @@ export default function FormTemplatesList() {
                         <IconButton
                           size="small"
                           onClick={() => navigate(`/hospital/form-builder/${t.formTemplateId}/edit`)}
-                          sx={{ color: ACCENTS.hospital, mr: 1, "&:hover": { bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                          sx={{ color: BRAND.action, mr: 1, "&:hover": { bgcolor: "rgba(99, 102, 241, 0.1)" } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>
