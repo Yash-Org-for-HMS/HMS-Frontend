@@ -160,6 +160,11 @@ export default function AuditLogs() {
               value={filters.startDate}
               onChange={handleFilterChange}
               {...textFieldProps}
+              // A date input always renders "dd-mm-yyyy", but the label only
+              // floats once the field is focused or filled — so the two sat on
+              // top of each other. Must come AFTER the spread, which would
+              // otherwise overwrite this with its own InputLabelProps.
+              InputLabelProps={{ shrink: true, style: { color: "text.secondary" } }}
             />
           </Grid>
           <Grid size={{ xs: 6, md: 2 }}>
@@ -170,6 +175,7 @@ export default function AuditLogs() {
               value={filters.endDate}
               onChange={handleFilterChange}
               {...textFieldProps}
+              InputLabelProps={{ shrink: true, style: { color: "text.secondary" } }}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 2 }}>
