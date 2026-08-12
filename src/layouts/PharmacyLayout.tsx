@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, alpha } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
 const pharmacyTheme = createPanelTheme(ACCENTS.pharmacy, ACCENTS.pharmacyDark);
@@ -103,7 +103,7 @@ export default function PharmacyLayout() {
               <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => { navigate(item.path); if (isMobile) setMobileOpen(false); }}
-                sx={{ borderRadius: 2, bgcolor: isActive ? "rgba(79, 70, 229, 0.08)" : "transparent", "&:hover": { bgcolor: "action.hover" } }}
+                sx={{ borderRadius: 2, bgcolor: isActive ? alpha(ACCENTS.pharmacy, 0.08) : "transparent", "&:hover": { bgcolor: "action.hover" } }}
               >
                 <ListItemIcon sx={{ minWidth: 40, color: isActive ? ACCENTS.pharmacy : NEUTRAL.muted, opacity: locked ? 0.55 : 1 }}>
                   {item.icon}

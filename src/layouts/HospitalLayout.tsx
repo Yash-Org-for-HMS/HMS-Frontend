@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Outlet, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL, alpha } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
 const hospitalTheme = createPanelTheme(ACCENTS.hospital, ACCENTS.hospitalDark);
@@ -203,7 +203,7 @@ export default function HospitalLayout() {
                 }}
                 sx={{
                   borderRadius: 2,
-                  bgcolor: isActive ? "rgba(16, 185, 129, 0.08)" : "transparent",
+                  bgcolor: isActive ? alpha(ACCENTS.hospital, 0.08) : "transparent",
                   "&:hover": {
                     bgcolor: "action.hover",
                   },

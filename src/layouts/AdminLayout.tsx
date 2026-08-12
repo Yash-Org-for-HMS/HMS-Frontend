@@ -42,7 +42,7 @@ import { useAuth } from "@/providers/AuthContext";
 import SidebarHeader from "@/components/layout/SidebarHeader";
 import SidebarSearch from "@/components/layout/SidebarSearch";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
-import { ACCENTS, NEUTRAL } from "@/styles/accents";
+import { ACCENTS, NEUTRAL, alpha } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
 const adminTheme = createPanelTheme(ACCENTS.admin, ACCENTS.adminDark);
@@ -184,7 +184,7 @@ export default function AdminLayout() {
                     }}
                     sx={{
                       borderRadius: 2,
-                      bgcolor: isActive ? "rgba(79, 70, 229, 0.08)" : "transparent",
+                      bgcolor: isActive ? alpha(ACCENTS.admin, 0.08) : "transparent",
                       "&:hover": {
                         bgcolor: "action.hover",
                       },

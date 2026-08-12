@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, alpha } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
 const doctorTheme = createPanelTheme(ACCENTS.doctor, ACCENTS.doctorDark);
@@ -116,8 +116,8 @@ export default function DoctorLayout() {
                 }}
                 sx={{
                   borderRadius: 2,
-                  bgcolor: isActive ? `rgba(59,130,246,0.12)` : "transparent",
-                  "&:hover": { bgcolor: `rgba(59,130,246,0.08)` },
+                  bgcolor: isActive ? alpha(ACCENTS.doctor, 0.12) : "transparent",
+                  "&:hover": { bgcolor: alpha(ACCENTS.doctor, 0.08) },
                   transition: "all 0.15s ease",
                 }}
               >
@@ -150,7 +150,7 @@ export default function DoctorLayout() {
         })}
       </List>
 
-      <Divider sx={{ borderColor: `rgba(59,130,246,0.1)` }} />
+      <Divider sx={{ borderColor: alpha(ACCENTS.doctor, 0.1) }} />
 
       {/* Branch switcher (only shown to multi-branch users) */}
       <Box sx={{ px: 2, pt: 2 }}>
@@ -179,7 +179,7 @@ export default function DoctorLayout() {
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
           bgcolor: "background.paper",
-          borderBottom: `1px solid rgba(59,130,246,0.12)`,
+          borderBottom: `1px solid ${alpha(ACCENTS.doctor, 0.12)}`,
         }}
       >
         <Toolbar sx={{ justifyContent: "space-between", minHeight: "70px !important" }}>
