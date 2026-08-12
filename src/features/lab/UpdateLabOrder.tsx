@@ -5,6 +5,7 @@ import ErrorState from "@/components/ErrorState";
 import {
   Box, Typography, Paper, Grid, TextField, Button, Alert, Chip, Divider, Avatar,
   Tooltip, LinearProgress,
+  Checkbox, FormControlLabel,
 } from "@mui/material";
 import {
   SaveRounded, ArrowBackRounded, ScienceRounded, AccessTimeRounded, PrintRounded, VerifiedRounded,
@@ -23,17 +24,36 @@ import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
 const LAB = BRAND.action;
 const LAB_DARK = BRAND.actionDark;
 
+// Mirrors the backend's evaluateCriticalValue (lab.service.ts) so this live
+// preview matches what actually gets saved. Handles plain numbers, limit
+// notation ("<0.5", ">1000") and qualitative text — a positive culture or a
+// reactive screen could previously never be flagged, because anything
+// non-numeric fell straight through as "not critical".
+const CRITICAL_QUALITATIVE = ["reactive", "positive", "detected", "growth", "incompatible", "isolated"];
+const QUALITATIVE_NEGATIONS = ["non-reactive", "nonreactive", "non reactive", "not detected", "no growth", "negative", "not isolated", "no organism"];
+
 const evaluateCriticalValue = (testCode: string, resultValue: string): boolean => {
-  const val = parseFloat(resultValue);
+  const raw = (resultValue ?? "").trim();
+  if (!raw || raw.toUpperCase() === "PENDING") return false;
+
+  const lower = raw.toLowerCase();
+  if (QUALITATIVE_NEGATIONS.some((n) => lower.includes(n))) return false;
+  if (CRITICAL_QUALITATIVE.some((k) => lower.includes(k))) return true;
+
+  const limit = raw.match(/^([<>])\s*(-?\d+(?:\.\d+)?)/);
+  const val = limit ? parseFloat(limit[2]) : parseFloat(raw);
   if (isNaN(val)) return false;
+  const below = limit?.[1] === "<";
+  const above = limit?.[1] === ">";
+  const range = (low: number, high: number) =>
+    above ? val >= high : below ? val <= low : val < low || val > high;
 
   const code = testCode?.toUpperCase() || "";
-  if (code === 'HEMO' || code === 'HB' || code === 'CBC-HB') return val < 7.0 || val > 20.0;
-  if (code === 'PLT' || code === 'PLATELETS') return val < 20000 || val > 1000000;
-  if (code === 'GLU' || code === 'FBS' || code === 'RBS') return val < 50 || val > 400;
-  if (code === 'K' || code === 'POTASSIUM') return val < 2.5 || val > 6.5;
-  if (code === 'WBC') return val < 2000 || val > 30000;
-
+  if (code === 'HEMO' || code === 'HB' || code === 'CBC-HB') return range(7.0, 20.0);
+  if (code === 'PLT' || code === 'PLATELETS') return range(20000, 1000000);
+  if (code === 'GLU' || code === 'FBS' || code === 'RBS') return range(50, 400);
+  if (code === 'K' || code === 'POTASSIUM') return range(2.5, 6.5);
+  if (code === 'WBC') return range(2000, 30000);
   return false;
 };
 
@@ -56,7 +76,7 @@ export default function UpdateLabOrder() {
   const [saving, setSaving] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [showPOS, setShowPOS] = useState(false);
-  const [results, setResults] = useState<Record<string, { value: string, range: string, remarks: string }>>({});
+  const [results, setResults] = useState<Record<string, { value: string, range: string, remarks: string, critical?: boolean }>>({});
   const [message, setMessage] = useState<{type: "success" | "error", text: string} | null>(null);
 
   const { data: order, isLoading: loading, isError, error, refetch } = useQuery({
@@ -86,6 +106,10 @@ export default function UpdateLabOrder() {
         value: r.resultValue === "PENDING" ? "" : r.resultValue,
         range: r.normalRange === "N/A" ? "" : r.normalRange,
         remarks: r.remarks || "",
+        // undefined = no explicit call yet, so the rules decide. Seeded only when
+        // the saved flag DISAGREES with the rules, so reopening a report keeps a
+        // human override instead of silently reverting to the automatic verdict.
+        critical: r.isCritical !== evaluateCriticalValue(r.labTest?.testCode || "", r.resultValue || "") ? r.isCritical : undefined,
       };
     });
     setResults(initialResults);
@@ -101,6 +125,7 @@ export default function UpdateLabOrder() {
         resultValue: data.value || "PENDING",
         normalRange: data.range || "N/A",
         remarks: data.remarks || "",
+        ...(typeof data.critical === "boolean" ? { isCritical: data.critical } : {}),
       }));
 
       await axiosInstance.put(`/lab/orders/${id}/results`, { results: payload });
@@ -153,7 +178,7 @@ export default function UpdateLabOrder() {
   const total = reports.length;
   const pct = total ? Math.round((enteredCount / total) * 100) : 0;
 
-  const set = (rid: string, key: "value" | "range" | "remarks", v: string) =>
+  const set = (rid: string, key: "value" | "range" | "remarks" | "critical", v: string | boolean) =>
     setResults({ ...results, [rid]: { ...results[rid], [key]: v } });
 
   return (
@@ -288,7 +313,12 @@ export default function UpdateLabOrder() {
           {reports.map((report: any) => {
             const rid = report.labReportId;
             const val = results[rid]?.value || "";
-            const isCriticalNow = evaluateCriticalValue(report.labTest?.testCode || "", val);
+            const autoCritical = evaluateCriticalValue(report.labTest?.testCode || "", val);
+            // An explicit call by the technician wins in both directions; the
+            // automatic rules only cover five analytes, so anything else that is
+            // clinically critical can ONLY be raised by a human.
+            const override = results[rid]?.critical;
+            const isCriticalNow = typeof override === "boolean" ? override : autoCritical;
             return (
               <Paper key={rid} elevation={0} sx={{
                 p: 2, borderRadius: 2,
@@ -314,7 +344,24 @@ export default function UpdateLabOrder() {
                         sx={{ height: 20, fontFamily: "monospace", "& .MuiChip-label": { px: 0.75, ...typeScale.chip } }} />
                     )}
                   </Box>
-                  {isCriticalNow && <Chip label="CRITICAL" size="small" color="error" sx={{ height: 22, fontWeight: 700 }} />}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    {isCriticalNow && <Chip label="CRITICAL" size="small" color="error" sx={{ height: 22, fontWeight: 700 }} />}
+                    <Tooltip title="Automatic detection only covers a few numeric analytes. Tick this for anything else that needs the ordering doctor's acknowledgement — a positive culture, a reactive screen, an incompatible cross-match.">
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            size="small"
+                            checked={isCriticalNow}
+                            disabled={!canEdit}
+                            onChange={(e) => set(rid, "critical", e.target.checked)}
+                            sx={{ color: SEMANTIC.danger, "&.Mui-checked": { color: SEMANTIC.danger } }}
+                          />
+                        }
+                        label={<Typography sx={{ ...typeScale.chip, color: "text.secondary" }}>Mark critical</Typography>}
+                        sx={{ mr: 0 }}
+                      />
+                    </Tooltip>
+                  </Box>
                 </Box>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, sm: 4 }}>
