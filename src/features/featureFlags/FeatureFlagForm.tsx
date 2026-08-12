@@ -275,8 +275,6 @@ export default function FeatureFlagForm() {
                   disabled={loading} 
                   startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
-                    background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-                    boxShadow: "0 4px 14px 0 rgba(245, 158, 11, 0.39)",
                   }}
                 >
                   {loading ? t("common.saving", "Saving...") : t("common.save", "Save Flag")}

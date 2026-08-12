@@ -203,12 +203,9 @@ export default function MedicineCatalog() {
             fontWeight: 600,
             px: 3,
             py: 1.2,
-            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-            boxShadow: '0 8px 16px -4px rgba(16, 185, 129, 0.4)',
             transition: 'all 0.2s',
             '&:hover': {
               transform: 'translateY(-2px)',
-              boxShadow: '0 12px 20px -4px rgba(16, 185, 129, 0.5)',
             }
           }}
         >
@@ -462,9 +459,7 @@ export default function MedicineCatalog() {
               fontWeight: 600,
               borderRadius: '8px',
               px: 3,
-              background: 'linear-gradient(135deg, #0d9488 0%, #3B82F6 100%)',
               boxShadow: 'none',
-              '&:hover': { boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)' }
             }}
           >
             {saving ? <HeartbeatLoader size={22} /> : "Save Changes"}

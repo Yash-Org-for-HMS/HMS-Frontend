@@ -311,8 +311,6 @@ export default function PlanForm() {
                   disabled={loading} 
                   startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
-                    background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                    boxShadow: "0 4px 14px 0 rgba(16, 185, 129, 0.39)",
                   }}
                 >
                   {loading ? t("common.saving", "Saving...") : t("common.save", "Save Plan")}

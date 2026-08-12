@@ -167,8 +167,6 @@ export default function FrontDeskConsole() {
                 sx={{
                   minWidth: "auto",
                   px: 2,
-                  background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
-                  boxShadow: "0 4px 14px rgba(6, 182, 212, 0.3)",
                   borderRadius: 2,
                   "&:hover": { background: "linear-gradient(135deg, #0e7490 0%, #0891b2 100%)" },
                 }}

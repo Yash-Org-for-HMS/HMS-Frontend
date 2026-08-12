@@ -196,7 +196,6 @@ export default function NurseDashboard() {
                             sx={{
                               background: `linear-gradient(135deg, ${NURSE_PURPLE_DARK}, ${NURSE_PURPLE})`,
                               textTransform: "none", fontWeight: 600, fontSize: "0.875rem",
-                              boxShadow: "0 2px 8px rgba(124,58,237,0.25)",
                               "&:hover": { background: `linear-gradient(135deg, #6d28d9, ${NURSE_PURPLE_DARK})` },
                             }}
                           >

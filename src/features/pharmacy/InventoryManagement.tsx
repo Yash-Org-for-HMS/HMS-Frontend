@@ -236,8 +236,6 @@ export default function InventoryManagement() {
             fontWeight: 600,
             px: 3,
             py: 1.2,
-            background: 'linear-gradient(135deg, #0d9488 0%, #3B82F6 100%)',
-            boxShadow: '0 8px 16px -4px rgba(79, 70, 229, 0.4)',
           }}
         >
           Create PO

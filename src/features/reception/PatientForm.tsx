@@ -587,16 +587,12 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
                 disabled={loading}
                 startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                 sx={{
-                  background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
                   fontWeight: 700,
                   px: 4,
                   py: 1.3,
                   textTransform: "none",
                   borderRadius: 2,
-                  boxShadow: "0 4px 14px rgba(6, 182, 212, 0.25)",
                   "&:hover": {
-                    background: "linear-gradient(135deg, #0e7490 0%, #0891b2 100%)",
-                    boxShadow: "0 6px 20px rgba(6, 182, 212, 0.35)",
                   },
                 }}
               >

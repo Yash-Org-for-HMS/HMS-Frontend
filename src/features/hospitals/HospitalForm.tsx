@@ -411,8 +411,6 @@ export default function HospitalForm() {
                   disabled={loading} 
                   startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
-                    background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-                    boxShadow: "0 4px 14px 0 rgba(59, 130, 246, 0.39)",
                   }}
                 >
                   {loading ? t("common.saving", "Saving...") : isConvert ? "Convert & create hospital" : t("common.save", "Save Hospital")}

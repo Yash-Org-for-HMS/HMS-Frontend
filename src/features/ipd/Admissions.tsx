@@ -109,7 +109,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
         actions={
           readOnly ? undefined : (
           <Button variant="contained" startIcon={<LocalHotelRounded />} onClick={() => setAdmitOpen(true)}
-            sx={{ background: "linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%)", fontWeight: 600, textTransform: "none", borderRadius: 2 }}>
+            sx={{ fontWeight: 600, textTransform: "none", borderRadius: 2 }}>
             Admit Patient
           </Button>
           )

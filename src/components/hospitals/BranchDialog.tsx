@@ -119,7 +119,6 @@ export default function BranchDialog({ open, onClose, hospitalId, plans, editing
           onClick={handleSubmit}
           variant="contained"
           disabled={!branch.name || loading}
-          sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" }}
         >
           {loading ? "Adding..." : "Add Branch"}
         </Button>

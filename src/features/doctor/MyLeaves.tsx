@@ -93,7 +93,7 @@ export default function MyLeaves() {
             startIcon={addLeave.isPending ? <HeartbeatLoader size={22} /> : <AddRounded />}
             onClick={() => addLeave.mutate()}
             disabled={addLeave.isPending || !fromDate}
-            sx={{ background: "linear-gradient(135deg, #6366f1 0%, #06b6d4 100%)", textTransform: "none", fontWeight: 600 }}
+            sx={{ textTransform: "none", fontWeight: 600 }}
           >
             Add Leave
           </Button>

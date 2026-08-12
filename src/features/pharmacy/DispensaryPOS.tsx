@@ -569,7 +569,6 @@ export default function DispensaryPOS() {
                     borderRadius: 2,
                     fontWeight: 700,
                     fontSize: '1.1rem',
-                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                     boxShadow: cart.length > 0 ? '0 8px 16px -4px rgba(16, 185, 129, 0.4)' : 'none',
                     minWidth: { xs: '100%', md: '250px' }
                   }}

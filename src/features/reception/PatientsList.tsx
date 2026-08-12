@@ -176,13 +176,11 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
               startIcon={<PersonAddRounded />}
               onClick={() => navigate("/reception/patients/new")}
               sx={{
-                background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)",
                 fontWeight: 600,
                 px: 3,
                 py: 1.2,
                 textTransform: "none",
                 borderRadius: 2,
-                boxShadow: "0 4px 14px rgba(6, 182, 212, 0.4)",
               }}
             >
               Register New Patient

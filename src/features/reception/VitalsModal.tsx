@@ -221,9 +221,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
             <Box
               sx={{
                 width: 44, height: 44, borderRadius: 2,
-                background: "linear-gradient(135deg, #06b6d4, #0891b2)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 4px 12px rgba(6,182,212,0.3)",
               }}
             >
               <MonitorHeartRounded sx={{ color: "#fff", fontSize: 24 }} />
@@ -408,11 +406,9 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
               startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
               id="vitals-save-button"
               sx={{
-                background: "linear-gradient(135deg, #06b6d4, #0891b2)",
                 textTransform: "none",
                 fontWeight: 600,
                 px: 3,
-                boxShadow: "0 4px 12px rgba(6,182,212,0.3)",
                 "&:hover": { background: "linear-gradient(135deg, #0891b2, #0e7490)" },
               }}
             >
