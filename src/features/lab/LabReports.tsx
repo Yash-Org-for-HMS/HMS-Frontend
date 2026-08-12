@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { Box, Grid, Paper, Tabs, Tab, TextField, MenuItem, Typography } from "@mui/material";
+import { Box, Grid, Paper, Tabs, Tab, TextField, MenuItem, Typography, Alert } from "@mui/material";
 import {
   ScienceRounded, CheckCircleRounded, HourglassEmptyRounded, BiotechRounded,
   MonitorHeartRounded, WarningAmberRounded, AccessTimeRounded, CurrencyRupeeRounded,
@@ -48,7 +48,7 @@ export function LabOverview() {
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<CheckCircleRounded />} accent={SEMANTIC.success} label="Completed" value={s?.completed || 0} current={s?.completed} previous={p?.completed} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology" value={s?.radiologyOrders || 0} current={s?.radiologyOrders} previous={p?.radiologyOrders} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Critical results" value={s?.criticalResults || 0} current={s?.criticalResults} previous={p?.criticalResults} higherIsBetter={false} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent={BRAND.actionDark} label="Avg turnaround" value={`${s?.avgTurnaroundHours || 0}h`} current={s?.avgTurnaroundHours} previous={p?.avgTurnaroundHours} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent={BRAND.actionDark} label="Avg time to result" value={`${s?.avgTurnaroundHours || 0} hrs`} current={s?.avgTurnaroundHours} previous={p?.avgTurnaroundHours} higherIsBetter={false} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Revenue estimate" value={inr(s?.revenueEstimate)} current={s?.revenueEstimate} previous={p?.revenueEstimate} /></Grid>
           </Grid>
 
@@ -103,7 +103,7 @@ export function TestWise() {
                 num("performed", "Performed"),
                 num("completed", "Completed"),
                 num("critical", "Critical"),
-                { key: "avgTatHours", label: "Avg TAT (h)", align: "right", value: (r) => Number(r.avgTatHours) },
+                { key: "avgTatHours", label: "Avg hours to result", align: "right", value: (r) => Number(r.avgTatHours) },
                 money("revenue", "Revenue"),
               ]}
               rows={labRows}
@@ -134,6 +134,20 @@ export function TestWise() {
 // ── Turnaround & SLA ──────────────────────────────────────────────────────────
 // TAT distribution, SLA compliance, avg/median/p90, and the slowest orders — the
 // core lab quality view, for lab and radiology side by side.
+
+// With no completed orders the API still returns zeros, and "0 hrs / 0%" reads
+// as "instant, and failing every target" — the opposite of "nothing to report".
+// So every card falls back to an em dash + a plain sentence when count is 0.
+// Sub-hour figures are worded, not printed: a real median can round to 0.0 and
+// "half are ready within 0 hrs" is nonsense to read.
+const hoursText = (v: any) => { const n = Number(v) || 0; return n < 1 ? "under an hour" : `${n} hrs`; };
+const avgText = (d: any) => (!d?.count ? "—" : Number(d.avg) < 1 ? "< 1 hr" : `${d.avg} hrs`);
+const spreadText = (d: any) => (d?.count
+  ? `Half are ready within ${hoursText(d.median)} · 9 in 10 within ${hoursText(d.p90)}`
+  : "Nothing completed in this period");
+const onTimeAccent = (d: any) => (!d?.count ? NEUTRAL.muted
+  : d.slaPct >= 90 ? SEMANTIC.success : d.slaPct >= 75 ? SEMANTIC.warning : SEMANTIC.danger);
+
 export function Turnaround() {
   const [range, setRange] = useState<DateRange>(initialRange);
   const [doctorId, setDoctorId] = useState("");
@@ -150,39 +164,61 @@ export function Turnaround() {
     <Box>
       <ReportFilters value={range} onChange={setRange}>
         <ReportFilterSelect label="Ordering doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
-        <TextField select size="small" label="SLA target" value={sla} onChange={(e) => setSla(e.target.value)} sx={{ minWidth: 120 }}>
-          {["12", "24", "48", "72"].map((h) => <MenuItem key={h} value={h}>{h}h</MenuItem>)}
+        <TextField select size="small" label="On-time target" value={sla} onChange={(e) => setSla(e.target.value)} sx={{ minWidth: 150 }}
+          helperText="Results are counted on-time if ready within this">
+          {["12", "24", "48", "72"].map((h) => <MenuItem key={h} value={h}>Within {h} hours</MenuItem>)}
         </TextField>
       </ReportFilters>
+
+      {/* The two modalities are timed from DIFFERENT starting points, so the
+          figures below are not directly comparable. Saying so beats letting
+          someone conclude radiology is "slower" when it simply starts counting
+          earlier — it includes the wait for the patient to attend. */}
+      <Alert severity="info" sx={{ mb: 2.5, borderRadius: 2 }}>
+        <strong>How this is measured.</strong> For lab tests, the clock starts when the{" "}
+        <strong>sample is collected</strong> and stops when results are entered. For radiology, it starts
+        when the scan is <strong>ordered</strong> and stops when the report is filed — so radiology also
+        includes the time waiting for the patient to come in. Compare each against its own target rather
+        than against the other.
+      </Alert>
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SpeedRounded />} accent={BRAND.action} label="Lab avg TAT" value={`${data.lab.avg}h`} sub={`median ${data.lab.median}h · p90 ${data.lab.p90}h`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<VerifiedRounded />} accent={data.lab.slaPct >= 90 ? SEMANTIC.success : data.lab.slaPct >= 75 ? SEMANTIC.warning : SEMANTIC.danger} label={`Lab SLA (≤${sla}h)`} value={`${data.lab.slaPct}%`} sub={`${data.lab.count} completed`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.actionDark} label="Radiology avg TAT" value={`${data.radiology.avg}h`} sub={`median ${data.radiology.median}h · p90 ${data.radiology.p90}h`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<VerifiedRounded />} accent={data.radiology.slaPct >= 90 ? SEMANTIC.success : data.radiology.slaPct >= 75 ? SEMANTIC.warning : SEMANTIC.danger} label={`Radiology SLA (≤${sla}h)`} value={`${data.radiology.slaPct}%`} sub={`${data.radiology.count} reported`} /></Grid>
+            {/* Plain words instead of TAT / SLA / p90. "p90" in particular is
+                meaningless outside analytics — "9 in 10 within Xh" says the
+                same thing and needs no explaining. */}
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SpeedRounded />} accent={BRAND.action}
+              label="Lab — average time to result" value={avgText(data.lab)} sub={spreadText(data.lab)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<VerifiedRounded />} accent={onTimeAccent(data.lab)}
+              label={`Lab — ready within ${sla} hrs`} value={data.lab.count ? `${data.lab.slaPct}%` : "—"}
+              sub={data.lab.count ? `of ${data.lab.count} completed test${data.lab.count === 1 ? "" : "s"}` : "No completed tests in this period"} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.actionDark}
+              label="Radiology — average time to report" value={avgText(data.radiology)} sub={spreadText(data.radiology)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<VerifiedRounded />} accent={onTimeAccent(data.radiology)}
+              label={`Radiology — ready within ${sla} hrs`} value={data.radiology.count ? `${data.radiology.slaPct}%` : "—"}
+              sub={data.radiology.count ? `of ${data.radiology.count} reported scan${data.radiology.count === 1 ? "" : "s"}` : "No reported scans in this period"} /></Grid>
           </Grid>
 
           <Box sx={{ mb: 2.5 }}>
-            <ReportTable title="Turnaround-time distribution" filename={`lab_tat_distribution_${range.from}_${range.to}`}
+            <ReportTable title="How long results took" filename={`lab_tat_distribution_${range.from}_${range.to}`}
               columns={[
-                { key: "bucket", label: "Turnaround" },
-                num("lab", "Lab orders"),
-                num("radiology", "Radiology orders"),
+                { key: "bucket", label: "Time taken" },
+                num("lab", "Lab tests"),
+                num("radiology", "Radiology scans"),
               ]} rows={dist} />
           </Box>
 
           <ReportTable
-            title={`Slowest orders${data.slowestTotal > data.slowestShown ? ` (top ${data.slowestShown} of ${data.slowestTotal})` : ""}`}
+            title={`Took the longest${data.slowestTotal > data.slowestShown ? ` (slowest ${data.slowestShown} of ${data.slowestTotal})` : ""}`}
             filename={`lab_slowest_${range.from}_${range.to}`}
             emptyText="No completed orders with a measurable turnaround in this period."
             columns={[
               { key: "patient", label: "Patient" },
               { key: "uhid", label: "UHID" },
-              { key: "modality", label: "Modality" },
+              { key: "modality", label: "Lab / Radiology" },
               { key: "detail", label: "Test / scan" },
               { key: "doctor", label: "Ordering doctor" },
-              { key: "tatHours", label: "TAT (h)", align: "right", value: (r) => Number(r.tatHours) },
+              { key: "tatHours", label: "Hours taken", align: "right", value: (r) => Number(r.tatHours) },
               { key: "completedOn", label: "Completed" },
             ]}
             rows={slowest}
@@ -314,7 +350,7 @@ export default function LabReports() {
           sx={{ px: 1, "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 56 }, "& .Mui-selected": { color: `${ACCENT} !important` }, "& .MuiTabs-indicator": { bgcolor: ACCENT } }}>
           <Tab icon={<ScienceRounded fontSize="small" />} iconPosition="start" label="Overview" />
           <Tab icon={<BiotechRounded fontSize="small" />} iconPosition="start" label="Test-Wise" />
-          <Tab icon={<SpeedRounded fontSize="small" />} iconPosition="start" label="Turnaround & SLA" />
+          <Tab icon={<SpeedRounded fontSize="small" />} iconPosition="start" label="Turnaround Times" />
           <Tab icon={<PendingActionsRounded fontSize="small" />} iconPosition="start" label="Pending & Backlog" />
           <Tab icon={<CrisisAlertRounded fontSize="small" />} iconPosition="start" label="Critical Results" />
         </Tabs>

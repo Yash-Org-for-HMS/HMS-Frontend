@@ -76,7 +76,7 @@ const GROUPS: ReportGroup[] = [
     items: [
       { key: "lab-reports", label: "Lab & Radiology Overview", Comp: LabOverview },
       { key: "lab-test-wise", label: "Test-Wise (Lab & Radiology)", Comp: TestWise },
-      { key: "lab-turnaround", label: "Turnaround & SLA", Comp: Turnaround },
+      { key: "lab-turnaround", label: "Turnaround Times", Comp: Turnaround },
       { key: "lab-pending", label: "Pending & Backlog", Comp: Pending },
       { key: "lab-critical", label: "Critical Results", Comp: CriticalResults },
     ],
