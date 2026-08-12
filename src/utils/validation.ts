@@ -58,6 +58,15 @@ export const isNonNegativeNumber: Rule = (v) => {
   return n >= 0 ? "" : "Value cannot be negative";
 };
 
+/** Strictly greater than zero. For prices where 0 means "never configured"
+ *  rather than "free" — a 0 there bills nothing but still has to be settled. */
+export const isPositiveNumber: Rule = (v) => {
+  if (isBlank(v)) return "";
+  const n = Number(v);
+  if (!Number.isFinite(n)) return "Enter a valid number";
+  return n > 0 ? "" : "Must be greater than 0";
+};
+
 export const min =
   (limit: number): Rule =>
   (v) => {

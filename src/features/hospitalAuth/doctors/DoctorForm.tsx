@@ -23,7 +23,7 @@ import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import FormSkeleton from "@/components/skeletons/FormSkeleton";
 import CredentialDialog from "@/components/CredentialDialog";
-import { validate, hasErrors, required, isEmail, isPhone, isNonNegativeNumber, type Errors } from "@/utils/validation";
+import { validate, hasErrors, required, isEmail, isPhone, isNonNegativeNumber, isPositiveNumber, type Errors } from "@/utils/validation";
 
 export default function DoctorForm() {
   const navigate = useNavigate();
@@ -123,7 +123,8 @@ export default function DoctorForm() {
       email: [required("Email"), isEmail],
       phone: [isPhone],
       licenseNumber: [required("License number")],
-      consultationFee: [required("Consultation fee"), isNonNegativeNumber],
+      consultationFee: [required("Consultation fee"), isPositiveNumber],
+      ipdVisitCharge: [required("IPD ward-visit charge"), isPositiveNumber],
       experienceYears: [isNonNegativeNumber],
       // A doctor MUST belong to a department — booking filters the doctor list by
       // department, so a departmentless doctor is invisible there (the empty-
@@ -323,14 +324,15 @@ export default function DoctorForm() {
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Consultation Fee (₹)"
+                  label="OPD Consultation Fee (₹)"
                   name="consultationFee"
                   type="number"
                   value={formData.consultationFee}
                   onChange={handleChange}
                   required
+                  inputProps={{ min: 1 }}
                   error={!!errors.consultationFee}
-                  helperText={errors.consultationFee}
+                  helperText={errors.consultationFee || "Charged per OPD consultation. Must be above 0."}
                   {...textFieldProps}
                 />
               </Grid>
@@ -341,7 +343,10 @@ export default function DoctorForm() {
                   type="number"
                   value={formData.ipdVisitCharge}
                   onChange={handleChange}
-                  helperText="Billed per logged ward visit during an admission"
+                  required
+                  inputProps={{ min: 1 }}
+                  error={!!errors.ipdVisitCharge}
+                  helperText={errors.ipdVisitCharge || "Billed per logged ward visit during an admission. Must be above 0."}
                   {...textFieldProps}
                 />
               </Grid>
