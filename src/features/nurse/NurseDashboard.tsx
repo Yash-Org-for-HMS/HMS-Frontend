@@ -1,4 +1,5 @@
 import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { alpha } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Grid, Typography, Paper, Alert,
@@ -132,7 +133,7 @@ export default function NurseDashboard() {
                 size="small" variant="outlined"
                 startIcon={<SyncRounded />}
                 onClick={() => refetch()}
-                sx={{ color: NURSE_PURPLE, borderColor: `rgba(167,139,250,0.4)`, textTransform: "none", "&:hover": { borderColor: NURSE_PURPLE, bgcolor: "rgba(167,139,250,0.06)" } }}
+                sx={{ color: NURSE_PURPLE, borderColor: alpha(NURSE_PURPLE, 0.4), textTransform: "none", "&:hover": { borderColor: NURSE_PURPLE, bgcolor: alpha(NURSE_PURPLE, 0.06) } }}
               >
                 Refresh
               </Button>
@@ -183,11 +184,10 @@ export default function NurseDashboard() {
                             size="small" variant="contained"
                             startIcon={<MonitorHeartRounded />}
                             onClick={() => navigate("/nurse/queue", { state: { token } })}
-                            sx={{
-                              background: `linear-gradient(135deg, ${NURSE_PURPLE_DARK}, ${NURSE_PURPLE})`,
-                              textTransform: "none", fontWeight: 600, fontSize: "0.875rem",
-                              "&:hover": { background: `linear-gradient(135deg, #6d28d9, ${NURSE_PURPLE_DARK})` },
-                            }}
+                            // Gradient and hover come from the theme's contained-primary
+                            // style, so this button matches every other primary action
+                            // in the product instead of carrying its own violet.
+                            sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.875rem" }}
                           >
                             Record Vitals
                           </Button>
@@ -221,11 +221,11 @@ export default function NurseDashboard() {
                     key={token.queueTokenId}
                     sx={{
                       display: "flex", alignItems: "center", gap: 1.5,
-                      p: 1.5, borderRadius: 2, bgcolor: "rgba(16,185,129,0.06)",
-                      border: "1px solid rgba(16,185,129,0.2)",
+                      p: 1.5, borderRadius: 2, bgcolor: alpha(SEMANTIC.success, 0.06),
+                      border: "1px solid", borderColor: alpha(SEMANTIC.success, 0.2),
                     }}
                   >
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: "rgba(16,185,129,0.15)", color: SEMANTIC.success, fontSize: "0.75rem", fontWeight: 800 }}>
+                    <Avatar sx={{ width: 32, height: 32, bgcolor: alpha(SEMANTIC.success, 0.15), color: SEMANTIC.success, fontSize: "0.75rem", fontWeight: 800 }}>
                       {token.displayNumber}
                     </Avatar>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -244,9 +244,9 @@ export default function NurseDashboard() {
                 endIcon={<ArrowForwardRounded />}
                 onClick={() => navigate("/nurse/queue")}
                 sx={{
-                  color: NURSE_PURPLE, borderColor: `rgba(167,139,250,0.4)`,
+                  color: NURSE_PURPLE, borderColor: alpha(NURSE_PURPLE, 0.4),
                   textTransform: "none", fontWeight: 600,
-                  "&:hover": { borderColor: NURSE_PURPLE, bgcolor: "rgba(167,139,250,0.06)" },
+                  "&:hover": { borderColor: NURSE_PURPLE, bgcolor: alpha(NURSE_PURPLE, 0.06) },
                 }}
               >
                 View Full Queue

@@ -13,12 +13,14 @@ import Mascot from "@/components/Mascot";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import ErrorState from "@/components/ErrorState";
 import StatCard from "@/components/StatCard";
+import AttentionList from "@/components/dashboard/AttentionList";
 import PharmacyPage from "./components/PharmacyPage";
 import type { LowStockAlert, PharmacyOrder } from "@/types";
 import { apiErrorText } from "@/utils/apiError";
 
 export default function PharmacyDashboard() {
   const theme = useTheme();
+  const navigate = useNavigate();
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ["pharmacy-dashboard"],
     queryFn: async () => {
@@ -91,33 +93,35 @@ export default function PharmacyDashboard() {
 
               <Grid container spacing={4}>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <Paper sx={{ borderRadius: 4, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-                    <Box sx={{ p: 2, bgcolor: alpha(theme.palette.error.main, 0.04), borderBottom: '1px solid', borderColor: 'divider' }}>
-                      <Typography variant="h6" fontWeight="700" color="error.main" display="flex" alignItems="center" gap={1}>
-                        <WarningRounded /> Low Stock Alerts
-                      </Typography>
-                    </Box>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 600 }}>Medicine</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>Available</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>Reorder Level</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {lowStockAlerts.length === 0 ? (
-                          <TableRow><TableCell colSpan={3} sx={{ py: 3, border: 0 }}><Mascot pose="all-caught-up" subtitle="No low stock items — inventory looks healthy." size={110} /></TableCell></TableRow>
-                        ) : lowStockAlerts.map(item => (
-                          <TableRow key={item.medicineId}>
-                            <TableCell sx={{ fontWeight: 600 }}>{item.medicineName}</TableCell>
-                            <TableCell sx={{ color: 'error.main', fontWeight: 700 }}>{item.currentStock}</TableCell>
-                            <TableCell>{item.minStockLevel}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </Paper>
+                  {/* Ranked worst-first, so the medicine closest to running out
+                      is the one you read. The old table was in whatever order
+                      the API returned and gave every row equal weight. */}
+                  <AttentionList
+                    title="Low stock"
+                    subtitle="Furthest below its reorder level first"
+                    emptyText="No low stock items — inventory looks healthy."
+                    items={lowStockAlerts
+                      .map((item) => ({
+                        item,
+                        shortBy: Number(item.minStockLevel ?? 0) - Number(item.currentStock ?? 0),
+                        out: Number(item.currentStock ?? 0) <= 0,
+                      }))
+                      // Out of stock outranks everything: a medicine you cannot
+                      // dispense at all is more urgent than one that is merely
+                      // further below its reorder level.
+                      .sort((a, b) => Number(b.out) - Number(a.out) || b.shortBy - a.shortBy)
+                      .map(({ item, shortBy }) => ({
+                        id: item.medicineId,
+                        primary: item.medicineName,
+                        secondary: `${item.currentStock} in stock · reorder at ${item.minStockLevel}`,
+                        meta: Number(item.currentStock ?? 0) <= 0 ? "Out of stock" : `${shortBy} short`,
+                        severity: (Number(item.currentStock ?? 0) <= 0 ? "critical" : "warning") as "critical" | "warning",
+                        icon: <WarningRounded sx={{ fontSize: 18 }} />,
+                        onClick: () => navigate("/pharmacy/inventory"),
+                      }))}
+                    actionLabel="Inventory & POs"
+                    onAction={() => navigate("/pharmacy/inventory")}
+                  />
                 </Grid>
                 
                 <Grid size={{ xs: 12, md: 6 }}>

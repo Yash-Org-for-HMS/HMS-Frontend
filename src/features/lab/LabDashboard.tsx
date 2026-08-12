@@ -147,8 +147,8 @@ export default function LabDashboard() {
           <StatCard 
             label="Est. Daily Revenue"
             value={`₹${(labStats.todayRevenue + radStats.todayRevenue).toLocaleString()}`} 
-            icon={<AttachMoneyRounded sx={{ fontSize: 32, color: '#8b5cf6' }} />} 
-            color="#8b5cf6"
+            icon={<AttachMoneyRounded sx={{ fontSize: 32, color: SEMANTIC.success }} />}
+            color={SEMANTIC.success}
           />
         </Grid>
       </Grid>

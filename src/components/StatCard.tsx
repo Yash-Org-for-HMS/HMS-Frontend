@@ -1,6 +1,8 @@
 import { ACCENTS, BRAND } from "@/styles/accents";
-import { Box, Paper, Typography, Skeleton } from "@mui/material";
+import { Box, Paper, Typography, Skeleton, Tooltip } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { ArrowUpwardRounded, ArrowDownwardRounded, RemoveRounded } from "@mui/icons-material";
+import { computeDelta } from "@/utils/delta";
 import type { ReactNode } from "react";
 
 export interface StatCardProps {
@@ -17,6 +19,19 @@ export interface StatCardProps {
   onClick?: () => void;
   /** "vertical" (icon top, big value below — default) or "horizontal" (icon left). */
   layout?: "vertical" | "horizontal";
+  /**
+   * Raw current value. Pass with `previous` to show a ▲/▼ chip — the same
+   * comparison the reports KPI tile uses. A count with no baseline can't tell
+   * anyone whether the day is going well, which is why every dashboard tile
+   * should carry one where a sensible baseline exists.
+   */
+  current?: number;
+  /** Raw comparable value from the prior period. */
+  previous?: number | null;
+  /** Whether a higher value is good — drives the delta colour. Default true. */
+  higherIsBetter?: boolean;
+  /** What the comparison is against, shown on hover. Default "vs previous period". */
+  deltaLabel?: string;
 }
 
 const DEFAULT_ACCENT = BRAND.action;
@@ -29,11 +44,29 @@ const DEFAULT_ACCENT = BRAND.action;
  */
 export default function StatCard({
   icon, label, value, color = DEFAULT_ACCENT, sub, loading = false, onClick, layout = "vertical",
+  current, previous, higherIsBetter = true, deltaLabel = "vs previous period",
 }: StatCardProps) {
   const clickable = Boolean(onClick);
   const horizontal = layout === "horizontal";
   const displayValue = typeof value === "number" ? value.toLocaleString() : value;
   const tileSize = horizontal ? 44 : 40;
+
+  // No baseline (no previous, or a previous of zero) means no honest percentage
+  // to show, so the chip is simply absent rather than reading "0%" or "∞".
+  const delta = current != null ? computeDelta(current, previous, higherIsBetter) : null;
+  const showDelta = !loading && delta != null && delta.pct != null;
+  const DeltaIcon = delta?.dir === "up" ? ArrowUpwardRounded : delta?.dir === "down" ? ArrowDownwardRounded : RemoveRounded;
+
+  const DeltaChip = showDelta ? (
+    <Tooltip title={deltaLabel}>
+      <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.25, px: 0.75, py: 0.25, borderRadius: 1.5, bgcolor: alpha(delta!.color, 0.12), color: delta!.color, flexShrink: 0 }}>
+        <DeltaIcon sx={{ fontSize: 14 }} />
+        <Typography variant="caption" sx={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+          {Math.abs(delta!.pct!).toFixed(1)}%
+        </Typography>
+      </Box>
+    </Tooltip>
+  ) : null;
 
   const IconTile = (
     <Box
@@ -90,6 +123,7 @@ export default function StatCard({
       {horizontal ? IconTile : (
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5 }}>
           {IconTile}
+          {DeltaChip}
         </Box>
       )}
 
@@ -122,6 +156,10 @@ export default function StatCard({
           </Typography>
         )}
       </Box>
+
+      {/* Horizontal cards have no icon row to hang the chip off, so it sits at
+          the far end of the row instead. */}
+      {horizontal && DeltaChip}
     </Paper>
   );
 }

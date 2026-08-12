@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
+import { alpha } from "@mui/material/styles";
 import {
   Box,
   Typography,
@@ -56,7 +57,7 @@ interface DashboardStats {
   departmentDistribution: { name: string; count: number }[];
 }
 
-const TEAM_BAR = "#818cf8"; // single hue for the staff-by-department magnitude bars
+const TEAM_BAR = BRAND.action; // single hue for the staff-by-department magnitude bars
 
 // First word of the humanized action ("Added Doctor" / "Updated Onboarding" /
 // "Removed Nursing Note") picks the feed icon + colour — advisory, not a status.
@@ -128,14 +129,14 @@ export default function HospitalDashboard() {
           <StatCard label="Total Doctors" value={stats?.totalDoctors || 0} icon={<MedicalServicesRounded />} color={SEMANTIC.successLight} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Active Staff" value={stats?.activeUsers || 0} icon={<VerifiedUserRounded />} color="#f472b6" />
+          <StatCard label="Active Staff" value={stats?.activeUsers || 0} icon={<VerifiedUserRounded />} color={BRAND.actionDark} />
         </Grid>
       </Grid>
 
       {/* Organization — setup-time facts, secondary to what's happening today */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, md: 4 }}>
-          <StatCard layout="horizontal" label="Total Staff" value={stats?.totalStaff || 0} icon={<PeopleAltRounded />} color="#818cf8" />
+          <StatCard layout="horizontal" label="Total Staff" value={stats?.totalStaff || 0} icon={<PeopleAltRounded />} color={BRAND.action} />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <StatCard layout="horizontal" label="Departments" value={stats?.totalDepartments || 0} icon={<DomainRounded />} color={SEMANTIC.warningLight} />
@@ -154,10 +155,10 @@ export default function HospitalDashboard() {
                   margin={{ top: 0, right: 28, left: 0, bottom: 0 }}
                 >
                   <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" width={90} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <RechartsTooltip cursor={{ fill: "rgba(129,140,248,0.08)" }} contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={(v) => [v, "Staff"]} />
+                  <YAxis type="category" dataKey="name" width={90} tick={{ fill: NEUTRAL.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <RechartsTooltip cursor={{ fill: alpha(BRAND.action, 0.08) }} contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={(v) => [v, "Staff"]} />
                   <Bar dataKey="count" fill={TEAM_BAR} radius={[0, 4, 4, 0]} barSize={14}>
-                    <LabelList dataKey="count" position="right" style={{ fill: "#475569", fontSize: 11, fontWeight: 700 }} />
+                    <LabelList dataKey="count" position="right" style={{ fill: NEUTRAL.textSecondary, fontSize: 11, fontWeight: 700 }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>

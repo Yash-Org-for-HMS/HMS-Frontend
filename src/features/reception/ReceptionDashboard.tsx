@@ -1,4 +1,5 @@
 import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { alpha } from "@mui/material/styles";
 import { formatINR } from "@/utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -69,7 +70,7 @@ function ActionCard({ icon, label, value, sub, color, onClick }: {
 function MiniStat({ icon, title, value, loading, prefix }: any) {
   return (
     <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", display: "flex", alignItems: "center", gap: 1.5 }}>
-      <Box sx={{ width: 38, height: 38, borderRadius: 2, bgcolor: "rgba(8,145,178,0.1)", color: ACCENT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</Box>
+      <Box sx={{ width: 38, height: 38, borderRadius: 2, bgcolor: alpha(ACCENT, 0.1), color: ACCENT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</Box>
       <Box sx={{ minWidth: 0 }}>
         {loading ? <Skeleton width={60} height={28} /> : (
           <Typography variant="h6" sx={{ fontWeight: 800, color: "text.primary", lineHeight: 1.1 }} noWrap>
@@ -214,7 +215,7 @@ export default function ReceptionDashboard() {
           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary", mb: 2 }}>Quick Actions</Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             <Button fullWidth variant="contained" startIcon={<PersonAddRounded />} onClick={() => navigate("/reception/patients/new")}
-              sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, background: "linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)", py: 1.2 }}>
+              sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, py: 1.2 }}>
               Register new patient
             </Button>
             <Button fullWidth variant="outlined" startIcon={<CalendarMonthRounded />} onClick={() => navigate("/reception/appointments/new")}
@@ -222,11 +223,11 @@ export default function ReceptionDashboard() {
               Book appointment
             </Button>
             <Button fullWidth variant="outlined" startIcon={<ReceiptLongRounded />} onClick={() => navigate("/reception/billing")}
-              sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, color: SEMANTIC.warning, borderColor: "divider", py: 1.2 }}>
+              sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, color: ACCENT, borderColor: "divider", py: 1.2 }}>
               Create / collect a bill
             </Button>
             <Button fullWidth variant="outlined" startIcon={<LocalHotelRounded />} onClick={() => navigate("/reception/ipd/admissions")}
-              sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, color: "#8b5cf6", borderColor: "divider", py: 1.2 }}>
+              sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, color: ACCENT, borderColor: "divider", py: 1.2 }}>
               Admit a patient
             </Button>
           </Box>

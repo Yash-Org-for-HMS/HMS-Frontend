@@ -30,10 +30,12 @@ export const CHART_INK = {
   text: NEUTRAL.textSecondary,
 };
 
-/** Delta direction cues (paired with an arrow + label, never colour alone). */
-export const DELTA_GOOD = SEMANTIC.success;
-export const DELTA_BAD = SEMANTIC.danger;
-export const DELTA_FLAT = NEUTRAL.muted;
+/**
+ * Delta cues and maths now live in `@/utils/delta` so shared components outside
+ * this feature (the dashboard stat card) can use them too. Re-exported here so
+ * every existing import keeps working.
+ */
+export { DELTA_GOOD, DELTA_BAD, DELTA_FLAT, computeDelta, type Delta } from "@/utils/delta";
 
 /** Shared recharts axis styling. */
 export const xAxisProps = {
@@ -48,18 +50,3 @@ export const yAxisProps = {
   width: 44,
 } as const;
 
-/**
- * Percentage change of `current` vs `previous`, plus the direction and whether
- * that direction is "good" (given whether higher is better for this metric).
- * Returns null pct when there's no comparable baseline.
- */
-export function computeDelta(current: number, previous: number | null | undefined, higherIsBetter = true) {
-  if (previous == null || previous === 0 || !Number.isFinite(previous)) {
-    return { pct: null as number | null, dir: "flat" as const, color: DELTA_FLAT };
-  }
-  const pct = ((current - previous) / Math.abs(previous)) * 100;
-  const dir = pct > 0.05 ? "up" : pct < -0.05 ? "down" : "flat";
-  if (dir === "flat") return { pct, dir, color: DELTA_FLAT };
-  const good = dir === "up" ? higherIsBetter : !higherIsBetter;
-  return { pct, dir, color: good ? DELTA_GOOD : DELTA_BAD };
-}

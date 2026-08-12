@@ -1,4 +1,5 @@
 import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { alpha } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Grid, Typography, Paper, Alert,
@@ -84,9 +85,9 @@ export default function DoctorDashboard() {
           <StatCard
             label="Completed Consultations"
             value={stats?.completedVisits || 0}
-            icon={<CheckCircleRounded sx={{ color: "#8b5cf6" }} />}
+            icon={<CheckCircleRounded sx={{ color: SEMANTIC.success }} />}
             loading={loading}
-            color="#8b5cf6"
+            color={SEMANTIC.success}
             sub="Finished today"
           />
         </Grid>
@@ -108,7 +109,7 @@ export default function DoctorDashboard() {
                 size="small" variant="outlined"
                 endIcon={<ArrowForwardRounded />}
                 onClick={() => navigate("/doctor/queue")}
-                sx={{ color: DOCTOR_BLUE, borderColor: `rgba(59,130,246,0.4)`, textTransform: "none", "&:hover": { borderColor: DOCTOR_BLUE, bgcolor: "rgba(59,130,246,0.06)" } }}
+                sx={{ color: DOCTOR_BLUE, borderColor: alpha(DOCTOR_BLUE, 0.4), textTransform: "none", "&:hover": { borderColor: DOCTOR_BLUE, bgcolor: alpha(DOCTOR_BLUE, 0.06) } }}
               >
                 Go to Queue
               </Button>
@@ -126,8 +127,8 @@ export default function DoctorDashboard() {
                     sx={{
                       display: "flex", alignItems: "center", gap: 2, p: 2,
                       borderRadius: 2, border: "1px solid", borderColor: "divider",
-                      bgcolor: idx === 0 ? `rgba(59,130,246,0.05)` : "background.default",
-                      "&:hover": { borderColor: DOCTOR_BLUE, bgcolor: `rgba(59,130,246,0.02)` },
+                      bgcolor: idx === 0 ? alpha(DOCTOR_BLUE, 0.05) : "background.default",
+                      "&:hover": { borderColor: DOCTOR_BLUE, bgcolor: alpha(DOCTOR_BLUE, 0.02) },
                     }}
                   >
                     <Box sx={{ textAlign: "center", minWidth: 60 }}>
