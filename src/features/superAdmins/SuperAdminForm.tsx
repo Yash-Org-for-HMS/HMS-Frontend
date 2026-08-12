@@ -184,6 +184,7 @@ export default function SuperAdminForm() {
                 onChange={handleChange}
                 error={!!errors.phone}
                 helperText={errors.phone}
+               inputProps={{ maxLength: 20 }}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>

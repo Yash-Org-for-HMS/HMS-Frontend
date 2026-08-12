@@ -271,7 +271,8 @@ export default function DoctorForm() {
                   error={!!errors.phone}
                   helperText={errors.phone}
                   {...textFieldProps}
-                />
+                 inputProps={{ maxLength: 20 }}
+              />
               </Grid>
             </Grid>
           )}

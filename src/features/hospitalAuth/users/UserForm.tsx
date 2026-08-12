@@ -309,7 +309,8 @@ export default function UserForm() {
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField label="Phone" name="phone" value={formData.phone} onChange={handleChange} error={!!errors.phone} helperText={errors.phone} {...textFieldProps} />
+                  <TextField label="Phone" name="phone" value={formData.phone} onChange={handleChange} error={!!errors.phone} helperText={errors.phone} {...textFieldProps}  inputProps={{ maxLength: 20 }}
+              />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField

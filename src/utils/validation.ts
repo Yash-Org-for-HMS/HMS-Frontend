@@ -26,7 +26,14 @@ export type Errors<T> = Partial<Record<keyof T, string>>;
 // Mirrors the backend EMAIL_REGEX and the existing Login.tsx check.
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Digits, spaces, +, -, parentheses; 6–20 chars of content. Matches backend.
-const PHONE_REGEX = /^[+]?[\d\s()-]{6,20}$/;
+// Mirrors the backend (src/utils/validation.ts) so the form and the API agree.
+// The old rule counted CHARACTERS, not digits, so "      ", "((((((" and
+// "------" were all accepted as phone numbers. Formatting characters are still
+// allowed; there just has to be a real number underneath.
+const PHONE_SHAPE = /^[+]?[\d\s()-]+$/;
+const PHONE_MIN_DIGITS = 10;   // Indian mobile
+const PHONE_MAX_DIGITS = 15;   // E.164 maximum
+export const PHONE_MAX_LENGTH = 20;  // input maxLength, incl. formatting chars
 
 const isBlank = (v: unknown) =>
   v === undefined || v === null || (typeof v === "string" && v.trim() === "");
@@ -42,8 +49,15 @@ export const isEmail: Rule = (v) =>
   isBlank(v) || EMAIL_REGEX.test(String(v).trim()) ? "" : "Enter a valid email address";
 
 /** Valid phone format. Empty passes — combine with `required` when mandatory. */
-export const isPhone: Rule = (v) =>
-  isBlank(v) || PHONE_REGEX.test(String(v).trim()) ? "" : "Enter a valid phone number";
+export const isPhone: Rule = (v) => {
+  if (isBlank(v)) return "";
+  const s = String(v).trim();
+  if (!PHONE_SHAPE.test(s)) return "Enter a valid phone number";
+  const digits = (s.match(/\d/g) || []).length;
+  if (digits < PHONE_MIN_DIGITS) return `Phone number needs at least ${PHONE_MIN_DIGITS} digits`;
+  if (digits > PHONE_MAX_DIGITS) return `Phone number can have at most ${PHONE_MAX_DIGITS} digits`;
+  return "";
+};
 
 export const minLen =
   (n: number, label = "This field"): Rule =>

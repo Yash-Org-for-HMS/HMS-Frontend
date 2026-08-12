@@ -193,6 +193,7 @@ export default function LeadForm() {
                 required
                 error={!!errors.phone}
                 helperText={errors.phone}
+               inputProps={{ maxLength: 20 }}
               />
             </Grid>
             {/* Starting stage is set only when creating; an existing lead's status

@@ -291,6 +291,7 @@ export default function UserForm() {
                     "&.Mui-focused fieldset": { borderColor: BRAND.action },
                   },
                 }}
+               inputProps={{ maxLength: 20 }}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
