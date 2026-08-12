@@ -20,7 +20,7 @@ import CheckoutDialog from "@/components/reception/CheckoutDialog";
 import { useSocket } from "@/hooks/useSocket";
 import PageHeader from "@/components/layout/PageHeader";
 import { QUEUE_POLL_MS } from "@/constants/intervals";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { ACCENTS, SEMANTIC, NEUTRAL } from "@/styles/accents";
 
 // Shared cell styling for the Completed section's table.
 const COMPLETED_HEAD_SX = {
@@ -43,6 +43,32 @@ const consultDuration = (t: any) => {
   ));
   return mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
 };
+
+// Is the person at the desk here for the first time, back again, or on a booked
+// follow-up? Colour-coded but always paired with the word, so it never depends
+// on colour alone.
+const VISIT_TYPE_STYLE: Record<string, { color: string; label: string }> = {
+  "First visit": { color: "#ec4899", label: "First visit" },
+  Repeat: { color: SEMANTIC.info, label: "Repeat" },
+  "Follow-up": { color: SEMANTIC.warning, label: "Follow-up" },
+  "Walk-in": { color: NEUTRAL.muted, label: "Walk-in" },
+};
+
+function VisitTypeChip({ visitType }: { visitType?: string }) {
+  const meta = visitType ? VISIT_TYPE_STYLE[visitType] : undefined;
+  if (!meta) return null;
+  return (
+    <Chip
+      label={meta.label}
+      size="small"
+      sx={{
+        height: 20, fontSize: "0.68rem", fontWeight: 700,
+        bgcolor: alpha(meta.color, 0.12), color: meta.color,
+        border: `1px solid ${alpha(meta.color, 0.3)}`,
+      }}
+    />
+  );
+}
 
 const getDoctorInitials = (doctorName?: string) => {
   if (!doctorName || doctorName === "Unknown") return "";
@@ -104,6 +130,14 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
       .filter((t: any) => t.statusCode === "COMPLETED")
       .sort((a: any, b: any) => new Date(b.consultationEndedAt || b.updatedAt || 0).getTime() - new Date(a.consultationEndedAt || a.updatedAt || 0).getTime()),
     [tokens]
+  );
+
+  // Today's first-vs-repeat mix across every token (not just the active ones —
+  // a patient already seen still counts toward the day's mix).
+  const firstVisitCount = useMemo(() => tokens.filter((t: any) => t.visitType === "First visit").length, [tokens]);
+  const repeatCount = useMemo(
+    () => tokens.filter((t: any) => t.visitType === "Repeat" || t.visitType === "Follow-up").length,
+    [tokens],
   );
 
   // ── Waiting-time monitor ──────────────────────────────────────────────
@@ -202,6 +236,9 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
           { label: "Avg Wait", value: fmtWait(avgWait), color: waitColor(avgWait) },
           { label: "Longest Wait", value: fmtWait(maxWait), color: waitColor(maxWait) },
           { label: "Completed Today", value: String(completedTokens.length), color: SEMANTIC.success },
+          // Today's mix at a glance — the same split the OPD Visit Register
+          // reports over a date range.
+          { label: "First / Repeat Today", value: `${firstVisitCount} / ${repeatCount}`, color: "#ec4899" },
         ].map((s) => (
           <Paper key={s.label} elevation={0} sx={{ flex: "1 1 140px", minWidth: 140, p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
             <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4 }}>{s.label}</Typography>
@@ -248,7 +285,10 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
                         />
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                        <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{token.patientName}</Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                          <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{token.patientName}</Typography>
+                          <VisitTypeChip visitType={token.visitType} />
+                        </Box>
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.875rem" }}>
                         {token.doctorName}
@@ -399,7 +439,10 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
                         <Typography variant="body2" sx={{ fontWeight: 700, color: SEMANTIC.success }}>{getDoctorInitials(token.doctorName)}-{token.displayNumber}</Typography>
                       </TableCell>
                       <TableCell sx={COMPLETED_CELL_SX}>
-                        <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{token.patientName}</Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                          <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{token.patientName}</Typography>
+                          <VisitTypeChip visitType={token.visitType} />
+                        </Box>
                       </TableCell>
                       <TableCell sx={{ ...COMPLETED_CELL_SX, color: "text.secondary", fontSize: "0.875rem" }}>
                         {token.doctorName}

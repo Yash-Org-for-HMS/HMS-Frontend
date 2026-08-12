@@ -363,14 +363,16 @@ export function OpdVisitRegister() {
   const [doctorId, setDoctorId] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [statusId, setStatusId] = useState("");
+  const [visitType, setVisitType] = useState("");
   const { data: opts } = useFilterOptions();
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["report-opd-visits", range.from, range.to, doctorId, departmentId, statusId],
+    queryKey: ["report-opd-visits", range.from, range.to, doctorId, departmentId, statusId, visitType],
     queryFn: async () => (await axiosInstance.get("/reception/reports/opd-visits", {
       params: {
         from: range.from, to: range.to,
         doctorId: doctorId || undefined, departmentId: departmentId || undefined, statusId: statusId || undefined,
+        visitType: visitType || undefined,
       },
     })).data.data,
   });
@@ -385,6 +387,10 @@ export function OpdVisitRegister() {
         <FilterSelect label="Doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
         <FilterSelect label="Department" value={departmentId} onChange={setDepartmentId} options={opts?.departments} />
         <FilterSelect label="Status" value={statusId} onChange={setStatusId} options={opts?.appointmentStatuses} />
+        <FilterSelect
+          label="Visit type" value={visitType} onChange={setVisitType}
+          options={[{ id: "First visit", name: "First visit" }, { id: "Repeat", name: "Repeat" }, { id: "Follow-up", name: "Follow-up" }]}
+        />
       </ReportFilters>
 
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
