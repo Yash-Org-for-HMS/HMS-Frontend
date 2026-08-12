@@ -13,7 +13,7 @@ import {
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
 import StatusChip from "@/components/StatusChip";
-import { TableRowsSkeleton, CardGridSkeleton } from "@/components/TableRowsSkeleton";
+import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import PageHeader from "@/components/layout/PageHeader";
 import ErrorState from "@/components/ErrorState";
 import StatCard from "@/components/StatCard";
@@ -61,10 +61,22 @@ export default function NurseDashboard() {
   // The worklist and the tile above it are now the SAME list. They used to be
   // two different filters, and the tile could read "3 Vitals Pending" directly
   // above a table saying "All caught up!".
-  const pendingVitals = tokens.filter(needsVitals);
+  //
+  // Longest-waiting first. Token order is arrival order within a doctor's
+  // queue, so with several doctors running the person who has been sitting
+  // there an hour could appear below someone who walked in five minutes ago.
+  // Sorting by wait is what makes this a worklist rather than a list.
+  const waitedMs = (t: any) => Date.now() - new Date(t.createdAt).getTime();
+  const pendingVitals = tokens.filter(needsVitals).sort((a, b) => waitedMs(b) - waitedMs(a));
   const doneVitals = tokens.filter(hasVitals);
   const vitalsPending = pendingVitals.length;
   const vitalsCompleted = doneVitals.length;
+
+  // Whole minutes waited, as "1h 20m" once past the hour.
+  const waitLabel = (t: any) => {
+    const mins = Math.max(0, Math.floor(waitedMs(t) / 60000));
+    return mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+  };
 
   return (
     <Box sx={{ pb: 6 }}>
@@ -116,36 +128,49 @@ export default function NurseDashboard() {
         </Grid>
       </Grid>
 
-      {/* Priority: Needs Vitals */}
+      {/* The worklist IS the page. It used to share the row with a "Vitals
+          Completed" panel that took a third of the width to say what a number
+          in this header says — and the patients already done aren't work. */}
       <Grid container spacing={4}>
-        <Grid size={{ xs: 12, lg: 8 }}>
+        <Grid size={{ xs: 12 }}>
           <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: "background.paper", border: "1px solid", borderColor: "divider" }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3, gap: 2, flexWrap: "wrap" }}>
               <Box>
                 <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary" }}>
                   Patients Awaiting Vitals
                 </Typography>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  Record vitals for these patients before their consultation
+                  Longest wait first — record vitals before their consultation
+                  {vitalsCompleted > 0 && ` · ${vitalsCompleted} already recorded today`}
                 </Typography>
               </Box>
-              <Button
-                size="small" variant="outlined"
-                startIcon={<SyncRounded />}
-                onClick={() => refetch()}
-                sx={{ color: NURSE_PURPLE, borderColor: alpha(NURSE_PURPLE, 0.4), textTransform: "none", "&:hover": { borderColor: NURSE_PURPLE, bgcolor: alpha(NURSE_PURPLE, 0.06) } }}
-              >
-                Refresh
-              </Button>
+              <Box sx={{ display: "flex", gap: 1.5 }}>
+                <Button
+                  size="small" variant="outlined"
+                  startIcon={<SyncRounded />}
+                  onClick={() => refetch()}
+                  sx={{ color: NURSE_PURPLE, borderColor: alpha(NURSE_PURPLE, 0.4), textTransform: "none", "&:hover": { borderColor: NURSE_PURPLE, bgcolor: alpha(NURSE_PURPLE, 0.06) } }}
+                >
+                  Refresh
+                </Button>
+                <Button
+                  size="small" variant="outlined"
+                  endIcon={<ArrowForwardRounded />}
+                  onClick={() => navigate("/nurse/queue")}
+                  sx={{ color: NURSE_PURPLE, borderColor: alpha(NURSE_PURPLE, 0.4), textTransform: "none", "&:hover": { borderColor: NURSE_PURPLE, bgcolor: alpha(NURSE_PURPLE, 0.06) } }}
+                >
+                  Full queue
+                </Button>
+              </Box>
             </Box>
 
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
-                    {["Token", "Patient", "Doctor", "Status", ""].map((h, i) => (
+                    {["Token", "Patient", "Doctor", "Waiting", "Status", ""].map((h, i) => (
                       <TableCell key={h || i}
-                        align={i === 4 ? "right" : "left"}
+                        align={i === 5 ? "right" : "left"}
                         sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", py: 1.5, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider" }}
                       >
                         {h}
@@ -155,10 +180,10 @@ export default function NurseDashboard() {
                 </TableHead>
                 <TableBody>
                   {loading && pendingVitals.length === 0 ? (
-                    <TableRowsSkeleton rows={6} columns={5} />
+                    <TableRowsSkeleton rows={6} columns={6} />
                   ) : pendingVitals.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} sx={{ py: 4, border: 0 }}>
+                      <TableCell colSpan={6} sx={{ py: 4, border: 0 }}>
                         <Mascot pose="all-caught-up" title="All caught up!" subtitle="All vitals recorded for today." />
                       </TableCell>
                     </TableRow>
@@ -175,6 +200,17 @@ export default function NurseDashboard() {
                         </TableCell>
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.875rem" }}>
                           {token.doctorName}
+                        </TableCell>
+                        {/* How long they've been in the queue — the thing that
+                            decides who to see next, and the reason the rows are
+                            in this order. Turns red past 30 minutes. */}
+                        <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
+                          <Typography variant="body2" sx={{
+                            fontWeight: 700, fontVariantNumeric: "tabular-nums",
+                            color: waitedMs(token) >= 30 * 60000 ? SEMANTIC.danger : "text.secondary",
+                          }}>
+                            {waitLabel(token)}
+                          </Typography>
                         </TableCell>
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                           <StatusChip label={token.statusLabel} color={token.statusColor} />
@@ -201,59 +237,6 @@ export default function NurseDashboard() {
           </Paper>
         </Grid>
 
-        {/* Right side: Vitals Done */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", height: "100%" }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary", mb: 0.5 }}>
-              Vitals Completed
-            </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
-              Patients whose vitals are recorded
-            </Typography>
-            {loading ? (
-              <CardGridSkeleton count={4} height={60} minWidth={220} />
-            ) : doneVitals.length === 0 ? (
-              <Mascot pose="nothing-here-yet" subtitle="No vitals recorded yet today." size={130} />
-            ) : (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {doneVitals.map(token => (
-                  <Box
-                    key={token.queueTokenId}
-                    sx={{
-                      display: "flex", alignItems: "center", gap: 1.5,
-                      p: 1.5, borderRadius: 2, bgcolor: alpha(SEMANTIC.success, 0.06),
-                      border: "1px solid", borderColor: alpha(SEMANTIC.success, 0.2),
-                    }}
-                  >
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: alpha(SEMANTIC.success, 0.15), color: SEMANTIC.success, fontSize: "0.75rem", fontWeight: 800 }}>
-                      {token.displayNumber}
-                    </Avatar>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }} noWrap>{token.patientName}</Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>{token.doctorName}</Typography>
-                    </Box>
-                    <CheckCircleRounded sx={{ color: SEMANTIC.success, fontSize: 18 }} />
-                  </Box>
-                ))}
-              </Box>
-            )}
-
-            <Box sx={{ mt: 3 }}>
-              <Button
-                fullWidth variant="outlined"
-                endIcon={<ArrowForwardRounded />}
-                onClick={() => navigate("/nurse/queue")}
-                sx={{
-                  color: NURSE_PURPLE, borderColor: alpha(NURSE_PURPLE, 0.4),
-                  textTransform: "none", fontWeight: 600,
-                  "&:hover": { borderColor: NURSE_PURPLE, bgcolor: alpha(NURSE_PURPLE, 0.06) },
-                }}
-              >
-                View Full Queue
-              </Button>
-            </Box>
-          </Paper>
-        </Grid>
       </Grid>
     </Box>
   );

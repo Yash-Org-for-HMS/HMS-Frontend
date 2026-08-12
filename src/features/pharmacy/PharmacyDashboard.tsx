@@ -6,7 +6,7 @@ import {
   Tabs, Tab, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Select, MenuItem, TextField, Chip, Tooltip
 } from "@mui/material";
 import {
-  MedicationRounded, LocalShippingRounded, WarningRounded, PointOfSaleRounded, DashboardRounded
+  MedicationRounded, LocalShippingRounded, WarningRounded, PointOfSaleRounded, DashboardRounded, EventBusyRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
@@ -15,8 +15,28 @@ import ErrorState from "@/components/ErrorState";
 import StatCard from "@/components/StatCard";
 import AttentionList from "@/components/dashboard/AttentionList";
 import PharmacyPage from "./components/PharmacyPage";
-import type { LowStockAlert, PharmacyOrder } from "@/types";
+import type { LowStockAlert } from "@/types";
 import { apiErrorText } from "@/utils/apiError";
+import { formatINR } from "@/utils/format";
+
+interface ExpiringBatch {
+  inventoryId: string;
+  medicineName: string;
+  batchNumber: string;
+  expiryDate: string;
+  availableQuantity: number;
+  /** Negative once the batch is already past its expiry date. */
+  daysLeft: number;
+}
+interface RecentSale {
+  pharmacyOrderId: string;
+  createdAt: string;
+  totalAmount: string | number;
+  patientName: string;
+  itemCount: number;
+}
+
+const inr = (v: number | null | undefined) => formatINR(v, 0);
 
 export default function PharmacyDashboard() {
   const theme = useTheme();
@@ -36,13 +56,18 @@ export default function PharmacyDashboard() {
       };
     },
   });
-  const stats = data?.stats ?? { medicineCount: 0, pendingPOCount: 0, totalSalesValue: 0, recentSales: [] };
+  const stats = data?.stats ?? {};
   const lowStockAlerts: LowStockAlert[] = data?.lowStockAlerts ?? [];
 
   const medicineCount: number = stats.medicineCount ?? 0;
   const pendingPOCount: number = stats.pendingPOCount ?? 0;
-  const totalSalesValue: number = Number(stats.totalSalesValue ?? 0);
-  const recentSales: PharmacyOrder[] = stats.recentSales ?? [];
+  const ipdRequestsPending: number = stats.ipdRequestsPending ?? 0;
+  const salesToday: number = Number(stats.salesToday ?? 0);
+  const salesPrevious: number = Number(stats.salesPrevious ?? 0);
+  const expiring: ExpiringBatch[] = stats.expiring ?? [];
+  const expiringCount: number = stats.expiringCount ?? 0;
+  const expiryHorizonDays: number = stats.expiryHorizonDays ?? 90;
+  const recentSales: RecentSale[] = stats.recentSales ?? [];
 
   return (
     <PharmacyPage
@@ -74,18 +99,28 @@ export default function PharmacyDashboard() {
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <StatCard 
-                    label="Pending POs"
-                    value={pendingPOCount}
-                    icon={<LocalShippingRounded sx={{ fontSize: 32, color: SEMANTIC.warning }} />} 
+                  {/* Ward requests waiting on this desk. There was no sign of
+                      them here at all — the only way to know was to open the
+                      IPD Medication Requests page and look. */}
+                  <StatCard
+                    label="IPD requests waiting"
+                    value={ipdRequestsPending}
+                    sub={pendingPOCount ? `${pendingPOCount} purchase order${pendingPOCount === 1 ? "" : "s"} open` : "No open purchase orders"}
+                    icon={<LocalShippingRounded sx={{ fontSize: 32, color: SEMANTIC.warning }} />}
                     color={SEMANTIC.warning}
+                    onClick={() => navigate("/pharmacy/ipd-requests")}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <StatCard 
-                    label="Total Sales"
-                    value={`₹${totalSalesValue.toFixed(2)}`}
-                    icon={<PointOfSaleRounded sx={{ fontSize: 32, color: SEMANTIC.success }} />} 
+                  {/* Was "Total Sales" — the sum of every order ever placed,
+                      with no period stated. A lifetime figure only goes up, so
+                      it could never say whether today was any good. */}
+                  <StatCard
+                    label="Sales today"
+                    value={inr(salesToday)}
+                    current={salesToday} previous={salesPrevious}
+                    deltaLabel="vs the same weekday last week"
+                    icon={<PointOfSaleRounded sx={{ fontSize: 32, color: SEMANTIC.success }} />}
                     color={SEMANTIC.success}
                   />
                 </Grid>
@@ -123,19 +158,50 @@ export default function PharmacyDashboard() {
                     onAction={() => navigate("/pharmacy/inventory")}
                   />
                 </Grid>
-                
+
                 <Grid size={{ xs: 12, md: 6 }}>
+                  {/* The other way a pharmacy loses money, and unlike low stock
+                      it is silent until it's too late — nothing on this screen
+                      mentioned expiry at all. Soonest first; already-expired
+                      batches lead. */}
+                  <AttentionList
+                    title="Expiring soon"
+                    subtitle={`Batches within ${expiryHorizonDays} days of expiry, soonest first`}
+                    emptyText={`Nothing expiring in the next ${expiryHorizonDays} days.`}
+                    items={expiring.map((b) => ({
+                      id: b.inventoryId,
+                      primary: b.medicineName,
+                      secondary: `Batch ${b.batchNumber} · ${b.availableQuantity} in stock · expires ${new Date(b.expiryDate).toLocaleDateString()}`,
+                      meta: b.daysLeft < 0 ? "Expired" : b.daysLeft === 0 ? "Today" : `${b.daysLeft}d`,
+                      severity: (b.daysLeft < 0 ? "critical" : b.daysLeft <= 30 ? "warning" : "info") as "critical" | "warning" | "info",
+                      icon: <EventBusyRounded sx={{ fontSize: 18 }} />,
+                      onClick: () => navigate("/pharmacy/inventory"),
+                    }))}
+                    maxRows={5}
+                    totalCount={expiringCount}
+                    actionLabel="Inventory & POs"
+                    onAction={() => navigate("/pharmacy/inventory")}
+                  />
+                </Grid>
+
+                {/* Full width: the two attention lists above already fill a
+                    two-column row, so a half-width third panel just leaves a
+                    hole beside it. */}
+                <Grid size={{ xs: 12 }}>
                   <Paper sx={{ borderRadius: 4, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
                     <Box sx={{ p: 2, bgcolor: alpha(theme.palette.success.main, 0.04), borderBottom: '1px solid', borderColor: 'divider' }}>
                       <Typography variant="h6" fontWeight="700" color="success.main" display="flex" alignItems="center" gap={1}>
                         <PointOfSaleRounded /> Recent Sales
                       </Typography>
                     </Box>
+                    {/* Was a column of order-ID fragments (6D5CFAB3, 0FDA7C50).
+                        Nobody recognises a sale by its id — they recognise the
+                        patient and what was dispensed. */}
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 600 }}>Order ID</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Patient</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>When</TableCell>
                           <TableCell align="right" sx={{ fontWeight: 600 }}>Amount</TableCell>
                         </TableRow>
                       </TableHead>
@@ -144,9 +210,14 @@ export default function PharmacyDashboard() {
                           <TableRow><TableCell colSpan={3} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No recent sales." size={110} /></TableCell></TableRow>
                         ) : recentSales.map(sale => (
                           <TableRow key={sale.pharmacyOrderId}>
-                            <TableCell sx={{ fontFamily: 'monospace' }}>{sale.pharmacyOrderId.split('-')[0].toUpperCase()}</TableCell>
-                            <TableCell>{new Date(sale.createdAt).toLocaleString()}</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, color: SEMANTIC.success }}>₹{parseFloat(sale.totalAmount).toFixed(2)}</TableCell>
+                            <TableCell>
+                              <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>{sale.patientName}</Typography>
+                              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                {sale.itemCount} item{sale.itemCount === 1 ? "" : "s"}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={{ color: "text.secondary" }}>{new Date(sale.createdAt).toLocaleString()}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, color: SEMANTIC.success }}>{inr(Number(sale.totalAmount))}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

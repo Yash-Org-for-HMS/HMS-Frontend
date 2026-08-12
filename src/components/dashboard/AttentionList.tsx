@@ -47,6 +47,12 @@ export interface AttentionListProps {
    * length, so trimming the list can never quietly understate the workload.
    */
   maxRows?: number;
+  /**
+   * The true size of the set when the SERVER already trimmed it — pass it and
+   * the chip and "and N more" describe everything, not just what arrived. An
+   * endpoint returning its top 8 would otherwise make a backlog of 40 read as 8.
+   */
+  totalCount?: number;
 }
 
 /**
@@ -60,10 +66,12 @@ export interface AttentionListProps {
  */
 export default function AttentionList({
   title, subtitle, items, loading = false, emptyText = "Nothing needs attention right now.",
-  actionLabel, onAction, maxRows = 5,
+  actionLabel, onAction, maxRows = 5, totalCount,
 }: AttentionListProps) {
   const shown = items.slice(0, maxRows);
-  const hidden = items.length - shown.length;
+  // Anything the server already dropped counts as hidden too.
+  const total = Math.max(totalCount ?? items.length, items.length);
+  const hidden = total - shown.length;
 
   return (
     <Paper
@@ -78,7 +86,7 @@ export default function AttentionList({
         {!loading && items.length > 0 && (
           <Chip
             size="small"
-            label={items.length}
+            label={total}
             sx={{ fontWeight: 700, bgcolor: alpha(SEMANTIC.warning, 0.14), color: SEMANTIC.warning, borderRadius: 1.5 }}
           />
         )}
