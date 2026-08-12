@@ -19,6 +19,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import VitalsModal from "../reception/VitalsModal";
 import { useSocket } from "@/hooks/useSocket";
 import { QUEUE_POLL_MS } from "@/constants/intervals";
+import { QUEUE_STATUS, needsVitals, hasVitals, isWaitingForCare, isInConsultation } from "@/constants/queueStatus";
 
 const getDoctorInitials = (doctorName?: string) => {
   if (!doctorName || doctorName === "Unknown") return "";
@@ -69,17 +70,14 @@ export default function NurseQueue() {
   // toggle, vitals dialog open/close), which would otherwise re-run all 6 of
   // these full-array passes for no reason.
   const { waiting, inProgress, completed, vitalsRecordedCount, pending, done } = useMemo(() => ({
-    waiting: tokens.filter((t: any) => t.statusCode === "WAITING_FOR_VITALS" || t.statusCode === "READY_FOR_DOCTOR" || t.statusCode === "SKIPPED").length,
-    inProgress: tokens.filter((t: any) => t.statusCode === "IN_CONSULTATION").length,
-    completed: tokens.filter((t: any) => t.statusCode === "COMPLETED").length,
+    waiting: tokens.filter(isWaitingForCare).length,
+    inProgress: tokens.filter(isInConsultation).length,
+    completed: tokens.filter((t: any) => t.statusCode === QUEUE_STATUS.COMPLETED).length,
     vitalsRecordedCount: tokens.filter((t: any) => t.vitalsRecorded).length,
-    // Station view buckets
-    pending: tokens.filter(
-      (t: any) => t.appointmentId &&
-        !t.vitalsRecorded &&
-        !["COMPLETED", "CANCELLED"].includes(t.statusCode)
-    ),
-    done: tokens.filter((t: any) => t.appointmentId && t.vitalsRecorded),
+    // Station view buckets — shared with the Nursing Station dashboard so the
+    // count there can never disagree with the list here.
+    pending: tokens.filter(needsVitals),
+    done: tokens.filter(hasVitals),
   }), [tokens]);
 
   return (

@@ -20,6 +20,7 @@ import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
 import { apiErrorText } from "@/utils/apiError";
 import { QUEUE_POLL_MS } from "@/constants/intervals";
+import { needsVitals, hasVitals, isInConsultation } from "@/constants/queueStatus";
 
 const NURSE_PURPLE = BRAND.action;
 const NURSE_PURPLE_DARK = BRAND.actionDark;
@@ -28,28 +29,18 @@ export default function NurseDashboard() {
   const { hospital, user } = useHospitalAuth();
   const navigate = useNavigate();
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
-    // Distinct key from NurseQueue's ["nurse-queue"]: this query returns an
-    // aggregate object ({ tokens, vitalsRecorded }), not the raw token array, so
-    // sharing a cache key would feed the wrong shape to whichever page reads it.
+    // The queue endpoint already reports `vitalsRecorded` on every token, so
+    // this used to fan out one extra GET /appointments/:id/vitals PER PATIENT to
+    // learn something the list had already told it — 50 requests for a 50-token
+    // queue, every 30 seconds. Read the flag off the token instead.
     queryKey: ["nurse-dashboard-queue"],
     queryFn: async () => {
       const res = await axiosInstance.get("/reception/queue");
-      const tokenList: any[] = Array.isArray(res.data?.data) ? res.data.data : [];
-      // Resolve which appointments already have vitals recorded.
-      const apptIds = tokenList.map((t: any) => t.appointmentId).filter(Boolean);
-      const vitalsChecks = await Promise.allSettled(
-        apptIds.map((id: string) => axiosInstance.get(`/reception/appointments/${id}/vitals`))
-      );
-      const recorded = new Set<string>();
-      vitalsChecks.forEach((result, i) => {
-        if (result.status === "fulfilled" && (result.value as any).data.data) recorded.add(apptIds[i]);
-      });
-      return { tokens: tokenList, vitalsRecorded: recorded };
+      return Array.isArray(res.data?.data) ? (res.data.data as any[]) : [];
     },
     refetchInterval: QUEUE_POLL_MS, // refresh every 30s
   });
-  const tokens: any[] = data?.tokens ?? [];
-  const vitalsRecorded: Set<string> = data?.vitalsRecorded ?? new Set();
+  const tokens: any[] = data ?? [];
 
   if (isError) {
     return (
@@ -64,16 +55,15 @@ export default function NurseDashboard() {
   }
 
   const totalPatients = tokens.length;
-  const waiting = tokens.filter(t => t.statusCode === "WAITING" || t.statusCode === "SKIPPED").length;
-  const inProgress = tokens.filter(t => t.statusCode === "IN_PROGRESS").length;
-  const vitalsPending = tokens.filter(t => t.appointmentId && !vitalsRecorded.has(t.appointmentId)).length;
-  const vitalsCompleted = vitalsRecorded.size;
+  const inProgress = tokens.filter(isInConsultation).length;
 
-  // Patients needing vitals — waiting or in progress without vitals
-  const needsVitals = tokens.filter(
-    t => t.appointmentId && !vitalsRecorded.has(t.appointmentId) &&
-      (t.statusCode === "WAITING" || t.statusCode === "IN_PROGRESS" || t.statusCode === "SKIPPED")
-  );
+  // The worklist and the tile above it are now the SAME list. They used to be
+  // two different filters, and the tile could read "3 Vitals Pending" directly
+  // above a table saying "All caught up!".
+  const pendingVitals = tokens.filter(needsVitals);
+  const doneVitals = tokens.filter(hasVitals);
+  const vitalsPending = pendingVitals.length;
+  const vitalsCompleted = doneVitals.length;
 
   return (
     <Box sx={{ pb: 6 }}>
@@ -163,16 +153,16 @@ export default function NurseDashboard() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {loading && needsVitals.length === 0 ? (
+                  {loading && pendingVitals.length === 0 ? (
                     <TableRowsSkeleton rows={6} columns={5} />
-                  ) : needsVitals.length === 0 ? (
+                  ) : pendingVitals.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} sx={{ py: 4, border: 0 }}>
                         <Mascot pose="all-caught-up" title="All caught up!" subtitle="All vitals recorded for today." />
                       </TableCell>
                     </TableRow>
                   ) : (
-                    needsVitals.map(token => (
+                    pendingVitals.map(token => (
                       <TableRow key={token.queueTokenId} sx={{ "&:hover": { bgcolor: "background.default" } }}>
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                           <Avatar sx={{ bgcolor: `${NURSE_PURPLE_DARK}cc`, width: 36, height: 36, fontSize: "0.875rem", fontWeight: 800 }}>
@@ -222,11 +212,11 @@ export default function NurseDashboard() {
             </Typography>
             {loading ? (
               <CardGridSkeleton count={4} height={60} minWidth={220} />
-            ) : tokens.filter(t => t.appointmentId && vitalsRecorded.has(t.appointmentId)).length === 0 ? (
+            ) : doneVitals.length === 0 ? (
               <Mascot pose="nothing-here-yet" subtitle="No vitals recorded yet today." size={130} />
             ) : (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {tokens.filter(t => t.appointmentId && vitalsRecorded.has(t.appointmentId)).map(token => (
+                {doneVitals.map(token => (
                   <Box
                     key={token.queueTokenId}
                     sx={{

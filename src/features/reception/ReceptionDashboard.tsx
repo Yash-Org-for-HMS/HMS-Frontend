@@ -24,7 +24,10 @@ interface AppointmentEntry {
   appointmentTime: string;
   tokenNumber: number;
   patientId: string | null;
+  patientName: string;
+  uhidNumber: string | null;
   doctorId: string | null;
+  doctorName: string;
   status: { label: string; color: string };
 }
 interface DashboardStats {
@@ -184,7 +187,19 @@ export default function ReceptionDashboard() {
                     <TableRow key={appt.appointmentId} hover>
                       <TableCell sx={{ fontWeight: 700, color: "text.primary", borderColor: "divider" }}>#{appt.tokenNumber}</TableCell>
                       <TableCell sx={{ color: "text.primary", borderColor: "divider" }}>{new Date(appt.appointmentTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</TableCell>
-                      <TableCell sx={{ color: "text.secondary", borderColor: "divider" }}>{appt.patientId ? <Box component="span" sx={{ fontFamily: "monospace" }}>{appt.patientId.slice(0, 8)}</Box> : <Typography variant="caption" sx={{ color: "text.disabled" }}>Unregistered</Typography>}</TableCell>
+                      {/* Name and UHID, not an ID fragment. This column used to
+                          print patientId.slice(0, 8) in monospace, because the
+                          endpoint returned no name to print. */}
+                      <TableCell sx={{ borderColor: "divider" }}>
+                        {appt.patientId ? (
+                          <>
+                            <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{appt.patientName}</Typography>
+                            {appt.uhidNumber && <Typography variant="caption" sx={{ color: "text.secondary" }}>{appt.uhidNumber}</Typography>}
+                          </>
+                        ) : (
+                          <Typography variant="caption" sx={{ color: "text.disabled" }}>Unregistered</Typography>
+                        )}
+                      </TableCell>
                       <TableCell sx={{ borderColor: "divider" }}><Chip label={appt.status.label} size="small" sx={{ bgcolor: `${appt.status.color}15`, color: appt.status.color, fontWeight: 600, borderRadius: 1.5 }} /></TableCell>
                     </TableRow>
                   ))
