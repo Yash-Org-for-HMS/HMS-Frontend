@@ -22,6 +22,13 @@ interface Props {
   required?: boolean;
   showPincode?: boolean;
   disabled?: boolean;
+  /**
+   * Per-field messages from the parent form's validator. Without this the
+   * address fields were the only ones on a form that could fail validation
+   * silently — the submit was blocked but State/City showed nothing, so the
+   * user saw a form that simply refused to save.
+   */
+  errors?: { state?: string; district?: string; city?: string; pincode?: string };
 }
 
 /**
@@ -31,7 +38,7 @@ interface Props {
  * strings) — the onChange patch always includes both ids and names.
  * Renders <Grid> items; use inside a <Grid container>.
  */
-export default function GeoAddressPicker({ value, onChange, colSpan = 3, required, showPincode = true, disabled = false }: Props) {
+export default function GeoAddressPicker({ value, onChange, colSpan = 3, required, showPincode = true, disabled = false, errors = {} }: Props) {
   const { data: states = [] } = useQuery<GeoOption[]>({
     queryKey: ["geo-states"],
     queryFn: async () => (await axiosInstance.get("/geo/states")).data.data,
@@ -83,6 +90,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
       <Grid size={{ xs: 12, md: colSpan }}>
         <TextField
           select fullWidth label="State" required={required} disabled={disabled}
+          error={!!errors.state} helperText={errors.state}
           value={stateId}
           onChange={(e) => {
             const id = Number(e.target.value);
@@ -111,6 +119,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
       <Grid size={{ xs: 12, md: colSpan }}>
         <TextField
           fullWidth label="City / Town" required={required} disabled={disabled}
+          error={!!errors.city} helperText={errors.city}
           value={city}
           onChange={(e) => onChange({ city: e.target.value })}
           placeholder="e.g. Hyderabad"

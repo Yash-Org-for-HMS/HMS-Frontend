@@ -35,8 +35,21 @@ export default function CreatePODialog({ open, onClose, suppliers, medicines, on
   }, [open]);
 
   const handleCreate = async () => {
-    if (!supplierId || items.some(item => !item.medicineId || item.orderedQuantity <= 0)) {
-      toast.error("Please fill all fields properly.");
+    // Name the row and the field. "Please fill all fields properly" on a form
+    // with N item rows told the user nothing about WHICH row was wrong, so on a
+    // long PO they had to re-check every line by hand.
+    if (!supplierId) {
+      toast.error("Choose a supplier for this purchase order.");
+      return;
+    }
+    const badIndex = items.findIndex(item => !item.medicineId || !(item.orderedQuantity > 0));
+    if (badIndex !== -1) {
+      const bad = items[badIndex];
+      toast.error(
+        !bad.medicineId
+          ? `Item #${badIndex + 1}: choose a medicine.`
+          : `Item #${badIndex + 1}: quantity must be greater than 0.`
+      );
       return;
     }
     try {
@@ -86,7 +99,9 @@ export default function CreatePODialog({ open, onClose, suppliers, medicines, on
               const newItems = [...items];
               newItems[idx].unitPrice = parseFloat(e.target.value) || 0;
               setItems(newItems);
-            }} sx={{ flex: 1 }} />
+            }} sx={{ flex: 1 }}
+                inputProps={{ min: 0, max: 10000000 }}
+              />
           </Box>
         ))}
         <Button onClick={() => setItems([...items, emptyItem()])} variant="text" sx={{ alignSelf: 'flex-start' }}>

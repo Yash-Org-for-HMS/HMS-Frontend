@@ -19,7 +19,7 @@ import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
-import { validate, hasErrors, required, isNonNegativeNumber, min } from "@/utils/validation";
+import { validate, hasErrors, required, isNonNegativeNumber, min, max } from "@/utils/validation";
 
 // Match the existing plain (non-uppercase) table-head look, overriding
 // SortableHeadCell's default uppercase/secondary styling.
@@ -53,7 +53,7 @@ export default function MedicineCatalog() {
   const [minStockLevel, setMinStockLevel] = useState("10");
   const [defaultSupplierId, setDefaultSupplierId] = useState("");
   const [saving, setSaving] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ sellingPrice?: string; minStockLevel?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | undefined>>({});
 
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -122,17 +122,23 @@ export default function MedicineCatalog() {
   };
 
   const handleSave = async () => {
-    if (!medicineCode || !medicineName || !genericName || !sellingPrice) {
-      setErrorMsg("Please fill in all required fields.");
-      return;
-    }
-    // Numeric guards mirror the backend: price ≥ 0, min-stock a non-negative whole number.
-    const numErrors = validate(
-      { sellingPrice, minStockLevel },
-      { sellingPrice: [required("Selling price"), isNonNegativeNumber], minStockLevel: [min(0)] },
+    // One pass over every field, so the error lands ON the offending input
+    // instead of a banner saying "fill in all required fields" that leaves the
+    // user hunting for which one. Numeric bounds mirror the server's caps.
+    const errors = validate(
+      { medicineCode, medicineName, genericName, sellingPrice, minStockLevel, gstPercent },
+      {
+        medicineCode: [required("Medicine code")],
+        medicineName: [required("Medicine name")],
+        genericName: [required("Generic name")],
+        sellingPrice: [required("Selling price"), isNonNegativeNumber, max(10000000)],
+        minStockLevel: [min(0), max(100000)],
+        gstPercent: [min(0), max(100)],
+      },
     );
-    if (hasErrors(numErrors)) {
-      setFieldErrors(numErrors);
+    if (hasErrors(errors)) {
+      setFieldErrors(errors);
+      setErrorMsg("");
       return;
     }
     setFieldErrors({});
@@ -354,6 +360,8 @@ export default function MedicineCatalog() {
                 fullWidth
                 variant="outlined"
                 required
+                error={!!fieldErrors.medicineCode}
+                helperText={fieldErrors.medicineCode}
               />
               <TextField
                 label="Selling Price (₹)"
@@ -377,6 +385,8 @@ export default function MedicineCatalog() {
               fullWidth
               variant="outlined"
               required
+              error={!!fieldErrors.medicineName}
+              helperText={fieldErrors.medicineName}
             />
 
             <TextField
@@ -387,7 +397,8 @@ export default function MedicineCatalog() {
               fullWidth
               variant="outlined"
               required
-              helperText="The active pharmaceutical ingredient (Salt)"
+              error={!!fieldErrors.genericName}
+              helperText={fieldErrors.genericName || "The active pharmaceutical ingredient (Salt)"}
             />
 
             <TextField
@@ -408,7 +419,8 @@ export default function MedicineCatalog() {
                 fullWidth
                 variant="outlined"
                 inputProps={{ min: 0, max: 100 }}
-                helperText="Blank / 0 = untaxed"
+                error={!!fieldErrors.gstPercent}
+                helperText={fieldErrors.gstPercent || "Blank / 0 = untaxed"}
               />
               <TextField
                 label="HSN/SAC (optional)"

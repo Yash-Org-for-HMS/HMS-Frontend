@@ -221,7 +221,9 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
           <TextField fullWidth type="number" label="Price (₹, optional)"
             error={!!errors.price}
             helperText={errors.price || "Marking this surgery completed will raise a charge for this amount"}
-            value={form.price} onChange={(e) => { setForm({ ...form, price: e.target.value }); setErrors((p) => ({ ...p, price: undefined })); }} />
+            value={form.price} onChange={(e) => { setForm({ ...form, price: e.target.value }); setErrors((p) => ({ ...p, price: undefined })); }}
+                inputProps={{ min: 0, max: 10000000 }}
+              />
           <TextField fullWidth multiline rows={2} label="Notes (optional)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         </Stack>
       </DialogContent>

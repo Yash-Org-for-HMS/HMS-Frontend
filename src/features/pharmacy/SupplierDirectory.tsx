@@ -20,7 +20,7 @@ import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
-import { validate, hasErrors, isEmail, isPhone } from "@/utils/validation";
+import { validate, hasErrors, isEmail, isPhone, required } from "@/utils/validation";
 
 // Match the existing plain (non-uppercase) table-head look, overriding
 // SortableHeadCell's default uppercase/secondary styling.
@@ -55,7 +55,7 @@ export default function SupplierDirectory() {
   const [stateLoc, setStateLoc] = useState("");
   const [country, setCountry] = useState("India");
   const [saving, setSaving] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | undefined>>({});
 
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -120,14 +120,27 @@ export default function SupplierDirectory() {
   };
 
   const handleSave = async () => {
-    if (!supplierCode || !supplierName || !contactPersonName || !phone || !email || !city || !stateLoc || !country || !gstNumber) {
-      setErrorMsg("Please fill in all required fields.");
-      return;
-    }
-    // Format guards mirror the backend supplier validator.
-    const fmtErrors = validate({ phone, email }, { phone: [isPhone], email: [isEmail] });
-    if (hasErrors(fmtErrors)) {
-      setFieldErrors(fmtErrors);
+    // Required-ness and format checked in ONE pass, so every problem surfaces on
+    // its own field at once. The old flow reported "fill in all required fields"
+    // as a banner — across nine fields that meant hunting for the empty one, and
+    // it hid format errors until the required check happened to pass.
+    const errors = validate(
+      { supplierCode, supplierName, contactPersonName, phone, email, city, stateLoc, country, gstNumber },
+      {
+        supplierCode: [required("Supplier code")],
+        supplierName: [required("Supplier name")],
+        contactPersonName: [required("Contact person")],
+        phone: [required("Phone"), isPhone],
+        email: [required("Email"), isEmail],
+        city: [required("City")],
+        stateLoc: [required("State")],
+        country: [required("Country")],
+        gstNumber: [required("GST number")],
+      },
+    );
+    if (hasErrors(errors)) {
+      setFieldErrors(errors);
+      setErrorMsg("");
       return;
     }
     setFieldErrors({});
@@ -344,6 +357,8 @@ export default function SupplierDirectory() {
                 fullWidth
                 variant="outlined"
                 required
+                error={!!fieldErrors.supplierCode}
+                helperText={fieldErrors.supplierCode}
               />
               <TextField
                 label="Company Name"
@@ -353,6 +368,8 @@ export default function SupplierDirectory() {
                 fullWidth
                 variant="outlined"
                 required
+                error={!!fieldErrors.supplierName}
+                helperText={fieldErrors.supplierName}
               />
 
               <TextField
@@ -362,6 +379,8 @@ export default function SupplierDirectory() {
                 fullWidth
                 variant="outlined"
                 required
+                error={!!fieldErrors.contactPersonName}
+                helperText={fieldErrors.contactPersonName}
               />
               <TextField
                 label="GST Number"
@@ -370,6 +389,8 @@ export default function SupplierDirectory() {
                 fullWidth
                 variant="outlined"
                 required
+                error={!!fieldErrors.gstNumber}
+                helperText={fieldErrors.gstNumber || "15-character GSTIN, e.g. 27AAPFU0939F1ZV"}
               />
 
               <TextField
@@ -398,6 +419,7 @@ export default function SupplierDirectory() {
                 <Grid container spacing={2}>
                   <GeoAddressPicker
                     showPincode={false} colSpan={6}
+                    errors={{ state: fieldErrors.stateLoc, city: fieldErrors.city }}
                     value={{ stateName: stateLoc, districtName: districtLoc, city }}
                     onChange={(patch) => {
                       if (patch.stateName !== undefined) setStateLoc(patch.stateName);
