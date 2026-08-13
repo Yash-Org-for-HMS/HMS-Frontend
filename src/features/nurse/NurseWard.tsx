@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Paper, Grid, Button, TextField, InputAdornment, Dialog, DialogTitle,
-  DialogContent, Typography, Chip, Divider,
+  DialogContent, Typography, Chip, Divider, ToggleButton, ToggleButtonGroup,
+  Table, TableHead, TableBody, TableRow, TableCell, TableContainer, IconButton, Tooltip,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import {
   SearchRounded, MedicationRounded, MedicalServicesRounded, DescriptionRounded,
   MonitorHeartRounded, WaterDropRounded, SwapHorizRounded, AssignmentRounded,
-  HotelRounded,
+  HotelRounded, ViewModuleRounded, ViewListRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { BRAND, SEMANTIC, NEUTRAL } from "@/styles/accents";
@@ -26,16 +27,28 @@ import HandoverDialog from "@/components/ipd/HandoverDialog";
 import { apiErrorText } from "@/utils/apiError";
 
 /**
- * The ward, as one card per patient.
+ * The ward.
  *
- * A table row could not carry seven actions — they were the same weight, the
- * column wrapped, and nothing read as primary. A card gives each patient the
- * room to show every action with its name on it, so nothing is hidden behind a
- * menu, and leaves space for the things a table had nowhere to put: which bed,
- * which consultant, and how long this patient has been in.
+ * Grouped by ward, because a hospital with several wards was showing every
+ * patient in one flat list — a nurse works one ward, and had to pick their
+ * patients out of everybody else's.
+ *
+ * Two views, because they answer different questions. Cards show every action
+ * with its name on and have room for the bed and the length of stay; the list
+ * is dense, for a big ward where you are scanning for one patient. The choice
+ * is remembered.
  */
+
+const VIEW_KEY = "hms.ward.view";
+
+/** "Room 10" after "Room 9", not before it. */
+const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+
 export default function NurseWard() {
   const [search, setSearch] = useState("");
+  const [view, setView] = useState<"cards" | "list">(
+    () => (localStorage.getItem(VIEW_KEY) as "cards" | "list") || "cards",
+  );
   const [chartFor, setChartFor] = useState<any>(null);
   const [visitsFor, setVisitsFor] = useState<any>(null);
   const [notesFor, setNotesFor] = useState<any>(null);
@@ -50,12 +63,36 @@ export default function NurseWard() {
   });
 
   const s = search.trim().toLowerCase();
-  const filtered = s
-    ? admissions.filter((a) => [a.patientName, a.uhid, a.bed?.label].filter(Boolean).some((v: string) => v.toLowerCase().includes(s)))
-    : admissions;
+  const filtered = useMemo(
+    () =>
+      s
+        ? admissions.filter((a) => [a.patientName, a.uhid, a.bed?.label].filter(Boolean).some((v: string) => v.toLowerCase().includes(s)))
+        : admissions,
+    [admissions, s],
+  );
 
-  // Ordered by how often a nurse reaches for them, but all of them visible —
-  // the point of the card is that nothing needs hiding.
+  // Grouped by ward, each ward ordered by room then bed — the order a nurse
+  // walks the ward in, rather than whatever order the API returned.
+  const groups = useMemo(() => {
+    const byWard = new Map<string, any[]>();
+    for (const a of filtered) {
+      const ward = a.bed?.wardName || "No ward assigned";
+      (byWard.get(ward) ?? byWard.set(ward, []).get(ward)!).push(a);
+    }
+    return [...byWard.entries()]
+      .sort(([x], [y]) => (x === "No ward assigned" ? 1 : y === "No ward assigned" ? -1 : collator.compare(x, y)))
+      .map(([ward, list]) => ({
+        ward,
+        list: list.sort(
+          (p, q) =>
+            collator.compare(p.bed?.roomNumber ?? "", q.bed?.roomNumber ?? "") ||
+            collator.compare(p.bed?.bedNumber ?? "", q.bed?.bedNumber ?? "") ||
+            collator.compare(p.patientName ?? "", q.patientName ?? ""),
+        ),
+      }));
+  }, [filtered]);
+
+  // Ordered by how often a nurse reaches for them — but all of them visible.
   const actions = [
     { key: "obs", label: "Observations", icon: <MonitorHeartRounded fontSize="small" />, open: setObsFor, tone: BRAND.action },
     { key: "fluid", label: "Fluids", icon: <WaterDropRounded fontSize="small" />, open: setFluidFor, tone: BRAND.action },
@@ -65,19 +102,150 @@ export default function NurseWard() {
     { key: "visits", label: "Doctor visits", icon: <MedicalServicesRounded fontSize="small" />, open: setVisitsFor, tone: NEUTRAL.muted },
   ];
 
+  const chooseView = (_: unknown, v: "cards" | "list" | null) => {
+    if (!v) return;
+    setView(v);
+    localStorage.setItem(VIEW_KEY, v);
+  };
+
+  /** Room · bed, built from the parts — the API's composed label reads "Bed Bed 1". */
+  const bedText = (a: any) => [a.bed?.roomNumber, a.bed?.bedNumber].filter(Boolean).join(" · ");
+
+  const PatientCard = ({ a }: { a: any }) => (
+    <Paper
+      elevation={0}
+      sx={{
+        height: "100%", display: "flex", flexDirection: "column",
+        borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden",
+        transition: "border-color .15s ease",
+        "&:hover": { borderColor: alpha(BRAND.action, 0.5) },
+      }}
+    >
+      <Box sx={{ px: 2.5, pt: 2.25, pb: 1.75 }}>
+        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }} noWrap>{a.patientName}</Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              {[a.uhid, a.admissionNumber].filter(Boolean).join(" · ")}
+            </Typography>
+          </Box>
+          {a.days != null && (
+            <Chip size="small" label={`Day ${a.days}`}
+              sx={{ flexShrink: 0, bgcolor: alpha(SEMANTIC.info, 0.12), color: SEMANTIC.info, fontWeight: 700 }} />
+          )}
+        </Box>
+
+        <Box sx={{ mt: 1.5 }}>
+          {a.bed ? (
+            <Chip size="small" icon={<HotelRounded sx={{ fontSize: 15 }} />} label={bedText(a)}
+              sx={{ bgcolor: alpha(BRAND.action, 0.1), color: BRAND.action, fontWeight: 600 }} />
+          ) : (
+            <Chip size="small" label="No bed assigned"
+              sx={{ bgcolor: alpha(SEMANTIC.warning, 0.12), color: SEMANTIC.warning, fontWeight: 600 }} />
+          )}
+        </Box>
+        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
+          {a.doctorName || "No consultant recorded"}
+        </Typography>
+      </Box>
+
+      <Divider />
+
+      <Box sx={{ px: 2.5, py: 2, mt: "auto" }}>
+        <Button fullWidth variant="contained" startIcon={<AssignmentRounded />}
+          onClick={() => navigate("/nurse/chart/" + a.admissionId)} sx={{ textTransform: "none", mb: 1.5 }}>
+          Open chart
+        </Button>
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
+          {actions.map((act) => (
+            <Button
+              key={act.key} size="small" variant="outlined" onClick={() => act.open(a)}
+              sx={{
+                textTransform: "none", px: 0.5, minWidth: 0, borderColor: "divider", color: act.tone,
+                flexDirection: "column", gap: 0.25, py: 0.75, lineHeight: 1.2, fontSize: "0.72rem",
+                "&:hover": { borderColor: act.tone, bgcolor: alpha(act.tone, 0.06) },
+              }}
+            >
+              {act.icon}
+              <Box component="span" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
+                {act.label}
+              </Box>
+            </Button>
+          ))}
+        </Box>
+      </Box>
+    </Paper>
+  );
+
+  const PatientTable = ({ list }: { list: any[] }) => (
+    <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>Bed</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>Patient</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>Consultant</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>Stay</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 700, color: "text.secondary" }}>Chart</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {list.map((a) => (
+              <TableRow key={a.admissionId} hover>
+                <TableCell sx={{ whiteSpace: "nowrap", fontWeight: 600, color: BRAND.action }}>{bedText(a) || "—"}</TableCell>
+                <TableCell>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{a.patientName}</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>{a.uhid}</Typography>
+                </TableCell>
+                <TableCell sx={{ color: "text.secondary" }}>{a.doctorName || "—"}</TableCell>
+                <TableCell sx={{ color: "text.secondary", whiteSpace: "nowrap" }}>{a.days != null ? `Day ${a.days}` : "—"}</TableCell>
+                <TableCell align="right">
+                  <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                    <Button size="small" variant="contained" startIcon={<AssignmentRounded />}
+                      onClick={() => navigate("/nurse/chart/" + a.admissionId)}
+                      sx={{ textTransform: "none", whiteSpace: "nowrap", flexShrink: 0, mr: 0.5 }}>
+                      Open chart
+                    </Button>
+                    {/* The dense view trades labels for icons — that is the trade
+                        it exists to make. Every action is still one tap. */}
+                    {actions.map((act) => (
+                      <Tooltip key={act.key} title={act.label}>
+                        <IconButton size="small" aria-label={act.label} onClick={() => act.open(a)}
+                          sx={{ color: NEUTRAL.muted, "&:hover": { color: act.tone, bgcolor: alpha(act.tone, 0.08) } }}>
+                          {act.icon}
+                        </IconButton>
+                      </Tooltip>
+                    ))}
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
+  );
+
   return (
     <Box sx={{ pb: 6 }}>
       <PageHeader title="Ward" subtitle="Current in-patients — open a chart to record or read the day" />
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2, mb: 2.5, flexWrap: "wrap" }}>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          {isLoading ? "" : `${filtered.length} patient${filtered.length === 1 ? "" : "s"}${s ? " matching" : " in the ward"}`}
+          {isLoading ? "" : `${filtered.length} patient${filtered.length === 1 ? "" : "s"} across ${groups.length} ward${groups.length === 1 ? "" : "s"}${s ? " matching" : ""}`}
         </Typography>
-        <TextField
-          placeholder="Search patient, UHID, bed…" value={search} onChange={(e) => setSearch(e.target.value)} size="small"
-          InputProps={{ startAdornment: (<InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary", fontSize: 20 }} /></InputAdornment>) }}
-          sx={{ minWidth: 300 }}
-        />
+        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
+          <TextField
+            placeholder="Search patient, UHID, bed…" value={search} onChange={(e) => setSearch(e.target.value)} size="small"
+            InputProps={{ startAdornment: (<InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary", fontSize: 20 }} /></InputAdornment>) }}
+            sx={{ minWidth: 280 }}
+          />
+          <ToggleButtonGroup exclusive size="small" value={view} onChange={chooseView}>
+            <ToggleButton value="cards" aria-label="Card view"><Tooltip title="Cards — every action named"><ViewModuleRounded fontSize="small" /></Tooltip></ToggleButton>
+            <ToggleButton value="list" aria-label="List view"><Tooltip title="List — denser, for a big ward"><ViewListRounded fontSize="small" /></Tooltip></ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Box>
 
       {isLoading ? (
@@ -86,96 +254,34 @@ export default function NurseWard() {
         <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : filtered.length === 0 ? (
         <Paper elevation={0} sx={{ py: 5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
-          <Mascot
-            pose="all-caught-up"
+          <Mascot pose="all-caught-up"
             title={s ? "No match" : "No in-patients"}
-            subtitle={s ? "No patient matches that search." : "No active admissions right now."}
-            size={120}
-          />
+            subtitle={s ? "No patient matches that search." : "No active admissions right now."} size={120} />
         </Paper>
       ) : (
-        <Grid container spacing={2.5}>
-          {filtered.map((a) => (
-            <Grid key={a.admissionId} size={{ xs: 12, md: 6, lg: 4 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  height: "100%", display: "flex", flexDirection: "column",
-                  borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden",
-                  transition: "border-color .15s ease",
-                  "&:hover": { borderColor: alpha(BRAND.action, 0.5) },
-                }}
-              >
-                {/* Identity first, then where they are and who is looking after
-                    them — what a nurse needs to recognise the patient. */}
-                <Box sx={{ px: 2.5, pt: 2.25, pb: 1.75 }}>
-                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }} noWrap>
-                        {a.patientName}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        {[a.uhid, a.admissionNumber].filter(Boolean).join(" · ")}
-                      </Typography>
-                    </Box>
-                    {a.days != null && (
-                      <Chip
-                        size="small" label={`Day ${a.days}`}
-                        sx={{ flexShrink: 0, bgcolor: alpha(SEMANTIC.info, 0.12), color: SEMANTIC.info, fontWeight: 700 }}
-                      />
-                    )}
-                  </Box>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
+          {groups.map(({ ward, list }) => (
+            <Box key={ward}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 1.5 }}>
+                <HotelRounded sx={{ color: NEUTRAL.muted, fontSize: 20 }} />
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }}>{ward}</Typography>
+                <Chip size="small" label={`${list.length} patient${list.length === 1 ? "" : "s"}`}
+                  sx={{ bgcolor: alpha(NEUTRAL.muted, 0.12), color: "text.secondary", fontWeight: 600 }} />
+                <Divider sx={{ flex: 1, ml: 0.5 }} />
+              </Box>
 
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1.5, flexWrap: "wrap" }}>
-                    {a.bed?.label ? (
-                      <Chip
-                        size="small" icon={<HotelRounded sx={{ fontSize: 15 }} />} label={a.bed.label}
-                        sx={{ bgcolor: alpha(BRAND.action, 0.1), color: BRAND.action, fontWeight: 600 }}
-                      />
-                    ) : (
-                      <Chip size="small" label="No bed assigned" sx={{ bgcolor: alpha(SEMANTIC.warning, 0.12), color: SEMANTIC.warning, fontWeight: 600 }} />
-                    )}
-                  </Box>
-                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
-                    {a.doctorName || "No consultant recorded"}
-                  </Typography>
-                </Box>
-
-                <Divider />
-
-                <Box sx={{ px: 2.5, py: 2, mt: "auto" }}>
-                  <Button
-                    fullWidth variant="contained" startIcon={<AssignmentRounded />}
-                    onClick={() => navigate("/nurse/chart/" + a.admissionId)}
-                    sx={{ textTransform: "none", mb: 1.5 }}
-                  >
-                    Open chart
-                  </Button>
-
-                  {/* All six, named. On a card there is room, so nothing has to
-                      hide behind a menu. */}
-                  <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
-                    {actions.map((act) => (
-                      <Button
-                        key={act.key} size="small" variant="outlined" onClick={() => act.open(a)}
-                        sx={{
-                          textTransform: "none", px: 0.5, minWidth: 0, borderColor: "divider", color: act.tone,
-                          flexDirection: "column", gap: 0.25, py: 0.75, lineHeight: 1.2, fontSize: "0.72rem",
-                          "&:hover": { borderColor: act.tone, bgcolor: alpha(act.tone, 0.06) },
-                        }}
-                      >
-                        {act.icon}
-                        <Box component="span" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
-                          {act.label}
-                        </Box>
-                      </Button>
-                    ))}
-                  </Box>
-                </Box>
-              </Paper>
-            </Grid>
+              {view === "cards" ? (
+                <Grid container spacing={2.5}>
+                  {list.map((a) => (
+                    <Grid key={a.admissionId} size={{ xs: 12, md: 6, lg: 4 }}><PatientCard a={a} /></Grid>
+                  ))}
+                </Grid>
+              ) : (
+                <PatientTable list={list} />
+              )}
+            </Box>
           ))}
-        </Grid>
+        </Box>
       )}
 
       <Dialog open={!!chartFor} onClose={() => setChartFor(null)} maxWidth="md" fullWidth>
