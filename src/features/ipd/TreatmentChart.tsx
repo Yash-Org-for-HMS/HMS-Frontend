@@ -122,6 +122,18 @@ export default function TreatmentChart() {
     enabled: !!admissionId,
   });
 
+  const { data: visitData } = useQuery({
+    queryKey: ["ipd-doctor-visits", admissionId, from, to],
+    queryFn: async () => (await axiosInstance.get(`/ipd/admissions/${admissionId}/doctor-visits`, { params: { from, to } })).data.data,
+    enabled: !!admissionId,
+  });
+
+  const { data: notes } = useQuery({
+    queryKey: ["ipd-nursing-notes", admissionId, from, to],
+    queryFn: async () => (await axiosInstance.get(`/ipd/admissions/${admissionId}/nursing-notes`, { params: { from, to } })).data.data,
+    enabled: !!admissionId,
+  });
+
   if (headerLoading) return <Box sx={{ p: 3 }}><ListSkeleton rows={8} /></Box>;
   if (isError) return <Box sx={{ p: 3 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></Box>;
 
@@ -145,6 +157,14 @@ export default function TreatmentChart() {
   const marOrders: any[] = (mar ?? []).filter(
     (o: any) => (o.doses?.length ?? 0) > 0 || o.status === "ACTIVE" || o.status === "REQUESTED",
   );
+
+  // Oldest first: both read as a diary of the day, so they run the way the day
+  // ran — unlike the dialogs, which put the newest on top for writing.
+  const asc = (a: any, b: any, k: string) => dayjs(a[k]).valueOf() - dayjs(b[k]).valueOf();
+  const visits: any[] = [...(visitData?.visits ?? [])]
+    .filter((v: any) => v.status !== "CANCELLED")
+    .sort((a, b) => asc(a, b, "visitDate"));
+  const nursingNotes: any[] = [...(notes ?? [])].sort((a, b) => asc(a, b, "createdAt"));
 
   const cell = (v: any, suffix = "") => (v === null || v === undefined ? "" : `${v}${suffix}`);
 
@@ -452,6 +472,64 @@ export default function TreatmentChart() {
                 </TableBody>
               </Table>
             </TableContainer>
+          )}
+        </Paper>
+
+        {/* ── The written record ──────────────────────────────────────────────
+            The numbers above say what happened; these say what was thought
+            about it. Both are shown even when empty: on a medico-legal record
+            "no doctor visit recorded for this day" is itself the finding, and
+            hiding the section would quietly turn that into no question at all. */}
+        <Paper elevation={0} className="print-block" sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden", mt: 2 }}>
+          <Box sx={{ px: 2.5, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Doctor's round</Typography>
+          </Box>
+          {visits.length === 0 ? (
+            <Box sx={{ p: 3 }}>
+              <Typography variant="body2" sx={{ color: SEMANTIC.warning, fontWeight: 600 }}>
+                No doctor visit recorded for this chart day.
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ px: 2.5, py: 1 }}>
+              {visits.map((v: any, i: number) => (
+                <Box key={v.visitId} sx={{ py: 1.25, borderTop: i ? "1px solid" : "none", borderColor: "divider" }}>
+                  <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.25, flexWrap: "wrap" }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{dayjs(v.visitDate).format("HH:mm")}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.doctorName || "Doctor"}</Typography>
+                  </Box>
+                  {/* A visit with nothing written is still a visit — the doctor
+                      saw the patient, and that is the entry. Saying so beats a
+                      blank line the reader has to interpret. */}
+                  <Typography variant="body2" sx={{ mt: 0.4, whiteSpace: "pre-wrap", color: v.notes ? "text.primary" : NEUTRAL.muted }}>
+                    {v.notes || "Seen — nothing written."}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Paper>
+
+        <Paper elevation={0} className="print-block" sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden", mt: 2 }}>
+          <Box sx={{ px: 2.5, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Nursing notes</Typography>
+          </Box>
+          {nursingNotes.length === 0 ? (
+            <Box sx={{ p: 3 }}>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>No nursing notes for this chart day.</Typography>
+            </Box>
+          ) : (
+            <Box sx={{ px: 2.5, py: 1 }}>
+              {nursingNotes.map((n: any, i: number) => (
+                <Box key={n.nursingNoteId} sx={{ py: 1.25, borderTop: i ? "1px solid" : "none", borderColor: "divider" }}>
+                  <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.25 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{dayjs(n.createdAt).format("HH:mm")}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{n.author}</Typography>
+                  </Box>
+                  <Typography variant="body2" sx={{ mt: 0.4, whiteSpace: "pre-wrap" }}>{n.noteText}</Typography>
+                </Box>
+              ))}
+            </Box>
           )}
         </Paper>
       </Box>
