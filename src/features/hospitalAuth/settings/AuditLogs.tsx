@@ -64,12 +64,15 @@ export default function AuditLogs() {
   });
   const logs: any[] = resp?.data ?? [];
   const totalPages: number = resp?.pagination?.totalPages ?? 1;
+  // "No results" and "nothing has happened yet" are different things to be told.
+  const hasFilters = Object.values(appliedFilters).some((v) => Boolean(v));
 
-  // Seed sample logs once (dev convenience), then refresh.
-  useEffect(() => {
-    axiosInstance.post("/hospital/audit-logs/generate-samples").finally(() => refetch());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // This page used to POST /audit-logs/generate-samples on every mount, which
+  // wrote four invented entries — a user "dr.smith@example.com", a department
+  // "Cardiology Unit B", a timezone change — stamped with the LOGGED-IN ADMIN'S
+  // own user id. An admin reviewing the trail was shown things they never did,
+  // attributed to them by name. An empty audit log is fine; a fabricated one is
+  // worse than no page at all.
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
@@ -224,7 +227,7 @@ export default function AuditLogs() {
                 {sorted.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} sx={{ py: 3, borderBottom: "none" }}>
-                      <Mascot pose="no-matches" subtitle="No audit logs found matching criteria." size={120} />
+                      <Mascot pose="no-matches" subtitle={hasFilters ? "No activity matches these filters." : "No activity recorded yet."} size={120} />
                     </TableCell>
                   </TableRow>
                 ) : (
