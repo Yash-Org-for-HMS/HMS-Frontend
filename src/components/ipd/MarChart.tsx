@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
   Box, Typography, Chip, Button, Stack, Divider, Tooltip,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
 } from "@mui/material";
 import { CheckRounded, CloseRounded, PauseRounded, UndoRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -30,10 +31,19 @@ export default function MarChart({ admissionId }: { admissionId: string }) {
     enabled: !!admissionId,
   });
 
-  const setStatus = async (adminId: string, status: string) => {
+  // An IV or NG dose is given IN a volume of fluid, and that volume is part of
+  // the patient's intake. Asking for it here — once, where the dose is charted —
+  // is what stops the nurse recording the same event again in the fluid chart.
+  const [askVolumeFor, setAskVolumeFor] = useState<any>(null);
+  const [volume, setVolume] = useState("");
+
+  const setStatus = async (adminId: string, status: string, infusedVolumeMl?: string) => {
     setBusy(adminId);
     try {
-      await axiosInstance.post(`/ipd/mar/${adminId}`, { status });
+      await axiosInstance.post(`/ipd/mar/${adminId}`, {
+        status,
+        ...(infusedVolumeMl ? { infusedVolumeMl } : {}),
+      });
       await refetch();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update dose"));
@@ -76,7 +86,7 @@ export default function MarChart({ admissionId }: { admissionId: string }) {
                     <Box sx={{ display: "flex", gap: 0.5 }}>
                       {isPending ? (
                         <>
-                          <Tooltip title="Given"><Button size="small" variant="outlined" disabled={busy === d.ipMedAdminId} onClick={() => setStatus(d.ipMedAdminId, "GIVEN")} startIcon={<CheckRounded />} sx={{ minWidth: 0, borderColor: "rgba(16,185,129,0.5)", color: "#047857" }}>Give</Button></Tooltip>
+                          <Tooltip title="Given"><Button size="small" variant="outlined" disabled={busy === d.ipMedAdminId} onClick={() => (o.carriesFluid ? (setVolume(""), setAskVolumeFor({ dose: d, med: o })) : setStatus(d.ipMedAdminId, "GIVEN"))} startIcon={<CheckRounded />} sx={{ minWidth: 0, borderColor: "rgba(16,185,129,0.5)", color: "#047857" }}>Give</Button></Tooltip>
                           <Tooltip title="Missed"><Button size="small" variant="outlined" disabled={busy === d.ipMedAdminId} onClick={() => setStatus(d.ipMedAdminId, "MISSED")} sx={{ minWidth: 0, borderColor: "rgba(239,68,68,0.4)", color: "#b91c1c" }}><CloseRounded fontSize="small" /></Button></Tooltip>
                           <Tooltip title="Held"><Button size="small" variant="outlined" disabled={busy === d.ipMedAdminId} onClick={() => setStatus(d.ipMedAdminId, "HELD")} sx={{ minWidth: 0, borderColor: "divider", color: "text.secondary" }}><PauseRounded fontSize="small" /></Button></Tooltip>
                         </>
@@ -91,6 +101,38 @@ export default function MarChart({ admissionId }: { admissionId: string }) {
           </Box>
         </Box>
       ))}
+      {/* Asked once, where the dose is charted. Leaving it blank still records
+          the dose — a nurse who does not know the volume must not be blocked
+          from charting that the medicine was given. */}
+      <Dialog open={!!askVolumeFor} onClose={() => setAskVolumeFor(null)} maxWidth="xs" fullWidth>
+        <DialogTitle component="div">
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>Fluid given with this dose</Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            {askVolumeFor?.med?.medicineName} · {askVolumeFor?.med?.route}
+          </Typography>
+        </DialogTitle>
+        <DialogContent dividers>
+          <TextField
+            autoFocus size="small" fullWidth label="Volume (ml)" value={volume}
+            onChange={(e) => setVolume(e.target.value)}
+            inputProps={{ inputMode: "numeric" }}
+            helperText="Counts towards the patient's fluid intake. Leave blank if not known."
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setAskVolumeFor(null)} sx={{ textTransform: "none" }}>Cancel</Button>
+          <Button
+            variant="contained" sx={{ textTransform: "none" }}
+            onClick={() => {
+              const dose = askVolumeFor.dose;
+              setAskVolumeFor(null);
+              setStatus(dose.ipMedAdminId, "GIVEN", volume.trim() || undefined);
+            }}
+          >
+            Record as given
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }
