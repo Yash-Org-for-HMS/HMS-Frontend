@@ -45,6 +45,7 @@ import {
   AccountBalanceRounded,
   AssessmentRounded,
   HotelRounded,
+  MonitorHeartRounded,
   VaccinesRounded,
   MedicationRounded,
   LocalHotelRounded,
@@ -106,6 +107,7 @@ export default function HospitalLayout() {
     // permission-code bypass) — adminOnly here matches that exactly so a
     // custom role never sees a link that would just 403.
     { text: "Ward & Bed Setup", icon: <HotelRounded />, path: "/hospital/facility-setup", permission: null, adminOnly: true, module: "IPD", section: "Configuration" },
+    { text: "Ward Chart Settings", icon: <MonitorHeartRounded />, path: "/hospital/ward-chart", permission: null, adminOnly: true, module: "IPD", section: "Configuration" },
     { text: "Vaccine Catalog", icon: <VaccinesRounded />, path: "/hospital/vaccines", permission: null, adminOnly: true, section: "Configuration" },
     { text: "Schedule of Charges", icon: <ReceiptLongRounded />, path: "/hospital/soc", permission: null, adminOnly: true, section: "Configuration" },
     { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/hospital/medicines", permission: null, adminOnly: true, section: "Configuration" },

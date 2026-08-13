@@ -72,6 +72,7 @@ const DoctorSchedule = lazy(() => import("@/features/hospitalAuth/doctors/Doctor
 const DoctorLeaves = lazy(() => import("@/features/hospitalAuth/doctors/DoctorLeaves"));
 const LookupManager = lazy(() => import("@/features/hospitalAuth/settings/LookupManager"));
 const FacilitySetup = lazy(() => import("@/features/hospitalAuth/settings/FacilitySetup"));
+const WardChartSettings = lazy(() => import("@/features/hospitalAuth/settings/WardChartSettings"));
 const VaccineCatalog = lazy(() => import("@/features/hospitalAuth/settings/VaccineCatalog"));
 const ScheduleOfCharges = lazy(() => import("@/features/hospitalAuth/settings/ScheduleOfCharges"));
 const FormTemplatesList = lazy(() => import("@/features/hospitalAuth/formBuilder/FormTemplatesList"));
@@ -250,6 +251,7 @@ function App() {
             <Route path="/hospital/doctors/:id/leaves" element={el(DoctorLeaves)} />
             <Route path="/hospital/lookups" element={el(LookupManager)} />
             <Route path="/hospital/facility-setup" element={elGated(FacilitySetup, "IPD", "Ward & Bed Setup")} />
+            <Route path="/hospital/ward-chart" element={elGated(WardChartSettings, "IPD", "Ward Chart Settings")} />
             <Route path="/hospital/vaccines" element={el(VaccineCatalog)} />
             <Route path="/hospital/soc" element={el(ScheduleOfCharges)} />
             <Route path="/hospital/medicines" element={el(MedicineCatalog)} />

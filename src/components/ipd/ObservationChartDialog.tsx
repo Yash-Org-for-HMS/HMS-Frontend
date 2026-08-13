@@ -69,14 +69,26 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
   const qc = useQueryClient();
   const admissionId = admission?.admissionId;
 
-  // Day window. The nursing day is a per-hospital setting (it starts at 8am on
-  // the reference chart, not midnight) — that lands with the chart profile, so
-  // this deliberately uses a plain calendar day for now rather than baking in an
-  // assumption that would have to be unpicked from here later.
+  // The nursing day is NOT the calendar day — it starts at this hospital's
+  // earliest shift (08:00 on the reference chart, 07:00 elsewhere). Read from the
+  // chart profile, which falls back to working defaults when nothing is set, so
+  // this never needs the hospital to have configured anything.
+  const { data: profile } = useQuery({
+    queryKey: ["ward-chart-profile"],
+    queryFn: async () => (await axiosInstance.get("/ipd/chart-profile")).data.data,
+    staleTime: 5 * 60_000,
+  });
+  const chartDayStart: string = profile?.chartDayStart ?? "08:00";
+  const [startH, startM] = chartDayStart.split(":").map(Number);
+
   const [dayOffset, setDayOffset] = useState(0);
-  const day = dayjs().add(dayOffset, "day");
-  const from = day.startOf("day").toISOString();
-  const to = day.endOf("day").toISOString();
+  // Today is the chart day currently in progress: before the start hour we are
+  // still inside yesterday's chart day.
+  const anchor = dayjs().hour(startH).minute(startM).second(0).millisecond(0);
+  const dayStart = (dayjs().isBefore(anchor) ? anchor.subtract(1, "day") : anchor).add(dayOffset, "day");
+  const day = dayStart;
+  const from = dayStart.toISOString();
+  const to = dayStart.add(1, "day").subtract(1, "millisecond").toISOString();
 
   const [form, setForm] = useState({ ...EMPTY });
   const [correcting, setCorrecting] = useState<Observation | null>(null);
@@ -111,7 +123,7 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
 
   const openNew = () => {
     setCorrecting(null);
-    setForm({ ...EMPTY, observedAt: dayjs().format("YYYY-MM-DDTHH:mm") });
+    setForm({ ...EMPTY, temperatureUnit: profile?.temperatureUnit ?? "F", observedAt: dayjs().format("YYYY-MM-DDTHH:mm") });
     setEntryOpen(true);
   };
 
@@ -182,14 +194,14 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>Observations — {admission?.patientName}</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {admission?.uhid} · {admission?.bed?.label || "—"}
+                {admission?.uhid} · {admission?.bed?.label || "—"} · chart day {chartDayStart}–{chartDayStart}
               </Typography>
             </Box>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <IconButton size="small" onClick={() => setDayOffset((d) => d - 1)}><ChevronLeftRounded /></IconButton>
             <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 116, textAlign: "center" }}>
-              {dayOffset === 0 ? "Today" : day.format("DD MMM YYYY")}
+              {dayOffset === 0 ? "Today" : day.format("DD MMM")}
             </Typography>
             <IconButton size="small" onClick={() => setDayOffset((d) => d + 1)} disabled={dayOffset >= 0}><ChevronRightRounded /></IconButton>
           </Box>
