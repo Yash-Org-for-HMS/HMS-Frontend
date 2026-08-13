@@ -2,22 +2,21 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Paper, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
-  Button, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, Typography,
-  IconButton, Tooltip, Menu, MenuItem, ListItemIcon, ListItemText, Divider, Chip,
+  Box, Paper, Grid, Button, TextField, InputAdornment, Dialog, DialogTitle,
+  DialogContent, Typography, Chip, Divider,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import {
   SearchRounded, MedicationRounded, MedicalServicesRounded, DescriptionRounded,
   MonitorHeartRounded, WaterDropRounded, SwapHorizRounded, AssignmentRounded,
-  MoreVertRounded, HotelRounded,
+  HotelRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
-import { BRAND, NEUTRAL } from "@/styles/accents";
+import { BRAND, SEMANTIC, NEUTRAL } from "@/styles/accents";
 import PageHeader from "@/components/layout/PageHeader";
 import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
-import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import { CardGridSkeleton } from "@/components/TableRowsSkeleton";
 import MarChart from "@/components/ipd/MarChart";
 import IpdDoctorVisitsDialog from "@/components/ipd/IpdDoctorVisitsDialog";
 import NursingNotesDialog from "@/components/ipd/NursingNotesDialog";
@@ -27,15 +26,13 @@ import HandoverDialog from "@/components/ipd/HandoverDialog";
 import { apiErrorText } from "@/utils/apiError";
 
 /**
- * The ward list.
+ * The ward, as one card per patient.
  *
- * Every action used to be a labelled button on the row — seven of them, all the
- * same weight, so nothing read as primary and the column wrapped. They are now
- * ranked by how often a nurse actually reaches for them:
- *
- *   Chart          the hub, and the thing you print → one primary button
- *   Obs / Fluids / Medicines   charted through the shift → one tap each
- *   Handover, notes, visits    once a shift or less     → behind the ⋮
+ * A table row could not carry seven actions — they were the same weight, the
+ * column wrapped, and nothing read as primary. A card gives each patient the
+ * room to show every action with its name on it, so nothing is hidden behind a
+ * menu, and leaves space for the things a table had nowhere to put: which bed,
+ * which consultant, and how long this patient has been in.
  */
 export default function NurseWard() {
   const [search, setSearch] = useState("");
@@ -45,7 +42,6 @@ export default function NurseWard() {
   const [obsFor, setObsFor] = useState<any>(null);
   const [fluidFor, setFluidFor] = useState<any>(null);
   const [handoverFor, setHandoverFor] = useState<any>(null);
-  const [menu, setMenu] = useState<{ el: HTMLElement; admission: any } | null>(null);
   const navigate = useNavigate();
 
   const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<any[]>({
@@ -58,21 +54,22 @@ export default function NurseWard() {
     ? admissions.filter((a) => [a.patientName, a.uhid, a.bed?.label].filter(Boolean).some((v: string) => v.toLowerCase().includes(s)))
     : admissions;
 
-  const closeMenu = () => setMenu(null);
-  const fromMenu = (fn: (a: any) => void) => () => { const a = menu?.admission; closeMenu(); if (a) fn(a); };
-
-  /** The three things charted repeatedly through a shift — one tap, not a menu. */
-  const quickActions = [
-    { key: "obs", label: "Record observations", icon: <MonitorHeartRounded fontSize="small" />, onClick: setObsFor },
-    { key: "fluid", label: "Record intake / output", icon: <WaterDropRounded fontSize="small" />, onClick: setFluidFor },
-    { key: "meds", label: "Medication chart", icon: <MedicationRounded fontSize="small" />, onClick: setChartFor },
+  // Ordered by how often a nurse reaches for them, but all of them visible —
+  // the point of the card is that nothing needs hiding.
+  const actions = [
+    { key: "obs", label: "Observations", icon: <MonitorHeartRounded fontSize="small" />, open: setObsFor, tone: BRAND.action },
+    { key: "fluid", label: "Fluids", icon: <WaterDropRounded fontSize="small" />, open: setFluidFor, tone: BRAND.action },
+    { key: "meds", label: "Medicines", icon: <MedicationRounded fontSize="small" />, open: setChartFor, tone: BRAND.action },
+    { key: "handover", label: "Handover", icon: <SwapHorizRounded fontSize="small" />, open: setHandoverFor, tone: NEUTRAL.muted },
+    { key: "notes", label: "Nursing notes", icon: <DescriptionRounded fontSize="small" />, open: setNotesFor, tone: NEUTRAL.muted },
+    { key: "visits", label: "Doctor visits", icon: <MedicalServicesRounded fontSize="small" />, open: setVisitsFor, tone: NEUTRAL.muted },
   ];
 
   return (
     <Box sx={{ pb: 6 }}>
       <PageHeader title="Ward" subtitle="Current in-patients — open a chart to record or read the day" />
 
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2, mb: 2, flexWrap: "wrap" }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2, mb: 2.5, flexWrap: "wrap" }}>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           {isLoading ? "" : `${filtered.length} patient${filtered.length === 1 ? "" : "s"}${s ? " matching" : " in the ward"}`}
         </Typography>
@@ -83,107 +80,103 @@ export default function NurseWard() {
         />
       </Box>
 
-      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>Patient</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>Bed</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>Consultant</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700, color: "text.secondary" }}>Chart</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {isLoading ? (
-                <TableRowsSkeleton rows={6} columns={4} />
-              ) : isError ? (
-                <TableRow><TableCell colSpan={4}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></TableCell></TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4}>
-                    <Box sx={{ py: 4 }}>
-                      <Mascot pose="all-caught-up" title={s ? "No match" : "No in-patients"} subtitle={s ? "No patient matches that search." : "No active admissions right now."} size={120} />
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map((a) => (
-                  <TableRow key={a.admissionId} hover>
-                    {/* Identity in one block — name, UHID and IPD number belong
-                        together, and merging them frees a whole column. */}
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>{a.patientName}</Typography>
+      {isLoading ? (
+        <CardGridSkeleton count={6} height={230} minWidth={330} />
+      ) : isError ? (
+        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
+      ) : filtered.length === 0 ? (
+        <Paper elevation={0} sx={{ py: 5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+          <Mascot
+            pose="all-caught-up"
+            title={s ? "No match" : "No in-patients"}
+            subtitle={s ? "No patient matches that search." : "No active admissions right now."}
+            size={120}
+          />
+        </Paper>
+      ) : (
+        <Grid container spacing={2.5}>
+          {filtered.map((a) => (
+            <Grid key={a.admissionId} size={{ xs: 12, md: 6, lg: 4 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  height: "100%", display: "flex", flexDirection: "column",
+                  borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden",
+                  transition: "border-color .15s ease",
+                  "&:hover": { borderColor: alpha(BRAND.action, 0.5) },
+                }}
+              >
+                {/* Identity first, then where they are and who is looking after
+                    them — what a nurse needs to recognise the patient. */}
+                <Box sx={{ px: 2.5, pt: 2.25, pb: 1.75 }}>
+                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }} noWrap>
+                        {a.patientName}
+                      </Typography>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         {[a.uhid, a.admissionNumber].filter(Boolean).join(" · ")}
                       </Typography>
-                    </TableCell>
-                    <TableCell>
-                      {a.bed?.label ? (
-                        <Chip
-                          size="small" icon={<HotelRounded sx={{ fontSize: 15 }} />} label={a.bed.label}
-                          sx={{ bgcolor: alpha(BRAND.action, 0.1), color: BRAND.action, fontWeight: 600 }}
-                        />
-                      ) : <Typography variant="caption" sx={{ color: "text.disabled" }}>No bed</Typography>}
-                    </TableCell>
-                    <TableCell sx={{ color: "text.secondary" }}>{a.doctorName || "—"}</TableCell>
-                    <TableCell align="right">
-                      <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
-                        <Button
-                          size="small" variant="contained" startIcon={<AssignmentRounded />}
-                          onClick={() => navigate("/nurse/chart/" + a.admissionId)}
-                          sx={{ textTransform: "none", mr: 0.5, whiteSpace: "nowrap", flexShrink: 0 }}
-                        >
-                          Open chart
-                        </Button>
+                    </Box>
+                    {a.days != null && (
+                      <Chip
+                        size="small" label={`Day ${a.days}`}
+                        sx={{ flexShrink: 0, bgcolor: alpha(SEMANTIC.info, 0.12), color: SEMANTIC.info, fontWeight: 700 }}
+                      />
+                    )}
+                  </Box>
 
-                        {quickActions.map((q) => (
-                          <Tooltip key={q.key} title={q.label}>
-                            <IconButton
-                              size="small" aria-label={q.label} onClick={() => q.onClick(a)}
-                              sx={{
-                                color: NEUTRAL.muted, border: "1px solid", borderColor: "divider",
-                                "&:hover": { color: BRAND.action, borderColor: BRAND.action, bgcolor: alpha(BRAND.action, 0.06) },
-                              }}
-                            >
-                              {q.icon}
-                            </IconButton>
-                          </Tooltip>
-                        ))}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1.5, flexWrap: "wrap" }}>
+                    {a.bed?.label ? (
+                      <Chip
+                        size="small" icon={<HotelRounded sx={{ fontSize: 15 }} />} label={a.bed.label}
+                        sx={{ bgcolor: alpha(BRAND.action, 0.1), color: BRAND.action, fontWeight: 600 }}
+                      />
+                    ) : (
+                      <Chip size="small" label="No bed assigned" sx={{ bgcolor: alpha(SEMANTIC.warning, 0.12), color: SEMANTIC.warning, fontWeight: 600 }} />
+                    )}
+                  </Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
+                    {a.doctorName || "No consultant recorded"}
+                  </Typography>
+                </Box>
 
-                        <Tooltip title="More">
-                          <IconButton size="small" aria-label="More actions" onClick={(e) => setMenu({ el: e.currentTarget, admission: a })} sx={{ color: NEUTRAL.muted }}>
-                            <MoreVertRounded fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+                <Divider />
 
-      {/* Once a shift or less — real estate on the row is worth more than the
-          click these save. */}
-      <Menu anchorEl={menu?.el} open={!!menu} onClose={closeMenu}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}>
-        <MenuItem onClick={fromMenu(setHandoverFor)}>
-          <ListItemIcon><SwapHorizRounded fontSize="small" /></ListItemIcon>
-          <ListItemText primary="Shift handover" secondary="Notes and sign-off" />
-        </MenuItem>
-        <MenuItem onClick={fromMenu(setNotesFor)}>
-          <ListItemIcon><DescriptionRounded fontSize="small" /></ListItemIcon>
-          <ListItemText primary="Nursing notes" />
-        </MenuItem>
-        <Divider />
-        <MenuItem onClick={fromMenu(setVisitsFor)}>
-          <ListItemIcon><MedicalServicesRounded fontSize="small" /></ListItemIcon>
-          <ListItemText primary="Doctor visits" />
-        </MenuItem>
-      </Menu>
+                <Box sx={{ px: 2.5, py: 2, mt: "auto" }}>
+                  <Button
+                    fullWidth variant="contained" startIcon={<AssignmentRounded />}
+                    onClick={() => navigate("/nurse/chart/" + a.admissionId)}
+                    sx={{ textTransform: "none", mb: 1.5 }}
+                  >
+                    Open chart
+                  </Button>
+
+                  {/* All six, named. On a card there is room, so nothing has to
+                      hide behind a menu. */}
+                  <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
+                    {actions.map((act) => (
+                      <Button
+                        key={act.key} size="small" variant="outlined" onClick={() => act.open(a)}
+                        sx={{
+                          textTransform: "none", px: 0.5, minWidth: 0, borderColor: "divider", color: act.tone,
+                          flexDirection: "column", gap: 0.25, py: 0.75, lineHeight: 1.2, fontSize: "0.72rem",
+                          "&:hover": { borderColor: act.tone, bgcolor: alpha(act.tone, 0.06) },
+                        }}
+                      >
+                        {act.icon}
+                        <Box component="span" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
+                          {act.label}
+                        </Box>
+                      </Button>
+                    ))}
+                  </Box>
+                </Box>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
       <Dialog open={!!chartFor} onClose={() => setChartFor(null)} maxWidth="md" fullWidth>
         <DialogTitle component="div" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
