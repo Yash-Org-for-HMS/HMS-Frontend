@@ -80,6 +80,21 @@ const EMPTY = {
 const cell = (v: number | null | undefined, suffix = "") =>
   v === null || v === undefined ? "" : `${v}${suffix}`;
 
+/**
+ * The time column stays put while the rest scrolls. A right-hand shadow shows
+ * there is more chart off-screen; without it the pin reads as the grid simply
+ * ending there.
+ */
+const STICKY_TIME_CELL = {
+  position: "sticky" as const,
+  left: 0,
+  zIndex: 1,
+  backgroundColor: "inherit",
+  boxShadow: "1px 0 0 rgba(0,0,0,0.08)",
+};
+/** The header cell is already sticky vertically, so it needs the higher layer. */
+const STICKY_TIME_HEAD = { ...STICKY_TIME_CELL, zIndex: 3, backgroundColor: "background.paper" };
+
 /** Outside the hospital's own normal range for this field. Marked, never refused. */
 const outOfRange = (f: FieldDef, raw: number | string | undefined) => {
   if (f.dataType !== "NUMBER" || raw === undefined || raw === "") return false;
@@ -267,8 +282,17 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
               <Table size="small" stickyHeader>
                 <TableHead>
                   <TableRow>
-                    {columns.map((c) => (
-                      <TableCell key={c.key} sx={{ fontWeight: 700, fontSize: "0.7rem", textTransform: "uppercase", color: "text.secondary", whiteSpace: "nowrap" }}>
+                    {columns.map((c, i) => (
+                      <TableCell key={c.key}
+                        sx={{
+                          fontWeight: 700, fontSize: "0.7rem", textTransform: "uppercase",
+                          color: "text.secondary", whiteSpace: "nowrap",
+                          // Time is the chart's anchor. Once a hospital adds its own
+                          // columns the grid is wider than the dialog, and without
+                          // this the time scrolls away — leaving rows of numbers
+                          // with nothing saying when they were taken.
+                          ...(i === 0 ? STICKY_TIME_HEAD : null),
+                        }}>
                         {c.label}
                       </TableCell>
                     ))}
@@ -286,9 +310,12 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
                           // the same as a crossed-out line on the paper chart.
                           opacity: dead ? 0.5 : 1,
                           "& td": { textDecoration: dead ? "line-through" : "none" },
-                          bgcolor: o.correctsId ? alpha(SEMANTIC.warning, 0.06) : undefined,
+                          // Set on the ROW, not the cell, so the pinned time cell can
+                          // inherit it and stay opaque over the scrolled columns —
+                          // including on hover and on a correction's tint.
+                          bgcolor: o.correctsId ? alpha(SEMANTIC.warning, 0.06) : "background.paper",
                         }}>
-                        <TableCell sx={{ whiteSpace: "nowrap", fontWeight: 600 }}>{dayjs(o.observedAt).format("HH:mm")}</TableCell>
+                        <TableCell sx={{ whiteSpace: "nowrap", fontWeight: 600, ...STICKY_TIME_CELL }}>{dayjs(o.observedAt).format("HH:mm")}</TableCell>
                         <TableCell>{o.temperature === null ? "" : `${o.temperature}°${o.temperatureUnit ?? ""}`}</TableCell>
                         <TableCell>{cell(o.pulseRate)}</TableCell>
                         <TableCell>{cell(o.respiratoryRate)}</TableCell>

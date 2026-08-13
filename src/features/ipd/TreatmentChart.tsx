@@ -87,6 +87,20 @@ export default function TreatmentChart() {
 
   const cell = (v: any, suffix = "") => (v === null || v === undefined ? "" : `${v}${suffix}`);
 
+  /**
+   * Pins the time column while a chart wide enough to scroll does so. Dropped
+   * under print, where nothing scrolls and a sticky cell only risks painting
+   * over a neighbour.
+   */
+  const STICKY_TIME = {
+    position: "sticky" as const,
+    left: 0,
+    zIndex: 1,
+    backgroundColor: "inherit",
+    boxShadow: "1px 0 0 rgba(0,0,0,0.08)",
+    "@media print": { position: "static" as const, boxShadow: "none" },
+  };
+
   /** Outside the hospital's own normal range for that observation. Marked, never refused. */
   const outOfNormal = (f: any, raw: any) => {
     if (f?.dataType !== "NUMBER" || raw === undefined || raw === "") return false;
@@ -114,6 +128,22 @@ export default function TreatmentChart() {
         body { background: #fff; }
         .MuiDrawer-root, .MuiAppBar-root, .MuiToolbar-root { display: none !important; }
         main { padding: 0 !important; width: 100% !important; min-height: 0 !important; }
+        /* A hospital that charts its own observations can push this table past
+           the width of the sheet, and a chart that prints with its last columns
+           guillotined off is worse than one that prints small. Tables are
+           compacted to fit the page rather than being allowed to overflow it. */
+        .MuiTableContainer-root { overflow: visible !important; }
+        table { width: 100% !important; }
+        th, td {
+          font-size: 8.5pt !important;
+          padding: 3px 4px !important;
+          /* Wrap, but only at spaces: "Head circumference (cm)" over three
+             lines reads fine, "HEAD CIRCUM FERENC E" does not. Column widths
+             stay automatic so TIME gets a sliver and REMARK gets the room. */
+          white-space: normal !important;
+          overflow-wrap: normal;
+          word-break: normal;
+        }
       }`}</style>
 
       <Box className="no-print" sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, mb: 2, flexWrap: "wrap" }}>
@@ -194,15 +224,23 @@ export default function TreatmentChart() {
                       // the whole chart, not the standard part of it.
                       ...obsFields.map((f: any) => (f.unit ? `${f.label} (${f.unit})` : f.label)),
                       "Remark", "By",
-                    ].map((h) => (
-                      <TableCell key={h} sx={{ fontWeight: 700, fontSize: "0.68rem", textTransform: "uppercase", color: "text.secondary", whiteSpace: "nowrap" }}>{h}</TableCell>
+                    ].map((h, i) => (
+                      <TableCell key={h}
+                        sx={{
+                          fontWeight: 700, fontSize: "0.68rem", textTransform: "uppercase",
+                          color: "text.secondary", whiteSpace: "nowrap",
+                          // Time stays put while a wide chart scrolls — see the
+                          // observation dialog for why. Released for print, where
+                          // the whole width is on the page anyway.
+                          ...(i === 0 ? STICKY_TIME : null),
+                        }}>{h}</TableCell>
                     ))}
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {observations.map((o) => (
-                    <TableRow key={o.observationId} sx={{ height: ROW_H }}>
-                      <TableCell sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>{dayjs(o.observedAt).format("HH:mm")}</TableCell>
+                    <TableRow key={o.observationId} sx={{ height: ROW_H, bgcolor: "background.paper" }}>
+                      <TableCell sx={{ fontWeight: 600, whiteSpace: "nowrap", ...STICKY_TIME }}>{dayjs(o.observedAt).format("HH:mm")}</TableCell>
                       <TableCell>{o.temperature === null ? "" : `${o.temperature}°${o.temperatureUnit ?? ""}`}</TableCell>
                       <TableCell>{cell(o.pulseRate)}</TableCell>
                       <TableCell>{cell(o.respiratoryRate)}</TableCell>
