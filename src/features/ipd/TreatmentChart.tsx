@@ -77,12 +77,23 @@ export default function TreatmentChart() {
   if (isError) return <Box sx={{ p: 3 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></Box>;
 
   const observations: any[] = (obs?.observations ?? []).filter((o: any) => !o.supersededByObservationId);
+  // Already narrowed to this patient's ward by the server, and still carrying
+  // any switched-off field a reading on this day used.
+  const obsFields: any[] = obs?.fields ?? [];
   const entries: any[] = (fluid?.entries ?? []).filter((e: any) => !e.supersededByEntryId);
   const totals = fluid?.totals;
   const medsGiven: any[] = fluid?.medicationsGiven ?? [];
   const allergies: any[] = header?.allergies ?? [];
 
   const cell = (v: any, suffix = "") => (v === null || v === undefined ? "" : `${v}${suffix}`);
+
+  /** Outside the hospital's own normal range for that observation. Marked, never refused. */
+  const outOfNormal = (f: any, raw: any) => {
+    if (f?.dataType !== "NUMBER" || raw === undefined || raw === "") return false;
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return false;
+    return (f.normalLow !== null && n < f.normalLow) || (f.normalHigh !== null && n > f.normalHigh);
+  };
 
   return (
     <Box sx={{
@@ -176,7 +187,14 @@ export default function TreatmentChart() {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    {["Time", "Temp", "Pulse", "Resp", "BP", "SpO₂", "RBS", "Pain", "Remark", "By"].map((h) => (
+                    {[
+                      "Time", "Temp", "Pulse", "Resp", "BP", "SpO₂", "RBS", "Pain",
+                      // This hospital's own columns, in the order it set. They
+                      // print with the rest — a sheet in the folder has to be
+                      // the whole chart, not the standard part of it.
+                      ...obsFields.map((f: any) => (f.unit ? `${f.label} (${f.unit})` : f.label)),
+                      "Remark", "By",
+                    ].map((h) => (
                       <TableCell key={h} sx={{ fontWeight: 700, fontSize: "0.68rem", textTransform: "uppercase", color: "text.secondary", whiteSpace: "nowrap" }}>{h}</TableCell>
                     ))}
                   </TableRow>
@@ -192,6 +210,16 @@ export default function TreatmentChart() {
                       <TableCell>{cell(o.spo2, "%")}</TableCell>
                       <TableCell>{cell(o.bloodSugar)}</TableCell>
                       <TableCell>{cell(o.painScore)}</TableCell>
+                      {obsFields.map((f: any) => {
+                        const v = o.extras?.[f.observationFieldId];
+                        const flag = outOfNormal(f, v);
+                        return (
+                          <TableCell key={f.observationFieldId}
+                            sx={{ whiteSpace: "nowrap", color: flag ? SEMANTIC.danger : undefined, fontWeight: flag ? 700 : undefined }}>
+                            {v === undefined || v === "" ? "" : String(v)}
+                          </TableCell>
+                        );
+                      })}
                       <TableCell sx={{ fontSize: "0.8rem" }}>{o.remark || ""}</TableCell>
                       <TableCell sx={{ fontSize: "0.75rem", color: "text.secondary", whiteSpace: "nowrap" }}>{o.recordedBy}</TableCell>
                     </TableRow>

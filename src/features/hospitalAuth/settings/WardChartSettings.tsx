@@ -12,6 +12,7 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { apiErrorText } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
 import { SEMANTIC } from "@/styles/accents";
+import ObservationFieldsPanel from "./ObservationFieldsPanel";
 
 /**
  * How this hospital charts its wards.
@@ -246,6 +247,13 @@ export default function WardChartSettings() {
               </Typography>
             )}
           </Paper>
+        </Grid>
+
+        {/* ── The hospital's own observations ────────────────────────────── */}
+        {/* Saved as you go, not by the button above — each one is its own
+            record with readings against it, so it cannot ride on a form save. */}
+        <Grid size={12}>
+          <ObservationFieldsPanel />
         </Grid>
       </Grid>
     </Box>

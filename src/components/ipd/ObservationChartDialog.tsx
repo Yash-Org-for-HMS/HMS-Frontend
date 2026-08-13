@@ -53,6 +53,22 @@ interface Observation {
   correctsId: string | null;
   correctionReason: string | null;
   supersededByObservationId: string | null;
+  /** This hospital's own observations, keyed by field id. Missing = not taken. */
+  extras: Record<string, number | string>;
+}
+
+/** A hospital-defined observation — see the ward chart settings screen. */
+interface FieldDef {
+  observationFieldId: string;
+  label: string;
+  dataType: "NUMBER" | "CHOICE" | "TEXT";
+  unit: string | null;
+  minValue: number | null;
+  maxValue: number | null;
+  normalLow: number | null;
+  normalHigh: number | null;
+  choices: string[] | null;
+  isActive: boolean;
 }
 
 const EMPTY = {
@@ -63,6 +79,14 @@ const EMPTY = {
 /** A blank cell is "not taken" — never a zero, never a dash that looks like data. */
 const cell = (v: number | null | undefined, suffix = "") =>
   v === null || v === undefined ? "" : `${v}${suffix}`;
+
+/** Outside the hospital's own normal range for this field. Marked, never refused. */
+const outOfRange = (f: FieldDef, raw: number | string | undefined) => {
+  if (f.dataType !== "NUMBER" || raw === undefined || raw === "") return false;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return false;
+  return (f.normalLow !== null && n < f.normalLow) || (f.normalHigh !== null && n > f.normalHigh);
+};
 
 export default function ObservationChartDialog({ open, admission, onClose, readOnly = false }: Props) {
   const toast = useToast();
@@ -91,6 +115,9 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
   const to = dayStart.add(1, "day").subtract(1, "millisecond").toISOString();
 
   const [form, setForm] = useState({ ...EMPTY });
+  // The hospital's own observations, keyed by field id. Kept apart from `form`
+  // so the built-in fields stay a fixed, typed shape.
+  const [extras, setExtras] = useState<Record<string, string>>({});
   const [correcting, setCorrecting] = useState<Observation | null>(null);
   const [reason, setReason] = useState("");
   const [entryOpen, setEntryOpen] = useState(false);
@@ -103,6 +130,11 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
   });
 
   const observations: Observation[] = data?.observations ?? [];
+  // Served alongside the readings, and already narrowed to this patient's ward.
+  // Includes any switched-off field a reading in this window still carries, so
+  // an older chart keeps rendering exactly as it was written.
+  const fields: FieldDef[] = data?.fields ?? [];
+  const liveFields = fields.filter((f) => f.isActive);
 
   const save = useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
@@ -119,11 +151,12 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
     onError: (err) => toast.error(apiErrorText(err)),
   });
 
-  const closeEntry = () => { setEntryOpen(false); setCorrecting(null); setForm({ ...EMPTY }); setReason(""); };
+  const closeEntry = () => { setEntryOpen(false); setCorrecting(null); setForm({ ...EMPTY }); setExtras({}); setReason(""); };
 
   const openNew = () => {
     setCorrecting(null);
     setForm({ ...EMPTY, temperatureUnit: profile?.temperatureUnit ?? "F", observedAt: dayjs().format("YYYY-MM-DDTHH:mm") });
+    setExtras({});
     setEntryOpen(true);
   };
 
@@ -143,6 +176,9 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
       painScore: o.painScore?.toString() ?? "",
       remark: o.remark ?? "",
     });
+    // Carried over too, so correcting a mis-keyed pulse doesn't silently drop
+    // the retractions that were charted in the same round.
+    setExtras(Object.fromEntries(Object.entries(o.extras ?? {}).map(([k, v]) => [k, String(v)])));
     setReason("");
     setEntryOpen(true);
   };
@@ -156,10 +192,15 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
       if (v !== "" && v !== null && v !== undefined) payload[k] = v;
     });
     if (form.temperature !== "") payload.temperatureUnit = form.temperatureUnit;
+    // Same rule as above: a box left blank is absent, not an empty value.
+    const filled = Object.fromEntries(Object.entries(extras).filter(([, v]) => v !== "" && v !== null && v !== undefined));
+    if (Object.keys(filled).length) payload.extras = filled;
     if (correcting) payload.correctionReason = reason;
     save.mutate(payload);
   };
 
+  // The hospital's own columns sit after the standard ones and before the
+  // remark, which is where a nurse writing on paper would have squeezed them in.
   const columns = useMemo(
     () => [
       { key: "time", label: "Time" },
@@ -170,9 +211,10 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
       { key: "spo2", label: "SpO₂" },
       { key: "rbs", label: "RBS" },
       { key: "pain", label: "Pain" },
+      ...fields.map((f) => ({ key: f.observationFieldId, label: f.unit ? `${f.label} (${f.unit})` : f.label })),
       { key: "remark", label: "Remark" },
     ],
-    [],
+    [fields],
   );
 
   const num = (label: string, key: keyof typeof EMPTY, extra: Record<string, unknown> = {}) => (
@@ -254,6 +296,16 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
                         <TableCell>{cell(o.spo2, "%")}</TableCell>
                         <TableCell>{cell(o.bloodSugar)}</TableCell>
                         <TableCell>{cell(o.painScore)}</TableCell>
+                        {fields.map((f) => {
+                          const v = o.extras?.[f.observationFieldId];
+                          const flag = outOfRange(f, v);
+                          return (
+                            <TableCell key={f.observationFieldId}
+                              sx={{ whiteSpace: "nowrap", color: flag ? SEMANTIC.danger : undefined, fontWeight: flag ? 700 : undefined }}>
+                              {v === undefined || v === "" ? "" : String(v)}
+                            </TableCell>
+                          );
+                        })}
                         <TableCell sx={{ maxWidth: 220 }}>
                           <Typography variant="caption" sx={{ color: "text.secondary" }}>{o.remark || ""}</Typography>
                           {o.correctsId && (
@@ -339,6 +391,59 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
             {num("Blood sugar", "bloodSugar")}
             {num("Pain (0-10)", "painScore")}
           </Box>
+
+          {/* This hospital's own observations. When correcting, a since-retired
+              field still appears — the point of a correction is to state what
+              the reading should have said, and it was live when it was taken. */}
+          {(correcting ? fields : liveFields).length > 0 && (
+            <Box>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 1.25 }}>
+                Also charted on this ward
+              </Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+                {(correcting ? fields : liveFields).map((f) => {
+                  const v = extras[f.observationFieldId] ?? "";
+                  const change = (val: string) => setExtras({ ...extras, [f.observationFieldId]: val });
+                  const flag = outOfRange(f, v);
+                  const help = !f.isActive
+                    ? "No longer charted — kept so this correction can reproduce the original."
+                    : flag
+                      ? `Outside the normal ${f.normalLow ?? "?"}–${f.normalHigh ?? "?"}`
+                      : undefined;
+
+                  if (f.dataType === "CHOICE") {
+                    return (
+                      <TextField key={f.observationFieldId} select size="small" label={f.label} value={v}
+                        onChange={(e) => change(e.target.value)} sx={{ width: 168 }} helperText={help}>
+                        <MenuItem value=""><em>Not taken</em></MenuItem>
+                        {(f.choices ?? []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                      </TextField>
+                    );
+                  }
+                  if (f.dataType === "TEXT") {
+                    return (
+                      <TextField key={f.observationFieldId} size="small" label={f.label} value={v}
+                        onChange={(e) => change(e.target.value)} sx={{ width: 260 }} helperText={help} />
+                    );
+                  }
+                  return (
+                    <TextField
+                      key={f.observationFieldId} size="small" value={v}
+                      label={f.unit ? `${f.label} (${f.unit})` : f.label}
+                      onChange={(e) => change(e.target.value)}
+                      inputProps={{ inputMode: "decimal" }}
+                      sx={{ width: 148 }}
+                      helperText={help}
+                      // Out of the normal range is FLAGGED, not refused — using
+                      // the error state would tell the nurse to fix a reading
+                      // that may well be the truth.
+                      FormHelperTextProps={flag ? { sx: { color: SEMANTIC.danger, fontWeight: 600 } } : undefined}
+                    />
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
 
           <TextField
             size="small" label="Remark" value={form.remark} fullWidth multiline minRows={2}
