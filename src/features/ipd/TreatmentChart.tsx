@@ -29,6 +29,47 @@ import dayjs from "dayjs";
 
 const ROW_H = 34;
 
+/**
+ * How a dose reads on the chart.
+ *
+ * A symbol AND a colour, never colour alone — the chart is printed, and it is
+ * printed in black and white more often than not.
+ *
+ * "Not signed for" is the case worth having: a dose whose time has passed and
+ * that nobody has recorded either way. It is not "due" — due is something in
+ * the future you can still act on — and it is not "missed" either, because
+ * nobody has said so. It is the gap on the chart that a drug round is supposed
+ * to close, and it needs to look like one.
+ */
+const doseMark = (d: any): { mark: string; label: string; color: string } => {
+  if (d.status === "GIVEN") return { mark: "✓", label: "given", color: SEMANTIC.success };
+  if (d.status === "MISSED") return { mark: "✗", label: "missed", color: SEMANTIC.danger };
+  if (d.status === "HELD") return { mark: "‖", label: "held", color: NEUTRAL.muted };
+  if (dayjs(d.scheduledAt).isBefore(dayjs())) return { mark: "!", label: "not signed for", color: SEMANTIC.danger };
+  return { mark: "○", label: "still due", color: SEMANTIC.warning };
+};
+
+/**
+ * Everything about the dose beyond its mark and its due time.
+ *
+ * The note matters most: a dose recorded as missed or held without the reason
+ * is half a record, and the reason is exactly what anyone reviewing the chart
+ * came to read. The infused volume is here too — it is counted in the fluid
+ * intake total, so the sheet has to show where those millilitres came from,
+ * or the total has no working on paper.
+ */
+const doseDetail = (d: any): string => {
+  const bits: string[] = [];
+  const due = dayjs(d.scheduledAt).format("HH:mm");
+  const at = d.administeredAt ? dayjs(d.administeredAt).format("HH:mm") : null;
+  // Only when it differs — a dose given on time needs no second timestamp.
+  if (at && at !== due) bits.push(`at ${at}`);
+  if (d.infusedVolumeMl != null) bits.push(`${d.infusedVolumeMl} ml`);
+  if (d.givenBy) bits.push(d.givenBy);
+  if (d.notes) bits.push(d.notes);
+  return bits.join(" · ");
+};
+
 export default function TreatmentChart() {
   const { admissionId = "" } = useParams();
   const navigate = useNavigate();
@@ -73,6 +114,14 @@ export default function TreatmentChart() {
     enabled: !!admissionId,
   });
 
+  // Windowed to this chart day. The bedside MAR asks without a window because a
+  // drug round needs the whole run; the file needs the day.
+  const { data: mar } = useQuery({
+    queryKey: ["ipd-admission-mar", admissionId, from, to],
+    queryFn: async () => (await axiosInstance.get(`/ipd/admissions/${admissionId}/mar`, { params: { from, to } })).data.data,
+    enabled: !!admissionId,
+  });
+
   if (headerLoading) return <Box sx={{ p: 3 }}><ListSkeleton rows={8} /></Box>;
   if (isError) return <Box sx={{ p: 3 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></Box>;
 
@@ -82,8 +131,20 @@ export default function TreatmentChart() {
   const obsFields: any[] = obs?.fields ?? [];
   const entries: any[] = (fluid?.entries ?? []).filter((e: any) => !e.supersededByEntryId);
   const totals = fluid?.totals;
-  const medsGiven: any[] = fluid?.medicationsGiven ?? [];
   const allergies: any[] = header?.allergies ?? [];
+
+  /**
+   * The drug chart for this day. An order earns a row if it has a dose due
+   * today OR is still live — a drug ordered this morning belongs on the chart
+   * before its first dose is due, and one awaiting the pharmacy has to be
+   * visible or nobody notices it never arrived.
+   *
+   * A cancelled order with no dose today is dropped: it is history, and it is
+   * still on the medicines list.
+   */
+  const marOrders: any[] = (mar ?? []).filter(
+    (o: any) => (o.doses?.length ?? 0) > 0 || o.status === "ACTIVE" || o.status === "REQUESTED",
+  );
 
   const cell = (v: any, suffix = "") => (v === null || v === undefined ? "" : `${v}${suffix}`);
 
@@ -268,6 +329,89 @@ export default function TreatmentChart() {
           )}
         </Paper>
 
+        {/* ── The drug chart ────────────────────────────────────────────────
+            What was ORDERED and what happened to each dose. The fluid sheet
+            below lists only doses that were given, because that is all a fluid
+            total can use — but a drug chart that shows only the doses that
+            went in is the one thing a drug chart must never be. A missed dose
+            is the entry people are looking for. */}
+        <Paper elevation={0} className="print-block" sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden", mb: 2 }}>
+          <Box sx={{ px: 2.5, py: 1.5, borderBottom: "1px solid", borderColor: "divider", display: "flex", justifyContent: "space-between", gap: 2, flexWrap: "wrap", alignItems: "baseline" }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Medication chart</Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              ✓ given · ✗ missed · ‖ held · ! not signed for · ○ still due
+            </Typography>
+          </Box>
+          {marOrders.length === 0 ? (
+            <Box sx={{ p: 3 }}><Typography variant="body2" sx={{ color: "text.secondary" }}>No medicines on this chart day.</Typography></Box>
+          ) : (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    {["Medicine", "Dose", "Route", "Frequency", "Doses this chart day", "Ordered by"].map((h, i) => (
+                      <TableCell key={h}
+                        sx={{
+                          fontWeight: 700, fontSize: "0.68rem", textTransform: "uppercase",
+                          color: "text.secondary", whiteSpace: "nowrap",
+                          ...(i === 0 ? STICKY_TIME : null),
+                        }}>{h}</TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {marOrders.map((o: any) => (
+                    <TableRow key={o.ipMedOrderId} sx={{ height: ROW_H, bgcolor: "background.paper" }}>
+                      <TableCell sx={{ fontWeight: 600, ...STICKY_TIME }}>{o.medicineName}</TableCell>
+                      <TableCell>{o.dosage || ""}</TableCell>
+                      <TableCell>{o.route || ""}</TableCell>
+                      <TableCell>{o.frequency || ""}</TableCell>
+                      <TableCell>
+                        {o.status === "REQUESTED" ? (
+                          // Ordered but not dispensed. Invisible until now, which
+                          // is how a drug quietly never reaches the patient.
+                          <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 700 }}>
+                            Awaiting pharmacy — no doses scheduled yet
+                          </Typography>
+                        ) : (o.doses ?? []).length === 0 ? (
+                          <Typography variant="caption" sx={{ color: NEUTRAL.muted }}>
+                            {o.status === "CANCELLED" ? "Stopped" : "As needed — no dose given today"}
+                          </Typography>
+                        ) : (
+                          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                            {o.doses.map((d: any) => {
+                              const m = doseMark(d);
+                              const detail = doseDetail(d);
+                              return (
+                                <Box key={d.ipMedAdminId} component="span"
+                                  title={`${m.label} — due ${dayjs(d.scheduledAt).format("HH:mm")}${detail ? ` · ${detail}` : ""}`}
+                                  sx={{
+                                    display: "inline-flex", alignItems: "baseline", gap: 0.4,
+                                    fontSize: "0.75rem",
+                                    px: 0.6, py: 0.15, borderRadius: 1,
+                                    border: "1px solid", borderColor: alpha(m.color, 0.35),
+                                    color: m.color, fontWeight: 600,
+                                  }}>
+                                  <Box component="span" sx={{ fontWeight: 800 }}>{m.mark}</Box>
+                                  <Box component="span" sx={{ whiteSpace: "nowrap" }}>{dayjs(d.scheduledAt).format("HH:mm")}</Box>
+                                  {detail && (
+                                    <Box component="span" sx={{ color: NEUTRAL.muted, fontWeight: 400 }}>{detail}</Box>
+                                  )}
+                                </Box>
+                              );
+                            })}
+                          </Box>
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: "0.75rem", color: "text.secondary", whiteSpace: "nowrap" }}>{o.orderedBy || ""}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Paper>
+
         <Paper elevation={0} className="print-block" sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
           <Box sx={{ px: 2.5, py: 1.5, borderBottom: "1px solid", borderColor: "divider", display: "flex", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Intake &amp; output</Typography>
@@ -310,40 +454,6 @@ export default function TreatmentChart() {
             </TableContainer>
           )}
         </Paper>
-        {medsGiven.length > 0 && (
-          <Paper elevation={0} className="print-block" sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden", mt: 2 }}>
-            <Box sx={{ px: 2.5, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Medicines given</Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                From the medication record — shown here so a drug is not written on the chart twice.
-                Not added to the intake total, since the volume a dose contributes is unknown.
-              </Typography>
-            </Box>
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    {["Time", "Medicine", "Dose", "Route", "Note", "Given by"].map((h) => (
-                      <TableCell key={h} sx={{ fontWeight: 700, fontSize: "0.68rem", textTransform: "uppercase", color: "text.secondary", whiteSpace: "nowrap" }}>{h}</TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {medsGiven.map((m: any) => (
-                    <TableRow key={m.ipMedAdminId} sx={{ height: ROW_H }}>
-                      <TableCell sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>{dayjs(m.administeredAt).format("HH:mm")}</TableCell>
-                      <TableCell>{m.medicineName}</TableCell>
-                      <TableCell>{m.dosage || ""}</TableCell>
-                      <TableCell>{m.route || ""}</TableCell>
-                      <TableCell sx={{ fontSize: "0.8rem" }}>{m.notes || ""}</TableCell>
-                      <TableCell sx={{ fontSize: "0.75rem", color: "text.secondary", whiteSpace: "nowrap" }}>{m.givenBy}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-        )}
       </Box>
 
       <Box sx={{ display: tab === 1 ? "block" : "none", "@media print": { display: "block", pageBreakBefore: "always" } }}>
