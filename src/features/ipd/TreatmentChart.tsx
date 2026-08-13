@@ -79,6 +79,7 @@ export default function TreatmentChart() {
   const observations: any[] = (obs?.observations ?? []).filter((o: any) => !o.supersededByObservationId);
   const entries: any[] = (fluid?.entries ?? []).filter((e: any) => !e.supersededByEntryId);
   const totals = fluid?.totals;
+  const medsGiven: any[] = fluid?.medicationsGiven ?? [];
   const allergies: any[] = header?.allergies ?? [];
 
   const cell = (v: any, suffix = "") => (v === null || v === undefined ? "" : `${v}${suffix}`);
@@ -243,6 +244,40 @@ export default function TreatmentChart() {
             </TableContainer>
           )}
         </Paper>
+        {medsGiven.length > 0 && (
+          <Paper elevation={0} className="print-block" sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden", mt: 2 }}>
+            <Box sx={{ px: 2.5, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Medicines given</Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                From the medication record — shown here so a drug is not written on the chart twice.
+                Not added to the intake total, since the volume a dose contributes is unknown.
+              </Typography>
+            </Box>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    {["Time", "Medicine", "Dose", "Route", "Note", "Given by"].map((h) => (
+                      <TableCell key={h} sx={{ fontWeight: 700, fontSize: "0.68rem", textTransform: "uppercase", color: "text.secondary", whiteSpace: "nowrap" }}>{h}</TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {medsGiven.map((m: any) => (
+                    <TableRow key={m.ipMedAdminId} sx={{ height: ROW_H }}>
+                      <TableCell sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>{dayjs(m.administeredAt).format("HH:mm")}</TableCell>
+                      <TableCell>{m.medicineName}</TableCell>
+                      <TableCell>{m.dosage || ""}</TableCell>
+                      <TableCell>{m.route || ""}</TableCell>
+                      <TableCell sx={{ fontSize: "0.8rem" }}>{m.notes || ""}</TableCell>
+                      <TableCell sx={{ fontSize: "0.75rem", color: "text.secondary", whiteSpace: "nowrap" }}>{m.givenBy}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        )}
       </Box>
 
       <Box sx={{ display: tab === 1 ? "block" : "none", "@media print": { display: "block", pageBreakBefore: "always" } }}>
