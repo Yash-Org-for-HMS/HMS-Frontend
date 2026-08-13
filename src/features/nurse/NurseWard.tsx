@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Paper, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
   Button, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, Typography, Stack,
 } from "@mui/material";
-import { SearchRounded, MedicationRounded, MedicalServicesRounded, DescriptionRounded, MonitorHeartRounded, WaterDropRounded, SwapHorizRounded } from "@mui/icons-material";
+import { SearchRounded, MedicationRounded, MedicalServicesRounded, DescriptionRounded, MonitorHeartRounded, WaterDropRounded, SwapHorizRounded, AssignmentRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import PageHeader from "@/components/layout/PageHeader";
 import ErrorState from "@/components/ErrorState";
@@ -27,6 +28,7 @@ export default function NurseWard() {
   const [obsFor, setObsFor] = useState<any>(null);
   const [fluidFor, setFluidFor] = useState<any>(null);
   const [handoverFor, setHandoverFor] = useState<any>(null);
+  const navigate = useNavigate();
 
   const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<any[]>({
     queryKey: ["nurse-ward-admissions"],
@@ -74,7 +76,9 @@ export default function NurseWard() {
                     <TableCell sx={{ color: "text.secondary" }}>{a.doctorName || "—"}</TableCell>
                     <TableCell align="right">
                       <Stack direction="row" spacing={1} justifyContent="flex-end">
-                        <Button size="small" variant="contained" startIcon={<MonitorHeartRounded />} onClick={() => setObsFor(a)}
+                        <Button size="small" variant="contained" startIcon={<AssignmentRounded />} onClick={() => navigate("/nurse/chart/" + a.admissionId)}
+                          sx={{ textTransform: "none" }}>Chart</Button>
+                        <Button size="small" variant="outlined" startIcon={<MonitorHeartRounded />} onClick={() => setObsFor(a)}
                           sx={{ textTransform: "none" }}>Observations</Button>
                         <Button size="small" variant="outlined" startIcon={<SwapHorizRounded />} onClick={() => setHandoverFor(a)}
                           sx={{ textTransform: "none", borderColor: "divider" }}>Handover</Button>

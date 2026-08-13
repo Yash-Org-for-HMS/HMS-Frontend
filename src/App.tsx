@@ -73,6 +73,7 @@ const DoctorLeaves = lazy(() => import("@/features/hospitalAuth/doctors/DoctorLe
 const LookupManager = lazy(() => import("@/features/hospitalAuth/settings/LookupManager"));
 const FacilitySetup = lazy(() => import("@/features/hospitalAuth/settings/FacilitySetup"));
 const WardChartSettings = lazy(() => import("@/features/hospitalAuth/settings/WardChartSettings"));
+const TreatmentChart = lazy(() => import("@/features/ipd/TreatmentChart"));
 const VaccineCatalog = lazy(() => import("@/features/hospitalAuth/settings/VaccineCatalog"));
 const ScheduleOfCharges = lazy(() => import("@/features/hospitalAuth/settings/ScheduleOfCharges"));
 const FormTemplatesList = lazy(() => import("@/features/hospitalAuth/formBuilder/FormTemplatesList"));
@@ -314,6 +315,7 @@ function App() {
             <Route path="/nurse/dashboard" element={el(NurseDashboard)} />
             <Route path="/nurse/queue" element={el(NurseQueue)} />
             <Route path="/nurse/ward" element={elGated(NurseWard, "IPD", "Ward")} />
+            <Route path="/nurse/chart/:admissionId" element={elGated(TreatmentChart, "IPD", "Treatment Chart")} />
             <Route path="/nurse/reports" element={el(NurseReports)} />
             {/* Read-only view under the Nurse shell — a nurse opening a patient (e.g. via
                 command-palette search) must not land inside the full Reception sidebar,
