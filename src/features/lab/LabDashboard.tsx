@@ -1,98 +1,46 @@
-import { Box, Typography, Grid, Paper, Chip, Table, TableBody, TableCell, TableHead, TableRow, Button } from "@mui/material";
-import { SEMANTIC } from "@/styles/accents";
-import { orderStatusColor } from "@/utils/statusColors";
-import { ScienceRounded, CheckCircleRounded, PendingActionsRounded, BiotechRounded, AttachMoneyRounded, TrendingUpRounded } from "@mui/icons-material";
+import { Box, Grid, Button } from "@mui/material";
+import { SEMANTIC, BRAND } from "@/styles/accents";
+import {
+  ScienceRounded, CheckCircleRounded, PendingActionsRounded, BiotechRounded,
+  AttachMoneyRounded, CrisisAlertRounded, MonitorHeartRounded,
+} from "@mui/icons-material";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
-import Mascot from "@/components/Mascot";
 import ErrorState from "@/components/ErrorState";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "@/components/layout/PageHeader";
 import StatCard from "@/components/StatCard";
+import AttentionList from "@/components/dashboard/AttentionList";
 import { apiErrorText } from "@/utils/apiError";
+import { formatINR } from "@/utils/format";
+
+const inr = (v: number | null | undefined) => formatINR(v, 0);
+
+/** Days when it's been more than one, else hours — an 8-day-old order shouldn't read "208h". */
+const ageLabel = (days: number, hours: number) => (days >= 1 ? `${days}d` : `${hours}h`);
+/** Anything sitting for a day is late; two days is a problem. */
+const ageSeverity = (days: number): "critical" | "warning" | "info" =>
+  days >= 2 ? "critical" : days >= 1 ? "warning" : "info";
 
 export default function LabDashboard() {
   const navigate = useNavigate();
 
-  const isToday = (dateString?: string | null) => {
-    if (!dateString) return false;
-    const today = new Date();
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return false;
-    return date.getDate() === today.getDate() &&
-           date.getMonth() === today.getMonth() &&
-           date.getFullYear() === today.getFullYear();
-  };
-
-  // A lab order has no completion column — its status is COMPLETED once every
-  // report has a result, so the completion moment is the latest report update.
-  const latestReportAt = (o: any): string | null => {
-    const rs: any[] = o.reports || [];
-    if (!rs.length) return null;
-    return rs.reduce<string | null>((max, r) => {
-      const d = r.updatedAt || r.createdAt;
-      return !max || new Date(d) > new Date(max) ? d : max;
-    }, null);
-  };
-
+  // One server-side aggregate. This page used to GET /lab/orders and
+  // /lab/radiology-orders with no paging — which returns the FULL history — and
+  // reduce the lot in the browser to produce four numbers.
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ["lab-dashboard"],
-    queryFn: async () => {
-      const [labRes, radRes] = await Promise.all([
-        axiosInstance.get("/lab/orders"),
-        axiosInstance.get("/lab/radiology-orders"),
-      ]);
-
-      const labOrders = labRes.data.data || [];
-      const radOrders = radRes.data.data || [];
-
-      let labRev = 0;
-      labOrders.forEach((o: any) => {
-        // Use the order's authoritative captured amount (the list endpoint doesn't
-        // join per-test prices, so the old r.labTest.price sum was always 0).
-        if (isToday(o.createdAt) && o.paymentStatus === 'PAID') labRev += Number(o.amount) || 0;
-      });
-      const labStats = {
-        total: labOrders.length,
-        pending: labOrders.filter((o: any) => o.status !== "COMPLETED").length,
-        // Completed TODAY: done, and its last result was entered today.
-        completed: labOrders.filter((o: any) => o.status === "COMPLETED" && isToday(latestReportAt(o))).length,
-        todayRevenue: labRev,
-      };
-
-      let radRev = 0;
-      radOrders.forEach((o: any) => {
-        // Real per-scan price (resolved server-side by scanType), not a flat ₹1000.
-        if (isToday(o.orderDate) && o.paymentStatus === 'PAID') radRev += Number(o.amount) || 0;
-      });
-      const radStats = {
-        total: radOrders.length,
-        pending: radOrders.filter((o: any) => o.status !== "COMPLETED").length,
-        // Completed TODAY: dated by the report's creation, not the order's updatedAt
-        // (which bumps on later writes like payment, inflating the count).
-        completed: radOrders.filter((o: any) => o.status === "COMPLETED" && isToday(latestReportAt(o))).length,
-        todayRevenue: radRev,
-      };
-
-      const recentLabOrders = labOrders.filter((o: any) => o.status !== "COMPLETED")
-        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
-      const recentRadOrders = radOrders.filter((o: any) => o.status !== "COMPLETED")
-        .sort((a: any, b: any) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()).slice(0, 5);
-
-      return { labStats, radStats, recentLabOrders, recentRadOrders };
-    },
+    queryFn: async () => (await axiosInstance.get("/lab/dashboard-stats")).data.data,
   });
 
-  const labStats = data?.labStats ?? { total: 0, pending: 0, completed: 0, todayRevenue: 0 };
-  const radStats = data?.radStats ?? { total: 0, pending: 0, completed: 0, todayRevenue: 0 };
-  const recentLabOrders: any[] = data?.recentLabOrders ?? [];
-  const recentRadOrders: any[] = data?.recentRadOrders ?? [];
+  const lab = data?.lab ?? { pending: 0, completedToday: 0, revenueToday: 0 };
+  const rad = data?.radiology ?? { pending: 0, completedToday: 0, revenueToday: 0 };
+  const criticals: any[] = data?.criticalUnacknowledged ?? [];
+  const pendingLab: any[] = data?.pendingLab ?? [];
+  const pendingRad: any[] = data?.pendingRadiology ?? [];
 
-
-  if (loading) {
-    return <DashboardSkeleton />;
-  }
+  if (loading) return <DashboardSkeleton />;
 
   if (isError) {
     return (
@@ -106,144 +54,121 @@ export default function LabDashboard() {
     <Box sx={{ p: { xs: 2, md: 4 } }}>
       <PageHeader
         title="Lab & Radiology Overview"
-        subtitle="Pending orders and recent activity across the laboratory and radiology departments."
+        subtitle="What's waiting, oldest first, across the laboratory and radiology departments."
         actions={
-          <Button variant="contained" onClick={() => navigate("/lab/orders")} startIcon={<ScienceRounded />} sx={{ borderRadius: 2 }}>
-            View Worklist
-          </Button>
+          // These were a "Quick Actions" panel occupying a full third of the
+          // page for two buttons, which squeezed the two data tables until
+          // their headings and patient names wrapped onto three lines.
+          <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+            <Button variant="outlined" onClick={() => navigate("/lab/radiology")} startIcon={<BiotechRounded />} sx={{ borderRadius: 2, textTransform: "none" }}>
+              Radiology
+            </Button>
+            <Button variant="contained" onClick={() => navigate("/lab/orders")} startIcon={<ScienceRounded />} sx={{ borderRadius: 2, textTransform: "none" }}>
+              Lab worklist
+            </Button>
+          </Box>
         }
       />
 
-      {/* KPI Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard 
-            label="Total Pending Lab Tests"
-            value={labStats.pending} 
-            icon={<ScienceRounded sx={{ fontSize: 32, color: SEMANTIC.info }} />} 
-            color={SEMANTIC.info}
+          <StatCard
+            label="Lab pending" value={lab.pending}
+            sub={pendingLab[0] ? `oldest ${ageLabel(pendingLab[0].ageDays, pendingLab[0].ageHours)}` : "Nothing waiting"}
+            icon={<ScienceRounded sx={{ fontSize: 32, color: SEMANTIC.info }} />} color={SEMANTIC.info}
+            onClick={() => navigate("/lab/orders")}
           />
         </Grid>
-        
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard 
-            label="Total Pending Radiology"
-            value={radStats.pending} 
-            icon={<BiotechRounded sx={{ fontSize: 32, color: SEMANTIC.warning }} />} 
-            color={SEMANTIC.warning}
+          <StatCard
+            label="Radiology pending" value={rad.pending}
+            sub={pendingRad[0] ? `oldest ${ageLabel(pendingRad[0].ageDays, pendingRad[0].ageHours)}` : "Nothing waiting"}
+            icon={<BiotechRounded sx={{ fontSize: 32, color: SEMANTIC.warning }} />} color={SEMANTIC.warning}
+            onClick={() => navigate("/lab/radiology")}
           />
         </Grid>
-
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard 
-            label="Completed Today"
-            value={labStats.completed + radStats.completed} 
-            icon={<CheckCircleRounded sx={{ fontSize: 32, color: SEMANTIC.success }} />} 
-            color={SEMANTIC.success}
+          <StatCard
+            label="Completed today" value={lab.completedToday + rad.completedToday}
+            sub={`${lab.completedToday} lab · ${rad.completedToday} radiology`}
+            icon={<CheckCircleRounded sx={{ fontSize: 32, color: SEMANTIC.success }} />} color={SEMANTIC.success}
           />
         </Grid>
-
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard 
-            label="Est. Daily Revenue"
-            value={`₹${(labStats.todayRevenue + radStats.todayRevenue).toLocaleString()}`} 
-            icon={<AttachMoneyRounded sx={{ fontSize: 32, color: SEMANTIC.success }} />}
-            color={SEMANTIC.success}
+          <StatCard
+            label="Billed today" value={inr(lab.revenueToday + rad.revenueToday)}
+            sub="Paid orders raised today"
+            icon={<AttachMoneyRounded sx={{ fontSize: 32, color: SEMANTIC.success }} />} color={SEMANTIC.success}
           />
         </Grid>
       </Grid>
 
-      <Grid container spacing={4}>
-        {/* Action Center */}
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Paper sx={{ p: 3, borderRadius: 4, height: "100%", display: "flex", flexDirection: "column", border: '1px solid', borderColor: 'divider' }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>Quick Actions</Typography>
-            
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
-              <Button variant="outlined" color="primary" onClick={() => navigate("/lab/orders")} sx={{ justifyContent: "flex-start", py: 1.5, borderRadius: 2, fontWeight: 600 }}>
-                <PendingActionsRounded sx={{ mr: 1.5 }} /> Process Lab Samples
-              </Button>
-              <Button variant="outlined" color="warning" onClick={() => navigate("/lab/radiology")} sx={{ justifyContent: "flex-start", py: 1.5, borderRadius: 2, fontWeight: 600 }}>
-                <BiotechRounded sx={{ mr: 1.5 }} /> Upload Radiology Reports
-              </Button>
-              
-              <Box sx={{ mt: 'auto', pt: 3, borderTop: '1px dashed', borderColor: 'divider' }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                  <strong>Need Help?</strong> Check out the Lab Equipment manuals or contact IT Support for integration issues.
-                </Typography>
-              </Box>
-            </Box>
-          </Paper>
+      {/* The one clinically time-critical thing in this department, and the
+          dashboard never showed it. Only rendered when there are any. */}
+      {criticals.length > 0 && (
+        <Box sx={{ mb: 3 }}>
+          <AttentionList
+            title="Critical results awaiting acknowledgement"
+            subtitle="Oldest first — the ordering doctor has not signed these off yet"
+            items={criticals.map((c) => ({
+              id: c.labReportId,
+              primary: `${c.patientName} — ${c.testName}`,
+              secondary: `Result: ${c.resultValue ?? "—"}`,
+              meta: c.ageHours >= 24 ? `${Math.floor(c.ageHours / 24)}d` : `${c.ageHours}h`,
+              severity: "critical" as const,
+              icon: <CrisisAlertRounded sx={{ fontSize: 18 }} />,
+              onClick: () => navigate("/lab/orders"),
+            }))}
+            actionLabel="Lab worklist"
+            onAction={() => navigate("/lab/orders")}
+          />
+        </Box>
+      )}
+
+      {/* Two columns, not three. Both lists are ranked oldest-first: in a lab
+          the oldest pending order is the one that needs chasing, and the old
+          layout sorted newest-first with no age shown at all. */}
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <AttentionList
+            title="Lab orders waiting"
+            subtitle="Longest waiting first"
+            emptyText="No pending lab orders — the bench is clear."
+            items={pendingLab.map((o) => ({
+              id: o.labOrderId,
+              primary: o.patientName,
+              secondary: [o.status, o.sampleBarcode, o.priority?.label].filter(Boolean).join(" · "),
+              meta: ageLabel(o.ageDays, o.ageHours),
+              severity: ageSeverity(o.ageDays),
+              icon: <PendingActionsRounded sx={{ fontSize: 18 }} />,
+              onClick: () => navigate("/lab/orders"),
+            }))}
+            maxRows={6}
+            totalCount={lab.pending}
+            actionLabel="Lab worklist"
+            onAction={() => navigate("/lab/orders")}
+          />
         </Grid>
 
-        {/* Recent Lab Orders */}
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Paper sx={{ p: 3, borderRadius: 4, height: "100%", border: '1px solid', borderColor: 'divider' }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Recent Pending Lab Orders</Typography>
-              <Button size="small" onClick={() => navigate("/lab/orders")}>View All</Button>
-            </Box>
-            
-            {recentLabOrders.length === 0 ? (
-              <Mascot pose="all-caught-up" subtitle="No pending lab orders." size={110} />
-            ) : (
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Patient</TableCell>
-                    <TableCell>Barcode</TableCell>
-                    <TableCell align="right">Status</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {recentLabOrders.map((order) => (
-                    <TableRow key={order.labOrderId}>
-                      <TableCell sx={{ fontWeight: 600 }}>{order.patient?.firstName} {order.patient?.lastName}</TableCell>
-                      <TableCell>{order.sampleBarcode || "N/A"}</TableCell>
-                      <TableCell align="right">
-                        <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status) as any} size="small" sx={{ fontSize: "0.75rem", height: 20 }} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </Paper>
-        </Grid>
-
-        {/* Recent Rad Orders */}
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Paper sx={{ p: 3, borderRadius: 4, height: "100%", border: '1px solid', borderColor: 'divider' }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Recent Pending Radiology</Typography>
-              <Button size="small" onClick={() => navigate("/lab/radiology")}>View All</Button>
-            </Box>
-            
-            {recentRadOrders.length === 0 ? (
-              <Mascot pose="all-caught-up" subtitle="No pending radiology orders." size={110} />
-            ) : (
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Patient</TableCell>
-                    <TableCell>Scan Type</TableCell>
-                    <TableCell align="right">Status</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {recentRadOrders.map((order) => (
-                    <TableRow key={order.radiologyOrderId}>
-                      <TableCell sx={{ fontWeight: 600 }}>{order.patient?.firstName} {order.patient?.lastName}</TableCell>
-                      <TableCell>{order.scanType}</TableCell>
-                      <TableCell align="right">
-                        <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status) as any} size="small" sx={{ fontSize: "0.75rem", height: 20 }} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </Paper>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <AttentionList
+            title="Radiology waiting"
+            subtitle="Longest waiting first"
+            emptyText="No pending radiology orders."
+            items={pendingRad.map((o) => ({
+              id: o.radiologyOrderId,
+              primary: o.patientName,
+              secondary: [o.scanType, o.priority?.label].filter(Boolean).join(" · "),
+              meta: ageLabel(o.ageDays, o.ageHours),
+              severity: ageSeverity(o.ageDays),
+              icon: <MonitorHeartRounded sx={{ fontSize: 18 }} />,
+              onClick: () => navigate("/lab/radiology"),
+            }))}
+            maxRows={6}
+            totalCount={rad.pending}
+            actionLabel="Radiology orders"
+            onAction={() => navigate("/lab/radiology")}
+          />
         </Grid>
       </Grid>
     </Box>
