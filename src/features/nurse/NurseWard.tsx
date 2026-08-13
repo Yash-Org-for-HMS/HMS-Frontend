@@ -4,7 +4,7 @@ import {
   Box, Paper, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
   Button, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, Typography, Stack,
 } from "@mui/material";
-import { SearchRounded, MedicationRounded, MedicalServicesRounded, DescriptionRounded } from "@mui/icons-material";
+import { SearchRounded, MedicationRounded, MedicalServicesRounded, DescriptionRounded, MonitorHeartRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import PageHeader from "@/components/layout/PageHeader";
 import ErrorState from "@/components/ErrorState";
@@ -13,6 +13,7 @@ import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import MarChart from "@/components/ipd/MarChart";
 import IpdDoctorVisitsDialog from "@/components/ipd/IpdDoctorVisitsDialog";
 import NursingNotesDialog from "@/components/ipd/NursingNotesDialog";
+import ObservationChartDialog from "@/components/ipd/ObservationChartDialog";
 import { apiErrorText } from "@/utils/apiError";
 
 // Nurse ward view: current in-patients + their medication chart (MAR).
@@ -21,6 +22,7 @@ export default function NurseWard() {
   const [chartFor, setChartFor] = useState<any>(null);
   const [visitsFor, setVisitsFor] = useState<any>(null);
   const [notesFor, setNotesFor] = useState<any>(null);
+  const [obsFor, setObsFor] = useState<any>(null);
 
   const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<any[]>({
     queryKey: ["nurse-ward-admissions"],
@@ -68,6 +70,8 @@ export default function NurseWard() {
                     <TableCell sx={{ color: "text.secondary" }}>{a.doctorName || "—"}</TableCell>
                     <TableCell align="right">
                       <Stack direction="row" spacing={1} justifyContent="flex-end">
+                        <Button size="small" variant="contained" startIcon={<MonitorHeartRounded />} onClick={() => setObsFor(a)}
+                          sx={{ textTransform: "none" }}>Observations</Button>
                         <Button size="small" variant="outlined" startIcon={<DescriptionRounded />} onClick={() => setNotesFor(a)}
                           sx={{ textTransform: "none", borderColor: "divider", color: "#0891b2" }}>Nursing notes</Button>
                         <Button size="small" variant="outlined" startIcon={<MedicalServicesRounded />} onClick={() => setVisitsFor(a)}
@@ -95,6 +99,7 @@ export default function NurseWard() {
 
       {visitsFor && <IpdDoctorVisitsDialog open admission={visitsFor} onClose={() => setVisitsFor(null)} />}
       {notesFor && <NursingNotesDialog open admission={notesFor} onClose={() => setNotesFor(null)} />}
+      {obsFor && <ObservationChartDialog open admission={obsFor} onClose={() => setObsFor(null)} />}
     </Box>
   );
 }
