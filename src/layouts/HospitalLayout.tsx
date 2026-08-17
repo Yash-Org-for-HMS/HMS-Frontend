@@ -97,11 +97,10 @@ export default function HospitalLayout() {
     { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", permission: "DEPARTMENT_MANAGE", section: "Organization" },
     { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", permission: "USER_MANAGE", section: "Organization" },
     { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", permission: "USER_MANAGE", section: "Organization" },
-    // Custom roles + granular permissions are shelved until the permission model
-    // is fully wired/enforced. Routes still exist; just hidden from the nav for
-    // now (re-add these two entries to bring the feature back).
-    // { text: "Role Management", icon: <ShieldRounded />, path: "/hospital/roles", permission: "ROLE_MANAGE" },
-    // { text: "Permission Matrix", icon: <RuleRounded />, path: "/hospital/permissions-matrix", permission: "ROLE_MANAGE" },
+    // Role Management and the Permission Matrix used to live here, commented
+    // out. Both are gone now: every hospital uses the fixed standard role set,
+    // and role authoring is removed rather than hidden — see the note in
+    // rbac.controller.ts for why.
     { text: "Master Data", icon: <DatasetRounded />, path: "/hospital/lookups", permission: "SETTINGS_MANAGE", section: "Configuration" },
     // Backend restricts these strictly to H_ADMIN/B_ADMIN (requireRole, no
     // permission-code bypass) — adminOnly here matches that exactly so a

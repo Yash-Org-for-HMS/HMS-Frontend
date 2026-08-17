@@ -47,7 +47,6 @@ const OnboardingForm = lazy(() => import("@/features/onboarding/OnboardingForm")
 const SuperAdminsList = lazy(() => import("@/features/superAdmins/SuperAdminsList"));
 const SuperAdminForm = lazy(() => import("@/features/superAdmins/SuperAdminForm"));
 const RolesList = lazy(() => import("@/features/rbac/RolesList"));
-const RoleForm = lazy(() => import("@/features/rbac/RoleForm"));
 const UsersList = lazy(() => import("@/features/rbac/UsersList"));
 const UserForm = lazy(() => import("@/features/rbac/UserForm"));
 const AuditLogsList = lazy(() => import("@/features/auditLogs/AuditLogsList"));
@@ -62,9 +61,6 @@ const DepartmentsList = lazy(() => import("@/features/hospitalAuth/departments/D
 const DepartmentForm = lazy(() => import("@/features/hospitalAuth/departments/DepartmentForm"));
 const HospitalUsersList = lazy(() => import("@/features/hospitalAuth/users/UsersList"));
 const HospitalUserForm = lazy(() => import("@/features/hospitalAuth/users/UserForm"));
-const HospitalRolesList = lazy(() => import("@/features/hospitalAuth/roles/RolesList"));
-const HospitalRoleForm = lazy(() => import("@/features/hospitalAuth/roles/RoleForm"));
-const PermissionMatrix = lazy(() => import("@/features/hospitalAuth/roles/PermissionMatrix"));
 const ModuleAccess = lazy(() => import("@/features/hospitalAuth/settings/ModuleAccess"));
 const DoctorsList = lazy(() => import("@/features/hospitalAuth/doctors/DoctorsList"));
 const DoctorForm = lazy(() => import("@/features/hospitalAuth/doctors/DoctorForm"));
@@ -204,8 +200,11 @@ function App() {
             <Route path="/super-admins/new" element={el(SuperAdminForm)} />
             <Route path="/super-admins/:id/edit" element={el(SuperAdminForm)} />
             <Route path="/rbac/roles" element={el(RolesList)} />
-            <Route path="/rbac/roles/new" element={el(RoleForm)} />
-            <Route path="/rbac/roles/:id/edit" element={el(RoleForm)} />
+            {/* Role authoring is gone. These URLs may still be bookmarked, and
+                the router has no catch-all — an unmatched path renders a blank
+                page — so send them to the read-only list rather than nowhere. */}
+            <Route path="/rbac/roles/new" element={<Navigate to="/rbac/roles" replace />} />
+            <Route path="/rbac/roles/:id/edit" element={<Navigate to="/rbac/roles" replace />} />
             <Route path="/rbac/users" element={el(UsersList)} />
             <Route path="/rbac/users/add" element={el(UserForm)} />
             <Route path="/rbac/users/edit/:id" element={el(UserForm)} />
@@ -234,15 +233,18 @@ function App() {
             <Route path="/hospital/departments/new" element={el(DepartmentForm)} />
             <Route path="/hospital/departments/:id/edit" element={el(DepartmentForm)} />
             <Route path="/hospital/users" element={el(HospitalUsersList)} />
+            {/* Role Management and the Permission Matrix are removed. Staff &
+                Users is where a role is actually assigned, so it is the honest
+                destination for anyone who still has these bookmarked. */}
+            <Route path="/hospital/roles" element={<Navigate to="/hospital/users" replace />} />
+            <Route path="/hospital/roles/new" element={<Navigate to="/hospital/users" replace />} />
+            <Route path="/hospital/roles/:id/edit" element={<Navigate to="/hospital/users" replace />} />
+            <Route path="/hospital/permissions-matrix" element={<Navigate to="/hospital/users" replace />} />
             <Route path="/hospital/users/new" element={el(HospitalUserForm)} />
             <Route path="/hospital/users/:id/edit" element={el(HospitalUserForm)} />
-            <Route path="/hospital/roles" element={el(HospitalRolesList)} />
-            <Route path="/hospital/roles/new" element={el(HospitalRoleForm)} />
-            <Route path="/hospital/roles/:id/edit" element={el(HospitalRoleForm)} />
             <Route path="/hospital/financials" element={elGated(FinancialDashboard, "Billing", "Financial Analytics")} />
             <Route path="/hospital/gst-report" element={elGated(GstReport, "Billing", "GST Report")} />
             <Route path="/hospital/reports" element={el(Reports)} />
-            <Route path="/hospital/permissions-matrix" element={el(PermissionMatrix)} />
             <Route path="/hospital/module-access" element={el(ModuleAccess)} />
             <Route path="/hospital/doctors" element={el(DoctorsList)} />
 
