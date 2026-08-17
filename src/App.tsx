@@ -47,6 +47,7 @@ const OnboardingForm = lazy(() => import("@/features/onboarding/OnboardingForm")
 const SuperAdminsList = lazy(() => import("@/features/superAdmins/SuperAdminsList"));
 const SuperAdminForm = lazy(() => import("@/features/superAdmins/SuperAdminForm"));
 const RolesList = lazy(() => import("@/features/rbac/RolesList"));
+const NotFound = lazy(() => import("@/components/NotFound"));
 const UsersList = lazy(() => import("@/features/rbac/UsersList"));
 const UserForm = lazy(() => import("@/features/rbac/UserForm"));
 const AuditLogsList = lazy(() => import("@/features/auditLogs/AuditLogsList"));
@@ -370,6 +371,11 @@ function App() {
             <Route path="/pharmacy/reports" element={el(PharmacyReports)} />
           </Route>
         </Route>
+
+        {/* Anything the router does not recognise. Without this a typo, a stale
+            bookmark, or a link to a removed page rendered a blank white screen,
+            which reads as "the app is down" rather than "wrong address". */}
+        <Route path="*" element={el(NotFound)} />
       </Routes>
     </HospitalAuthProvider>
     </>
