@@ -225,6 +225,14 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
     setUnit("Tab");
   };
 
+  // Compares a medicine name/dosage for the duplicate check below. This was
+  // being CALLED without ever being defined, so "Repeat last Rx" threw a
+  // ReferenceError the moment the patient actually had a previous prescription
+  // — and the catch reported it as "Failed to load the last prescription",
+  // which reads as a server problem or an empty history rather than a bug.
+  // Dosage is optional, hence the null guard.
+  const normalize = (s?: string | null) => (s ?? "").trim().toLowerCase();
+
   const handleRepeatLast = async () => {
     if (!patientId) {
       toast.error("No patient context available.");
