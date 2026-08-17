@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SEMANTIC } from "@/styles/accents";
 import {
   Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Chip, Button, Tabs, Tab, Grid,
+  Chip, Button, Tabs, Tab, Grid, Pagination,
 } from "@mui/material";
 import { PointOfSaleRounded, ScienceRounded, BiotechRounded, ReceiptLongRounded, PrintRounded } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -44,41 +44,34 @@ interface BillableOrder {
   paymentStatus: string; // PaymentState: UNPAID | PAID | PARTIAL | REFUNDED | BILLED
   billingLockActive: boolean;
   admissionNumber?: string | null;
+  // Resolved server-side from the same unbilled-items computation the invoice
+  // uses, so this screen can never quote a different figure from the bill.
+  amount: number | null;
+  billingDescription: string | null;
+  taxPercent: number;
 }
-
-interface UnbilledInfo { amount: number; description: string; taxPercent: number }
 
 const ACCENT = SEMANTIC.success;
 
-function normalizeLab(o: any): BillableOrder {
+// The queue endpoint already returns both kinds in one shape, priced and
+// labelled — the two normalisers this replaces were doing that per source table
+// in the browser.
+function normalizeRow(o: any): BillableOrder {
   return {
-    key: `LAB-${o.labOrderId}`,
-    kind: "LAB",
-    id: o.labOrderId,
+    key: `${o.kind}-${o.id}`,
+    kind: o.kind,
+    id: o.id,
     patientId: o.patientId,
-    patientName: `${o.patient?.firstName || ""} ${o.patient?.lastName || ""}`.trim() || "—",
-    uhid: o.patient?.uhidNumber,
-    description: o.sampleBarcode ? `Lab Order · ${o.sampleBarcode}` : "Lab Order",
-    date: o.createdAt,
+    patientName: o.patientName || "—",
+    uhid: o.uhid ?? undefined,
+    description: o.description,
+    date: o.date,
     paymentStatus: o.paymentStatus || "UNPAID",
     billingLockActive: !!o.billingLockActive,
     admissionNumber: o.admissionNumber,
-  };
-}
-
-function normalizeRad(o: any): BillableOrder {
-  return {
-    key: `RAD-${o.radiologyOrderId}`,
-    kind: "RADIOLOGY",
-    id: o.radiologyOrderId,
-    patientId: o.patientId,
-    patientName: `${o.patient?.firstName || ""} ${o.patient?.lastName || ""}`.trim() || "—",
-    uhid: o.patient?.uhidNumber,
-    description: `Radiology · ${o.scanType || "Scan"}`,
-    date: o.orderDate,
-    paymentStatus: o.paymentStatus || "UNPAID",
-    billingLockActive: !!o.billingLockActive,
-    admissionNumber: o.admissionNumber,
+    amount: o.amount ?? null,
+    billingDescription: o.billingDescription ?? null,
+    taxPercent: Number(o.taxPercent || 0),
   };
 }
 
@@ -88,76 +81,44 @@ export default function LabBilling() {
   const [payOrder, setPayOrder] = useState<BillableOrder | null>(null);
   const [receiptId, setReceiptId] = useState<string | null>(null);
 
-  const labQ = useQuery({
-    queryKey: ["lab-billing", "lab-orders"],
-    queryFn: async () => (await axiosInstance.get("/lab/orders")).data.data || [],
+  // One page of the selected tab, filtered/sorted/priced server-side.
+  //
+  // This screen used to GET every lab order and every radiology order the
+  // hospital had ever recorded and do all four tabs in the browser — roughly
+  // 1.7 KB per order, so ~48 MB per page load after a year at 80 orders a day.
+  // It also made one /billing/unbilled call per patient to price them. The
+  // server now returns 20 rows with their amounts already resolved.
+  const BUCKETS = ["outstanding", "paid", "inpatient", "all"] as const;
+  const [page, setPage] = useState(1);
+  useEffect(() => setPage(1), [tabValue]); // switching tabs starts at page 1
+
+  const queueQ = useQuery({
+    queryKey: ["lab-billing", "queue", tabValue, page],
+    queryFn: async () =>
+      (await axiosInstance.get("/lab/billing-queue", { params: { bucket: BUCKETS[tabValue], page, limit: 20 } })).data.data,
   });
-  const radQ = useQuery({
-    queryKey: ["lab-billing", "radiology-orders"],
-    queryFn: async () => (await axiosInstance.get("/lab/radiology-orders")).data.data || [],
-  });
 
-  const orders = useMemo<BillableOrder[]>(() => {
-    const lab = (labQ.data || []).map(normalizeLab);
-    const rad = (radQ.data || []).map(normalizeRad);
-    return [...lab, ...rad].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [labQ.data, radQ.data]);
+  const orders = useMemo<BillableOrder[]>(() => (queueQ.data?.rows || []).map(normalizeRow), [queueQ.data]);
+  const totalPages = queueQ.data?.pagination?.totalPages ?? 1;
 
-  // Outstanding = outpatient orders with an active billing lock (unpaid, pre-paid
-  // strategy). Inpatient orders settle on the IP bill, so they're never collected here.
-  const outstanding = useMemo(() => orders.filter((o) => o.billingLockActive), [orders]);
+  // The summary covers EVERY outstanding order, not this page — a headline
+  // "Amount Due" that silently counted only the first 20 rows would be worse
+  // than showing none. It is safe to compute in full because the outstanding
+  // set is bounded by unpaid work rather than by history.
+  const outstandingCount = queueQ.data?.summary?.outstandingCount ?? 0;
+  const outstandingTotal = queueQ.data?.summary?.outstandingAmount ?? 0;
 
-  // Accurate amounts (and richer descriptions) for outstanding orders, one call
-  // per distinct patient. Bounded by the number of patients with unpaid orders
-  // and cached by react-query.
-  const patientIds = useMemo(
-    () => Array.from(new Set(outstanding.map((o) => o.patientId))).sort(),
-    [outstanding],
-  );
-  const unbilledQ = useQuery({
-    queryKey: ["lab-billing", "unbilled", patientIds],
-    enabled: patientIds.length > 0,
-    queryFn: async () => {
-      const map: Record<string, UnbilledInfo> = {};
-      await Promise.all(
-        patientIds.map(async (pid) => {
-          const items = (await axiosInstance.get(`/billing/unbilled/${pid}`)).data.data || [];
-          for (const it of items) {
-            if (it?.id) map[it.id] = { amount: Number(it.amount || 0), description: it.description || "", taxPercent: Number(it.taxPercent || 0) };
-          }
-        }),
-      );
-      return map;
-    },
-  });
-  const unbilled = unbilledQ.data || {};
+  const amountOf = (o: BillableOrder): number | null => o.amount ?? null;
 
-  const amountOf = (o: BillableOrder): number | null => {
-    const u = unbilled[o.id];
-    return u ? u.amount : null;
-  };
-
-  const outstandingTotal = useMemo(
-    () => outstanding.reduce((s, o) => s + (amountOf(o) || 0), 0),
-    [outstanding, unbilled], // eslint-disable-line react-hooks/exhaustive-deps
-  );
-
-  const filtered = useMemo(() => {
-    if (tabValue === 0) return orders.filter((o) => o.billingLockActive); // Outstanding
-    if (tabValue === 1) return orders.filter((o) => o.paymentStatus === "PAID"); // Paid
-    if (tabValue === 2) return orders.filter((o) => !!o.admissionNumber); // Inpatient (on IP bill)
-    return orders; // All
-  }, [orders, tabValue]);
-
-  const { sorted, orderBy, order, onSort } = useTableSort(filtered, {
+  const { sorted, orderBy, order, onSort } = useTableSort(orders, {
     date: (o: BillableOrder) => (o.date ? new Date(o.date) : null),
     patient: (o: BillableOrder) => o.patientName,
     service: (o: BillableOrder) => o.description,
     status: (o: BillableOrder) => o.paymentStatus,
   });
 
-  const loading = labQ.isLoading || radQ.isLoading;
-  const isError = labQ.isError || radQ.isError;
+  const loading = queueQ.isLoading;
+  const isError = queueQ.isError;
 
   const headSx = { fontWeight: 500, fontSize: "0.875rem", textTransform: "none", letterSpacing: "normal", py: 1, color: "text.primary" } as const;
 
@@ -171,7 +132,7 @@ export default function LabBilling() {
     return (
       <Box>
         <PageHeader title="Billing" subtitle="Collect payments for lab & radiology orders." />
-        <ErrorState message={apiErrorText(labQ.error || radQ.error)} onRetry={() => { labQ.refetch(); radQ.refetch(); }} />
+        <ErrorState message={apiErrorText(queueQ.error)} onRetry={() => queueQ.refetch()} />
       </Box>
     );
   }
@@ -183,7 +144,7 @@ export default function LabBilling() {
       {/* Summary */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Outstanding Orders" value={outstanding.length} icon={<ReceiptLongRounded sx={{ fontSize: 32, color: SEMANTIC.warning }} />} color={SEMANTIC.warning} />
+          <StatCard label="Outstanding Orders" value={outstandingCount} icon={<ReceiptLongRounded sx={{ fontSize: 32, color: SEMANTIC.warning }} />} color={SEMANTIC.warning} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label="Amount Due" value={formatINR(outstandingTotal)} icon={<PointOfSaleRounded sx={{ fontSize: 32, color: ACCENT }} />} color={ACCENT} />
@@ -192,7 +153,7 @@ export default function LabBilling() {
 
       <Paper sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={tabValue} onChange={(_e, v) => setTabValue(v)} variant="scrollable" scrollButtons="auto">
-          <Tab label={`Outstanding${outstanding.length ? ` (${outstanding.length})` : ""}`} />
+          <Tab label={`Outstanding${outstandingCount ? ` (${outstandingCount})` : ""}`} />
           <Tab label="Paid" />
           <Tab label="Inpatient" />
           <Tab label="All Orders" />
@@ -264,6 +225,14 @@ export default function LabBilling() {
             </Table>
           </TableContainer>
         )}
+
+        {/* Only the current page is loaded, so the pages have to be walkable.
+            Matches the control the lab order queue already uses. */}
+        {totalPages > 1 && (
+          <Box sx={{ display: "flex", justifyContent: "center", pt: 2 }}>
+            <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" />
+          </Box>
+        )}
       </Paper>
 
       {payOrder && (
@@ -279,9 +248,9 @@ export default function LabBilling() {
           item={{
             id: payOrder.id,
             type: payOrder.kind,
-            description: unbilled[payOrder.id]?.description || payOrder.description,
+            description: payOrder.billingDescription || payOrder.description,
             amount: amountOf(payOrder) || 0,
-            taxPercent: unbilled[payOrder.id]?.taxPercent || 0,
+            taxPercent: payOrder.taxPercent,
             date: payOrder.date,
           }}
         />
