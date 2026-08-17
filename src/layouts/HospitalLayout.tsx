@@ -76,44 +76,44 @@ export default function HospitalLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Map sidebar items to required permissions
+  // Sidebar items; `adminOnly` tabs are hidden from non-admin roles.
   const menuItems = [
-    { text: "Dashboard", icon: <DashboardRounded />, path: "/hospital/dashboard", permission: null, section: "Overview" },
-    { text: "Hospital Profile", icon: <LocalHospitalRounded />, path: "/hospital/profile", permission: null, adminOnly: true, section: "Overview" },
+    { text: "Dashboard", icon: <DashboardRounded />, path: "/hospital/dashboard", section: "Overview" },
+    { text: "Hospital Profile", icon: <LocalHospitalRounded />, path: "/hospital/profile", adminOnly: true, section: "Overview" },
     // Admin-only: its endpoint (/billing/analytics) is admin-gated, so don't show
     // a tab non-admins can't actually open.
-    { text: "Financial Analytics", icon: <AccountBalanceRounded />, path: "/hospital/financials", permission: null, adminOnly: true, module: "Billing", section: "Overview" },
-    { text: "GST Report", icon: <AssessmentRounded />, path: "/hospital/gst-report", permission: null, adminOnly: true, module: "Billing", section: "Overview" },
-    { text: "Reports", icon: <AssessmentRounded />, path: "/hospital/reports", permission: null, section: "Overview" },
+    { text: "Financial Analytics", icon: <AccountBalanceRounded />, path: "/hospital/financials", adminOnly: true, module: "Billing", section: "Overview" },
+    { text: "GST Report", icon: <AssessmentRounded />, path: "/hospital/gst-report", adminOnly: true, module: "Billing", section: "Overview" },
+    { text: "Reports", icon: <AssessmentRounded />, path: "/hospital/reports", section: "Overview" },
     // Operations: hospital-wide, read-oriented windows into day-to-day activity.
     // Admin-only (mirrors the backend org-wide data view for H_ADMIN); these
     // reuse the existing reception/IPD pages, mounted under the admin shell.
-    { text: "All Patients", icon: <PeopleRounded />, path: "/hospital/patients", permission: null, adminOnly: true, section: "Operations" },
-    { text: "Appointments", icon: <CalendarTodayRounded />, path: "/hospital/appointments", permission: null, adminOnly: true, section: "Operations" },
-    { text: "Patient Queue", icon: <FormatListNumberedRounded />, path: "/hospital/queue", permission: null, adminOnly: true, section: "Operations" },
-    { text: "Admissions", icon: <LocalHotelRounded />, path: "/hospital/ipd/admissions", permission: null, adminOnly: true, module: "IPD", section: "Operations" },
-    { text: "Bed Board", icon: <HotelRounded />, path: "/hospital/ipd/beds", permission: null, adminOnly: true, module: "IPD", section: "Operations" },
-    { text: "Billing Overview", icon: <ReceiptLongRounded />, path: "/hospital/billing", permission: null, adminOnly: true, module: "Billing", section: "Operations" },
-    { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", permission: "DEPARTMENT_MANAGE", section: "Organization" },
-    { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", permission: "USER_MANAGE", section: "Organization" },
-    { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", permission: "USER_MANAGE", section: "Organization" },
+    { text: "All Patients", icon: <PeopleRounded />, path: "/hospital/patients", adminOnly: true, section: "Operations" },
+    { text: "Appointments", icon: <CalendarTodayRounded />, path: "/hospital/appointments", adminOnly: true, section: "Operations" },
+    { text: "Patient Queue", icon: <FormatListNumberedRounded />, path: "/hospital/queue", adminOnly: true, section: "Operations" },
+    { text: "Admissions", icon: <LocalHotelRounded />, path: "/hospital/ipd/admissions", adminOnly: true, module: "IPD", section: "Operations" },
+    { text: "Bed Board", icon: <HotelRounded />, path: "/hospital/ipd/beds", adminOnly: true, module: "IPD", section: "Operations" },
+    { text: "Billing Overview", icon: <ReceiptLongRounded />, path: "/hospital/billing", adminOnly: true, module: "Billing", section: "Operations" },
+    { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", adminOnly: true, section: "Organization" },
+    { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", adminOnly: true, section: "Organization" },
+    { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", adminOnly: true, section: "Organization" },
     // Role Management and the Permission Matrix used to live here, commented
     // out. Both are gone now: every hospital uses the fixed standard role set,
     // and role authoring is removed rather than hidden — see the note in
     // rbac.controller.ts for why.
-    { text: "Master Data", icon: <DatasetRounded />, path: "/hospital/lookups", permission: "SETTINGS_MANAGE", section: "Configuration" },
+    { text: "Master Data", icon: <DatasetRounded />, path: "/hospital/lookups", adminOnly: true, section: "Configuration" },
     // Backend restricts these strictly to H_ADMIN/B_ADMIN (requireRole, no
     // permission-code bypass) — adminOnly here matches that exactly so a
     // custom role never sees a link that would just 403.
-    { text: "Ward & Bed Setup", icon: <HotelRounded />, path: "/hospital/facility-setup", permission: null, adminOnly: true, module: "IPD", section: "Configuration" },
-    { text: "Ward Chart Settings", icon: <MonitorHeartRounded />, path: "/hospital/ward-chart", permission: null, adminOnly: true, module: "IPD", section: "Configuration" },
-    { text: "Vaccine Catalog", icon: <VaccinesRounded />, path: "/hospital/vaccines", permission: null, adminOnly: true, section: "Configuration" },
-    { text: "Schedule of Charges", icon: <ReceiptLongRounded />, path: "/hospital/soc", permission: null, adminOnly: true, section: "Configuration" },
-    { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/hospital/medicines", permission: null, adminOnly: true, section: "Configuration" },
-    { text: "Form Builder", icon: <DynamicFormRounded />, path: "/hospital/form-builder", permission: "SETTINGS_MANAGE", section: "Configuration" },
-    { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", permission: "SETTINGS_MANAGE", section: "Configuration" },
-    { text: "Audit Logs", icon: <SecurityRounded />, path: "/hospital/audit-logs", permission: "SETTINGS_MANAGE", section: "System" },
-    { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", permission: "SETTINGS_MANAGE", section: "System" },
+    { text: "Ward & Bed Setup", icon: <HotelRounded />, path: "/hospital/facility-setup", adminOnly: true, module: "IPD", section: "Configuration" },
+    { text: "Ward Chart Settings", icon: <MonitorHeartRounded />, path: "/hospital/ward-chart", adminOnly: true, module: "IPD", section: "Configuration" },
+    { text: "Vaccine Catalog", icon: <VaccinesRounded />, path: "/hospital/vaccines", adminOnly: true, section: "Configuration" },
+    { text: "Schedule of Charges", icon: <ReceiptLongRounded />, path: "/hospital/soc", adminOnly: true, section: "Configuration" },
+    { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/hospital/medicines", adminOnly: true, section: "Configuration" },
+    { text: "Form Builder", icon: <DynamicFormRounded />, path: "/hospital/form-builder", adminOnly: true, section: "Configuration" },
+    { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", adminOnly: true, section: "Configuration" },
+    { text: "Audit Logs", icon: <SecurityRounded />, path: "/hospital/audit-logs", adminOnly: true, section: "System" },
+    { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", adminOnly: true, section: "System" },
   ];
 
   // Org AND branch admins see everything (mirrors the backend ADMIN_ROLE_CODES
@@ -126,9 +126,7 @@ export default function HospitalLayout() {
   // adminOnly / permission still gate visibility as before.
   const visibleMenuItems = menuItems.filter(item => {
     if ((item as any).adminOnly) return isAdmin;   // admin-only tab (e.g. Financial, Operations)
-    if (!item.permission) return true;
-    if (isAdmin) return true;
-    return user?.permissions?.includes(item.permission);
+    return true;
   });
   const isLocked = (item: any) => item.module && !isModuleEnabled(item.module);
 

@@ -36,7 +36,7 @@ export function HospitalProtectedRoute({ panel }: { panel?: Panel } = {}) {
 
   // Panel isolation. Only enforce once we actually have the user (fail open on a
   // missing user to avoid any redirect loop — the backend still guards data).
-  if (panel && user && !canAccessPanel(user.role, user.permissions, panel)) {
+  if (panel && user && !canAccessPanel(user.role, panel)) {
     return <Navigate to={homeForRole(user.role)} replace />;
   }
 

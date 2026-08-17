@@ -12,7 +12,6 @@ export interface HospitalUser {
   employeeCode: string | null;
   role: string;
   roleName: string;
-  permissions: string[];
 }
 
 export interface HospitalInfo {

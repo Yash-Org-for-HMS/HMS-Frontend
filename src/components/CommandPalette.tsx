@@ -62,18 +62,6 @@ const STATIC_ROUTES = [
   { name: "Hospital Settings", path: "/hospital/settings", icon: <DashboardRounded />, section: "Admin" },
 ];
 
-// Fallback permission codes per section — mirrors the backend's own panel
-// guards (middleware/panelAccess.ts). A custom tenant role (no standard
-// roleCode match) still sees the sections it actually has permissions for,
-// instead of an empty palette.
-const SECTION_PERMISSIONS: Record<string, string[]> = {
-  Reception: ["PATIENT_VIEW", "APPOINTMENT_VIEW"],
-  Laboratory: ["LAB_TEST_VIEW", "LAB_ORDER_CREATE", "LAB_RESULT_UPDATE"],
-  Pharmacy: ["PRESCRIPTION_VIEW", "MEDICINE_DISPENSE"],
-  Doctor: ["CONSULTATION_VIEW", "CONSULTATION_CREATE", "PRESCRIPTION_CREATE"],
-  Nurse: ["PATIENT_VIEW", "APPOINTMENT_VIEW"],
-};
-
 // Everyday aliases so common terms find the right destination (keyed by path so
 // the route lists above stay clean). e.g. "pos" → Pharmacy POS, "xray" → Radiology.
 const ALIASES: Record<string, string[]> = {
@@ -255,15 +243,12 @@ export default function CommandPalette() {
   };
 
   let userRole = "";
-  let permissions: string[] = [];
   try {
     const hospitalUserStr = sessionStorage.getItem("hospitalUser");
     if (hospitalUserStr) {
-      const parsed = JSON.parse(hospitalUserStr);
-      userRole = parsed.role?.toLowerCase() || "";
-      permissions = Array.isArray(parsed.permissions) ? parsed.permissions : [];
+      userRole = JSON.parse(hospitalUserStr).role?.toLowerCase() || "";
     }
-  } catch (e) {}
+  } catch (e) { /* no readable session — the palette simply shows nothing */ }
 
   const isReception = userRole.includes("reception");
   const isLab = userRole.includes("lab");
@@ -274,13 +259,12 @@ export default function CommandPalette() {
   // middleware/branchContext.ts. Matching literal "admin"/"hospital_admin"
   // never matched a real role, so admins previously saw an empty palette.
   const isAdmin = userRole === "h_admin" || userRole === "b_admin";
-  const hasAnyPermission = (codes: string[]) => codes.some((c) => permissions.includes(c));
 
   // Who may search patient PII from the palette. Only panels with a real
   // patient-profile destination (reception, nurse→reception, doctor, admin→
   // hospital oversight). Lab/Pharmacy are deliberately excluded — see the guard
-  // in handleSearchChange. Custom roles pass via the reception fallback perms.
-  const canSearchPatients = isReception || isNurse || isDoctor || isAdmin || hasAnyPermission(["PATIENT_VIEW", "APPOINTMENT_VIEW"]);
+  // in handleSearchChange.
+  const canSearchPatients = isReception || isNurse || isDoctor || isAdmin;
 
   const allowSection = (section: string) => {
     // Admins operate from their own shell. Surface ONLY the Admin section (which
@@ -288,11 +272,11 @@ export default function CommandPalette() {
     // would drop the admin into the full Reception/Doctor/etc. panels. Patient
     // search is separate and already routes admins to /hospital.
     if (isAdmin) return section === "Admin";
-    if (section === "Reception") return isReception || hasAnyPermission(SECTION_PERMISSIONS.Reception);
-    if (section === "Laboratory") return isLab || hasAnyPermission(SECTION_PERMISSIONS.Laboratory);
-    if (section === "Pharmacy") return isPharmacy || hasAnyPermission(SECTION_PERMISSIONS.Pharmacy);
-    if (section === "Doctor") return isDoctor || hasAnyPermission(SECTION_PERMISSIONS.Doctor);
-    if (section === "Nurse") return isNurse || hasAnyPermission(SECTION_PERMISSIONS.Nurse);
+    if (section === "Reception") return isReception;
+    if (section === "Laboratory") return isLab;
+    if (section === "Pharmacy") return isPharmacy;
+    if (section === "Doctor") return isDoctor;
+    if (section === "Nurse") return isNurse;
     if (section === "Admin") return isAdmin;
     return true;
   };

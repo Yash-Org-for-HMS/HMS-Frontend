@@ -32,15 +32,6 @@ const PANEL_ROLES: Record<Exclude<Panel, "hospital">, string[]> = {
 
 // Fallback permission codes per panel — mirrors backend middleware/panelAccess.ts
 // so a custom role reaches exactly the panels the API already authorizes it for.
-const PANEL_PERMISSIONS: Record<Panel, string[]> = {
-  reception: ["PATIENT_VIEW", "APPOINTMENT_VIEW"],
-  nurse: ["PATIENT_VIEW", "APPOINTMENT_VIEW"],
-  doctor: ["CONSULTATION_VIEW", "CONSULTATION_CREATE", "CONSULTATION_EDIT", "PRESCRIPTION_VIEW", "PRESCRIPTION_CREATE", "LAB_ORDER_CREATE"],
-  lab: ["LAB_TEST_VIEW", "LAB_ORDER_CREATE", "LAB_RESULT_UPDATE"],
-  pharmacy: ["PRESCRIPTION_VIEW", "MEDICINE_DISPENSE"],
-  hospital: ["USER_MANAGE", "DEPARTMENT_MANAGE", "ROLE_MANAGE", "SETTINGS_MANAGE"],
-};
-
 export const PANEL_HOME: Record<Panel, string> = {
   reception: "/reception/dashboard",
   nurse: "/nurse/dashboard",
@@ -69,13 +60,14 @@ export function homeForRole(role?: string | null): string {
 
 // May this user render the given panel's routes? True when: they're an admin, OR
 // it's their own home panel, OR nurse/reception (which share the backend's
-// receptionAccess class), OR they hold one of the panel's fallback permissions.
-export function canAccessPanel(role: string | null | undefined, permissions: string[] | null | undefined, panel: Panel): boolean {
+// receptionAccess class). Mirrors middleware/panelAccess.ts, which is likewise
+// role-only since the permission layer was removed.
+export function canAccessPanel(role: string | null | undefined, panel: Panel): boolean {
   if (isAdmin(role)) return true;
   const home = primaryPanelForRole(role);
   if (home === panel) return true;
   // Nurse and Reception are one trust class on the backend (receptionAccess),
   // so either may enter both panels.
   if ((panel === "reception" || panel === "nurse") && (home === "reception" || home === "nurse")) return true;
-  return (PANEL_PERMISSIONS[panel] || []).some((p) => (permissions || []).includes(p));
+  return false;
 }
