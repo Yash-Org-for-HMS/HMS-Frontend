@@ -27,6 +27,13 @@ const STATUS_COLOR: Record<string, string> = {
 // tiles still show live occupancy but are not clickable, so the admin can read
 // the ward census without opening the status-change menu (available / reserved /
 // maintenance). Defaults keep the IPD panel interactive.
+const Tile = ({ label, value, color }: { label: string; value: number; color: string }) => (
+  <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", textAlign: "center" }}>
+    <Typography variant="h5" sx={{ fontWeight: 800, color }}>{value}</Typography>
+    <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>{label}</Typography>
+  </Paper>
+);
+
 export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = {}) {
   const toast = useToast();
   const [bedMenu, setBedMenu] = useState<{ anchor: HTMLElement | null; bed: any }>({ anchor: null, bed: null });
@@ -49,12 +56,6 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
     }
   };
 
-  const Tile = ({ label, value, color }: { label: string; value: number; color: string }) => (
-    <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", textAlign: "center" }}>
-      <Typography variant="h5" sx={{ fontWeight: 800, color }}>{value}</Typography>
-      <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>{label}</Typography>
-    </Paper>
-  );
 
   return (
     <Box>

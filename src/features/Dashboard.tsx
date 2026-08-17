@@ -60,6 +60,52 @@ interface DashboardStats {
   recentActivities: Array<any>;
 }
 
+const GroupCard = ({ title, icon, color, primary, subs }: any) => (
+  <Paper
+    elevation={0}
+    sx={{
+      p: 2,
+      borderRadius: 3,
+      bgcolor: "background.paper",
+      border: "1px solid", borderColor: "divider",
+      height: "100%",
+      transition: "all 0.2s ease-in-out",
+      "&:hover": { boxShadow: "0 6px 24px rgba(0,0,0,0.06)" },
+    }}
+  >
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+      <Box sx={{ width: 28, height: 28, borderRadius: 2, bgcolor: `${color}15`, color, display: "grid", placeItems: "center", "& svg": { fontSize: 16 } }}>
+        {icon}
+      </Box>
+      <Typography variant="caption" fontWeight={700} sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.4 }}>{title}</Typography>
+    </Box>
+    <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary", lineHeight: 1.05 }}>{primary.value}</Typography>
+    <Typography variant="caption" sx={{ color: "text.secondary" }}>{primary.label}</Typography>
+    <Box sx={{ borderTop: "1px solid", borderColor: "divider", my: 1 }} />
+    <Box sx={{ display: "flex", gap: 1 }}>
+      {subs.map((s: any) => (
+        <Box key={s.label} sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="subtitle1" fontWeight={800} sx={{ color: s.color || "text.primary", lineHeight: 1.2 }}>{s.value}</Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.75rem", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.label}</Typography>
+        </Box>
+      ))}
+    </Box>
+  </Paper>
+);
+
+const ChartCard = ({ title, subtitle, right, height = 340, children }: any) => (
+  <Paper elevation={0} sx={{ p: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, height, display: "flex", flexDirection: "column" }}>
+    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 2, mb: 2 }}>
+      <Box>
+        <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>{title}</Typography>
+        {subtitle && <Typography variant="caption" sx={{ color: "text.secondary" }}>{subtitle}</Typography>}
+      </Box>
+      {right}
+    </Box>
+    <Box sx={{ flexGrow: 1, minHeight: 0 }}>{children}</Box>
+  </Paper>
+);
+
 export default function Dashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -100,38 +146,6 @@ export default function Dashboard() {
 
   // One card per theme, with a headline metric and related sub-metrics grouped
   // beneath it (e.g. Total Hospitals + Active / On Trial / Expired together).
-  const GroupCard = ({ title, icon, color, primary, subs }: any) => (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 2,
-        borderRadius: 3,
-        bgcolor: "background.paper",
-        border: "1px solid", borderColor: "divider",
-        height: "100%",
-        transition: "all 0.2s ease-in-out",
-        "&:hover": { boxShadow: "0 6px 24px rgba(0,0,0,0.06)" },
-      }}
-    >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-        <Box sx={{ width: 28, height: 28, borderRadius: 2, bgcolor: `${color}15`, color, display: "grid", placeItems: "center", "& svg": { fontSize: 16 } }}>
-          {icon}
-        </Box>
-        <Typography variant="caption" fontWeight={700} sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.4 }}>{title}</Typography>
-      </Box>
-      <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary", lineHeight: 1.05 }}>{primary.value}</Typography>
-      <Typography variant="caption" sx={{ color: "text.secondary" }}>{primary.label}</Typography>
-      <Box sx={{ borderTop: "1px solid", borderColor: "divider", my: 1 }} />
-      <Box sx={{ display: "flex", gap: 1 }}>
-        {subs.map((s: any) => (
-          <Box key={s.label} sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="subtitle1" fontWeight={800} sx={{ color: s.color || "text.primary", lineHeight: 1.2 }}>{s.value}</Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.75rem", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.label}</Typography>
-          </Box>
-        ))}
-      </Box>
-    </Paper>
-  );
 
   // ── Derived chart data ───────────────────────────────────────────────────
   const INDIGO = "#6366f1";  // single-hue for the lead funnel (magnitude)
@@ -160,18 +174,6 @@ export default function Dashboard() {
   const planData = [...stats.hospitalsByPlan].sort((a, b) => b.count - a.count);
 
   // Shared chart card (title + optional right-slot headline + plot area).
-  const ChartCard = ({ title, subtitle, right, height = 340, children }: any) => (
-    <Paper elevation={0} sx={{ p: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, height, display: "flex", flexDirection: "column" }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 2, mb: 2 }}>
-        <Box>
-          <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>{title}</Typography>
-          {subtitle && <Typography variant="caption" sx={{ color: "text.secondary" }}>{subtitle}</Typography>}
-        </Box>
-        {right}
-      </Box>
-      <Box sx={{ flexGrow: 1, minHeight: 0 }}>{children}</Box>
-    </Paper>
-  );
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>

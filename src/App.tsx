@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ComponentType } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 // ── Eager: app shell + auth entry ───────────────────────────────────────────
 // Kept in the initial bundle so the login screen and the authenticated shell
@@ -168,6 +168,25 @@ const elGated = (C: ComponentType<any>, module: string, feature?: string, props:
     </Suspense>
   </ModuleGate>
 );
+
+/**
+ * Top-level paths owned by the super-admin <Routes> tree above. The two trees
+ * render as siblings, so both evaluate on every navigation: the hospital tree's
+ * "*" fallback matches super-admin paths too, and would render NotFound
+ * underneath the real page. Anything genuinely unrouted (a typo, a dead link)
+ * is in neither list and still reaches NotFound.
+ */
+const ADMIN_SEGMENTS = new Set([
+  "login", "plans", "subscription-billing", "leads", "trials", "hospitals",
+  "onboarding", "super-admins", "rbac", "reports", "audit-logs",
+]);
+
+function AdminOwnedFallback() {
+  const { pathname } = useLocation();
+  const seg = pathname.split("/")[1] ?? "";
+  if (pathname === "/" || ADMIN_SEGMENTS.has(seg)) return null;
+  return el(NotFound);
+}
 
 function App() {
   return (
@@ -374,8 +393,11 @@ function App() {
 
         {/* Anything the router does not recognise. Without this a typo, a stale
             bookmark, or a link to a removed page rendered a blank white screen,
-            which reads as "the app is down" rather than "wrong address". */}
-        <Route path="*" element={el(NotFound)} />
+            which reads as "the app is down" rather than "wrong address".
+            Guarded because this is one of TWO sibling <Routes> trees — see
+            AdminOwnedFallback: a bare "*" here also matches every super-admin
+            path, stacking a "page doesn't exist" panel under those pages. */}
+        <Route path="*" element={<AdminOwnedFallback />} />
       </Routes>
     </HospitalAuthProvider>
     </>

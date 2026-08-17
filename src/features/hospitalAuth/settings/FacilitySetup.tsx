@@ -30,6 +30,13 @@ const STATUS_COLOR: Record<string, string> = {
 // Ward/room/bed SETUP lives here (Hospital Admin) — day-to-day bed STATUS
 // changes (available/reserved/maintenance) remain in the Reception panel's
 // Bed Management screen, since that's operational, not configuration.
+const Tile = ({ label, value, color }: { label: string; value: number; color: string }) => (
+  <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", textAlign: "center" }}>
+    <Typography variant="h5" sx={{ fontWeight: 800, color }}>{value}</Typography>
+    <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>{label}</Typography>
+  </Paper>
+);
+
 export default function FacilitySetup() {
   const toast = useToast();
   const [setupAnchor, setSetupAnchor] = useState<null | HTMLElement>(null);
@@ -50,12 +57,6 @@ export default function FacilitySetup() {
     queryFn: async () => (await axiosInstance.get("/hospital/soc/room-classes")).data.data,
   });
 
-  const Tile = ({ label, value, color }: { label: string; value: number; color: string }) => (
-    <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", textAlign: "center" }}>
-      <Typography variant="h5" sx={{ fontWeight: 800, color }}>{value}</Typography>
-      <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>{label}</Typography>
-    </Paper>
-  );
 
   return (
     <Box>

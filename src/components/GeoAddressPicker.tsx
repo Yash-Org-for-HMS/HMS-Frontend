@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Grid, TextField, MenuItem, InputAdornment, CircularProgress } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
@@ -65,12 +65,14 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
 
   // Pincode autofill: 6 digits → set State + District (city stays user-entered).
   const lastLookup = useRef<string>("");
-  const lookingUp = useRef(false);
+  // Must be state, not a ref: the spinner is read during render, and mutating a
+  // ref doesn't re-render — as a ref it could never actually appear.
+  const [lookingUp, setLookingUp] = useState(false);
   useEffect(() => {
     const code = pincode.trim();
     if (!/^\d{6}$/.test(code) || code === lastLookup.current) return;
     lastLookup.current = code;
-    lookingUp.current = true;
+    setLookingUp(true);
     axiosInstance
       .get(`/geo/pincode/${code}`)
       .then((r) => {
@@ -82,7 +84,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
         });
       })
       .catch(() => { /* unknown pincode — leave as-is */ })
-      .finally(() => { lookingUp.current = false; });
+      .finally(() => { setLookingUp(false); });
   }, [pincode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -134,7 +136,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
             inputProps={{ inputMode: "numeric", maxLength: 6 }}
             onChange={(e) => onChange({ pincode: e.target.value.replace(/\D/g, "").slice(0, 6) })}
             helperText="6 digits — auto-fills state & district"
-            InputProps={{ endAdornment: lookingUp.current ? <InputAdornment position="end"><CircularProgress size={16} /></InputAdornment> : undefined }}
+            InputProps={{ endAdornment: lookingUp ? <InputAdornment position="end"><CircularProgress size={16} /></InputAdornment> : undefined }}
           />
         </Grid>
       )}

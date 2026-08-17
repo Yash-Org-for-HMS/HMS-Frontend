@@ -39,6 +39,13 @@ const EMPTY = { occurredAt: "", direction: "IN", fluidType: "iv", label: "", vol
 
 const ml = (n: number) => `${n.toLocaleString("en-IN")} ml`;
 
+const Total = ({ title, value, tone }: { title: string; value: string; tone?: string }) => (
+  <Box sx={{ px: 2, py: 1.25, borderRadius: 2, bgcolor: alpha(tone ?? NEUTRAL.muted, 0.08), minWidth: 132 }}>
+    <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{title}</Typography>
+    <Typography variant="h6" sx={{ fontWeight: 800, color: tone ?? "text.primary", fontVariantNumeric: "tabular-nums" }}>{value}</Typography>
+  </Box>
+);
+
 export default function FluidBalanceDialog({ open, admission, onClose, readOnly = false }: Props) {
   const toast = useToast();
   const qc = useQueryClient();
@@ -123,12 +130,6 @@ export default function FluidBalanceDialog({ open, admission, onClose, readOnly 
 
   const typeOptions: string[] = form.direction === "IN" ? options.in : options.out;
 
-  const Total = ({ title, value, tone }: { title: string; value: string; tone?: string }) => (
-    <Box sx={{ px: 2, py: 1.25, borderRadius: 2, bgcolor: alpha(tone ?? NEUTRAL.muted, 0.08), minWidth: 132 }}>
-      <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{title}</Typography>
-      <Typography variant="h6" sx={{ fontWeight: 800, color: tone ?? "text.primary", fontVariantNumeric: "tabular-nums" }}>{value}</Typography>
-    </Box>
-  );
 
   return (
     <>

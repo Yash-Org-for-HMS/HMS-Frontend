@@ -50,6 +50,18 @@ function ageSex(p: any): string {
   return age != null ? `${age}Y / ${sex}` : sex;
 }
 
+const MetaRow = ({ k, v }: { k: string; v: any }) => (
+  <div style={{ display: "flex", gap: 6, marginBottom: 3, fontSize: 11.5 }}>
+    <span style={{ color: SUB, minWidth: 96, fontWeight: 600 }}>{k}</span>
+    <span style={{ color: INK, fontWeight: 500 }}>{v ?? "—"}</span>
+  </div>
+);
+const TotalRow = ({ k, v, bold, color, big }: { k: string; v: string; bold?: boolean; color?: string; big?: boolean }) => (
+  <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", fontSize: big ? 14 : 12, fontWeight: bold ? 800 : 500, color: color || INK }}>
+    <span>{k}</span><span style={{ fontVariantNumeric: "tabular-nums" }}>{v}</span>
+  </div>
+);
+
 export default function PrintIpBill() {
   const { invoiceId } = useParams();
   const [inv, setInv] = useState<any>(null);
@@ -104,17 +116,6 @@ export default function PrintIpBill() {
   const td: React.CSSProperties = { padding: "5px 7px", fontSize: 11, borderBottom: `1px solid ${LINE}`, verticalAlign: "top" };
   const num = { textAlign: "right" as const };
 
-  const MetaRow = ({ k, v }: { k: string; v: any }) => (
-    <div style={{ display: "flex", gap: 6, marginBottom: 3, fontSize: 11.5 }}>
-      <span style={{ color: SUB, minWidth: 96, fontWeight: 600 }}>{k}</span>
-      <span style={{ color: INK, fontWeight: 500 }}>{v ?? "—"}</span>
-    </div>
-  );
-  const TotalRow = ({ k, v, bold, color, big }: { k: string; v: string; bold?: boolean; color?: string; big?: boolean }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", fontSize: big ? 14 : 12, fontWeight: bold ? 800 : 500, color: color || INK }}>
-      <span>{k}</span><span style={{ fontVariantNumeric: "tabular-nums" }}>{v}</span>
-    </div>
-  );
 
   return (
     <Box sx={{ bgcolor: "#eef2f5", minHeight: "100vh", py: { xs: 0, sm: 3 }, "@media print": { bgcolor: "white", py: 0 } }}>
