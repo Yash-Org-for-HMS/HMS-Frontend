@@ -17,6 +17,13 @@ export interface ReportColumn<T = any> {
   /** Raw value for sorting/CSV (defaults to row[key]). */
   value?: (row: T) => string | number;
   sortable?: boolean;
+  /**
+   * Override the default clamp for a free-text column (a list of test names, a
+   * remark). Cells are clamped to CELL_MAX_WIDTH by default so one verbose
+   * value can't stretch the table; raise or lower it per column. The CSV export
+   * is unaffected — it always carries the full value.
+   */
+  maxWidth?: number;
 }
 
 /**
@@ -24,6 +31,13 @@ export interface ReportColumn<T = any> {
  * report's tabular view looks and behaves the same. Replaces the ~7 copy-pasted
  * SimpleTable/DataTable implementations.
  */
+/**
+ * Default cell clamp. Cells don't wrap (see the Table sx below), so without a
+ * ceiling a single long remark would drag its column — and the whole table —
+ * to an absurd width. Anything shorter than this is unaffected.
+ */
+const CELL_MAX_WIDTH = 320;
+
 export default function ReportTable<T = any>({ columns, rows, filename, title, maxHeight = 460, emptyText = "No data for this period.", truncated, totalRows, shownRows }: {
   columns: ReportColumn<T>[];
   rows: T[];
@@ -36,6 +50,11 @@ export default function ReportTable<T = any>({ columns, rows, filename, title, m
   totalRows?: number;
   shownRows?: number;
 }) {
+  // Only long values get a hover tooltip; a tooltip on every short cell is noise.
+  const cellTitle = (v: unknown) => {
+    const t = v == null ? "" : String(v);
+    return t.length > 28 ? t : undefined;
+  };
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [dir, setDir] = useState<"asc" | "desc">("desc");
 
@@ -88,7 +107,13 @@ export default function ReportTable<T = any>({ columns, rows, filename, title, m
         <Box sx={{ py: 4 }}><Mascot pose="nothing-here-yet" subtitle={emptyText} size={110} /></Box>
       ) : (
         <TableContainer sx={{ maxHeight }}>
-          <Table stickyHeader size="small">
+          {/* Cells don't wrap by default. Squeezed into the container, a wide
+              register compressed every column to a similar width, so dates,
+              UHIDs and even the header "No. of tests" broke across lines while
+              one long cell stretched its row to twice the height of its
+              neighbours. Letting the table take its natural width and scroll
+              inside the card keeps rows uniform and scannable. */}
+          <Table stickyHeader size="small" sx={{ "& td, & th": { whiteSpace: "nowrap" } }}>
             <TableHead>
               <TableRow>
                 {columns.map((c) => (
@@ -106,7 +131,17 @@ export default function ReportTable<T = any>({ columns, rows, filename, title, m
               {sorted.map((row, i) => (
                 <TableRow key={i} hover>
                   {columns.map((c) => (
-                    <TableCell key={c.key} align={c.align || "left"} sx={{ fontVariantNumeric: c.align === "right" ? "tabular-nums" : undefined }}>
+                    <TableCell
+                      key={c.key}
+                      align={c.align || "left"}
+                      title={cellTitle((row as any)[c.key])}
+                      sx={{
+                        fontVariantNumeric: c.align === "right" ? "tabular-nums" : undefined,
+                        maxWidth: c.maxWidth ?? CELL_MAX_WIDTH,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
                       {c.format ? c.format((row as any)[c.key], row) : (row as any)[c.key]}
                     </TableCell>
                   ))}
