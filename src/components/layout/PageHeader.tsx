@@ -25,7 +25,8 @@ export default function PageHeader({ title, subtitle, actions }: PageHeaderProps
         mb: 4,
       }}
     >
-      <Box>
+      {/* minWidth:0 lets a long title wrap instead of widening the header. */}
+      <Box sx={{ minWidth: 0 }}>
         <Typography
           variant="h4"
           sx={{ fontWeight: 800, letterSpacing: "-0.5px", color: "text.primary" }}
@@ -38,7 +39,10 @@ export default function PageHeader({ title, subtitle, actions }: PageHeaderProps
           </Typography>
         )}
       </Box>
-      {actions && <Box sx={{ display: "flex", gap: 1.5, flexShrink: 0 }}>{actions}</Box>}
+      {/* flexShrink:0 keeps the buttons full-size beside the title on desktop;
+          once the row wraps on a phone they must be free to stack, or a pair of
+          buttons is wider than the screen and the whole page scrolls sideways. */}
+      {actions && <Box sx={{ display: "flex", gap: 1.5, flexShrink: 0, flexWrap: "wrap", maxWidth: "100%" }}>{actions}</Box>}
     </Box>
   );
 }

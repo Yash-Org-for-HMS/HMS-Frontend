@@ -320,6 +320,10 @@ export default function ReceptionLayout() {
         component="main"
         sx={{
           flexGrow: 1,
+          // A flex item defaults to min-width:auto, so it refuses to shrink
+          // below its content: one wide table made the whole page scroll
+          // sideways instead of the table scrolling inside its own card.
+          minWidth: 0,
           p: { xs: 2, md: 3 },
           width: { md: `calc(100% - ${drawerWidth}px)` },
           minHeight: "100vh",

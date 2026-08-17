@@ -280,7 +280,9 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
 
       {/* Toolbar */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', flexGrow: 1, display: 'flex', gap: 2, alignItems: 'center' }}>
+        {/* minWidth:0 so the scrollable Tabs can actually scroll: without it this
+            flex item keeps its content width and pushes the date filter off-screen. */}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', flexGrow: 1, minWidth: 0, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
           <Tabs 
             value={tabValue} 
             onChange={(e, v) => { setTabValue(v); if(v === "today") setSelectedDate(dayjs()); }}

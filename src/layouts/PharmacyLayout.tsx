@@ -150,7 +150,11 @@ export default function PharmacyLayout() {
         </Drawer>
       </Box>
 
-      <Box component="main" sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` }, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <Box component="main" sx={{ flexGrow: 1,
+          // A flex item defaults to min-width:auto, so it refuses to shrink
+          // below its content: one wide table made the whole page scroll
+          // sideways instead of the table scrolling inside its own card.
+          minWidth: 0, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` }, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <Toolbar sx={{ display: { xs: "block", md: "none" } }} />
         <TrialBanner />
         <ModuleGate module="Pharmacy"><Outlet /></ModuleGate>
