@@ -1,11 +1,10 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import {
   Box, Typography, Paper, TextField, Button, ButtonGroup,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
-  List, ListItemButton, ListItemText, ListSubheader, Divider,
 } from "@mui/material";
 import {
   DescriptionRounded, HourglassBottomRounded, PaidRounded, CancelRounded,
@@ -17,8 +16,7 @@ import { exportTableToExcel } from "@/utils/exportExcel";
 import { formatINR } from "@/utils/format";
 import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
-import PageHeader from "@/components/layout/PageHeader";
-import { ReportTruncationNote } from "@/features/reports/kit";
+import { ReportTruncationNote, ReportNavLayout } from "@/features/reports/kit";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import { apiErrorText } from "@/utils/apiError";
@@ -186,7 +184,6 @@ export default function ClaimReports() {
   const [preset, setPreset] = useState("90d");
   const [from, setFrom] = useState(dayjs().subtract(89, "day").format("YYYY-MM-DD"));
   const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
-  const [active, setActive] = useState(GROUPS[0].items[0].key);
 
   const applyPreset = (p: typeof PRESETS[number]) => { setPreset(p.key); setFrom(p.from().format("YYYY-MM-DD")); setTo(p.to().format("YYYY-MM-DD")); };
 
@@ -196,16 +193,9 @@ export default function ClaimReports() {
     placeholderData: keepPreviousData,
   });
 
-  const ActiveComp = useMemo(() => {
-    for (const g of GROUPS) { const f = g.items.find((i) => i.key === active); if (f) return f.Comp; }
-    return GROUPS[0].items[0].Comp;
-  }, [active]);
-
-  return (
-    <Box sx={{ p: { xs: 0, md: 1 } }}>
-      <PageHeader title="Claim Reports" subtitle="Insurance & scheme analytics — turnaround, outstanding reimbursements, rejections. Every table is downloadable." actions={isFetching ? <HeartbeatLoader size={22} /> : undefined} />
+  const toolbar = (
+    <>
       <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/reception/claims")} sx={{ color: "text.secondary", textTransform: "none", mb: 1 }}>Back to claims</Button>
-
       <Paper elevation={0} sx={{ p: 1.5, borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2, display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
         <ButtonGroup size="small" variant="outlined">
           {PRESETS.map((p) => (
@@ -217,36 +207,28 @@ export default function ClaimReports() {
           <TextField size="small" type="date" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => { setTo(e.target.value); setPreset(""); }} />
         </Box>
       </Paper>
+    </>
+  );
 
-      {isLoading ? (
-        <ReportSkeleton />
-      ) : isError ? (
-        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
-      ) : (data?.summary?.totalClaims ?? 0) === 0 ? (
-        <Box sx={{ py: 6 }}><Mascot pose="nothing-here-yet" title="No claims in this range" subtitle="Register some claims, then come back for analytics." size={130} /></Box>
-      ) : (
-        <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2.5, alignItems: "flex-start" }}>
-          <Paper elevation={0} sx={{ width: { xs: "100%", md: 240 }, flexShrink: 0, borderRadius: 3, border: "1px solid", borderColor: "divider", position: { md: "sticky" }, top: { md: 16 }, overflow: "hidden" }}>
-            <List dense disablePadding>
-              {GROUPS.map((g, gi) => (
-                <Box key={g.heading}>
-                  {gi > 0 && <Divider />}
-                  <ListSubheader sx={{ fontWeight: 800, fontSize: "0.7rem", letterSpacing: 0.5, textTransform: "uppercase", color: "text.secondary", lineHeight: "36px", bgcolor: "transparent" }}>{g.heading}</ListSubheader>
-                  {g.items.map((it) => (
-                    <ListItemButton key={it.key} selected={active === it.key} onClick={() => setActive(it.key)}
-                      sx={{ py: 0.75, "&.Mui-selected": { bgcolor: `${ACCENT}14`, borderRight: `3px solid ${ACCENT}` }, "&.Mui-selected:hover": { bgcolor: `${ACCENT}22` } }}>
-                      <ListItemText primary={it.label} primaryTypographyProps={{ fontSize: "0.86rem", fontWeight: active === it.key ? 700 : 500, color: active === it.key ? ACCENT : "text.primary" }} />
-                    </ListItemButton>
-                  ))}
-                </Box>
-              ))}
-            </List>
-          </Paper>
-          <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
-            <ActiveComp data={data} />
-          </Box>
-        </Box>
-      )}
-    </Box>
+  // An empty range has nothing to slice, so the picker would offer a menu of
+  // blank reports — show the empty state in the content pane instead.
+  const contentState =
+    isLoading ? <ReportSkeleton />
+      : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
+      : (data?.summary?.totalClaims ?? 0) === 0
+        ? <Box sx={{ py: 6 }}><Mascot pose="nothing-here-yet" title="No claims in this range" subtitle="Register some claims, then come back for analytics." size={130} /></Box>
+        : undefined;
+
+  return (
+    <ReportNavLayout
+      title="Claim Reports"
+      subtitle="Insurance & scheme analytics — turnaround, outstanding reimbursements, rejections. Every table is downloadable."
+      groups={GROUPS}
+      accent={ACCENT}
+      actions={isFetching ? <HeartbeatLoader size={22} /> : undefined}
+      toolbar={toolbar}
+      componentProps={{ data }}
+      contentState={contentState}
+    />
   );
 }

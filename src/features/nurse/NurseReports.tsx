@@ -1,11 +1,10 @@
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { useMemo, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
   Box, Typography, Paper, TextField, Button, ButtonGroup,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
-  List, ListItemButton, ListItemText, ListSubheader, Divider,
 } from "@mui/material";
 import {
   GroupRounded, MonitorHeartRounded, WarningAmberRounded, BadgeRounded,
@@ -15,12 +14,10 @@ import { axiosInstance } from "@/api/axios";
 import { exportTableToExcel } from "@/utils/exportExcel";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import ErrorState from "@/components/ErrorState";
-import Mascot from "@/components/Mascot";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
-import PageHeader from "@/components/layout/PageHeader";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
-import { ReportTruncationNote } from "@/features/reports/kit";
+import { ReportTruncationNote, ReportNavLayout } from "@/features/reports/kit";
 
 const NURSE_PURPLE = BRAND.action;
 
@@ -217,7 +214,6 @@ export default function NurseReports() {
   const [preset, setPreset] = useState("30d");
   const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
   const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
-  const [active, setActive] = useState<string>(GROUPS[0].items[0].key);
 
   const applyPreset = (p: typeof PRESETS[number]) => {
     setPreset(p.key);
@@ -235,78 +231,42 @@ export default function NurseReports() {
     placeholderData: keepPreviousData,
   });
 
-  const ActiveComp = useMemo(() => {
-    for (const g of visibleGroups) {
-      const found = g.items.find((i) => i.key === active);
-      if (found) return found.Comp;
-    }
-    return GROUPS[0].items[0].Comp;
-  }, [active, visibleGroups]);
+  // Date range — shared across every report below.
+  const toolbar = (
+    <Paper elevation={0} sx={{ p: 1.5, borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2, display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
+      <ButtonGroup size="small" variant="outlined">
+        {PRESETS.map((p) => (
+          <Button
+            key={p.key}
+            onClick={() => applyPreset(p)}
+            variant={preset === p.key ? "contained" : "outlined"}
+            sx={preset === p.key ? { bgcolor: NURSE_PURPLE } : undefined}
+          >
+            {p.label}
+          </Button>
+        ))}
+      </ButtonGroup>
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+        <TextField size="small" type="date" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => { setFrom(e.target.value); setPreset(""); }} />
+        <TextField size="small" type="date" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => { setTo(e.target.value); setPreset(""); }} />
+      </Box>
+    </Paper>
+  );
 
   return (
-    <Box sx={{ p: { xs: 0, md: 1 } }}>
-      <PageHeader
-        title="Reports"
-        subtitle="Nursing analytics — pick a report on the left. Every table is downloadable."
-        actions={isFetching ? <HeartbeatLoader size={22} /> : undefined}
-      />
-
-      {/* Date range — shared across every report below */}
-      <Paper elevation={0} sx={{ p: 1.5, borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2, display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
-        <ButtonGroup size="small" variant="outlined">
-          {PRESETS.map((p) => (
-            <Button
-              key={p.key}
-              onClick={() => applyPreset(p)}
-              variant={preset === p.key ? "contained" : "outlined"}
-              sx={preset === p.key ? { bgcolor: NURSE_PURPLE } : undefined}
-            >
-              {p.label}
-            </Button>
-          ))}
-        </ButtonGroup>
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-          <TextField size="small" type="date" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => { setFrom(e.target.value); setPreset(""); }} />
-          <TextField size="small" type="date" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => { setTo(e.target.value); setPreset(""); }} />
-        </Box>
-      </Paper>
-
-      {isLoading ? (
-        <ReportSkeleton />
-      ) : isError ? (
-        <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
-      ) : (
-        <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2.5, alignItems: "flex-start" }}>
-          {/* Report picker */}
-          <Paper elevation={0} sx={{ width: { xs: "100%", md: 260 }, flexShrink: 0, borderRadius: 3, border: "1px solid", borderColor: "divider", position: { md: "sticky" }, top: { md: 16 }, overflow: "hidden" }}>
-            <List dense disablePadding>
-              {visibleGroups.map((g, gi) => (
-                <Box key={g.heading}>
-                  {gi > 0 && <Divider />}
-                  <ListSubheader sx={{ fontWeight: 800, fontSize: "0.7rem", letterSpacing: 0.5, textTransform: "uppercase", color: "text.secondary", lineHeight: "36px", bgcolor: "transparent" }}>
-                    {g.heading}
-                  </ListSubheader>
-                  {g.items.map((it) => (
-                    <ListItemButton
-                      key={it.key}
-                      selected={active === it.key}
-                      onClick={() => setActive(it.key)}
-                      sx={{ py: 0.75, "&.Mui-selected": { bgcolor: `${NURSE_PURPLE}14`, borderRight: `3px solid ${NURSE_PURPLE}` }, "&.Mui-selected:hover": { bgcolor: `${NURSE_PURPLE}22` } }}
-                    >
-                      <ListItemText primary={it.label} primaryTypographyProps={{ fontSize: "0.86rem", fontWeight: active === it.key ? 700 : 500, color: active === it.key ? NURSE_PURPLE : "text.primary" }} />
-                    </ListItemButton>
-                  ))}
-                </Box>
-              ))}
-            </List>
-          </Paper>
-
-          {/* Active report */}
-          <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
-            <ActiveComp data={data} from={from} to={to} />
-          </Box>
-        </Box>
-      )}
-    </Box>
+    <ReportNavLayout
+      title="Reports"
+      subtitle="Nursing analytics — pick a report on the left. Every table is downloadable."
+      groups={visibleGroups}
+      accent={NURSE_PURPLE}
+      actions={isFetching ? <HeartbeatLoader size={22} /> : undefined}
+      toolbar={toolbar}
+      componentProps={{ data, from, to }}
+      contentState={
+        isLoading ? <ReportSkeleton />
+          : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
+          : undefined
+      }
+    />
   );
 }

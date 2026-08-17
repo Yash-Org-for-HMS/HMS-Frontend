@@ -10,3 +10,5 @@ export type { FilterOpt, ReportFilterOptions } from "./ReportFilterSelect";
 export { ChartCard, TrendChart, BreakdownBar, DonutChart } from "./ReportCharts";
 export type { Series } from "./ReportCharts";
 export { CHART_SERIES, seriesColor, computeDelta, CHART_INK, DELTA_GOOD, DELTA_BAD } from "./chartTheme";
+export { default as ReportNavLayout } from "./ReportNavLayout";
+export type { ReportItem, ReportGroup } from "./ReportNavLayout";

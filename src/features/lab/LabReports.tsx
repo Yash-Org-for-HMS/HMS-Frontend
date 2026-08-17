@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ACCENTS, SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { Box, Grid, Paper, Tabs, Tab, TextField, MenuItem, Typography, Alert } from "@mui/material";
+import { Box, Grid, TextField, MenuItem, Typography, Alert } from "@mui/material";
 import {
   ScienceRounded, CheckCircleRounded, HourglassEmptyRounded, BiotechRounded,
   MonitorHeartRounded, WarningAmberRounded, AccessTimeRounded, CurrencyRupeeRounded,
@@ -11,10 +11,9 @@ import {
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
-import PageHeader from "@/components/layout/PageHeader";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, useReportFilterOptions, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, ReportNavLayout, useReportFilterOptions, type DateRange, type ReportGroup } from "@/features/reports/kit";
 import dayjs from "dayjs";
 
 const inr = formatINRAuto;
@@ -434,29 +433,32 @@ export function OrderRegister() {
 }
 
 // The lab panel's reports page: aggregate Overview + the test-wise drill-down.
+const GROUPS: ReportGroup[] = [
+  { heading: "Overview", items: [{ key: "overview", label: "Lab & Radiology Overview", Comp: LabOverview }] },
+  {
+    heading: "Volume",
+    items: [
+      { key: "test-wise", label: "Test-Wise (Lab & Radiology)", Comp: TestWise },
+      { key: "register", label: "Order Register", Comp: OrderRegister },
+    ],
+  },
+  {
+    heading: "Operations",
+    items: [
+      { key: "turnaround", label: "Turnaround Times", Comp: Turnaround },
+      { key: "pending", label: "Pending & Backlog", Comp: Pending },
+    ],
+  },
+  { heading: "Patient safety", items: [{ key: "critical", label: "Critical Results", Comp: CriticalResults }] },
+];
+
 export default function LabReports() {
-  const [tab, setTab] = useState(0);
-  const ACCENT = BRAND.action;
   return (
-    <Box>
-      <PageHeader title="Lab & Radiology Reports" subtitle="Order volume and turnaround, plus per-test / per-scan detail." />
-      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2.5 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
-          sx={{ px: 1, "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 56 }, "& .Mui-selected": { color: `${ACCENT} !important` }, "& .MuiTabs-indicator": { bgcolor: ACCENT } }}>
-          <Tab icon={<ScienceRounded fontSize="small" />} iconPosition="start" label="Overview" />
-          <Tab icon={<BiotechRounded fontSize="small" />} iconPosition="start" label="Test-Wise" />
-          <Tab icon={<SpeedRounded fontSize="small" />} iconPosition="start" label="Turnaround Times" />
-          <Tab icon={<PendingActionsRounded fontSize="small" />} iconPosition="start" label="Pending & Backlog" />
-          <Tab icon={<CrisisAlertRounded fontSize="small" />} iconPosition="start" label="Critical Results" />
-          <Tab icon={<ListAltRounded fontSize="small" />} iconPosition="start" label="Order Register" />
-        </Tabs>
-      </Paper>
-      {tab === 0 && <LabOverview />}
-      {tab === 1 && <TestWise />}
-      {tab === 2 && <Turnaround />}
-      {tab === 3 && <Pending />}
-      {tab === 4 && <CriticalResults />}
-      {tab === 5 && <OrderRegister />}
-    </Box>
+    <ReportNavLayout
+      title="Lab & Radiology Reports"
+      subtitle="Order volume and turnaround, plus per-test / per-scan detail. Every table is downloadable."
+      groups={GROUPS}
+      accent={BRAND.action}
+    />
   );
 }

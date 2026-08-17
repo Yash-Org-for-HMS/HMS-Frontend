@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { Box, Grid, Paper, Tabs, Tab, Typography } from "@mui/material";
+import { Box, Grid, Typography } from "@mui/material";
 import {
   ReceiptLongRounded, CurrencyRupeeRounded, TrendingUpRounded,
   WarningAmberRounded, EventBusyRounded, LocalPharmacyRounded,
@@ -12,11 +12,9 @@ import {
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
-import PageHeader from "@/components/layout/PageHeader";
-import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportTable, ReportNavLayout, type DateRange, type ReportGroup } from "@/features/reports/kit";
 import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList, SupplierLedger, Movers, OpdIpdSplit } from "./InventoryReports";
 
 const inr = formatINRAuto;
@@ -112,33 +110,37 @@ export function PharmacyOverview() {
 
 // The pharmacy panel's reports page: the sales/stock Overview plus the inventory
 // reports (stock valuation, expiry & loss, purchase vs consumption, reorder).
+const GROUPS: ReportGroup[] = [
+  { heading: "Overview", items: [{ key: "overview", label: "Pharmacy Overview", Comp: PharmacyOverview }] },
+  {
+    heading: "Dispensing",
+    items: [{ key: "opd-ipd", label: "OPD vs IPD Dispensing", Comp: OpdIpdSplit }],
+  },
+  {
+    heading: "Stock",
+    items: [
+      { key: "valuation", label: "Stock Valuation", Comp: StockValuation },
+      { key: "expiry", label: "Expiry & Loss", Comp: ExpiryLoss },
+      { key: "movers", label: "Fast / Slow Movers", Comp: Movers },
+    ],
+  },
+  {
+    heading: "Purchasing",
+    items: [
+      { key: "purchase", label: "Purchase vs Consumption", Comp: PurchaseConsumption },
+      { key: "reorder", label: "Reorder List", Comp: ReorderList },
+      { key: "supplier", label: "Supplier Ledger", Comp: SupplierLedger },
+    ],
+  },
+];
+
 export default function PharmacyReports() {
-  const [tab, setTab] = useState(0);
-  const ACCENT = BRAND.action;
   return (
-    <Box>
-      <PageHeader title="Pharmacy Reports" subtitle="Sales, stock valuation, expiry, purchasing and reorder." />
-      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2.5 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
-          sx={{ px: 1, "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 56 }, "& .Mui-selected": { color: `${ACCENT} !important` }, "& .MuiTabs-indicator": { bgcolor: ACCENT } }}>
-          <Tab icon={<LocalPharmacyRounded fontSize="small" />} iconPosition="start" label="Overview" />
-          <Tab icon={<CompareArrowsRounded fontSize="small" />} iconPosition="start" label="OPD vs IPD" />
-          <Tab icon={<Inventory2Rounded fontSize="small" />} iconPosition="start" label="Stock Valuation" />
-          <Tab icon={<EventBusyRounded fontSize="small" />} iconPosition="start" label="Expiry & Loss" />
-          <Tab icon={<ShoppingCartRounded fontSize="small" />} iconPosition="start" label="Purchase vs Consumption" />
-          <Tab icon={<ReplayRounded fontSize="small" />} iconPosition="start" label="Reorder List" />
-          <Tab icon={<LocalShippingRounded fontSize="small" />} iconPosition="start" label="Supplier Ledger" />
-          <Tab icon={<SwapVertRounded fontSize="small" />} iconPosition="start" label="Fast / Slow Movers" />
-        </Tabs>
-      </Paper>
-      {tab === 0 && <PharmacyOverview />}
-      {tab === 1 && <OpdIpdSplit />}
-      {tab === 2 && <StockValuation />}
-      {tab === 3 && <ExpiryLoss />}
-      {tab === 4 && <PurchaseConsumption />}
-      {tab === 5 && <ReorderList />}
-      {tab === 6 && <SupplierLedger />}
-      {tab === 7 && <Movers />}
-    </Box>
+    <ReportNavLayout
+      title="Pharmacy Reports"
+      subtitle="Sales, stock valuation, expiry, purchasing and reorder. Every table is downloadable."
+      groups={GROUPS}
+      accent={BRAND.action}
+    />
   );
 }

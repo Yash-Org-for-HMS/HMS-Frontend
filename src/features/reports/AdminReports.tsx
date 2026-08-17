@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
-  Box, Paper, Tabs, Tab, Typography, Button, Grid, Chip, Tooltip,
+  Box, Paper, Typography, Button, Grid, Chip, Tooltip,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
 } from "@mui/material";
 import {
@@ -13,11 +13,11 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { exportTableToExcel } from "@/utils/exportExcel";
-import PageHeader from "@/components/layout/PageHeader";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import ErrorState from "@/components/ErrorState";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
+import { ReportNavLayout, type ReportGroup } from "@/features/reports/kit";
 
 const ACCENT = BRAND.action; // indigo #6366f1
 
@@ -524,29 +524,32 @@ function OnboardingReport() {
 
 // ── Page shell ───────────────────────────────────────────────────────────────
 
-const TABS = [
-  { label: "Overview", Comp: OverviewReport },
-  { label: "Hospitals", Comp: HospitalsReport },
-  { label: "Sales Pipeline", Comp: LeadsReport },
-  { label: "Trials", Comp: TrialsReport },
-  { label: "Subscriptions", Comp: SubscriptionsReport },
-  { label: "Onboarding", Comp: OnboardingReport },
+const GROUPS: ReportGroup[] = [
+  { heading: "Overview", items: [{ key: "overview", label: "Platform Overview", Comp: OverviewReport }] },
+  {
+    heading: "Tenants",
+    items: [
+      { key: "hospitals", label: "Hospitals", Comp: HospitalsReport },
+      { key: "onboarding", label: "Onboarding", Comp: OnboardingReport },
+    ],
+  },
+  {
+    heading: "Sales pipeline",
+    items: [
+      { key: "leads", label: "Leads", Comp: LeadsReport },
+      { key: "trials", label: "Trials", Comp: TrialsReport },
+    ],
+  },
+  { heading: "Revenue", items: [{ key: "subscriptions", label: "Subscriptions", Comp: SubscriptionsReport }] },
 ];
 
 export default function AdminReports() {
-  const [tab, setTab] = useState(0);
-  const Active = TABS[tab].Comp;
-
   return (
-    <Box>
-      <PageHeader title="Reports" subtitle="Platform-wide analytics and downloadable registers" />
-      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", mb: 2.5 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
-          sx={{ px: 1, "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 52 }, "& .Mui-selected": { color: `${ACCENT} !important` }, "& .MuiTabs-indicator": { bgcolor: ACCENT } }}>
-          {TABS.map((t) => <Tab key={t.label} label={t.label} />)}
-        </Tabs>
-      </Paper>
-      <Active />
-    </Box>
+    <ReportNavLayout
+      title="Reports"
+      subtitle="Platform-wide analytics and downloadable registers"
+      groups={GROUPS}
+      accent={ACCENT}
+    />
   );
 }
