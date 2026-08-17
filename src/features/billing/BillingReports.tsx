@@ -4,6 +4,7 @@ import { Box, Paper, Grid, TextField, Tabs, Tab, Autocomplete, Chip } from "@mui
 import {
   AccountBalanceWalletRounded, ReceiptLongRounded, PaymentsRounded,
   TrendingUpRounded, PersonRounded, SavingsRounded, Inventory2Rounded,
+  AccountBalanceRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
@@ -61,7 +62,11 @@ export function Receipts() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Collected" value={inr(data.totals.gross)} current={Number(data.totals.gross)} previous={prev ? Number(prev.gross) : undefined} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Total received" value={inr(data.totals.gross)} current={Number(data.totals.gross)} previous={prev ? Number(prev.gross) : undefined} /></Grid>
+            {/* Split out the same way the Day Book does: a payer settling a claim
+                is real income, but nobody collected it over the counter. */}
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={ACCENT} label="From patients" value={inr(data.totals.fromPatient ?? data.totals.gross)} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<AccountBalanceRounded />} accent={SEMANTIC.info} label="From payers (claims)" value={inr(data.totals.fromPayer ?? 0)} /></Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Receipts" value={String(data.totals.count)} current={data.totals.count} previous={prev?.count} /></Grid>
           </Grid>
           <ReportTable
@@ -72,6 +77,7 @@ export function Receipts() {
               { key: "invoiceNumber", label: "Invoice" },
               { key: "patientName", label: "Patient" },
               { key: "uhid", label: "UHID" },
+              { key: "source", label: "Source" },
               { key: "method", label: "Method" },
               { key: "reference", label: "Reference" },
               { key: "collector", label: "Collector" },
