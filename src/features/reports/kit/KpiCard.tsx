@@ -30,37 +30,48 @@ export default function KpiCard({
   label, value, current, previous, higherIsBetter = true, icon, accent = seriesColor(0), sub,
 }: KpiCardProps) {
   const delta = current != null ? computeDelta(current, previous, higherIsBetter) : null;
-  const showDelta = delta != null && delta.pct != null;
+  const showDelta = delta != null && delta.mode !== "none";
+  // A percentage off a tiny baseline overstates the change (2 orders becoming
+  // 12 is "+500%"), so below MIN_PCT_BASELINE show the plain difference.
+  const deltaText = delta == null ? ""
+    : delta.mode === "abs"
+      ? `${delta.abs! > 0 ? "+" : ""}${Math.round(delta.abs!)}`
+      : `${Math.abs(delta.pct!).toFixed(1)}%`;
   const DeltaIcon = delta?.dir === "up" ? ArrowUpwardRounded : delta?.dir === "down" ? ArrowDownwardRounded : RemoveRounded;
 
   return (
     <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, height: "100%", bgcolor: "background.paper", border: "1px solid", borderColor: "divider", display: "flex", flexDirection: "column", gap: 1 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
-          {icon && (
-            <Box sx={{ width: 36, height: 36, borderRadius: 2, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha(accent, 0.12), color: accent }}>
-              {icon}
-            </Box>
-          )}
-          <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4, lineHeight: 1.2 }}>
-            {label}
-          </Typography>
-        </Box>
+      {/* The label gets the full row beside the icon. It used to share that row
+          with the delta chip, which left roughly half the width for a caption
+          like "AVG TIME TO RESULT" — it wrapped onto three lines and pushed the
+          value down, so cards in the same grid disagreed on where the number
+          sat. The chip now rides with the value, which is short. */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
+        {icon && (
+          <Box sx={{ width: 36, height: 36, borderRadius: 2, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha(accent, 0.12), color: accent }}>
+            {icon}
+          </Box>
+        )}
+        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4, lineHeight: 1.2 }}>
+          {label}
+        </Typography>
+      </Box>
+
+      <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 1, mt: "auto" }}>
+        <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary", lineHeight: 1.1, wordBreak: "break-word", minWidth: 0 }}>
+          {value}
+        </Typography>
         {showDelta && (
-          <Tooltip title="vs previous period">
+          <Tooltip title={delta!.mode === "abs" ? "Change vs previous period (baseline too small for a meaningful %)" : "vs previous period"}>
             <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.25, px: 0.75, py: 0.25, borderRadius: 1.5, bgcolor: alpha(delta!.color, 0.12), color: delta!.color, flexShrink: 0 }}>
               <DeltaIcon sx={{ fontSize: 14 }} />
               <Typography variant="caption" sx={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
-                {Math.abs(delta!.pct!).toFixed(1)}%
+                {deltaText}
               </Typography>
             </Box>
           </Tooltip>
         )}
       </Box>
-
-      <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary", lineHeight: 1.1, wordBreak: "break-word" }}>
-        {value}
-      </Typography>
 
       {sub && <Typography variant="caption" sx={{ color: "text.secondary" }}>{sub}</Typography>}
     </Paper>

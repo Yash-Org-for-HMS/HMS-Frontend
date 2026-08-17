@@ -19,9 +19,25 @@ export const DELTA_FLAT = NEUTRAL.muted;
 export interface Delta {
   /** Percentage change, or null when there is no comparable baseline. */
   pct: number | null;
+  /** Absolute change (current − previous), for baselines too small for a %. */
+  abs: number | null;
+  /**
+   * How this should be shown. A percentage off a tiny baseline is misleading —
+   * two orders growing to twelve is "+500%", which reads like a surge rather
+   * than ten orders. Below MIN_PCT_BASELINE the absolute change is the honest
+   * figure.
+   */
+  mode: "pct" | "abs" | "none";
   dir: "up" | "down" | "flat";
   color: string;
 }
+
+/**
+ * Smallest previous-period value for which a percentage is worth showing.
+ * Money baselines are virtually always above this, so currency metrics keep
+ * their percentages; low-count metrics switch to "+10" instead of "+500%".
+ */
+export const MIN_PCT_BASELINE = 10;
 
 /**
  * Percentage change of `current` vs `previous`, plus the direction and whether
@@ -35,11 +51,13 @@ export function computeDelta(
   higherIsBetter = true,
 ): Delta {
   if (previous == null || previous === 0 || !Number.isFinite(previous)) {
-    return { pct: null, dir: "flat", color: DELTA_FLAT };
+    return { pct: null, abs: null, mode: "none", dir: "flat", color: DELTA_FLAT };
   }
   const pct = ((current - previous) / Math.abs(previous)) * 100;
+  const abs = current - previous;
+  const mode = Math.abs(previous) >= MIN_PCT_BASELINE ? "pct" : "abs";
   const dir = pct > 0.05 ? "up" : pct < -0.05 ? "down" : "flat";
-  if (dir === "flat") return { pct, dir, color: DELTA_FLAT };
+  if (dir === "flat") return { pct, abs, mode, dir, color: DELTA_FLAT };
   const good = dir === "up" ? higherIsBetter : !higherIsBetter;
-  return { pct, dir, color: good ? DELTA_GOOD : DELTA_BAD };
+  return { pct, abs, mode, dir, color: good ? DELTA_GOOD : DELTA_BAD };
 }

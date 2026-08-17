@@ -54,7 +54,13 @@ export default function StatCard({
   // No baseline (no previous, or a previous of zero) means no honest percentage
   // to show, so the chip is simply absent rather than reading "0%" or "∞".
   const delta = current != null ? computeDelta(current, previous, higherIsBetter) : null;
-  const showDelta = !loading && delta != null && delta.pct != null;
+  const showDelta = !loading && delta != null && delta.mode !== "none";
+  // Below MIN_PCT_BASELINE a percentage overstates the move, so show the plain
+  // difference instead — same rule as the reports KPI tile.
+  const deltaText = delta == null ? ""
+    : delta.mode === "abs"
+      ? `${delta.abs! > 0 ? "+" : ""}${Math.round(delta.abs!)}`
+      : `${Math.abs(delta.pct!).toFixed(1)}%`;
   const DeltaIcon = delta?.dir === "up" ? ArrowUpwardRounded : delta?.dir === "down" ? ArrowDownwardRounded : RemoveRounded;
 
   const DeltaChip = showDelta ? (
@@ -62,7 +68,7 @@ export default function StatCard({
       <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.25, px: 0.75, py: 0.25, borderRadius: 1.5, bgcolor: alpha(delta!.color, 0.12), color: delta!.color, flexShrink: 0 }}>
         <DeltaIcon sx={{ fontSize: 14 }} />
         <Typography variant="caption" sx={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
-          {Math.abs(delta!.pct!).toFixed(1)}%
+          {deltaText}
         </Typography>
       </Box>
     </Tooltip>
