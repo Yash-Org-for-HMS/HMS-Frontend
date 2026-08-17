@@ -21,7 +21,7 @@ import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
-import { apiErrorText } from "@/utils/apiError";
+import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
 
 // Match this page's existing table-head styling so SortableHeadCell blends in.
@@ -301,7 +301,7 @@ function AckButton({ report }: { report: any }) {
       await axiosInstance.post(`/lab/reports/${report.labReportId}/acknowledge`);
       toast.success("Critical result acknowledged");
       qc.invalidateQueries({ queryKey: ["doctor-results"] });
-    } catch (e) { toast.error(apiErrorText(e)); }
+    } catch (e) { toast.error(getApiErrorMessage(e)); }
     finally { setSaving(false); }
   };
   return (

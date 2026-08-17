@@ -15,7 +15,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
-import { apiErrorText } from "@/utils/apiError";
+import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
 
 const EMPTY_FILTERS = { moduleName: "", actionType: "", userId: "", branchId: "", startDate: "", endDate: "" };
@@ -167,7 +167,7 @@ export default function AuditLogs() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      toast.error(apiErrorText(err));
+      toast.error(getApiErrorMessage(err));
     } finally {
       setExporting(false);
     }
@@ -265,10 +265,10 @@ export default function AuditLogs() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <SortableHeadCell id="timestamp" label="When" orderBy={orderBy} order={order} onSort={onSort} />
-                  <SortableHeadCell id="user" label="Who" orderBy={orderBy} order={order} onSort={onSort} />
-                  <SortableHeadCell id="module" label="Where" orderBy={orderBy} order={order} onSort={onSort} />
-                  <SortableHeadCell id="action" label="What" orderBy={orderBy} order={order} onSort={onSort} />
+                  <SortableHeadCell sortKey="timestamp" label="When" orderBy={orderBy} order={order} onSort={onSort} />
+                  <SortableHeadCell sortKey="user" label="Who" orderBy={orderBy} order={order} onSort={onSort} />
+                  <SortableHeadCell sortKey="module" label="Where" orderBy={orderBy} order={order} onSort={onSort} />
+                  <SortableHeadCell sortKey="action" label="What" orderBy={orderBy} order={order} onSort={onSort} />
                   <TableCell sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase" }}>From</TableCell>
                   <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase" }}>Details</TableCell>
                 </TableRow>

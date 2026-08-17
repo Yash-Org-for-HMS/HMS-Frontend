@@ -140,7 +140,7 @@ export default function ScheduleOfCharges() {
   });
 
   const deleteItem = async (item: Item) => {
-    const ok = await confirm({ title: "Remove charge?", message: `Delete "${item.itemName}" from this category?`, confirmText: "Delete", danger: true });
+    const ok = await confirm({ title: "Remove charge?", message: `Delete "${item.itemName}" from this category?`, confirmText: "Delete", destructive: true });
     if (!ok) return;
     try {
       await axiosInstance.delete(`/hospital/soc/items/${item.chargeItemId}`);
@@ -587,7 +587,9 @@ function PriceHistoryDialog({ item, onClose }: { item: Item; onClose: () => void
 function CategoryDialog({ mode, cat, categories, defaultParentId, onClose, onDone }: { mode: "add" | "edit"; cat?: Category; categories: Category[]; defaultParentId?: string | null; onClose: () => void; onDone: (newId?: string) => void }) {
   const toast = useToast();
   const [name, setName] = useState(cat?.categoryName ?? "");
-  const [parentId, setParentId] = useState<string>(cat?.parentId ?? (mode === "add" ? (defaultParentId ?? "") : "") ?? "");
+  // The ternary already yields a string in both branches, so a trailing `?? ""`
+  // could never fire.
+  const [parentId, setParentId] = useState<string>(cat?.parentId ?? (mode === "add" ? (defaultParentId ?? "") : ""));
   const [description, setDescription] = useState(cat?.description ?? "");
   const [sortOrder, setSortOrder] = useState(String(cat?.sortOrder ?? ""));
   const [isActive, setIsActive] = useState(cat?.isActive ?? true);
@@ -900,7 +902,7 @@ function RoomClassesDialog({ roomClasses, onClose, onChanged }: { roomClasses: R
     catch (e) { toast.error(getApiErrorMessage(e, "Failed to rename")); }
   };
   const remove = async (rc: RoomClass) => {
-    const ok = await confirm({ title: "Delete room class?", message: `Delete "${rc.name}"? Any per-room prices set for this class will be removed (charges fall back to their base price).`, confirmText: "Delete", danger: true });
+    const ok = await confirm({ title: "Delete room class?", message: `Delete "${rc.name}"? Any per-room prices set for this class will be removed (charges fall back to their base price).`, confirmText: "Delete", destructive: true });
     if (!ok) return;
     try { await axiosInstance.delete(`/hospital/soc/room-classes/${rc.roomClassId}`); onChanged(); toast.success("Room class deleted"); }
     catch (e) { toast.error(getApiErrorMessage(e, "Failed to delete")); }

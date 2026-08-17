@@ -10,7 +10,7 @@ import {
   ArrowUpwardRounded, ArrowDownwardRounded, LockRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
-import { apiErrorText } from "@/utils/apiError";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
 import { NEUTRAL } from "@/styles/accents";
 
@@ -106,7 +106,7 @@ export default function ObservationFieldsPanel() {
     qc.invalidateQueries({ queryKey: ["observation-fields"] });
     setOpen(false);
   };
-  const fail = (err: unknown) => toast.error(apiErrorText(err));
+  const fail = (err: unknown) => toast.error(getApiErrorMessage(err));
 
   const save = useMutation({
     mutationFn: async () => {

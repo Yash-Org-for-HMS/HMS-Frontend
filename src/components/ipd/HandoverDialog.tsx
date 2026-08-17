@@ -13,7 +13,7 @@ import { axiosInstance } from "@/api/axios";
 import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
 import ErrorState from "@/components/ErrorState";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
-import { apiErrorText } from "@/utils/apiError";
+import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
 import dayjs from "dayjs";
 
@@ -57,7 +57,7 @@ export default function HandoverDialog({ open, admission, onClose, readOnly = fa
       setDrafts((p) => ({ ...p, [v.shiftName]: "" }));
       qc.invalidateQueries({ queryKey: ["ipd-handover", admissionId] });
     },
-    onError: (err) => toast.error(apiErrorText(err)),
+    onError: (err) => toast.error(getApiErrorMessage(err)),
   });
 
   const sign = useMutation({
@@ -67,7 +67,7 @@ export default function HandoverDialog({ open, admission, onClose, readOnly = fa
       toast.success("Signed");
       qc.invalidateQueries({ queryKey: ["ipd-handover", admissionId] });
     },
-    onError: (err) => toast.error(apiErrorText(err)),
+    onError: (err) => toast.error(getApiErrorMessage(err)),
   });
 
   return (

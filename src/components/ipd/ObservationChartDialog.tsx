@@ -11,7 +11,7 @@ import { axiosInstance } from "@/api/axios";
 import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
 import ErrorState from "@/components/ErrorState";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
-import { apiErrorText } from "@/utils/apiError";
+import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
 import dayjs from "dayjs";
 
@@ -163,7 +163,7 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
       qc.invalidateQueries({ queryKey: ["ipd-observations", admissionId] });
       closeEntry();
     },
-    onError: (err) => toast.error(apiErrorText(err)),
+    onError: (err) => toast.error(getApiErrorMessage(err)),
   });
 
   const closeEntry = () => { setEntryOpen(false); setCorrecting(null); setForm({ ...EMPTY }); setExtras({}); setReason(""); };

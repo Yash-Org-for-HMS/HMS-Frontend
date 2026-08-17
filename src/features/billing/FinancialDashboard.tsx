@@ -196,10 +196,10 @@ export default function FinancialDashboard() {
                     cursor={{ fill: `${SOURCE_BAR}14` }}
                     contentStyle={{ backgroundColor: theme.palette.background.paper, border: "none", borderRadius: 12, boxShadow: "0 10px 40px rgba(0,0,0,0.1)", padding: "12px 16px" }}
                     itemStyle={{ fontWeight: 800, fontSize: "1rem", color: SOURCE_BAR }}
-                    formatter={(v: number) => [`₹${v.toLocaleString()}`, "Revenue"]}
+                    formatter={(v) => [`₹${Number(v).toLocaleString()}`, "Revenue"]}
                   />
                   <Bar dataKey="amount" fill={SOURCE_BAR} radius={[0, 4, 4, 0]} barSize={22}>
-                    <LabelList dataKey="amount" position="right" formatter={(v: number) => `₹${v.toLocaleString()}`} style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
+                    <LabelList dataKey="amount" position="right" formatter={(v) => `₹${Number(v).toLocaleString()}`} style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -239,10 +239,10 @@ export default function FinancialDashboard() {
                     cursor={{ fill: `${METHOD_BAR}14` }}
                     contentStyle={{ backgroundColor: theme.palette.background.paper, border: "none", borderRadius: 12, boxShadow: "0 10px 40px rgba(0,0,0,0.1)", padding: "12px 16px" }}
                     itemStyle={{ fontWeight: 800, fontSize: "1rem", color: METHOD_BAR }}
-                    formatter={(v: number) => [`₹${v.toLocaleString()}`, "Collected"]}
+                    formatter={(v) => [`₹${Number(v).toLocaleString()}`, "Collected"]}
                   />
                   <Bar dataKey="amount" fill={METHOD_BAR} radius={[0, 4, 4, 0]} barSize={22}>
-                    <LabelList dataKey="amount" position="right" formatter={(v: number) => `₹${v.toLocaleString()}`} style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
+                    <LabelList dataKey="amount" position="right" formatter={(v) => `₹${Number(v).toLocaleString()}`} style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>

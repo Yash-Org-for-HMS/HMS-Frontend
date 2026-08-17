@@ -9,7 +9,7 @@ import { axiosInstance } from "@/api/axios";
 import PageHeader from "@/components/layout/PageHeader";
 import ErrorState from "@/components/ErrorState";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
-import { apiErrorText } from "@/utils/apiError";
+import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
 import { SEMANTIC } from "@/styles/accents";
 import ObservationFieldsPanel from "./ObservationFieldsPanel";
@@ -86,7 +86,7 @@ export default function WardChartSettings() {
       toast.success("Ward chart settings saved");
       qc.invalidateQueries({ queryKey: ["ward-chart-profile"] });
     },
-    onError: (err) => toast.error(apiErrorText(err)),
+    onError: (err) => toast.error(getApiErrorMessage(err)),
   });
 
   const setShift = (i: number, patch: Partial<Shift>) =>
