@@ -6,7 +6,7 @@ import {
   ScienceRounded, CheckCircleRounded, HourglassEmptyRounded, BiotechRounded,
   MonitorHeartRounded, WarningAmberRounded, AccessTimeRounded, CurrencyRupeeRounded,
   SpeedRounded, VerifiedRounded, PendingActionsRounded, TimelapseRounded,
-  CrisisAlertRounded, PersonRounded, ReportProblemRounded,
+  CrisisAlertRounded, PersonRounded, ReportProblemRounded, ListAltRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -338,6 +338,101 @@ export function CriticalResults() {
   );
 }
 
+
+// ── Order Register (every order, line by line) ────────────────────────────────
+// The other detail tables here are all filtered slices — slowest N, oldest
+// pending, critical only. This is the plain list: every lab order and every
+// scan in the period, with patient names, downloadable as-is.
+export function OrderRegister() {
+  const [range, setRange] = useState<DateRange>(initialRange);
+  const [doctorId, setDoctorId] = useState("");
+  const [status, setStatus] = useState("");
+  const { data: opts } = useReportFilterOptions();
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["lab-register", range.from, range.to, doctorId, status],
+    queryFn: async () =>
+      (await axiosInstance.get("/lab/reports/register", {
+        params: { from: range.from, to: range.to, doctorId: doctorId || undefined, status: status || undefined },
+      })).data.data,
+    placeholderData: keepPreviousData,
+  });
+  const labRows: any[] = data?.lab?.rows ?? [];
+  const radRows: any[] = data?.radiology?.rows ?? [];
+
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={setRange}>
+        <ReportFilterSelect label="Ordering doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
+        <TextField select size="small" label="Status" value={status} onChange={(e) => setStatus(e.target.value)} sx={{ minWidth: 180 }}>
+          <MenuItem value="">All statuses</MenuItem>
+          <MenuItem value="Awaiting collection">Awaiting collection (lab)</MenuItem>
+          <MenuItem value="In process">In process (lab)</MenuItem>
+          <MenuItem value="Completed">Completed (lab)</MenuItem>
+          <MenuItem value="Reported">Reported (radiology)</MenuItem>
+        </TextField>
+      </ReportFilters>
+      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ScienceRounded />} accent={SEMANTIC.success} label="Lab orders" value={String(data.totals.labOrders)} sub={`${data.totals.labCompleted} completed`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology orders" value={String(data.totals.radOrders)} sub={`${data.totals.radReported} reported`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Order value" value={inr(Number(data.totals.labValue) + Number(data.totals.radValue))} sub={`${data.totals.unpaid} unpaid`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="With a critical result" value={String(data.totals.labCritical)} /></Grid>
+          </Grid>
+
+          <Box sx={{ mb: 2.5 }}>
+            <ReportTable
+              title="Lab order register"
+              filename={`lab_order_register_${range.from}_${range.to}`}
+              emptyText="No lab orders in this period."
+              columns={[
+                { key: "orderedOn", label: "Ordered" },
+                { key: "patient", label: "Patient" },
+                { key: "uhid", label: "UHID" },
+                { key: "barcode", label: "Barcode" },
+                { key: "tests", label: "Tests" },
+                num("testCount", "No. of tests"),
+                { key: "status", label: "Status" },
+                { key: "critical", label: "Critical" },
+                { key: "collectedOn", label: "Sample collected" },
+                { key: "reportedOn", label: "Reported" },
+                { key: "tatHours", label: "Turnaround (h)", align: "right", value: (r) => (r.tatHours == null ? "" : Number(r.tatHours)) },
+                { key: "doctor", label: "Ordering doctor" },
+                { key: "verified", label: "Verified" },
+                money("amount", "Amount"),
+                { key: "paymentStatus", label: "Payment" },
+              ]}
+              rows={labRows}
+              truncated={data.lab.truncated} totalRows={data.lab.totalRows} shownRows={data.lab.shownRows}
+            />
+          </Box>
+
+          <ReportTable
+            title="Radiology order register"
+            filename={`radiology_order_register_${range.from}_${range.to}`}
+            emptyText="No radiology orders in this period."
+            columns={[
+              { key: "orderedOn", label: "Ordered" },
+              { key: "patient", label: "Patient" },
+              { key: "uhid", label: "UHID" },
+              { key: "scan", label: "Scan" },
+              { key: "status", label: "Status" },
+              { key: "reportedOn", label: "Reported" },
+              { key: "tatHours", label: "Turnaround (h)", align: "right", value: (r) => (r.tatHours == null ? "" : Number(r.tatHours)) },
+              { key: "doctor", label: "Ordering doctor" },
+              { key: "verified", label: "Verified" },
+              money("amount", "Amount"),
+              { key: "paymentStatus", label: "Payment" },
+            ]}
+            rows={radRows}
+            truncated={data.radiology.truncated} totalRows={data.radiology.totalRows} shownRows={data.radiology.shownRows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 // The lab panel's reports page: aggregate Overview + the test-wise drill-down.
 export default function LabReports() {
   const [tab, setTab] = useState(0);
@@ -353,6 +448,7 @@ export default function LabReports() {
           <Tab icon={<SpeedRounded fontSize="small" />} iconPosition="start" label="Turnaround Times" />
           <Tab icon={<PendingActionsRounded fontSize="small" />} iconPosition="start" label="Pending & Backlog" />
           <Tab icon={<CrisisAlertRounded fontSize="small" />} iconPosition="start" label="Critical Results" />
+          <Tab icon={<ListAltRounded fontSize="small" />} iconPosition="start" label="Order Register" />
         </Tabs>
       </Paper>
       {tab === 0 && <LabOverview />}
@@ -360,6 +456,7 @@ export default function LabReports() {
       {tab === 2 && <Turnaround />}
       {tab === 3 && <Pending />}
       {tab === 4 && <CriticalResults />}
+      {tab === 5 && <OrderRegister />}
     </Box>
   );
 }
