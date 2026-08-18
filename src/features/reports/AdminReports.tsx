@@ -1,4 +1,10 @@
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import { apiGet, apiGetList } from "@/api/client";
+import type {
+  AdminDashboardStats, DashboardPlanRow, DashboardStatusRow, DashboardOnboardingRow,
+  HospitalRegisterRow, LeadRegisterRow, TrialRegisterRow, PlanRegisterRow, PlanWithMrr,
+  OnboardingRegisterRow, OnboardingGateKey,
+} from "./adminReports.types";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +17,6 @@ import {
   TimerRounded, CardMembershipRounded, RocketLaunchRounded, AccountBalanceWalletRounded,
   CheckCircleRounded, HighlightOffRounded, WarningAmberRounded, InfoOutlined, ArrowForwardRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "@/api/axios";
 import { exportTableToExcel } from "@/utils/exportExcel";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import ErrorState from "@/components/ErrorState";
@@ -31,15 +36,14 @@ const cap = (s: unknown) => {
 
 // Page every list endpoint (hard cap 1000/page server-side) so exported
 // registers are complete rather than silently truncated to the first page.
-async function fetchAllRows(endpoint: string, params: Record<string, unknown> = {}): Promise<any[]> {
-  const all: any[] = [];
+async function fetchAllRows<T>(endpoint: string, params: Record<string, unknown> = {}): Promise<T[]> {
+  const all: T[] = [];
   const limit = 1000;
   for (let page = 1; page <= 50; page++) {
-    const res = await axiosInstance.get(endpoint, { params: { ...params, page, limit } });
-    const batch: any[] = res.data?.data ?? [];
-    all.push(...batch);
-    const total = res.data?.pagination?.total ?? all.length;
-    if (batch.length === 0 || all.length >= total) break;
+    const { rows, meta } = await apiGetList<T>(endpoint, { params: { ...params, page, limit } });
+    all.push(...rows);
+    const total = meta?.total ?? all.length;
+    if (rows.length === 0 || all.length >= total) break;
   }
   return all;
 }
@@ -109,15 +113,15 @@ const YesNo = ({ v }: { v: boolean }) =>
 function OverviewReport() {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-report-overview"],
-    queryFn: async () => (await axiosInstance.get("/dashboard/stats")).data.data,
+    queryFn: () => apiGet<AdminDashboardStats>("/dashboard/stats"),
   });
 
   if (isLoading) return <ReportSkeleton />;
   if (isError || !data) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
-  const byPlan: any[] = data.hospitalsByPlan || [];
-  const byStatus: any[] = data.leadsByStatus || [];
-  const onboarding: any[] = data.onboardingProgress || [];
+  const byPlan: DashboardPlanRow[] = data.hospitalsByPlan || [];
+  const byStatus: DashboardStatusRow[] = data.leadsByStatus || [];
+  const onboarding: DashboardOnboardingRow[] = data.onboardingProgress || [];
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -136,7 +140,7 @@ function OverviewReport() {
       {/* Downloadable summary tables */}
       <Grid container spacing={2.5}>
         <Grid size={{ xs: 12, md: 4 }}>
-          <SimpleTable title="Branches by plan" head={["Plan", "Branches"]} rows={byPlan.map((p) => [p.planName, Number(p.count)])} />
+          <SimpleTable title="Branches by plan" head={["Plan", "Branches"]} rows={byPlan.map((p) => [p.planName ?? "—", Number(p.count)])} />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <SimpleTable title="Leads by stage" head={["Stage", "Leads"]} rows={byStatus.map((s) => [cap(s.status), Number(s.count)])} />
@@ -154,17 +158,17 @@ function OverviewReport() {
 function HospitalsReport() {
   const { data = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-report-hospitals"],
-    queryFn: () => fetchAllRows("/hospitals"),
+    queryFn: () => fetchAllRows<HospitalRegisterRow>("/hospitals"),
   });
 
   if (isLoading) return <ReportSkeleton />;
   if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
-  const planNames = (h: any) => {
-    const names = [...new Set((h.branches || []).map((b: any) => b.subscriptionPlan?.planName).filter(Boolean))];
+  const planNames = (h: HospitalRegisterRow) => {
+    const names = [...new Set((h.branches || []).map((b) => b.subscriptionPlan?.planName).filter(Boolean))];
     return names.length ? names.join(", ") : "—";
   };
-  const rows = data.map((h: any) => [
+  const rows = data.map((h) => [
     `${h.hospitalName || "—"}`,
     h.hospitalCode || "—",
     cap(h.status),
@@ -172,8 +176,8 @@ function HospitalsReport() {
     Number(h._count?.branches ?? 0),
     fmtDate(h.createdAt),
   ]);
-  const active = data.filter((h: any) => h.status === "active").length;
-  const suspended = data.filter((h: any) => h.status === "suspended").length;
+  const active = data.filter((h) => h.status === "active").length;
+  const suspended = data.filter((h) => h.status === "suspended").length;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -181,7 +185,7 @@ function HospitalsReport() {
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Total" value={data.length} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Active" value={active} color={SEMANTIC.success} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Suspended" value={suspended} color={SEMANTIC.danger} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Branches" value={data.reduce((s: number, h: any) => s + Number(h._count?.branches ?? 0), 0)} color={NEUTRAL.muted} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Branches" value={data.reduce((s: number, h) => s + Number(h._count?.branches ?? 0), 0)} color={NEUTRAL.muted} /></Grid>
       </Grid>
       <SimpleTable title="Hospitals register" head={["Hospital", "Code", "Status", "Plan(s)", "Branches", "Registered"]} rows={rows} />
     </Box>
@@ -193,13 +197,13 @@ function HospitalsReport() {
 function LeadsReport() {
   const { data = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-report-leads"],
-    queryFn: () => fetchAllRows("/leads"),
+    queryFn: () => fetchAllRows<LeadRegisterRow>("/leads"),
   });
 
   if (isLoading) return <ReportSkeleton />;
   if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
-  const rows = data.map((l: any) => [
+  const rows = data.map((l) => [
     l.hospitalName || "—",
     l.contactPersonName || "—",
     l.email || "—",
@@ -211,7 +215,7 @@ function LeadsReport() {
 
   // Stage counts (drive the KPI tiles).
   const counts: Record<string, number> = {};
-  data.forEach((l: any) => { counts[l.leadStatus] = (counts[l.leadStatus] || 0) + 1; });
+  data.forEach((l) => { counts[l.leadStatus] = (counts[l.leadStatus] || 0) + 1; });
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -231,20 +235,20 @@ function LeadsReport() {
 function TrialsReport() {
   const { data = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-report-trials"],
-    queryFn: () => fetchAllRows("/trials"),
+    queryFn: () => fetchAllRows<TrialRegisterRow>("/trials"),
   });
 
   if (isLoading) return <ReportSkeleton />;
   if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
-  const rows = data.map((t: any) => [
+  const rows = data.map((t) => [
     t.lead?.hospitalName || "—",
     fmtDate(t.trialStartDate),
     fmtDate(t.trialEndDate),
     cap(t.trialStatus),
     t.autoExpire ? "Yes" : "No",
   ]);
-  const byState = (s: string) => data.filter((t: any) => t.trialStatus === s).length;
+  const byState = (s: string) => data.filter((t) => t.trialStatus === s).length;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -264,22 +268,22 @@ function TrialsReport() {
 function SubscriptionsReport() {
   const { data = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-report-plans"],
-    queryFn: () => fetchAllRows("/plans"),
+    queryFn: () => fetchAllRows<PlanRegisterRow>("/plans"),
   });
 
   if (isLoading) return <ReportSkeleton />;
   if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
   // Est. MRR per plan = monthlyPrice × branches subscribed to it (same basis as the dashboard).
-  const withMrr = data.map((p: any) => {
+  const withMrr = data.map((p): PlanWithMrr => {
     const branches = Number(p._count?.branches ?? 0);
     const mrr = Number(p.monthlyPrice || 0) * branches;
     return { ...p, branches, mrr };
   });
-  const totalMrr = withMrr.reduce((s: number, p: any) => s + p.mrr, 0);
-  const totalBranches = withMrr.reduce((s: number, p: any) => s + p.branches, 0);
+  const totalMrr = withMrr.reduce((s, p) => s + p.mrr, 0);
+  const totalBranches = withMrr.reduce((s, p) => s + p.branches, 0);
 
-  const rows = withMrr.map((p: any) => [
+  const rows = withMrr.map((p) => [
     p.planName,
     inr(p.monthlyPrice),
     inr(p.annualPrice),
@@ -322,7 +326,7 @@ const STATUS_FILTERS = [
   { key: "stalled", label: "Stalled" },
 ];
 
-const GATE_LABELS: [string, string][] = [
+const GATE_LABELS: [OnboardingGateKey, string][] = [
   ["tenantSetupCompleted", "Tenant setup"],
   ["defaultRolesSeeded", "Roles seeded"],
   ["paymentVerified", "Payment verified"],
@@ -335,30 +339,30 @@ function OnboardingReport() {
 
   const { data = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-report-onboarding"],
-    queryFn: () => fetchAllRows("/onboarding"),
+    queryFn: () => fetchAllRows<OnboardingRegisterRow>("/onboarding"),
   });
 
   if (isLoading) return <ReportSkeleton />;
   if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
-  const completed = data.filter((o: any) => o.onboardingStatus === "completed").length;
-  const inProgress = data.filter((o: any) => o.onboardingStatus === "pending" || o.onboardingStatus === "in_progress").length;
-  const stalled = data.filter((o: any) => o.onboardingStatus === "stalled").length;
-  const verifiedCount = data.filter((o: any) => o.paymentVerified).length;
-  const mismatchCount = data.filter((o: any) => o.paymentMismatch).length;
-  const unverifiedPaidCount = data.filter((o: any) => o.paymentUnverifiedButPaid).length;
-  const totalCollected = data.reduce((sum: number, o: any) => sum + Number(o.billing?.totalPaid || 0), 0);
+  const completed = data.filter((o) => o.onboardingStatus === "completed").length;
+  const inProgress = data.filter((o) => o.onboardingStatus === "pending" || o.onboardingStatus === "in_progress").length;
+  const stalled = data.filter((o) => o.onboardingStatus === "stalled").length;
+  const verifiedCount = data.filter((o) => o.paymentVerified).length;
+  const mismatchCount = data.filter((o) => o.paymentMismatch).length;
+  const unverifiedPaidCount = data.filter((o) => o.paymentUnverifiedButPaid).length;
+  const totalCollected = data.reduce((sum: number, o) => sum + Number(o.billing?.totalPaid || 0), 0);
 
-  const filtered = data.filter((o: any) => {
+  const filtered = data.filter((o) => {
     if (statusFilter !== "all" && o.onboardingStatus !== statusFilter) return false;
     if (attentionOnly && !o.paymentMismatch && !o.paymentUnverifiedButPaid) return false;
     return true;
   });
 
-  const blockedOn = (o: any) =>
+  const blockedOn = (o: OnboardingRegisterRow) =>
     o.onboardingStatus === "completed" ? "—" : GATE_LABELS.filter(([key]) => !o[key]).map(([, label]) => label).join(", ") || "—";
 
-  const exportRows = filtered.map((o: any) => [
+  const exportRows = filtered.map((o) => [
     o.hospital?.hospitalName || "—",
     o.hospital?.hospitalCode || "—",
     o.hospital?.city || "—",
@@ -450,7 +454,7 @@ function OnboardingReport() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filtered.map((o: any) => {
+                {filtered.map((o) => {
                   const flagBg = o.paymentMismatch ? "rgba(239,68,68,0.05)" : o.paymentUnverifiedButPaid ? "rgba(2,132,199,0.05)" : "transparent";
                   return (
                     <TableRow key={o.hospitalOnboardingId} hover sx={{ bgcolor: flagBg }}>
