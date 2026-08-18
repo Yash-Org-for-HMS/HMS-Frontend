@@ -1,6 +1,6 @@
 import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, TextField, IconButton, Autocomplete, MenuItem,
@@ -106,6 +106,29 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   const { isModuleEnabled } = useEnabledModules();
   const pharmacyEnabled = isModuleEnabled("Pharmacy");
   const [bulkBuyOutside, setBulkBuyOutside] = useState(false);
+
+  // Check what is on the prescription against the patient's recorded allergies.
+  // Keyed on the medicines currently listed, so the warning appears as the
+  // doctor builds the Rx rather than after saving it, which is the only point
+  // at which it can change a decision.
+  const medicineKey = items.map((i) => `${i.medicineId || ""}:${i.genericName || ""}`).join("|");
+  const { data: allergyRaw } = useQuery({
+    queryKey: ["allergy-check", patientId, medicineKey],
+    enabled: !!patientId && items.length > 0,
+    queryFn: async () =>
+      (await axiosInstance.post(`/doctor/patients/${patientId}/allergy-check`, {
+        medicines: items.map((i) => ({ medicineId: i.medicineId, medicineName: i.medicineName, genericName: i.genericName })),
+      })).data.data,
+  });
+  const allergyCheck = useMemo(() => {
+    const byMedicine: Record<string, { salt: string; allergen: string; severity: string | null; reaction: string | null }[]> =
+      allergyRaw?.byMedicine ?? {};
+    const warnings = Object.entries(byMedicine).flatMap(([id, ws]) => {
+      const item = items.find((i) => (i.medicineId || i.medicineName || "") === id);
+      return ws.map((w) => ({ ...w, medicineName: item?.medicineName || id }));
+    });
+    return { warnings, uncheckedFreeTextCount: allergyRaw?.uncheckedFreeTextCount ?? 0 };
+  }, [allergyRaw, items]);
 
   // Autocomplete state
   const [medicineQuery, setMedicineQuery] = useState("");
@@ -607,6 +630,29 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
           </Button>
         </Box>
       </Paper>
+
+      {/* Allergy clashes on what is currently on the prescription. This warns
+          and never blocks — overriding is a clinical judgement — and it names
+          the exact salt so the doctor can weigh it rather than guess. */}
+      {allergyCheck.warnings.length > 0 && (
+        <Alert severity="error" icon={<WarningAmberRounded />} sx={{ borderRadius: 2 }}>
+          <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 0.5 }}>
+            Allergy warning — this patient is recorded as allergic to a salt in {allergyCheck.warnings.length === 1 ? "this medicine" : "these medicines"}
+          </Typography>
+          {allergyCheck.warnings.map((w: any, i: number) => (
+            <Typography key={i} variant="body2">
+              <b>{w.medicineName}</b> contains <b>{w.salt}</b> — recorded allergy: {w.allergen}
+              {w.severity ? ` (${w.severity})` : ""}{w.reaction ? `, reaction: ${w.reaction}` : ""}
+            </Typography>
+          ))}
+        </Alert>
+      )}
+      {allergyCheck.uncheckedFreeTextCount > 0 && (
+        <Alert severity="info" sx={{ borderRadius: 2 }}>
+          {allergyCheck.uncheckedFreeTextCount} recorded {allergyCheck.uncheckedFreeTextCount === 1 ? "allergy was" : "allergies were"} entered
+          as free text and could not be checked automatically — review them before prescribing.
+        </Alert>
+      )}
 
       {items.length > 0 && (
         <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }}>

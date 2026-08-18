@@ -15,6 +15,7 @@ import {
   Divider,
   InputAdornment,
   Chip,
+  Autocomplete,
   ToggleButtonGroup,
   ToggleButton,
 } from "@mui/material";
@@ -83,6 +84,14 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
   const bloodGroups: BloodGroup[] = dd?.bloodGroups ?? [];
   const internalDoctors: InternalDoctor[] = dd?.internalDoctors ?? [];
 
+  // Salts the hospital actually stocks. Choosing one is what makes an allergy
+  // checkable at prescribing time; free text stays allowed but unmatched.
+  const { data: allergenOptions = [] } = useQuery<string[]>({
+    queryKey: ["allergen-vocabulary"],
+    queryFn: async () => (await axiosInstance.get("/reception/patients/allergen-vocabulary")).data.data,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -108,6 +117,13 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
     referredByExternalClinic: "",
   });
   const [errors, setErrors] = useState<Errors<typeof formData>>({});
+
+  // The allergy field is stored as one comma-separated string (the backend
+  // splits it into rows), so the picker reads and writes that same shape.
+  const allergyList = formData.allergies
+    .split(",")
+    .map((a) => a.trim())
+    .filter(Boolean);
 
   const { data: patientData, isLoading: patientLoading, isError: patientIsError, error: patientError, refetch: refetchPatient } = useQuery({
     queryKey: ["patient-edit", id],
@@ -371,10 +387,42 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
           )}
         </Grid>
         <Grid size={{ xs: 12 }}>
-          <TextField
-            fullWidth multiline rows={3} label="Known Allergies / Medical Notes"
-            name="allergies" value={formData.allergies} onChange={handleChange} sx={fieldSx}
-            placeholder="e.g. Penicillin, Sulfa drugs, Pollen..."
+          {/* Picking from the list is what makes an allergy checkable when a
+              medicine is prescribed — those entries are stored against the
+              hospital's salt vocabulary. Anything typed freehand is still
+              accepted and shown to clinicians, but is deliberately never
+              matched, because guessing at free text is what got the previous
+              allergy warnings withdrawn. */}
+          <Autocomplete
+            multiple
+            freeSolo
+            options={allergenOptions}
+            value={allergyList}
+            onChange={(_e, v) => setFormData((p: any) => ({ ...p, allergies: (v as string[]).join(", ") }))}
+            renderTags={(value: readonly string[], getTagProps) =>
+              value.map((option, index) => {
+                const known = allergenOptions.some((o) => o.toLowerCase() === option.toLowerCase());
+                return (
+                  <Chip
+                    variant={known ? "filled" : "outlined"}
+                    color={known ? "primary" : "default"}
+                    label={option}
+                    size="small"
+                    {...getTagProps({ index })}
+                    key={option}
+                  />
+                );
+              })
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Known Allergies"
+                placeholder="Start typing a drug salt, or add your own"
+                sx={fieldSx}
+                helperText="Filled chips are matched against the medicine catalogue and will warn on prescribing. Outlined ones are recorded for reference only."
+              />
+            )}
           />
         </Grid>
       </Grid>
