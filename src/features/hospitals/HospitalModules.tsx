@@ -3,8 +3,7 @@ import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Button, Grid, Chip, MenuItem, TextField, Tooltip,
-} from "@mui/material";
+  Box, Typography, Paper, Button, Grid, Chip, MenuItem, TextField, } from "@mui/material";
 import { ArrowBackRounded, SaveRounded, WidgetsRounded, CheckCircleRounded, AddCircleOutlineRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { SEMANTIC } from "@/styles/accents";
@@ -92,7 +91,7 @@ export default function HospitalModules() {
   const toggle = (key: string) =>
     setSelected((s) => {
       const next = new Set(s);
-      next.has(key) ? next.delete(key) : next.add(key);
+      if (next.has(key)) next.delete(key); else next.add(key);
       return next;
     });
 

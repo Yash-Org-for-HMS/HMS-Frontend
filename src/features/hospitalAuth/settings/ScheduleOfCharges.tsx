@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, memo, useCallback } from "react";
-import { ACCENTS, BRAND } from "@/styles/accents";
+import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -37,7 +37,6 @@ import { formatINRAuto } from "@/utils/format";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const ACCENT = BRAND.action;
-const ACCENT_DARK = BRAND.actionDark;
 const inr = formatINRAuto;
 
 type Category = { chargeCategoryId: string; categoryName: string; categoryCode: string; parentId: string | null; description: string | null; iconName: string | null; sortOrder: number; isActive: boolean; _count?: { items: number } };
@@ -122,7 +121,7 @@ export default function ScheduleOfCharges() {
       setExpanded(new Set((childrenOf.get(null) ?? []).map((c) => c.chargeCategoryId)));
     }
   }, [categories, childrenOf]);
-  const toggle = (id: string) => setExpanded((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggle = (id: string) => setExpanded((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
 
   const { data: items = [], isLoading: itemsLoading, isError: itemsError, error: itemsErr, refetch: refetchItems } = useQuery<Item[]>({
     queryKey: ["soc-items", activeCategoryId],
@@ -601,7 +600,7 @@ function CategoryDialog({ mode, cat, categories, defaultParentId, onClose, onDon
     if (mode === "edit" && cat) {
       excluded.add(cat.chargeCategoryId);
       const childrenBy = new Map<string, Category[]>();
-      for (const c of categories) if (c.parentId) { const a = childrenBy.get(c.parentId); a ? a.push(c) : childrenBy.set(c.parentId, [c]); }
+      for (const c of categories) if (c.parentId) { const a = childrenBy.get(c.parentId); if (a) a.push(c); else childrenBy.set(c.parentId, [c]); }
       const stack = [cat.chargeCategoryId];
       while (stack.length) { const id = stack.pop()!; for (const ch of childrenBy.get(id) ?? []) if (!excluded.has(ch.chargeCategoryId)) { excluded.add(ch.chargeCategoryId); stack.push(ch.chargeCategoryId); } }
     }

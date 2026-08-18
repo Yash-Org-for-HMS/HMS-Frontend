@@ -1,4 +1,4 @@
-import { ACCENTS, BRAND } from "@/styles/accents";
+import { BRAND } from "@/styles/accents";
 import { useState } from "react";
 import {
   IconButton, Popover, Box, Typography, TextField, Button, Chip, Divider, Tooltip,

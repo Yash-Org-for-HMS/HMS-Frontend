@@ -14,13 +14,9 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Avatar,
-  Menu,
-  MenuItem,
   useTheme,
   useMediaQuery,
-  Tooltip,
-} from "@mui/material";
+  } from "@mui/material";
 import {
   Menu as MenuIcon,
   DashboardRounded,
@@ -29,10 +25,7 @@ import {
   TimerRounded,
   CardMembershipRounded,
   ReceiptLongRounded,
-  HandshakeRounded,
   AdminPanelSettingsRounded,
-  LogoutRounded,
-  AccountCircleRounded,
   SecurityRounded,
   HistoryRounded,
   NotificationsActiveRounded,
@@ -117,23 +110,9 @@ export default function AdminLayout() {
       : location.pathname === path || location.pathname.startsWith(path + "/");
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
-  };
-
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleLogout = () => {
-    handleMenuClose();
-    logout();
   };
 
   const drawerContent = (

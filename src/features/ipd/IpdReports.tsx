@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import { Box, Paper, Grid, TextField, Tabs, Tab } from "@mui/material";
 import { LocalHotelRounded, ReplayRounded, AccessTimeRounded, PersonAddRounded, SavingsRounded, SpeedRounded, HeightRounded, WarningAmberRounded, MedicationRounded } from "@mui/icons-material";
@@ -10,7 +10,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, useReportFilterOptions, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, TrendChart, hasPlottableData, useReportFilterOptions, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = BRAND.action;
 const inr = formatINRAuto;
@@ -142,6 +142,11 @@ export function IpRegistrations() {
               <KpiCard icon={<PersonAddRounded />} accent={ACCENT} label="Admissions" value={String(data.totals.admissions)} current={data.totals.admissions} previous={prev?.admissions} />
             </Grid>
           </Grid>
+          {hasPlottableData(trend, ["admissions"]) && (
+            <Box sx={{ mb: 2.5 }}>
+              <TrendChart title="Admissions per day" data={trend} xKey="date" series={[{ key: "admissions", label: "Admissions", type: "area" }]} />
+            </Box>
+          )}
           <ReportTable
             title="IP registration detail"
             filename={`ip_registrations_${range.from}_${range.to}`}
@@ -180,6 +185,11 @@ export function IpAdvances() {
             <Grid size={{ xs: 12, sm: 6, md: 4 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.success} label="Advance collected" value={inr(data.totals.total)} current={Number(data.totals.total)} previous={prev ? Number(prev.total) : undefined} /></Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}><KpiCard icon={<AccessTimeRounded />} accent={ACCENT} label="Entries" value={String(data.totals.count)} current={data.totals.count} previous={prev?.count} /></Grid>
           </Grid>
+          {hasPlottableData(trend, ["amount"]) && (
+            <Box sx={{ mb: 2.5 }}>
+              <TrendChart title="Advance collected per day" data={trend} xKey="date" series={[{ key: "amount", label: "Advance", type: "bar" }]} valueFormatter={inr} />
+            </Box>
+          )}
           <ReportTable
             title="IP advance detail"
             filename={`ip_advances_${range.from}_${range.to}`}

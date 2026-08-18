@@ -33,7 +33,6 @@ function Field({ label, value }: { label: string; value: any }) {
 export default function ClaimDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const toast = useToast();
   const [advOpen, setAdvOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
   const [settleOpen, setSettleOpen] = useState(false);

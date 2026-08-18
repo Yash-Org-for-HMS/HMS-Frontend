@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { ACCENTS, BRAND } from "@/styles/accents";
+import { BRAND } from "@/styles/accents";
 import {
   Box,
   Button,
@@ -11,12 +11,11 @@ import {
   TextField,
   Typography,
   MenuItem,
-  Alert,
   IconButton,
   InputAdornment,
   Chip,
 } from "@mui/material";
-import { ArrowBackRounded, Visibility, VisibilityOff } from "@mui/icons-material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import { useToast } from "@/providers/ToastContext";

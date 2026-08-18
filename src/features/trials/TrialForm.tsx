@@ -10,7 +10,6 @@ import {
   Paper,
   TextField,
   MenuItem,
-  IconButton,
   Switch,
   FormControlLabel,
   Dialog,
@@ -20,7 +19,7 @@ import {
   Alert,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
+import { SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -29,7 +28,7 @@ import { useToast } from "@/providers/ToastContext";
 import { validate, hasErrors, required, isEmail, type Errors } from "@/utils/validation";
 import FormHeader from "@/components/layout/FormHeader";
 import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
-import { ACCENTS, BRAND } from "@/styles/accents";
+import { BRAND } from "@/styles/accents";
 
 export default function TrialForm() {
   const { t } = useTranslation();
@@ -407,14 +406,3 @@ export default function TrialForm() {
   );
 }
 
-const textFieldSx = {
-  "& .MuiOutlinedInput-root": {
-    color: "text.primary",
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "divider", borderRadius: "12px" },
-    "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: BRAND.action },
-  },
-  "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: BRAND.action },
-};

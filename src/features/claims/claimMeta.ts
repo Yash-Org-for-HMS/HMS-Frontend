@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 // Presentation metadata for claim statuses / enums — shared across the claims
 // list, detail, and form so labels and colors stay consistent.
 

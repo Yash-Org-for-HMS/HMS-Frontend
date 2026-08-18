@@ -13,9 +13,7 @@ import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 
 const ACCENT = "#0891b2";
-const ACCENT_DARK = "#0e7490";
 const TEXT = "#0F172A";
-
 
 export default function HospitalChangePassword() {
   const [newPassword, setNewPassword] = useState("");

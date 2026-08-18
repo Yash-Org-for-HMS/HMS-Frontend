@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, BRAND } from "@/styles/accents";
+import { BRAND } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -9,12 +9,10 @@ import {
   Button,
   Paper,
   TextField,
-  MenuItem,
-  IconButton,
-  Alert
+  MenuItem
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
+import { SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -271,14 +269,3 @@ export default function LeadForm() {
   );
 }
 
-const textFieldSx = {
-  "& .MuiOutlinedInput-root": {
-    color: "text.primary",
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "divider", borderRadius: "12px" },
-    "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: BRAND.action },
-  },
-  "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: BRAND.action },
-};

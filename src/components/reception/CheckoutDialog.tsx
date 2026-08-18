@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { paidTotal, refundedTotal, balanceOf, isSettled } from "@/utils/invoiceMoney";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -44,8 +45,8 @@ export default function CheckoutDialog({ open, onClose, token, onDone }: Checkou
     enabled: open && !!apptId,
   });
 
-  const totalPaid = invoice?.Payment?.reduce((s: number, p: any) => s + Number(p.paidAmount), 0) || 0;
-  const balance = invoice ? Math.max(0, Number(invoice.netAmount) - totalPaid) : 0;
+  const totalPaid = paidTotal(invoice);
+  const balance = invoice ? Math.max(0, balanceOf(invoice)) : 0;
   const hasDues = balance > 0;
 
   const handleClose = () => {

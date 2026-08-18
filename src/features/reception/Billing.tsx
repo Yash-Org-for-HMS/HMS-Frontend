@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { formatINR, formatDate } from "@/utils/format";
 import { useEffect, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, BRAND } from "@/styles/accents";
+import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -9,8 +9,7 @@ import {
   Button,
   Grid,
   MenuItem,
-  Alert,
-} from "@mui/material";
+  } from "@mui/material";
 import { SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";

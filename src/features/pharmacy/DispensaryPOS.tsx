@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useLocation } from "react-router-dom";
 import { 
@@ -7,7 +7,7 @@ import {
   Button, TextField, IconButton, useTheme, Autocomplete, alpha,
   List, ListItem, ListItemButton, Chip, Pagination, Select, MenuItem, Tooltip, Alert
 } from "@mui/material";
-import { PointOfSaleRounded, AddCircleRounded, RemoveCircleRounded, DeleteRounded, PaymentRounded, LocalPharmacyRounded, DownloadRounded, EditRounded, CancelRounded, CheckCircleRounded } from "@mui/icons-material";
+import { PointOfSaleRounded, AddCircleRounded, RemoveCircleRounded, DeleteRounded, PaymentRounded, LocalPharmacyRounded, DownloadRounded, CancelRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
@@ -143,7 +143,7 @@ export default function DispensaryPOS() {
     if (location.state?.editItems && availableMedicines.length > 0 && cart.length === 0) {
       const editItems = location.state.editItems;
       const initialCart: any[] = [];
-      let missingItems: string[] = [];
+      const missingItems: string[] = [];
       
       editItems.forEach((item: any) => {
         const match = availableMedicines.find((m: any) => m.medicineId === item.medicineId);
@@ -223,7 +223,7 @@ export default function DispensaryPOS() {
     setPatientId(prescription.patientId || "");
     
     const newCart: any[] = [];
-    let missingItems: string[] = [];
+    const missingItems: string[] = [];
     
     prescription.items.forEach((item: any) => {
       const match = availableMedicines.find((m: any) => m.medicineId === item.medicineId || 

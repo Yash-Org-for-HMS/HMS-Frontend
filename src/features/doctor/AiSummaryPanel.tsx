@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { useRef, useState, useEffect } from "react";
 import { Box, Typography, Button, Chip, Alert, Fade, TextField, IconButton, Tooltip } from "@mui/material";
 import {
@@ -19,7 +19,6 @@ const BLUE_DARK = BRAND.actionDark;
 // the doctor panel's BLUE family (accent #3b82f6) with a sky sheen for depth, so
 // Dr. Dex reads as part of the doctor panel instead of a foreign violet element.
 const GRAD = "linear-gradient(135deg, #38bdf8 0%, #3b82f6 50%, #1d4ed8 100%)";
-const GRAD_HEADER = "linear-gradient(120deg, #1e3a8a 0%, #1d4ed8 55%, #2563eb 100%)";
 
 const DEX_NAME = "Dr. Dex";
 const DEX_TAGLINE = "AI clinical assistant";

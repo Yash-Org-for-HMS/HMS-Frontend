@@ -1,5 +1,5 @@
 import { Box, Grid, Button } from "@mui/material";
-import { SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC } from "@/styles/accents";
 import {
   ScienceRounded, CheckCircleRounded, PendingActionsRounded, BiotechRounded,
   AttachMoneyRounded, CrisisAlertRounded, MonitorHeartRounded,

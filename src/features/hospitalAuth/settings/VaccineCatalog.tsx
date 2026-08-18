@@ -21,7 +21,6 @@ import PageHeader from "@/components/layout/PageHeader";
 import { formatINRAuto } from "@/utils/format";
 
 const ACCENT = BRAND.action;
-const ACCENT_DARK = BRAND.actionDark;
 
 type ScheduleItem = { scheduleItemId: string; doseLabel: string; ageLabel: string; recommendedAgeDays: number; sortOrder: number };
 type Vaccine = { vaccineId: string; vaccineCode: string; vaccineName: string; description: string | null; price: number | string | null; isActive: boolean; isGlobal: boolean; scheduleItems: ScheduleItem[] };
@@ -31,7 +30,6 @@ const inr = formatINRAuto;
 // from. The shared/global UIP list (isGlobal) is read-only here — a hospital
 // can only add/edit/deactivate ITS OWN vaccines, never the shared catalog.
 export default function VaccineCatalog() {
-  const toast = useToast();
   const qc = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Vaccine | null>(null);

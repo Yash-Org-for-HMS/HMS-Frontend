@@ -1,4 +1,4 @@
-import { SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { NEUTRAL } from "@/styles/accents";
 
 /**
  * Report visualisation tokens (see the dataviz method).

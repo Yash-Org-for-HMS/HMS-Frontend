@@ -1,10 +1,9 @@
-import { ACCENTS, BRAND } from "@/styles/accents";
+import { BRAND } from "@/styles/accents";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, IconButton, TextField, MenuItem,
-  ToggleButton, ToggleButtonGroup, Tooltip, Chip,
-} from "@mui/material";
+  ToggleButton, ToggleButtonGroup, Tooltip, } from "@mui/material";
 import {
   ChevronLeftRounded, ChevronRightRounded, TodayRounded, AddRounded,
   ViewListRounded, CalendarMonthRounded,

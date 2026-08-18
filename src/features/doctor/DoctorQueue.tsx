@@ -1,15 +1,13 @@
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip,
-  Alert, Avatar, Tooltip, IconButton,
-} from "@mui/material";
+  Alert, Tooltip, } from "@mui/material";
 import {
   MonitorHeartRounded, CheckCircleRounded, SyncRounded, HourglassTopRounded,
-  LocalHospitalRounded, PlayArrowRounded, VisibilityRounded,
-} from "@mui/icons-material";
+  LocalHospitalRounded, PlayArrowRounded, } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
 import StatusChip from "@/components/StatusChip";

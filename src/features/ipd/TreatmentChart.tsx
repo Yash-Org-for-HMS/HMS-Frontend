@@ -11,7 +11,7 @@ import {
   WarningAmberRounded, CheckCircleRounded, RadioButtonUncheckedRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
-import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
+import { SEMANTIC, NEUTRAL } from "@/styles/accents";
 import ErrorState from "@/components/ErrorState";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { apiErrorText } from "@/utils/apiError";

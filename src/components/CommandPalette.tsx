@@ -221,7 +221,7 @@ export default function CommandPalette() {
           });
           if (reqId !== searchReqId.current) return; // a newer search already superseded this one
           setPatients(res.data?.data || []);
-        } catch (err) {
+        } catch {
           if (reqId !== searchReqId.current) return;
           // Fail silently if not authenticated or error
           setPatients([]);
@@ -248,7 +248,7 @@ export default function CommandPalette() {
     if (hospitalUserStr) {
       userRole = JSON.parse(hospitalUserStr).role?.toLowerCase() || "";
     }
-  } catch (e) { /* no readable session — the palette simply shows nothing */ }
+  } catch { /* no readable session — the palette simply shows nothing */ }
 
   const isReception = userRole.includes("reception");
   const isLab = userRole.includes("lab");

@@ -1,11 +1,10 @@
 import { useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
-import { useToast } from "@/providers/ToastContext";
 import { API_URL } from "@/api/axios";
 
 export function useSocket(eventMap: Record<string, (...args: any[]) => void>) {
-  const { user, hospital } = useHospitalAuth();
+  const { hospital } = useHospitalAuth();
   const socketRef = useRef<Socket | null>(null);
 
   const eventMapRef = useRef(eventMap);
@@ -44,7 +43,7 @@ export function useSocket(eventMap: Record<string, (...args: any[]) => void>) {
     });
 
     // Register all event listeners
-    Object.entries(eventMapRef.current).forEach(([event, handler]) => {
+    Object.entries(eventMapRef.current).forEach(([event]) => {
       socket.on(event, (...args: any[]) => {
         console.log(`[Socket.io] Received event: ${event}`);
         // Always call the latest handler from the ref
@@ -60,5 +59,4 @@ export function useSocket(eventMap: Record<string, (...args: any[]) => void>) {
     };
   }, [hospital?.id]);
 
-  return socketRef.current;
 }

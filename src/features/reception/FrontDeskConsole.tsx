@@ -3,7 +3,7 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, TextField, InputAdornment,
-  Button, Avatar, Dialog, DialogContent, IconButton, Alert, Chip
+  Button, Avatar, Dialog, DialogContent, IconButton, Chip
 } from "@mui/material";
 import {
   SearchRounded, PersonAddRounded, CloseRounded, ChevronRightRounded, ContentCopyRounded,
@@ -20,7 +20,7 @@ import { useEnabledModules } from "@/hooks/useEnabledModules";
 import PageHeader from "@/components/layout/PageHeader";
 
 import type { Patient } from "@/types";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 
 export default function FrontDeskConsole() {
   const [search, setSearch] = useState("");

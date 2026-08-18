@@ -11,7 +11,7 @@ import { DayBook, RevenueAnalytics, RefundRegister, DiscountRegister, CancelledI
 import { LabOverview, TestWise, Turnaround, Pending, CriticalResults, OrderRegister } from "../lab/LabReports";
 import { PharmacyOverview } from "../pharmacy/PharmacyReports";
 import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList, SupplierLedger, Movers, OpdIpdSplit } from "../pharmacy/InventoryReports";
-import { ACCENTS, BRAND } from "@/styles/accents";
+import { BRAND } from "@/styles/accents";
 import { ReportNavLayout, type ReportItem } from "@/features/reports/kit";
 
 const ACCENT = BRAND.action;

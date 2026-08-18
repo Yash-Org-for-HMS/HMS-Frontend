@@ -3,7 +3,7 @@ import { apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
-  Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Chip, TextField, InputAdornment, Alert,
 } from "@mui/material";
 import { SearchRounded } from "@mui/icons-material";

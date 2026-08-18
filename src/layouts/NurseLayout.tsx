@@ -7,15 +7,12 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   Box, Drawer, AppBar, Toolbar, List, Typography, Divider,
   IconButton, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  Avatar, useTheme, useMediaQuery,
+  useTheme, useMediaQuery,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
   DashboardRounded,
   PeopleAltRounded,
-  LocalHospitalRounded,
-  LogoutRounded,
-  MedicalServicesRounded,
   AssessmentRounded,
   MedicationRounded,
   LockRounded,

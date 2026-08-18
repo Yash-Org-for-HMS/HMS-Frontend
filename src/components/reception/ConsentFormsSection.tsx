@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";

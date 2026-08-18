@@ -4,11 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Box, Typography, Button, Grid, TextField, Slider,
-  Alert, Divider, IconButton, Chip,
+  Divider, IconButton, Chip,
 } from "@mui/material";
 import {
   CloseRounded, FavoriteRounded, ThermostatRounded, MonitorHeartRounded,
-  ScaleRounded, HeightRounded, BloodtypeRounded, SaveRounded,
+  ScaleRounded, BloodtypeRounded, SaveRounded,
   SentimentVeryDissatisfied, SentimentSatisfied, SentimentVerySatisfied,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";

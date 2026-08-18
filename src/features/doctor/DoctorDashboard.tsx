@@ -1,9 +1,8 @@
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { alpha } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Grid, Typography, Paper, Alert,
-  Chip, Avatar, Button, Divider
+  Box, Grid, Typography, Paper, Chip, Button, Divider
 } from "@mui/material";
 import {
   MonitorHeartRounded, CheckCircleRounded, HourglassTopRounded,

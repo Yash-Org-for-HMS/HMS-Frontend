@@ -16,9 +16,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 // from the cyan hospital staff login, so the two portals read as different realms
 // of the same product.
 const ACCENT = "#4F46E5";
-const ACCENT_DARK = "#4338CA";
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-
 
 export default function Login() {
   const [email, setEmail] = useState("");

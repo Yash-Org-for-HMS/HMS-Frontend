@@ -3,14 +3,13 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { assetUrl } from "@/utils/assetUrl";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Paper, Typography, Button, Chip, IconButton, Tooltip, Divider, Stack,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
-} from "@mui/material";
+  Box, Paper, Typography, Button, Chip, Divider, Stack,
+  Dialog, DialogTitle, DialogContent, DialogActions, } from "@mui/material";
 import {
   CloudUploadRounded, DeleteOutlineRounded, VisibilityRounded, CheckCircleRounded,
   RadioButtonUncheckedRounded, DescriptionRounded,
 } from "@mui/icons-material";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";

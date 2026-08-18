@@ -1,16 +1,15 @@
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { calculateAge } from "@/utils/format";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Box, Grid, Typography, Paper,
-  Button, TextField, Divider, Avatar, IconButton, Chip, Tab, Tabs, Autocomplete
+  Button, TextField, Divider, Avatar, IconButton, Tab, Tabs, Autocomplete
 } from "@mui/material";
 import {
   ArrowBackRounded, CheckCircleRounded, SaveRounded, MonitorHeartRounded,
-  HistoryRounded, PersonRounded, LocalHospitalRounded, DateRangeRounded,
-  CloudDoneRounded, CloudSyncRounded, CloudOffRounded, AutoAwesomeRounded
+  HistoryRounded, PersonRounded, LocalHospitalRounded, CloudDoneRounded, CloudSyncRounded, CloudOffRounded, AutoAwesomeRounded
 } from "@mui/icons-material";
 import AiSummaryPanel from "./AiSummaryPanel";
 import { axiosInstance } from "@/api/axios";

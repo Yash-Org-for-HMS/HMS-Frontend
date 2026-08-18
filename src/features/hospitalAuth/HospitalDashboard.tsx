@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ACCENTS, SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
+import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
 import { alpha } from "@mui/material/styles";
 import {
   Box,

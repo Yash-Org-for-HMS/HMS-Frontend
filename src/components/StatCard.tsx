@@ -1,4 +1,4 @@
-import { ACCENTS, BRAND } from "@/styles/accents";
+import { BRAND } from "@/styles/accents";
 import { Box, Paper, Typography, Skeleton, Tooltip } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { ArrowUpwardRounded, ArrowDownwardRounded, RemoveRounded } from "@mui/icons-material";

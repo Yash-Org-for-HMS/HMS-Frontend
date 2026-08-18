@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
   Box,
-  Container,
   Typography,
   Paper,
   Table,
@@ -32,7 +31,6 @@ import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import PageContainer from "@/components/layout/PageContainer";
 import PageHeader from "@/components/layout/PageHeader";
-import ActionButton from "@/components/layout/ActionButton";
 import FilterBar from "@/components/layout/FilterBar";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useAuth } from "@/providers/AuthContext";
@@ -294,13 +292,3 @@ export default function AuditLogsList() {
   );
 }
 
-const textFieldSx = {
-  "& .MuiOutlinedInput-root": {
-    color: "text.primary",
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "divider" },
-    "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: SEMANTIC.info },
-  },
-  "& .MuiInputLabel-root": { color: "text.secondary" },
-};

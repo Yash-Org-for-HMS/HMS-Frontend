@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { paidTotal, refundedTotal, balanceOf, isSettled } from "@/utils/invoiceMoney";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box,
 } from "@mui/material";
@@ -33,10 +34,10 @@ export default function LabReceiptDialog({ open, serviceId, onClose }: Props) {
     enabled: open && !!serviceId,
   });
 
-  const totalPaid = invoice?.Payment?.reduce((s: number, p: any) => s + Number(p.paidAmount), 0) || 0;
-  const totalRefunded = invoice?.Refund?.reduce((s: number, r: any) => s + Number(r.refundAmount), 0) || 0;
-  const balance = invoice ? Number(invoice.netAmount) - (totalPaid - totalRefunded) : 0;
-  const fullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || balance <= 0.005;
+  const totalPaid = paidTotal(invoice);
+  const totalRefunded = refundedTotal(invoice);
+  const balance = invoice ? balanceOf(invoice) : 0;
+  const fullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || isSettled(invoice);
 
   const cell: React.CSSProperties = { padding: "6px 8px", borderBottom: "1px solid #eee", fontSize: 13 };
 

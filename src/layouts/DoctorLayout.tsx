@@ -9,15 +9,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Drawer, AppBar, Toolbar, List, Typography, Divider,
   IconButton, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  Avatar, useTheme, useMediaQuery, Badge,
+  useTheme, useMediaQuery, Badge,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
   DashboardRounded,
   PeopleAltRounded,
   GroupsRounded,
-  LogoutRounded,
-  LocalHospitalRounded,
   QueueRounded,
   EventBusyRounded,
   ScienceRounded,
@@ -38,7 +36,6 @@ import { DASHBOARD_POLL_MS } from "@/constants/intervals";
 
 const drawerWidth = 260;
 const DOCTOR_BLUE = BRAND.action;
-const DOCTOR_BLUE_DARK = BRAND.action;
 
 export default function DoctorLayout() {
   useEffect(() => {

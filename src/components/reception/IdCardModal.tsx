@@ -5,7 +5,7 @@ import {
 import { PrintRounded, CloseRounded } from "@mui/icons-material";
 import JsBarcode from "jsbarcode";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
-import { ACCENTS, NEUTRAL } from "@/styles/accents";
+import { NEUTRAL } from "@/styles/accents";
 
 export interface IdCardPatient {
   uhidNumber: string;

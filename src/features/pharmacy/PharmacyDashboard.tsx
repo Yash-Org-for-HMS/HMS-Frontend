@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { useNavigate } from "react-router-dom";
 import { 
-  Box, Typography, Grid, Paper, Table, TableBody, TableCell, TableHead, TableRow, alpha, useTheme,
-  Tabs, Tab, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Select, MenuItem, TextField, Chip, Tooltip
+  Box, Typography, Grid, Paper, Table, TableBody, TableCell, TableHead, TableRow, alpha, useTheme
 } from "@mui/material";
 import {
   MedicationRounded, LocalShippingRounded, WarningRounded, PointOfSaleRounded, DashboardRounded, EventBusyRounded

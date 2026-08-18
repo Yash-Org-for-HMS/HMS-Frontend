@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -19,7 +19,7 @@ import { exportTableToExcel } from "@/utils/exportExcel";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportTable, ReportTruncationNote, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportTable, ReportTruncationNote, TrendChart, hasPlottableData, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = BRAND.action;
 const inr = formatINRAuto;
@@ -203,6 +203,12 @@ export function ReferralsByDoctor() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CallSplitRounded />} accent={SEMANTIC.info} label="Internal / External" value={`${s.internal ?? 0} / ${s.external ?? 0}`} sub="referrers" /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} accent="#8b5cf6" label="Total visits" value={String(s.totalVisits)} current={s.totalVisits} previous={prev?.totalVisits} /></Grid>
           </Grid>
+
+          {hasPlottableData(trend, ["patients"]) && (
+            <Box sx={{ mb: 2.5 }}>
+              <TrendChart title="Referred patients per day" data={trend} xKey="date" series={[{ key: "patients", label: "Referred patients", type: "area" }]} />
+            </Box>
+          )}
 
           <ReportTable
             title="Referrer detail"

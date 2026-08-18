@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -20,7 +20,6 @@ import {
   DialogContent,
   TextField,
   InputAdornment,
-  Alert,
   Avatar,
   Divider,
 } from "@mui/material";
@@ -34,7 +33,6 @@ import {
   VisibilityOff,
   ContentCopyRounded,
   LockResetRounded,
-  PersonRounded,
   InfoOutlined,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";

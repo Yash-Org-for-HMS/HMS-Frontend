@@ -7,23 +7,14 @@ import {
   Container,
   Typography,
   Paper,
-  Button,
-} from "@mui/material";
+  } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import {
   LocalHospitalRounded,
   PeopleAltRounded,
-  TimerRounded,
-  CardMembershipRounded,
-  AdminPanelSettingsRounded,
-  AssignmentTurnedInRounded,
-  CheckCircleRounded,
-  MedicalServicesRounded,
-  TimerOffRounded,
   AccountBalanceRounded,
   BusinessRounded,
-  HealingRounded,
-} from "@mui/icons-material";
+  } from "@mui/icons-material";
 import {
   BarChart,
   Bar,

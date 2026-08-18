@@ -3,8 +3,7 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { assetUrl } from "@/utils/assetUrl";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Button, Paper, Grid, Alert,
-  Card, CardContent, CardActions, IconButton, Chip, Dialog,
+  Box, Typography, Button, Paper, Grid, Card, CardContent, CardActions, IconButton, Chip, Dialog,
   DialogTitle, DialogContent, DialogActions, TextField, MenuItem
 } from "@mui/material";
 import {
@@ -17,7 +16,7 @@ import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { SEMANTIC } from "@/styles/accents";
 
 export default function PatientDocumentsSection({ patientId, readOnly = false }: { patientId: string; readOnly?: boolean }) {
   const toast = useToast();

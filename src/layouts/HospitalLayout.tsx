@@ -18,22 +18,15 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Avatar,
-  Menu,
-  MenuItem,
   useTheme,
   useMediaQuery,
-  Tooltip,
-} from "@mui/material";
+  } from "@mui/material";
 import {
   Menu as MenuIcon,
   DashboardRounded,
   LocalHospitalRounded,
-  LogoutRounded,
-  AccountCircleRounded,
   PeopleRounded,
   CalendarTodayRounded,
-  ScienceRounded,
   SettingsRounded,
   DomainRounded,
   BadgeRounded,
@@ -147,23 +140,9 @@ export default function HospitalLayout() {
     isAdmin && !!hospitalProfile && !profileComplete && location.pathname !== "/hospital/profile";
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
-  };
-
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleLogout = () => {
-    handleMenuClose();
-    logout();
   };
 
   const drawerContent = (

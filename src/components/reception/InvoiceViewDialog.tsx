@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
+import { paidTotal, refundedTotal, balanceOf, isSettled } from "@/utils/invoiceMoney";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { formatINR, formatDate } from "@/utils/format";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, Divider,
-  Chip, TextField, MenuItem, Grid,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, TextField, MenuItem, Grid,
 } from "@mui/material";
 import { CloseRounded, PrintRounded, PaymentRounded, CheckCircleRounded, BlockRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -13,7 +13,7 @@ import HeartbeatLoader from "../HeartbeatLoader";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
 import { useToast } from "@/providers/ToastContext";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 
 
 interface Props {
@@ -44,10 +44,10 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
     enabled: open && !!invoiceId,
   });
 
-  const totalPaid = invoice?.Payment?.reduce((s: number, p: any) => s + Number(p.paidAmount), 0) || 0;
-  const totalRefunded = invoice?.Refund?.reduce((s: number, r: any) => s + Number(r.refundAmount), 0) || 0;
-  const balance = invoice ? Number(invoice.netAmount) - (totalPaid - totalRefunded) : 0;
-  const fullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || balance <= 0.005;
+  const totalPaid = paidTotal(invoice);
+  const totalRefunded = refundedTotal(invoice);
+  const balance = invoice ? balanceOf(invoice) : 0;
+  const fullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || isSettled(invoice);
 
   const hp = invoice?.hospital;
 

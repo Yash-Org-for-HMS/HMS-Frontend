@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,

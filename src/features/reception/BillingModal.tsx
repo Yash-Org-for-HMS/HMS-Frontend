@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { paidTotal, refundedTotal, refundablePayments } from "@/utils/invoiceMoney";
 import { useNavigate } from "react-router-dom";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
@@ -17,7 +18,7 @@ import { useToast } from "@/providers/ToastContext";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BillReceipt from "@/components/reception/BillReceipt";
 import SocChargePicker from "@/components/billing/SocChargePicker";
-import { SEMANTIC, ACCENTS, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 
 interface BillingModalProps {
   open: boolean;
@@ -137,8 +138,8 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
 
       // Pre-fill payment amount with remaining balance
       if (currentInvoice) {
-        const totalPaid = currentInvoice.Payment?.reduce((sum: number, p: any) => sum + Number(p.paidAmount), 0) || 0;
-        const totalRefunded = currentInvoice.Refund?.reduce((sum: number, r: any) => sum + Number(r.refundAmount), 0) || 0;
+        const totalPaid = paidTotal(currentInvoice);
+        const totalRefunded = refundedTotal(currentInvoice);
         const remaining = Number(currentInvoice.netAmount) - (totalPaid - totalRefunded);
         if (remaining > 0) {
           setPaymentAmount(remaining.toString());
@@ -185,8 +186,8 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
           setInvoice(getInvoiceRes.data.data);
           
           const updatedInvoice = getInvoiceRes.data.data;
-          const totalPaid = updatedInvoice.Payment?.reduce((sum: number, p: any) => sum + Number(p.paidAmount), 0) || 0;
-          const totalRefunded = updatedInvoice.Refund?.reduce((sum: number, r: any) => sum + Number(r.refundAmount), 0) || 0;
+          const totalPaid = paidTotal(updatedInvoice);
+          const totalRefunded = refundedTotal(updatedInvoice);
           const remaining = Number(updatedInvoice.netAmount) - (totalPaid - totalRefunded);
           if (remaining > 0) {
              setPaymentAmount(remaining.toString());
@@ -372,25 +373,16 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
 
   if (!open) return null;
 
-  const totalPaid = invoice?.Payment?.reduce((sum: number, p: any) => sum + Number(p.paidAmount), 0) || 0;
-  const totalRefunded = invoice?.Refund?.reduce((sum: number, r: any) => sum + Number(r.refundAmount), 0) || 0;
+  const totalPaid = paidTotal(invoice);
+  const totalRefunded = refundedTotal(invoice);
   const netPaid = totalPaid - totalRefunded;
-  const grossAmount = Number(invoice?.grossAmount || 0);
-  const discountAmount = Number(invoice?.discountAmount || 0);
-  const taxAmount = Number(invoice?.taxAmount || 0);
   const netAmount = Number(invoice?.netAmount || 0);
   const balance = netAmount - netPaid;
   const isFullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || balance <= 0;
 
   // How much of each payment is still refundable (paid − refunds against it).
-  const refundedByPayment: Record<string, number> = {};
-  (invoice?.Refund || []).forEach((r: any) => {
-    refundedByPayment[r.paymentId] = (refundedByPayment[r.paymentId] || 0) + Number(r.refundAmount);
-  });
-  const refundablePayments = (invoice?.Payment || [])
-    .map((p: any) => ({ ...p, refundable: Number(p.paidAmount) - (refundedByPayment[p.paymentId] || 0) }))
-    .filter((p: any) => p.refundable > 0.005);
-  const selectedRefundable = refundablePayments.find((p: any) => p.paymentId === refundPaymentId)?.refundable || 0;
+  const refundable = refundablePayments(invoice);
+  const selectedRefundable = refundable.find((p) => p.paymentId === refundPaymentId)?.refundable || 0;
 
   return (
     <>
@@ -557,7 +549,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                 )}
 
                 {/* Refund — available whenever there's collected money left to return. */}
-                {refundablePayments.length > 0 && (
+                {refundable.length > 0 && (
                   <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(139,92,246,0.05)", borderRadius: 2, border: "1px dashed rgba(139,92,246,0.3)" }}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <Typography variant="subtitle2" sx={{ color: "#8b5cf6", fontWeight: 700 }}>
@@ -566,7 +558,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                       {!showRefund && (
                         <Button size="small" onClick={() => {
                           setShowRefund(true);
-                          const first = refundablePayments[0];
+                          const first = refundable[0];
                           if (first) { setRefundPaymentId(first.paymentId); setRefundAmount(first.refundable.toFixed(2)); }
                         }} sx={{ color: "#8b5cf6", textTransform: "none", fontWeight: 600 }}>
                           Process a refund
@@ -582,12 +574,12 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                           value={refundPaymentId}
                           onChange={(e) => {
                             setRefundPaymentId(e.target.value);
-                            const p = refundablePayments.find((x: any) => x.paymentId === e.target.value);
+                            const p = refundable.find((x) => x.paymentId === e.target.value);
                             if (p) setRefundAmount(p.refundable.toFixed(2));
                           }}
                           sx={{ mb: 2 }}
                         >
-                          {refundablePayments.map((p: any) => (
+                          {refundable.map((p) => (
                             <MenuItem key={p.paymentId} value={p.paymentId}>
                               {p.paymentMethod?.methodName || "Payment"} — {Number(p.paidAmount).toFixed(2)} (refundable {p.refundable.toFixed(2)})
                             </MenuItem>

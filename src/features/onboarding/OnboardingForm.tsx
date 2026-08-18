@@ -11,14 +11,13 @@ import {
   Paper,
   TextField,
   MenuItem,
-  IconButton,
   Alert,
   Switch,
   FormControlLabel,
   Chip,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import { ArrowBackRounded, SaveRounded, ReceiptLongRounded } from "@mui/icons-material";
+import { SaveRounded, ReceiptLongRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -104,8 +103,6 @@ export default function OnboardingForm() {
         subtitle={hospitalName}
         onBack={() => navigate("/onboarding")}
       />
-
-
 
       <Paper
         elevation={2}
@@ -259,12 +256,3 @@ export default function OnboardingForm() {
   );
 }
 
-const textFieldSx = {
-  "& .MuiOutlinedInput-root": {
-    color: "text.primary",
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: SEMANTIC.success },
-  },
-  "& .MuiInputLabel-root": { color: "text.secondary" },
-};

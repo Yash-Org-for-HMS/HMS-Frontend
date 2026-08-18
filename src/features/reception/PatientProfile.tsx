@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR, getInitials } from "@/utils/format";
 import { useMemo, useState } from "react";
@@ -104,7 +104,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
   try {
     const hospitalUserStr = sessionStorage.getItem("hospitalUser");
     if (hospitalUserStr) userRole = JSON.parse(hospitalUserStr).role?.toLowerCase() || "";
-  } catch (e) { /* ignore */ }
+  } catch { /* ignore */ }
   const canEdit = !readOnly && (userRole.includes("reception") || userRole.includes("admin"));
 
   const { data: patient, isLoading: loading, isError, error, refetch } = useQuery<Patient>({

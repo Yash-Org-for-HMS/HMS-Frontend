@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -33,7 +33,6 @@ import {
 } from "@mui/material";
 import {
   ArrowBackRounded,
-  LocalHospitalRounded,
   PeopleRounded,
   MedicalServicesRounded,
   AccountCircleRounded,

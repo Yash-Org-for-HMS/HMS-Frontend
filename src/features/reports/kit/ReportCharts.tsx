@@ -40,6 +40,17 @@ export function TrendChart({ data, xKey, series, valueFormatter, height = 280, t
   data: any[]; xKey: string; series: Series[]; valueFormatter?: (n: number) => string;
   height?: number; title: string; subtitle?: string; action?: ReactNode;
 }) {
+  // A count series must not get fractional ticks — "0.25 admissions" is not a
+  // thing a reader can act on. Derived rather than declared per call site, so
+  // every chart in the app gets it: if every plotted value is a whole number the
+  // axis stays whole, and a money series with paise still ticks in decimals.
+  const allowDecimals = data.some((row) =>
+    series.some((sr) => {
+      const v = Number(row?.[sr.key]);
+      return Number.isFinite(v) && !Number.isInteger(v);
+    }),
+  );
+
   return (
     <ChartCard title={title} subtitle={subtitle} action={action} height={height}>
       <ComposedChart data={data} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
@@ -53,7 +64,7 @@ export function TrendChart({ data, xKey, series, valueFormatter, height = 280, t
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke={CHART_INK.grid} vertical={false} />
         <XAxis dataKey={xKey} {...xAxisProps} />
-        <YAxis {...yAxisProps} tickFormatter={valueFormatter as any} />
+        <YAxis {...yAxisProps} tickFormatter={valueFormatter as any} allowDecimals={allowDecimals} />
         <RTooltip contentStyle={tooltipStyle} formatter={valueFormatter as any} />
         {series.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}
         {series.map((s, i) => s.type === "bar" ? (
@@ -114,4 +125,14 @@ export function DonutChart({ data, nameKey = "name", valueKey = "value", valueFo
       </PieChart>
     </ChartCard>
   );
+}
+
+/**
+ * True when at least one row carries a non-zero value for one of the series
+ * keys. The trend payloads are zero-filled across the whole date range, so
+ * `rows.length > 0` is always true and says nothing about whether there is
+ * anything worth plotting.
+ */
+export function hasPlottableData(rows: any[] | undefined | null, keys: string[]): boolean {
+  return (rows ?? []).some((r) => keys.some((k) => Number(r?.[k] ?? 0) !== 0));
 }

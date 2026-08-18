@@ -9,10 +9,10 @@ import {
 } from "@mui/material";
 import {
   SaveRounded, ArrowBackRounded, ScienceRounded, AccessTimeRounded, PrintRounded, VerifiedRounded,
-  PersonRounded, BadgeRounded, LocalHospitalRounded, WarningAmberRounded, CheckCircleRounded,
+  BadgeRounded, LocalHospitalRounded, WarningAmberRounded, CheckCircleRounded,
   ReceiptLongRounded, PaymentsRounded,
 } from "@mui/icons-material";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { typeScale } from "@/styles/typography";
 import { getInitials } from "@/utils/format";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -132,7 +132,7 @@ export default function UpdateLabOrder() {
       setMessage({ type: "success", text: "Lab results updated successfully!" });
       setTimeout(() => refetch(), 1000);
     } catch (err) {
-      setMessage({ type: "error", text: "Failed to update results." });
+      setMessage({ type: "error", text: getApiErrorMessage(err, "Failed to update results.") });
     } finally {
       setSaving(false);
     }

@@ -1,20 +1,18 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Box, Grid, Typography } from "@mui/material";
 import {
   ReceiptLongRounded, CurrencyRupeeRounded, TrendingUpRounded,
   WarningAmberRounded, EventBusyRounded, LocalPharmacyRounded,
-  Inventory2Rounded, ShoppingCartRounded, ReplayRounded,
-  LocalShippingRounded, SwapVertRounded, CompareArrowsRounded,
-} from "@mui/icons-material";
+  } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportTable, ReportNavLayout, type DateRange, type ReportGroup } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportTable, ReportNavLayout, TrendChart, hasPlottableData, type DateRange, type ReportGroup } from "@/features/reports/kit";
 import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList, SupplierLedger, Movers, OpdIpdSplit } from "./InventoryReports";
 
 const inr = formatINRAuto;
@@ -61,6 +59,11 @@ export function PharmacyOverview() {
             <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.warning} label="Low stock items" value={s?.lowStockCount || 0} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<EventBusyRounded />} accent={SEMANTIC.danger} label="Expiring in 30 days" value={s?.expiringSoonCount || 0} /></Grid>
           </Grid>
+
+          {hasPlottableData(trend, ["sales"]) && (
+            <TrendChart title="Sales per day" subtitle="Billed order value — order count is shown in the KPI above, and would flatline against a rupee axis"
+              data={trend} xKey="date" series={[{ key: "sales", label: "Billed value", type: "area" }]} valueFormatter={inr} />
+          )}
 
           <ReportTable title="Top-selling medicines" filename={`pharmacy_top_meds_${range.from}_${range.to}`}
             columns={[

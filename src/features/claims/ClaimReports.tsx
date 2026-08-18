@@ -10,7 +10,7 @@ import {
   DescriptionRounded, HourglassBottomRounded, PaidRounded, CancelRounded,
   AccountBalanceWalletRounded, GroupRounded, FileDownloadRounded, ArrowBackRounded,
 } from "@mui/icons-material";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { axiosInstance } from "@/api/axios";
 import { exportTableToExcel } from "@/utils/exportExcel";
 import { formatINR } from "@/utils/format";

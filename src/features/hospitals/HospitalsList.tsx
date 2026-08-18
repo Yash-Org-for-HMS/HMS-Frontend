@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import {
   Box,
-  Container,
   Typography,
   Button,
   Paper,

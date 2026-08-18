@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -12,7 +12,6 @@ import {
   Paper,
   TextField,
   MenuItem,
-  IconButton,
   Alert,
   Dialog,
   DialogTitle,
@@ -23,7 +22,7 @@ import {
   Autocomplete,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
+import { SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -538,14 +537,3 @@ export default function HospitalForm() {
   );
 }
 
-const textFieldSx = {
-  "& .MuiOutlinedInput-root": {
-    color: "text.primary",
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "divider", borderRadius: "12px" },
-    "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: SEMANTIC.info },
-  },
-  "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: SEMANTIC.info },
-};

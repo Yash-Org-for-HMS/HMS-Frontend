@@ -17,9 +17,6 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Avatar,
-  Menu,
-  MenuItem,
   useTheme,
   useMediaQuery,
 } from "@mui/material";
@@ -30,8 +27,6 @@ import {
   LocalShippingRounded,
   InventoryRounded,
   PointOfSaleRounded,
-  LogoutRounded,
-  LocalHospitalRounded,
   AssessmentRounded,
   LocalPharmacyRounded,
   LockRounded,
@@ -69,16 +64,9 @@ export default function PharmacyLayout() {
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
-  const handleMenuClose = () => setAnchorEl(null);
   
-  const handleLogout = () => {
-    handleMenuClose();
-    logout();
-  };
 
   const drawerContent = (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "background.paper", color: "text.primary" }}>

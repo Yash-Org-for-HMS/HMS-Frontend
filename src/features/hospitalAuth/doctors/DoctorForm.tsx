@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
   Box,
@@ -8,7 +8,6 @@ import {
   TextField,
   Button,
   Grid,
-  Alert,
   MenuItem,
   Tabs,
   Tab,

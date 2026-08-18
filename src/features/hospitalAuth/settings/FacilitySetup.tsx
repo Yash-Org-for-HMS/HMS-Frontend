@@ -17,7 +17,6 @@ import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 
 const ACCENT = BRAND.action;
-const ACCENT_DARK = BRAND.actionDark;
 
 const WARD_TYPES = ["general", "surgical", "maternity", "pediatric", "ICU"];
 const ROOM_TYPES = ["general", "semi_private", "private_room", "ICU", "NICU"];
@@ -38,7 +37,6 @@ const Tile = ({ label, value, color }: { label: string; value: number; color: st
 );
 
 export default function FacilitySetup() {
-  const toast = useToast();
   const [setupAnchor, setSetupAnchor] = useState<null | HTMLElement>(null);
   const [dialog, setDialog] = useState<null | { kind: "ward" | "room" | "bed"; edit?: any }>(null);
   const [rentOpen, setRentOpen] = useState(false);
@@ -56,7 +54,6 @@ export default function FacilitySetup() {
     queryKey: ["soc-room-classes"],
     queryFn: async () => (await axiosInstance.get("/hospital/soc/room-classes")).data.data,
   });
-
 
   return (
     <Box>

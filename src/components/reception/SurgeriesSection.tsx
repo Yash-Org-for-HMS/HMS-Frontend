@@ -1,4 +1,4 @@
-import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Chip,

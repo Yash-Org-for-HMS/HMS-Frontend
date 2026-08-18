@@ -9,13 +9,11 @@ import {
   Button,
   Paper,
   TextField,
-  IconButton,
-  Alert,
   Autocomplete,
   Chip
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import { ArrowBackRounded, SaveRounded } from "@mui/icons-material";
+import { SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -324,21 +322,3 @@ export default function PlanForm() {
   );
 }
 
-const textFieldSx = {
-  "& .MuiOutlinedInput-root": {
-    color: "text.primary",
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "divider", borderRadius: "12px" },
-    "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: SEMANTIC.success },
-  },
-  "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: SEMANTIC.success },
-  "& input[type=number]::-webkit-inner-spin-button, & input[type=number]::-webkit-outer-spin-button": {
-    WebkitAppearance: "none",
-    margin: 0,
-  },
-  "& input[type=number]": {
-    MozAppearance: "textfield",
-  },
-};

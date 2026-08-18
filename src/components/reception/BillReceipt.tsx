@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { paidTotal, refundedTotal, balanceOf, isSettled } from "@/utils/invoiceMoney";
 import { formatINR } from "@/utils/format";
 import BillDocument from "@/components/billing/BillDocument";
 
@@ -18,8 +19,8 @@ const tdBase: CSSProperties = { padding: "10px 8px", borderBottom: "1px solid #f
  * it matches the IPD bill and invoice views. Only the line-item table is local.
  */
 export default function BillReceipt({ invoice, hospitalProfile, hospital, patientName, appointmentDate }: Props) {
-  const totalPaid = invoice?.Payment?.reduce((s: number, p: any) => s + Number(p.paidAmount), 0) || 0;
-  const totalRefunded = invoice?.Refund?.reduce((s: number, r: any) => s + Number(r.refundAmount), 0) || 0;
+  const totalPaid = paidTotal(invoice);
+  const totalRefunded = refundedTotal(invoice);
   const netPaid = totalPaid - totalRefunded;
   const netAmount = Number(invoice?.netAmount || 0);
   const balance = netAmount - netPaid;

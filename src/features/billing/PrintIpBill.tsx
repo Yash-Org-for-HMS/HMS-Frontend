@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
+import { paidTotal, refundedTotal } from "@/utils/invoiceMoney";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useParams } from "react-router-dom";
 import { Box, Typography, ToggleButton, ToggleButtonGroup, Button } from "@mui/material";
@@ -105,8 +106,8 @@ export default function PrintIpBill() {
 
   const p = inv.patient, adm = inv.admission, hosp = inv.hospital || {}, dep = inv.deposits;
   const bed = adm?.bed;
-  const totalPaid = (inv.Payment || []).reduce((s: number, x: any) => s + n(x.paidAmount), 0);
-  const totalRefunded = (inv.Refund || []).reduce((s: number, x: any) => s + n(x.refundAmount), 0);
+  const totalPaid = paidTotal(inv);
+  const totalRefunded = refundedTotal(inv);
   const balance = n(inv.netAmount) - (totalPaid - totalRefunded);
   const patientAddress = p ? [p.addressLine1, p.addressLine2, p.city, p.district, p.state, p.postalCode].filter(Boolean).join(", ") : "";
   const hospAddress = [hosp.addressLine1, hosp.addressLine2, hosp.landmark, hosp.city, hosp.postalCode].filter(Boolean).join(", ");

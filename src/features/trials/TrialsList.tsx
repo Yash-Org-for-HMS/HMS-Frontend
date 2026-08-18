@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { trialStatusColor } from "@/utils/statusColors";
 import { useQuery } from "@tanstack/react-query";
@@ -7,9 +7,6 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Box,
-  Container,
-  Typography,
-  Button,
   Paper,
   Table,
   TableBody,
@@ -24,13 +21,7 @@ import {
   Menu,
   MenuItem,
   Pagination,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Alert,
 } from "@mui/material";
-import Grid from "@mui/material/Grid";
 import {
   AddRounded,
   SearchRounded,
@@ -148,7 +139,6 @@ export default function TrialsList() {
     if (!trial) return;
     navigate(`/hospitals/new?trialId=${trial.hospitalTrialId}`);
   };
-
 
   const calculateDaysRemaining = (endDateStr: string) => {
     const end = new Date(endDateStr);
@@ -332,15 +322,3 @@ export default function TrialsList() {
   );
 }
 
-const textFieldSx = {
-  "& .MuiOutlinedInput-root": {
-    color: "text.primary",
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
-    "& fieldset": { borderColor: "divider" },
-    "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderColor: BRAND.action },
-  },
-  "& .MuiInputLabel-root": { color: "text.secondary" },
-  "& .MuiInputLabel-root.Mui-focused": { color: BRAND.action },
-  "& .MuiSvgIcon-root": { color: "text.secondary" },
-};

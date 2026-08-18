@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { ACCENTS, SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
+import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { Box, Grid, TextField, MenuItem, Typography, Alert } from "@mui/material";
 import {
   ScienceRounded, CheckCircleRounded, HourglassEmptyRounded, BiotechRounded,
   MonitorHeartRounded, WarningAmberRounded, AccessTimeRounded, CurrencyRupeeRounded,
   SpeedRounded, VerifiedRounded, PendingActionsRounded, TimelapseRounded,
-  CrisisAlertRounded, PersonRounded, ReportProblemRounded, ListAltRounded,
-} from "@mui/icons-material";
+  CrisisAlertRounded, PersonRounded, ReportProblemRounded, } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";

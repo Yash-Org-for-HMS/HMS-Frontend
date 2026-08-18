@@ -17,7 +17,7 @@ import ErrorState from "@/components/ErrorState";
 import BillingModal from "./BillingModal";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
-import { ACCENTS, SEMANTIC } from "@/styles/accents";
+import { SEMANTIC } from "@/styles/accents";
 
 export interface AppointmentFormProps {
   isEmbedded?: boolean;

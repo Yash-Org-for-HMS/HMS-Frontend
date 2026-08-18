@@ -1,9 +1,8 @@
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { alpha } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Grid, Typography, Paper, Alert,
-  Table, TableBody, TableCell, TableContainer,
+  Box, Grid, Typography, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Avatar, Button,
 } from "@mui/material";
 import {

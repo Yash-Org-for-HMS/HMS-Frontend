@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, BRAND } from "@/styles/accents";
+import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {

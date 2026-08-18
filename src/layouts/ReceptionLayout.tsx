@@ -17,25 +17,19 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Avatar,
-  Menu,
-  MenuItem,
   useTheme,
   useMediaQuery,
-  Tooltip,
   Chip,
   Badge,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
   DashboardRounded,
-  LogoutRounded,
   AccountCircleRounded,
   CalendarTodayRounded,
   PersonAddRounded,
   QueueRounded,
   ReceiptRounded,
-  LocalHospitalRounded,
   MedicalServicesRounded,
   ApartmentRounded,
   CallSplitRounded,
@@ -44,8 +38,6 @@ import {
   LocalHotelRounded,
   HotelRounded,
   NotificationsRounded,
-  WifiRounded,
-  AccessTimeRounded,
   HealthAndSafetyRounded,
   LockRounded,
 } from "@mui/icons-material";
@@ -120,16 +112,8 @@ export default function ReceptionLayout() {
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) =>
-    setAnchorEl(event.currentTarget);
-  const handleMenuClose = () => setAnchorEl(null);
-  const handleLogout = () => {
-    handleMenuClose();
-    logout();
-  };
 
   const drawerContent = (
     <Box

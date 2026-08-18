@@ -13,7 +13,7 @@ import ErrorState from "@/components/ErrorState";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { SEMANTIC, ACCENTS, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
 
 const inr = formatINRAuto;

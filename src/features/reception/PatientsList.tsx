@@ -59,7 +59,7 @@ import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 
 import type { Patient as PatientBase } from "@/types";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 
 interface Patient extends PatientBase {
   city: string;
@@ -153,7 +153,6 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
     deleteMutation.mutate(deleteDialog.patient.patientId);
   };
 
-
   const avatarColors = [
     BRAND.action, "#7c3aed", SEMANTIC.successDark, SEMANTIC.dangerDark, SEMANTIC.warningDark,
     SEMANTIC.infoDark, "#db2777", "#65a30d",
@@ -194,7 +193,6 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
             {errorMsg}
           </Alert>
         )}
-
 
         {/* ── Search ── */}
         <Box sx={{ mb: 3 }}>

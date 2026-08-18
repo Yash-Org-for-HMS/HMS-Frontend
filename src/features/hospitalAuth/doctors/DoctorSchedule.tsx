@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "@/components/ErrorState";
 import {
-  Box, Paper, TextField, Button, MenuItem, Switch, Typography, Divider, Stack, IconButton, Tooltip,
+  Box, Paper, TextField, Button, MenuItem, Switch, Typography, Stack, IconButton, Tooltip,
 } from "@mui/material";
 import {
   SaveRounded, DeleteOutlineRounded, AddRounded, BoltRounded, ContentCopyRounded, ScheduleRounded,

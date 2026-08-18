@@ -15,7 +15,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import dayjs from "dayjs";
-import { ACCENTS, BRAND } from "@/styles/accents";
+import { BRAND } from "@/styles/accents";
 
 // `basePath` keeps a row-click inside whatever shell renders the page (reception
 // by default; the admin oversight route can pass "/hospital").

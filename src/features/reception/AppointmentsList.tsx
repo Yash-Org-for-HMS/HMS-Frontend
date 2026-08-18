@@ -5,7 +5,7 @@ import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Tooltip,
   TextField, InputAdornment, Alert,
-  Dialog, DialogContent, Grid, Tabs, Tab, Avatar, Stack, Popover
+  Dialog, DialogContent, Tabs, Tab, Avatar, Popover
 } from "@mui/material";
 import {
   AddRounded, SearchRounded, CancelRounded, CheckCircleRounded,
@@ -27,7 +27,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import dayjs, { Dayjs } from "dayjs";
-import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 
 const getAppointmentType = (reason: string | null | undefined) => {
   if (!reason) return { label: "Standard", color: NEUTRAL.muted, bgcolor: "rgba(100,116,139,0.1)" };

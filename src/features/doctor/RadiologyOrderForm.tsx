@@ -1,10 +1,10 @@
-import { ACCENTS, BRAND } from "@/styles/accents";
+import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Button, TextField,
-  Paper, Grid, Alert, MenuItem, Link
+  Paper, MenuItem, Link
 } from "@mui/material";
 import RadiologyTestPicker, { type PickedRadTest } from "@/components/lab/RadiologyTestPicker";
 import { SaveRounded, CameraAltRounded, DescriptionRounded } from "@mui/icons-material";

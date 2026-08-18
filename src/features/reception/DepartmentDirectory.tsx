@@ -14,7 +14,7 @@ import Mascot from "@/components/Mascot";
 import { CardGridSkeleton } from "@/components/TableRowsSkeleton";
 import PageHeader from "@/components/layout/PageHeader";
 import { apiErrorText } from "@/utils/apiError";
-import { ACCENTS, SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 
 export default function DepartmentDirectory() {
   const [search, setSearch] = useState("");

@@ -18,7 +18,7 @@ import BillingModal from "./BillingModal";
 import { useToast } from "@/providers/ToastContext";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
-import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 
 const STATUS = {
   AVAILABLE: { label: "Available", color: SEMANTIC.success, icon: <EventAvailableRounded fontSize="small" /> },
