@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { prescriptionToCart } from "./prescriptionToCart";
 import type { MedicineCatalogRow, MedicineInventoryRow, DispensableMedicine, CartLine, PrescriptionItem, PendingPrescription } from "@/types";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
@@ -225,37 +226,18 @@ export default function DispensaryPOS() {
     setSelectedPrescriptionId(prescription.prescriptionId);
     setPatientId(prescription.patientId || "");
     
-    const newCart: CartLine[] = [];
-    const missingItems: string[] = [];
-    
-    prescription.items.forEach((item: PrescriptionItem) => {
-      const match = availableMedicines.find((m) => m.medicineId === item.medicineId || 
-        (m.genericName && item.genericName && m.genericName.toLowerCase().includes(item.genericName.toLowerCase())));
-      
-      if (match) {
-        // A prescribed item may carry no explicit quantity. Comparing against
-        // `undefined` is always false, which used to skip the stock check and
-        // push a cart line with an undefined quantity — an order for an unknown
-        // amount. Resolve it first, then compare.
-        const wanted = Number(item.quantity ?? 1) || 1;
-        if (match.inStock < wanted) {
-          toast.error(`Not enough stock for ${match.medicineName}! Available: ${match.inStock}`);
-        } else {
-          newCart.push({
-            ...match,
-            quantity: wanted,
-            unitPrice: Number(match.sellingPrice),
-          });
-        }
-      } else {
-        missingItems.push(item.medicineName || item.genericName || "Unnamed medicine");
-      }
-    });
+    // The matching and quantity rules live in prescriptionToCart so they can be
+    // tested directly — this is the step that decides how much of a drug leaves
+    // the pharmacy. Here we only turn its result into UI.
+    const { cart: newCart, missing, outOfStock } = prescriptionToCart(prescription.items, availableMedicines);
 
     setCart(newCart);
 
-    if (missingItems.length > 0) {
-      toast.warning(`Some prescribed items were not found in stock/catalog: ${missingItems.join(', ')}. Add a generic substitute manually.`);
+    for (const s of outOfStock) {
+      toast.error(`Not enough stock for ${s.medicineName}! Available: ${s.available}`);
+    }
+    if (missing.length > 0) {
+      toast.warning(`Some prescribed items were not found in stock/catalog: ${missing.join(', ')}. Add a generic substitute manually.`);
     }
   };
 
