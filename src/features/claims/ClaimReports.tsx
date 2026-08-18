@@ -1,4 +1,9 @@
 import { useState } from "react";
+import { apiGet } from "@/api/client";
+import type {
+  ClaimReportsResponse, ClaimStatusRow, ClaimPayerRow, ClaimSchemeRow,
+  PreAuthTatRow, ClaimAgingBucket, ClaimAgingRow, ClaimRejectionRow, ClaimRegisterRow,
+} from "./claimReports.types";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
@@ -11,7 +16,6 @@ import {
   AccountBalanceWalletRounded, GroupRounded, FileDownloadRounded, ArrowBackRounded,
 } from "@mui/icons-material";
 import { SEMANTIC, BRAND } from "@/styles/accents";
-import { axiosInstance } from "@/api/axios";
 import { exportTableToExcel } from "@/utils/exportExcel";
 import { formatINR } from "@/utils/format";
 import ErrorState from "@/components/ErrorState";
@@ -23,7 +27,7 @@ import { apiErrorText } from "@/utils/apiError";
 
 const ACCENT = BRAND.action;
 const fmtDate = (d: string) => (d ? dayjs(d).format("DD MMM YYYY") : "—");
-const inr = (v: any) => formatINR(Number(v || 0));
+const inr = (v: unknown) => formatINR(Number(v || 0));
 
 const PRESETS = [
   { key: "30d", label: "30 days", from: () => dayjs().subtract(29, "day"), to: () => dayjs() },
@@ -84,9 +88,9 @@ function SimpleTable({ title, head, rows, dense, note }: { title: string; head: 
 
 // ── Report views ────────────────────────────────────────────────────────────
 
-function OverviewReport({ data }: { data: any }) {
+function OverviewReport({ data }: { data: ClaimReportsResponse }) {
   const s = data?.summary || {};
-  const status: any[] = data?.statusBreakdown || [];
+  const status: ClaimStatusRow[] = data?.statusBreakdown || [];
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(3,1fr)", md: "repeat(6,1fr)" }, gap: 1.5 }}>
@@ -111,21 +115,21 @@ function OverviewReport({ data }: { data: any }) {
   );
 }
 
-function PayerReport({ data }: { data: any }) {
-  const rows: any[] = data?.payerWise || [];
+function PayerReport({ data }: { data: ClaimReportsResponse }) {
+  const rows: ClaimPayerRow[] = data?.payerWise || [];
   return <SimpleTable title="Payer-wise volume & amounts" head={["Payer", "Claims", "Billed", "Approved", "Settled", "Outstanding"]}
     rows={rows.map((r) => [r.payerName, r.count, inr(r.billed), inr(r.approved), inr(r.settled), inr(r.outstanding)])} />;
 }
 
-function SchemeReport({ data }: { data: any }) {
-  const rows: any[] = data?.schemeWise || [];
+function SchemeReport({ data }: { data: ClaimReportsResponse }) {
+  const rows: ClaimSchemeRow[] = data?.schemeWise || [];
   return <SimpleTable title="Scheme-wise volume & amounts" head={["Scheme", "Claims", "Billed", "Approved", "Settled"]}
     rows={rows.map((r) => [r.scheme, r.count, inr(r.billed), inr(r.approved), inr(r.settled)])} />;
 }
 
-function TatReport({ data }: { data: any }) {
+function TatReport({ data }: { data: ClaimReportsResponse }) {
   const tat = data?.preAuthTat || {};
-  const rows: any[] = tat.rows || [];
+  const rows: PreAuthTatRow[] = tat.rows || [];
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr" }, gap: 1.5, maxWidth: 420 }}>
@@ -138,10 +142,10 @@ function TatReport({ data }: { data: any }) {
   );
 }
 
-function AgingReport({ data }: { data: any }) {
+function AgingReport({ data }: { data: ClaimReportsResponse }) {
   const aging = data?.aging || {};
-  const buckets: any[] = aging.buckets || [];
-  const rows: any[] = aging.rows || [];
+  const buckets: ClaimAgingBucket[] = aging.buckets || [];
+  const rows: ClaimAgingRow[] = aging.rows || [];
   return (
     <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1.6fr" }, gap: 2 }}>
       <SimpleTable title="Aging buckets" head={["Age", "Claims", "Outstanding"]} rows={buckets.map((b) => [b.label, b.count, inr(b.amount)])} />
@@ -151,20 +155,20 @@ function AgingReport({ data }: { data: any }) {
   );
 }
 
-function RejectionsReport({ data }: { data: any }) {
-  const rows: any[] = data?.rejections || [];
+function RejectionsReport({ data }: { data: ClaimReportsResponse }) {
+  const rows: ClaimRejectionRow[] = data?.rejections || [];
   return <SimpleTable title="Rejected claims" head={["Claim #", "Patient", "Payer", "Status", "Billed", "When"]}
     rows={rows.map((r) => [r.claimNumber, r.patientName, r.payerName, r.status, inr(r.billed), fmtDate(r.at)])} />;
 }
 
-function RegisterReport({ data }: { data: any }) {
-  const rows: any[] = data?.register || [];
+function RegisterReport({ data }: { data: ClaimReportsResponse }) {
+  const rows: ClaimRegisterRow[] = data?.register || [];
   return <SimpleTable title="Claims register" head={["Claim #", "Patient", "UHID", "Payer", "Scheme", "Status", "Billed", "Approved", "Settled", "Registered"]}
     rows={rows.map((r) => [r.claimNumber, r.patientName, r.uhid, r.payerName, r.scheme, r.status, inr(r.billed), inr(r.approved), inr(r.settled), fmtDate(r.registeredAt)])}
     note={<ReportTruncationNote truncated={data?.truncated} totalRows={data?.totalRows} shownRows={data?.shownRows} />} />;
 }
 
-type ReportItem = { key: string; label: string; Comp: React.ComponentType<{ data: any }> };
+type ReportItem = { key: string; label: string; Comp: React.ComponentType<{ data: ClaimReportsResponse }> };
 const GROUPS: { heading: string; items: ReportItem[] }[] = [
   { heading: "Overview", items: [{ key: "overview", label: "Summary & Status", Comp: OverviewReport }] },
   { heading: "Volume", items: [
@@ -189,7 +193,7 @@ export default function ClaimReports() {
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["claim-reports", from, to],
-    queryFn: async () => (await axiosInstance.get("/claims/reports", { params: { from, to } })).data.data,
+    queryFn: () => apiGet<ClaimReportsResponse>("/claims/reports", { params: { from, to } }),
     placeholderData: keepPreviousData,
   });
 

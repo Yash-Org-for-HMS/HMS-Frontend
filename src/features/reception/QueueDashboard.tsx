@@ -1,4 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
+import { apiGetList } from "@/api/client";
+import type { QueueTokenRow, QueueAppointmentRef } from "./queue.types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
@@ -36,7 +38,7 @@ const fmtTime = (iso?: string | null) =>
 // How long the doctor actually spent with the patient. Only meaningful when both
 // ends were stamped — a token completed without a recorded start shows "—"
 // rather than a misleading 0m.
-const consultDuration = (t: any) => {
+const consultDuration = (t: QueueTokenRow) => {
   if (!t.consultationStartedAt || !t.consultationEndedAt) return "—";
   const mins = Math.max(0, Math.round(
     (new Date(t.consultationEndedAt).getTime() - new Date(t.consultationStartedAt).getTime()) / 60000
@@ -87,11 +89,11 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
   const queryClient = useQueryClient();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
-  const [selectedAppt, setSelectedAppt] = useState<any>(null);
-  const [billingDialog, setBillingDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
-  const [vitalsDialog, setVitalsDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
+  const [selectedAppt, setSelectedAppt] = useState<QueueAppointmentRef | null>(null);
+  const [billingDialog, setBillingDialog] = useState<{ open: boolean, appt: QueueAppointmentRef | null }>({ open: false, appt: null });
+  const [vitalsDialog, setVitalsDialog] = useState<{ open: boolean, appt: QueueAppointmentRef | null }>({ open: false, appt: null });
   const [selectedStatus, setSelectedStatus] = useState<string>("");
-  const [checkoutToken, setCheckoutToken] = useState<any>(null);
+  const [checkoutToken, setCheckoutToken] = useState<{ queueTokenId: string; appointmentId?: string | null; patientName?: string } | null>(null);
 
   const { data: vitalsCollector = "RECEPTIONIST" } = useQuery({
     queryKey: ['hospitalSettings', 'vitalsCollector'],
@@ -101,12 +103,9 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
     }
   });
 
-  const { data: tokens = [], isLoading: loading, error: queryError } = useQuery({
+  const { data: tokens = [], isLoading: loading, error: queryError } = useQuery<QueueTokenRow[]>({
     queryKey: ['queue'],
-    queryFn: async () => {
-      const res = await axiosInstance.get("/reception/queue");
-      return res.data.data;
-    },
+    queryFn: async () => (await apiGetList<QueueTokenRow>("/reception/queue")).rows,
     refetchInterval: QUEUE_POLL_MS // Auto refresh every 30s as a fallback
   });
 
@@ -116,10 +115,10 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
   // every unrelated local-state change (menu open/close, dialog toggles), and
   // without memoization each of those re-runs 4+ full-array passes for no reason.
   const activeTokens = useMemo(
-    () => tokens.filter((t: any) => t.statusCode !== "SKIPPED" && t.statusCode !== "COMPLETED" && t.statusCode !== "CANCELLED"),
+    () => tokens.filter((t) => t.statusCode !== "SKIPPED" && t.statusCode !== "COMPLETED" && t.statusCode !== "CANCELLED"),
     [tokens]
   );
-  const skippedTokens = useMemo(() => tokens.filter((t: any) => t.statusCode === "SKIPPED"), [tokens]);
+  const skippedTokens = useMemo(() => tokens.filter((t) => t.statusCode === "SKIPPED"), [tokens]);
   // Finished OPD patients. The backend already returns today's COMPLETED tokens,
   // but nothing rendered them — they were filtered out of `activeTokens` and had
   // no section of their own, so a patient simply vanished from the screen once
@@ -127,24 +126,24 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
   // "who just finished" is the question being asked.
   const completedTokens = useMemo(
     () => tokens
-      .filter((t: any) => t.statusCode === "COMPLETED")
-      .sort((a: any, b: any) => new Date(b.consultationEndedAt || b.updatedAt || 0).getTime() - new Date(a.consultationEndedAt || a.updatedAt || 0).getTime()),
+      .filter((t) => t.statusCode === "COMPLETED")
+      .sort((a, b) => new Date(b.consultationEndedAt || b.updatedAt || 0).getTime() - new Date(a.consultationEndedAt || a.updatedAt || 0).getTime()),
     [tokens]
   );
 
   // Today's first-vs-repeat mix across every token (not just the active ones —
   // a patient already seen still counts toward the day's mix).
-  const firstVisitCount = useMemo(() => tokens.filter((t: any) => t.visitType === "First visit").length, [tokens]);
+  const firstVisitCount = useMemo(() => tokens.filter((t) => t.visitType === "First visit").length, [tokens]);
   const repeatCount = useMemo(
-    () => tokens.filter((t: any) => t.visitType === "Repeat" || t.visitType === "Follow-up").length,
+    () => tokens.filter((t) => t.visitType === "Repeat" || t.visitType === "Follow-up").length,
     [tokens],
   );
 
   // ── Waiting-time monitor ──────────────────────────────────────────────
   // Minutes from joining the queue until seen by the doctor (or until now if
   // still waiting). Recomputed when tokens change; the 30s refetch keeps it fresh.
-  const isWaitingStatus = (t: any) => t.statusCode === "WAITING_FOR_VITALS" || t.statusCode === "READY_FOR_DOCTOR";
-  const waitMinutes = (t: any) => {
+  const isWaitingStatus = (t: QueueTokenRow) => t.statusCode === "WAITING_FOR_VITALS" || t.statusCode === "READY_FOR_DOCTOR";
+  const waitMinutes = (t: QueueTokenRow) => {
     if (!t.createdAt) return 0;
     const end = t.consultationStartedAt ? new Date(t.consultationStartedAt).getTime() : Date.now();
     return Math.max(0, Math.round((end - new Date(t.createdAt).getTime()) / 60000));
@@ -183,7 +182,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
     actionMutation.mutate({ id: idToUse, action });
   };
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, token: any) => {
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, token: QueueTokenRow) => {
     setAnchorEl(event.currentTarget);
     setSelectedTokenId(token.queueTokenId);
     setSelectedStatus(token.statusCode);
@@ -268,7 +267,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
               ) : activeTokens.length === 0 ? (
                 <TableRow><TableCell colSpan={8} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No patients in queue" subtitle="No active patients in the queue right now." /></TableCell></TableRow>
               ) : (
-                activeTokens.map((token: any) => {
+                activeTokens.map((token) => {
                   const isWaiting = token.statusCode === 'WAITING_FOR_VITALS' || token.statusCode === 'READY_FOR_DOCTOR';
                   const isInProgress = token.statusCode === 'IN_CONSULTATION';
                   return (
@@ -371,7 +370,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
             <TableContainer>
               <Table>
                 <TableBody>
-                  {skippedTokens.map((token: any) => (
+                  {skippedTokens.map((token) => (
                     <TableRow key={token.queueTokenId} sx={{ opacity: 0.85, "&:hover": { opacity: 1, bgcolor: "rgba(249,115,22,0.05)" }, transition: 'all 0.2s' }}>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '10%' }}>
                         <Typography variant="body2" sx={{ fontWeight: 700, color: '#f97316' }}>{getDoctorInitials(token.doctorName)}-{token.displayNumber}</Typography>
@@ -433,7 +432,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {completedTokens.map((token: any) => (
+                  {completedTokens.map((token) => (
                     <TableRow key={token.queueTokenId} sx={{ "&:hover": { bgcolor: alpha(SEMANTIC.success, 0.05) }, transition: 'all 0.2s' }}>
                       <TableCell sx={COMPLETED_CELL_SX}>
                         <Typography variant="body2" sx={{ fontWeight: 700, color: SEMANTIC.success }}>{getDoctorInitials(token.doctorName)}-{token.displayNumber}</Typography>
@@ -482,7 +481,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
         {vitalsCollector === "RECEPTIONIST" && selectedAppt?.appointmentId && (
           <MenuItem onClick={openVitals} sx={{ "&:hover": { bgcolor: "rgba(6,182,212,0.08)" } }}>
             <MonitorHeartRounded fontSize="small" sx={{ mr: 1.5, color: "#06b6d4" }} />
-            {tokens.find((t: any) => t.appointmentId === selectedAppt.appointmentId)?.vitalsRecorded ? "Update Vitals" : "Record Vitals"}
+            {tokens.find((t) => t.appointmentId === selectedAppt.appointmentId)?.vitalsRecorded ? "Update Vitals" : "Record Vitals"}
           </MenuItem>
         )}
         {selectedAppt?.appointmentId && (
@@ -494,6 +493,10 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
           <MenuItem
             onClick={() => {
               setAnchorEl(null);
+              // Without the guard a null id would post to /queue/null/checkout;
+              // the menu is only reachable with a token selected, so this is
+              // belt and braces rather than a reachable branch.
+              if (!selectedTokenId) return;
               setCheckoutToken({ queueTokenId: selectedTokenId, appointmentId: selectedAppt?.appointmentId, patientName: selectedAppt?.patientName });
             }}
             sx={{ "&:hover": { bgcolor: "rgba(16,185,129,0.08)" }, color: SEMANTIC.success }}
@@ -510,7 +513,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
       </Menu>
 
       {/* Billing Modal */}
-      {billingDialog.appt && (
+      {billingDialog.appt?.appointmentId && (
         <BillingModal
           open={billingDialog.open}
           onClose={() => setBillingDialog({ open: false, appt: null })}
@@ -529,12 +532,12 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
       />
 
       {/* Vitals Modal */}
-      {vitalsDialog.appt && (
+      {vitalsDialog.appt?.appointmentId && (
         <VitalsModal
           open={vitalsDialog.open}
           onClose={() => setVitalsDialog({ open: false, appt: null })}
           appointmentId={vitalsDialog.appt.appointmentId}
-          patientId={vitalsDialog.appt.patientId}
+          patientId={vitalsDialog.appt.patientId ?? undefined}
           patientName={vitalsDialog.appt.patientName}
           onSaved={() => {
             queryClient.invalidateQueries({ queryKey: ['queue'] });
