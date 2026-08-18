@@ -1,4 +1,11 @@
 import { useState } from "react";
+import { apiGet, apiGetList } from "@/api/client";
+import type {
+  ReceiptsResponse, ReceiptRow, OutstandingResponse, OutstandingRow,
+  UnreturnedAdvancesResponse, UnreturnedAdvanceRow, ServiceWiseResponse, ServiceWiseRow,
+  PharmacyExpenseResponse, PharmacyExpenseRow,
+  PatientStatementResponse, PatientStatementInvoice, PatientSearchRow,
+} from "./billingReports.types";
 import { useQuery } from "@tanstack/react-query";
 import { Box, Paper, Grid, TextField, Tabs, Tab, Autocomplete, Chip } from "@mui/material";
 import {
@@ -6,7 +13,6 @@ import {
   TrendingUpRounded, PersonRounded, SavingsRounded, Inventory2Rounded,
   AccountBalanceRounded,
 } from "@mui/icons-material";
-import { axiosInstance } from "@/api/axios";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import ErrorState from "@/components/ErrorState";
 import PageHeader from "@/components/layout/PageHeader";
@@ -19,9 +25,13 @@ import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/
 const ACCENT = BRAND.action;
 const inr = formatINRAuto;
 const rangeFrom = (days: number): DateRange => ({ from: dayjs().subtract(days, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
-const fmtDate = (v: any) => (v ? dayjs(v).format("DD MMM YYYY") : "—");
-const ts = (v: any) => (v ? new Date(v).getTime() : 0);
-const money = (key: string, label: string) => ({ key, label, align: "right" as const, format: (v: any) => inr(v), value: (r: any) => Number(r[key]) });
+const fmtDate = (v: unknown) => (v ? dayjs(v as string).format("DD MMM YYYY") : "—");
+const ts = (v: unknown) => (v ? new Date(v as string).getTime() : 0);
+// Shared by tables over different row types, so these take unknown and stay
+// assignable to ReportColumn<T> for every T without forcing an index signature.
+const cell = (r: unknown, key: string): unknown => (r as Record<string, unknown>)?.[key];
+const money = (key: string, label: string) =>
+  ({ key, label, align: "right" as const, format: (v: unknown) => inr(v as number), value: (r: unknown) => Number(cell(r, key)) });
 
 export default function BillingReports() {
   const [tab, setTab] = useState(0);
@@ -51,15 +61,15 @@ export function Receipts() {
   const [range, setRange] = useState<DateRange>(() => rangeFrom(6));
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["billing-report-receipts", range.from, range.to],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/receipts", { params: { from: range.from, to: range.to } })).data.data,
+    queryFn: () => apiGet<ReceiptsResponse>("/reception/reports/receipts", { params: { from: range.from, to: range.to } }),
   });
-  const rows: any[] = data?.rows ?? [];
+  const rows: ReceiptRow[] = data?.rows ?? [];
   const prev = data?.previous;
 
   return (
     <Box>
       <ReportFilters value={range} onChange={setRange} />
-      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+      {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Total received" value={inr(data.totals.gross)} current={Number(data.totals.gross)} previous={prev ? Number(prev.gross) : undefined} /></Grid>
@@ -96,14 +106,14 @@ export function Outstanding() {
   const [range, setRange] = useState<DateRange>(() => rangeFrom(89));
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["billing-report-outstanding", range.from, range.to],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/outstanding", { params: { from: range.from, to: range.to } })).data.data,
+    queryFn: () => apiGet<OutstandingResponse>("/reception/reports/outstanding", { params: { from: range.from, to: range.to } }),
   });
-  const rows: any[] = data?.rows ?? [];
+  const rows: OutstandingRow[] = data?.rows ?? [];
 
   return (
     <Box>
       <ReportFilters value={range} onChange={setRange} />
-      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+      {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 12, sm: 4, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.danger} label="Total dues" value={inr(data.totals.totalDues)} /></Grid>
@@ -147,13 +157,13 @@ function refundStatusChip(s: string) {
 export function UnreturnedAdvances() {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["billing-report-unreturned-advances"],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/unreturned-advances")).data.data,
+    queryFn: () => apiGet<UnreturnedAdvancesResponse>("/reception/reports/unreturned-advances"),
   });
-  const rows: any[] = data?.rows ?? [];
+  const rows: UnreturnedAdvanceRow[] = data?.rows ?? [];
 
   return (
     <Box>
-      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+      {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 12, sm: 4, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.danger} label="Owed to patients" value={inr(data.totals.totalOwed)} /></Grid>
@@ -187,14 +197,14 @@ export function ServiceWise() {
   const [range, setRange] = useState<DateRange>(() => rangeFrom(29));
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["billing-report-service-wise", range.from, range.to],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/service-wise", { params: { from: range.from, to: range.to } })).data.data,
+    queryFn: () => apiGet<ServiceWiseResponse>("/reception/reports/service-wise", { params: { from: range.from, to: range.to } }),
   });
-  const rows: any[] = data?.rows ?? [];
+  const rows: ServiceWiseRow[] = data?.rows ?? [];
 
   return (
     <Box>
       <ReportFilters value={range} onChange={setRange} />
-      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+      {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Total revenue" value={inr(data.totals.total)} /></Grid>
@@ -220,15 +230,15 @@ export function PharmacyExpense() {
   const [range, setRange] = useState<DateRange>(() => rangeFrom(29));
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["billing-report-pharmacy-expense", range.from, range.to],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/pharmacy-expense", { params: { from: range.from, to: range.to } })).data.data,
+    queryFn: () => apiGet<PharmacyExpenseResponse>("/reception/reports/pharmacy-expense", { params: { from: range.from, to: range.to } }),
   });
-  const rows: any[] = data?.rows ?? [];
+  const rows: PharmacyExpenseRow[] = data?.rows ?? [];
   const prev = data?.previous;
 
   return (
     <Box>
       <ReportFilters value={range} onChange={setRange} />
-      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+      {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<Inventory2Rounded />} accent={SEMANTIC.warning} label="Total spend" value={inr(data.totals.total)} current={Number(data.totals.total)} previous={prev ? Number(prev.total) : undefined} higherIsBetter={false} /></Grid>
@@ -255,20 +265,23 @@ export function PharmacyExpense() {
 
 export function PatientStatement() {
   const [term, setTerm] = useState("");
-  const [selected, setSelected] = useState<any>(null);
+  const [selected, setSelected] = useState<PatientSearchRow | null>(null);
 
   const { data: options = [] } = useQuery({
     queryKey: ["billing-patient-search", term],
-    queryFn: async () => (await axiosInstance.get("/reception/patients", { params: { search: term, limit: 10 } })).data.data ?? [],
+    queryFn: async () => (await apiGetList<PatientSearchRow>("/reception/patients", { params: { search: term, limit: 10 } })).rows,
     enabled: term.trim().length >= 2,
   });
 
+  // Hoisted so the query key, the URL and `enabled` all read the same value —
+  // the guard is what stops this firing without a patient.
+  const patientId = selected?.patientId;
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["billing-patient-statement", selected?.patientId],
-    queryFn: async () => (await axiosInstance.get(`/reception/patients/${selected.patientId}/billing-summary`)).data.data,
-    enabled: !!selected?.patientId,
+    queryKey: ["billing-patient-statement", patientId],
+    queryFn: () => apiGet<PatientStatementResponse>(`/reception/patients/${patientId}/billing-summary`),
+    enabled: !!patientId,
   });
-  const rows: any[] = data?.invoices ?? [];
+  const rows: PatientStatementInvoice[] = data?.invoices ?? [];
 
   return (
     <Box>
@@ -276,8 +289,8 @@ export function PatientStatement() {
         <Autocomplete
           sx={{ minWidth: 340 }} size="small"
           options={options}
-          getOptionLabel={(o: any) => o ? `${o.firstName} ${o.lastName} · ${o.uhidNumber}` : ""}
-          isOptionEqualToValue={(a: any, b: any) => a.patientId === b.patientId}
+          getOptionLabel={(o) => o ? `${o.firstName} ${o.lastName} · ${o.uhidNumber}` : ""}
+          isOptionEqualToValue={(a, b) => a.patientId === b.patientId}
           filterOptions={(x) => x}
           value={selected}
           onChange={(_, v) => setSelected(v)}
@@ -290,7 +303,7 @@ export function PatientStatement() {
         <Paper elevation={0} sx={{ borderRadius: 3, border: "1px dashed", borderColor: "divider", p: 6, textAlign: "center", color: "text.secondary" }}>
           Search and select a patient to view their account statement.
         </Paper>
-      ) : isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+      ) : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Total billed" value={inr(data.totals.totalBilled)} /></Grid>
