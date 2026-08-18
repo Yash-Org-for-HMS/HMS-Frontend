@@ -46,16 +46,23 @@ export const MIN_PCT_BASELINE = 10;
  * nothing rather than a meaningless "0%" or "∞".
  */
 export function computeDelta(
-  current: number,
-  previous: number | null | undefined,
+  current: number | string,
+  previous: number | string | null | undefined,
   higherIsBetter = true,
 ): Delta {
-  if (previous == null || previous === 0 || !Number.isFinite(previous)) {
+  // Money reaches the UI as a decimal STRING (Prisma Decimal), and
+  // `Number.isFinite("120.50")` is false — so a string baseline used to fall
+  // through the guard below and return mode "none", silently dropping the delta
+  // chip rather than failing. Every call site happens to wrap in Number() today;
+  // coercing here means the next one that forgets still works.
+  const cur = Number(current);
+  const prev = previous == null ? null : Number(previous);
+  if (prev == null || prev === 0 || !Number.isFinite(prev) || !Number.isFinite(cur)) {
     return { pct: null, abs: null, mode: "none", dir: "flat", color: DELTA_FLAT };
   }
-  const pct = ((current - previous) / Math.abs(previous)) * 100;
-  const abs = current - previous;
-  const mode = Math.abs(previous) >= MIN_PCT_BASELINE ? "pct" : "abs";
+  const pct = ((cur - prev) / Math.abs(prev)) * 100;
+  const abs = cur - prev;
+  const mode = Math.abs(prev) >= MIN_PCT_BASELINE ? "pct" : "abs";
   const dir = pct > 0.05 ? "up" : pct < -0.05 ? "down" : "flat";
   if (dir === "flat") return { pct, abs, mode, dir, color: DELTA_FLAT };
   const good = dir === "up" ? higherIsBetter : !higherIsBetter;

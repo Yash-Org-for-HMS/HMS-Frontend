@@ -1,4 +1,12 @@
 import { useState } from "react";
+import { apiGet } from "@/api/client";
+import type {
+  LabOverviewResponse, TopTestRow, RadiologyStatusRow,
+  TestWiseResponse, LabTestWiseRow, RadiologyTypeRow,
+  TurnaroundResponse, TatStat, TatDistributionRow, SlowestRow,
+  PendingResponse, PendingRow, StageRow, AgingRow,
+  CriticalResponse, CriticalRow, RegisterResponse, RegisterRow,
+} from "./labReports.types";
 import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { Box, Grid, TextField, MenuItem, Typography, Alert } from "@mui/material";
@@ -17,27 +25,30 @@ import dayjs from "dayjs";
 
 const inr = formatINRAuto;
 const initialRange = (): DateRange => ({ from: dayjs().subtract(29, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
-const money = (key: string, label: string) => ({ key, label, align: "right" as const, format: (v: any) => inr(v), value: (r: any) => Number(r[key] ?? 0) });
-const num = (key: string, label: string) => ({ key, label, align: "right" as const, value: (r: any) => Number(r[key] ?? 0) });
+const cell = (r: unknown, key: string): unknown => (r as Record<string, unknown>)?.[key];
+const money = (key: string, label: string) =>
+  ({ key, label, align: "right" as const, format: (v: unknown) => inr(v as number), value: (r: unknown) => Number(cell(r, key) ?? 0) });
+const num = (key: string, label: string) =>
+  ({ key, label, align: "right" as const, value: (r: unknown) => Number(cell(r, key) ?? 0) });
 
 // The lab/radiology aggregate dashboard (also the "Overview" tab and the hub item).
 export function LabOverview() {
   const [range, setRange] = useState<DateRange>(initialRange);
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["lab-reports", range.from, range.to],
-    queryFn: async () => (await axiosInstance.get("/lab/reports", { params: { from: range.from, to: range.to } })).data.data,
+    queryFn: () => apiGet<LabOverviewResponse>("/lab/reports", { params: { from: range.from, to: range.to } }),
     placeholderData: keepPreviousData,
   });
 
   const s = data?.summary;
   const p = data?.previous;
-  const topTests: any[] = data?.topTests || [];
-  const radiologyStatusBreakdown: any[] = data?.radiologyStatusBreakdown || [];
+  const topTests: TopTestRow[] = data?.topTests || [];
+  const radiologyStatusBreakdown: RadiologyStatusRow[] = data?.radiologyStatusBreakdown || [];
 
   return (
     <Box>
       <ReportFilters value={range} onChange={setRange} />
-      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+      {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<ScienceRounded />} accent={SEMANTIC.success} label="Total orders" value={s?.totalOrders || 0} current={s?.totalOrders} previous={p?.totalOrders} /></Grid>
@@ -73,17 +84,17 @@ export function TestWise() {
   const { data: opts } = useReportFilterOptions();
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["lab-test-wise", range.from, range.to, doctorId],
-    queryFn: async () => (await axiosInstance.get("/lab/reports/test-wise", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined } })).data.data,
+    queryFn: () => apiGet<TestWiseResponse>("/lab/reports/test-wise", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined } }),
   });
-  const labRows: any[] = data?.labRows ?? [];
-  const radRows: any[] = data?.radRows ?? [];
+  const labRows: LabTestWiseRow[] = data?.labRows ?? [];
+  const radRows: RadiologyTypeRow[] = data?.radRows ?? [];
 
   return (
     <Box>
       <ReportFilters value={range} onChange={setRange}>
         <ReportFilterSelect label="Ordering doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
       </ReportFilters>
-      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+      {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ScienceRounded />} accent={SEMANTIC.success} label="Lab tests performed" value={String(data.totals.labPerformed)} sub={`${data.totals.labTests} distinct`} /></Grid>
@@ -138,12 +149,12 @@ export function TestWise() {
 // So every card falls back to an em dash + a plain sentence when count is 0.
 // Sub-hour figures are worded, not printed: a real median can round to 0.0 and
 // "half are ready within 0 hrs" is nonsense to read.
-const hoursText = (v: any) => { const n = Number(v) || 0; return n < 1 ? "under an hour" : `${n} hrs`; };
-const avgText = (d: any) => (!d?.count ? "—" : Number(d.avg) < 1 ? "< 1 hr" : `${d.avg} hrs`);
-const spreadText = (d: any) => (d?.count
+const hoursText = (v: unknown) => { const n = Number(v) || 0; return n < 1 ? "under an hour" : `${n} hrs`; };
+const avgText = (d?: TatStat) => (!d?.count ? "—" : Number(d.avg) < 1 ? "< 1 hr" : `${d.avg} hrs`);
+const spreadText = (d?: TatStat) => (d?.count
   ? `Half are ready within ${hoursText(d.median)} · 9 in 10 within ${hoursText(d.p90)}`
   : "Nothing completed in this period");
-const onTimeAccent = (d: any) => (!d?.count ? NEUTRAL.muted
+const onTimeAccent = (d?: TatStat) => (!d?.count ? NEUTRAL.muted
   : d.slaPct >= 90 ? SEMANTIC.success : d.slaPct >= 75 ? SEMANTIC.warning : SEMANTIC.danger);
 
 export function Turnaround() {
@@ -153,10 +164,10 @@ export function Turnaround() {
   const { data: opts } = useReportFilterOptions();
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["lab-turnaround", range.from, range.to, doctorId, sla],
-    queryFn: async () => (await axiosInstance.get("/lab/reports/turnaround", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined, slaHours: sla } })).data.data,
+    queryFn: () => apiGet<TurnaroundResponse>("/lab/reports/turnaround", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined, slaHours: sla } }),
   });
-  const dist: any[] = data?.distribution ?? [];
-  const slowest: any[] = data?.slowest ?? [];
+  const dist: TatDistributionRow[] = data?.distribution ?? [];
+  const slowest: SlowestRow[] = data?.slowest ?? [];
 
   return (
     <Box>
@@ -179,7 +190,7 @@ export function Turnaround() {
         includes the time waiting for the patient to come in. Compare each against its own target rather
         than against the other.
       </Alert>
-      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+      {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             {/* Plain words instead of TAT / SLA / p90. "p90" in particular is
@@ -235,11 +246,11 @@ export function Pending() {
   const { data: opts } = useReportFilterOptions();
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["lab-pending", doctorId],
-    queryFn: async () => (await axiosInstance.get("/lab/reports/pending", { params: { doctorId: doctorId || undefined } })).data.data,
+    queryFn: () => apiGet<PendingResponse>("/lab/reports/pending", { params: { doctorId: doctorId || undefined } }),
   });
-  const rows: any[] = data?.rows ?? [];
-  const byStage: any[] = data?.byStage ?? [];
-  const aging: any[] = data?.aging ?? [];
+  const rows: PendingRow[] = data?.rows ?? [];
+  const byStage: StageRow[] = data?.byStage ?? [];
+  const aging: AgingRow[] = data?.aging ?? [];
 
   return (
     <Box>
@@ -247,7 +258,7 @@ export function Pending() {
         <ReportFilterSelect label="Ordering doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
         {data && <Typography variant="caption" sx={{ color: "text.secondary" }}>Live snapshot as of {data.asOf} · open orders from the last {data.lookbackDays} days</Typography>}
       </Box>
-      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+      {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PendingActionsRounded />} accent={SEMANTIC.warning} label="Lab pending" value={String(data.totals.pendingLab)} /></Grid>
@@ -297,16 +308,16 @@ export function CriticalResults() {
   const { data: opts } = useReportFilterOptions();
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["lab-critical", range.from, range.to, doctorId],
-    queryFn: async () => (await axiosInstance.get("/lab/reports/critical", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined } })).data.data,
+    queryFn: () => apiGet<CriticalResponse>("/lab/reports/critical", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined } }),
   });
-  const rows: any[] = data?.rows ?? [];
+  const rows: CriticalRow[] = data?.rows ?? [];
 
   return (
     <Box>
       <ReportFilters value={range} onChange={setRange}>
         <ReportFilterSelect label="Ordering doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
       </ReportFilters>
-      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+      {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CrisisAlertRounded />} accent={SEMANTIC.danger} label="Critical results" value={String(data.totals.critical)} /></Grid>
@@ -354,8 +365,8 @@ export function OrderRegister() {
       })).data.data,
     placeholderData: keepPreviousData,
   });
-  const labRows: any[] = data?.lab?.rows ?? [];
-  const radRows: any[] = data?.radiology?.rows ?? [];
+  const labRows: RegisterRow[] = data?.lab?.rows ?? [];
+  const radRows: RegisterRow[] = data?.radiology?.rows ?? [];
 
   return (
     <Box>
@@ -369,7 +380,7 @@ export function OrderRegister() {
           <MenuItem value="Reported">Reported (radiology)</MenuItem>
         </TextField>
       </ReportFilters>
-      {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
+      {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ScienceRounded />} accent={SEMANTIC.success} label="Lab orders" value={String(data.totals.labOrders)} sub={`${data.totals.labCompleted} completed`} /></Grid>
