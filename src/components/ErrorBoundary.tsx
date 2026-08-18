@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { reportClientError } from "@/utils/errorReporting";
 import { Box, Typography, Button, Stack } from "@mui/material";
 import { ErrorOutlineRounded, RefreshRounded, ReplayRounded } from "@mui/icons-material";
 
@@ -44,9 +45,12 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
-    // Surface the full error + component stack for debugging. A real error-
-    // reporting service (Sentry etc.) would hook in here.
-    console.error("Uncaught error caught by ErrorBoundary:", error, info.componentStack);
+    // Reported rather than merely logged: a render crash on a user's machine
+    // was previously invisible to anyone who could fix it.
+    reportClientError(error, {
+      source: "boundary",
+      componentStack: info.componentStack ?? undefined,
+    });
   }
 
   private handleReset = () => this.setState({ hasError: false, error: null });

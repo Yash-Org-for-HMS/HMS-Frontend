@@ -25,8 +25,14 @@ import { theme } from "./theme";
 import "./i18n";
 import App from "./App";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { installGlobalErrorHandlers } from "@/utils/errorReporting";
 import { ToastProvider } from "@/providers/ToastContext";
 import { ConfirmProvider } from "@/providers/ConfirmContext";
+
+// Catch what React cannot: throws from event handlers and async callbacks,
+// and promise rejections nobody handled. The ErrorBoundary only ever sees
+// render-phase errors, so without this most real failures went unrecorded.
+installGlobalErrorHandlers();
 
 // Wrap the app in an error boundary keyed to the current route, so a render
 // crash shows a contained fallback (not a blank screen) and navigating to

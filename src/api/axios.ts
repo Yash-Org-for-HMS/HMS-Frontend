@@ -1,4 +1,5 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
+import { noteFailedRequestId } from "@/utils/errorReporting";
 
 // Access Vite env variable — the single source of truth for the backend's
 // base URL. Other modules that need it (asset URLs, the socket connection,
@@ -114,6 +115,10 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const status = error.response?.status;
+    // The join between a browser error report and the server log line for the
+    // same request — recorded here because this is the one place every failed
+    // call passes through.
+    noteFailedRequestId(error.response?.headers?.["x-request-id"] as string | undefined);
     const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
     const url = original?.url || "";
 
