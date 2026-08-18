@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { PrescribableMedicine, InpatientMedicationRow } from "@/types";
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
@@ -39,10 +40,10 @@ const isScheduledFrequency = (f: string) => !!f && f !== "SOS";
 interface Props {
   open: boolean;
   onClose: () => void;
-  admission: any; // { admissionId, patientId, patientName }
+  admission: { admissionId: string; patientId?: string | null; patientName?: string };
 }
 
-const emptyForm = { medicine: null as any, quantity: "1", unitsPerDose: "1", dosage: "", frequency: "", durationDays: "", route: "", notes: "" };
+const emptyForm = { medicine: null as PrescribableMedicine | null, quantity: "1", unitsPerDose: "1", dosage: "", frequency: "", durationDays: "", route: "", notes: "" };
 
 export default function IpdMedicinesDialog({ open, onClose, admission }: Props) {
   const toast = useToast();
@@ -55,7 +56,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
   const [view, setView] = useState<"assign" | "chart">("assign");
 
   const medsKey = ["ipd-admission-meds", admission?.admissionId];
-  const { data, isFetching, refetch } = useQuery<{ medications: any[]; total: number }>({
+  const { data, isFetching, refetch } = useQuery<{ medications: InpatientMedicationRow[]; total: number }>({
     queryKey: medsKey,
     queryFn: async () => (await axiosInstance.get(`/ipd/admissions/${admission.admissionId}/medications`)).data.data,
     enabled: open && !!admission?.admissionId,
@@ -93,7 +94,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
   };
 
   const submit = async () => {
-    if (!canAdd) return;
+    if (!canAdd || !form.medicine) return;
     setSaving(true);
     try {
       await axiosInstance.post(`/ipd/admissions/${admission.admissionId}/medications`, {
@@ -229,9 +230,9 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
             value={form.medicine}
             onChange={(_, v) => setForm({ ...form, medicine: v })}
             onInputChange={(_, v, reason) => { if (reason === "input") setSearch(v); }}
-            getOptionLabel={(o: any) => (o ? `${o.medicineName}${o.genericName ? ` (${o.genericName})` : ""}` : "")}
-            isOptionEqualToValue={(o: any, v: any) => o.medicineId === v?.medicineId}
-            renderOption={(props, o: any) => (
+            getOptionLabel={(o) => (o ? `${o.medicineName}${o.genericName ? ` (${o.genericName})` : ""}` : "")}
+            isOptionEqualToValue={(o, v) => o.medicineId === v?.medicineId}
+            renderOption={(props, o) => (
               <li {...props} key={o.medicineId}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
                   <span>{o.medicineName}{o.genericName ? ` · ${o.genericName}` : ""}</span>

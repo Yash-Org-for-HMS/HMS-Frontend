@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import type { MedicineCatalogRow, MedicineInventoryRow, DispensableMedicine, CartLine, PrescriptionItem, PendingPrescription } from "@/types";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useLocation } from "react-router-dom";
@@ -50,8 +51,8 @@ export default function DispensaryPOS() {
     refetchInterval: QUEUE_POLL_MS,
   });
 
-  const medicines = data?.medicines || [];
-  const inventory = data?.inventory || [];
+  const medicines: MedicineCatalogRow[] = data?.medicines || [];
+  const inventory: MedicineInventoryRow[] = data?.inventory || [];
   const pendingPrescriptions = data?.pendingPrescriptions || [];
   const sales = data?.sales || [];
 
@@ -92,17 +93,17 @@ export default function DispensaryPOS() {
   // Map inventory to medicines to see what's actually in stock
   const medicineStock = useMemo(() => {
     const stockMap: Record<string, number> = {};
-    inventory.forEach((inv: any) => {
+    inventory.forEach((inv: MedicineInventoryRow) => {
       stockMap[inv.medicineId] = (stockMap[inv.medicineId] || 0) + inv.availableQuantity;
     });
     return stockMap;
   }, [inventory]);
 
   const availableMedicines = useMemo(() => {
-    return medicines.map((med: any) => ({
+    return medicines.map((med: MedicineCatalogRow): DispensableMedicine => ({
       ...med,
       inStock: medicineStock[med.medicineId] || 0,
-      label: `${med.medicineName} (${med.genericName}) - ₹${parseFloat(med.sellingPrice).toFixed(2)}`
+      label: `${med.medicineName} (${med.genericName}) - ₹${Number(med.sellingPrice).toFixed(2)}`
     }));
   }, [medicines, medicineStock]);
 
@@ -119,14 +120,14 @@ export default function DispensaryPOS() {
         // Load items into cart
         const initialCart: any[] = [];
         order.items.forEach((item: any) => {
-          const match = availableMedicines.find((m: any) => m.medicineId === item.medicineId);
+          const match = availableMedicines.find((m) => m.medicineId === item.medicineId);
           if (match) {
             initialCart.push({
               ...match,
               quantity: item.quantity,
               // Coerce to a number — an existing order's unitPrice arrives from
               // the API as a Decimal string, which would crash item.unitPrice.toFixed().
-              unitPrice: Number(item.unitPrice) || parseFloat(match.sellingPrice),
+              unitPrice: Number(item.unitPrice) || Number(match.sellingPrice),
             });
           }
         });
@@ -146,12 +147,12 @@ export default function DispensaryPOS() {
       const missingItems: string[] = [];
       
       editItems.forEach((item: any) => {
-        const match = availableMedicines.find((m: any) => m.medicineId === item.medicineId);
+        const match = availableMedicines.find((m) => m.medicineId === item.medicineId);
         if (match) {
           initialCart.push({
             ...match,
             quantity: item.quantity,
-            unitPrice: item.unitPrice || parseFloat(match.sellingPrice),
+            unitPrice: Number(item.unitPrice) || Number(match.sellingPrice),
           });
         } else {
           missingItems.push(item.medicineId);
@@ -169,7 +170,7 @@ export default function DispensaryPOS() {
     }
   }, [availableMedicines, location.state]);
 
-  const addToCart = (medicine: any, quantity: number = 1) => {
+  const addToCart = (medicine: DispensableMedicine | null, quantity: number = 1) => {
     if (!medicine) return;
     if (medicine.inStock <= 0) {
       toast.error("Item is out of stock!");
@@ -191,10 +192,12 @@ export default function DispensaryPOS() {
         toast.error(`Not enough stock for ${medicine.medicineName}!`);
         return;
       }
-      setCart(prev => [...prev, { 
-        ...medicine, 
-        quantity: quantity, 
-        unitPrice: parseFloat(medicine.sellingPrice) 
+      setCart(prev => [...prev, {
+        ...medicine,
+        quantity: quantity,
+        // sellingPrice arrives as a Decimal STRING; Number() keeps the cart's
+        // unitPrice numeric so the arithmetic below can't concatenate.
+        unitPrice: Number(medicine.sellingPrice),
       }]);
     }
   };
@@ -202,7 +205,7 @@ export default function DispensaryPOS() {
   // Close a prescription that was already fulfilled (e.g. dispensed via a manual
   // walk-in sale rather than the linked "load prescription" flow, which clears it
   // automatically). Marks it DISPENSED — not cancelled — so the records are right.
-  const handleMarkDispensed = async (p: any) => {
+  const handleMarkDispensed = async (p: PendingPrescription) => {
     const ok = await confirm({
       title: "Mark as dispensed",
       message: "Mark this prescription as already dispensed? It will leave the pending queue. Use this only if you've already given the patient these medicines.",
@@ -218,29 +221,34 @@ export default function DispensaryPOS() {
     }
   };
 
-  const loadPrescription = (prescription: any) => {
+  const loadPrescription = (prescription: PendingPrescription) => {
     setSelectedPrescriptionId(prescription.prescriptionId);
     setPatientId(prescription.patientId || "");
     
-    const newCart: any[] = [];
+    const newCart: CartLine[] = [];
     const missingItems: string[] = [];
     
-    prescription.items.forEach((item: any) => {
-      const match = availableMedicines.find((m: any) => m.medicineId === item.medicineId || 
+    prescription.items.forEach((item: PrescriptionItem) => {
+      const match = availableMedicines.find((m) => m.medicineId === item.medicineId || 
         (m.genericName && item.genericName && m.genericName.toLowerCase().includes(item.genericName.toLowerCase())));
       
       if (match) {
-        if (match.inStock < item.quantity) {
+        // A prescribed item may carry no explicit quantity. Comparing against
+        // `undefined` is always false, which used to skip the stock check and
+        // push a cart line with an undefined quantity — an order for an unknown
+        // amount. Resolve it first, then compare.
+        const wanted = Number(item.quantity ?? 1) || 1;
+        if (match.inStock < wanted) {
           toast.error(`Not enough stock for ${match.medicineName}! Available: ${match.inStock}`);
         } else {
           newCart.push({
             ...match,
-            quantity: item.quantity,
-            unitPrice: parseFloat(match.sellingPrice)
+            quantity: wanted,
+            unitPrice: Number(match.sellingPrice),
           });
         }
       } else {
-        missingItems.push(item.medicineName || item.genericName);
+        missingItems.push(item.medicineName || item.genericName || "Unnamed medicine");
       }
     });
 

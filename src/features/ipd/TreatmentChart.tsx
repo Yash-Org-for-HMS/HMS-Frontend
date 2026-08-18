@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { MedicationDose, MedicationOrder, PatientAllergyRow } from "@/types";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -41,7 +42,7 @@ const ROW_H = 34;
  * nobody has said so. It is the gap on the chart that a drug round is supposed
  * to close, and it needs to look like one.
  */
-const doseMark = (d: any): { mark: string; label: string; color: string } => {
+const doseMark = (d: MedicationDose): { mark: string; label: string; color: string } => {
   if (d.status === "GIVEN") return { mark: "✓", label: "given", color: SEMANTIC.success };
   if (d.status === "MISSED") return { mark: "✗", label: "missed", color: SEMANTIC.danger };
   if (d.status === "HELD") return { mark: "‖", label: "held", color: NEUTRAL.muted };
@@ -58,7 +59,7 @@ const doseMark = (d: any): { mark: string; label: string; color: string } => {
  * intake total, so the sheet has to show where those millilitres came from,
  * or the total has no working on paper.
  */
-const doseDetail = (d: any): string => {
+const doseDetail = (d: MedicationDose): string => {
   const bits: string[] = [];
   const due = dayjs(d.scheduledAt).format("HH:mm");
   const at = d.administeredAt ? dayjs(d.administeredAt).format("HH:mm") : null;
@@ -143,7 +144,7 @@ export default function TreatmentChart() {
   const obsFields: any[] = obs?.fields ?? [];
   const entries: any[] = (fluid?.entries ?? []).filter((e: any) => !e.supersededByEntryId);
   const totals = fluid?.totals;
-  const allergies: any[] = header?.allergies ?? [];
+  const allergies: PatientAllergyRow[] = header?.allergies ?? [];
 
   /**
    * The drug chart for this day. An order earns a row if it has a dose due
@@ -154,8 +155,8 @@ export default function TreatmentChart() {
    * A cancelled order with no dose today is dropped: it is history, and it is
    * still on the medicines list.
    */
-  const marOrders: any[] = (mar ?? []).filter(
-    (o: any) => (o.doses?.length ?? 0) > 0 || o.status === "ACTIVE" || o.status === "REQUESTED",
+  const marOrders: MedicationOrder[] = (mar ?? []).filter(
+    (o: MedicationOrder) => (o.doses?.length ?? 0) > 0 || o.status === "ACTIVE" || o.status === "REQUESTED",
   );
 
   // Oldest first: both read as a diary of the day, so they run the way the day
@@ -380,7 +381,7 @@ export default function TreatmentChart() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {marOrders.map((o: any) => (
+                  {marOrders.map((o) => (
                     <TableRow key={o.ipMedOrderId} sx={{ height: ROW_H, bgcolor: "background.paper" }}>
                       <TableCell sx={{ fontWeight: 600, ...STICKY_TIME }}>{o.medicineName}</TableCell>
                       <TableCell>{o.dosage || ""}</TableCell>
@@ -399,7 +400,7 @@ export default function TreatmentChart() {
                           </Typography>
                         ) : (
                           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
-                            {o.doses.map((d: any) => {
+                            {o.doses.map((d) => {
                               const m = doseMark(d);
                               const detail = doseDetail(d);
                               return (

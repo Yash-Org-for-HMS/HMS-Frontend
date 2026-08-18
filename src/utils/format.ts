@@ -6,7 +6,7 @@
  * Format a number as Indian Rupees. `decimals` fixes both the minimum and
  * maximum fraction digits (default 2). Null/undefined is treated as 0.
  */
-export function formatINR(amount: number | null | undefined, decimals = 2): string {
+export function formatINR(amount: number | string | null | undefined, decimals = 2): string {
   return `₹${Number(amount || 0).toLocaleString("en-IN", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,

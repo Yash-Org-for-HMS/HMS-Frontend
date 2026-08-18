@@ -1,4 +1,5 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import type { PrescribableMedicine, PrescriptionItem } from "@/types";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -132,9 +133,12 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
 
   // Autocomplete state
   const [medicineQuery, setMedicineQuery] = useState("");
-  const [medicineOptions, setMedicineOptions] = useState<any[]>([]);
+  const [medicineOptions, setMedicineOptions] = useState<PrescribableMedicine[]>([]);
   const [medicineLoading, setMedicineLoading] = useState(false);
-  const [selectedMedicine, setSelectedMedicine] = useState<any | null>(null);
+  // freeSolo: the Autocomplete hands back a raw string when the doctor types a
+  // medicine that is not in the catalog. handleAddItem already branches on that
+  // (isCustom), so the state genuinely holds either — say so rather than widen to any.
+  const [selectedMedicine, setSelectedMedicine] = useState<PrescribableMedicine | string | null>(null);
 
   // New item state — dosage is entered as a numeric value + a unit picked from a
   // dropdown (no more typing "mg" by hand), then combined into "500 mg" on save.
@@ -274,8 +278,8 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
       // Merge in, skipping medicines already on the list (same name + dosage).
       const existingKeys = new Set(items.map((i) => `${normalize(i.medicineName)}|${normalize(i.dosage)}`));
       const toAdd = last.items
-        .filter((i: any) => !existingKeys.has(`${normalize(i.medicineName)}|${normalize(i.dosage)}`))
-        .map((i: any) => ({ ...i, buyOutside: i.buyOutside || false }));
+        .filter((i: PrescriptionItem) => !existingKeys.has(`${normalize(i.medicineName)}|${normalize(i.dosage)}`))
+        .map((i: PrescriptionItem) => ({ ...i, buyOutside: (i as { buyOutside?: boolean }).buyOutside || false }));
       if (toAdd.length === 0) {
         toast.error("All medicines from the last visit are already added.");
         return;
@@ -639,7 +643,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
           <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 0.5 }}>
             Allergy warning — this patient is recorded as allergic to a salt in {allergyCheck.warnings.length === 1 ? "this medicine" : "these medicines"}
           </Typography>
-          {allergyCheck.warnings.map((w: any, i: number) => (
+          {allergyCheck.warnings.map((w, i) => (
             <Typography key={i} variant="body2">
               <b>{w.medicineName}</b> contains <b>{w.salt}</b> — recorded allergy: {w.allergen}
               {w.severity ? ` (${w.severity})` : ""}{w.reaction ? `, reaction: ${w.reaction}` : ""}

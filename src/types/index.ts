@@ -162,3 +162,168 @@ export interface Invoice {
 export interface RefundablePayment extends Payment {
   refundable: number;
 }
+
+// ── Pharmacy / medication ────────────────────────────────────────────────────
+// Shapes for the dispensing and medication-administration paths, where a wrong
+// field is a clinical error rather than a cosmetic one. Prices and quantities
+// cross the wire as decimal strings (Prisma Decimal), hence `Money`.
+
+/** A medicine as the catalog endpoint returns it. */
+export interface MedicineCatalogRow {
+  medicineId: string;
+  medicineCode: string;
+  medicineName: string | null;
+  genericName: string;
+  manufacturer: string;
+  sellingPrice: Money;
+  gstPercent?: Money;
+  hsnCode?: string | null;
+  minStockLevel?: number;
+}
+
+/** A catalog row decorated by the POS with live stock and a display label. */
+export interface DispensableMedicine extends MedicineCatalogRow {
+  /** Summed available quantity across non-expired batches. */
+  inStock: number;
+  label: string;
+}
+
+export interface MedicineInventoryRow {
+  medicineInventoryId?: string;
+  medicineId: string;
+  batchNumber?: string | null;
+  expiryDate?: string | null;
+  availableQuantity: number;
+}
+
+/** One line in the dispensary cart. `unitPrice` is a number here: it is coerced
+ *  on the way in precisely because the API sends a Decimal string and
+ *  `.toFixed()` on a string throws. */
+export interface CartLine extends DispensableMedicine {
+  quantity: number;
+  unitPrice: number;
+}
+
+/** A prescribed item, as written by a doctor and read by the pharmacy. */
+export interface PrescriptionItem {
+  medicineId?: string | null;
+  medicineName: string;
+  genericName?: string | null;
+  dosage?: string | null;
+  /** Free text today ("twice daily", "TDS") — not yet a structured schedule. */
+  frequency?: string | null;
+  durationDays?: number | string | null;
+  quantity?: number | null;
+  instructions?: string | null;
+}
+
+export interface PendingPrescription {
+  prescriptionId: string;
+  patientId?: string | null;
+  patientName?: string;
+  uhid?: string;
+  doctorName?: string;
+  createdAt?: string;
+  items: PrescriptionItem[];
+}
+
+export interface PharmacyOrderLine {
+  medicineId: string;
+  medicineName?: string;
+  quantity: number;
+  unitPrice: Money;
+}
+
+// ── IPD medication administration ────────────────────────────────────────────
+
+/**
+ * One scheduled or administered dose on the treatment chart (MAR) — a
+ * MedicationAdministration row plus the resolved staff name the API adds.
+ * PENDING | GIVEN | MISSED | HELD; a PENDING dose whose scheduledAt is in the
+ * past is the unsigned-for gap a drug round is meant to close.
+ */
+export interface MedicationDose {
+  ipMedAdminId: string;
+  ipMedOrderId?: string | null;
+  scheduledAt: string;
+  status: string;
+  administeredAt?: string | null;
+  administeredBy?: string | null;
+  /** Resolved display name for administeredBy; null when never given. */
+  givenBy?: string | null;
+  /** Fluid given with an infused dose — counted in the patient's intake total. */
+  infusedVolumeMl?: number | null;
+  notes?: string | null;
+}
+
+/**
+ * An in-patient medication order as the MAR endpoint projects it.
+ * REQUESTED (asked for, nothing dispensed) -> ACTIVE (pharmacy confirmed,
+ * stock deducted, doses generated) -> BILLED; CANCELLED before BILLED.
+ */
+export interface MedicationOrder {
+  ipMedOrderId: string;
+  medicineName: string | null;
+  dosage?: string | null;
+  /** Free text today ("TDS", "twice daily") — not a structured schedule. */
+  frequency?: string | null;
+  route?: string | null;
+  durationDays?: number | null;
+  status: string;
+  orderedAt?: string | null;
+  /** Resolved prescriber name, not the raw user id. */
+  orderedBy?: string | null;
+  notes?: string | null;
+  /** True for infused routes: the chart prompts for volume when a dose is given. */
+  carriesFluid?: boolean;
+  doses: MedicationDose[];
+}
+
+/** A recorded patient allergy. `allergenType` distinguishes a structured drug
+ *  salt (matchable) from free text (displayed, never matched on). */
+export interface PatientAllergyRow {
+  patientAllergyId?: string;
+  allergen: string;
+  allergenType?: string | null;
+  normalizedAllergen?: string | null;
+  reaction?: string | null;
+  severity?: string | null;
+}
+
+/**
+ * A hit from the doctor's prescription medicine search: a narrow Medicine
+ * projection plus stock summed across batches. Deliberately not the full
+ * catalog row — the search only selects these four fields.
+ */
+export interface PrescribableMedicine {
+  medicineId: string;
+  medicineName: string | null;
+  genericName: string;
+  sellingPrice: Money;
+  inStock: number;
+}
+
+/**
+ * A whole in-patient medication order row, as the admission medications list
+ * returns it (GET /ipd/admissions/:id/medications). Distinct from
+ * MedicationOrder, which is the narrower MAR projection carrying doses.
+ */
+export interface InpatientMedicationRow {
+  ipMedOrderId: string;
+  admissionId?: string | null;
+  patientId?: string | null;
+  medicineId?: string | null;
+  medicineName: string | null;
+  dosage?: string | null;
+  frequency?: string | null;
+  durationDays?: number | null;
+  route?: string | null;
+  quantity: number;
+  unitPrice: Money;
+  totalPrice: Money;
+  /** REQUESTED -> ACTIVE -> BILLED; CANCELLED before BILLED. */
+  status: string;
+  notes?: string | null;
+  orderedAt?: string | null;
+  orderedBy?: string | null;
+}
