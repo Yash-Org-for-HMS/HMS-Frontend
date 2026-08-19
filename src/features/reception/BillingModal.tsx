@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { paidTotal, refundedTotal, refundablePayments } from "@/utils/invoiceMoney";
+import { paidTotal, refundedTotal, refundablePayments, isPendingRefund } from "@/utils/invoiceMoney";
+import type { Refund } from "@/types";
+import RefundReceiptDialog from "@/components/billing/RefundReceiptDialog";
 import { useNavigate } from "react-router-dom";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
@@ -82,6 +84,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   // card payment handed back as cash booked as a card reversal.
   const [refundMethodId, setRefundMethodId] = useState<string>("");
   const [refundReference, setRefundReference] = useState("");
+  const [receiptFor, setReceiptFor] = useState<string | null>(null);
   const [refunding, setRefunding] = useState(false);
 
   // For printing
@@ -567,6 +570,40 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                       <Typography variant="subtitle2" sx={{ color: "#8b5cf6", fontWeight: 700 }}>
                         Refund
                       </Typography>
+                      {/* What has already been returned on this bill. A refund
+                          waiting on approval is listed too, marked as such — it
+                          explains why less is refundable than the payments suggest,
+                          and it has no receipt because no money has moved. */}
+                      {(invoice.Refund ?? []).length > 0 && (
+                        <Box sx={{ mb: 1.5 }}>
+                          {(invoice.Refund ?? []).map((r: Refund) => {
+                            const pending = isPendingRefund(r);
+                            const rejected = String(r.refundStatus).toUpperCase() === "REJECTED";
+                            return (
+                              <Box key={r.refundId} sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.5 }}>
+                                <Typography variant="caption" sx={{ flex: 1, color: "text.secondary", textDecoration: rejected ? "line-through" : "none" }}>
+                                  {r.refundNumber ? `${r.refundNumber} · ` : ""}
+                                  ₹{Number(r.refundAmount).toFixed(2)}
+                                  {r.refundReason ? ` — ${r.refundReason}` : ""}
+                                </Typography>
+                                {pending && (
+                                  <Chip size="small" label="Awaiting approval" sx={{ height: 20, fontSize: "0.66rem", fontWeight: 700 }} />
+                                )}
+                                {rejected && (
+                                  <Chip size="small" label="Rejected" sx={{ height: 20, fontSize: "0.66rem", fontWeight: 700 }} />
+                                )}
+                                {!pending && !rejected && (
+                                  <Button size="small" onClick={() => setReceiptFor(r.refundId)}
+                                    sx={{ textTransform: "none", fontWeight: 600, minWidth: 0 }}>
+                                    Receipt
+                                  </Button>
+                                )}
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      )}
+
                       {!showRefund && (
                         <Button size="small" onClick={() => {
                           setShowRefund(true);
@@ -827,6 +864,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       onPick={(c) => handleAddSocCharge(c.chargeItemId)}
       accent={BRAND.action}
     />
+    <RefundReceiptDialog refundId={receiptFor} open={!!receiptFor} onClose={() => setReceiptFor(null)} />
     </>
   );
 }

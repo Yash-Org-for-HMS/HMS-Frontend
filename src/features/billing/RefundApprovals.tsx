@@ -13,6 +13,7 @@ import { axiosInstance } from "@/api/axios";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import RefundReceiptDialog from "@/components/billing/RefundReceiptDialog";
 
 /**
  * Refunds waiting on an administrator.
@@ -50,6 +51,9 @@ export default function RefundApprovals() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<PendingRefund | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  // Set the moment an approval succeeds: the money has gone back, so the
+  // receipt is the next thing the desk needs.
+  const [receiptFor, setReceiptFor] = useState<string | null>(null);
 
   const { data: rows = [], isLoading: loading, isError, error, refetch } = useQuery<PendingRefund[]>({
     queryKey: ["refund-approvals"],
@@ -62,6 +66,7 @@ export default function RefundApprovals() {
       setBusyId(r.refundId);
       const res = await axiosInstance.post(`/reception/billing/refunds/${r.refundId}/approve`);
       toast.success(res.data?.message || "Refund approved");
+      setReceiptFor(r.refundId);
       await load();
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Could not approve this refund"));
@@ -197,6 +202,8 @@ export default function RefundApprovals() {
           </TableContainer>
         </>
       )}
+
+      <RefundReceiptDialog refundId={receiptFor} open={!!receiptFor} onClose={() => setReceiptFor(null)} />
 
       <Dialog open={!!rejecting} onClose={() => setRejecting(null)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 800 }}>Reject this refund</DialogTitle>
