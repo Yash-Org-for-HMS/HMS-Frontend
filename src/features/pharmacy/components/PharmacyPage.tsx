@@ -15,13 +15,17 @@ interface PharmacyPageProps {
 }
 
 /**
- * Uniform shell for all pharmacy pages. Keeps the container width, padding,
- * and header layout identical across the panel so that navigating between
- * pages only swaps the title and the content — structure stays put.
+ * Uniform shell for all pharmacy pages: header layout and spacing stay put
+ * so navigating between pages only swaps the title and the content.
+ *
+ * It does NOT cap the width. It used to cap at 1400 and centre, which was
+ * invisible on a 1600px window and pushed pharmacy 99px further in than
+ * every other panel on a 1920px one. Horizontal padding belongs to the
+ * layout, which already applies p: 3 to <main>.
  */
 export default function PharmacyPage({ title, subtitle, action, children }: PharmacyPageProps) {
   return (
-    <Box sx={{ maxWidth: 1400, mx: "auto", width: "100%" }}>
+    <Box sx={{ width: "100%" }}>
       <Box
         sx={{
           display: "flex",

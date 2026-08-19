@@ -64,7 +64,7 @@ export default function DoctorPatients({ scope = "mine" }: { scope?: "mine" | "a
     d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
   return (
-    <Box sx={{ p: { xs: 0, md: 1 } }}>
+    <Box>
       <PageHeader
         title={scope === "all" ? "All Patients" : "My Patients"}
         subtitle={scope === "all"

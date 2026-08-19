@@ -44,14 +44,14 @@ export default function LabDashboard() {
 
   if (isError) {
     return (
-      <Box sx={{ p: { xs: 2, md: 4 } }}>
+      <Box>
         <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 } }}>
+    <Box>
       <PageHeader
         title="Lab & Radiology Overview"
         subtitle="What's waiting, oldest first, across the laboratory and radiology departments."

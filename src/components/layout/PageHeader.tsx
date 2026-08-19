@@ -10,15 +10,21 @@ interface PageHeaderProps {
 
 /**
  * Consistent page header: title (+ optional subtitle) on the left, action
- * button(s) pinned top-right. Used by every Super Admin page so the title and
- * primary action always sit in the same place.
+ * button(s) pinned top-right. Used across the panels so the title and primary
+ * action always sit in the same place.
+ *
+ * The row is top-aligned, not bottom-aligned. Bottom-aligning made the title's
+ * position depend on which was taller — the title block or the buttons — so a
+ * page with no subtitle rendered its title 5px lower than its neighbours
+ * (measured: Lab Orders Queue at y=29 against y=24 everywhere else). The title
+ * is the thing the eye tracks between pages, so its top is what must not move.
  */
 export default function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
   return (
     <Box
       sx={{
         display: "flex",
-        alignItems: "flex-end",
+        alignItems: "flex-start",
         justifyContent: "space-between",
         flexWrap: "wrap",
         gap: 2,

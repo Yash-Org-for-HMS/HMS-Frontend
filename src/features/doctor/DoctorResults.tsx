@@ -83,7 +83,7 @@ export default function DoctorResults() {
     new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
   return (
-    <Box sx={{ p: { xs: 0, md: 1 } }}>
+    <Box>
       <PageHeader
         title="Results"
         subtitle="Lab and radiology results for tests you've ordered — including those that came back after the visit."
