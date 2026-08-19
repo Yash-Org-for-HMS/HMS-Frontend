@@ -9,9 +9,9 @@ import {
 } from "@mui/material";
 import {
   ArrowBackRounded, CheckCircleRounded, SaveRounded, MonitorHeartRounded,
-  HistoryRounded, PersonRounded, LocalHospitalRounded, CloudDoneRounded, CloudSyncRounded, CloudOffRounded, AutoAwesomeRounded
+  HistoryRounded, PersonRounded, LocalHospitalRounded, CloudDoneRounded, CloudSyncRounded, CloudOffRounded
 } from "@mui/icons-material";
-import AiSummaryPanel from "./AiSummaryPanel";
+import AiSummaryPanel, { DexGlyph } from "./AiSummaryPanel";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
@@ -285,10 +285,15 @@ export default function ConsultationWorkspace() {
           <Button
             variant={aiOpen ? "contained" : "outlined"}
             onClick={() => setAiOpen((v) => !v)}
-            startIcon={<AutoAwesomeRounded />}
+            startIcon={<DexGlyph size={18} />}
+            // Flat brand, matching every other primary action on this toolbar.
+            // This button carried a THIRD gradient — blue into violet #8b5cf6 —
+            // which sat beside the panel's own sky-to-navy one and the plain
+            // indigo "Complete Consultation" button, three treatments for the
+            // same accent in a single header.
             sx={aiOpen
-              ? { textTransform: "none", fontWeight: 700, color: "#fff", background: `linear-gradient(135deg, ${DOCTOR_BLUE}, #8b5cf6)`, boxShadow: `0 4px 12px ${DOCTOR_BLUE}44`, "&:hover": { background: `linear-gradient(135deg, #2563eb, #7c3aed)` } }
-              : { textTransform: "none", fontWeight: 700, color: DOCTOR_BLUE, borderColor: `${DOCTOR_BLUE}55`, background: `linear-gradient(135deg, ${DOCTOR_BLUE}0d, #8b5cf60d)`, "&:hover": { borderColor: DOCTOR_BLUE, background: `linear-gradient(135deg, ${DOCTOR_BLUE}1a, #8b5cf61a)` } }}
+              ? { textTransform: "none", fontWeight: 700 }
+              : { textTransform: "none", fontWeight: 700, color: DOCTOR_BLUE, borderColor: `${DOCTOR_BLUE}55`, bgcolor: `${DOCTOR_BLUE}0a`, "&:hover": { borderColor: DOCTOR_BLUE, bgcolor: `${DOCTOR_BLUE}18` } }}
           >
             Ask Dr. Dex
           </Button>

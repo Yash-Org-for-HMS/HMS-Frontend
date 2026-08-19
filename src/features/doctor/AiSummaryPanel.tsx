@@ -2,7 +2,7 @@ import { SEMANTIC, BRAND } from "@/styles/accents";
 import { useRef, useState, useEffect } from "react";
 import { Box, Typography, Button, Chip, Alert, Fade, TextField, IconButton, Tooltip } from "@mui/material";
 import {
-  AutoAwesomeRounded, ReplayRounded, StopRounded, PersonRounded,
+  ReplayRounded, StopRounded, PersonRounded,
   MedicalServicesRounded, MedicationRounded, TrendingUpRounded,
   FlagRounded, TaskAltRounded, InfoOutlined, HistoryRounded,
   MonitorHeartRounded, DescriptionRounded, CircleRounded, SendRounded,
@@ -15,10 +15,17 @@ import { API_URL } from "@/api/axios";
 const BLUE = BRAND.action;
 const BLUE_DARK = BRAND.actionDark;
 
-// Signature gradients — the whole "premium AI" look hangs off these two. Kept in
-// the doctor panel's BLUE family (accent #3b82f6) with a sky sheen for depth, so
-// Dr. Dex reads as part of the doctor panel instead of a foreign violet element.
-const GRAD = "linear-gradient(135deg, #38bdf8 0%, #3b82f6 50%, #1d4ed8 100%)";
+// The mark's gradient — the ONLY gradient in the panel, and it covers a badge no
+// bigger than 74px.
+//
+// It used to be `#38bdf8 -> #3b82f6 -> #1d4ed8`, a sky-to-navy ramp belonging to
+// no palette in this product (the app themes indigo from BRAND), painted onto
+// the badge, the primary button, the send button AND the chat bubbles, with an
+// 18px blurred copy of itself behind the badge at 0.55 opacity. Stacked up, that
+// turned the top of the panel into a dark blue cloud sitting next to an indigo
+// "Ask Dr. Dex" button it did not match. Everything else here is now flat BRAND
+// colour, and the halo is a tinted ring rather than a blur.
+const MARK_GRAD = `linear-gradient(140deg, #818cf8 0%, ${BRAND.action} 55%, ${BRAND.actionDark} 100%)`;
 
 const DEX_NAME = "Dr. Dex";
 const DEX_TAGLINE = "AI clinical assistant";
@@ -52,22 +59,62 @@ function authHeaders(extra: Record<string, string> = {}): Record<string, string>
 }
 
 /**
- * Dr. Dex's orb — a circular gradient mark. `glow` adds a soft blurred halo
- * behind it for the hero/empty state; the small variants sit beside replies.
+ * Dr. Dex's glyph, unbadged — a trace with a reading point at its head, since
+ * reading this patient's record is Dex's whole job. Drawn from the same clinical
+ * vocabulary as the vitals monitor rather than the four-pointed sparkle every AI
+ * feature ships with; the sparkle also blurred into an indistinct blob at the
+ * 28px size used beside each reply, where two strokes stay legible.
+ *
+ * Exported so the buttons that summon Dex carry Dex's own mark instead of that
+ * same stock sparkle.
  */
-function DexOrb({ size = 40, glow = false }: { size?: number; glow?: boolean }) {
+export function DexGlyph({ size = 20 }: { size?: number }) {
   return (
-    <Box sx={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
-      {glow && (
-        <Box sx={{ position: "absolute", inset: -size * 0.38, borderRadius: "50%", background: GRAD, filter: "blur(18px)", opacity: 0.55 }} />
-      )}
-      <Box sx={{
-        position: "relative", width: size, height: size, borderRadius: "50%",
-        display: "grid", placeItems: "center", background: GRAD, color: "#fff",
-        boxShadow: "0 6px 18px rgba(37,99,235,0.45)",
-      }}>
-        <AutoAwesomeRounded sx={{ fontSize: size * 0.5 }} />
-      </Box>
+    <Box component="svg" viewBox="0 0 24 24" fill="none" sx={{ width: size, height: size, display: "block" }}>
+      <path
+        d="M2.8 13h3.9l2-5.6 2.5 10.6L13.6 13h1.8"
+        stroke="currentColor"
+        strokeWidth={2.1}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* The reading point at the head of the trace. The gap is deliberate and
+          has to clear the stroke's round cap (~1.05 at this width), or the dot
+          reads as a blob stuck onto the line rather than sitting ahead of it. */}
+      <circle cx="19.6" cy="13" r="1.75" fill="currentColor" />
+    </Box>
+  );
+}
+
+/**
+ * The glyph in its badge.
+ *
+ * A rounded square, not a circle: every other round badge in this app is a
+ * person's avatar, and Dex is not a person.
+ *
+ * `ring` replaces the old blurred halo with a flat tinted ring — it still lifts
+ * the mark off the surface in the hero state without laying a dark cloud across
+ * a quarter of the panel.
+ */
+function DexMark({ size = 40, ring = false }: { size?: number; ring?: boolean }) {
+  return (
+    <Box
+      sx={{
+        width: size,
+        height: size,
+        flexShrink: 0,
+        // Squircle: proportional so it reads the same at 28px and 74px.
+        borderRadius: `${Math.max(7, Math.round(size * 0.31))}px`,
+        display: "grid",
+        placeItems: "center",
+        background: MARK_GRAD,
+        color: "#fff",
+        boxShadow: ring
+          ? `0 0 0 ${Math.round(size * 0.13)}px ${BLUE}14, 0 6px 16px ${BLUE_DARK}2e`
+          : `0 2px 6px ${BLUE_DARK}33`,
+      }}
+    >
+      <DexGlyph size={size * 0.66} />
     </Box>
   );
 }
@@ -218,7 +265,7 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
       {/* ── Header (light — the orb is the only colour pop) ─ */}
       <Box sx={{ bgcolor: "background.paper", color: "text.primary", px: 2, py: 1.5, display: "flex", alignItems: "center", gap: 1.25, borderBottom: "1px solid", borderColor: "divider" }}>
         <Box sx={{ position: "relative", flexShrink: 0 }}>
-          <DexOrb size={36} />
+          <DexMark size={36} />
           <Box sx={{ position: "absolute", right: -1, bottom: -1, width: 10, height: 10, borderRadius: "50%", bgcolor: "#22c55e", border: "2px solid", borderColor: "background.paper" }} />
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -255,18 +302,16 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
         {isEmpty && (
           <Fade in>
             <Box sx={{ textAlign: "center", px: 1, minHeight: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-              <DexOrb size={74} glow />
+              <DexMark size={74} ring />
               <Typography sx={{ fontWeight: 800, fontSize: "1.2rem", mt: 3, mb: 0.75 }}>Hi, I'm {DEX_NAME}</Typography>
               <Typography sx={{ ...typeScale.body, color: "text.secondary", maxWidth: 320, mb: 3 }}>
                 Your clinical co-pilot. I'll review this patient's history, vitals, medications and documents and brief you in seconds — or answer any question you have.
               </Typography>
               <Button
-                variant="contained" size="large" onClick={generate} disabled={!patientId} startIcon={<AutoAwesomeRounded />}
+                variant="contained" size="large" onClick={generate} disabled={!patientId} startIcon={<DexGlyph size={19} />}
                 sx={{
                   textTransform: "none", fontWeight: 700, fontSize: "0.95rem", px: 3.5, py: 1.15, borderRadius: 99,
-                  background: GRAD, boxShadow: "0 10px 24px rgba(37,99,235,0.4)",
-                  "&:hover": { background: GRAD, filter: "brightness(1.06)", boxShadow: "0 12px 28px rgba(37,99,235,0.5)" },
-                  "&.Mui-disabled": { background: "action.disabledBackground", color: "action.disabled", boxShadow: "none" },
+                  bgcolor: BLUE, "&:hover": { bgcolor: BLUE_DARK },
                 }}
               >
                 Generate briefing
@@ -283,7 +328,7 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
 
         {busy && !hasContent && (
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100%" }}>
-            <DexOrb size={56} glow />
+            <DexMark size={56} ring />
             <HeartbeatLoader size={60} />
             <Typography sx={{ ...typeScale.body, color: "text.secondary", mt: 1 }}>{DEX_NAME} is reviewing the record…</Typography>
           </Box>
@@ -291,7 +336,7 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
 
         {hasContent && (
           <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
-            <DexOrb size={28} />
+            <DexMark size={28} />
             <Box sx={{ flex: 1, minWidth: 0, p: 1.5, borderRadius: 3, borderTopLeftRadius: 6, bgcolor: "action.hover" }}>
               <SummaryContent text={text} />
               {busy && <StreamCursor />}
@@ -304,11 +349,11 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
           <Box sx={{ mt: hasContent ? 2.5 : 0 }}>
             {messages.map((m, i) => (
               <Box key={i} sx={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start", alignItems: "flex-start", gap: 1, mb: 1.5 }}>
-                {m.role === "assistant" && <DexOrb size={28} />}
+                {m.role === "assistant" && <DexMark size={28} />}
                 <Box sx={{
                   maxWidth: "82%", px: 1.5, py: 1.15, borderRadius: 3,
                   ...(m.role === "user"
-                    ? { background: GRAD, color: "#fff", borderBottomRightRadius: 6, boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }
+                    ? { bgcolor: BLUE, color: "#fff", borderBottomRightRadius: 6 }
                     : { bgcolor: "action.hover", color: "text.primary", borderTopLeftRadius: 6 }),
                 }}>
                   {m.role === "user"
@@ -358,7 +403,7 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
             type="submit"
             disabled={chatBusy || !patientId || !input.trim()}
             aria-label="Send"
-            sx={{ background: GRAD, color: "#fff", borderRadius: "50%", width: 42, height: 42, flexShrink: 0, boxShadow: "0 4px 12px rgba(37,99,235,0.35)", "&:hover": { background: GRAD, filter: "brightness(1.06)" }, "&.Mui-disabled": { background: "action.disabledBackground", color: "action.disabled", boxShadow: "none" } }}
+            sx={{ bgcolor: BLUE, color: "#fff", borderRadius: "50%", width: 42, height: 42, flexShrink: 0, "&:hover": { bgcolor: BLUE_DARK }, "&.Mui-disabled": { bgcolor: "action.disabledBackground", color: "action.disabled" } }}
           >
             <SendRounded sx={{ fontSize: 20 }} />
           </IconButton>
