@@ -13,12 +13,33 @@ import RadiologyTestPicker, { type PickedRadTest } from "@/components/lab/Radiol
 import LabTestPicker, { type PickedLabTest } from "@/components/lab/LabTestPicker";
 import { useToast } from "@/providers/ToastContext";
 
+export interface OrderForPatient {
+  patientId: string;
+  firstName?: string;
+  lastName?: string | null;
+  uhidNumber?: string;
+}
+
 interface WalkInOrderDialogProps {
   open: boolean;
   kind: "lab" | "radiology";
   onClose: () => void;
-  /** Called after a walk-in order is created so the caller can refetch its queue. */
+  /** Called after an order is created so the caller can refetch its queue. */
   onCreated: () => void;
+  /**
+   * Pre-selected patient. When set the search box is replaced by a fixed
+   * summary — a nurse ordering from the queue already has the patient in
+   * front of them, and re-searching invites picking the wrong one.
+   */
+  patient?: OrderForPatient | null;
+  /**
+   * The clinician the order is raised UNDER — not whoever is typing it.
+   * A nurse ordering from the queue passes the doctor that patient is queued
+   * for, so the record answers 'on whose authority'. The lab counter taking a
+   * walk-in with an outside prescription has no internal doctor and omits it.
+   */
+  doctorId?: string | null;
+  doctorName?: string | null;
 }
 
 const PRIORITIES = [
@@ -36,7 +57,9 @@ const PRIORITIES = [
  * handles walk-in sales. The order is created UNPAID, so it shows up in the
  * patient's billing unbilled list.
  */
-export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: WalkInOrderDialogProps) {
+export default function WalkInOrderDialog({
+  open, kind, onClose, onCreated, patient, doctorId, doctorName,
+}: WalkInOrderDialogProps) {
   const toast = useToast();
 
   const [patientQuery, setPatientQuery] = useState("");
@@ -63,6 +86,11 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
     enabled: open && patientQuery.trim().length >= 2,
   });
 
+  // A caller-supplied patient takes precedence; the search state is only used
+  // when there isn't one.
+  const patientForOrder = patient ?? selectedPatient;
+  const fixedPatient = Boolean(patient);
+
   const reset = () => {
     setPatientQuery("");
     setSelectedPatient(null);
@@ -79,7 +107,7 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
   };
 
   const handleSubmit = async () => {
-    if (!selectedPatient) {
+    if (!patientForOrder) {
       toast.error("Please select a patient.");
       return;
     }
@@ -96,20 +124,22 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
       setSubmitting(true);
       if (kind === "lab") {
         await axiosInstance.post("/lab/orders", {
-          patientId: selectedPatient.patientId,
+          patientId: patientForOrder.patientId,
           priorityId: priority,
           chargeItemIds: labBasket.map((t) => t.chargeItemId),
+          doctorId: doctorId || undefined,
         });
       } else {
         await axiosInstance.post("/lab/radiology-orders", {
-          patientId: selectedPatient.patientId,
+          patientId: patientForOrder.patientId,
           priorityId: priority,
           chargeItemId: selectedTest!.chargeItemId,
           scanType: selectedTest!.testName,
           radiologistNotes: notes,
+          doctorId: doctorId || undefined,
         });
       }
-      toast.success(`Walk-in ${kind === "lab" ? "lab" : "radiology"} order created`);
+      toast.success(`${kind === "lab" ? "Lab" : "Radiology"} order created`);
       reset();
       onCreated();
       onClose();
@@ -122,36 +152,60 @@ export default function WalkInOrderDialog({ open, kind, onClose, onCreated }: Wa
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>New Walk-in {kind === "lab" ? "Lab" : "Radiology"} Order</DialogTitle>
+      <DialogTitle>New {fixedPatient ? "" : "Walk-in "}{kind === "lab" ? "Lab" : "Radiology"} Order</DialogTitle>
       <DialogContent dividers>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
-          <Autocomplete
-            fullWidth
-            options={patients}
-            value={selectedPatient}
-            loading={searchingPatients}
-            getOptionLabel={(p) => (p ? `${p.firstName} ${p.lastName || ""} (${p.uhidNumber})` : "")}
-            isOptionEqualToValue={(o, v) => o.patientId === v?.patientId}
-            onInputChange={(_, v) => setPatientQuery(v)}
-            onChange={(_, v) => setSelectedPatient(v)}
-            noOptionsText={patientQuery.trim().length < 2 ? "Type at least 2 characters" : "No matching patients"}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Patient"
-                placeholder="Search by name or UHID"
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {searchingPatients ? <HeartbeatLoader size={22} /> : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
-          />
+          {fixedPatient ? (
+            /* Ordering for a patient already in front of you (the queue, the
+               ward). Fixed rather than searchable so the wrong patient can't be
+               picked, and showing the authorising clinician because that is
+               what makes this an order rather than a request. */
+            <Box sx={{ p: 2, borderRadius: 2, border: "1px solid", borderColor: "divider", bgcolor: "action.hover" }}>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>
+                Patient
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 700 }}>
+                {patient?.firstName} {patient?.lastName || ""}
+                {patient?.uhidNumber && (
+                  <Typography component="span" variant="body2" sx={{ color: "text.secondary", ml: 1 }}>
+                    {patient.uhidNumber}
+                  </Typography>
+                )}
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
+                {doctorName
+                  ? `Ordered under ${doctorName}`
+                  : "No ordering doctor on this visit — the order will record only who raised it."}
+              </Typography>
+            </Box>
+          ) : (
+            <Autocomplete
+              fullWidth
+              options={patients}
+              value={selectedPatient}
+              loading={searchingPatients}
+              getOptionLabel={(p) => (p ? `${p.firstName} ${p.lastName || ""} (${p.uhidNumber})` : "")}
+              isOptionEqualToValue={(o, v) => o.patientId === v?.patientId}
+              onInputChange={(_, v) => setPatientQuery(v)}
+              onChange={(_, v) => setSelectedPatient(v)}
+              noOptionsText={patientQuery.trim().length < 2 ? "Type at least 2 characters" : "No matching patients"}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Patient"
+                  placeholder="Search by name or UHID"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {searchingPatients ? <HeartbeatLoader size={22} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+            />          )}
 
           {kind === "lab" ? (
             <Box>

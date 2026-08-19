@@ -1,15 +1,17 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import WalkInOrderDialog from "@/components/lab/WalkInOrderDialog";
 import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip,
-  Alert, Avatar, Tooltip, Grid, ToggleButton, ToggleButtonGroup,
+  Alert, Avatar, Tooltip, Grid, ToggleButton, ToggleButtonGroup, IconButton,
 } from "@mui/material";
 import {
   MonitorHeartRounded, CheckCircleRounded, SyncRounded, HourglassTopRounded,
   ArrowForwardRounded, ViewListRounded, DashboardCustomizeRounded,
+  ScienceRounded, CameraAltRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
@@ -37,6 +39,11 @@ type ViewMode = "queue" | "station";
 
 export default function NurseQueue() {
   const location = useLocation();
+  // Raising an order for the patient in front of you. The token carries both
+  // the patient and the doctor they are queued for, so the order records whose
+  // authority it is under rather than only who typed it.
+  const [orderFor, setOrderFor] = useState<{ token: any; kind: "lab" | "radiology" } | null>(null);
+
   const { data, isLoading: loading, error, refetch: fetchQueue } = useQuery({
     queryKey: ["nurse-queue"],
     queryFn: async () => {
@@ -265,6 +272,30 @@ export default function NurseQueue() {
                               {hasVitals ? "Update Vitals" : "Record Vitals"}
                             </Button>
                           )}
+                          {!isCompleted && (
+                            <>
+                              <Tooltip title="Order lab tests">
+                                <IconButton
+                                  size="small"
+                                  aria-label={`Order lab tests for ${token.patientName}`}
+                                  onClick={() => setOrderFor({ token, kind: "lab" })}
+                                  sx={{ ml: 1, color: NURSE_PURPLE }}
+                                >
+                                  <ScienceRounded fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Order radiology">
+                                <IconButton
+                                  size="small"
+                                  aria-label={`Order radiology for ${token.patientName}`}
+                                  onClick={() => setOrderFor({ token, kind: "radiology" })}
+                                  sx={{ ml: 0.5, color: NURSE_PURPLE }}
+                                >
+                                  <CameraAltRounded fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
@@ -444,6 +475,24 @@ export default function NurseQueue() {
           patientId={vitalsDialog.token.patientId}
           patientName={vitalsDialog.token.patientName}
           onSaved={() => fetchQueue()}
+        />
+      )}
+
+      {/* The order carries the doctor this patient is queued for, so the record
+          says whose authority it is under — not just which nurse raised it. */}
+      {orderFor && (
+        <WalkInOrderDialog
+          open
+          kind={orderFor.kind}
+          patient={{
+            patientId: orderFor.token.patientId,
+            firstName: orderFor.token.patientName,
+            uhidNumber: orderFor.token.uhid,
+          }}
+          doctorId={orderFor.token.doctorId}
+          doctorName={orderFor.token.doctorName}
+          onClose={() => setOrderFor(null)}
+          onCreated={() => fetchQueue()}
         />
       )}
     </Box>
