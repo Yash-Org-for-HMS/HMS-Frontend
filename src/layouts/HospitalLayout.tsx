@@ -77,6 +77,9 @@ export default function HospitalLayout() {
     // a tab non-admins can't actually open.
     { text: "Financial Analytics", icon: <AccountBalanceRounded />, path: "/hospital/financials", adminOnly: true, module: "Billing", section: "Overview" },
     { text: "GST Report", icon: <AssessmentRounded />, path: "/hospital/gst-report", adminOnly: true, module: "Billing", section: "Overview" },
+    // Admin-only by design: raising a refund and approving it have to be
+    // different people, so this never appears for the desk that raises them.
+    { text: "Refund Approvals", icon: <AccountBalanceRounded />, path: "/hospital/refund-approvals", adminOnly: true, module: "Billing", section: "Overview" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/hospital/reports", section: "Overview" },
     // Operations: hospital-wide, read-oriented windows into day-to-day activity.
     // Admin-only (mirrors the backend org-wide data view for H_ADMIN); these

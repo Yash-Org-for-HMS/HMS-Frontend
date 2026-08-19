@@ -27,9 +27,33 @@ export function paidTotal(invoice?: { Payment?: Payment[] | null } | null): numb
   return (invoice?.Payment ?? []).reduce((s, p) => s + num(p.paidAmount), 0);
 }
 
-/** Everything returned to the payer against this invoice. */
+/**
+ * A refund only counts as money once an administrator has released it.
+ *
+ * Refunds at or above the hospital's approval threshold are raised PENDING and
+ * return nothing until approved, so there are two different questions here and
+ * conflating them would either credit a patient before they were handed anything
+ * (counting PENDING as returned) or let three pending refunds each claim the
+ * same payment (ignoring PENDING entirely). They get separate functions.
+ */
+const isCompleted = (r: Refund): boolean => String(r.refundStatus).toUpperCase() === "COMPLETED";
+
+/** Still awaiting an administrator — no money has moved. */
+export const isPendingRefund = (r: Refund): boolean => String(r.refundStatus).toUpperCase() === "PENDING";
+
+/**
+ * Money actually returned to the payer: COMPLETED refunds only.
+ *
+ * This is the one that feeds balances, dues and "has this been settled" — it
+ * must never include a refund that is still waiting on approval.
+ */
 export function refundedTotal(invoice?: { Refund?: Refund[] | null } | null): number {
-  return (invoice?.Refund ?? []).reduce((s, r) => s + num(r.refundAmount), 0);
+  return (invoice?.Refund ?? []).filter(isCompleted).reduce((s, r) => s + num(r.refundAmount), 0);
+}
+
+/** Raised but not yet released — shown to explain why a payment isn't refundable. */
+export function pendingRefundTotal(invoice?: { Refund?: Refund[] | null } | null): number {
+  return (invoice?.Refund ?? []).filter(isPendingRefund).reduce((s, r) => s + num(r.refundAmount), 0);
 }
 
 /** Money the hospital has actually kept: collected − refunded. */
@@ -56,12 +80,20 @@ export function isSettled(invoice?: Pick<Invoice, "netAmount"> & { Payment?: Pay
  * Payments that still have money left to return, each carrying its remaining
  * refundable amount. A payment already fully refunded drops out, so the refund
  * picker can never offer to return money twice.
+ *
+ * Counts PENDING refunds against the payment as well as COMPLETED ones — the
+ * opposite of `refundedTotal`, and deliberately. A pending refund has not
+ * returned any money, but it has SPOKEN FOR it; leaving it out here would let
+ * the desk raise a second refund for the same payment while the first is still
+ * waiting, and an admin would then approve both. The backend enforces the same
+ * rule, so this only keeps the UI from offering what the server will refuse.
  */
 export function refundablePayments(
   invoice?: { Payment?: Payment[] | null; Refund?: Refund[] | null } | null,
 ): RefundablePayment[] {
   const refundedByPayment: Record<string, number> = {};
   for (const r of invoice?.Refund ?? []) {
+    if (!isCompleted(r) && !isPendingRefund(r)) continue; // REJECTED frees the money again
     refundedByPayment[r.paymentId] = (refundedByPayment[r.paymentId] ?? 0) + num(r.refundAmount);
   }
   return (invoice?.Payment ?? [])

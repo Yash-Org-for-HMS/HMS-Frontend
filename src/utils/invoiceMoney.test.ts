@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { num, paidTotal, refundedTotal, netPaid, balanceOf, isSettled, refundablePayments } from "./invoiceMoney";
+import { num, paidTotal, refundedTotal, pendingRefundTotal, netPaid, balanceOf, isSettled, refundablePayments } from "./invoiceMoney";
 import type { Invoice, Payment, Refund } from "@/types";
 
 // Amounts arrive from the API as decimal STRINGS, so every fixture uses strings —
@@ -90,5 +90,70 @@ describe("refundablePayments", () => {
 
   it("returns nothing when there are no payments", () => {
     expect(refundablePayments(invoice("1000"))).toEqual([]);
+  });
+});
+
+// ── Refunds awaiting approval ────────────────────────────────────────────────
+// A refund at or above the hospital's threshold is raised PENDING and returns
+// nothing until an admin releases it. That creates two different questions about
+// the same rows, and answering either with the other is a money bug:
+//   - "how much came back?"      -> COMPLETED only
+//   - "what can still be raised?" -> COMPLETED *and* PENDING
+const refStatus = (refundId: string, paymentId: string, refundAmount: string, refundStatus: string): Refund =>
+  ({ refundId, paymentId, refundAmount, refundStatus });
+
+describe("refunds awaiting approval", () => {
+  const withPending = invoice(
+    "1000.00",
+    [pay("p1", "1000.00")],
+    [refStatus("r1", "p1", "600.00", "PENDING")],
+  );
+
+  it("a pending refund is NOT money returned", () => {
+    expect(refundedTotal(withPending)).toBe(0);
+    expect(netPaid(withPending)).toBe(1000);
+    // The patient is not owed anything yet — nothing has been handed back.
+    expect(balanceOf(withPending)).toBe(0);
+    expect(isSettled(withPending)).toBe(true);
+  });
+
+  it("but a pending refund HAS spoken for the money", () => {
+    // ₹600 of the ₹1,000 is claimed, so only ₹400 can still be raised. Counting
+    // COMPLETED alone here would offer the full ₹1,000 twice over.
+    expect(refundablePayments(withPending).map((p) => p.refundable)).toEqual([400]);
+    expect(pendingRefundTotal(withPending)).toBe(600);
+  });
+
+  it("approving it turns the claim into real money", () => {
+    const approved = invoice("1000.00", [pay("p1", "1000.00")], [refStatus("r1", "p1", "600.00", "COMPLETED")]);
+    expect(refundedTotal(approved)).toBe(600);
+    expect(netPaid(approved)).toBe(400);
+    expect(balanceOf(approved)).toBe(600); // refunding re-opens what is owed
+    expect(refundablePayments(approved).map((p) => p.refundable)).toEqual([400]);
+  });
+
+  it("rejecting it releases the money for a fresh refund", () => {
+    const rejected = invoice("1000.00", [pay("p1", "1000.00")], [refStatus("r1", "p1", "600.00", "REJECTED")]);
+    expect(refundedTotal(rejected)).toBe(0);
+    expect(pendingRefundTotal(rejected)).toBe(0);
+    // The whole payment is claimable again — a rejected refund must not sit on it.
+    expect(refundablePayments(rejected).map((p) => p.refundable)).toEqual([1000]);
+  });
+
+  it("mixes the three states without letting any leak into the others", () => {
+    const mixed = invoice("1000.00", [pay("p1", "1000.00")], [
+      refStatus("r1", "p1", "200.00", "COMPLETED"),
+      refStatus("r2", "p1", "300.00", "PENDING"),
+      refStatus("r3", "p1", "400.00", "REJECTED"),
+    ]);
+    expect(refundedTotal(mixed)).toBe(200);        // only the completed one
+    expect(pendingRefundTotal(mixed)).toBe(300);
+    expect(netPaid(mixed)).toBe(800);
+    expect(refundablePayments(mixed).map((p) => p.refundable)).toEqual([500]); // 1000 − 200 − 300
+  });
+
+  it("treats status case-insensitively — the API is the source of that string", () => {
+    const lower = invoice("1000.00", [pay("p1", "1000.00")], [refStatus("r1", "p1", "250.00", "completed")]);
+    expect(refundedTotal(lower)).toBe(250);
   });
 });

@@ -77,6 +77,11 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const [refundPaymentId, setRefundPaymentId] = useState("");
   const [refundAmount, setRefundAmount] = useState("");
   const [refundReason, setRefundReason] = useState("");
+  // How the money physically goes back. Recorded rather than inferred: the cash
+  // book used to assume a refund left by the method the payment arrived on, so a
+  // card payment handed back as cash booked as a card reversal.
+  const [refundMethodId, setRefundMethodId] = useState<string>("");
+  const [refundReference, setRefundReference] = useState("");
   const [refunding, setRefunding] = useState(false);
 
   // For printing
@@ -355,13 +360,20 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         paymentId: refundPaymentId,
         amount: parseFloat(refundAmount),
         reason: refundReason.trim(),
+        paymentMethodId: refundMethodId === "" ? null : Number(refundMethodId),
+        referenceNumber: refundReference.trim() || null,
       });
       if (res.data.success) {
-        toast.success("Refund processed");
+        // The server says whether the money went back or the refund is waiting on
+        // an administrator; a flat "Refund processed" on a PENDING one would tell
+        // the desk the patient had been paid when they had not.
+        toast.success(res.data?.message || "Refund processed");
         setShowRefund(false);
         setRefundPaymentId("");
         setRefundAmount("");
         setRefundReason("");
+        setRefundMethodId("");
+        setRefundReference("");
         await fetchBillingData();
       }
     } catch (err: unknown) {
@@ -593,6 +605,27 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                           onChange={(e) => setRefundAmount(e.target.value)}
                           inputProps={{ min: 0, max: selectedRefundable, step: "0.01" }}
                           helperText={`Max refundable: ${selectedRefundable.toFixed(2)} INR`}
+                          sx={{ mb: 2 }}
+                        />
+                        <TextField
+                          select fullWidth size="small"
+                          label="Refunded by"
+                          value={refundMethodId}
+                          onChange={(e) => setRefundMethodId(e.target.value)}
+                          helperText="How the money is going back — blank assumes the original method"
+                          sx={{ mb: 2 }}
+                        >
+                          <MenuItem value="">Same as the original payment</MenuItem>
+                          {paymentMethods.map((m) => (
+                            <MenuItem key={m.paymentMethodId} value={String(m.paymentMethodId)}>{m.methodName}</MenuItem>
+                          ))}
+                        </TextField>
+                        <TextField
+                          fullWidth size="small"
+                          label="Reference / UTR (optional)"
+                          placeholder="Bank or UPI reference for a non-cash refund"
+                          value={refundReference}
+                          onChange={(e) => setRefundReference(e.target.value)}
                           sx={{ mb: 2 }}
                         />
                         <TextField

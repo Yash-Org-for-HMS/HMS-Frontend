@@ -106,8 +106,15 @@ export interface Refund {
   paymentId: string;
   refundAmount: Money;
   refundReason?: string | null;
+  /** "PENDING" | "COMPLETED" | "REJECTED". Only COMPLETED is money returned. */
   refundStatus: string;
+  /** Null while PENDING — set at the moment the refund completes. */
   processedAt?: string | null;
+  /** How the money went back, and its bank/UPI reference. Null on older rows. */
+  paymentMethodId?: number | null;
+  referenceNumber?: string | null;
+  approvedBy?: string | null;
+  rejectionReason?: string | null;
 }
 
 /** The status lookup rows carry their own label + colour, which the UI renders

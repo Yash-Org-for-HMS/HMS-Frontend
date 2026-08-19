@@ -74,6 +74,7 @@ const TreatmentChart = lazy(() => import("@/features/ipd/TreatmentChart"));
 const VaccineCatalog = lazy(() => import("@/features/hospitalAuth/settings/VaccineCatalog"));
 const ScheduleOfCharges = lazy(() => import("@/features/hospitalAuth/settings/ScheduleOfCharges"));
 const FormTemplatesList = lazy(() => import("@/features/hospitalAuth/formBuilder/FormTemplatesList"));
+const RefundApprovals = lazy(() => import("@/features/billing/RefundApprovals"));
 const FormBuilder = lazy(() => import("@/features/hospitalAuth/formBuilder/FormBuilder"));
 const AuditLogs = lazy(() => import("@/features/hospitalAuth/settings/AuditLogs"));
 const FinancialDashboard = lazy(() => import("@/features/billing/FinancialDashboard"));
@@ -264,6 +265,7 @@ function App() {
             <Route path="/hospital/users/:id/edit" element={el(HospitalUserForm)} />
             <Route path="/hospital/financials" element={elGated(FinancialDashboard, "Billing", "Financial Analytics")} />
             <Route path="/hospital/gst-report" element={elGated(GstReport, "Billing", "GST Report")} />
+            <Route path="/hospital/refund-approvals" element={elGated(RefundApprovals, "Billing", "Refund Approvals")} />
             <Route path="/hospital/reports" element={el(Reports)} />
             <Route path="/hospital/module-access" element={el(ModuleAccess)} />
             <Route path="/hospital/doctors" element={el(DoctorsList)} />

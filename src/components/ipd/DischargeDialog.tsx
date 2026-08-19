@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem,
   Stack, Typography, Box, IconButton, Divider,
+  RadioGroup, FormControlLabel, Radio, Alert,
 } from "@mui/material";
 import { LogoutRounded, AddRounded, DeleteOutlineRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -95,6 +96,13 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // What the patient must cover after insurance approval (shortfall).
   const patientShortfall = claim ? Math.max(0, total - claimApproved) : null;
 
+  // Leftover advance: the desk has to say what happens to it before the
+  // discharge goes through. This used to be a caption suggesting they refund it
+  // from a menu afterwards, which is how an admission was discharged still
+  // holding ₹97,635 that nobody returned.
+  const [advanceAction, setAdvanceAction] = useState<"" | "REFUND" | "HOLD">("");
+  const [holdReason, setHoldReason] = useState("");
+
   const submit = async () => {
     setSaving(true);
     try {
@@ -104,9 +112,14 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
         extraCharges: extras
           .filter((e) => e.chargeItemId || (e.description.trim() && Number(e.amount) > 0))
           .map((e) => e.chargeItemId ? { chargeItemId: e.chargeItemId } : { description: e.description.trim(), amount: Number(e.amount) }),
+        advanceHoldReason: advanceAction === "HOLD" ? holdReason.trim() : undefined,
       });
       const inv = res.data?.data?.invoice;
+      const advanceLeft = Number(res.data?.data?.depositRemaining ?? 0);
       toast.success(inv ? `Discharged — invoice ${inv.invoiceNumber} (${formatINR(inv.netAmount)})` : "Patient discharged");
+      if (advanceAction === "REFUND" && advanceLeft > 0) {
+        toast.info(`${formatINR(advanceLeft)} advance is still held — use the refund action on this admission to return it.`);
+      }
       onDone();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to discharge"));
@@ -266,9 +279,29 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
             <Typography variant="subtitle1" sx={{ fontWeight: 800, color: payable > 0 ? SEMANTIC.danger : SEMANTIC.success }}>{formatINR(payable)}</Typography>
           </Box>
           {depositRefundable > 0 && (
-            <Typography variant="caption" sx={{ color: "#8b5cf6" }}>
-              {formatINR(depositRefundable)} deposit will remain after this bill — refund it from the admission's ⋮ menu.
-            </Typography>
+            <Alert severity="warning" sx={{ borderRadius: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
+                {formatINR(depositRefundable)} of this patient's advance is left over
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                It stays with the hospital until someone returns it. Say what happens to it.
+              </Typography>
+              <RadioGroup value={advanceAction} onChange={(e) => setAdvanceAction(e.target.value as "REFUND" | "HOLD")} sx={{ mt: 1 }}>
+                <FormControlLabel value="REFUND" control={<Radio size="small" />}
+                  label={<Typography variant="body2">Refund it to the patient</Typography>} />
+                <FormControlLabel value="HOLD" control={<Radio size="small" />}
+                  label={<Typography variant="body2">Hold it for now</Typography>} />
+              </RadioGroup>
+              {advanceAction === "HOLD" && (
+                <TextField
+                  fullWidth size="small" sx={{ mt: 1 }}
+                  label="Why is it being held? (required)"
+                  placeholder="e.g. bill under dispute, cheque awaited"
+                  value={holdReason}
+                  onChange={(e) => setHoldReason(e.target.value)}
+                />
+              )}
+            </Alert>
           )}
 
           <TextField fullWidth label="Discharge summary" value={summary} onChange={(e) => setSummary(e.target.value)} multiline rows={3} placeholder="Condition at discharge, instructions, follow-up…" />
@@ -279,7 +312,10 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
         {/* Block discharge until the bill preview has actually loaded — otherwise the
             operator could confirm on a misleading ₹0 total. */}
-        <Button variant="contained" onClick={submit} disabled={saving || !detail}
+        {/* A leftover advance has to be dealt with explicitly: refund or hold,
+            and a hold carries its reason. */}
+        <Button variant="contained" onClick={submit}
+          disabled={saving || !detail || (depositRefundable > 0 && (!advanceAction || (advanceAction === "HOLD" && holdReason.trim().length < 3)))}
           startIcon={saving ? <HeartbeatLoader size={22} /> : <LogoutRounded />}
           sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: SEMANTIC.dangerDark } }}>
           Discharge & Bill
