@@ -23,6 +23,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   LabelList,
+  CartesianGrid,
 } from "recharts";
 import { axiosInstance } from "@/api/axios";
 import { useAuth } from "@/providers/AuthContext";
@@ -48,7 +49,12 @@ interface DashboardStats {
   onboardingProgress: Array<{ status: string; count: number }>;
   leadsByStatus: Array<{ status: string; count: number }>;
   hospitalsTrend: Array<{ month: string; count: number }>;
-  recentActivities: Array<any>;
+  recentActivities: Array<{
+    activityLogId: string;
+    moduleName: string | null;
+    description: string;
+    createdAt: string;
+  }>;
 }
 
 const GroupCard = ({ title, icon, color, primary, subs }: any) => (
@@ -141,6 +147,7 @@ export default function Dashboard() {
   // ── Derived chart data ───────────────────────────────────────────────────
   const INDIGO = "#6366f1";  // single-hue for the lead funnel (magnitude)
   const TEAL = "#14b8a6";    // single-hue for plan mix (distinct from the funnel)
+  const BLUE = "#3b82f6";    // single-hue for tenant growth; matches the TENANTS tile
   const tooltipStyle = { backgroundColor: "#FFFFFF", border: "1px solid rgba(15,23,42,0.1)", borderRadius: 8, color: "#0F172A", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", fontSize: 13 } as const;
 
   const FUNNEL = [
@@ -156,6 +163,15 @@ export default function Dashboard() {
 
 
   const planData = [...stats.hospitalsByPlan].sort((a, b) => b.count - a.count);
+  const trendData = stats.hospitalsTrend ?? [];
+  const activities = stats.recentActivities ?? [];
+  // Onboarding statuses arrive as raw enum values (in_progress, …).
+  const onboardingData = (stats.onboardingProgress ?? [])
+    .map((o) => ({
+      label: o.status.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()),
+      count: o.count,
+    }))
+    .sort((a, b) => b.count - a.count);
 
   // Shared chart card (title + optional right-slot headline + plot area).
 
@@ -243,7 +259,11 @@ export default function Dashboard() {
                 <XAxis type="number" hide />
                 <YAxis type="category" dataKey="stage" width={92} tick={{ fill: "#475569", fontSize: 13 }} axisLine={false} tickLine={false} />
                 <Tooltip cursor={{ fill: "rgba(99,102,241,0.06)" }} contentStyle={tooltipStyle} formatter={(v) => [v, "Leads"]} />
-                <Bar dataKey="count" fill={INDIGO} radius={[0, 4, 4, 0]} barSize={22}>
+                {/* minPointSize gives a zero-count stage a 2px stub, so the label
+                    anchors and the row reads as "nobody here" rather than as a
+                    missing row. Without it four empty stages render as bare
+                    labels and the funnel looks broken rather than early. */}
+                <Bar dataKey="count" fill={INDIGO} radius={[0, 4, 4, 0]} barSize={22} minPointSize={2}>
                   <LabelList dataKey="count" position="right" style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
                 </Bar>
               </BarChart>
@@ -273,7 +293,94 @@ export default function Dashboard() {
           </ChartCard>
         </Grid>
       </Grid>
-      
+
+      {/* ── Growth + activity ─────────────────────────────────────────────── */}
+      {/* Both of these were already being fetched, typed, and then dropped:
+          the API returns hospitalsTrend and recentActivities on every call and
+          nothing rendered them. */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {/* New tenants per month — a count per discrete period, so bars rather
+            than a line: nothing continuous joins one month to the next. */}
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <ChartCard title="Tenant Growth" subtitle="New hospitals onboarded per month" height={280}>
+            {trendData.length === 0 ? (
+              <Box sx={{ display: "grid", placeItems: "center", height: "100%", color: "text.secondary" }}>
+                <Typography variant="body2">No hospitals onboarded yet.</Typography>
+              </Box>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={trendData} margin={{ top: 8, right: 12, left: -16, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,23,42,0.06)" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fill: "#475569", fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fill: "#475569", fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <Tooltip cursor={{ fill: "rgba(59,130,246,0.06)" }} contentStyle={tooltipStyle} formatter={(v) => [v, "New hospitals"]} />
+                  <Bar dataKey="count" fill={BLUE} radius={[4, 4, 0, 0]} maxBarSize={38} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </ChartCard>
+        </Grid>
+
+        {/* Onboarding progress — where tenants are stuck before going live. */}
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <ChartCard title="Onboarding Progress" subtitle="Tenants by setup stage" height={280}>
+            {onboardingData.length === 0 ? (
+              <Box sx={{ display: "grid", placeItems: "center", height: "100%", color: "text.secondary" }}>
+                <Typography variant="body2">Nothing in onboarding.</Typography>
+              </Box>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={onboardingData} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="label" width={104} tick={{ fill: "#475569", fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <Tooltip cursor={{ fill: "rgba(20,184,166,0.06)" }} contentStyle={tooltipStyle} formatter={(v) => [v, "Tenants"]} />
+                  <Bar dataKey="count" fill={TEAL} radius={[0, 4, 4, 0]} barSize={20}>
+                    <LabelList dataKey="count" position="right" style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </ChartCard>
+        </Grid>
+      </Grid>
+
+      {/* Recent activity — the last ten audited actions across the platform. */}
+      <Paper elevation={0} sx={{ p: 3, mb: 4, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", mb: 2 }}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary" }}>Recent Activity</Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>Latest audited actions across all tenants</Typography>
+          </Box>
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>Last {activities.length}</Typography>
+        </Box>
+        {activities.length === 0 ? (
+          <Typography variant="body2" sx={{ color: "text.secondary", py: 2 }}>No activity recorded yet.</Typography>
+        ) : (
+          <Box sx={{ display: "flex", flexDirection: "column" }}>
+            {activities.map((a, i) => (
+              <Box
+                key={a.activityLogId}
+                sx={{
+                  display: "flex", alignItems: "center", gap: 1.5, py: 1.25,
+                  borderTop: i === 0 ? "none" : "1px solid", borderColor: "divider",
+                }}
+              >
+                <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: BLUE, flexShrink: 0 }} />
+                <Typography variant="body2" sx={{ flex: 1, minWidth: 0, color: "text.primary" }} noWrap>
+                  {a.description}
+                </Typography>
+                {a.moduleName && (
+                  <Typography variant="caption" sx={{ color: "text.secondary", flexShrink: 0 }}>{a.moduleName}</Typography>
+                )}
+                <Typography variant="caption" sx={{ color: "text.secondary", flexShrink: 0, width: 132, textAlign: "right" }}>
+                  {new Date(a.createdAt).toLocaleString()}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        )}
+      </Paper>
+
     </Container>
   );
 }
