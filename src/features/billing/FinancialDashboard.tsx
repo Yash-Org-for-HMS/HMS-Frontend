@@ -57,24 +57,25 @@ export default function FinancialDashboard() {
       <Grid container spacing={4} sx={{ mb: 6 }}>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatCard
-            label="Total Revenue Collected"
+            label="Total Collected (to date)"
             value={`₹${(analytics.totalCollected || 0).toLocaleString()}`}
             icon={<AccountBalanceRounded />}
             color={SEMANTIC.success}
-            sub={collectionRate !== null ? `${collectionRate}% of expected revenue` : undefined}
+            sub={collectionRate !== null ? `${collectionRate}% of billed value · net of refunds` : undefined}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatCard
-            label="Expected Revenue (Gross)"
+            label="Billed Value (to date)"
             value={`₹${(analytics.expectedRevenue || 0).toLocaleString()}`}
             icon={<TrendingUpRounded />}
             color={SEMANTIC.info}
+            sub="Excludes cancelled and draft invoices"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatCard
-            label="Outstanding Dues"
+            label="Outstanding Dues (to date)"
             value={`₹${(analytics.outstandingDues || 0).toLocaleString()}`}
             icon={<WarningRounded />}
             color={SEMANTIC.danger}
@@ -82,7 +83,7 @@ export default function FinancialDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatCard
-            label="Total Invoices Generated"
+            label="Invoices Issued (to date)"
             value={analytics.totalInvoices || 0}
             icon={<ReceiptRounded />}
             color="#8B5CF6"
