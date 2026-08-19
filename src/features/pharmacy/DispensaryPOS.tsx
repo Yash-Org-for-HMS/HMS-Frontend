@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { prescriptionToCart } from "./prescriptionToCart";
-import type { MedicineCatalogRow, MedicineInventoryRow, DispensableMedicine, CartLine, PrescriptionItem, PendingPrescription } from "@/types";
-import { SEMANTIC, BRAND } from "@/styles/accents";
+import type { MedicineCatalogRow, MedicineInventoryRow, DispensableMedicine, PendingPrescription } from "@/types";
+import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useLocation } from "react-router-dom";
 import { 
@@ -330,7 +330,6 @@ export default function DispensaryPOS() {
     <PharmacyPage
       title="Dispensary & POS"
       subtitle="Process sales, auto-load prescriptions, and auto-deduct inventory."
-      icon={<PointOfSaleRounded fontSize="large" sx={{ color: BRAND.action }} />}
       action={
         <Button variant="outlined" onClick={() => { setCart([]); setSelectedPrescriptionId(null); setPatientId(""); }}>
           Clear Cart

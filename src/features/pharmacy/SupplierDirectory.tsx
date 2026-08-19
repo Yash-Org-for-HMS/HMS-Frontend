@@ -7,7 +7,7 @@ import {
   TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha, InputAdornment
 } from "@mui/material";
 import GeoAddressPicker from "@/components/GeoAddressPicker";
-import { EditRounded, DeleteRounded, AddRounded, LocalShippingRounded, SearchRounded } from "@mui/icons-material";
+import { EditRounded, DeleteRounded, AddRounded, SearchRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -200,7 +200,6 @@ export default function SupplierDirectory() {
     <PharmacyPage
       title="Supplier Directory"
       subtitle="Manage vendors, distributors, and pharmacy suppliers."
-      icon={<LocalShippingRounded fontSize="large" sx={{ color: BRAND.action }} />}
       action={
         <Button
           variant="contained"

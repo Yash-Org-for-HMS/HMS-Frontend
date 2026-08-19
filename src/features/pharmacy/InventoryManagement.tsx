@@ -5,7 +5,7 @@ import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, useTheme, alpha, Tabs, Tab, MenuItem, Select, IconButton, Tooltip, TextField, InputAdornment
 } from "@mui/material";
-import { AddRounded, InventoryRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded, SearchRounded } from "@mui/icons-material";
+import { AddRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded, SearchRounded } from "@mui/icons-material";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
@@ -224,7 +224,6 @@ export default function InventoryManagement() {
     <PharmacyPage
       title="Inventory & POs"
       subtitle="Manage stock levels, raise purchase orders, and receive goods."
-      icon={<InventoryRounded fontSize="large" sx={{ color: BRAND.action }} />}
       action={
         <Button
           variant="contained"

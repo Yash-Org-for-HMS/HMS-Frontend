@@ -9,8 +9,6 @@ interface PharmacyPageProps {
   title: string;
   /** Optional one-line description under the title. */
   subtitle?: string;
-  /** Optional icon rendered before the title. */
-  icon?: ReactNode;
   /** Optional right-aligned action(s), e.g. an "Add" button. */
   action?: ReactNode;
   children: ReactNode;
@@ -21,7 +19,7 @@ interface PharmacyPageProps {
  * and header layout identical across the panel so that navigating between
  * pages only swaps the title and the content — structure stays put.
  */
-export default function PharmacyPage({ title, subtitle, icon, action, children }: PharmacyPageProps) {
+export default function PharmacyPage({ title, subtitle, action, children }: PharmacyPageProps) {
   return (
     <Box sx={{ maxWidth: 1400, mx: "auto", width: "100%" }}>
       <Box
@@ -42,12 +40,8 @@ export default function PharmacyPage({ title, subtitle, icon, action, children }
               fontWeight: 800,
               letterSpacing: "-0.5px",
               color: "text.primary",
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5,
             }}
           >
-            {icon}
             {title}
           </Typography>
           {subtitle && (

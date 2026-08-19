@@ -5,7 +5,7 @@ import {
   Box, Typography, Grid, Paper, Table, TableBody, TableCell, TableHead, TableRow, alpha, useTheme
 } from "@mui/material";
 import {
-  MedicationRounded, LocalShippingRounded, WarningRounded, PointOfSaleRounded, DashboardRounded, EventBusyRounded
+  MedicationRounded, LocalShippingRounded, WarningRounded, PointOfSaleRounded, EventBusyRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
@@ -72,7 +72,6 @@ export default function PharmacyDashboard() {
     <PharmacyPage
       title="Dashboard Overview"
       subtitle="Pharmacy summary, low stock alerts, and recent activities."
-      icon={<DashboardRounded fontSize="large" sx={{ color: BRAND.action }} />}
     >
       {loading ? (
         <DashboardSkeleton />

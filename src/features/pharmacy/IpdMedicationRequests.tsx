@@ -7,7 +7,7 @@ import {
   Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip,
 } from "@mui/material";
-import { CheckCircleRounded, CancelRounded, LocalPharmacyRounded } from "@mui/icons-material";
+import { CheckCircleRounded, CancelRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { formatINR } from "@/utils/format";
 import Mascot from "@/components/Mascot";
@@ -61,7 +61,6 @@ export default function IpdMedicationRequests() {
     <PharmacyPage
       title="IPD Medication Requests"
       subtitle="Medicines the ward has requested for admitted patients — confirm to dispense (deducts stock), or reject with a reason."
-      icon={<LocalPharmacyRounded fontSize="large" sx={{ color: BRAND.action }} />}
     >
       <Paper sx={{ borderRadius: 4, overflow: "hidden", border: "1px solid", borderColor: "divider" }}>
         <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>

@@ -6,7 +6,7 @@ import {
   Button, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha, InputAdornment
 } from "@mui/material";
-import { EditRounded, DeleteRounded, AddRounded, MedicationRounded, SearchRounded } from "@mui/icons-material";
+import { EditRounded, DeleteRounded, AddRounded, SearchRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -197,7 +197,6 @@ export default function MedicineCatalog() {
     <PharmacyPage
       title="Medicine Catalog"
       subtitle="Manage the hospital's drug formulary, generic compositions, and pricing."
-      icon={<MedicationRounded fontSize="large" sx={{ color: BRAND.action }} />}
       action={
         <Button
           variant="contained"
