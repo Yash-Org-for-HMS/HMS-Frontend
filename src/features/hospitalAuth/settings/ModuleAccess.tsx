@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import ErrorState from "@/components/ErrorState";
@@ -68,7 +69,7 @@ export default function ModuleAccess() {
   };
 
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto" }}>
+    <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <PageHeader
         title="Module Access"
         subtitle="Turn modules your plan includes on or off. Modules outside your plan are locked — contact your provider to upgrade."

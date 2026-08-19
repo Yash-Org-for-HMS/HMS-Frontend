@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -68,7 +69,7 @@ export default function MyLeaves() {
   });
 
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto" }}>
+    <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <PageHeader
         title="My Leave"
         subtitle="Mark the days you're off. Reception can't book patients with you on those days."

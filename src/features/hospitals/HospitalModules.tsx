@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -137,7 +138,7 @@ export default function HospitalModules() {
   };
 
   return (
-    <Box sx={{ maxWidth: 1040, mx: "auto", p: { xs: 2, md: 3 } }}>
+    <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/hospitals")} sx={{ color: "text.secondary", textTransform: "none", mb: 1 }}>
         Hospitals
       </Button>

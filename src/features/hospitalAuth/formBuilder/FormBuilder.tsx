@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { DETAIL_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
@@ -166,7 +167,7 @@ export default function FormBuilder() {
   };
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: "auto" }}>
+    <Box sx={{ maxWidth: DETAIL_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <PageHeader
         title={isEditing ? "Edit Form Template" : "Form Builder"}
         subtitle="Design your form by adding and configuring fields dynamically."

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
@@ -192,7 +193,7 @@ export default function UserForm() {
   }
 
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto" }}>
+    <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <FormHeader title={isEdit ? "Edit User" : "Add New User"} onBack={() => navigate("/rbac/users")} />
 <Card
         sx={{

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
@@ -492,7 +493,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
   };
 
   return (
-    <Box sx={{ maxWidth: 1000, mx: "auto" }}>
+    <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       {/* Header */}
       {!isModal && (
         <Button

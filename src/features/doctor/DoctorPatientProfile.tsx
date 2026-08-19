@@ -1,4 +1,5 @@
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import { DETAIL_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -117,7 +118,7 @@ export default function DoctorPatientProfile() {
   }
 
   return (
-    <Box sx={{ p: { xs: 0, md: 1 }, maxWidth: 1200, mx: "auto" }}>
+    <Box sx={{ p: { xs: 0, md: 1 }, maxWidth: DETAIL_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       {/* Top nav */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, gap: 1, flexWrap: "wrap" }}>
         <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ color: "text.secondary", textTransform: "none", fontWeight: 600 }}>Back to patients</Button>

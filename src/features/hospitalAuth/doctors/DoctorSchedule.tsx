@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
@@ -120,7 +121,7 @@ export default function DoctorSchedule() {
   if (isError) return <ErrorState title="Couldn't load schedule" message={apiErrorText(error)} onRetry={() => refetch()} />;
 
   return (
-    <Box sx={{ maxWidth: 920, mx: "auto" }}>
+    <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <PageHeader
         title="Configure Schedule"
         subtitle={doctorName}

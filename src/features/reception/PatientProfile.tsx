@@ -1,4 +1,5 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import { DETAIL_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR, getInitials } from "@/utils/format";
 import { useMemo, useState } from "react";
@@ -186,7 +187,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
 
   if (loading) {
     return (
-      <Box sx={{ maxWidth: 1200, mx: "auto" }}>
+      <Box sx={{ maxWidth: DETAIL_PAGE_WIDTH, mx: "auto", width: "100%" }}>
         <Skeleton height={40} width={200} sx={{ bgcolor: "action.hover", mb: 3 }} />
         <Paper elevation={0} sx={{ p: 4, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
           <Box sx={{ display: "flex", gap: 3, alignItems: "center" }}>
@@ -217,7 +218,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
   const pagedInvoices = invoices.slice(billPage * billRpp, billPage * billRpp + billRpp);
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: "auto" }}>
+    <Box sx={{ maxWidth: DETAIL_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       {/* Top nav */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, gap: 1, flexWrap: "wrap" }}>
         <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ color: "text.secondary", textTransform: "none", fontWeight: 600 }}>Back to patients</Button>

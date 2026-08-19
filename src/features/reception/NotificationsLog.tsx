@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { DETAIL_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   Box,
@@ -64,7 +65,7 @@ export default function NotificationsLog() {
   const meta = data?.meta as { total: number; totalPages: number } | undefined;
 
   return (
-    <Box sx={{ p: 3, maxWidth: 1200, mx: "auto" }}>
+    <Box sx={{ p: 3, maxWidth: DETAIL_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <PageHeader
         title="Notifications Log"
         subtitle="History of SMS and Email notifications sent to patients."

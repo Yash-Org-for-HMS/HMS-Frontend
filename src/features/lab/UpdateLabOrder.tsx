@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { DETAIL_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import ErrorState from "@/components/ErrorState";
@@ -182,7 +183,7 @@ export default function UpdateLabOrder() {
     setResults({ ...results, [rid]: { ...results[rid], [key]: v } });
 
   return (
-    <Box sx={{ maxWidth: 1100, mx: "auto" }}>
+    <Box sx={{ maxWidth: DETAIL_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/lab/orders")} sx={{ mb: 2, color: "text.secondary" }}>
         Back to Queue
       </Button>

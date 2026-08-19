@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
@@ -161,7 +162,7 @@ export default function HospitalSettings() {
   }
 
   return (
-    <Box sx={{ maxWidth: 1000, mx: "auto" }}>
+    <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <PageHeader
         title="Hospital Settings"
         subtitle="Configure appointments, localization, notifications, and billing defaults."

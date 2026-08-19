@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
@@ -190,7 +191,7 @@ export default function DoctorForm() {
   };
 
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto" }}>
+    <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <PageHeader
         title={isEditing ? "Edit Doctor Profile" : "Add Doctor"}
         subtitle="Configure personal details and medical qualifications."
