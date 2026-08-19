@@ -154,13 +154,6 @@ export default function Dashboard() {
   const funnelData = FUNNEL.map((f) => ({ stage: f.label, count: leadCounts[f.key] || 0 }));
   const convRate = stats.totalLeads ? Math.round((stats.convertedLeads / stats.totalLeads) * 100) : 0;
 
-  // Tenant health — status palette (good / warning / critical), always with labels.
-  const tenantSeg = [
-    { label: "Active", value: stats.activeHospitals, color: "#10b981" },
-    { label: "In trial", value: stats.trialHospitals, color: "#f59e0b" },
-    { label: "Expired", value: stats.expiredHospitals, color: "#ef4444" },
-  ];
-  const tenantTotal = tenantSeg.reduce((s, t) => s + t.value, 0);
 
   const planData = [...stats.hospitalsByPlan].sort((a, b) => b.count - a.count);
 
@@ -258,32 +251,9 @@ export default function Dashboard() {
           </ChartCard>
         </Grid>
 
-        {/* Tenant status — state palette (good/warning/critical), always labelled */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <ChartCard title="Tenant Status" subtitle={`${stats.totalHospitals} hospital${stats.totalHospitals === 1 ? "" : "s"}`} height={280}>
-            <Box sx={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "center", gap: 2.5 }}>
-              <Box sx={{ display: "flex", gap: "2px", height: 14, borderRadius: 99, overflow: "hidden", bgcolor: "action.hover" }}>
-                {tenantSeg.filter((t) => t.value > 0).map((t) => (
-                  <Box key={t.label} sx={{ flexGrow: t.value, bgcolor: t.color }} />
-                ))}
-              </Box>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {tenantSeg.map((t) => (
-                  <Box key={t.label} sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-                    <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: t.color, flexShrink: 0 }} />
-                    <Typography variant="body2" sx={{ flex: 1, color: "text.primary", fontWeight: 500 }}>{t.label}</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 800, color: "text.primary" }}>{t.value}</Typography>
-                    <Typography variant="caption" sx={{ color: "text.secondary", width: 42, textAlign: "right" }}>{tenantTotal ? Math.round((t.value / tenantTotal) * 100) : 0}%</Typography>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          </ChartCard>
-        </Grid>
-
         {/* Hospitals by plan — magnitude by category, single hue, sorted desc */}
-        <Grid size={{ xs: 12 }}>
-          <ChartCard title="Hospitals by Plan" subtitle="Active subscriptions by plan" height={Math.max(140, 96 + planData.length * 42)}>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <ChartCard title="Hospitals by Plan" subtitle="Active subscriptions by plan" height={280}>
             {planData.length === 0 ? (
               <Box sx={{ display: "grid", placeItems: "center", height: "100%" }}>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>No active plans yet.</Typography>
