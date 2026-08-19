@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import CredentialDialog from "@/components/CredentialDialog";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -31,7 +32,6 @@ import {
   KeyRounded,
   Visibility,
   VisibilityOff,
-  ContentCopyRounded,
   LockResetRounded,
   InfoOutlined,
 } from "@mui/icons-material";
@@ -327,77 +327,6 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
 }
 
 // ── Credentials Success Dialog (after reset) ────────────────────────────────
-interface CredentialSuccessProps {
-  open: boolean;
-  user: User | null;
-  newPassword: string;
-  onClose: () => void;
-}
-
-function CredentialSuccessDialog({ open, user, newPassword, onClose }: CredentialSuccessProps) {
-  const [copied, setCopied] = useState(false);
-
-  const copy = async () => {
-    await navigator.clipboard.writeText(
-      `Login: ${user?.email}\nPassword: ${newPassword}\n\nNote: You will be asked to change your password on next login.`
-    );
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="xs"
-      fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: "background.paper",
-          border: "1px solid rgba(16,185,129,0.25)",
-          borderRadius: 3,
-          backgroundImage: "none",
-        },
-      }}
-    >
-      <Box sx={{ height: 4, bgcolor: SEMANTIC.success }} />
-      <DialogContent sx={{ p: 3 }}>
-        <Box sx={{ textAlign: "center", mb: 3 }}>
-          <CheckCircleRounded sx={{ color: SEMANTIC.success, fontSize: 40, mb: 1 }} />
-          <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>
-            Password Reset!
-          </Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Share these new credentials with {user?.firstName}
-          </Typography>
-        </Box>
-
-        <Box sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(255,255,255,0.03)", border: "1px solid", borderColor: "divider", mb: 2 }}>
-          <Typography variant="caption" sx={{ color: NEUTRAL.textSecondary }}>Email</Typography>
-          <Typography sx={{ color: "text.primary", fontFamily: "monospace", fontSize: "0.875rem", mb: 1 }}>{user?.email}</Typography>
-          <Typography variant="caption" sx={{ color: NEUTRAL.textSecondary }}>New Password</Typography>
-          <Typography sx={{ color: SEMANTIC.warningLight, fontFamily: "monospace", fontSize: "0.875rem", fontWeight: 700 }}>{newPassword}</Typography>
-        </Box>
-
-        <Box sx={{ display: "flex", gap: 1.5 }}>
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={copied ? <CheckCircleRounded /> : <ContentCopyRounded />}
-            onClick={copy}
-            sx={{ color: copied ? SEMANTIC.success : NEUTRAL.muted, borderColor: "divider", textTransform: "none" }}
-          >
-            {copied ? "Copied!" : "Copy"}
-          </Button>
-          <Button fullWidth variant="contained" onClick={onClose} sx={{ bgcolor: SEMANTIC.success, "&:hover": { bgcolor: SEMANTIC.successDark }, textTransform: "none" }}>
-            Done
-          </Button>
-        </Box>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 // ── Main UsersList ──────────────────────────────────────────────────────────
 export default function UsersList() {
   const navigate = useNavigate();
@@ -604,11 +533,16 @@ export default function UsersList() {
         }}
       />
 
-      {/* Success Credential Dialog */}
-      <CredentialSuccessDialog
+      {/* The local version of this had a single Copy button that took the
+          email and password together, so there was no way to copy just the
+          password — the thing you most often need on its own. */}
+      <CredentialDialog
         open={successDialog.open}
-        user={successDialog.user}
-        newPassword={successDialog.password}
+        title="Password reset"
+        email={successDialog.user?.email || ""}
+        password={successDialog.password}
+        name={successDialog.user ? `${successDialog.user.firstName} ${successDialog.user.lastName || ""}`.trim() : undefined}
+        note="They will be required to change this password on their next login. Share it securely."
         onClose={() => setSuccessDialog({ open: false, user: null, password: "" })}
       />
     </>

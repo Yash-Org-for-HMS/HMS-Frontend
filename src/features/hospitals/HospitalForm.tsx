@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { SEMANTIC, BRAND } from "@/styles/accents";
+import CredentialDialog from "@/components/CredentialDialog";
+import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -13,10 +14,6 @@ import {
   TextField,
   MenuItem,
   Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Chip,
   Tooltip,
   Autocomplete,
@@ -516,23 +513,18 @@ export default function HospitalForm() {
         onSaved={() => setReload(r => r + 1)}
       />
 
-      {/* One-time admin credentials after a trial conversion */}
-      <Dialog open={!!convertResult} onClose={() => { setConvertResult(null); navigate("/hospitals"); }} maxWidth="xs" fullWidth
-        PaperProps={{ sx: { bgcolor: "background.paper", borderRadius: 3 } }}>
-        <DialogTitle sx={{ fontWeight: 700 }}>Hospital created</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-            Share these one-time credentials with the hospital admin — they'll set a new password on first login.
-          </Typography>
-          <Alert severity="info">
-            <Box sx={{ mb: 0.5 }}><b>Email:</b> {convertResult?.email}</Box>
-            <Box><b>Temp password:</b> <Box component="code" sx={{ fontFamily: "monospace" }}>{convertResult?.temporaryPassword}</Box></Box>
-          </Alert>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => { setConvertResult(null); navigate("/hospitals"); }} variant="contained">Done</Button>
-        </DialogActions>
-      </Dialog>
+      {/* One-time admin credentials after a trial conversion.
+          Was a plain Alert with the password as selectable text and no copy
+          button — a one-time secret you had to highlight by hand and risk
+          mistyping. The shared dialog copies each field, or both together. */}
+      <CredentialDialog
+        open={!!convertResult}
+        onClose={() => { setConvertResult(null); navigate("/hospitals"); }}
+        title="Hospital created"
+        email={convertResult?.email || ""}
+        password={convertResult?.temporaryPassword || ""}
+        note="Share these one-time credentials with the hospital admin — they will set a new password on first login."
+      />
     </Container>
   );
 }
