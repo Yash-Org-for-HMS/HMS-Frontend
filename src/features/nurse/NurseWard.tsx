@@ -9,6 +9,7 @@ import {
 import { alpha } from "@mui/material/styles";
 import {
   SearchRounded, MedicationRounded, MedicalServicesRounded, DescriptionRounded,
+  ScienceRounded, CameraAltRounded,
   MonitorHeartRounded, WaterDropRounded, SwapHorizRounded, AssignmentRounded,
   HotelRounded, ViewModuleRounded, ViewListRounded,
 } from "@mui/icons-material";
@@ -24,6 +25,8 @@ import NursingNotesDialog from "@/components/ipd/NursingNotesDialog";
 import ObservationChartDialog from "@/components/ipd/ObservationChartDialog";
 import FluidBalanceDialog from "@/components/ipd/FluidBalanceDialog";
 import HandoverDialog from "@/components/ipd/HandoverDialog";
+import IpdLabOrdersDialog from "@/components/ipd/IpdLabOrdersDialog";
+import IpdRadiologyOrdersDialog from "@/components/ipd/IpdRadiologyOrdersDialog";
 import { apiErrorText } from "@/utils/apiError";
 
 /**
@@ -55,6 +58,8 @@ export default function NurseWard() {
   const [obsFor, setObsFor] = useState<any>(null);
   const [fluidFor, setFluidFor] = useState<any>(null);
   const [handoverFor, setHandoverFor] = useState<any>(null);
+  const [labsFor, setLabsFor] = useState<any>(null);
+  const [radiologyFor, setRadiologyFor] = useState<any>(null);
   const navigate = useNavigate();
 
   const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<any[]>({
@@ -100,6 +105,11 @@ export default function NurseWard() {
     { key: "handover", label: "Handover", icon: <SwapHorizRounded fontSize="small" />, open: setHandoverFor, tone: NEUTRAL.muted },
     { key: "notes", label: "Nursing notes", icon: <DescriptionRounded fontSize="small" />, open: setNotesFor, tone: NEUTRAL.muted },
     { key: "visits", label: "Doctor visits", icon: <MedicalServicesRounded fontSize="small" />, open: setVisitsFor, tone: NEUTRAL.muted },
+    // Ordering for an admitted patient goes through the IPD path, not the
+    // walk-in one: it must carry the admission so the charge reaches the
+    // discharge bill rather than raising a separate OPD invoice.
+    { key: "labs", label: "Investigations", icon: <ScienceRounded fontSize="small" />, open: setLabsFor, tone: BRAND.action },
+    { key: "imaging", label: "Imaging", icon: <CameraAltRounded fontSize="small" />, open: setRadiologyFor, tone: BRAND.action },
   ];
 
   const chooseView = (_: unknown, v: "cards" | "list" | null) => {
@@ -302,6 +312,8 @@ export default function NurseWard() {
       {obsFor && <ObservationChartDialog open admission={obsFor} onClose={() => setObsFor(null)} />}
       {fluidFor && <FluidBalanceDialog open admission={fluidFor} onClose={() => setFluidFor(null)} />}
       {handoverFor && <HandoverDialog open admission={handoverFor} onClose={() => setHandoverFor(null)} />}
+      {labsFor && <IpdLabOrdersDialog open admission={labsFor} onClose={() => setLabsFor(null)} />}
+      {radiologyFor && <IpdRadiologyOrdersDialog open admission={radiologyFor} onClose={() => setRadiologyFor(null)} />}
     </Box>
   );
 }
