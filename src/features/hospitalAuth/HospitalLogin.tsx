@@ -28,17 +28,27 @@ export default function HospitalLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [capsOn, setCapsOn] = useState(false);
   const [touched, setTouched] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
   const { login } = useHospitalAuth();
   const navigate = useNavigate();
 
-  const emailError = touched && email.length > 0 && !isValidEmail(email);
-  const canSubmit = isValidEmail(email) && password.length > 0 && !isLoading;
+  // Blur only flags what has been typed and is wrong; submit flags anything
+  // missing. `touched` fires when the EMAIL blurs, so keying the password
+  // message off it would nag about a field the user is on their way to.
+  const emailError = (touched && email.length > 0 && !isValidEmail(email)) || (submitted && !isValidEmail(email));
+  const passwordError = submitted && password.length === 0;
+  // Deliberately NOT gated on the fields being valid. Gating it made the
+  // button flip grey→solid mid-word as the email became parseable, which
+  // reads as a fault; and a disabled button never explains itself. The
+  // submit handler already refuses bad input, and now says why.
+  const canSubmit = !isLoading;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
+    setSubmitted(true);
     if (!isValidEmail(email) || !password) return;
     setIsLoading(true);
     try {
@@ -103,7 +113,7 @@ export default function HospitalLogin() {
           <TextField
             fullWidth variant="outlined" type="email" margin="dense"
             value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setTouched(true)}
-            error={emailError} helperText={emailError ? "Enter a valid email address" : " "}
+            error={emailError} helperText={emailError ? (email.length === 0 ? "Enter your email address" : "Enter a valid email address") : " "}
             disabled={isLoading} required sx={fieldSx} inputProps={{ autoComplete: "email", "aria-label": "Email" }}
             placeholder="you@hospital.com"
             InputProps={{
@@ -120,8 +130,9 @@ export default function HospitalLogin() {
             onKeyUp={(e) => setCapsOn(e.getModifierState?.("CapsLock") ?? false)}
             disabled={isLoading} required sx={fieldSx} inputProps={{ autoComplete: "current-password", "aria-label": "Password" }}
             placeholder="Enter your password"
-            helperText={capsOn ? "Caps Lock is on" : " "}
-            FormHelperTextProps={{ sx: { color: capsOn ? "warning.main" : undefined } }}
+            error={passwordError}
+            helperText={passwordError ? "Enter your password" : capsOn ? "Caps Lock is on" : " "}
+            FormHelperTextProps={{ sx: { color: !passwordError && capsOn ? "warning.main" : undefined } }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
