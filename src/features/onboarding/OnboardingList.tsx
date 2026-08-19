@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { actionBuckets, daysUntil } from "./actionNeeded";
 import { useNavigate } from "react-router-dom";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import {
@@ -28,7 +29,6 @@ import PageHeader from "@/components/layout/PageHeader";
 import { apiErrorText } from "@/utils/apiError";
 
 // How soon (in days) an active trial counts as "expiring soon".
-const EXPIRY_WINDOW_DAYS = 7;
 
 function Section({
   icon, title, color, items, children,
@@ -76,23 +76,13 @@ export default function OnboardingList() {
   const hospitals: any[] = hq.data?.data ?? [];
   const trials: any[] = tq.data?.data ?? [];
 
-  const daysUntil = (d: string) => Math.ceil((new Date(d).getTime() - Date.now()) / 86_400_000);
-
-  // ── The buckets that actually need a human to act ──
-  const expiring = trials
-    .filter((t) => t.trialStatus === "active" && daysUntil(t.trialEndDate) <= EXPIRY_WINDOW_DAYS)
-    .sort((a, b) => daysUntil(a.trialEndDate) - daysUntil(b.trialEndDate));
-  const expired = trials.filter((t) => t.trialStatus === "expired");
-  // Suspended = the DB status column OR the computed subscription state (a tenant
-  // past its grace window whose status hasn't been flipped at login yet).
-  const suspended = hospitals.filter((h) => h.status === "suspended" || h.subscriptionState === "suspended");
-  // Overdue but not yet suspended — in the grace window, action needed before cut-off.
-  const overdue = hospitals.filter((h) => h.subscriptionState === "overdue" && h.status !== "suspended");
-  const incomplete = hospitals.filter(
-    (h) => h.status === "active" && (!h.officialPhone || !h.addressLine1 || !h.registrationNumber),
-  );
-
-  const total = expiring.length + expired.length + suspended.length + overdue.length + incomplete.length;
+  // Bucketing lives in actionNeeded.ts so its two awkward rules — the
+  // expiring window bounded at both ends, and counting distinct tenants
+  // across overlapping buckets — are covered by tests rather than by eye.
+  const {
+    expiring, expired, suspended, overdue, incomplete,
+    trialCount, hospitalCount, total,
+  } = actionBuckets(trials, hospitals);
 
   if (loading) {
     return (
@@ -125,7 +115,11 @@ export default function OnboardingList() {
     <PageContainer>
       <PageHeader
         title="Action Needed"
-        subtitle="Tenants and trials that need your attention right now."
+        subtitle={
+          total === 0
+            ? "Tenants and trials that need your attention right now."
+            : `${hospitalCount} tenant${hospitalCount === 1 ? "" : "s"} and ${trialCount} trial${trialCount === 1 ? "" : "s"} need attention. One tenant can appear under more than one heading.`
+        }
       />
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
