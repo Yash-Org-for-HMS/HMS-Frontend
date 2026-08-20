@@ -26,6 +26,7 @@ import ObservationChartDialog from "@/components/ipd/ObservationChartDialog";
 import FluidBalanceDialog from "@/components/ipd/FluidBalanceDialog";
 import HandoverDialog from "@/components/ipd/HandoverDialog";
 import IpdLabOrdersDialog from "@/components/ipd/IpdLabOrdersDialog";
+import SurgeryDialog from "@/components/ipd/SurgeryDialog";
 import IpdRadiologyOrdersDialog from "@/components/ipd/IpdRadiologyOrdersDialog";
 import { apiErrorText } from "@/utils/apiError";
 
@@ -60,6 +61,7 @@ export default function NurseWard() {
   const [handoverFor, setHandoverFor] = useState<any>(null);
   const [labsFor, setLabsFor] = useState<any>(null);
   const [radiologyFor, setRadiologyFor] = useState<any>(null);
+  const [surgeryFor, setSurgeryFor] = useState<any>(null);
   const navigate = useNavigate();
 
   const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<any[]>({
@@ -110,6 +112,10 @@ export default function NurseWard() {
     // discharge bill rather than raising a separate OPD invoice.
     { key: "labs", label: "Investigations", icon: <ScienceRounded fontSize="small" />, open: setLabsFor, tone: BRAND.action },
     { key: "imaging", label: "Imaging", icon: <CameraAltRounded fontSize="small" />, open: setRadiologyFor, tone: BRAND.action },
+    // Read-only: the ward needs to know what a patient is booked for and what
+    // has been done. Completing a priced surgery raises an invoice, so that
+    // stays with the desk.
+    { key: "surgery", label: "Surgery", icon: <MedicalServicesRounded fontSize="small" />, open: setSurgeryFor, tone: NEUTRAL.muted },
   ];
 
   const chooseView = (_: unknown, v: "cards" | "list" | null) => {
@@ -314,6 +320,7 @@ export default function NurseWard() {
       {handoverFor && <HandoverDialog open admission={handoverFor} onClose={() => setHandoverFor(null)} />}
       {labsFor && <IpdLabOrdersDialog open admission={labsFor} onClose={() => setLabsFor(null)} />}
       {radiologyFor && <IpdRadiologyOrdersDialog open admission={radiologyFor} onClose={() => setRadiologyFor(null)} />}
+      {surgeryFor && <SurgeryDialog open readOnly admission={surgeryFor} onClose={() => setSurgeryFor(null)} />}
     </Box>
   );
 }
