@@ -44,7 +44,7 @@ import {
   EditRounded,
   WidgetsRounded,
   CheckCircleRounded,
-  CancelRounded,
+  CancelRounded, FactCheckRounded,
   LockResetRounded,
   ContentCopyRounded,
   SwapHorizRounded,
@@ -458,6 +458,21 @@ export default function HospitalOverview() {
                   <Typography variant="body2" sx={{ color: "text.primary" }}>{row.label}</Typography>
                 </Box>
               ))}
+
+              {/* This checklist is where an unverified payment is SEEN, and it used
+                  to be the end of the road — the toggle that clears it lives on the
+                  onboarding record, which you had to know to go and find. */}
+              {onboarding.hospitalOnboardingId && (
+                <Button
+                  size="small"
+                  variant={onboarding.paymentVerified ? "text" : "outlined"}
+                  startIcon={<FactCheckRounded />}
+                  onClick={() => navigate(`/onboarding/${onboarding.hospitalOnboardingId}/edit`)}
+                  sx={{ alignSelf: "flex-start", mt: 1, textTransform: "none", fontWeight: 700 }}
+                >
+                  {onboarding.paymentVerified ? "Review onboarding checklist" : "Verify payment & onboarding"}
+                </Button>
+              )}
               <Chip size="small" label={(onboarding.onboardingStatus || "pending").replace("_", " ")} sx={{ mt: 1, alignSelf: "flex-start", textTransform: "capitalize", fontWeight: 600 }} />
             </Box>
           ) : <Typography color="text.secondary">No onboarding record.</Typography>}

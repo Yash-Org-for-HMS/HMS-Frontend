@@ -2,7 +2,7 @@ import { useState } from "react";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Box, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Box, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, Tab,
   Chip, Button, TextField, MenuItem, Pagination, Dialog, DialogTitle, DialogContent,
   DialogActions, Tooltip, IconButton,
 } from "@mui/material";
@@ -21,6 +21,8 @@ import ActionButton from "@/components/layout/ActionButton";
 import StatCard from "@/components/StatCard";
 import ErrorState from "@/components/ErrorState";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import PaymentsRegister from "./PaymentsRegister";
+import SubscriptionInvoiceDialog from "./SubscriptionInvoiceDialog";
 
 const PAY_METHODS = ["Cash", "Bank Transfer", "UPI", "Card", "Cheque", "Other"];
 const STATUS_FILTERS = [
@@ -118,6 +120,11 @@ export default function SubscriptionBilling() {
     onError: (err) => toast.error(getApiErrorMessage(err, "Failed to save settings")),
   });
 
+  // Invoices are what was billed; payments are what arrived. Reconciling a bank
+  // statement needs the second list, and it cannot be derived from the first.
+  const [tab, setTab] = useState<"invoices" | "payments">("invoices");
+  const [detailFor, setDetailFor] = useState<string | null>(null);
+
   const handleVoid = async (inv: any) => {
     const yes = await confirm({ title: "Void invoice", message: `Void ${inv.invoiceNumber}? This cannot be undone.`, confirmText: "Void", destructive: true });
     if (yes) voidMutation.mutate(inv.subscriptionInvoiceId);
@@ -162,6 +169,13 @@ export default function SubscriptionBilling() {
         </Grid>
       </Grid>
 
+      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: "divider" }}>
+        <Tab value="invoices" label="Invoices" sx={{ textTransform: "none", fontWeight: 700 }} />
+        <Tab value="payments" label="Payments received" sx={{ textTransform: "none", fontWeight: 700 }} />
+      </Tabs>
+
+      {tab === "payments" ? <PaymentsRegister /> : (
+      <>
       {/* Filter */}
       <Box sx={{ mb: 2 }}>
         <TextField
@@ -197,7 +211,12 @@ export default function SubscriptionBilling() {
                 <TableRow><TableCell colSpan={8} align="center" sx={{ py: 8, color: "text.secondary" }}>No subscription invoices yet. Click “Generate Due Invoices” to bill the current period.</TableCell></TableRow>
               ) : (
                 invoices.map((inv) => (
-                  <TableRow key={inv.subscriptionInvoiceId} hover>
+                  <TableRow
+                    key={inv.subscriptionInvoiceId}
+                    hover
+                    onClick={() => setDetailFor(inv.subscriptionInvoiceId)}
+                    sx={{ cursor: "pointer" }}
+                  >
                     <TableCell sx={{ fontFamily: "monospace", fontWeight: 600 }}>{inv.invoiceNumber}</TableCell>
                     <TableCell sx={{ fontWeight: 500 }}>{inv.hospitalName}</TableCell>
                     <TableCell>{inv.planName} <Chip label={inv.billingCycle === "ANNUAL" ? "Yr" : "Mo"} size="small" sx={{ ml: 0.5, height: 18, fontSize: "0.65rem" }} /></TableCell>
@@ -205,7 +224,7 @@ export default function SubscriptionBilling() {
                     <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(inv.amount)}</TableCell>
                     <TableCell><Chip label={PHASE_LABEL[inv.phase] || inv.status} color={PHASE_COLOR[inv.phase] || "default"} size="small" /></TableCell>
                     <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem" }}>{formatDate(inv.dueDate)}</TableCell>
-                    <TableCell align="right">
+                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                       <Box sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end", alignItems: "center" }}>
                         <Tooltip title="Print / download invoice">
                           <IconButton size="small" onClick={() => window.open(`/subscription-billing/invoices/${inv.subscriptionInvoiceId}/print`, "_blank")}><PrintRounded fontSize="small" /></IconButton>
@@ -236,6 +255,13 @@ export default function SubscriptionBilling() {
           </Box>
         )}
       </Paper>
+      </>
+      )}
+
+      {/* Invoice detail — what was billed and, for a paid one, exactly how it
+          was paid. Reachable from the row so checking a reference does not mean
+          opening a print tab. */}
+      <SubscriptionInvoiceDialog invoiceId={detailFor} open={!!detailFor} onClose={() => setDetailFor(null)} />
 
       {/* Record payment dialog */}
       <Dialog open={!!payTarget} onClose={() => setPayTarget(null)} maxWidth="xs" fullWidth>

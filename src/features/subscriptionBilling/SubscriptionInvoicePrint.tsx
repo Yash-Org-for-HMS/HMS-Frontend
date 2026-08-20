@@ -10,6 +10,16 @@ import BillDocument from "@/components/billing/BillDocument";
 const fmtDate = (d?: string | null) =>
   d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
+/** One recorded payment against a subscription invoice. */
+interface SubscriptionPaymentRow {
+  subscriptionPaymentId: string;
+  paidAt: string;
+  amount: string | number;
+  method: string;
+  reference?: string | null;
+  recordedByName?: string | null;
+}
+
 export default function SubscriptionInvoicePrint() {
   const { id } = useParams();
   const [inv, setInv] = useState<any>(null);
@@ -83,6 +93,29 @@ export default function SubscriptionInvoicePrint() {
           { label: "Cycle", value: inv.billingCycle === "ANNUAL" ? "Annual" : "Monthly" },
         ]}
         totals={{ subtotal: Number(inv.amount), total: Number(inv.amount), paid: Number(inv.paid || 0), balance }}
+        // How the money actually arrived. The invoice used to show only that
+        // SOMEONE had marked it paid — no method, no bank reference, no name —
+        // which is not something a tenant or an auditor can check against a
+        // statement. The payload already carried all of it.
+        afterTotals={
+          Array.isArray(inv.payments) && inv.payments.length > 0 ? (
+            <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 12, marginTop: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", letterSpacing: 1, marginBottom: 8 }}>
+                PAYMENTS RECEIVED
+              </div>
+              {inv.payments.map((pay: SubscriptionPaymentRow) => (
+                <div key={pay.subscriptionPaymentId} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#4b5563", marginBottom: 4 }}>
+                  <span>
+                    {fmtDate(pay.paidAt)} • {pay.method}
+                    {pay.reference ? ` (Ref: ${pay.reference})` : ""}
+                    {pay.recordedByName ? ` • recorded by ${pay.recordedByName}` : ""}
+                  </span>
+                  <span style={{ fontWeight: 700 }}>{formatINR(Number(pay.amount))}</span>
+                </div>
+              ))}
+            </div>
+          ) : null
+        }
         paidWatermark={fullyPaid}
         footer={p.gstNumber ? `GST: ${p.gstNumber} · This is a computer-generated subscription invoice.` : "This is a computer-generated subscription invoice."}
       >
