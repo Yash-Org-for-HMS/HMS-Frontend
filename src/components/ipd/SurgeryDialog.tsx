@@ -22,14 +22,6 @@ interface Props {
   open: boolean;
   onClose: () => void;
   admission: any; // { admissionId, patientId, patientName }
-  /**
-   * View without the ability to add, edit or complete a surgery.
-   *
-   * Used by the nursing ward. Nurses need to know what a patient is booked
-   * for and what has been done, but marking a priced surgery COMPLETED
-   * raises an invoice — billing is not a nursing action.
-   */
-  readOnly?: boolean;
 }
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
@@ -40,7 +32,7 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 
 const emptyForm = { procedureName: "", surgeryType: "MINOR", gradeId: "", surgeonId: "", surgeryDate: "", price: "", notes: "" };
 
-export default function SurgeryDialog({ open, onClose, admission, readOnly = false }: Props) {
+export default function SurgeryDialog({ open, onClose, admission }: Props) {
   const toast = useToast();
   const confirm = useConfirm();
   const qc = useQueryClient();
@@ -175,7 +167,7 @@ export default function SurgeryDialog({ open, onClose, admission, readOnly = fal
                         )}
                       </TableCell>
                       <TableCell align="right">
-                        {!readOnly && s.status === "SCHEDULED" && (
+                        {s.status === "SCHEDULED" && (
                           <>
                             <Tooltip title="Mark completed">
                               <IconButton size="small" disabled={busyId === s.surgeryId} onClick={() => setStatus(s.surgeryId, "COMPLETED")} sx={{ color: SEMANTIC.success }}>
@@ -198,13 +190,10 @@ export default function SurgeryDialog({ open, onClose, admission, readOnly = fal
           </TableContainer>
         )}
 
-        {!readOnly && (
         <Divider sx={{ mb: 2 }}>
           <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, textTransform: "uppercase" }}>Add Surgery</Typography>
         </Divider>
-        )}
 
-        {!readOnly && (
         <Stack spacing={2}>
           <TextField fullWidth required label="Surgical Details" placeholder="e.g. Appendectomy"
             value={form.procedureName} onChange={(e) => { setForm({ ...form, procedureName: e.target.value }); setErrors((p) => ({ ...p, procedureName: undefined })); }}
@@ -237,21 +226,12 @@ export default function SurgeryDialog({ open, onClose, admission, readOnly = fal
               />
           <TextField fullWidth multiline rows={2} label="Notes (optional)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         </Stack>
-        )}
-
-        {readOnly && surgeries.length === 0 && (
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            No surgery has been recorded for this admission.
-          </Typography>
-        )}
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Close</Button>
-        {!readOnly && (
         <Button variant="contained" onClick={submit} disabled={saving || !form.procedureName.trim()}
           startIcon={saving ? <HeartbeatLoader size={22} /> : <AddRounded />}
 >Add Surgery</Button>
-        )}
       </DialogActions>
     </Dialog>
   );

@@ -112,9 +112,9 @@ export default function NurseWard() {
     // discharge bill rather than raising a separate OPD invoice.
     { key: "labs", label: "Investigations", icon: <ScienceRounded fontSize="small" />, open: setLabsFor, tone: BRAND.action },
     { key: "imaging", label: "Imaging", icon: <CameraAltRounded fontSize="small" />, open: setRadiologyFor, tone: BRAND.action },
-    // Read-only: the ward needs to know what a patient is booked for and what
-    // has been done. Completing a priced surgery raises an invoice, so that
-    // stays with the desk.
+    // Full access, same dialog the desk uses: the ward records what actually
+    // happened in theatre. Marking a PRICED surgery completed raises its charge,
+    // so the price field is the one to be careful with — not the record itself.
     { key: "surgery", label: "Surgery", icon: <MedicalServicesRounded fontSize="small" />, open: setSurgeryFor, tone: NEUTRAL.muted },
   ];
 
@@ -320,7 +320,7 @@ export default function NurseWard() {
       {handoverFor && <HandoverDialog open admission={handoverFor} onClose={() => setHandoverFor(null)} />}
       {labsFor && <IpdLabOrdersDialog open admission={labsFor} onClose={() => setLabsFor(null)} />}
       {radiologyFor && <IpdRadiologyOrdersDialog open admission={radiologyFor} onClose={() => setRadiologyFor(null)} />}
-      {surgeryFor && <SurgeryDialog open readOnly admission={surgeryFor} onClose={() => setSurgeryFor(null)} />}
+      {surgeryFor && <SurgeryDialog open admission={surgeryFor} onClose={() => setSurgeryFor(null)} />}
     </Box>
   );
 }
