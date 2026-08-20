@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import {
-  SearchRounded, MedicationRounded, MedicalServicesRounded, DescriptionRounded,
+  SearchRounded, MedicationRounded, MedicalServicesRounded, DescriptionRounded, VaccinesRounded,
   ScienceRounded, CameraAltRounded,
   MonitorHeartRounded, WaterDropRounded, SwapHorizRounded, AssignmentRounded,
   HotelRounded, ViewModuleRounded, ViewListRounded,
@@ -27,6 +27,7 @@ import FluidBalanceDialog from "@/components/ipd/FluidBalanceDialog";
 import HandoverDialog from "@/components/ipd/HandoverDialog";
 import IpdLabOrdersDialog from "@/components/ipd/IpdLabOrdersDialog";
 import SurgeryDialog from "@/components/ipd/SurgeryDialog";
+import IpdMedicinesDialog from "@/components/ipd/IpdMedicinesDialog";
 import IpdRadiologyOrdersDialog from "@/components/ipd/IpdRadiologyOrdersDialog";
 import { apiErrorText } from "@/utils/apiError";
 
@@ -62,6 +63,7 @@ export default function NurseWard() {
   const [labsFor, setLabsFor] = useState<any>(null);
   const [radiologyFor, setRadiologyFor] = useState<any>(null);
   const [surgeryFor, setSurgeryFor] = useState<{ admissionId: string; patientId?: string; patientName?: string } | null>(null);
+  const [assignMedsFor, setAssignMedsFor] = useState<{ admissionId: string; patientId?: string | null; patientName?: string } | null>(null);
   const navigate = useNavigate();
 
   const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<any[]>({
@@ -103,7 +105,14 @@ export default function NurseWard() {
   const actions = [
     { key: "obs", label: "Observations", icon: <MonitorHeartRounded fontSize="small" />, open: setObsFor, tone: BRAND.action },
     { key: "fluid", label: "Fluids", icon: <WaterDropRounded fontSize="small" />, open: setFluidFor, tone: BRAND.action },
-    { key: "meds", label: "Medicines", icon: <MedicationRounded fontSize="small" />, open: setChartFor, tone: BRAND.action },
+    // Two different jobs, and the labels have to separate them: this one opens
+    // the administration record (what was given, and signing off a dose), the
+    // one below puts a NEW medicine on the patient.
+    { key: "meds", label: "Medication chart", icon: <MedicationRounded fontSize="small" />, open: setChartFor, tone: BRAND.action },
+    // The ward asks; the pharmacy commits. A new order is created REQUESTED —
+    // it moves no stock and reaches no bill until the pharmacy confirms it, so
+    // requesting is squarely a nursing action.
+    { key: "assign-meds", label: "Assign medicine", icon: <VaccinesRounded fontSize="small" />, open: setAssignMedsFor, tone: BRAND.action },
     { key: "handover", label: "Handover", icon: <SwapHorizRounded fontSize="small" />, open: setHandoverFor, tone: NEUTRAL.muted },
     { key: "notes", label: "Nursing notes", icon: <DescriptionRounded fontSize="small" />, open: setNotesFor, tone: NEUTRAL.muted },
     { key: "visits", label: "Doctor visits", icon: <MedicalServicesRounded fontSize="small" />, open: setVisitsFor, tone: NEUTRAL.muted },
@@ -321,6 +330,7 @@ export default function NurseWard() {
       {labsFor && <IpdLabOrdersDialog open admission={labsFor} onClose={() => setLabsFor(null)} />}
       {radiologyFor && <IpdRadiologyOrdersDialog open admission={radiologyFor} onClose={() => setRadiologyFor(null)} />}
       {surgeryFor && <SurgeryDialog open admission={surgeryFor} onClose={() => setSurgeryFor(null)} />}
+      {assignMedsFor && <IpdMedicinesDialog open admission={assignMedsFor} onClose={() => setAssignMedsFor(null)} />}
     </Box>
   );
 }
