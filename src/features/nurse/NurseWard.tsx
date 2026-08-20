@@ -61,7 +61,7 @@ export default function NurseWard() {
   const [handoverFor, setHandoverFor] = useState<any>(null);
   const [labsFor, setLabsFor] = useState<any>(null);
   const [radiologyFor, setRadiologyFor] = useState<any>(null);
-  const [surgeryFor, setSurgeryFor] = useState<any>(null);
+  const [surgeryFor, setSurgeryFor] = useState<{ admissionId: string; patientId?: string; patientName?: string } | null>(null);
   const navigate = useNavigate();
 
   const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<any[]>({
