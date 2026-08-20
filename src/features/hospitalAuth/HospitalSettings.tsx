@@ -90,6 +90,8 @@ export default function HospitalSettings() {
     // Clinical Workflow
     vitalsCollector: "RECEPTIONIST" as "RECEPTIONIST" | "NURSE",
     billingStrategy: "PRE_PAID" as "PRE_PAID" | "POST_PAID",
+    // Kept as a string so the field can be cleared while typing; parsed on save.
+    refundApprovalThreshold: "5000",
   });
 
   const { data: settingsData, isLoading: loading, isError, error, refetch } = useQuery({
@@ -117,6 +119,7 @@ export default function HospitalSettings() {
       invoicePrefix: settings.invoicePrefix || "INV-",
       vitalsCollector: (settings.vitalsCollector as "RECEPTIONIST" | "NURSE") || "RECEPTIONIST",
       billingStrategy: (settings.billingStrategy as "PRE_PAID" | "POST_PAID") || "PRE_PAID",
+      refundApprovalThreshold: settings.refundApprovalThreshold != null ? String(settings.refundApprovalThreshold) : "5000",
     });
   }, [settingsData]);
 
@@ -136,7 +139,16 @@ export default function HospitalSettings() {
     e.preventDefault();
     try {
       setSaving(true);
-      await axiosInstance.put("/hospital/settings", formData);
+      // The threshold is held as a string so the field can be emptied while
+      // typing. Sending "" would arrive as Number("") === 0, which means
+      // "every refund needs approval" — a blank box must not silently do that,
+      // so an empty value leaves the setting untouched.
+      const raw = formData.refundApprovalThreshold;
+      const payload: Record<string, unknown> = { ...formData };
+      if (raw === "" || raw == null) delete payload.refundApprovalThreshold;
+      else payload.refundApprovalThreshold = Number(raw);
+
+      await axiosInstance.put("/hospital/settings", payload);
       toast.success("Settings updated successfully!");
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update settings"));
@@ -376,6 +388,33 @@ export default function HospitalSettings() {
                     </Box>
                   </Grid>
                 </Grid>
+              </Grid>
+
+              {/* Refund approval threshold. This existed as a per-hospital setting
+                  from the moment refunds could need approval, but with no way to
+                  set it every hospital was silently stuck on the default. */}
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, mb: 0.5, mt: 2 }}>
+                  Refund Approval Threshold
+                </Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+                  A refund of this amount or more is held for an administrator to approve, and no
+                  money goes back until they do. Smaller refunds are returned immediately by the
+                  desk. Set 0 to require approval for every refund.
+                </Typography>
+                <TextField
+                  type="number"
+                  label="Needs approval at or above (INR)"
+                  value={formData.refundApprovalThreshold}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, refundApprovalThreshold: e.target.value }))}
+                  inputProps={{ min: 0, step: 100 }}
+                  sx={{ maxWidth: 320 }}
+                  helperText={
+                    formData.refundApprovalThreshold === "0"
+                      ? "Every refund will wait for an administrator."
+                      : `Refunds under ₹${Number(formData.refundApprovalThreshold || 0).toLocaleString("en-IN")} complete straight away.`
+                  }
+                />
               </Grid>
             </Grid>
           </CustomTabPanel>
