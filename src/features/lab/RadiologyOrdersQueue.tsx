@@ -14,6 +14,7 @@ import { useSocket } from "@/hooks/useSocket";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { assetUrl } from "@/utils/assetUrl";
 import PageHeader from "@/components/layout/PageHeader";
+import RadiologyMacroBar from "@/components/lab/RadiologyMacroBar";
 import { isUrgent, priorityMeta, urgentRowSx } from "./orderPriority";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
@@ -43,8 +44,6 @@ export default function RadiologyOrdersQueue() {
   const orders: any[] = data?.data ?? [];
   const totalPages: number = data?.pagination?.totalPages ?? 1;
 
-  const [macros, setMacros] = useState<any[]>([]);
-  const [selectedMacro, setSelectedMacro] = useState("");
 
   const [editOrder, setEditOrder] = useState<any>(null);
   const [status, setStatus] = useState("PENDING");
@@ -74,17 +73,8 @@ export default function RadiologyOrdersQueue() {
   });
 
   useEffect(() => {
-    fetchMacros();
   }, []);
 
-  const fetchMacros = async () => {
-    try {
-      const res = await axiosInstance.get("/lab/radiology-macros");
-      setMacros(res.data.data || []);
-    } catch (err: unknown) {
-      toast.error(getApiErrorMessage(err, "Failed to load report macros"));
-    }
-  };
 
 
 
@@ -97,7 +87,6 @@ export default function RadiologyOrdersQueue() {
 
   const handleClose = () => {
     setEditOrder(null);
-    setSelectedMacro("");
   };
 
   const handleFileUpload = async (e: any) => {
@@ -360,27 +349,16 @@ export default function RadiologyOrdersQueue() {
             </Box>
 
             <Box sx={{ mt: 2 }}>
-              <TextField
-                select
-                label="Insert Template / Macro"
-                value={selectedMacro}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setSelectedMacro(val);
-                  const macro = macros.find(m => m.macroId === val);
-                  if (macro) {
-                    setNotes(prev => prev ? `${prev}\n\n${macro.content}` : macro.content);
-                  }
-                }}
-                fullWidth
-                disabled={editOrder?.billingLockActive}
-                sx={{ mb: 2 }}
-              >
-                <MenuItem value=""><em>None</em></MenuItem>
-                {macros.map(m => (
-                  <MenuItem key={m.macroId} value={m.macroId}>{m.title}</MenuItem>
-                ))}
-              </TextField>
+              {/* Picking a template appends it, and the same control saves the
+                  report you have written as a new one — the dropdown here could
+                  only ever read, and nothing in the app could write, so it had
+                  nothing to list. */}
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1.5 }}>
+                <RadiologyMacroBar
+                  content={notes}
+                  onApply={(m) => setNotes((prev) => (prev ? `${prev}\n\n${m.content}` : m.content))}
+                />
+              </Box>
               <TextField
                 label="Radiologist Notes"
               value={notes}
