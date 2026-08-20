@@ -5,13 +5,14 @@ import {
   Box, Paper, Grid, Button, TextField, InputAdornment, Dialog, DialogTitle,
   DialogContent, Typography, Chip, Divider, ToggleButton, ToggleButtonGroup,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer, IconButton, Tooltip,
+  Menu, MenuItem, ListItemIcon, ListItemText, ListSubheader,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import {
   SearchRounded, MedicationRounded, MedicalServicesRounded, DescriptionRounded, VaccinesRounded,
   ScienceRounded, CameraAltRounded,
   MonitorHeartRounded, WaterDropRounded, SwapHorizRounded, AssignmentRounded,
-  HotelRounded, ViewModuleRounded, ViewListRounded,
+  HotelRounded, ViewModuleRounded, ViewListRounded, MoreHorizRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { BRAND, SEMANTIC, NEUTRAL } from "@/styles/accents";
@@ -62,8 +63,8 @@ export default function NurseWard() {
   const [handoverFor, setHandoverFor] = useState<any>(null);
   const [labsFor, setLabsFor] = useState<any>(null);
   const [radiologyFor, setRadiologyFor] = useState<any>(null);
-  const [surgeryFor, setSurgeryFor] = useState<{ admissionId: string; patientId?: string; patientName?: string } | null>(null);
-  const [assignMedsFor, setAssignMedsFor] = useState<{ admissionId: string; patientId?: string | null; patientName?: string } | null>(null);
+  const [surgeryFor, setSurgeryFor] = useState<WardRow | null>(null);
+  const [assignMedsFor, setAssignMedsFor] = useState<WardRow | null>(null);
   const navigate = useNavigate();
 
   const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<any[]>({
@@ -101,31 +102,94 @@ export default function NurseWard() {
       }));
   }, [filtered]);
 
-  // Ordered by how often a nurse reaches for them — but all of them visible.
-  const actions = [
+  // Split by what the action IS, not by guesswork about frequency. Ten buttons
+  // on every card meant four rows of them per patient and nothing standing out;
+  // the split below encodes a real distinction:
+  //
+  //   CHART   — recording what happened to this patient (the hourly work)
+  //   ORDER   — asking for something new (occasional, on the doctor's word)
+  //   RECORD  — reference, read far more often than written
+  //
+  // Only CHART stays on the card. The rest live one tap away under "More",
+  // grouped under those headings so the menu explains itself.
+  // Typed explicitly: inferred from the first list, `tone` narrows to the one
+  // literal colour it happens to contain and the muted entries below stop fitting.
+  /** The fields any ward action needs off the row it was opened from. */
+  interface WardRow {
+    admissionId: string;
+    patientId?: string | null;
+    patientName?: string;
+    uhid?: string;
+  }
+
+  interface WardAction {
+    key: string;
+    label: string;
+    icon: React.ReactNode;
+    open: (row: WardRow) => void;
+    tone: string;
+  }
+
+  const chartActions: WardAction[] = [
     { key: "obs", label: "Observations", icon: <MonitorHeartRounded fontSize="small" />, open: setObsFor, tone: BRAND.action },
-    { key: "fluid", label: "Fluids", icon: <WaterDropRounded fontSize="small" />, open: setFluidFor, tone: BRAND.action },
-    // Two different jobs, and the labels have to separate them: this one opens
-    // the administration record (what was given, and signing off a dose), the
-    // one below puts a NEW medicine on the patient.
     { key: "meds", label: "Medication chart", icon: <MedicationRounded fontSize="small" />, open: setChartFor, tone: BRAND.action },
-    // The ward asks; the pharmacy commits. A new order is created REQUESTED —
-    // it moves no stock and reaches no bill until the pharmacy confirms it, so
-    // requesting is squarely a nursing action.
-    { key: "assign-meds", label: "Assign medicine", icon: <VaccinesRounded fontSize="small" />, open: setAssignMedsFor, tone: BRAND.action },
-    { key: "handover", label: "Handover", icon: <SwapHorizRounded fontSize="small" />, open: setHandoverFor, tone: NEUTRAL.muted },
-    { key: "notes", label: "Nursing notes", icon: <DescriptionRounded fontSize="small" />, open: setNotesFor, tone: NEUTRAL.muted },
-    { key: "visits", label: "Doctor visits", icon: <MedicalServicesRounded fontSize="small" />, open: setVisitsFor, tone: NEUTRAL.muted },
-    // Ordering for an admitted patient goes through the IPD path, not the
-    // walk-in one: it must carry the admission so the charge reaches the
-    // discharge bill rather than raising a separate OPD invoice.
-    { key: "labs", label: "Investigations", icon: <ScienceRounded fontSize="small" />, open: setLabsFor, tone: BRAND.action },
-    { key: "imaging", label: "Imaging", icon: <CameraAltRounded fontSize="small" />, open: setRadiologyFor, tone: BRAND.action },
-    // Full access, same dialog the desk uses: the ward records what actually
-    // happened in theatre. Marking a PRICED surgery completed raises its charge,
-    // so the price field is the one to be careful with — not the record itself.
-    { key: "surgery", label: "Surgery", icon: <MedicalServicesRounded fontSize="small" />, open: setSurgeryFor, tone: NEUTRAL.muted },
+    { key: "fluid", label: "Fluids", icon: <WaterDropRounded fontSize="small" />, open: setFluidFor, tone: BRAND.action },
+    { key: "notes", label: "Nursing notes", icon: <DescriptionRounded fontSize="small" />, open: setNotesFor, tone: BRAND.action },
   ];
+
+  const moreActions: { group: string; items: WardAction[] }[] = [
+    {
+      group: "Order",
+      items: [
+        // The ward asks; the pharmacy commits. A new order is created REQUESTED —
+        // it moves no stock and reaches no bill until the pharmacy confirms it.
+        { key: "assign-meds", label: "Assign medicine", icon: <VaccinesRounded fontSize="small" />, open: setAssignMedsFor, tone: BRAND.action },
+        // Ordering for an admitted patient goes through the IPD path, not the
+        // walk-in one: it must carry the admission so the charge reaches the
+        // discharge bill rather than raising a separate OPD invoice.
+        { key: "labs", label: "Investigations", icon: <ScienceRounded fontSize="small" />, open: setLabsFor, tone: BRAND.action },
+        { key: "imaging", label: "Imaging", icon: <CameraAltRounded fontSize="small" />, open: setRadiologyFor, tone: BRAND.action },
+      ],
+    },
+    {
+      group: "Record",
+      items: [
+        { key: "visits", label: "Doctor visits", icon: <MedicalServicesRounded fontSize="small" />, open: setVisitsFor, tone: NEUTRAL.muted },
+        // Full access, same dialog the desk uses: the ward records what actually
+        // happened in theatre. Marking a PRICED surgery completed raises its
+        // charge, so the price field is the one to be careful with.
+        { key: "surgery", label: "Surgery", icon: <MedicalServicesRounded fontSize="small" />, open: setSurgeryFor, tone: NEUTRAL.muted },
+        { key: "handover", label: "Handover", icon: <SwapHorizRounded fontSize="small" />, open: setHandoverFor, tone: NEUTRAL.muted },
+      ],
+    },
+  ];
+
+  // One menu, re-anchored per patient — the row it was opened from is carried
+  // alongside the anchor so an action always applies to the right admission.
+  const [moreMenu, setMoreMenu] = useState<{ anchor: HTMLElement; row: WardRow } | null>(null);
+  const closeMore = () => setMoreMenu(null);
+
+  // A plain element, deliberately not a component declared in here: React
+  // treats a function defined during render as a NEW component type each
+  // pass and remounts its subtree, which closes the menu the moment anything
+  // upstream re-renders.
+  const moreMenuEl = (
+    <Menu anchorEl={moreMenu?.anchor} open={!!moreMenu} onClose={closeMore}
+      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      transformOrigin={{ vertical: "top", horizontal: "right" }}>
+      {moreActions.flatMap((g) => [
+        <ListSubheader key={g.group} sx={{ lineHeight: "32px", fontWeight: 700, fontSize: "0.7rem", letterSpacing: 0.6, textTransform: "uppercase" }}>
+          {g.group}
+        </ListSubheader>,
+        ...g.items.map((act) => (
+          <MenuItem key={act.key} onClick={() => { const r = moreMenu?.row; closeMore(); if (r) act.open(r); }}>
+            <ListItemIcon sx={{ color: act.tone }}>{act.icon}</ListItemIcon>
+            <ListItemText primaryTypographyProps={{ fontSize: "0.875rem" }}>{act.label}</ListItemText>
+          </MenuItem>
+        )),
+      ])}
+    </Menu>
+  );
 
   const chooseView = (_: unknown, v: "cards" | "list" | null) => {
     if (!v) return;
@@ -182,7 +246,7 @@ export default function NurseWard() {
           Open chart
         </Button>
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
-          {actions.map((act) => (
+          {chartActions.map((act) => (
             <Button
               key={act.key} size="small" variant="outlined" onClick={() => act.open(a)}
               sx={{
@@ -197,6 +261,18 @@ export default function NurseWard() {
               </Box>
             </Button>
           ))}
+          <Button
+            size="small" variant="outlined"
+            onClick={(e) => setMoreMenu({ anchor: e.currentTarget, row: a })}
+            sx={{
+              textTransform: "none", px: 0.5, minWidth: 0, borderColor: "divider", color: NEUTRAL.muted,
+              flexDirection: "column", gap: 0.25, py: 0.75, lineHeight: 1.2, fontSize: "0.72rem",
+              "&:hover": { borderColor: NEUTRAL.muted, bgcolor: alpha(NEUTRAL.muted, 0.06) },
+            }}
+          >
+            <MoreHorizRounded fontSize="small" />
+            <Box component="span">More</Box>
+          </Button>
         </Box>
       </Box>
     </Paper>
@@ -233,8 +309,9 @@ export default function NurseWard() {
                       Open chart
                     </Button>
                     {/* The dense view trades labels for icons — that is the trade
-                        it exists to make. Every action is still one tap. */}
-                    {actions.map((act) => (
+                        it exists to make. The charting actions stay one tap; the
+                        rest are one tap behind the same menu as the cards. */}
+                    {chartActions.map((act) => (
                       <Tooltip key={act.key} title={act.label}>
                         <IconButton size="small" aria-label={act.label} onClick={() => act.open(a)}
                           sx={{ color: NEUTRAL.muted, "&:hover": { color: act.tone, bgcolor: alpha(act.tone, 0.08) } }}>
@@ -242,6 +319,13 @@ export default function NurseWard() {
                         </IconButton>
                       </Tooltip>
                     ))}
+                    <Tooltip title="More">
+                      <IconButton size="small" aria-label="More actions"
+                        onClick={(e) => setMoreMenu({ anchor: e.currentTarget, row: a })}
+                        sx={{ color: NEUTRAL.muted }}>
+                        <MoreHorizRounded fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 </TableCell>
               </TableRow>
@@ -331,6 +415,7 @@ export default function NurseWard() {
       {radiologyFor && <IpdRadiologyOrdersDialog open admission={radiologyFor} onClose={() => setRadiologyFor(null)} />}
       {surgeryFor && <SurgeryDialog open admission={surgeryFor} onClose={() => setSurgeryFor(null)} />}
       {assignMedsFor && <IpdMedicinesDialog open admission={assignMedsFor} onClose={() => setAssignMedsFor(null)} />}
+      {moreMenuEl}
     </Box>
   );
 }
