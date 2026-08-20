@@ -110,6 +110,8 @@ export interface Refund {
   refundStatus: string;
   /** Null while PENDING — set at the moment the refund completes. */
   processedAt?: string | null;
+  /** Receipt number, REF-{year}-{NNNN}. Only a COMPLETED refund has one. */
+  refundNumber?: string | null;
   /** How the money went back, and its bank/UPI reference. Null on older rows. */
   paymentMethodId?: number | null;
   referenceNumber?: string | null;

@@ -1,0 +1,209 @@
+import { useState } from "react";
+import { Box, Button, Chip, TextField, MenuItem, Typography } from "@mui/material";
+import { axiosInstance } from "@/api/axios";
+import { getApiErrorMessage } from "@/utils/apiError";
+import { useToast } from "@/providers/ToastContext";
+import { refundablePayments, isPendingRefund } from "@/utils/invoiceMoney";
+import RefundReceiptDialog from "@/components/billing/RefundReceiptDialog";
+import { SEMANTIC } from "@/styles/accents";
+import type { Invoice, Refund } from "@/types";
+
+/**
+ * Refunding money already collected on an invoice: what has been returned, and
+ * the control to return more.
+ *
+ * Shared deliberately. This lived only inside the appointment billing screen,
+ * which meant it could only be reached for an invoice that HAS an appointment —
+ * so every IPD bill and every hand-generated OPD invoice was unrefundable
+ * through the UI (23 of 27 invoices holding money, on the live data). Refunding
+ * belongs to the invoice, not to the appointment that happened to create it, so
+ * it lives here and both screens mount it.
+ *
+ * One definition also means the two screens cannot drift apart on a money rule.
+ */
+export default function RefundSection({
+  invoice, onChanged, readOnly = false, paymentMethods = [],
+}: {
+  invoice: (Partial<Invoice> & { invoiceId?: string; Refund?: Refund[] | null }) | null | undefined;
+  onChanged?: () => void | Promise<unknown>;
+  readOnly?: boolean;
+  paymentMethods?: { paymentMethodId: number; methodName: string }[];
+}) {
+  const toast = useToast();
+  const [open, setOpen] = useState(false);
+  const [paymentId, setPaymentId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [reason, setReason] = useState("");
+  const [methodId, setMethodId] = useState<string>("");
+  const [reference, setReference] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [receiptFor, setReceiptFor] = useState<string | null>(null);
+
+  const refunds = invoice?.Refund ?? [];
+  const refundable = refundablePayments(invoice);
+  const selectedMax = refundable.find((p) => p.paymentId === paymentId)?.refundable ?? 0;
+
+  // Nothing collected and nothing returned — there is no refund story to tell.
+  if (!invoice || (refunds.length === 0 && refundable.length === 0)) return null;
+
+  const begin = () => {
+    setOpen(true);
+    const first = refundable[0];
+    if (first) { setPaymentId(first.paymentId); setAmount(first.refundable.toFixed(2)); }
+  };
+
+  const reset = () => {
+    setOpen(false); setPaymentId(""); setAmount(""); setReason(""); setMethodId(""); setReference("");
+  };
+
+  const submit = async () => {
+    const amt = Number(amount);
+    if (!paymentId || !(amt > 0) || reason.trim().length < 3) return;
+    setBusy(true);
+    try {
+      const res = await axiosInstance.post(`/reception/billing/invoices/${invoice.invoiceId}/refund`, {
+        paymentId,
+        amount: amt,
+        reason: reason.trim(),
+        paymentMethodId: methodId === "" ? null : Number(methodId),
+        referenceNumber: reference.trim() || null,
+      });
+      // The server's message differs when the refund only got RAISED — saying
+      // "processed" for one awaiting approval would tell the desk the patient
+      // had been paid when they have not.
+      toast.success(res.data?.message || "Refund processed");
+      reset();
+      await onChanged?.();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Refund failed"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Box sx={{ mt: 3, p: 2, borderRadius: 2, bgcolor: "rgba(139,92,246,0.06)", border: "1px dashed rgba(139,92,246,0.3)" }}>
+      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#7c3aed", mb: 1 }}>Refunds</Typography>
+
+      {/* What has already been returned. A refund awaiting approval is listed
+          too and marked as such: it explains why less is refundable than the
+          payments suggest, and it has no receipt because no money has moved. */}
+      {refunds.length > 0 && (
+        <Box sx={{ mb: 1.5 }}>
+          {refunds.map((r) => {
+            const pending = isPendingRefund(r);
+            const rejected = String(r.refundStatus).toUpperCase() === "REJECTED";
+            return (
+              <Box key={r.refundId} sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ flex: 1, color: "text.secondary", textDecoration: rejected ? "line-through" : "none" }}
+                >
+                  {r.refundNumber ? `${r.refundNumber} · ` : ""}
+                  ₹{Number(r.refundAmount).toFixed(2)}
+                  {r.refundReason ? ` — ${r.refundReason}` : ""}
+                </Typography>
+                {pending && <Chip size="small" label="Awaiting approval" sx={{ height: 20, fontSize: "0.66rem", fontWeight: 700 }} />}
+                {rejected && <Chip size="small" label="Rejected" sx={{ height: 20, fontSize: "0.66rem", fontWeight: 700 }} />}
+                {!pending && !rejected && (
+                  <Button size="small" onClick={() => setReceiptFor(r.refundId)} sx={{ textTransform: "none", fontWeight: 600, minWidth: 0 }}>
+                    Receipt
+                  </Button>
+                )}
+              </Box>
+            );
+          })}
+        </Box>
+      )}
+
+      {readOnly ? (
+        refundable.length > 0 && (
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            Refund from the Billing panel.
+          </Typography>
+        )
+      ) : refundable.length === 0 ? (
+        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+          Nothing left to refund on this invoice.
+        </Typography>
+      ) : !open ? (
+        <Button size="small" onClick={begin} sx={{ color: "#8b5cf6", textTransform: "none", fontWeight: 600 }}>
+          Process a refund
+        </Button>
+      ) : (
+        <Box sx={{ mt: 1 }}>
+          <TextField
+            select fullWidth size="small" label="Refund against payment" value={paymentId}
+            onChange={(e) => {
+              setPaymentId(e.target.value);
+              const p = refundable.find((x) => x.paymentId === e.target.value);
+              if (p) setAmount(p.refundable.toFixed(2));
+            }}
+            sx={{ mb: 2 }}
+          >
+            {refundable.map((p) => (
+              <MenuItem key={p.paymentId} value={p.paymentId}>
+                {p.paymentMethod?.methodName || "Payment"} — {Number(p.paidAmount).toFixed(2)} (refundable {p.refundable.toFixed(2)})
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            fullWidth size="small" type="number" label="Refund amount (INR)" value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            inputProps={{ min: 0, max: selectedMax, step: "0.01" }}
+            error={Number(amount) > selectedMax + 0.005}
+            helperText={`Max refundable: ${selectedMax.toFixed(2)} INR`}
+            sx={{ mb: 2 }}
+          />
+
+          {/* How the money physically goes back. Recorded rather than inferred:
+              the cash book otherwise assumes a refund left by the method the
+              payment arrived on, so cash handed back on a card payment books as
+              a card reversal and the drawer will not reconcile. */}
+          <TextField
+            select fullWidth size="small" label="Refunded by" value={methodId}
+            onChange={(e) => setMethodId(e.target.value)}
+            helperText="Blank assumes the original method"
+            sx={{ mb: 2 }}
+          >
+            <MenuItem value="">Same as the original payment</MenuItem>
+            {paymentMethods.map((m) => (
+              <MenuItem key={m.paymentMethodId} value={String(m.paymentMethodId)}>{m.methodName}</MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            fullWidth size="small" label="Reference / UTR (optional)"
+            placeholder="Bank or UPI reference for a non-cash refund"
+            value={reference} onChange={(e) => setReference(e.target.value)}
+            sx={{ mb: 2 }}
+          />
+
+          <TextField
+            fullWidth size="small" label="Reason (required)"
+            placeholder="e.g. Service cancelled, overcharge"
+            value={reason} onChange={(e) => setReason(e.target.value)}
+            multiline rows={2} sx={{ mb: 2 }}
+          />
+
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button fullWidth variant="outlined" onClick={reset} disabled={busy}
+              sx={{ color: "text.secondary", borderColor: "divider", fontWeight: 600 }}>
+              Cancel
+            </Button>
+            <Button
+              fullWidth variant="contained" onClick={submit}
+              disabled={busy || !paymentId || !(Number(amount) > 0) || Number(amount) > selectedMax + 0.005 || reason.trim().length < 3}
+              sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: SEMANTIC.dangerDark }, fontWeight: 700 }}
+            >
+              {busy ? "Refunding…" : "Confirm refund"}
+            </Button>
+          </Box>
+        </Box>
+      )}
+
+      <RefundReceiptDialog refundId={receiptFor} open={!!receiptFor} onClose={() => setReceiptFor(null)} />
+    </Box>
+  );
+}

@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { paidTotal, refundedTotal, refundablePayments, isPendingRefund } from "@/utils/invoiceMoney";
-import type { Refund } from "@/types";
-import RefundReceiptDialog from "@/components/billing/RefundReceiptDialog";
+import { paidTotal, refundedTotal } from "@/utils/invoiceMoney";
+import RefundSection from "@/components/billing/RefundSection";
 import { useNavigate } from "react-router-dom";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
@@ -75,17 +74,6 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const [voiding, setVoiding] = useState(false);
 
   // Refund
-  const [showRefund, setShowRefund] = useState(false);
-  const [refundPaymentId, setRefundPaymentId] = useState("");
-  const [refundAmount, setRefundAmount] = useState("");
-  const [refundReason, setRefundReason] = useState("");
-  // How the money physically goes back. Recorded rather than inferred: the cash
-  // book used to assume a refund left by the method the payment arrived on, so a
-  // card payment handed back as cash booked as a card reversal.
-  const [refundMethodId, setRefundMethodId] = useState<string>("");
-  const [refundReference, setRefundReference] = useState("");
-  const [receiptFor, setReceiptFor] = useState<string | null>(null);
-  const [refunding, setRefunding] = useState(false);
 
   // For printing
   const receiptRef = useRef<HTMLDivElement>(null);
@@ -355,36 +343,6 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     }, 250);
   };
 
-  const handleRefund = async () => {
-    if (!invoice || !refundPaymentId || !refundAmount || refundReason.trim().length < 3) return;
-    try {
-      setRefunding(true);
-      const res = await axiosInstance.post(`/reception/billing/invoices/${invoice.invoiceId}/refund`, {
-        paymentId: refundPaymentId,
-        amount: parseFloat(refundAmount),
-        reason: refundReason.trim(),
-        paymentMethodId: refundMethodId === "" ? null : Number(refundMethodId),
-        referenceNumber: refundReference.trim() || null,
-      });
-      if (res.data.success) {
-        // The server says whether the money went back or the refund is waiting on
-        // an administrator; a flat "Refund processed" on a PENDING one would tell
-        // the desk the patient had been paid when they had not.
-        toast.success(res.data?.message || "Refund processed");
-        setShowRefund(false);
-        setRefundPaymentId("");
-        setRefundAmount("");
-        setRefundReason("");
-        setRefundMethodId("");
-        setRefundReference("");
-        await fetchBillingData();
-      }
-    } catch (err: unknown) {
-      toast.error(getApiErrorMessage(err, "Refund failed"));
-    } finally {
-      setRefunding(false);
-    }
-  };
 
   if (!open) return null;
 
@@ -395,9 +353,6 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const balance = netAmount - netPaid;
   const isFullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || balance <= 0;
 
-  // How much of each payment is still refundable (paid − refunds against it).
-  const refundable = refundablePayments(invoice);
-  const selectedRefundable = refundable.find((p) => p.paymentId === refundPaymentId)?.refundable || 0;
 
   return (
     <>
@@ -563,135 +518,14 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                   </Box>
                 )}
 
-                {/* Refund — available whenever there's collected money left to return. */}
-                {refundable.length > 0 && (
-                  <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(139,92,246,0.05)", borderRadius: 2, border: "1px dashed rgba(139,92,246,0.3)" }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <Typography variant="subtitle2" sx={{ color: "#8b5cf6", fontWeight: 700 }}>
-                        Refund
-                      </Typography>
-                      {/* What has already been returned on this bill. A refund
-                          waiting on approval is listed too, marked as such — it
-                          explains why less is refundable than the payments suggest,
-                          and it has no receipt because no money has moved. */}
-                      {(invoice.Refund ?? []).length > 0 && (
-                        <Box sx={{ mb: 1.5 }}>
-                          {(invoice.Refund ?? []).map((r: Refund) => {
-                            const pending = isPendingRefund(r);
-                            const rejected = String(r.refundStatus).toUpperCase() === "REJECTED";
-                            return (
-                              <Box key={r.refundId} sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.5 }}>
-                                <Typography variant="caption" sx={{ flex: 1, color: "text.secondary", textDecoration: rejected ? "line-through" : "none" }}>
-                                  {r.refundNumber ? `${r.refundNumber} · ` : ""}
-                                  ₹{Number(r.refundAmount).toFixed(2)}
-                                  {r.refundReason ? ` — ${r.refundReason}` : ""}
-                                </Typography>
-                                {pending && (
-                                  <Chip size="small" label="Awaiting approval" sx={{ height: 20, fontSize: "0.66rem", fontWeight: 700 }} />
-                                )}
-                                {rejected && (
-                                  <Chip size="small" label="Rejected" sx={{ height: 20, fontSize: "0.66rem", fontWeight: 700 }} />
-                                )}
-                                {!pending && !rejected && (
-                                  <Button size="small" onClick={() => setReceiptFor(r.refundId)}
-                                    sx={{ textTransform: "none", fontWeight: 600, minWidth: 0 }}>
-                                    Receipt
-                                  </Button>
-                                )}
-                              </Box>
-                            );
-                          })}
-                        </Box>
-                      )}
-
-                      {!showRefund && (
-                        <Button size="small" onClick={() => {
-                          setShowRefund(true);
-                          const first = refundable[0];
-                          if (first) { setRefundPaymentId(first.paymentId); setRefundAmount(first.refundable.toFixed(2)); }
-                        }} sx={{ color: "#8b5cf6", textTransform: "none", fontWeight: 600 }}>
-                          Process a refund
-                        </Button>
-                      )}
-                    </Box>
-
-                    {showRefund && (
-                      <Box sx={{ mt: 2 }}>
-                        <TextField
-                          select fullWidth size="small"
-                          label="Refund against payment"
-                          value={refundPaymentId}
-                          onChange={(e) => {
-                            setRefundPaymentId(e.target.value);
-                            const p = refundable.find((x) => x.paymentId === e.target.value);
-                            if (p) setRefundAmount(p.refundable.toFixed(2));
-                          }}
-                          sx={{ mb: 2 }}
-                        >
-                          {refundable.map((p) => (
-                            <MenuItem key={p.paymentId} value={p.paymentId}>
-                              {p.paymentMethod?.methodName || "Payment"} — {Number(p.paidAmount).toFixed(2)} (refundable {p.refundable.toFixed(2)})
-                            </MenuItem>
-                          ))}
-                        </TextField>
-                        <TextField
-                          fullWidth size="small"
-                          label="Refund amount (INR)"
-                          type="number"
-                          value={refundAmount}
-                          onChange={(e) => setRefundAmount(e.target.value)}
-                          inputProps={{ min: 0, max: selectedRefundable, step: "0.01" }}
-                          helperText={`Max refundable: ${selectedRefundable.toFixed(2)} INR`}
-                          sx={{ mb: 2 }}
-                        />
-                        <TextField
-                          select fullWidth size="small"
-                          label="Refunded by"
-                          value={refundMethodId}
-                          onChange={(e) => setRefundMethodId(e.target.value)}
-                          helperText="How the money is going back — blank assumes the original method"
-                          sx={{ mb: 2 }}
-                        >
-                          <MenuItem value="">Same as the original payment</MenuItem>
-                          {paymentMethods.map((m) => (
-                            <MenuItem key={m.paymentMethodId} value={String(m.paymentMethodId)}>{m.methodName}</MenuItem>
-                          ))}
-                        </TextField>
-                        <TextField
-                          fullWidth size="small"
-                          label="Reference / UTR (optional)"
-                          placeholder="Bank or UPI reference for a non-cash refund"
-                          value={refundReference}
-                          onChange={(e) => setRefundReference(e.target.value)}
-                          sx={{ mb: 2 }}
-                        />
-                        <TextField
-                          fullWidth size="small"
-                          label="Reason (required)"
-                          placeholder="e.g. Service cancelled, overcharge"
-                          value={refundReason}
-                          onChange={(e) => setRefundReason(e.target.value)}
-                          multiline rows={2}
-                          sx={{ mb: 2 }}
-                        />
-                        <Box sx={{ display: "flex", gap: 1 }}>
-                          <Button fullWidth variant="outlined" onClick={() => setShowRefund(false)} disabled={refunding}
-                            sx={{ color: "text.secondary", borderColor: "divider", fontWeight: 600 }}>
-                            Cancel
-                          </Button>
-                          <Button
-                            fullWidth variant="contained"
-                            onClick={handleRefund}
-                            disabled={refunding || !refundPaymentId || !refundAmount || Number(refundAmount) <= 0 || Number(refundAmount) > selectedRefundable + 0.005 || refundReason.trim().length < 3}
-                            sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" }, fontWeight: 700 }}
-                          >
-                            {refunding ? "Processing..." : "Process Refund"}
-                          </Button>
-                        </Box>
-                      </Box>
-                    )}
-                  </Box>
-                )}
+                {/* Refunding is the same act wherever an invoice is opened, so
+                    both this screen and the Billing panel's invoice view mount
+                    the one component rather than each keeping its own copy. */}
+                <RefundSection
+                  invoice={invoice}
+                  paymentMethods={paymentMethods}
+                  onChanged={fetchBillingData}
+                />
 
                 {!isFullyPaid && (
                   <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(16,185,129,0.05)", borderRadius: 2, border: "1px dashed rgba(16,185,129,0.3)" }}>
@@ -864,7 +698,6 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       onPick={(c) => handleAddSocCharge(c.chargeItemId)}
       accent={BRAND.action}
     />
-    <RefundReceiptDialog refundId={receiptFor} open={!!receiptFor} onClose={() => setReceiptFor(null)} />
     </>
   );
 }

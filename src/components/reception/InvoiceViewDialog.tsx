@@ -9,6 +9,7 @@ import {
 import { CloseRounded, PrintRounded, PaymentRounded, CheckCircleRounded, BlockRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import BillDocument from "@/components/billing/BillDocument";
+import RefundSection from "@/components/billing/RefundSection";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
@@ -212,6 +213,17 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                   </Grid>
                 </Box>
               )}
+
+              {/* Refunding belongs to the INVOICE, not to the appointment that
+                  created it — this dialog is the only way most invoices are ever
+                  opened (IPD bills and hand-generated OPD invoices have no
+                  appointment at all). */}
+              <RefundSection
+                invoice={invoice}
+                readOnly={readOnly}
+                paymentMethods={lookups?.methods ?? []}
+                onChanged={async () => { await refetch(); onChanged?.(); }}
+              />
             </>
           ) : null}
       </DialogContent>
