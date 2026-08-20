@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { printHtml } from "@/utils/printHtml";
 import { Dialog, DialogContent, DialogActions, Button, Box, Paper } from "@mui/material";
 import { PrintRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
@@ -35,30 +36,12 @@ export default function RefundReceiptDialog({
   const handlePrint = () => {
     if (!printRef.current) return;
     const contents = printRef.current.innerHTML;
-    const headStyles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
-      .map((n) => n.outerHTML)
-      .join("");
-    const iframe = document.createElement("iframe");
-    iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
-    document.body.appendChild(iframe);
-    const doc = iframe.contentWindow?.document;
-    if (!doc) { document.body.removeChild(iframe); return; }
-    doc.open();
-    doc.write(
-      `<!doctype html><html><head><title>Refund Receipt</title>${headStyles}` +
-      `<style>@media print{@page{margin:12mm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}` +
-      `body{background:#fff;margin:0;padding:16px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}</style>` +
-      `</head><body>${contents}</body></html>`,
-    );
-    doc.close();
-    const win = iframe.contentWindow!;
-    const cleanup = () => { if (iframe.parentNode) document.body.removeChild(iframe); };
-    win.onafterprint = cleanup;
-    setTimeout(() => {
-      win.focus();
-      win.print();
-      setTimeout(cleanup, 1000); // fallback if onafterprint never fires
-    }, 250);
+    printHtml(contents, {
+      title: "Refund Receipt",
+      extraCss:
+        "@media print{@page{margin:12mm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}" +
+        'body{background:#fff;margin:0;padding:16px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}',
+    });
   };
 
   return (

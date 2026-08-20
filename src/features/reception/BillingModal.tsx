@@ -1,3 +1,4 @@
+import { printHtml } from "@/utils/printHtml";
 import { useState, useEffect, useRef } from "react";
 import { paidTotal, refundedTotal } from "@/utils/invoiceMoney";
 import RefundSection from "@/components/billing/RefundSection";
@@ -286,8 +287,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     const printContents = receiptRef.current.innerHTML;
 
     // Basic print styling
-    const printStyle = `
-        <style>
+    const printCss = `
           @media print {
             @page { margin: 0.5cm; }
             body { font-family: 'Inter', Arial, sans-serif; padding: 20px; color: #1f2937; background: #fff; }
@@ -307,40 +307,13 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
             .total-row.bold { font-weight: 800; font-size: 16px; }
             .watermark { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 120px; font-weight: 900; color: rgba(16, 185, 129, 0.1); pointer-events: none; }
           }
-        </style>
       `;
 
     // Print inside a hidden iframe instead of swapping document.body + reloading.
     // The old approach destroyed the React tree and forced a full page reload
-    // (losing all SPA state). We clone the page's stylesheets so the receipt's
-    // MUI styling renders identically inside the iframe.
-    const headStyles = Array.from(
-      document.querySelectorAll('style, link[rel="stylesheet"]')
-    ).map((el) => el.outerHTML).join("");
-
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("aria-hidden", "true");
-    Object.assign(iframe.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" });
-    document.body.appendChild(iframe);
-
-    const doc = iframe.contentWindow?.document;
-    if (!doc) {
-      document.body.removeChild(iframe);
-      return;
-    }
-    doc.open();
-    doc.write(`<!doctype html><html><head><title>Receipt</title>${headStyles}${printStyle}</head><body>${printContents}</body></html>`);
-    doc.close();
-
-    const win = iframe.contentWindow!;
-    const cleanup = () => { if (iframe.parentNode) document.body.removeChild(iframe); };
-    win.onafterprint = cleanup;
-    // Give cloned styles/fonts a tick to apply before printing.
-    setTimeout(() => {
-      win.focus();
-      win.print();
-      setTimeout(cleanup, 1000); // fallback if onafterprint never fires
-    }, 250);
+    // (losing all SPA state). printHtml carries the page's own CSS across so the
+    // receipt's MUI styling renders identically inside the iframe.
+    printHtml(printContents, { title: "Receipt", extraCss: printCss });
   };
 
 

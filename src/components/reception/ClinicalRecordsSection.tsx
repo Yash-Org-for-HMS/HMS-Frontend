@@ -1,4 +1,5 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import { printHtml } from "@/utils/printHtml";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -39,20 +40,10 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
 
   const handlePrint = () => {
     if (!printRef.current) return;
-    const headStyles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map((el) => el.outerHTML).join("");
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("aria-hidden", "true");
-    Object.assign(iframe.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" });
-    document.body.appendChild(iframe);
-    const doc = iframe.contentWindow?.document;
-    if (!doc) { document.body.removeChild(iframe); return; }
-    doc.open();
-    doc.write(`<!doctype html><html><head><title>Document</title>${headStyles}<style>@media print{@page{margin:1cm}body{font-family:Inter,Arial,sans-serif;color:#1f2937}}</style></head><body>${printRef.current.innerHTML}</body></html>`);
-    doc.close();
-    const win = iframe.contentWindow!;
-    const cleanup = () => { if (iframe.parentNode) document.body.removeChild(iframe); };
-    win.onafterprint = cleanup;
-    setTimeout(() => { win.focus(); win.print(); setTimeout(cleanup, 1000); }, 250);
+    printHtml(printRef.current.innerHTML, {
+      title: "Document",
+      extraCss: "@media print{@page{margin:1cm}body{font-family:Inter,Arial,sans-serif;color:#1f2937}}",
+    });
   };
 
   return (

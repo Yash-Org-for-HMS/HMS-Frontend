@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { printHtml } from "@/utils/printHtml";
 import { paidTotal, refundedTotal, balanceOf, isSettled } from "@/utils/invoiceMoney";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { formatINR, formatDate } from "@/utils/format";
@@ -91,20 +92,10 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
 
   const print = () => {
     if (!receiptRef.current) return;
-    const headStyles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map((el) => el.outerHTML).join("");
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("aria-hidden", "true");
-    Object.assign(iframe.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" });
-    document.body.appendChild(iframe);
-    const doc = iframe.contentWindow?.document;
-    if (!doc) { document.body.removeChild(iframe); return; }
-    doc.open();
-    doc.write(`<!doctype html><html><head><title>${invoice?.invoiceNumber || "Receipt"}</title>${headStyles}<style>@media print{@page{margin:1cm}body{font-family:Inter,Arial,sans-serif;color:#1f2937}}</style></head><body>${receiptRef.current.innerHTML}</body></html>`);
-    doc.close();
-    const win = iframe.contentWindow!;
-    const cleanup = () => { if (iframe.parentNode) document.body.removeChild(iframe); };
-    win.onafterprint = cleanup;
-    setTimeout(() => { win.focus(); win.print(); setTimeout(cleanup, 1000); }, 300);
+    printHtml(receiptRef.current.innerHTML, {
+      title: invoice?.invoiceNumber || "Receipt",
+      extraCss: "@media print{@page{margin:1cm}body{font-family:Inter,Arial,sans-serif;color:#1f2937}}",
+    });
   };
 
   const cell: React.CSSProperties = { padding: "6px 8px", borderBottom: "1px solid #eee", fontSize: 13 };

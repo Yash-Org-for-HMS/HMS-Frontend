@@ -1,3 +1,4 @@
+import { printHtml } from "@/utils/printHtml";
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useMemo, useState } from "react";
@@ -43,13 +44,6 @@ type Row = {
 // the invoice/lab-report prints elsewhere) listing only administered doses.
 function printCertificate(opts: { hospitalName: string; patientName: string; patientUhid: string; patientDob: string | null; rows: Row[] }) {
   const doneRows = opts.rows.filter((r) => r.state === "DONE");
-  const headStyles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map((el) => el.outerHTML).join("");
-  const iframe = document.createElement("iframe");
-  iframe.setAttribute("aria-hidden", "true");
-  Object.assign(iframe.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" });
-  document.body.appendChild(iframe);
-  const doc = iframe.contentWindow?.document;
-  if (!doc) { document.body.removeChild(iframe); return; }
 
   const rowsHtml = doneRows.length
     ? doneRows.map((r) => `
@@ -61,9 +55,7 @@ function printCertificate(opts: { hospitalName: string; patientName: string; pat
         </tr>`).join("")
     : `<tr><td colspan="4" style="text-align:center;color:#64748b;padding:24px">No administered doses on record</td></tr>`;
 
-  doc.open();
-  doc.write(`<!doctype html><html><head><title>Immunization Certificate — ${opts.patientName}</title>${headStyles}
-    <style>
+  const css = `
       @media print { @page { margin: 1.5cm } }
       body { font-family: Inter, Arial, sans-serif; color: #0f172a; }
       h1 { font-size: 20px; margin-bottom: 2px; }
@@ -75,9 +67,10 @@ function printCertificate(opts: { hospitalName: string; patientName: string; pat
       th { background: #f1f5f9; text-transform: uppercase; font-size: 11px; letter-spacing: 0.04em; color: #475569; }
       .footer { margin-top: 40px; display: flex; justify-content: space-between; font-size: 12px; color: #64748b; }
       .sign { border-top: 1px solid #94a3b8; width: 200px; text-align: center; padding-top: 6px; margin-top: 40px; }
-    </style></head>
-    <body>
-      <h1>${opts.hospitalName}</h1>
+    `;
+
+  printHtml(
+    `<h1>${opts.hospitalName}</h1>
       <div class="sub">Immunization Certificate</div>
       <div class="info">
         <div><span>Patient</span>${opts.patientName}</div>
@@ -91,13 +84,9 @@ function printCertificate(opts: { hospitalName: string; patientName: string; pat
       <div class="footer">
         <div>Printed on ${dayjs().format("DD MMM YYYY")}</div>
         <div class="sign">Authorized signature</div>
-      </div>
-    </body></html>`);
-  doc.close();
-  const win = iframe.contentWindow!;
-  const cleanup = () => { if (iframe.parentNode) document.body.removeChild(iframe); };
-  win.onafterprint = cleanup;
-  setTimeout(() => { win.focus(); win.print(); setTimeout(cleanup, 1000); }, 350);
+      </div>`,
+    { title: `Immunization Certificate — ${opts.patientName}`, extraCss: css },
+  );
 }
 
 export default function VaccinationsSection({ patientId, patientName, patientUhid, patientDob, readOnly = false }: { patientId: string; patientName: string; patientUhid: string; patientDob: string | null; readOnly?: boolean }) {

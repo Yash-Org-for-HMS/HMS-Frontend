@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { printHtml } from "@/utils/printHtml";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box,
 } from "@mui/material";
@@ -57,27 +58,10 @@ export default function IdCardModal({ open, onClose, patient }: IdCardModalProps
   const handlePrint = () => {
     if (!cardRef.current) return;
     const content = cardRef.current.outerHTML; // includes the rendered barcode SVG
-    const headStyles = Array.from(
-      document.querySelectorAll('style, link[rel="stylesheet"]')
-    ).map((el) => el.outerHTML).join("");
-
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("aria-hidden", "true");
-    Object.assign(iframe.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" });
-    document.body.appendChild(iframe);
-    const doc = iframe.contentWindow?.document;
-    if (!doc) { document.body.removeChild(iframe); return; }
-    doc.open();
-    doc.write(
-      `<!doctype html><html><head><title>Patient ID Card</title>${headStyles}` +
-      `<style>@page{margin:8mm} body{margin:0;display:flex;justify-content:center;padding:12px;font-family:Inter,Arial,sans-serif;}</style>` +
-      `</head><body>${content}</body></html>`
-    );
-    doc.close();
-    const win = iframe.contentWindow!;
-    const cleanup = () => { if (iframe.parentNode) document.body.removeChild(iframe); };
-    win.onafterprint = cleanup;
-    setTimeout(() => { win.focus(); win.print(); setTimeout(cleanup, 1000); }, 250);
+    printHtml(content, {
+      title: "Patient ID Card",
+      extraCss: "@page{margin:8mm} body{margin:0;display:flex;justify-content:center;padding:12px;font-family:Inter,Arial,sans-serif;}",
+    });
   };
 
   if (!open || !patient) return null;
