@@ -5,14 +5,13 @@ import {
   Box, Paper, Grid, Button, TextField, InputAdornment, Dialog, DialogTitle,
   DialogContent, Typography, Chip, Divider, ToggleButton, ToggleButtonGroup,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer, IconButton, Tooltip,
-  Menu, MenuItem, ListItemIcon, ListItemText, ListSubheader,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import {
   SearchRounded, MedicationRounded, MedicalServicesRounded, DescriptionRounded, VaccinesRounded,
   ScienceRounded, CameraAltRounded,
   MonitorHeartRounded, WaterDropRounded, SwapHorizRounded, AssignmentRounded,
-  HotelRounded, ViewModuleRounded, ViewListRounded, MoreHorizRounded,
+  HotelRounded, ViewModuleRounded, ViewListRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { BRAND, SEMANTIC, NEUTRAL } from "@/styles/accents";
@@ -110,8 +109,9 @@ export default function NurseWard() {
   //   ORDER   — asking for something new (occasional, on the doctor's word)
   //   RECORD  — reference, read far more often than written
   //
-  // Only CHART stays on the card. The rest live one tap away under "More",
-  // grouped under those headings so the menu explains itself.
+  // Every action stays on the card and one tap away. The grouping is there to
+  // make ten of them readable, not to hide six of them behind a menu — a ward
+  // nurse should not have to remember which drawer an action is in.
   // Typed explicitly: inferred from the first list, `tone` narrows to the one
   // literal colour it happens to contain and the muted entries below stop fitting.
   /** The fields any ward action needs off the row it was opened from. */
@@ -130,14 +130,12 @@ export default function NurseWard() {
     tone: string;
   }
 
-  const chartActions: WardAction[] = [
+  const ACTION_GROUPS: { group: string; items: WardAction[] }[] = [{ group: "Chart", items: [
     { key: "obs", label: "Observations", icon: <MonitorHeartRounded fontSize="small" />, open: setObsFor, tone: BRAND.action },
     { key: "meds", label: "Medication chart", icon: <MedicationRounded fontSize="small" />, open: setChartFor, tone: BRAND.action },
     { key: "fluid", label: "Fluids", icon: <WaterDropRounded fontSize="small" />, open: setFluidFor, tone: BRAND.action },
     { key: "notes", label: "Nursing notes", icon: <DescriptionRounded fontSize="small" />, open: setNotesFor, tone: BRAND.action },
-  ];
-
-  const moreActions: { group: string; items: WardAction[] }[] = [
+  ] },
     {
       group: "Order",
       items: [
@@ -164,32 +162,11 @@ export default function NurseWard() {
     },
   ];
 
-  // One menu, re-anchored per patient — the row it was opened from is carried
-  // alongside the anchor so an action always applies to the right admission.
-  const [moreMenu, setMoreMenu] = useState<{ anchor: HTMLElement; row: WardRow } | null>(null);
-  const closeMore = () => setMoreMenu(null);
+  // The dense view keeps every icon in one strip, in group order, with a hair
+  // of space between groups instead of labels — there is no room for headings
+  // in a table row and the order alone carries the grouping.
+  const allActions = ACTION_GROUPS.flatMap((g) => g.items);
 
-  // A plain element, deliberately not a component declared in here: React
-  // treats a function defined during render as a NEW component type each
-  // pass and remounts its subtree, which closes the menu the moment anything
-  // upstream re-renders.
-  const moreMenuEl = (
-    <Menu anchorEl={moreMenu?.anchor} open={!!moreMenu} onClose={closeMore}
-      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      transformOrigin={{ vertical: "top", horizontal: "right" }}>
-      {moreActions.flatMap((g) => [
-        <ListSubheader key={g.group} sx={{ lineHeight: "32px", fontWeight: 700, fontSize: "0.7rem", letterSpacing: 0.6, textTransform: "uppercase" }}>
-          {g.group}
-        </ListSubheader>,
-        ...g.items.map((act) => (
-          <MenuItem key={act.key} onClick={() => { const r = moreMenu?.row; closeMore(); if (r) act.open(r); }}>
-            <ListItemIcon sx={{ color: act.tone }}>{act.icon}</ListItemIcon>
-            <ListItemText primaryTypographyProps={{ fontSize: "0.875rem" }}>{act.label}</ListItemText>
-          </MenuItem>
-        )),
-      ])}
-    </Menu>
-  );
 
   const chooseView = (_: unknown, v: "cards" | "list" | null) => {
     if (!v) return;
@@ -245,35 +222,30 @@ export default function NurseWard() {
           onClick={() => navigate("/nurse/chart/" + a.admissionId)} sx={{ textTransform: "none", mb: 1.5 }}>
           Open chart
         </Button>
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
-          {chartActions.map((act) => (
-            <Button
-              key={act.key} size="small" variant="outlined" onClick={() => act.open(a)}
-              sx={{
-                textTransform: "none", px: 0.5, minWidth: 0, borderColor: "divider", color: act.tone,
-                flexDirection: "column", gap: 0.25, py: 0.75, lineHeight: 1.2, fontSize: "0.72rem",
-                "&:hover": { borderColor: act.tone, bgcolor: alpha(act.tone, 0.06) },
-              }}
-            >
-              {act.icon}
-              <Box component="span" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
-                {act.label}
-              </Box>
-            </Button>
-          ))}
-          <Button
-            size="small" variant="outlined"
-            onClick={(e) => setMoreMenu({ anchor: e.currentTarget, row: a })}
-            sx={{
-              textTransform: "none", px: 0.5, minWidth: 0, borderColor: "divider", color: NEUTRAL.muted,
-              flexDirection: "column", gap: 0.25, py: 0.75, lineHeight: 1.2, fontSize: "0.72rem",
-              "&:hover": { borderColor: NEUTRAL.muted, bgcolor: alpha(NEUTRAL.muted, 0.06) },
-            }}
-          >
-            <MoreHorizRounded fontSize="small" />
-            <Box component="span">More</Box>
-          </Button>
-        </Box>
+        {ACTION_GROUPS.map((g) => (
+          <Box key={g.group} sx={{ mb: 1 }}>
+            <Typography variant="caption" sx={{ display: "block", color: "text.disabled", fontWeight: 700, fontSize: "0.62rem", letterSpacing: 0.7, textTransform: "uppercase", mb: 0.5 }}>
+              {g.group}
+            </Typography>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
+              {g.items.map((act) => (
+                <Button
+                  key={act.key} size="small" variant="outlined" onClick={() => act.open(a)}
+                  sx={{
+                    textTransform: "none", px: 0.5, minWidth: 0, borderColor: "divider", color: act.tone,
+                    flexDirection: "column", gap: 0.25, py: 0.75, lineHeight: 1.2, fontSize: "0.72rem",
+                    "&:hover": { borderColor: act.tone, bgcolor: alpha(act.tone, 0.06) },
+                  }}
+                >
+                  {act.icon}
+                  <Box component="span" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
+                    {act.label}
+                  </Box>
+                </Button>
+              ))}
+            </Box>
+          </Box>
+        ))}
       </Box>
     </Paper>
   );
@@ -311,7 +283,7 @@ export default function NurseWard() {
                     {/* The dense view trades labels for icons — that is the trade
                         it exists to make. The charting actions stay one tap; the
                         rest are one tap behind the same menu as the cards. */}
-                    {chartActions.map((act) => (
+                    {allActions.map((act) => (
                       <Tooltip key={act.key} title={act.label}>
                         <IconButton size="small" aria-label={act.label} onClick={() => act.open(a)}
                           sx={{ color: NEUTRAL.muted, "&:hover": { color: act.tone, bgcolor: alpha(act.tone, 0.08) } }}>
@@ -319,13 +291,7 @@ export default function NurseWard() {
                         </IconButton>
                       </Tooltip>
                     ))}
-                    <Tooltip title="More">
-                      <IconButton size="small" aria-label="More actions"
-                        onClick={(e) => setMoreMenu({ anchor: e.currentTarget, row: a })}
-                        sx={{ color: NEUTRAL.muted }}>
-                        <MoreHorizRounded fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+
                   </Box>
                 </TableCell>
               </TableRow>
@@ -415,7 +381,6 @@ export default function NurseWard() {
       {radiologyFor && <IpdRadiologyOrdersDialog open admission={radiologyFor} onClose={() => setRadiologyFor(null)} />}
       {surgeryFor && <SurgeryDialog open admission={surgeryFor} onClose={() => setSurgeryFor(null)} />}
       {assignMedsFor && <IpdMedicinesDialog open admission={assignMedsFor} onClose={() => setAssignMedsFor(null)} />}
-      {moreMenuEl}
     </Box>
   );
 }
