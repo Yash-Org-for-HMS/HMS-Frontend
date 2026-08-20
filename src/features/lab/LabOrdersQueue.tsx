@@ -15,6 +15,7 @@ import WalkInOrderDialog from "@/components/lab/WalkInOrderDialog";
 import { useSocket } from "@/hooks/useSocket";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import PageHeader from "@/components/layout/PageHeader";
+import { isUrgent, priorityMeta, urgentRowSx } from "./orderPriority";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import { QUEUE_POLL_MS } from "@/constants/intervals";
@@ -163,8 +164,23 @@ export default function LabOrdersQueue() {
                   </TableCell>
                 </TableRow>
               ) : sorted.map((order: any) => (
-                <TableRow key={order.labOrderId} hover>
-                  <TableCell sx={{ fontWeight: 600 }}>{order.sampleBarcode}</TableCell>
+                <TableRow key={order.labOrderId} hover sx={urgentRowSx(order.priorityId)}>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {order.sampleBarcode}
+                    {/* The colour is never the only signal — a red edge alone is
+                        invisible to anyone who cannot separate it from the row. */}
+                    {isUrgent(order.priorityId) && (
+                      <Chip
+                        label={priorityMeta(order.priorityId)?.label}
+                        size="small"
+                        sx={{
+                          ml: 1, height: 20, fontSize: "0.7rem", fontWeight: 800,
+                          bgcolor: priorityMeta(order.priorityId)!.color!,
+                          color: "#fff",
+                        }}
+                      />
+                    )}
+                  </TableCell>
                   <TableCell>
                     {order.patient?.firstName} {order.patient?.lastName}
                     {order.admissionNumber && (

@@ -14,6 +14,7 @@ import { useSocket } from "@/hooks/useSocket";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { assetUrl } from "@/utils/assetUrl";
 import PageHeader from "@/components/layout/PageHeader";
+import { isUrgent, priorityMeta, urgentRowSx } from "./orderPriority";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import { useToast } from "@/providers/ToastContext";
@@ -221,8 +222,23 @@ export default function RadiologyOrdersQueue() {
                   </TableCell>
                 </TableRow>
               ) : sorted.map((order: any) => (
-                <TableRow key={order.radiologyOrderId} hover>
-                  <TableCell sx={{ fontWeight: 600 }}>{order.scanType}</TableCell>
+                <TableRow key={order.radiologyOrderId} hover sx={urgentRowSx(order.priorityId)}>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {order.scanType}
+                    {/* The colour is never the only signal — a red edge alone is
+                        invisible to anyone who cannot separate it from the row. */}
+                    {isUrgent(order.priorityId) && (
+                      <Chip
+                        label={priorityMeta(order.priorityId)?.label}
+                        size="small"
+                        sx={{
+                          ml: 1, height: 20, fontSize: "0.7rem", fontWeight: 800,
+                          bgcolor: priorityMeta(order.priorityId)!.color!,
+                          color: "#fff",
+                        }}
+                      />
+                    )}
+                  </TableCell>
                   <TableCell>
                     {order.patient?.firstName} {order.patient?.lastName}
                     {order.admissionNumber && (
