@@ -207,7 +207,12 @@ export function ServiceWise() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Total billed" value={inr(data.totals.total)} /></Grid>
+            {/* This total sums LINE values, so it is gross — before the invoice's
+                own discount and tax. Calling it "billed" invited a comparison
+                with Financial Overview's Billed Value, which is net: on this
+                data they sit ₹145.90 apart, exactly the discount less the tax,
+                and nothing on either card explained why. */}
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Total line value" value={inr(data.totals.total)} sub="Before invoice discount and tax" /></Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Services" value={String(data.totals.services)} /></Grid>
           </Grid>
           <ReportTable
