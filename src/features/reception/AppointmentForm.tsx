@@ -193,10 +193,17 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
         currentTotal += sched.slotDurationMinutes || 15;
       }
     } else {
-      // Fallback generic slots when the doctor has no schedule for this weekday —
-      // a full working day (09:00–19:30) so afternoon/evening bookings still work.
+      // Fallback slots when the doctor has no schedule for this weekday, so
+      // afternoon/evening bookings still work. The window comes from the server
+      // rather than being written out here: the Doctor Availability page reports
+      // these same hours, and a second copy of them is how the two screens ended
+      // up disagreeing about whether a doctor could be seen at all.
+      const def = dropdowns?.defaultHours ?? { startTime: "09:00", endTime: "19:30", slotDurationMinutes: 30 };
+      const [dh, dm] = String(def.startTime).split(":").map(Number);
+      const [eh, em] = String(def.endTime).split(":").map(Number);
+      const step = Number(def.slotDurationMinutes) || 30;
       rawSlots = [];
-      for (let t = 9 * 60; t < 20 * 60; t += 30) {
+      for (let t = dh * 60 + (dm || 0); t < eh * 60 + (em || 0); t += step) {
         rawSlots.push(`${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`);
       }
     }

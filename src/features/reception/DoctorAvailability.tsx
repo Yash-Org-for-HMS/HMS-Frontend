@@ -18,12 +18,18 @@ import BillingModal from "./BillingModal";
 import { useToast } from "@/providers/ToastContext";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
-import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND } from "@/styles/accents";
 
+/**
+ * There is no "off" state. A doctor with no weekly hours for today is still
+ * bookable — the appointment form offers a generic working day — and calling
+ * them "Off today" put this page in direct contradiction with the screen next
+ * to it, which is what "it says off but the doctor is available" was reporting.
+ * Only leave means not working; missing hours is a setup gap, shown as one.
+ */
 const STATUS = {
   AVAILABLE: { label: "Available", color: SEMANTIC.success, icon: <EventAvailableRounded fontSize="small" /> },
   ON_LEAVE: { label: "On leave", color: SEMANTIC.danger, icon: <BeachAccessRounded fontSize="small" /> },
-  OFF: { label: "Off today", color: NEUTRAL.muted, icon: <DoNotDisturbRounded fontSize="small" /> },
 } as const;
 
 const fmtTime = (hhmm: string) => {
@@ -72,7 +78,13 @@ export default function DoctorAvailability() {
         <Stack direction="row" spacing={1.5} sx={{ mb: 3, flexWrap: "wrap", gap: 1 }}>
           <Chip label={`${summary.total} doctors`} sx={{ fontWeight: 700, bgcolor: "action.hover", color: "text.primary" }} />
           <Chip icon={STATUS.AVAILABLE.icon} label={`${summary.available} available`} sx={{ fontWeight: 700, bgcolor: "rgba(16,185,129,0.12)", color: STATUS.AVAILABLE.color }} />
-          <Chip icon={STATUS.OFF.icon} label={`${summary.off} off`} sx={{ fontWeight: 700, bgcolor: "rgba(100,116,139,0.12)", color: STATUS.OFF.color }} />
+          {summary.noHoursSet > 0 && (
+            <Chip
+              icon={<DoNotDisturbRounded fontSize="small" />}
+              label={`${summary.noHoursSet} on default hours`}
+              sx={{ fontWeight: 700, bgcolor: "rgba(245,158,11,0.12)", color: SEMANTIC.warning }}
+            />
+          )}
           <Chip icon={STATUS.ON_LEAVE.icon} label={`${summary.onLeave} on leave`} sx={{ fontWeight: 700, bgcolor: "rgba(239,68,68,0.12)", color: STATUS.ON_LEAVE.color }} />
         </Stack>
       )}
@@ -86,7 +98,7 @@ export default function DoctorAvailability() {
       ) : (
         <Grid container spacing={2}>
           {doctors.map((doc) => {
-            const s = STATUS[doc.status as keyof typeof STATUS] || STATUS.OFF;
+            const s = STATUS[doc.status as keyof typeof STATUS] || STATUS.AVAILABLE;
             return (
               <Grid key={doc.doctorId} size={{ xs: 12, sm: 6, lg: 4 }}>
                 <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%", display: "flex", flexDirection: "column", gap: 1.5, opacity: doc.status === "ON_LEAVE" ? 0.85 : 1 }}>
@@ -112,12 +124,21 @@ export default function DoctorAvailability() {
                         On leave{doc.leaveReason ? ` — ${doc.leaveReason}` : ""}
                       </Typography>
                     ) : doc.schedule ? (
-                      <Typography variant="body2" sx={{ color: "text.primary" }}>
-                        {fmtTime(doc.schedule.startTime)} – {fmtTime(doc.schedule.endTime)}
-                        <Typography component="span" variant="caption" sx={{ color: "text.secondary", ml: 0.5 }}>
-                          ({doc.schedule.slotDurationMinutes}-min slots)
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="body2" sx={{ color: "text.primary" }}>
+                          {fmtTime(doc.schedule.startTime)} – {fmtTime(doc.schedule.endTime)}
+                          <Typography component="span" variant="caption" sx={{ color: "text.secondary", ml: 0.5 }}>
+                            ({doc.schedule.slotDurationMinutes}-min slots)
+                          </Typography>
                         </Typography>
-                      </Typography>
+                        {/* Bookable, but on the fallback the appointment form uses
+                            rather than hours anyone chose for this doctor. */}
+                        {doc.usingDefaultHours && (
+                          <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 600, display: "block" }}>
+                            Default hours — no weekly schedule set for today
+                          </Typography>
+                        )}
+                      </Box>
                     ) : (
                       <Typography variant="body2" sx={{ color: "text.secondary" }}>No hours scheduled</Typography>
                     )}
