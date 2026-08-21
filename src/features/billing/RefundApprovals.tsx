@@ -38,6 +38,8 @@ interface PendingRefund {
   invoiceNumber: string;
   patientName?: string | null;
   uhidNumber?: string | null;
+  /** Approving this also voids the bill and frees its services to be re-billed. */
+  voidInvoice?: boolean;
 }
 
 const inr = (v: unknown) =>
@@ -169,6 +171,21 @@ export default function RefundApprovals() {
                       </TableCell>
                       <TableCell sx={{ maxWidth: 240 }}>
                         <Typography variant="body2" sx={{ color: "text.secondary" }}>{r.refundReason || "—"}</Typography>
+                        {/* Approving this one does more than release the money — the
+                            desk asked for the charge itself to be cancelled, so the
+                            bill is voided and its services go back to be re-billed.
+                            That belongs in front of the approver, not after. */}
+                        {r.voidInvoice && (
+                          <Chip
+                            size="small"
+                            label="Also voids the bill"
+                            sx={{
+                              mt: 0.5, height: 20, fontSize: "0.66rem", fontWeight: 700,
+                              bgcolor: `${SEMANTIC.danger}1a`, color: SEMANTIC.danger,
+                              border: `1px solid ${SEMANTIC.danger}44`,
+                            }}
+                          />
+                        )}
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">{r.raisedBy || "—"}</Typography>

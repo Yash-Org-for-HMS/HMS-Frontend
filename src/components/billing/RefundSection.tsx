@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Button, Chip, TextField, MenuItem, Typography } from "@mui/material";
+import { Box, Button, Chip, TextField, MenuItem, Typography, Radio, RadioGroup, FormControlLabel } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
@@ -39,6 +39,9 @@ export default function RefundSection({
   const [reason, setReason] = useState("");
   const [methodId, setMethodId] = useState<string>("");
   const [reference, setReference] = useState("");
+  // "the charge stands" is the safe default: it leaves the bill collectable,
+  // which is reversible, where voiding hands the charges back to be re-billed.
+  const [voidInvoice, setVoidInvoice] = useState(false);
   const [busy, setBusy] = useState(false);
   const [receiptFor, setReceiptFor] = useState<string | null>(null);
 
@@ -76,7 +79,14 @@ export default function RefundSection({
 
   const reset = () => {
     setOpen(false); setPaymentId(""); setAmount(""); setReason(""); setMethodId(""); setReference("");
+    setVoidInvoice(false);
   };
+
+  // Does this refund hand back everything the invoice is holding? Only then is
+  // there a decision to make — and only then will the server accept one.
+  const clearsTheBill = Number(amount) > 0 && Number(amount) >= remaining - 0.005;
+  // An IPD bill is voided at its admission, not here.
+  const canVoid = clearsTheBill && !invoice?.admissionId;
 
   const submit = async () => {
     const amt = Number(amount);
@@ -88,6 +98,7 @@ export default function RefundSection({
         amount: amt,
         reason: reason.trim(),
         paymentMethodId: methodId === "" ? null : Number(methodId),
+        voidInvoice: canVoid && voidInvoice,
         referenceNumber: reference.trim() || null,
       });
       // The server's message differs when the refund only got RAISED — saying
@@ -192,6 +203,37 @@ export default function RefundSection({
             sx={{ mb: 2 }}
           />
 
+          {canVoid && (
+            <Box sx={{ mb: 2, p: 1.5, borderRadius: 1.5, bgcolor: "action.hover" }}>
+              <Typography variant="caption" sx={{ display: "block", fontWeight: 700, color: "text.primary", mb: 0.5 }}>
+                This returns everything collected on this bill. What happened?
+              </Typography>
+              <RadioGroup
+                value={voidInvoice ? "void" : "owed"}
+                onChange={(e) => setVoidInvoice(e.target.value === "void")}
+              >
+                <FormControlLabel
+                  value="owed"
+                  control={<Radio size="small" />}
+                  label={
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      <b>The charge stands</b> — the patient still owes this (overpayment returned, or paying again by another method)
+                    </Typography>
+                  }
+                />
+                <FormControlLabel
+                  value="void"
+                  control={<Radio size="small" />}
+                  label={
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      <b>Cancel the charge</b> — nothing is owed. The bill is voided and its services go back to be re-billed
+                    </Typography>
+                  }
+                />
+              </RadioGroup>
+            </Box>
+          )}
+
           {/* How the money physically goes back. Recorded rather than inferred:
               the cash book otherwise assumes a refund left by the method the
               payment arrived on, so cash handed back on a card payment books as
@@ -232,7 +274,7 @@ export default function RefundSection({
               disabled={busy || !paymentId || !(Number(amount) > 0) || Number(amount) > selectedMax + 0.005 || reason.trim().length < 3}
               sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: SEMANTIC.dangerDark }, fontWeight: 700 }}
             >
-              {busy ? "Refunding…" : "Confirm refund"}
+              {busy ? "Refunding…" : canVoid && voidInvoice ? "Refund and void the bill" : "Confirm refund"}
             </Button>
           </Box>
         </Box>
