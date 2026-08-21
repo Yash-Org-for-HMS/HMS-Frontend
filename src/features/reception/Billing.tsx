@@ -5,7 +5,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Tabs, Tab, TextField, InputAdornment, MenuItem, Table,
   TableHead, TableBody, TableRow, TableCell, TableContainer,
-  Button, Pagination, Stack, IconButton, Tooltip,
+  Button, Pagination, Stack, IconButton, Tooltip, Chip,
 } from "@mui/material";
 import {
   SearchRounded, AddRounded, VisibilityRounded, ReceiptRounded, LocalHotelRounded, PrintRounded,
@@ -135,7 +135,29 @@ function BillsList({ type, readOnly = false }: { type: "OPD" | "IPD"; readOnly?:
                   <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(r.netAmount)}</TableCell>
                   <TableCell align="right" sx={{ color: "text.secondary" }}>{formatINR(r.paidAmount)}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700, color: Number(r.balance) > 0.005 ? SEMANTIC.danger : SEMANTIC.success }}>{formatINR(r.balance)}</TableCell>
-                  <TableCell><StatusChip label={r.statusLabel} color={r.statusColor} /></TableCell>
+                  <TableCell>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                      <StatusChip label={r.statusLabel} color={r.statusColor} />
+                      {/* A refund awaiting an administrator returns no money, so the
+                          status stays "Paid" — correctly. That leaves the request
+                          itself invisible, which is its own way of misleading the
+                          desk, so it gets its own marker rather than bending the
+                          status to carry two meanings. */}
+                      {Number(r.refundPending) > 0.005 && (
+                        <Tooltip title={`${formatINR(r.refundPending)} refund raised — no money is returned until an administrator approves it`}>
+                          <Chip
+                            size="small"
+                            label="Refund pending"
+                            sx={{
+                              height: 20, fontSize: "0.66rem", fontWeight: 700,
+                              bgcolor: `${SEMANTIC.warning}22`, color: SEMANTIC.warning,
+                              border: `1px solid ${SEMANTIC.warning}55`,
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+                    </Box>
+                  </TableCell>
                   <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     {isIpd && (
                       <Tooltip title="Print IP Bill">
