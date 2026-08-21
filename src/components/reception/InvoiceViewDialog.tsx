@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { printHtml } from "@/utils/printHtml";
-import { paidTotal, refundedTotal, balanceOf, isSettled } from "@/utils/invoiceMoney";
+import { paidTotal, refundedTotal, balanceOf, isSettled, balanceFromRefunds } from "@/utils/invoiceMoney";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { formatINR, formatDate } from "@/utils/format";
 import { useQuery } from "@tanstack/react-query";
@@ -49,6 +49,10 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
   const totalPaid = paidTotal(invoice);
   const totalRefunded = refundedTotal(invoice);
   const balance = invoice ? balanceOf(invoice) : 0;
+  // How much of that balance is money handed back rather than money never
+  // collected. Non-zero means this bill WAS settled and was then refunded.
+  const reopenedByRefund = invoice ? balanceFromRefunds(invoice) : 0;
+  const wholeBalanceIsRefund = reopenedByRefund > 0.005 && reopenedByRefund >= balance - 0.005;
   const fullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || isSettled(invoice);
 
   const hp = invoice?.hospital;
@@ -129,6 +133,11 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                     tax: Number(invoice.taxAmount || 0), taxLabel: "Tax (CGST+SGST)",
                     cgst: Number(invoice.cgstAmount || 0), sgst: Number(invoice.sgstAmount || 0),
                     total: Number(invoice.netAmount || 0), paid: totalPaid, refunded: totalRefunded, balance,
+                    balanceNote: reopenedByRefund > 0.005
+                      ? (wholeBalanceIsRefund
+                          ? "This bill was paid and then refunded — the balance is the refund, not an unpaid amount."
+                          : `Includes ${formatINR(reopenedByRefund)} returned by refund.`)
+                      : undefined,
                   }}
                   afterTotals={invoice.Payment?.length > 0 ? (
                     <div style={{ marginTop: 16 }}>
@@ -180,7 +189,18 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                 </Box>
               ) : (
                 <Box sx={{ mt: 3, p: 2, borderRadius: 2, bgcolor: "rgba(16,185,129,0.06)", border: "1px dashed rgba(16,185,129,0.3)" }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: SEMANTIC.success, mb: 1.5 }}>Collect Payment</Typography>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: SEMANTIC.success, mb: wholeBalanceIsRefund ? 1 : 1.5 }}>
+                    {wholeBalanceIsRefund ? "Collect Payment again" : "Collect Payment"}
+                  </Typography>
+                  {/* Without this the box is identical to a never-paid bill, so
+                      collect → refund → collect → refund runs indefinitely with
+                      nothing on screen saying a round trip already happened. */}
+                  {wholeBalanceIsRefund && (
+                    <Typography variant="caption" sx={{ display: "block", mb: 1.5, color: SEMANTIC.warning, fontWeight: 600 }}>
+                      {formatINR(totalRefunded)} was already refunded on this bill. Taking payment again starts a new
+                      payment, which can then be refunded again — only do this if the patient is genuinely paying once more.
+                    </Typography>
+                  )}
                   <Grid container spacing={1.5}>
                     <Grid size={{ xs: 5 }}>
                       <TextField fullWidth size="small" type="number" label="Amount (₹)" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={String(balance.toFixed(2))}
@@ -199,7 +219,9 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                         sx={{ height: 40, bgcolor: SEMANTIC.success, "&:hover": { bgcolor: SEMANTIC.successDark } }}>Pay</Button>
                     </Grid>
                     <Grid size={{ xs: 12 }}>
-                      <Button size="small" onClick={() => setAmount(balance.toFixed(2))} sx={{ textTransform: "none", color: SEMANTIC.success, p: 0, minWidth: 0 }}>Pay full balance ({formatINR(balance)})</Button>
+                      <Button size="small" onClick={() => setAmount(balance.toFixed(2))} sx={{ textTransform: "none", color: wholeBalanceIsRefund ? "text.secondary" : SEMANTIC.success, p: 0, minWidth: 0 }}>
+                        {wholeBalanceIsRefund ? "Charge again" : "Pay full balance"} ({formatINR(balance)})
+                      </Button>
                     </Grid>
                   </Grid>
                 </Box>

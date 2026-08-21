@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { num, paidTotal, refundedTotal, pendingRefundTotal, netPaid, balanceOf, isSettled, refundablePayments } from "./invoiceMoney";
+import {
+  num, paidTotal, refundedTotal, pendingRefundTotal, netPaid, balanceOf, isSettled,
+  refundablePayments, balanceFromRefunds, totalRefundable,
+} from "./invoiceMoney";
 import type { Invoice, Payment, Refund } from "@/types";
 
 // Amounts arrive from the API as decimal STRINGS, so every fixture uses strings —
@@ -155,5 +158,58 @@ describe("refunds awaiting approval", () => {
   it("treats status case-insensitively — the API is the source of that string", () => {
     const lower = invoice("1000.00", [pay("p1", "1000.00")], [refStatus("r1", "p1", "250.00", "completed")]);
     expect(refundedTotal(lower)).toBe(250);
+  });
+});
+
+describe("balanceFromRefunds", () => {
+  // The distinction the invoice dialog needs: a bill paid and then refunded shows
+  // the same "Balance Due" as one nobody ever paid, and the screen offered both
+  // the same one-click "Pay full balance".
+  it("attributes the whole balance to the refund when the bill was paid in full", () => {
+    const i = invoice("850.00", [pay("p1", "850.00")], [ref("r1", "p1", "850.00")]);
+    expect(balanceOf(i)).toBe(850);
+    expect(balanceFromRefunds(i)).toBe(850);
+  });
+
+  it("is zero when nothing was ever collected", () => {
+    const i = invoice("850.00", [], []);
+    expect(balanceOf(i)).toBe(850);
+    expect(balanceFromRefunds(i)).toBe(0);
+  });
+
+  it("splits a balance that is part never-collected and part refunded", () => {
+    // 1000 billed, 500 taken, 200 handed back: 500 was never collected.
+    const i = invoice("1000.00", [pay("p1", "500.00")], [ref("r1", "p1", "200.00")]);
+    expect(balanceOf(i)).toBe(700);
+    expect(balanceFromRefunds(i)).toBe(200);
+  });
+
+  it("ignores a refund still awaiting approval — no money has moved yet", () => {
+    const i = invoice("850.00", [pay("p1", "850.00")], [refStatus("r1", "p1", "850.00", "PENDING")]);
+    expect(balanceOf(i)).toBe(0);
+    expect(balanceFromRefunds(i)).toBe(0);
+  });
+
+  it("never exceeds the balance it is explaining", () => {
+    // Overpaid then refunded in full: the refund is larger than what is outstanding.
+    const i = invoice("500.00", [pay("p1", "800.00")], [ref("r1", "p1", "800.00")]);
+    expect(balanceOf(i)).toBe(500);
+    expect(balanceFromRefunds(i)).toBe(500);
+  });
+});
+
+describe("totalRefundable", () => {
+  it("sums what is left across every payment", () => {
+    const i = invoice("1000.00", [pay("p1", "600.00"), pay("p2", "400.00")], [ref("r1", "p1", "100.00")]);
+    expect(totalRefundable(i)).toBe(900);
+  });
+
+  it("is zero once every payment is fully claimed, pending included", () => {
+    const i = invoice("1000.00", [pay("p1", "1000.00")], [
+      ref("r1", "p1", "400.00"),
+      refStatus("r2", "p1", "600.00", "PENDING"),
+    ]);
+    // Pending counts: the desk must not be offered money already spoken for.
+    expect(totalRefundable(i)).toBe(0);
   });
 });

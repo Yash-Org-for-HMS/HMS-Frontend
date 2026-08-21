@@ -42,6 +42,15 @@ export interface BillTotals {
   paid?: number;
   refunded?: number;
   balance?: number;
+  /**
+   * Why the balance is outstanding, when a refund is the reason.
+   *
+   * A bill paid in full and then refunded in full shows "Balance Due ₹850",
+   * which is arithmetically right — nothing is paid any more — but on screen and
+   * on paper it is indistinguishable from a bill that was never paid, so the
+   * desk is invited to collect it a second time. This line says which it is.
+   */
+  balanceNote?: string;
 }
 
 interface Props {
@@ -127,6 +136,11 @@ export default function BillDocument({
           {totals.refunded ? <TotalLine label="Refunded" value={`- ${money(totals.refunded)}`} color={REFUND} /> : null}
           {totals.balance != null && (
             <TotalLine label="Balance Due" value={money(totals.balance)} bold color={totals.balance > 0.005 ? NEG : POS} />
+          )}
+          {totals.balanceNote && (
+            <div style={{ fontSize: 10.5, color: SUB, textAlign: "right", marginTop: 2, lineHeight: 1.35 }}>
+              {totals.balanceNote}
+            </div>
           )}
         </div>
       </div>

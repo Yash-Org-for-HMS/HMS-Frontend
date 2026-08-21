@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { paidTotal, refundedTotal, balanceOf, isSettled } from "@/utils/invoiceMoney";
+import { paidTotal, refundedTotal, balanceOf, isSettled, balanceFromRefunds } from "@/utils/invoiceMoney";
 import { formatINR } from "@/utils/format";
 import BillDocument from "@/components/billing/BillDocument";
 
@@ -24,6 +24,8 @@ export default function BillReceipt({ invoice, hospitalProfile, hospital, patien
   const netPaid = totalPaid - totalRefunded;
   const netAmount = Number(invoice?.netAmount || 0);
   const balance = netAmount - netPaid;
+  // The part of the balance that is money handed back, not money never taken.
+  const refundedBalance = balanceFromRefunds(invoice);
   const isFullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || balance <= 0;
 
   const afterTotals = (
@@ -76,6 +78,11 @@ export default function BillReceipt({ invoice, hospitalProfile, hospital, patien
         tax: Number(invoice?.taxAmount || 0), taxLabel: "Tax (CGST + SGST)",
         cgst: Number(invoice?.cgstAmount || 0), sgst: Number(invoice?.sgstAmount || 0),
         total: netAmount, paid: totalPaid, refunded: totalRefunded, balance,
+        balanceNote: refundedBalance > 0.005
+          ? (refundedBalance >= balance - 0.005
+              ? "This bill was paid and then refunded — the balance is the refund, not an unpaid amount."
+              : `Includes ${formatINR(refundedBalance)} returned by refund.`)
+          : undefined,
       }}
       afterTotals={afterTotals}
       paidWatermark={isFullyPaid && totalRefunded <= 0}

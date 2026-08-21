@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { printHtml } from "@/utils/printHtml";
-import { paidTotal, refundedTotal, balanceOf, isSettled } from "@/utils/invoiceMoney";
+import { paidTotal, refundedTotal, balanceOf, isSettled, balanceFromRefunds } from "@/utils/invoiceMoney";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box,
 } from "@mui/material";
@@ -38,6 +38,8 @@ export default function LabReceiptDialog({ open, serviceId, onClose }: Props) {
   const totalPaid = paidTotal(invoice);
   const totalRefunded = refundedTotal(invoice);
   const balance = invoice ? balanceOf(invoice) : 0;
+  // The part of the balance that is money handed back, not money never taken.
+  const refundedBalance = invoice ? balanceFromRefunds(invoice) : 0;
   const fullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || isSettled(invoice);
 
   const cell: React.CSSProperties = { padding: "6px 8px", borderBottom: "1px solid #eee", fontSize: 13 };
@@ -77,6 +79,11 @@ export default function LabReceiptDialog({ open, serviceId, onClose }: Props) {
                   discount: Number(invoice.discountAmount || 0),
                   tax: Number(invoice.taxAmount || 0), taxLabel: "Tax (CGST+SGST)",
                   total: Number(invoice.netAmount || 0), paid: totalPaid, refunded: totalRefunded, balance,
+                  balanceNote: refundedBalance > 0.005
+                    ? (refundedBalance >= balance - 0.005
+                        ? "This bill was paid and then refunded — the balance is the refund, not an unpaid amount."
+                        : `Includes ${formatINR(refundedBalance)} returned by refund.`)
+                    : undefined,
                 }}
                 paidWatermark={fullyPaid && totalRefunded <= 0}
                 afterTotals={invoice.Payment?.length > 0 ? (

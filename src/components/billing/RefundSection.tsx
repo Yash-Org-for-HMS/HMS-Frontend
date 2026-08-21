@@ -3,7 +3,10 @@ import { Box, Button, Chip, TextField, MenuItem, Typography } from "@mui/materia
 import { axiosInstance } from "@/api/axios";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
-import { refundablePayments, isPendingRefund } from "@/utils/invoiceMoney";
+import {
+  refundablePayments, isPendingRefund, paidTotal, refundedTotal, pendingRefundTotal, totalRefundable,
+} from "@/utils/invoiceMoney";
+import { formatINR } from "@/utils/format";
 import RefundReceiptDialog from "@/components/billing/RefundReceiptDialog";
 import { SEMANTIC } from "@/styles/accents";
 import type { Invoice, Refund } from "@/types";
@@ -42,6 +45,25 @@ export default function RefundSection({
   const refunds = invoice?.Refund ?? [];
   const refundable = refundablePayments(invoice);
   const selectedMax = refundable.find((p) => p.paymentId === paymentId)?.refundable ?? 0;
+
+  // The position in one line, so nobody has to add up the rows below to work out
+  // whether this invoice can be refunded again. Reading the individual refunds
+  // and inferring it was the reason a fully-refunded bill looked refundable.
+  const collected = paidTotal(invoice);
+  const returned = refundedTotal(invoice);
+  const awaiting = pendingRefundTotal(invoice);
+  const remaining = totalRefundable(invoice);
+
+  // Which payment a refund was taken from — ambiguous from the amount alone once
+  // an invoice has more than one payment, which is exactly when it matters.
+  const paymentLabel = (id: string): string => {
+    const all = invoice?.Payment ?? [];
+    if (all.length < 2) return "";
+    const idx = all.findIndex((p) => p.paymentId === id);
+    if (idx < 0) return "";
+    const p = all[idx];
+    return ` · from payment ${idx + 1} (${p.paymentMethod?.methodName || "payment"} ${formatINR(p.paidAmount)})`;
+  };
 
   // Nothing collected and nothing returned — there is no refund story to tell.
   if (!invoice || (refunds.length === 0 && refundable.length === 0)) return null;
@@ -83,7 +105,19 @@ export default function RefundSection({
 
   return (
     <Box sx={{ mt: 3, p: 2, borderRadius: 2, bgcolor: "rgba(139,92,246,0.06)", border: "1px dashed rgba(139,92,246,0.3)" }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#7c3aed", mb: 1 }}>Refunds</Typography>
+      <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 1, mb: 1, flexWrap: "wrap" }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#7c3aed" }}>Refunds</Typography>
+        {collected > 0 && (
+          <Typography variant="caption" sx={{ color: "text.secondary", fontVariantNumeric: "tabular-nums" }}>
+            {formatINR(returned)} of {formatINR(collected)} collected returned
+            {awaiting > 0 ? ` · ${formatINR(awaiting)} awaiting approval` : ""}
+            {" · "}
+            <Box component="span" sx={{ fontWeight: 700, color: remaining > 0.005 ? "text.primary" : SEMANTIC.success }}>
+              {remaining > 0.005 ? `${formatINR(remaining)} still refundable` : "nothing left to refund"}
+            </Box>
+          </Typography>
+        )}
+      </Box>
 
       {/* What has already been returned. A refund awaiting approval is listed
           too and marked as such: it explains why less is refundable than the
@@ -100,8 +134,9 @@ export default function RefundSection({
                   sx={{ flex: 1, color: "text.secondary", textDecoration: rejected ? "line-through" : "none" }}
                 >
                   {r.refundNumber ? `${r.refundNumber} · ` : ""}
-                  ₹{Number(r.refundAmount).toFixed(2)}
+                  {formatINR(r.refundAmount)}
                   {r.refundReason ? ` — ${r.refundReason}` : ""}
+                  {paymentLabel(r.paymentId)}
                 </Typography>
                 {pending && <Chip size="small" label="Awaiting approval" sx={{ height: 20, fontSize: "0.66rem", fontWeight: 700 }} />}
                 {rejected && <Chip size="small" label="Rejected" sx={{ height: 20, fontSize: "0.66rem", fontWeight: 700 }} />}

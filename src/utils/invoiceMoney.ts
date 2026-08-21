@@ -88,6 +88,29 @@ export function isSettled(invoice?: Pick<Invoice, "netAmount"> & { Payment?: Pay
  * waiting, and an admin would then approve both. The backend enforces the same
  * rule, so this only keeps the UI from offering what the server will refuse.
  */
+/**
+ * How much of the outstanding balance exists only because money was handed back.
+ *
+ * A fully refunded invoice reads as "Balance Due ₹850" — arithmetically true
+ * (nothing is paid any more) but indistinguishable on screen from a bill that
+ * was never paid at all, so the desk is invited to collect it again. Splitting
+ * the two lets the UI say WHY the balance is there.
+ */
+export function balanceFromRefunds(
+  invoice?: Pick<Invoice, "netAmount"> & { Payment?: Payment[] | null; Refund?: Refund[] | null } | null,
+): number {
+  const refunded = refundedTotal(invoice);
+  if (refunded <= EPSILON) return 0;
+  return Math.min(refunded, Math.max(0, balanceOf(invoice)));
+}
+
+/** Total still returnable across every payment on the invoice. */
+export function totalRefundable(
+  invoice?: { Payment?: Payment[] | null; Refund?: Refund[] | null } | null,
+): number {
+  return refundablePayments(invoice).reduce((s, p) => s + p.refundable, 0);
+}
+
 export function refundablePayments(
   invoice?: { Payment?: Payment[] | null; Refund?: Refund[] | null } | null,
 ): RefundablePayment[] {
