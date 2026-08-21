@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { assetUrl } from "@/utils/assetUrl";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { Box, Typography, Table, TableBody, TableCell, TableHead, TableRow, Grid, Divider } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
@@ -69,7 +70,12 @@ export default function PrintLabReport() {
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           {order.hospital?.logoUrl && (
-            <img src={order.hospital.logoUrl} alt="Hospital Logo" style={{ height: "60px", objectFit: "contain" }} />
+            <img
+              src={assetUrl(order.hospital.logoUrl)}
+              alt="Hospital Logo"
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
+              style={{ height: "60px", objectFit: "contain" }}
+            />
           )}
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 800, color: "primary.main", m: 0 }}>

@@ -1,10 +1,9 @@
 import { Box, Toolbar, Typography } from "@mui/material";
 import type { ReactNode } from "react";
-import { assetUrl } from "@/utils/assetUrl";
 import HospitalLogo from "@/components/HospitalLogo";
 
 interface SidebarHeaderProps {
-  /** Raw hospital logo path (passed through assetUrl). Falls back to an icon tile. */
+  /** Stored logo path. Falls back to the default mark if absent or broken. */
   logoUrl?: string | null;
   title: string;
   subtitle: string;
@@ -30,20 +29,12 @@ export default function SidebarHeader({ logoUrl, title, subtitle, fallbackIcon }
         minHeight: "70px !important",
       }}
     >
-      {/* A hospital that has uploaded a logo gets a rounded tile for it; one that
-          has not gets the default mark, which is round and carries its own
-          shape. The old fallback was a flat indigo square with a generic glyph
-          in it — square tiles read as a broken image rather than as a brand. */}
-      {logoUrl ? (
-        <Box
-          sx={{
-            width: 40, height: 40, borderRadius: 1.5, flexShrink: 0, overflow: "hidden",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
-        >
-          <img src={assetUrl(logoUrl)} alt={`${title} logo`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        </Box>
-      ) : fallbackIcon ? (
+      {/* HospitalLogo decides: the uploaded logo if it loads, the default mark if
+          there is none OR the file has gone (the host's filesystem is ephemeral,
+          so logoUrl can outlive the file it points at). */}
+      {!fallbackIcon ? (
+        <HospitalLogo src={logoUrl} size={40} title={title} />
+      ) : (
         <Box
           sx={{
             width: 40, height: 40, borderRadius: "50%", bgcolor: "primary.main", flexShrink: 0,
@@ -53,8 +44,6 @@ export default function SidebarHeader({ logoUrl, title, subtitle, fallbackIcon }
         >
           {fallbackIcon}
         </Box>
-      ) : (
-        <HospitalLogo size={40} title={title} />
       )}
       <Box sx={{ overflow: "hidden", minWidth: 0 }}>
         <Typography variant="subtitle1" fontWeight={700} noWrap sx={{ maxWidth: 170, color: "text.primary" }}>

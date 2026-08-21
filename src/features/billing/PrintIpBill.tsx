@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
+import { assetUrl } from "@/utils/assetUrl";
 import { paidTotal, refundedTotal } from "@/utils/invoiceMoney";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useParams } from "react-router-dom";
@@ -138,7 +139,14 @@ export default function PrintIpBill() {
         {/* ── Hospital header ── */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, borderBottom: `2px solid ${ACCENT}`, paddingBottom: 10 }}>
           <div style={{ display: "flex", gap: 12, alignItems: "flex-start", minWidth: 0 }}>
-            {hosp.logoUrl && <img src={hosp.logoUrl} alt="" style={{ height: 46, width: "auto", objectFit: "contain" }} />}
+            {hosp.logoUrl && (
+              <img
+                src={assetUrl(hosp.logoUrl)}
+                alt=""
+                onError={(e) => { e.currentTarget.style.display = "none"; }}
+                style={{ height: 46, width: "auto", objectFit: "contain" }}
+              />
+            )}
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: 0.2, color: INK }}>{hosp.hospitalName || "Hospital"}</div>
               {hosp.legalBusinessName && <div style={{ fontSize: 11, color: SUB }}>{hosp.legalBusinessName}</div>}

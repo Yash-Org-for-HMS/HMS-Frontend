@@ -22,7 +22,6 @@ import { SaveRounded, BusinessRounded, PaletteRounded, GavelRounded, CloudUpload
 import { axiosInstance } from "@/api/axios";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useToast } from "@/providers/ToastContext";
-import { assetUrl } from "@/utils/assetUrl";
 import HospitalLogo from "@/components/HospitalLogo";
 import PageHeader from "@/components/layout/PageHeader";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -368,23 +367,24 @@ export default function HospitalProfile() {
                       overflow: "hidden",
                     }}
                   >
-                    {formData.logoUrl ? (
-                      <img 
-                        src={assetUrl(formData.logoUrl)} 
-                        alt="Logo" 
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                    {/* Whatever the sidebar is showing, shown here — including the
+                        default when a logo was uploaded but its file has gone.
+                        An admin deciding whether to upload one should be looking
+                        at what their staff actually see, not the words "No Logo"
+                        or a broken-image glyph. */}
+                    <Box sx={{ textAlign: "center" }}>
+                      <HospitalLogo
+                        src={formData.logoUrl}
+                        size={72}
+                        radius={1}
+                        title={formData.hospitalName || "Hospital"}
                       />
-                    ) : (
-                      // The default the app is actually using, not the words
-                      // "No Logo" — an admin deciding whether to upload one
-                      // should be looking at what their staff already see.
-                      <Box sx={{ textAlign: "center" }}>
-                        <HospitalLogo size={56} title={formData.hospitalName || "Hospital"} />
+                      {!formData.logoUrl && (
                         <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.75 }}>
                           Default
                         </Typography>
-                      </Box>
-                    )}
+                      )}
+                    </Box>
                   </Box>
                   <Box>
                     <Button
