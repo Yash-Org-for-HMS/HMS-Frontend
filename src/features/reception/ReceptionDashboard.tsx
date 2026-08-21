@@ -37,7 +37,10 @@ interface DashboardStats {
   waitingPatients: number;
   avgWaitMinutes: number;
   completedVisits: number;
+  /** Cash kept today: taken today, less anything handed back today. */
   todaysRevenue: number;
+  /** Of that, what went back out — shown so a smaller figure explains itself. */
+  todaysRefunded?: number;
   upcomingAppointments: AppointmentEntry[];
 }
 
@@ -67,7 +70,7 @@ function ActionCard({ icon, label, value, sub, color, onClick }: {
   );
 }
 
-function MiniStat({ icon, title, value, loading, prefix }: any) {
+function MiniStat({ icon, title, value, loading, prefix, sub }: any) {
   return (
     <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", display: "flex", alignItems: "center", gap: 1.5 }}>
       <Box sx={{ width: 38, height: 38, borderRadius: 2, bgcolor: alpha(ACCENT, 0.1), color: ACCENT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</Box>
@@ -77,7 +80,8 @@ function MiniStat({ icon, title, value, loading, prefix }: any) {
             {prefix}{typeof value === "number" ? value.toLocaleString("en-IN") : value}
           </Typography>
         )}
-        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>{title}</Typography>
+        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block" }}>{title}</Typography>
+        {sub && <Typography variant="caption" sx={{ color: "text.secondary", display: "block", lineHeight: 1.3 }}>{sub}</Typography>}
       </Box>
     </Paper>
   );
@@ -157,7 +161,22 @@ export default function ReceptionDashboard() {
         <MiniStat icon={<CalendarTodayRounded fontSize="small" />} title="Appointments" value={stats?.todaysAppointments || 0} loading={loading} />
         <MiniStat icon={<CheckCircleRounded fontSize="small" />} title="Completed" value={stats?.completedVisits || 0} loading={loading} />
         <MiniStat icon={<AccessTimeRounded fontSize="small" />} title="Avg wait" value={stats ? fmtWait(avgWait) : "0m"} loading={loading} />
-        <MiniStat icon={<CurrencyRupeeRounded fontSize="small" />} title="Revenue today" prefix="₹" value={stats?.todaysRevenue || 0} loading={loading} />
+        {/* "Revenue today" read as "what today's work earned", so a quiet day
+            with an old bill settled on it looked inexplicable — ₹41,000 against
+            no appointments. It is money taken today against bills of ANY date,
+            less anything handed back, so it says that. */}
+        <MiniStat
+          icon={<CurrencyRupeeRounded fontSize="small" />}
+          title="Collected today"
+          prefix="₹"
+          value={stats?.todaysRevenue || 0}
+          loading={loading}
+          sub={
+            stats?.todaysRefunded && stats.todaysRefunded > 0
+              ? `on bills of any date · ${inr(stats.todaysRefunded)} refunded`
+              : "on bills of any date"
+          }
+        />
       </Box>
 
       {/* Queue + quick actions */}

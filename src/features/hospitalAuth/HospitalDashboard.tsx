@@ -73,6 +73,8 @@ interface Operations {
   money: {
     collectedToday: number;
     collectedPrevious: number;
+    /** Handed back today; collectedToday is already net of it. */
+    refundedToday?: number;
     outstandingCount: number;
     outstandingAmount: number;
     trend: { date: string; amount: number }[];
@@ -186,6 +188,14 @@ export default function HospitalDashboard() {
             label="Collected today" value={inr(ops?.money.collectedToday ?? 0)}
             current={ops?.money.collectedToday} previous={ops?.money.collectedPrevious}
             deltaLabel="vs the same weekday last week"
+            // Money taken today against bills of any date, less anything handed
+            // back. Without saying so, a quiet day that settled an old bill reads
+            // as inexplicable, and the refund makes the figure look short.
+            sub={
+              Number(ops?.money.refundedToday) > 0
+                ? `on bills of any date · ${inr(ops?.money.refundedToday)} refunded`
+                : "on bills of any date"
+            }
             icon={<CurrencyRupeeRounded />} color={SEMANTIC.success} loading={opsLoading}
           />
         </Grid>
