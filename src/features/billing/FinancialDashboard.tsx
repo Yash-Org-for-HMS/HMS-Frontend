@@ -50,6 +50,21 @@ export default function FinancialDashboard() {
     ? Math.round((analytics.totalCollected / analytics.expectedRevenue) * 100)
     : null;
 
+  /**
+   * What the collected figure is a share OF, and what came back out of it.
+   *
+   * This read "21% of billed value · net of refunds", which put the qualifier
+   * immediately beside "billed value" — so it scanned as though the denominator
+   * were net of refunds. It is not: refunds are subtracted from the collected
+   * figure above, and the denominator is everything invoiced. Naming the
+   * denominator makes the percentage checkable, and the refund becomes its own
+   * fact instead of a modifier attached to the wrong noun.
+   */
+  const collectedSub = collectionRate === null ? undefined : [
+    `${collectionRate}% of ${formatINR(analytics.expectedRevenue, 0)} billed`,
+    Number(analytics.totalRefunded) > 0 ? `${formatINR(analytics.totalRefunded, 0)} refunded` : null,
+  ].filter(Boolean).join(" · ");
+
   return (
     <Box>
       <PageHeader
@@ -64,7 +79,7 @@ export default function FinancialDashboard() {
             value={formatINR(analytics.totalCollected, 0)}
             icon={<AccountBalanceRounded />}
             color={SEMANTIC.success}
-            sub={collectionRate !== null ? `${collectionRate}% of billed value · net of refunds` : undefined}
+            sub={collectedSub}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
