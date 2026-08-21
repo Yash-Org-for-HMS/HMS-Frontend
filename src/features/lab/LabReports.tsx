@@ -58,7 +58,7 @@ export function LabOverview() {
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology orders" value={s?.radiologyOrders || 0} current={s?.radiologyOrders} previous={p?.radiologyOrders} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Critical results" value={s?.criticalResults || 0} current={s?.criticalResults} previous={p?.criticalResults} higherIsBetter={false} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent={BRAND.actionDark} label="Avg time to result" value={`${s?.avgTurnaroundHours || 0} hrs`} current={s?.avgTurnaroundHours} previous={p?.avgTurnaroundHours} higherIsBetter={false} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Lab billed value" value={inr(s?.revenueEstimate)} current={s?.revenueEstimate} previous={p?.revenueEstimate} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Lab billed value" value={inr(s?.revenueEstimate)} sub="Priced per order" current={s?.revenueEstimate} previous={p?.revenueEstimate} /></Grid>
           </Grid>
 
           <Grid container spacing={2.5}>
@@ -98,9 +98,9 @@ export function TestWise() {
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ScienceRounded />} accent={SEMANTIC.success} label="Lab tests performed" value={String(data.totals.labPerformed)} sub={`${data.totals.labTests} distinct`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Lab billed value" value={inr(data.totals.labRevenue)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Lab value by test" value={inr(data.totals.labRevenue)} sub="Priced per test" /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology scans" value={String(data.totals.radScans)} sub={`${data.totals.radTypes} types`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.info} label="Radiology billed value (est.)" value={inr(data.totals.radRevenue)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.info} label="Radiology value by scan" value={inr(data.totals.radRevenue)} sub="Priced per scan (est.)" /></Grid>
           </Grid>
 
           <Box sx={{ mb: 2.5 }}>
