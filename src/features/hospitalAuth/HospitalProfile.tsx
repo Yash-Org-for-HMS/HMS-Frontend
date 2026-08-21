@@ -23,6 +23,7 @@ import { axiosInstance } from "@/api/axios";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useToast } from "@/providers/ToastContext";
 import { assetUrl } from "@/utils/assetUrl";
+import HospitalLogo from "@/components/HospitalLogo";
 import PageHeader from "@/components/layout/PageHeader";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
@@ -374,7 +375,15 @@ export default function HospitalProfile() {
                         style={{ width: "100%", height: "100%", objectFit: "cover" }} 
                       />
                     ) : (
-                      <Typography variant="caption" color="text.secondary">No Logo</Typography>
+                      // The default the app is actually using, not the words
+                      // "No Logo" — an admin deciding whether to upload one
+                      // should be looking at what their staff already see.
+                      <Box sx={{ textAlign: "center" }}>
+                        <HospitalLogo size={56} title={formData.hospitalName || "Hospital"} />
+                        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.75 }}>
+                          Default
+                        </Typography>
+                      </Box>
                     )}
                   </Box>
                   <Box>

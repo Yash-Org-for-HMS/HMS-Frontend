@@ -125,9 +125,12 @@ export default function AdminLayout() {
         color: "text.primary",
       }}
     >
+      {/* Not a hospital: without its own glyph the platform console would wear
+          the default hospital mark, which belongs to the tenants it administers. */}
       <SidebarHeader
         title="HMS Admin"
         subtitle="Platform Console"
+        fallbackIcon={<AdminPanelSettingsRounded fontSize="medium" />}
       />
       
       <SidebarSearch />
