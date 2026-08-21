@@ -24,18 +24,6 @@ import { KpiCard, ReportFilters, ReportTable, ReportTruncationNote, TrendChart, 
 const ACCENT = BRAND.action;
 const inr = formatINRAuto;
 
-function KpiTile({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 2, height: "100%" }}>
-      <Box sx={{ width: 44, height: 44, borderRadius: 2.5, bgcolor: `${color}1a`, color, display: "flex", alignItems: "center", justifyContent: "center" }}>{icon}</Box>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="h6" sx={{ fontWeight: 800, color: "text.primary", lineHeight: 1.2 }} noWrap>{value}</Typography>
-        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>{label}</Typography>
-      </Box>
-    </Paper>
-  );
-}
-
 export default function Reports() {
   const [tab, setTab] = useState(0);
   return (
@@ -87,7 +75,7 @@ export function OpRegistration() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="Registrations" value={String(data.totals.registrations)} color={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="Registrations" value={String(data.totals.registrations)} accent={ACCENT} /></Grid>
           </Grid>
           <SimpleTable title="Registered patients" head={["UHID", "Name", "Phone", "Registered", "Referral"]}
             rows={rows.map((r) => [r.uhid, r.name, r.phone, dayjs(r.registeredOn).format("DD MMM YYYY"), r.referral])}
@@ -122,9 +110,9 @@ export function OpBills() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PaymentsRounded />} label="Invoices" value={String(data.totals.invoices)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Billed" value={inr(data.totals.billed)} color="#8b5cf6" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PaymentsRounded />} label="Collected" value={inr(data.totals.collected)} color={SEMANTIC.success} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} label="Invoices" value={String(data.totals.invoices)} accent={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Billed" value={inr(data.totals.billed)} accent="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} label="Collected" value={inr(data.totals.collected)} accent={SEMANTIC.success} /></Grid>
           </Grid>
           <SimpleTable title="OPD invoices" head={["Invoice", "Patient", "UHID", "Date", "Net", "Paid", "Balance", "Status"]}
             rows={rows.map((r) => [r.invoiceNumber, r.patientName, r.uhid, dayjs(r.invoiceDate).format("DD MMM YYYY"), inr(r.netAmount), inr(r.paidAmount), inr(r.balance), r.statusLabel])}
@@ -154,8 +142,8 @@ export function DiagnosisWise() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<MedicalInformationRounded />} label="Consultations" value={String(data.totals.consultations)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<TrendingUpRounded />} label="Distinct diagnoses" value={String(data.totals.distinctDiagnoses)} color="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicalInformationRounded />} label="Consultations" value={String(data.totals.consultations)} accent={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} label="Distinct diagnoses" value={String(data.totals.distinctDiagnoses)} accent="#8b5cf6" /></Grid>
           </Grid>
           <SimpleTable title="Diagnoses" head={["Diagnosis", "Consultations"]} rows={rows.map((r) => [r.diagnosis, String(r.count)])} />
         </Box>
@@ -251,10 +239,10 @@ export function Census() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHotelRounded />} label="Current inpatients" value={String(data.currentInpatients)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<MeetingRoomRounded />} label="Bed occupancy" value={`${beds.occupancyRate}%`} color={SEMANTIC.danger} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="Admissions" value={String(data.movement.admissions)} color={SEMANTIC.success} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ReplayRounded />} label="Discharges" value={String(data.movement.discharges)} color="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHotelRounded />} label="Current inpatients" value={String(data.currentInpatients)} accent={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MeetingRoomRounded />} label="Bed occupancy" value={`${beds.occupancyRate}%`} accent={SEMANTIC.danger} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="Admissions" value={String(data.movement.admissions)} accent={SEMANTIC.success} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="Discharges" value={String(data.movement.discharges)} accent="#8b5cf6" /></Grid>
           </Grid>
 
           <SimpleTable title="Ward detail" head={["Ward", "Beds", "Occupied", "Available", "Occupancy"]}
@@ -295,14 +283,14 @@ export function DailyOpd() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<EventRounded />} label="Appointments" value={String(t.appointments)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Completed" value={String(t.completed)} color={SEMANTIC.success} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CancelRounded />} label="Cancelled" value={String(t.cancelled)} color={SEMANTIC.danger} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PaymentsRounded />} label="Collected" value={inr(t.collected)} color="#8b5cf6" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Checked in" value={String(t.checkedIn)} color={SEMANTIC.info} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ReplayRounded />} label="Follow-ups" value={String(t.followUps)} color={SEMANTIC.warning} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<EventRounded />} label="New OPD" value={String(t.newOpd)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="New patients" value={String(t.newPatients)} color="#ec4899" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} label="Appointments" value={String(t.appointments)} accent={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Completed" value={String(t.completed)} accent={SEMANTIC.success} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CancelRounded />} label="Cancelled" value={String(t.cancelled)} accent={SEMANTIC.danger} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} label="Collected" value={inr(t.collected)} accent="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Checked in" value={String(t.checkedIn)} accent={SEMANTIC.info} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="Follow-ups" value={String(t.followUps)} accent={SEMANTIC.warning} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} label="New OPD" value={String(t.newOpd)} accent={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="New patients" value={String(t.newPatients)} accent="#ec4899" /></Grid>
           </Grid>
 
           <SimpleTable title="By department" head={["Department", "Appointments"]} rows={data.byDepartment.map((d: any) => [d.departmentName, String(d.count)])} />
@@ -358,13 +346,13 @@ export function OpdVisitRegister() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<EventRounded />} label="Visits" value={String(t.visits)} color={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<GroupRounded />} label={`Unique patients · ${t.avgVisitsPerPatient} visits each`} value={String(t.uniquePatients)} color="#8b5cf6" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Completed" value={String(t.completed)} color={SEMANTIC.success} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CancelRounded />} label="Cancelled" value={String(t.cancelled)} color={SEMANTIC.danger} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonAddRounded />} label="First visits" value={String(t.firstVisits)} color="#ec4899" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ReplayRounded />} label="Repeat visits" value={String(t.repeatVisits)} color={SEMANTIC.info} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ReplayRounded />} label="Follow-ups" value={String(t.followUps)} color={SEMANTIC.warning} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} label="Visits" value={String(t.visits)} accent={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupRounded />} label={`Unique patients · ${t.avgVisitsPerPatient} visits each`} value={String(t.uniquePatients)} accent="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Completed" value={String(t.completed)} accent={SEMANTIC.success} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CancelRounded />} label="Cancelled" value={String(t.cancelled)} accent={SEMANTIC.danger} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="First visits" value={String(t.firstVisits)} accent="#ec4899" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="Repeat visits" value={String(t.repeatVisits)} accent={SEMANTIC.info} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="Follow-ups" value={String(t.followUps)} accent={SEMANTIC.warning} /></Grid>
           </Grid>
 
           <Box sx={{ mb: 2.5 }}>

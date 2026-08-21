@@ -1,4 +1,5 @@
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import KpiCard from "@/features/reports/kit/KpiCard";
 import { apiGet, apiGetList } from "@/api/client";
 import type {
   AdminDashboardStats, DashboardPlanRow, DashboardStatusRow, DashboardOnboardingRow,
@@ -50,21 +51,6 @@ async function fetchAllRows<T>(endpoint: string, params: Record<string, unknown>
 }
 
 // ── Shared presentational helpers (mirrors reception/Reports.tsx) ────────────
-
-function KpiTile({ icon, label, value, sub, color = ACCENT }: { icon: React.ReactNode; label: string; value: React.ReactNode; sub?: string; color?: string }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 2, height: "100%" }}>
-      <Box sx={{ width: 44, height: 44, borderRadius: 2.5, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: `${color}1f`, color }}>
-        {icon}
-      </Box>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.1 }} noWrap>{value}</Typography>
-        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4, display: "block" }}>{label}</Typography>
-        {sub && <Typography variant="caption" sx={{ color: "text.secondary" }}>{sub}</Typography>}
-      </Box>
-    </Paper>
-  );
-}
 
 function SimpleTable({ title, head, rows }: { title: string; head: string[]; rows: (string | number)[][] }) {
   return (
@@ -128,14 +114,14 @@ function OverviewReport() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       {/* KPIs */}
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Hospitals" value={data.totalHospitals ?? 0} sub={`${data.activeHospitals ?? 0} active`} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<TimerRounded />} label="Active Trials" value={data.activeTrials ?? 0} sub={`${data.expiredHospitals ?? 0} expired`} color={SEMANTIC.warning} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonSearchRounded />} label="Leads" value={data.totalLeads ?? 0} sub={`${data.convertedLeads ?? 0} converted`} color="#8b5cf6" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(data.totalRevenue)} sub="monthly recurring" color={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CardMembershipRounded />} label="Plans" value={data.activePlans ?? 0} color="#0891b2" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<GroupsRounded />} label="Patients" value={data.totalPatients ?? 0} color="#ec4899" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<MedicalInformationRounded />} label="Doctors" value={data.totalDoctors ?? 0} color={BRAND.action} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<StoreMallDirectoryRounded />} label="Branches" value={data.totalBranches ?? 0} color={NEUTRAL.muted} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Hospitals" value={data.totalHospitals ?? 0} sub={`${data.activeHospitals ?? 0} active`} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimerRounded />} label="Active Trials" value={data.activeTrials ?? 0} sub={`${data.expiredHospitals ?? 0} expired`} accent={SEMANTIC.warning} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonSearchRounded />} label="Leads" value={data.totalLeads ?? 0} sub={`${data.convertedLeads ?? 0} converted`} accent="#8b5cf6" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(data.totalRevenue)} sub="monthly recurring" accent={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CardMembershipRounded />} label="Plans" value={data.activePlans ?? 0} accent="#0891b2" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupsRounded />} label="Patients" value={data.totalPatients ?? 0} accent="#ec4899" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicalInformationRounded />} label="Doctors" value={data.totalDoctors ?? 0} accent={BRAND.action} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<StoreMallDirectoryRounded />} label="Branches" value={data.totalBranches ?? 0} accent={NEUTRAL.muted} /></Grid>
       </Grid>
 
       {/* Downloadable summary tables */}
@@ -183,10 +169,10 @@ function HospitalsReport() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Total" value={data.length} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Active" value={active} color={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Suspended" value={suspended} color={SEMANTIC.danger} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Branches" value={data.reduce((s: number, h) => s + Number(h._count?.branches ?? 0), 0)} color={NEUTRAL.muted} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Total" value={data.length} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Active" value={active} accent={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Suspended" value={suspended} accent={SEMANTIC.danger} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Branches" value={data.reduce((s: number, h) => s + Number(h._count?.branches ?? 0), 0)} accent={NEUTRAL.muted} /></Grid>
       </Grid>
       <SimpleTable title="Hospitals register" head={["Hospital", "Code", "Status", "Plan(s)", "Branches", "Registered"]} rows={rows} />
     </Box>
@@ -221,10 +207,10 @@ function LeadsReport() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Total leads" value={data.length} color="#8b5cf6" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Converted" value={counts["converted"] || 0} color={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<RocketLaunchRounded />} label="Trialing" value={counts["trialing"] || 0} color={SEMANTIC.warning} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Lost" value={counts["lost"] || 0} color={SEMANTIC.danger} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PeopleAltRounded />} label="Total leads" value={data.length} accent="#8b5cf6" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Converted" value={counts["converted"] || 0} accent={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<RocketLaunchRounded />} label="Trialing" value={counts["trialing"] || 0} accent={SEMANTIC.warning} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Lost" value={counts["lost"] || 0} accent={SEMANTIC.danger} /></Grid>
       </Grid>
       <SimpleTable title="Leads register" head={["Hospital", "Contact", "Email", "Phone", "Stage", "Assigned to", "Created"]} rows={rows} />
     </Box>
@@ -254,10 +240,10 @@ function TrialsReport() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<TimerRounded />} label="Total trials" value={data.length} color={SEMANTIC.warning} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<RocketLaunchRounded />} label="Active" value={byState("active")} color={BRAND.action} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Converted" value={byState("converted")} color={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Expired" value={byState("expired")} color={SEMANTIC.danger} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimerRounded />} label="Total trials" value={data.length} accent={SEMANTIC.warning} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<RocketLaunchRounded />} label="Active" value={byState("active")} accent={BRAND.action} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Converted" value={byState("converted")} accent={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Expired" value={byState("expired")} accent={SEMANTIC.danger} /></Grid>
       </Grid>
       <SimpleTable title="Trials register" head={["Hospital", "Start", "End", "Status", "Auto-expire"]} rows={rows} />
     </Box>
@@ -298,10 +284,10 @@ function SubscriptionsReport() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CardMembershipRounded />} label="Plans" value={data.length} color="#0891b2" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Subscribed branches" value={totalBranches} color={NEUTRAL.muted} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(totalMrr)} sub="monthly recurring" color={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ShowChartRounded />} label="Est. ARR" value={inr(totalMrr * 12)} sub="annualised" color="#8b5cf6" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CardMembershipRounded />} label="Plans" value={data.length} accent="#0891b2" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Subscribed branches" value={totalBranches} accent={NEUTRAL.muted} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(totalMrr)} sub="monthly recurring" accent={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ShowChartRounded />} label="Est. ARR" value={inr(totalMrr * 12)} sub="annualised" accent="#8b5cf6" /></Grid>
       </Grid>
       <SimpleTable
         title="Subscription plans"
@@ -390,22 +376,22 @@ function OnboardingReport() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<RocketLaunchRounded />} label="Onboarding records" value={data.length} sub={`${inProgress} in progress`} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Completed" value={completed} color={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<HighlightOffRounded />} label="Stalled" value={stalled} color={SEMANTIC.danger} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Collected to date" value={inr(totalCollected)} color={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CheckCircleRounded />} label="Payment verified" value={verifiedCount} color="#0891b2" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<RocketLaunchRounded />} label="Onboarding records" value={data.length} sub={`${inProgress} in progress`} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Completed" value={completed} accent={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Stalled" value={stalled} accent={SEMANTIC.danger} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Collected to date" value={inr(totalCollected)} accent={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Payment verified" value={verifiedCount} accent="#0891b2" /></Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <Tooltip title="Marked Payment Verified, but no payment is on file in Subscription Billing">
-            <Box><KpiTile icon={<WarningAmberRounded />} label="Verified w/o payment" value={mismatchCount} color={mismatchCount ? SEMANTIC.danger : NEUTRAL.muted} /></Box>
+            <Box><KpiCard icon={<WarningAmberRounded />} label="Verified w/o payment" value={mismatchCount} accent={mismatchCount ? SEMANTIC.danger : NEUTRAL.muted} /></Box>
           </Tooltip>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <Tooltip title="Has a real payment on file, but Payment Verified isn't checked yet">
-            <Box><KpiTile icon={<InfoOutlined />} label="Paid, not verified" value={unverifiedPaidCount} color={unverifiedPaidCount ? SEMANTIC.warning : NEUTRAL.muted} /></Box>
+            <Box><KpiCard icon={<InfoOutlined />} label="Paid, not verified" value={unverifiedPaidCount} accent={unverifiedPaidCount ? SEMANTIC.warning : NEUTRAL.muted} /></Box>
           </Tooltip>
         </Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Showing" value={filtered.length} sub={`of ${data.length}`} color={NEUTRAL.muted} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PeopleAltRounded />} label="Showing" value={filtered.length} sub={`of ${data.length}`} accent={NEUTRAL.muted} /></Grid>
       </Grid>
 
       {/* Filters */}

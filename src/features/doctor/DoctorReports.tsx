@@ -1,4 +1,5 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import KpiCard from "@/features/reports/kit/KpiCard";
 import { useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -28,20 +29,6 @@ const PRESETS = [
 
 const fmtDate = (d: string) => dayjs(d).format("DD MMM YYYY");
 const fmtDateTime = (d: string) => dayjs(d).format("DD MMM YYYY, hh:mm A");
-
-function Kpi({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 1.5 }}>
-      <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: `${color}1a`, color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        {icon}
-      </Box>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.1 }}>{value}</Typography>
-        <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>{label}</Typography>
-      </Box>
-    </Paper>
-  );
-}
 
 // Downloadable table — every report on this page ends in one of these.
 function SimpleTable({ title, head, rows, dense, note }: { title: string; head: string[]; rows: (string | number)[][]; dense?: boolean; note?: React.ReactNode }) {
@@ -90,16 +77,25 @@ function SimpleTable({ title, head, rows, dense, note }: { title: string; head: 
 
 function SummaryReport({ data }: { data: any }) {
   const s = data?.summary;
+  // The equal-length window before this one, so each count says which way it is
+  // moving rather than standing alone.
+  const p = data?.previous;
   const trend: any[] = data?.trend || [];
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(3,1fr)", md: "repeat(6,1fr)" }, gap: 1.5 }}>
-        <Kpi icon={<DescriptionRounded />} label="Consultations" value={s?.totalConsultations || 0} color={BRAND.action} />
-        <Kpi icon={<GroupRounded />} label="Unique patients" value={s?.uniquePatients || 0} color="#8b5cf6" />
-        <Kpi icon={<EventAvailableRounded />} label="Completed appts" value={s?.completedAppointments || 0} color={SEMANTIC.success} />
-        <Kpi icon={<MedicationRounded />} label="Prescriptions" value={s?.prescriptions || 0} color="#ec4899" />
-        <Kpi icon={<ScienceRounded />} label="Lab orders" value={s?.labOrders || 0} color={SEMANTIC.warning} />
-        <Kpi icon={<MonitorHeartRounded />} label="Radiology" value={s?.radiologyOrders || 0} color="#06b6d4" />
+        <KpiCard icon={<DescriptionRounded />} accent={BRAND.action} label="Consultations"
+          value={s?.totalConsultations || 0} current={s?.totalConsultations} previous={p?.totalConsultations} />
+        <KpiCard icon={<GroupRounded />} accent={BRAND.actionDark} label="Unique patients"
+          value={s?.uniquePatients || 0} current={s?.uniquePatients} previous={p?.uniquePatients} />
+        <KpiCard icon={<EventAvailableRounded />} accent={SEMANTIC.success} label="Completed appointments"
+          value={s?.completedAppointments || 0} current={s?.completedAppointments} previous={p?.completedAppointments} />
+        <KpiCard icon={<MedicationRounded />} accent={SEMANTIC.info} label="Prescriptions"
+          value={s?.prescriptions || 0} current={s?.prescriptions} previous={p?.prescriptions} />
+        <KpiCard icon={<ScienceRounded />} accent={SEMANTIC.warning} label="Lab orders"
+          value={s?.labOrders || 0} current={s?.labOrders} previous={p?.labOrders} />
+        <KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology orders"
+          value={s?.radiologyOrders || 0} current={s?.radiologyOrders} previous={p?.radiologyOrders} />
       </Box>
       <SimpleTable title="Daily consultations" head={["Date", "Consultations"]}
         rows={trend.map((t) => [fmtDate(t.date), Number(t.count)])} />

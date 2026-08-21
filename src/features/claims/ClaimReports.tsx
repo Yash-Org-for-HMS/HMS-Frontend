@@ -1,7 +1,8 @@
 import { useState } from "react";
+import KpiCard from "@/features/reports/kit/KpiCard";
 import { apiGet } from "@/api/client";
 import type {
-  ClaimReportsResponse, ClaimStatusRow, ClaimPayerRow, ClaimSchemeRow,
+  ClaimReportsResponse, ClaimSummary, ClaimStatusRow, ClaimPayerRow, ClaimSchemeRow,
   PreAuthTatRow, ClaimAgingBucket, ClaimAgingRow, ClaimRejectionRow, ClaimRegisterRow,
 } from "./claimReports.types";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
@@ -34,18 +35,6 @@ const PRESETS = [
   { key: "90d", label: "90 days", from: () => dayjs().subtract(89, "day"), to: () => dayjs() },
   { key: "1y", label: "1 year", from: () => dayjs().subtract(1, "year"), to: () => dayjs() },
 ];
-
-function Kpi({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 1.5 }}>
-      <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: `${color}1a`, color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</Box>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.1 }} noWrap>{value}</Typography>
-        <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>{label}</Typography>
-      </Box>
-    </Paper>
-  );
-}
 
 function SimpleTable({ title, head, rows, dense, note }: { title: string; head: string[]; rows: (string | number)[][]; dense?: boolean; note?: React.ReactNode }) {
   return (
@@ -90,16 +79,28 @@ function SimpleTable({ title, head, rows, dense, note }: { title: string; head: 
 
 function OverviewReport({ data }: { data: ClaimReportsResponse }) {
   const s = data?.summary || {};
+  // The equal-length window before this one, so each figure says which way it is
+  // moving rather than standing alone.
+  const p: Partial<ClaimSummary> = data?.previous ?? {};
   const status: ClaimStatusRow[] = data?.statusBreakdown || [];
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(3,1fr)", md: "repeat(6,1fr)" }, gap: 1.5 }}>
-        <Kpi icon={<DescriptionRounded />} label="Total claims" value={String(s.totalClaims || 0)} color={BRAND.action} />
-        <Kpi icon={<HourglassBottomRounded />} label="Open" value={String(s.open || 0)} color={SEMANTIC.warning} />
-        <Kpi icon={<PaidRounded />} label="Settled" value={String(s.settled || 0)} color={SEMANTIC.success} />
-        <Kpi icon={<CancelRounded />} label="Rejected" value={String(s.rejected || 0)} color={SEMANTIC.danger} />
-        <Kpi icon={<AccountBalanceWalletRounded />} label="Payer outstanding" value={inr(s.outstandingFromPayer)} color={SEMANTIC.info} />
-        <Kpi icon={<GroupRounded />} label="Patient shortfall" value={inr(s.patientShortfall)} color="#8b5cf6" />
+        <KpiCard icon={<DescriptionRounded />} accent={BRAND.action} label="Total claims"
+          value={String(s.totalClaims || 0)} current={s.totalClaims} previous={p.totalClaims} />
+        {/* An open claim is money not yet settled, so more of them is not better. */}
+        <KpiCard icon={<HourglassBottomRounded />} accent={SEMANTIC.warning} label="Open"
+          value={String(s.open || 0)} current={s.open} previous={p.open} higherIsBetter={false} />
+        <KpiCard icon={<PaidRounded />} accent={SEMANTIC.success} label="Settled"
+          value={String(s.settled || 0)} current={s.settled} previous={p.settled} />
+        <KpiCard icon={<CancelRounded />} accent={SEMANTIC.danger} label="Rejected"
+          value={String(s.rejected || 0)} current={s.rejected} previous={p.rejected} higherIsBetter={false} />
+        <KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.info} label="Payer outstanding"
+          value={inr(s.outstandingFromPayer)} current={Number(s.outstandingFromPayer)} previous={Number(p.outstandingFromPayer)}
+          higherIsBetter={false} />
+        <KpiCard icon={<GroupRounded />} accent={BRAND.actionDark} label="Patient shortfall"
+          value={inr(s.patientShortfall)} current={Number(s.patientShortfall)} previous={Number(p.patientShortfall)}
+          higherIsBetter={false} />
       </Box>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
         <SimpleTable title="Claims by status" head={["Status", "Claims"]} rows={status.map((r) => [r.label, Number(r.count)])} />
@@ -133,8 +134,10 @@ function TatReport({ data }: { data: ClaimReportsResponse }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr" }, gap: 1.5, maxWidth: 420 }}>
-        <Kpi icon={<HourglassBottomRounded />} label="Avg pre-auth TAT (days)" value={String(tat.avgDays ?? 0)} color={SEMANTIC.warning} />
-        <Kpi icon={<DescriptionRounded />} label="Approved pre-auths" value={String(rows.length)} color={SEMANTIC.info} />
+        <KpiCard icon={<HourglassBottomRounded />} accent={SEMANTIC.warning} label="Avg pre-auth turnaround"
+          value={`${tat.avgDays ?? 0} days`} />
+        <KpiCard icon={<DescriptionRounded />} accent={SEMANTIC.info} label="Approved pre-auths"
+          value={String(rows.length)} />
       </Box>
       <SimpleTable title="Pre-authorization turnaround" head={["Claim #", "Patient", "Submitted", "Approved", "Days"]}
         rows={rows.map((r) => [r.claimNumber, r.patientName, fmtDate(r.submittedAt), fmtDate(r.approvedAt), r.days])} />

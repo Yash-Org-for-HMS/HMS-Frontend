@@ -1,4 +1,5 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import KpiCard from "@/features/reports/kit/KpiCard";
 import { useMemo, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -29,20 +30,6 @@ const PRESETS = [
 
 const fmtDate = (d: string) => dayjs(d).format("DD MMM YYYY");
 const fmtDateTime = (d: string) => dayjs(d).format("DD MMM YYYY, hh:mm A");
-
-function Kpi({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 1.5 }}>
-      <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: `${color}1a`, color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        {icon}
-      </Box>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.1 }}>{value}</Typography>
-        <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>{label}</Typography>
-      </Box>
-    </Paper>
-  );
-}
 
 // Downloadable table — every report on this page ends in one of these.
 function SimpleTable({ title, head, rows, dense, note }: { title: string; head: string[]; rows: (string | number)[][]; dense?: boolean; note?: React.ReactNode }) {
@@ -89,14 +76,24 @@ function SimpleTable({ title, head, rows, dense, note }: { title: string; head: 
 
 function SummaryReport({ data }: { data: any }) {
   const s = data?.summary;
+  // The equal-length window before this one, so each count says which way it
+  // is moving rather than standing alone.
+  const p = data?.previous;
   const trend: any[] = data?.trend || [];
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(4,1fr)" }, gap: 1.5 }}>
-        <Kpi icon={<MonitorHeartRounded />} label="Vitals recorded" value={s?.totalVitalsRecorded || 0} color={BRAND.action} />
-        <Kpi icon={<GroupRounded />} label="Unique patients" value={s?.uniquePatients || 0} color={SEMANTIC.info} />
-        <Kpi icon={<WarningAmberRounded />} label="Abnormal readings" value={s?.abnormalReadings || 0} color={SEMANTIC.danger} />
-        <Kpi icon={<BadgeRounded />} label="Staff recording" value={s?.staffRecording || 0} color={SEMANTIC.success} />
+        <KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Vitals recorded"
+          value={s?.totalVitalsRecorded || 0} current={s?.totalVitalsRecorded} previous={p?.totalVitalsRecorded} />
+        <KpiCard icon={<GroupRounded />} accent={SEMANTIC.info} label="Unique patients"
+          value={s?.uniquePatients || 0} current={s?.uniquePatients} previous={p?.uniquePatients} />
+        {/* Fewer abnormal readings is the good direction here, unlike every
+            other card on this row. */}
+        <KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Abnormal readings"
+          value={s?.abnormalReadings || 0} current={s?.abnormalReadings} previous={p?.abnormalReadings}
+          higherIsBetter={false} />
+        <KpiCard icon={<BadgeRounded />} accent={SEMANTIC.success} label="Staff recording"
+          value={s?.staffRecording || 0} current={s?.staffRecording} previous={p?.staffRecording} />
       </Box>
       <SimpleTable title="Daily vitals recorded" head={["Date", "Vitals"]}
         rows={trend.map((t) => [fmtDate(t.date), Number(t.count)])} />

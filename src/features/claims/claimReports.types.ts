@@ -96,6 +96,12 @@ export interface ClaimRegisterRow {
 export interface ClaimReportsResponse {
   range: { from: string; to: string };
   summary: ClaimSummary;
+  /**
+   * The same summary for the equal-length window immediately before this one,
+   * so each card can show which way it is moving. Optional because a client
+   * built against the older response shape must keep working.
+   */
+  previous?: ClaimSummary;
   statusBreakdown: ClaimStatusRow[];
   payerWise: ClaimPayerRow[];
   schemeWise: ClaimSchemeRow[];
