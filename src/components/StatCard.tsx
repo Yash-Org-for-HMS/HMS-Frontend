@@ -57,9 +57,13 @@ export default function StatCard({
   const showDelta = !loading && delta != null && delta.mode !== "none";
   // Below MIN_PCT_BASELINE a percentage overstates the move, so show the plain
   // difference instead — same rule as the reports KPI tile.
+  //
+  // Magnitude only, in both modes: the arrow carries the direction, so signing
+  // the number too rendered a drop of one as "↓ -1" while the percentage mode
+  // showed a bare "96.6%" — one chip, two conventions.
   const deltaText = delta == null ? ""
     : delta.mode === "abs"
-      ? `${delta.abs! > 0 ? "+" : ""}${Math.round(delta.abs!)}`
+      ? String(Math.abs(Math.round(delta.abs!)))
       : `${Math.abs(delta.pct!).toFixed(1)}%`;
   const DeltaIcon = delta?.dir === "up" ? ArrowUpwardRounded : delta?.dir === "down" ? ArrowDownwardRounded : RemoveRounded;
 

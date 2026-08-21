@@ -6,8 +6,8 @@ import {
   TableHead, TableRow, Avatar, Button,
 } from "@mui/material";
 import {
-  MonitorHeartRounded, CheckCircleRounded, HourglassTopRounded,
-  PeopleAltRounded, ArrowForwardRounded, SyncRounded,
+  MonitorHeartRounded, HourglassTopRounded,
+  PeopleAltRounded, ArrowForwardRounded, SyncRounded, MedicalServicesRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
@@ -102,7 +102,8 @@ export default function NurseDashboard() {
             icon={<HourglassTopRounded sx={{ color: SEMANTIC.warning }} />}
             loading={loading}
             color={SEMANTIC.warning}
-            sub="Patients awaiting vitals"
+            sub={vitalsPending ? `of ${totalPatients} patients today` : "All vitals recorded"}
+            onClick={() => navigate("/nurse/queue")}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -112,14 +113,14 @@ export default function NurseDashboard() {
             icon={<MonitorHeartRounded sx={{ color: SEMANTIC.success }} />}
             loading={loading}
             color={SEMANTIC.success}
-            sub="Completed today"
+            sub={totalPatients ? `${Math.round((vitalsCompleted / totalPatients) * 100)}% of today's patients` : undefined}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             label="In Consultation"
             value={inProgress}
-            icon={<CheckCircleRounded sx={{ color: SEMANTIC.info }} />}
+            icon={<MedicalServicesRounded sx={{ color: SEMANTIC.info }} />}
             loading={loading}
             color={SEMANTIC.info}
             sub="With doctor now"

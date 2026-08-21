@@ -144,10 +144,10 @@ export default function LabBilling() {
       {/* Summary */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Outstanding Orders" value={outstandingCount} icon={<ReceiptLongRounded sx={{ fontSize: 32, color: SEMANTIC.warning }} />} color={SEMANTIC.warning} />
+          <StatCard label="Outstanding Orders" value={outstandingCount} icon={<ReceiptLongRounded sx={{ color: SEMANTIC.warning }} />} color={SEMANTIC.warning} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Amount Due" value={formatINR(outstandingTotal)} icon={<PointOfSaleRounded sx={{ fontSize: 32, color: ACCENT }} />} color={ACCENT} />
+          <StatCard label="Amount Due" value={formatINR(outstandingTotal)} icon={<PointOfSaleRounded sx={{ color: ACCENT }} />} color={ACCENT} />
         </Grid>
       </Grid>
 

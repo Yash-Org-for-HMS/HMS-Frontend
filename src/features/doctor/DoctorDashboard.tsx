@@ -77,6 +77,7 @@ export default function DoctorDashboard() {
             icon={<HourglassTopRounded sx={{ color: SEMANTIC.warning }} />}
             loading={loading}
             color={SEMANTIC.warning}
+            onClick={() => navigate("/doctor/queue")}
             // "Ready to be seen" wasn't necessarily true: a patient can be
             // checked in and waiting with vitals still not taken, which is what
             // actually blocks the consultation.
@@ -94,7 +95,7 @@ export default function DoctorDashboard() {
             icon={<MonitorHeartRounded sx={{ color: SEMANTIC.success }} />}
             loading={loading}
             color={SEMANTIC.success}
-            sub="Pre-consultation complete"
+            sub={stats?.todaysAppointments ? `of ${stats.todaysAppointments} appointments today` : undefined}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -104,7 +105,7 @@ export default function DoctorDashboard() {
             icon={<CheckCircleRounded sx={{ color: SEMANTIC.success }} />}
             loading={loading}
             color={SEMANTIC.success}
-            sub="Finished today"
+            sub={stats?.todaysAppointments ? `${Math.round(((stats.completedVisits || 0) / stats.todaysAppointments) * 100)}% of today's appointments` : undefined}
           />
         </Grid>
       </Grid>

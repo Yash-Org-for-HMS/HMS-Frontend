@@ -5,7 +5,7 @@ import {
   Box, Typography, Grid, Paper, Table, TableBody, TableCell, TableHead, TableRow, alpha, useTheme
 } from "@mui/material";
 import {
-  MedicationRounded, LocalShippingRounded, WarningRounded, PointOfSaleRounded, EventBusyRounded
+  MedicationRounded, VaccinesRounded, WarningRounded, PointOfSaleRounded, EventBusyRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
@@ -82,18 +82,20 @@ export default function PharmacyDashboard() {
           <Grid container spacing={3} mb={4}>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard
-                    label="Total Medicines"
+                    label="Medicines in catalog"
                     value={medicineCount}
-                    icon={<MedicationRounded sx={{ fontSize: 32, color: BRAND.action }} />} 
+                    icon={<MedicationRounded sx={{ color: BRAND.action }} />} 
                     color={BRAND.action}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
                     label="Low Stock Alerts"
-                    value={lowStockAlerts.length} 
-                    icon={<WarningRounded sx={{ fontSize: 32, color: SEMANTIC.danger }} />} 
+                    value={lowStockAlerts.length}
+                    sub={pendingPOCount ? `${pendingPOCount} purchase order${pendingPOCount === 1 ? "" : "s"} open` : "No open purchase orders"}
+                    icon={<WarningRounded sx={{ color: SEMANTIC.danger }} />} 
                     color={SEMANTIC.danger}
+                    onClick={() => navigate("/pharmacy/inventory")}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -103,8 +105,8 @@ export default function PharmacyDashboard() {
                   <StatCard
                     label="IPD requests waiting"
                     value={ipdRequestsPending}
-                    sub={pendingPOCount ? `${pendingPOCount} purchase order${pendingPOCount === 1 ? "" : "s"} open` : "No open purchase orders"}
-                    icon={<LocalShippingRounded sx={{ fontSize: 32, color: SEMANTIC.warning }} />}
+                    sub={ipdRequestsPending ? "Ward medicines not yet dispensed" : "Nothing waiting from the wards"}
+                    icon={<VaccinesRounded sx={{ color: SEMANTIC.warning }} />}
                     color={SEMANTIC.warning}
                     onClick={() => navigate("/pharmacy/ipd-requests")}
                   />
@@ -118,7 +120,7 @@ export default function PharmacyDashboard() {
                     value={inr(salesToday)}
                     current={salesToday} previous={salesPrevious}
                     deltaLabel="vs the same weekday last week"
-                    icon={<PointOfSaleRounded sx={{ fontSize: 32, color: SEMANTIC.success }} />}
+                    icon={<PointOfSaleRounded sx={{ color: SEMANTIC.success }} />}
                     color={SEMANTIC.success}
                   />
                 </Grid>

@@ -156,16 +156,16 @@ export default function SubscriptionBilling() {
       {/* Metrics */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="MRR" value={metrics ? formatINR(metrics.mrr) : "—"} icon={<TrendingUpRounded sx={{ fontSize: 30, color: BRAND.action }} />} color={BRAND.action} sub={metrics ? `${formatINR(metrics.arr)} ARR` : undefined} />
+          <StatCard label="MRR" value={metrics ? formatINR(metrics.mrr) : "—"} icon={<TrendingUpRounded sx={{ color: BRAND.action }} />} color={BRAND.action} sub={metrics ? `${formatINR(metrics.arr)} ARR` : undefined} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Collected" value={metrics ? formatINR(metrics.collected) : "—"} icon={<AccountBalanceWalletRounded sx={{ fontSize: 30, color: SEMANTIC.success }} />} color={SEMANTIC.success} />
+          <StatCard label="Collected" value={metrics ? formatINR(metrics.collected) : "—"} icon={<AccountBalanceWalletRounded sx={{ color: SEMANTIC.success }} />} color={SEMANTIC.success} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Outstanding" value={metrics ? formatINR(metrics.outstanding) : "—"} icon={<PendingActionsRounded sx={{ fontSize: 30, color: SEMANTIC.warning }} />} color={SEMANTIC.warning} sub={metrics ? `${metrics.unpaidCount} unpaid` : undefined} />
+          <StatCard label="Outstanding" value={metrics ? formatINR(metrics.outstanding) : "—"} icon={<PendingActionsRounded sx={{ color: SEMANTIC.warning }} />} color={SEMANTIC.warning} sub={metrics ? `${metrics.unpaidCount} unpaid` : undefined} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Overdue" value={metrics ? metrics.overdueCount : "—"} icon={<WarningAmberRounded sx={{ fontSize: 30, color: SEMANTIC.danger }} />} color={SEMANTIC.danger} />
+          <StatCard label="Overdue" value={metrics ? metrics.overdueCount : "—"} icon={<WarningAmberRounded sx={{ color: SEMANTIC.danger }} />} color={SEMANTIC.danger} />
         </Grid>
       </Grid>
 

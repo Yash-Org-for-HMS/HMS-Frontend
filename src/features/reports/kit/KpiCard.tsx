@@ -33,9 +33,15 @@ export default function KpiCard({
   const showDelta = delta != null && delta.mode !== "none";
   // A percentage off a tiny baseline overstates the change (2 orders becoming
   // 12 is "+500%"), so below MIN_PCT_BASELINE show the plain difference.
+  //
+  // Magnitude only, in BOTH modes — the arrow beside it already carries the
+  // direction. Signing the absolute value made a drop of one render as "↓ -1",
+  // reading as a double negative, while the percentage mode next to it showed a
+  // bare "96.6%"; the same chip disagreed with itself about whether the sign
+  // belonged in the text.
   const deltaText = delta == null ? ""
     : delta.mode === "abs"
-      ? `${delta.abs! > 0 ? "+" : ""}${Math.round(delta.abs!)}`
+      ? String(Math.abs(Math.round(delta.abs!)))
       : `${Math.abs(delta.pct!).toFixed(1)}%`;
   const DeltaIcon = delta?.dir === "up" ? ArrowUpwardRounded : delta?.dir === "down" ? ArrowDownwardRounded : RemoveRounded;
 

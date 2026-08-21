@@ -13,7 +13,8 @@ import {
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
 } from "@mui/material";
 import {
-  FileDownloadRounded, LocalHospitalRounded, PeopleAltRounded,
+  FileDownloadRounded, LocalHospitalRounded, PeopleAltRounded, StoreMallDirectoryRounded,
+  PersonSearchRounded, GroupsRounded, MedicalInformationRounded, ShowChartRounded,
   TimerRounded, CardMembershipRounded, RocketLaunchRounded, AccountBalanceWalletRounded,
   CheckCircleRounded, HighlightOffRounded, WarningAmberRounded, InfoOutlined, ArrowForwardRounded,
 } from "@mui/icons-material";
@@ -129,12 +130,12 @@ function OverviewReport() {
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Hospitals" value={data.totalHospitals ?? 0} sub={`${data.activeHospitals ?? 0} active`} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<TimerRounded />} label="Active Trials" value={data.activeTrials ?? 0} sub={`${data.expiredHospitals ?? 0} expired`} color={SEMANTIC.warning} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Leads" value={data.totalLeads ?? 0} sub={`${data.convertedLeads ?? 0} converted`} color="#8b5cf6" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PersonSearchRounded />} label="Leads" value={data.totalLeads ?? 0} sub={`${data.convertedLeads ?? 0} converted`} color="#8b5cf6" /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(data.totalRevenue)} sub="monthly recurring" color={SEMANTIC.success} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CardMembershipRounded />} label="Plans" value={data.activePlans ?? 0} color="#0891b2" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Patients" value={data.totalPatients ?? 0} color="#ec4899" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<PeopleAltRounded />} label="Doctors" value={data.totalDoctors ?? 0} color={BRAND.action} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Branches" value={data.totalBranches ?? 0} color={NEUTRAL.muted} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<GroupsRounded />} label="Patients" value={data.totalPatients ?? 0} color="#ec4899" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<MedicalInformationRounded />} label="Doctors" value={data.totalDoctors ?? 0} color={BRAND.action} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<StoreMallDirectoryRounded />} label="Branches" value={data.totalBranches ?? 0} color={NEUTRAL.muted} /></Grid>
       </Grid>
 
       {/* Downloadable summary tables */}
@@ -300,7 +301,7 @@ function SubscriptionsReport() {
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<CardMembershipRounded />} label="Plans" value={data.length} color="#0891b2" /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<LocalHospitalRounded />} label="Subscribed branches" value={totalBranches} color={NEUTRAL.muted} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(totalMrr)} sub="monthly recurring" color={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<AccountBalanceWalletRounded />} label="Est. ARR" value={inr(totalMrr * 12)} sub="annualised" color="#8b5cf6" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiTile icon={<ShowChartRounded />} label="Est. ARR" value={inr(totalMrr * 12)} sub="annualised" color="#8b5cf6" /></Grid>
       </Grid>
       <SimpleTable
         title="Subscription plans"

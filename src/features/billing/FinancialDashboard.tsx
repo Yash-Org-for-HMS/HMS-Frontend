@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import {
   Box, Typography, Paper, useTheme, Grid
 } from "@mui/material";
@@ -16,6 +17,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import StatCard from "@/components/StatCard";
 import { apiErrorText } from "@/utils/apiError";
 import { SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { formatINR } from "@/utils/format";
 
 // Each bar chart gets its own single hue (magnitude, not identity) — the two
 // charts are told apart by their titles, not by cycling colours within either.
@@ -24,6 +26,7 @@ const METHOD_BAR = "#8b5cf6";
 
 export default function FinancialDashboard() {
   const theme = useTheme();
+  const navigate = useNavigate();
   const { data: analytics, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ["financial-analytics", 30],
     queryFn: async () => (await axiosInstance.get("/billing/analytics?days=30")).data.data,
@@ -58,7 +61,7 @@ export default function FinancialDashboard() {
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatCard
             label="Total Collected (to date)"
-            value={`₹${(analytics.totalCollected || 0).toLocaleString()}`}
+            value={formatINR(analytics.totalCollected, 0)}
             icon={<AccountBalanceRounded />}
             color={SEMANTIC.success}
             sub={collectionRate !== null ? `${collectionRate}% of billed value · net of refunds` : undefined}
@@ -67,7 +70,7 @@ export default function FinancialDashboard() {
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatCard
             label="Billed Value (to date)"
-            value={`₹${(analytics.expectedRevenue || 0).toLocaleString()}`}
+            value={formatINR(analytics.expectedRevenue, 0)}
             icon={<TrendingUpRounded />}
             color={SEMANTIC.info}
             sub="Excludes cancelled and draft invoices"
@@ -76,9 +79,10 @@ export default function FinancialDashboard() {
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatCard
             label="Outstanding Dues (to date)"
-            value={`₹${(analytics.outstandingDues || 0).toLocaleString()}`}
+            value={formatINR(analytics.outstandingDues, 0)}
             icon={<WarningRounded />}
             color={SEMANTIC.danger}
+            onClick={() => navigate("/hospital/billing")}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -197,10 +201,10 @@ export default function FinancialDashboard() {
                     cursor={{ fill: `${SOURCE_BAR}14` }}
                     contentStyle={{ backgroundColor: theme.palette.background.paper, border: "none", borderRadius: 12, boxShadow: "0 10px 40px rgba(0,0,0,0.1)", padding: "12px 16px" }}
                     itemStyle={{ fontWeight: 800, fontSize: "1rem", color: SOURCE_BAR }}
-                    formatter={(v) => [`₹${Number(v).toLocaleString()}`, "Revenue"]}
+                    formatter={(v) => [formatINR(Number(v), 0), "Revenue"]}
                   />
                   <Bar dataKey="amount" fill={SOURCE_BAR} radius={[0, 4, 4, 0]} barSize={22}>
-                    <LabelList dataKey="amount" position="right" formatter={(v) => `₹${Number(v).toLocaleString()}`} style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
+                    <LabelList dataKey="amount" position="right" formatter={(v) => formatINR(Number(v), 0)} style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -240,10 +244,10 @@ export default function FinancialDashboard() {
                     cursor={{ fill: `${METHOD_BAR}14` }}
                     contentStyle={{ backgroundColor: theme.palette.background.paper, border: "none", borderRadius: 12, boxShadow: "0 10px 40px rgba(0,0,0,0.1)", padding: "12px 16px" }}
                     itemStyle={{ fontWeight: 800, fontSize: "1rem", color: METHOD_BAR }}
-                    formatter={(v) => [`₹${Number(v).toLocaleString()}`, "Collected"]}
+                    formatter={(v) => [formatINR(Number(v), 0), "Collected"]}
                   />
                   <Bar dataKey="amount" fill={METHOD_BAR} radius={[0, 4, 4, 0]} barSize={22}>
-                    <LabelList dataKey="amount" position="right" formatter={(v) => `₹${Number(v).toLocaleString()}`} style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
+                    <LabelList dataKey="amount" position="right" formatter={(v) => formatINR(Number(v), 0)} style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>

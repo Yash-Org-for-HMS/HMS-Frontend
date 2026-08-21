@@ -75,7 +75,7 @@ export default function LabDashboard() {
           <StatCard
             label="Lab pending" value={lab.pending}
             sub={pendingLab[0] ? `oldest ${ageLabel(pendingLab[0].ageDays, pendingLab[0].ageHours)}` : "Nothing waiting"}
-            icon={<ScienceRounded sx={{ fontSize: 32, color: SEMANTIC.info }} />} color={SEMANTIC.info}
+            icon={<ScienceRounded sx={{ color: SEMANTIC.info }} />} color={SEMANTIC.info}
             onClick={() => navigate("/lab/orders")}
           />
         </Grid>
@@ -83,7 +83,7 @@ export default function LabDashboard() {
           <StatCard
             label="Radiology pending" value={rad.pending}
             sub={pendingRad[0] ? `oldest ${ageLabel(pendingRad[0].ageDays, pendingRad[0].ageHours)}` : "Nothing waiting"}
-            icon={<BiotechRounded sx={{ fontSize: 32, color: SEMANTIC.warning }} />} color={SEMANTIC.warning}
+            icon={<BiotechRounded sx={{ color: SEMANTIC.warning }} />} color={SEMANTIC.warning}
             onClick={() => navigate("/lab/radiology")}
           />
         </Grid>
@@ -91,14 +91,14 @@ export default function LabDashboard() {
           <StatCard
             label="Completed today" value={lab.completedToday + rad.completedToday}
             sub={`${lab.completedToday} lab · ${rad.completedToday} radiology`}
-            icon={<CheckCircleRounded sx={{ fontSize: 32, color: SEMANTIC.success }} />} color={SEMANTIC.success}
+            icon={<CheckCircleRounded sx={{ color: SEMANTIC.success }} />} color={SEMANTIC.success}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Billed today" value={inr(lab.revenueToday + rad.revenueToday)}
-            sub="Paid orders raised today"
-            icon={<AttachMoneyRounded sx={{ fontSize: 32, color: SEMANTIC.success }} />} color={SEMANTIC.success}
+            label="Paid today" value={inr(lab.revenueToday + rad.revenueToday)}
+            sub="On orders raised today"
+            icon={<AttachMoneyRounded sx={{ color: SEMANTIC.success }} />} color={SEMANTIC.success}
           />
         </Grid>
       </Grid>
