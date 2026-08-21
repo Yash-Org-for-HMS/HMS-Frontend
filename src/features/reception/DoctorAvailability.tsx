@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Grid, Chip, TextField, Avatar, InputAdornment,
@@ -75,7 +76,11 @@ export default function DoctorAvailability() {
   const toast = useToast();
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [search, setSearch] = useState("");
-  const [dept, setDept] = useState("");
+  // Seeded from the URL so the Department Directory can hand a department
+  // straight over — "who is free in Cardiology" is one click from finding
+  // Cardiology, rather than finding it again here.
+  const [params] = useSearchParams();
+  const [dept, setDept] = useState(params.get("dept") ?? "");
   // Booking from a doctor's card opens the SAME appointment form used everywhere
   // else (Front Desk, Appointments list) inline here, rather than navigating
   // away — one booking flow regardless of entry point.
