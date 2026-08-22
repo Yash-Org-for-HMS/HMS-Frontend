@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import type { RadiologyOrderRow, UnbilledOrderItem } from "./labOrders.types";
+import type { RadiologyOrderRow } from "./labOrders.types";
+import type { UnbilledItem } from "@/types";
 import { formatDate } from "@/utils/format";
 import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
@@ -66,7 +67,7 @@ export default function RadiologyOrdersQueue() {
     enabled: !!editOrder?.patientId,
     queryFn: async () => (await axiosInstance.get(`/billing/unbilled/${editOrder!.patientId}`)).data.data || [],
   });
-  const posItem = unbilledItems.find((it: UnbilledOrderItem) => it.id === editOrder?.radiologyOrderId);
+  const posItem = unbilledItems.find((it: UnbilledItem) => it.id === editOrder?.radiologyOrderId);
 
   // Listen for real-time queue updates
   useSocket({

@@ -160,15 +160,6 @@ export interface RadiologyOrderRow {
   billingLockActive?: boolean;
 }
 
-/** A billable order awaiting payment, as the POS picker lists it. */
-export interface UnbilledOrderItem {
-  id: string;
-  type: string;
-  description: string;
-  amount: Money;
-  taxAmount?: Money;
-}
-
 /** Priority resolved from the lookup table — null when the order has none. */
 export interface OrderPriorityRef {
   code?: string | null;

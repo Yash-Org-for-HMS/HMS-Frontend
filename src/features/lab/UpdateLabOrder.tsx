@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import type { LabOrderDetail, LabReportRow, UnbilledOrderItem } from "./labOrders.types";
+import type { LabOrderDetail, LabReportRow } from "./labOrders.types";
+import type { UnbilledItem } from "@/types";
 import { DETAIL_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
@@ -98,7 +99,7 @@ export default function UpdateLabOrder() {
     enabled: showPOS && !!order?.patientId,
     queryFn: async () => {
       const items = (await axiosInstance.get(`/billing/unbilled/${order!.patientId}`)).data.data || [];
-      return items.find((it: UnbilledOrderItem) => it.id === order!.labOrderId) || null;
+      return items.find((it: UnbilledItem) => it.id === order!.labOrderId) || null;
     },
   });
 

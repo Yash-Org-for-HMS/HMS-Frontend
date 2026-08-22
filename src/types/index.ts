@@ -283,6 +283,10 @@ export interface UnbilledItem {
   hsnCode?: string | null;
   /** Authoritative when set — pharmacy orders mix GST rates across medicines. */
   taxAmount?: number;
+  /** When the work was done — what the picker lists the line under. */
+  date?: string | null;
+  /** Source links, so the invoice can be tied back to the order or stay. */
+  metadata?: { admissionId?: string | null; consultationId?: string | null } | null;
 }
 
 /** The hospital's own billing identity, as the profile endpoint returns it. */

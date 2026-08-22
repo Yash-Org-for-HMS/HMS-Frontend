@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import type { Invoice, PaymentMethodRef, UnbilledItem } from "@/types";
+import type { PatientSearchRow, PatientStatementInvoice, PatientStatementResponse } from "./billingReports.types";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -25,7 +27,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   // Patient Search
   const [patientQuery, setPatientQuery] = useState("");
   const debouncedQuery = useDebouncedValue(patientQuery, 500);
-  const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<PatientSearchRow | null>(null);
 
   // Billing Items
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
@@ -36,10 +38,10 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   
   // Modal State
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedInvoice, setGeneratedInvoice] = useState<any | null>(null);
+  const [generatedInvoice, setGeneratedInvoice] = useState<Invoice | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number | "">("");
   // The selected configured payment-method row (has paymentMethodId + methodName).
-  const [paymentMethod, setPaymentMethod] = useState<any | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodRef | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Invoice to view/collect from the patient's history panel.
@@ -56,7 +58,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
     return () => { cancelled = true; };
   }, [initialPatientId]);
 
-  const { data: patients = [], isFetching: patientLoading } = useQuery<any[]>({
+  const { data: patients = [], isFetching: patientLoading } = useQuery<PatientSearchRow[]>({
     queryKey: ["patient-search", debouncedQuery],
     queryFn: async () =>
       (await axiosInstance.get("/reception/patients", { params: { search: debouncedQuery } })).data.data || [],
@@ -70,22 +72,22 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
     isError: itemsError,
     error: itemsErr,
     refetch: refetchUnbilled,
-  } = useQuery<any[]>({
+  } = useQuery<UnbilledItem[]>({
     queryKey: ["unbilled", patientId],
     queryFn: async () => (await axiosInstance.get(`/billing/unbilled/${patientId}`)).data.data || [],
     enabled: !!patientId,
   });
-  const unbilledItems: any[] = unbilledData ?? [];
+  const unbilledItems: UnbilledItem[] = unbilledData ?? [];
 
   // This patient's existing invoices (paid + pending) — so staff can see what's
   // already billed/outstanding right here, and collect a pending one, instead of
   // accidentally raising a duplicate.
-  const { data: billing, refetch: refetchBilling } = useQuery<{ invoices: any[] }>({
+  const { data: billing, refetch: refetchBilling } = useQuery<PatientStatementResponse>({
     queryKey: ["geninvoice-patient-billing", patientId],
     queryFn: async () => (await axiosInstance.get(`/reception/patients/${patientId}/billing-summary`)).data.data,
     enabled: !!patientId,
   });
-  const patientInvoices: any[] = billing?.invoices ?? [];
+  const patientInvoices: PatientStatementInvoice[] = billing?.invoices ?? [];
   const outstanding = patientInvoices
     .filter((i) => i.invoiceStatus !== "CANCELLED")
     .reduce((sum, i) => sum + Math.max(0, Number(i.balance) || 0), 0);
@@ -93,7 +95,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   // The hospital's configured payment methods — the SAME list the reception
   // BillingModal / InvoiceViewDialog use — so tender options (and the stored
   // method) are consistent across every billing screen instead of a hardcoded four.
-  const { data: paymentMethods = [] } = useQuery<any[]>({
+  const { data: paymentMethods = [] } = useQuery<PaymentMethodRef[]>({
     queryKey: ["billing-payment-methods"],
     queryFn: async () => (await axiosInstance.get("/reception/billing/lookups")).data?.data?.methods || [],
     staleTime: 5 * 60 * 1000,
@@ -105,7 +107,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
 
   // Auto-select all charges when a fresh set loads (and clear on patient change).
   useEffect(() => {
-    setSelectedItemIds(new Set((unbilledData ?? []).map((i: any) => i.id)));
+    setSelectedItemIds(new Set((unbilledData ?? []).map((i) => i.id)));
   }, [unbilledData]);
 
   const handleToggleItem = (id: string) => {
@@ -403,8 +405,8 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
             />
             <Autocomplete
               options={paymentMethods}
-              getOptionLabel={(m: any) => m?.methodName || ""}
-              isOptionEqualToValue={(a: any, b: any) => a?.paymentMethodId === b?.paymentMethodId}
+              getOptionLabel={(m) => m?.methodName || ""}
+              isOptionEqualToValue={(a, b) => a?.paymentMethodId === b?.paymentMethodId}
               value={paymentMethod}
               onChange={(e, val) => setPaymentMethod(val)}
               renderInput={(params) => <TextField {...params} label="Payment Method" />}

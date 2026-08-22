@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import type { LabOrderRow, UnbilledOrderItem } from "./labOrders.types";
+import type { LabOrderRow } from "./labOrders.types";
+import type { UnbilledItem } from "@/types";
 import { formatDate } from "@/utils/format";
 import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
@@ -60,7 +61,7 @@ export default function LabOrdersQueue() {
     enabled: !!collectOrder?.patientId,
     queryFn: async () => (await axiosInstance.get(`/billing/unbilled/${collectOrder!.patientId}`)).data.data || [],
   });
-  const posItem = unbilledItems.find((it: UnbilledOrderItem) => it.id === collectOrder?.labOrderId);
+  const posItem = unbilledItems.find((it: UnbilledItem) => it.id === collectOrder?.labOrderId);
 
   // Listen for real-time queue updates
   useSocket({
