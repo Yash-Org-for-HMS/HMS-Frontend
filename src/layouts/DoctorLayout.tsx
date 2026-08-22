@@ -1,4 +1,5 @@
 import { SEMANTIC, alpha, BRAND } from "@/styles/accents";
+import { isNavItemActive } from "@/components/layout/navActive";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
 const doctorTheme = createPanelTheme(BRAND.action, BRAND.actionDark);
@@ -97,9 +98,7 @@ export default function DoctorLayout() {
       <SidebarSearch />
       <List sx={{ px: 1.5, pt: 2, flex: 1, overflowY: "auto" }}>
         {menuItems.map((item, idx, arr) => {
-          const isActive =
-            location.pathname === item.path ||
-            (item.path !== "/doctor/dashboard" && location.pathname.startsWith(item.path));
+          const isActive = isNavItemActive(location.pathname, item.path);
           const locked = (item as any).module && !isModuleEnabled((item as any).module);
           return (
             <Box key={item.text}>

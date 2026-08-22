@@ -1,4 +1,5 @@
 import { useState, useEffect, type ReactNode } from "react";
+import { isNavItemActive } from "@/components/layout/navActive";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -104,11 +105,6 @@ export default function AdminLayout() {
 
   // A nav item is active for its own route and any nested route beneath it
   // (e.g. /leads/new keeps "Leads" highlighted). "/" only matches exactly.
-  const isActivePath = (path: string) =>
-    path === "/"
-      ? location.pathname === "/"
-      : location.pathname === path || location.pathname.startsWith(path + "/");
-
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleDrawerToggle = () => {
@@ -156,7 +152,7 @@ export default function AdminLayout() {
               </Typography>
             )}
             {group.items.map((item) => {
-              const isActive = isActivePath(item.path);
+              const isActive = isNavItemActive(location.pathname, item.path);
               return (
                 <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
                   <ListItemButton

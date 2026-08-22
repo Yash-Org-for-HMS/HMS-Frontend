@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { isNavItemActive } from "@/components/layout/navActive";
 import { Outlet, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { SEMANTIC, NEUTRAL, alpha, BRAND } from "@/styles/accents";
@@ -167,7 +168,7 @@ export default function HospitalLayout() {
       <SidebarSearch />
       <List sx={{ px: 2, pt: 2, flex: 1, overflowY: "auto" }}>
         {visibleMenuItems.map((item, idx, arr) => {
-          const isActive = location.pathname.startsWith(item.path);
+          const isActive = isNavItemActive(location.pathname, item.path);
           const locked = isLocked(item);
           return (
             <Box key={item.text}>

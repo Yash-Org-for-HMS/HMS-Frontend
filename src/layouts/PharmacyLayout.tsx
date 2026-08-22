@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { isNavItemActive } from "@/components/layout/navActive";
 import { SEMANTIC, NEUTRAL, alpha, BRAND } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
@@ -79,7 +80,7 @@ export default function PharmacyLayout() {
       <SidebarSearch />
       <List sx={{ px: 2, pt: 2, flex: 1, overflowY: "auto" }}>
         {menuItems.map((item, idx, arr) => {
-          const isActive = location.pathname.startsWith(item.path);
+          const isActive = isNavItemActive(location.pathname, item.path);
           const locked = (item as any).module && !isModuleEnabled((item as any).module);
           return (
             <Box key={item.text}>

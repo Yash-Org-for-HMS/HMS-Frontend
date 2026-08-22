@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { isNavItemActive } from "@/components/layout/navActive";
 import { SEARCH_SHORTCUT } from "@/utils/shortcut";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
@@ -162,9 +163,7 @@ export default function ReceptionLayout() {
               {section.heading}
             </Typography>
             {section.items.map((item) => {
-              const isActive =
-                location.pathname === item.path ||
-                (item.path !== "/reception/dashboard" && location.pathname.startsWith(item.path));
+              const isActive = isNavItemActive(location.pathname, item.path);
               const locked = (item as any).module && !isModuleEnabled((item as any).module);
               return (
                 <ListItem key={item.text} disablePadding sx={{ mb: 0.25 }}>
