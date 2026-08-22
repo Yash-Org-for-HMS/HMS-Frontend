@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { LabOrderRow, UnbilledOrderItem } from "./labOrders.types";
 import { formatDate } from "@/utils/format";
 import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
@@ -40,10 +41,10 @@ export default function LabOrdersQueue() {
     refetchInterval: QUEUE_POLL_MS,
     placeholderData: keepPreviousData,
   });
-  const orders: any[] = data?.data ?? [];
+  const orders: LabOrderRow[] = data?.data ?? [];
   const totalPages: number = data?.pagination?.totalPages ?? 1;
 
-  const [collectOrder, setCollectOrder] = useState<any>(null);
+  const [collectOrder, setCollectOrder] = useState<LabOrderRow | null>(null);
   const [barcodeInput, setBarcodeInput] = useState("");
   const [collecting, setCollecting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -59,7 +60,7 @@ export default function LabOrdersQueue() {
     enabled: !!collectOrder?.patientId,
     queryFn: async () => (await axiosInstance.get(`/billing/unbilled/${collectOrder!.patientId}`)).data.data || [],
   });
-  const posItem = unbilledItems.find((it: any) => it.id === collectOrder?.labOrderId);
+  const posItem = unbilledItems.find((it: UnbilledOrderItem) => it.id === collectOrder?.labOrderId);
 
   // Listen for real-time queue updates
   useSocket({
@@ -70,7 +71,7 @@ export default function LabOrdersQueue() {
 
   const toast = useToast();
 
-  const handleCancel = async (order: any) => {
+  const handleCancel = async (order: LabOrderRow) => {
     if (!window.confirm(`Cancel this lab order for ${order.patient?.firstName || "this patient"}? It will no longer be billable.`)) return;
     try {
       await axiosInstance.post(`/lab/orders/${order.labOrderId}/cancel`);
@@ -81,7 +82,7 @@ export default function LabOrdersQueue() {
     }
   };
 
-  const handleCollectClick = (order: any) => {
+  const handleCollectClick = (order: LabOrderRow) => {
     setCollectOrder(order);
     setBarcodeInput("");
     setErrorMsg("");
@@ -93,6 +94,7 @@ export default function LabOrdersQueue() {
       return;
     }
     
+    if (!collectOrder) return;
     try {
       setCollecting(true);
       setErrorMsg("");
@@ -112,11 +114,11 @@ export default function LabOrdersQueue() {
   // tab; `orders` is already the current page of the selected bucket. The table
   // still sorts the current page client-side.
   const { sorted, orderBy, order, onSort } = useTableSort(orders, {
-    barcode: (o: any) => o.sampleBarcode,
-    patient: (o: any) => `${o.patient?.firstName ?? ""} ${o.patient?.lastName ?? ""}`.trim(),
-    doctor: (o: any) => `${o.doctor?.user?.firstName ?? ""} ${o.doctor?.user?.lastName ?? ""}`.trim(),
-    date: (o: any) => (o.createdAt ? new Date(o.createdAt) : null),
-    status: (o: any) => o.status ?? "PENDING",
+    barcode: (o: LabOrderRow) => o.sampleBarcode,
+    patient: (o: LabOrderRow) => `${o.patient?.firstName ?? ""} ${o.patient?.lastName ?? ""}`.trim(),
+    doctor: (o: LabOrderRow) => `${o.doctor?.user?.firstName ?? ""} ${o.doctor?.user?.lastName ?? ""}`.trim(),
+    date: (o: LabOrderRow) => (o.createdAt ? new Date(o.createdAt) : null),
+    status: (o: LabOrderRow) => o.status ?? "PENDING",
   });
 
   return (
@@ -164,7 +166,7 @@ export default function LabOrdersQueue() {
                     <Mascot pose="no-matches" subtitle="No orders match the selected filter." size={110} />
                   </TableCell>
                 </TableRow>
-              ) : sorted.map((order: any) => (
+              ) : sorted.map((order: LabOrderRow) => (
                 <TableRow key={order.labOrderId} hover sx={urgentRowSx(order.priorityId)}>
                   <TableCell sx={{ fontWeight: 600 }}>
                     {order.sampleBarcode}
@@ -192,7 +194,7 @@ export default function LabOrdersQueue() {
                   <TableCell>{formatDate(order.createdAt)}</TableCell>
                   <TableCell>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
-                      <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status) as any} size="small" />
+                      <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status ?? "PENDING")} size="small" />
                       {order.status === "COMPLETED" && (
                         order.verified ? (
                           <Chip icon={<VerifiedRounded sx={{ fontSize: "14px !important" }} />} label="Verified" size="small" color="success" variant="outlined" sx={{ height: 22, fontWeight: 700 }} />
@@ -311,12 +313,12 @@ export default function LabOrdersQueue() {
             fetchOrders();
             setCollectOrder({...collectOrder, paymentStatus: 'PAID', billingLockActive: false});
           }}
-          patientId={collectOrder.patientId}
+          patientId={collectOrder.patientId ?? ""}
           patientName={`${collectOrder.patient?.firstName || ''} ${collectOrder.patient?.lastName || ''}`}
           item={{
             id: collectOrder.labOrderId,
             type: "LAB",
-            description: posItem?.description || `Lab Tests: ${collectOrder.reports?.map((r: any) => r.labTest?.testName).filter(Boolean).join(', ') || 'Pending Tests'}`,
+            description: posItem?.description || `Lab Tests: ${collectOrder.reports?.map((r) => r.labTest?.testName).filter(Boolean).join(', ') || 'Pending Tests'}`,
             amount: Number(posItem?.amount ?? 0),
             taxPercent: Number(posItem?.taxPercent ?? 0),
             date: collectOrder.createdAt

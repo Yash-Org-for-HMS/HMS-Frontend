@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import type { RadiologyOrderRow, UnbilledOrderItem } from "./labOrders.types";
 import { formatDate } from "@/utils/format";
 import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
@@ -42,11 +43,11 @@ export default function RadiologyOrdersQueue() {
     refetchInterval: QUEUE_POLL_MS,
     placeholderData: keepPreviousData,
   });
-  const orders: any[] = data?.data ?? [];
+  const orders: RadiologyOrderRow[] = data?.data ?? [];
   const totalPages: number = data?.pagination?.totalPages ?? 1;
 
 
-  const [editOrder, setEditOrder] = useState<any>(null);
+  const [editOrder, setEditOrder] = useState<RadiologyOrderRow | null>(null);
   const [status, setStatus] = useState("PENDING");
   const [notes, setNotes] = useState("");
   const [reportUrl, setReportUrl] = useState("");
@@ -65,7 +66,7 @@ export default function RadiologyOrdersQueue() {
     enabled: !!editOrder?.patientId,
     queryFn: async () => (await axiosInstance.get(`/billing/unbilled/${editOrder!.patientId}`)).data.data || [],
   });
-  const posItem = unbilledItems.find((it: any) => it.id === editOrder?.radiologyOrderId);
+  const posItem = unbilledItems.find((it: UnbilledOrderItem) => it.id === editOrder?.radiologyOrderId);
 
   // Listen for real-time queue updates
   useSocket({
@@ -79,7 +80,7 @@ export default function RadiologyOrdersQueue() {
 
 
 
-  const handleEditClick = (order: any) => {
+  const handleEditClick = (order: RadiologyOrderRow) => {
     setEditOrder(order);
     setStatus(order.status || "PENDING");
     setNotes(order.radiologistNotes || "");
@@ -90,9 +91,12 @@ export default function RadiologyOrdersQueue() {
     setEditOrder(null);
   };
 
-  const handleFileUpload = async (e: any) => {
-    const file = e.target.files?.[0] || e.dataTransfer?.files?.[0];
-    if (!file) return;
+  // Serves both the file picker (target.files) and a drag-and-drop
+  // (dataTransfer.files), which is why the parameter is a union.
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<Element>) => {
+    const file = (e.target as HTMLInputElement).files?.[0]
+      || ("dataTransfer" in e ? e.dataTransfer.files?.[0] : undefined);
+    if (!file || !editOrder) return;
 
     try {
       setUploading(true);
@@ -114,8 +118,8 @@ export default function RadiologyOrdersQueue() {
     }
   };
 
-  const handleDragOver = (e: any) => e.preventDefault();
-  const handleDrop = (e: any) => {
+  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     handleFileUpload(e);
   };
@@ -159,11 +163,11 @@ export default function RadiologyOrdersQueue() {
   // `orders` is already the current page of the selected bucket. The table still
   // sorts the current page client-side.
   const { sorted, orderBy, order, onSort } = useTableSort(orders, {
-    scanType: (o: any) => o.scanType,
-    patient: (o: any) => `${o.patient?.firstName ?? ""} ${o.patient?.lastName ?? ""}`.trim(),
-    doctor: (o: any) => `${o.doctor?.user?.firstName ?? ""} ${o.doctor?.user?.lastName ?? ""}`.trim(),
-    date: (o: any) => (o.orderDate ? new Date(o.orderDate) : null),
-    status: (o: any) => o.status ?? "PENDING",
+    scanType: (o: RadiologyOrderRow) => o.scanType,
+    patient: (o: RadiologyOrderRow) => `${o.patient?.firstName ?? ""} ${o.patient?.lastName ?? ""}`.trim(),
+    doctor: (o: RadiologyOrderRow) => `${o.doctor?.user?.firstName ?? ""} ${o.doctor?.user?.lastName ?? ""}`.trim(),
+    date: (o: RadiologyOrderRow) => (o.orderDate ? new Date(o.orderDate) : null),
+    status: (o: RadiologyOrderRow) => o.status ?? "PENDING",
   });
 
   return (
@@ -211,7 +215,7 @@ export default function RadiologyOrdersQueue() {
                     <Mascot pose="no-matches" subtitle="No orders match the selected filter." size={110} />
                   </TableCell>
                 </TableRow>
-              ) : sorted.map((order: any) => (
+              ) : sorted.map((order: RadiologyOrderRow) => (
                 <TableRow key={order.radiologyOrderId} hover sx={urgentRowSx(order.priorityId)}>
                   <TableCell sx={{ fontWeight: 600 }}>
                     {order.scanType}
@@ -238,7 +242,7 @@ export default function RadiologyOrdersQueue() {
                   <TableCell>{order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</TableCell>
                   <TableCell>{formatDate(order.orderDate)}</TableCell>
                   <TableCell>
-                    <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status) as any} size="small" />
+                    <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status ?? "PENDING")} size="small" />
                     {order.verified && (
                       <Chip icon={<VerifiedRounded sx={{ fontSize: "14px !important" }} />} label="Verified" size="small" color="success" variant="outlined" sx={{ ml: 0.5, height: 22 }} />
                     )}
@@ -401,7 +405,7 @@ export default function RadiologyOrdersQueue() {
             fetchOrders();
             setEditOrder({...editOrder, paymentStatus: 'PAID', billingLockActive: false});
           }}
-          patientId={editOrder.patientId}
+          patientId={editOrder.patientId ?? ""}
           patientName={`${editOrder.patient?.firstName || ''} ${editOrder.patient?.lastName || ''}`}
           item={{
             id: editOrder.radiologyOrderId,
