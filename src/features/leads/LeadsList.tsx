@@ -479,7 +479,7 @@ export default function LeadsList() {
               fullWidth
               type="email"
               label="Admin Login Email"
-              helperText="This is the email the Hospital Admin will sign in with."
+              helperText="This is the email the Hospital Admin will log in with."
               value={convertForm.adminEmail}
               onChange={(e) => setConvertForm((f) => ({ ...f, adminEmail: e.target.value }))}
             />

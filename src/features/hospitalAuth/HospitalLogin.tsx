@@ -96,7 +96,7 @@ export default function HospitalLogin() {
   } as const;
 
   return (
-    <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", px: 3, py: 6, backgroundImage: "url('/login.jpg')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
+    <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", px: 3, py: 6, backgroundImage: "url('/login.png')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
       {/* Minimalist: the form sits directly on the background image — no card. */}
       <Box sx={{ width: "100%", maxWidth: 400 }}>
 
@@ -170,7 +170,7 @@ export default function HospitalLogin() {
               transition: "background-color 0.2s ease",
             }}
           >
-            {isLoading ? <HeartbeatLoader size={22} /> : "Sign In"}
+            {isLoading ? <HeartbeatLoader size={22} /> : "Login"}
           </Button>
         </form>
 

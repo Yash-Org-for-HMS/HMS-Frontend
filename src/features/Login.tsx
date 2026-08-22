@@ -16,6 +16,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 // from the cyan hospital staff login, so the two portals read as different realms
 // of the same product.
 const ACCENT = "#4F46E5";
+const ACCENT_DARK = "#4338CA";
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 export default function Login() {
@@ -77,7 +78,7 @@ export default function Login() {
   };
 
   return (
-    <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", px: 3, py: 6, backgroundImage: "url('/login.jpg')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
+    <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", px: 3, py: 6, backgroundImage: "url('/login.png')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
       {/* Minimalist: the form sits directly on the background image — no card. */}
       <Box sx={{ width: "100%", maxWidth: 400 }}>
 
@@ -131,15 +132,22 @@ export default function Login() {
             }}
           />
 
+          {/* bgcolor is not optional here: no `variant` is passed, so this is a
+              TEXT button, and without a background the white label sat on the
+              page's near-white ground — the control was invisible until you
+              happened to click it. ACCENT is the same indigo the fields already
+              focus to, so the realm reads as one. */}
           <Button
             fullWidth type="submit" disableElevation disabled={!canSubmit}
             sx={{
               py: 1.4, mt: 2.5, fontWeight: 700, fontSize: "0.98rem", textTransform: "none", borderRadius: 2.5, color: "#fff",
+              bgcolor: ACCENT,
+              "&:hover": { bgcolor: ACCENT_DARK },
               "&.Mui-disabled": { bgcolor: "rgba(15,23,42,0.10)", color: "rgba(15,23,42,0.4)" },
               transition: "background-color 0.2s ease",
             }}
           >
-            {isLoading ? <HeartbeatLoader size={22} /> : "Sign In"}
+            {isLoading ? <HeartbeatLoader size={22} /> : "Login"}
           </Button>
         </form>
 

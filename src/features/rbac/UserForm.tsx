@@ -261,7 +261,7 @@ export default function UserForm() {
                 onChange={handleChange}
                 required
                 error={!!errors.email}
-                helperText={errors.email || "This is the user's login email. Changing it changes how they sign in."}
+                helperText={errors.email || "This is the user's login email. Changing it changes how they log in."}
                 InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
