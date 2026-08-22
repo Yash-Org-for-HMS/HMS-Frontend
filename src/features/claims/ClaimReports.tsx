@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SimpleTable from "@/features/reports/kit/SimpleTable";
 import KpiCard from "@/features/reports/kit/KpiCard";
 import { apiGet } from "@/api/client";
 import type {
@@ -9,16 +10,14 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import {
-  Box, Typography, Paper, TextField, Button, ButtonGroup,
-  Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
+  Box, Paper, TextField, Button, ButtonGroup,
 } from "@mui/material";
 import {
   DescriptionRounded, HourglassBottomRounded, PaidRounded, CancelRounded,
-  AccountBalanceWalletRounded, GroupRounded, FileDownloadRounded, ArrowBackRounded,
+  AccountBalanceWalletRounded, GroupRounded, ArrowBackRounded,
 } from "@mui/icons-material";
 import { SEMANTIC, BRAND } from "@/styles/accents";
-import { exportTableToExcel } from "@/utils/exportExcel";
-import { formatINR } from "@/utils/format";
+import { formatINR, formatDate } from "@/utils/format";
 import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
 import { ReportTruncationNote, ReportNavLayout } from "@/features/reports/kit";
@@ -27,7 +26,6 @@ import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import { apiErrorText } from "@/utils/apiError";
 
 const ACCENT = BRAND.action;
-const fmtDate = (d: string) => (d ? dayjs(d).format("DD MMM YYYY") : "—");
 const inr = (v: unknown) => formatINR(Number(v || 0));
 
 const PRESETS = [
@@ -35,45 +33,6 @@ const PRESETS = [
   { key: "90d", label: "90 days", from: () => dayjs().subtract(89, "day"), to: () => dayjs() },
   { key: "1y", label: "1 year", from: () => dayjs().subtract(1, "year"), to: () => dayjs() },
 ];
-
-function SimpleTable({ title, head, rows, dense, note }: { title: string; head: string[]; rows: (string | number)[][]; dense?: boolean; note?: React.ReactNode }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{title}</Typography>
-        <Box sx={{ flex: 1 }} />
-        {rows.length > 0 && (
-          <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />} onClick={() => exportTableToExcel(title, head, rows)} sx={{ textTransform: "none", color: ACCENT }}>Excel</Button>
-        )}
-      </Box>
-      {note && <Box sx={{ mb: 1.5 }}>{note}</Box>}
-      {rows.length === 0 ? (
-        <Typography variant="body2" sx={{ color: "text.secondary", py: 2, textAlign: "center" }}>No data in this range</Typography>
-      ) : (
-        <TableContainer sx={{ maxHeight: dense ? 340 : 560 }}>
-          <Table size="small" stickyHeader>
-            <TableHead>
-              <TableRow>
-                {head.map((h, i) => (
-                  <TableCell key={h} align={i === 0 ? "left" : "right"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", borderColor: "divider", bgcolor: "background.paper" }}>{h}</TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((r, ri) => (
-                <TableRow key={ri} hover>
-                  {r.map((c, ci) => (
-                    <TableCell key={ci} align={ci === 0 ? "left" : "right"} sx={{ borderColor: "divider", color: ci === 0 ? "text.primary" : "text.secondary", fontWeight: ci === 0 ? 600 : 500 }}>{c}</TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </Paper>
-  );
-}
 
 // ── Report views ────────────────────────────────────────────────────────────
 
@@ -140,7 +99,7 @@ function TatReport({ data }: { data: ClaimReportsResponse }) {
           value={String(rows.length)} />
       </Box>
       <SimpleTable title="Pre-authorization turnaround" head={["Claim #", "Patient", "Submitted", "Approved", "Days"]}
-        rows={rows.map((r) => [r.claimNumber, r.patientName, fmtDate(r.submittedAt), fmtDate(r.approvedAt), r.days])} />
+        rows={rows.map((r) => [r.claimNumber, r.patientName, formatDate(r.submittedAt), formatDate(r.approvedAt), r.days])} />
     </Box>
   );
 }
@@ -161,13 +120,13 @@ function AgingReport({ data }: { data: ClaimReportsResponse }) {
 function RejectionsReport({ data }: { data: ClaimReportsResponse }) {
   const rows: ClaimRejectionRow[] = data?.rejections || [];
   return <SimpleTable title="Rejected claims" head={["Claim #", "Patient", "Payer", "Status", "Billed", "When"]}
-    rows={rows.map((r) => [r.claimNumber, r.patientName, r.payerName, r.status, inr(r.billed), fmtDate(r.at)])} />;
+    rows={rows.map((r) => [r.claimNumber, r.patientName, r.payerName, r.status, inr(r.billed), formatDate(r.at)])} />;
 }
 
 function RegisterReport({ data }: { data: ClaimReportsResponse }) {
   const rows: ClaimRegisterRow[] = data?.register || [];
   return <SimpleTable title="Claims register" head={["Claim #", "Patient", "UHID", "Payer", "Scheme", "Status", "Billed", "Approved", "Settled", "Registered"]}
-    rows={rows.map((r) => [r.claimNumber, r.patientName, r.uhid, r.payerName, r.scheme, r.status, inr(r.billed), inr(r.approved), inr(r.settled), fmtDate(r.registeredAt)])}
+    rows={rows.map((r) => [r.claimNumber, r.patientName, r.uhid, r.payerName, r.scheme, r.status, inr(r.billed), inr(r.approved), inr(r.settled), formatDate(r.registeredAt)])}
     note={<ReportTruncationNote truncated={data?.truncated} totalRows={data?.totalRows} shownRows={data?.shownRows} />} />;
 }
 

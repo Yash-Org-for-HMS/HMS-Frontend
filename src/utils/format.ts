@@ -49,7 +49,8 @@ const DATE_FMT: Intl.DateTimeFormatOptions = { day: "2-digit", month: "short", y
  *
  * Accepts a Date, timestamp, or date string.
  */
-export function formatDate(value: string | number | Date): string {
+export function formatDate(value: string | number | Date | null | undefined): string {
+  if (value == null || value === "") return "—";
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("en-IN", DATE_FMT);
 }
@@ -66,7 +67,8 @@ export function formatLongDate(value: string | number | Date): string {
 }
 
 /** The same date with a time beside it — "16 Jul 2026, 02:05 pm". */
-export function formatDateTime(value: string | number | Date): string {
+export function formatDateTime(value: string | number | Date | null | undefined): string {
+  if (value == null || value === "") return "—";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleString("en-IN", { ...DATE_FMT, hour: "2-digit", minute: "2-digit", hour12: true });
@@ -99,4 +101,20 @@ export function getInitials(firstName?: string | null, lastName?: string | null,
   const f = firstName?.charAt(0) || "";
   const l = lastName?.charAt(0) || "";
   return (f + l).toUpperCase() || fallback;
+}
+
+/**
+ * Initials from a doctor's display name — "Dr. Prakash Patel" → "PP".
+ *
+ * Distinct from {@link getInitials}, which takes first/last name fields; this
+ * one takes the single rendered string the queue endpoints return, so it has to
+ * strip the honorific itself. Was declared identically in the doctor, nurse and
+ * reception queue screens.
+ */
+export function getDoctorInitials(doctorName?: string): string {
+  if (!doctorName || doctorName === "Unknown") return "";
+  const parts = doctorName.replace(/^Dr\.\s*/i, "").split(" ").filter(Boolean);
+  if (parts.length === 0) return "";
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }

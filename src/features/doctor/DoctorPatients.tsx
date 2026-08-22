@@ -1,4 +1,5 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import { formatDate } from "@/utils/format";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
@@ -60,8 +61,6 @@ export default function DoctorPatients({ scope = "mine" }: { scope?: "mine" | "a
   const patients: any[] = data?.data || [];
   const meta = data?.meta as { total: number; totalPages: number } | undefined;
 
-  const fmtDate = (d: string | null) =>
-    d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
   return (
     <Box>
@@ -154,7 +153,7 @@ export default function DoctorPatients({ scope = "mine" }: { scope?: "mine" | "a
                       {p.phone || "—"}
                     </TableCell>
                     <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>
-                      {fmtDate(p.lastVisit)}
+                      {formatDate(p.lastVisit)}
                     </TableCell>
                     <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Tooltip title="Open record">

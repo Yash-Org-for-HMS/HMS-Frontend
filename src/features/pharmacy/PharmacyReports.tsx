@@ -11,12 +11,11 @@ import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import { apiErrorText } from "@/utils/apiError";
-import { formatINRAuto } from "@/utils/format";
+import { formatINRAuto, formatDate } from "@/utils/format";
 import { KpiCard, ReportFilters, ReportTable, ReportNavLayout, TrendChart, hasPlottableData, type DateRange, type ReportGroup } from "@/features/reports/kit";
 import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList, SupplierLedger, Movers, OpdIpdSplit } from "./InventoryReports";
 
 const inr = formatINRAuto;
-const fmtDate = (v: any) => (v ? dayjs(v).format("DD MMM YYYY") : "—");
 
 // The sales + stock-health dashboard (also embedded as the "Overview" tab and
 // reused as the Pharmacy Overview item in the shared reports hub).
@@ -94,7 +93,7 @@ export function PharmacyOverview() {
                   { key: "medicineName", label: "Medicine" },
                   { key: "batchNumber", label: "Batch" },
                   { key: "availableQuantity", label: "Qty", align: "right" },
-                  { key: "expiryDate", label: "Expiry", format: fmtDate, value: (r) => (r.expiryDate ? new Date(r.expiryDate).getTime() : 0) },
+                  { key: "expiryDate", label: "Expiry", format: formatDate, value: (r) => (r.expiryDate ? new Date(r.expiryDate).getTime() : 0) },
                 ]} rows={expiringSoon} emptyText="Nothing expiring in the next 30 days." />
             </Grid>
           </Grid>

@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
+import { formatDate, formatDateTime } from "@/utils/format";
 import { assetUrl } from "@/utils/assetUrl";
 import { paidTotal, refundedTotal } from "@/utils/invoiceMoney";
 import { getApiErrorMessage } from "@/utils/apiError";
@@ -43,8 +44,6 @@ const inr = (v: any) => {
   const s = Math.abs(x).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return x < 0 ? `(₹${s})` : `₹${s}`;
 };
-const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—");
-const fmtDateTime = (d?: string | null) => (d ? new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
 function ageSex(p: any): string {
   if (!p) return "—";
   const sex = p.genderId === 1 ? "M" : p.genderId === 2 ? "F" : "O";
@@ -166,7 +165,7 @@ export default function PrintIpBill() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: HEAD, borderRadius: 4, padding: "6px 12px", margin: "12px 0" }}>
           <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 2 }}>TAX INVOICE — IN-PATIENT BILL</span>
           <span style={{ fontSize: 11.5, color: SUB }}>
-            <b style={{ color: INK }}>{inv.invoiceNumber}</b> · {fmtDateTime(inv.invoiceDate)}
+            <b style={{ color: INK }}>{inv.invoiceNumber}</b> · {formatDateTime(inv.invoiceDate)}
             {inv.invoiceStatus ? ` · ${inv.invoiceStatus}` : ""}
           </span>
         </div>
@@ -184,8 +183,8 @@ export default function PrintIpBill() {
           <div style={{ border: `1px solid ${LINE}`, borderRadius: 5, padding: "9px 11px" }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: ACCENT, letterSpacing: 0.6, marginBottom: 5 }}>ADMISSION</div>
             <MetaRow k="IP No" v={adm?.admissionNumber} />
-            <MetaRow k="Admitted" v={fmtDateTime(adm?.admissionDate)} />
-            <MetaRow k="Discharged" v={fmtDateTime(adm?.dischargeDate)} />
+            <MetaRow k="Admitted" v={formatDateTime(adm?.admissionDate)} />
+            <MetaRow k="Discharged" v={formatDateTime(adm?.dischargeDate)} />
             <MetaRow k="Ward/Bed" v={bedLabel} />
             {dep && <MetaRow k="Deposit" v={`${inr(dep.available)} available`} />}
           </div>
@@ -240,11 +239,11 @@ export default function PrintIpBill() {
                 {g.dates.map((d) => (
                   <Fragment key={`d-${g.cat}-${d.date}`}>
                     <tr>
-                      <td colSpan={9} style={{ ...td, background: "#f8fafc", fontWeight: 700, fontSize: 10.5, color: SUB, borderBottom: `1px solid ${LINE}` }}>{d.date === "—" ? "Undated" : fmtDate(d.date)}</td>
+                      <td colSpan={9} style={{ ...td, background: "#f8fafc", fontWeight: 700, fontSize: 10.5, color: SUB, borderBottom: `1px solid ${LINE}` }}>{d.date === "—" ? "Undated" : formatDate(d.date)}</td>
                     </tr>
                     {d.rows.map((it, i) => {
                       const taxable = n(it.totalPrice), tax = n(it.taxAmount);
-                      const sub = [it.batchNo ? `Batch ${it.batchNo}` : null, it.expiryDate ? `Exp ${fmtDate(it.expiryDate)}` : null, it.manufacturer, it.orderingDoctor ? `by ${it.orderingDoctor}` : null].filter(Boolean).join(" · ");
+                      const sub = [it.batchNo ? `Batch ${it.batchNo}` : null, it.expiryDate ? `Exp ${formatDate(it.expiryDate)}` : null, it.manufacturer, it.orderingDoctor ? `by ${it.orderingDoctor}` : null].filter(Boolean).join(" · ");
                       return (
                         <tr key={it.invoiceItemId || `${d.date}-${i}`}>
                           <td style={{ ...td, color: SUB }}>{i + 1}</td>
@@ -297,7 +296,7 @@ export default function PrintIpBill() {
         {/* Footer */}
         <div style={{ marginTop: 24, borderTop: `1px solid ${LINE}`, paddingTop: 8, display: "flex", justifyContent: "space-between", fontSize: 10, color: "#9ca3af" }}>
           <span>Computer-generated tax invoice — no signature required. CGST/SGST as applicable.</span>
-          <span>Printed {fmtDateTime(new Date().toISOString())}</span>
+          <span>Printed {formatDateTime(new Date().toISOString())}</span>
         </div>
       </Box>
     </Box>

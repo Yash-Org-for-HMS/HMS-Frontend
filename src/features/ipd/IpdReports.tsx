@@ -9,13 +9,12 @@ import ErrorState from "@/components/ErrorState";
 import PageHeader from "@/components/layout/PageHeader";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
-import { formatINRAuto } from "@/utils/format";
+import { formatINRAuto, formatDate } from "@/utils/format";
 import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, TrendChart, hasPlottableData, useReportFilterOptions, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = BRAND.action;
 const inr = formatINRAuto;
 const initialRange = (): DateRange => ({ from: dayjs().subtract(29, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
-const fmtDate = (v: any) => (v ? dayjs(v).format("DD MMM YYYY") : "—");
 const ts = (v: any) => (v ? new Date(v).getTime() : 0);
 
 export default function IpdReports() {
@@ -68,7 +67,7 @@ export function InPatients() {
               { key: "patientName", label: "Patient" },
               { key: "uhid", label: "UHID" },
               { key: "bed", label: "Bed" },
-              { key: "admissionDate", label: "Admitted", format: fmtDate, value: (r) => ts(r.admissionDate) },
+              { key: "admissionDate", label: "Admitted", format: formatDate, value: (r) => ts(r.admissionDate) },
               { key: "days", label: "Days", align: "right" },
             ]}
             rows={rows}
@@ -109,8 +108,8 @@ export function Discharges() {
               { key: "patientName", label: "Patient" },
               { key: "uhid", label: "UHID" },
               { key: "bed", label: "Bed" },
-              { key: "admissionDate", label: "Admitted", format: fmtDate, value: (r) => ts(r.admissionDate) },
-              { key: "dischargeDate", label: "Discharged", format: fmtDate, value: (r) => ts(r.dischargeDate) },
+              { key: "admissionDate", label: "Admitted", format: formatDate, value: (r) => ts(r.admissionDate) },
+              { key: "dischargeDate", label: "Discharged", format: formatDate, value: (r) => ts(r.dischargeDate) },
               { key: "lengthOfStay", label: "Stay (days)", align: "right" },
             ]}
             rows={rows}
@@ -154,7 +153,7 @@ export function IpRegistrations() {
               { key: "patientName", label: "Patient" },
               { key: "uhid", label: "UHID" },
               { key: "bed", label: "Bed" },
-              { key: "admissionDate", label: "Admitted", format: fmtDate, value: (r) => ts(r.admissionDate) },
+              { key: "admissionDate", label: "Admitted", format: formatDate, value: (r) => ts(r.admissionDate) },
               { key: "status", label: "Status" },
             ]}
             rows={rows}
@@ -233,7 +232,7 @@ export function Occupancy() {
             title="Daily occupancy"
             filename={`occupancy_${range.from}_${range.to}`}
             columns={[
-              { key: "date", label: "Date", format: fmtDate, value: (r) => ts(r.date) },
+              { key: "date", label: "Date", format: formatDate, value: (r) => ts(r.date) },
               { key: "occupied", label: "Occupied beds", align: "right" },
               { key: "occupancyRate", label: "Occupancy %", align: "right", format: (v) => `${v}%`, value: (r) => Number(r.occupancyRate) },
             ]}

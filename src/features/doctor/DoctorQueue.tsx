@@ -1,4 +1,5 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import { getDoctorInitials } from "@/utils/format";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -19,14 +20,6 @@ import { useNavigate } from "react-router-dom";
 import { useSocket } from "@/hooks/useSocket";
 import { QUEUE_POLL_MS } from "@/constants/intervals";
 
-const getDoctorInitials = (doctorName?: string) => {
-  if (!doctorName || doctorName === "Unknown") return "";
-  const cleanName = doctorName.replace(/^Dr\.\s*/i, "");
-  const parts = cleanName.split(" ").filter(Boolean);
-  if (parts.length === 0) return "";
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-};
 
 const DOCTOR_BLUE = BRAND.action;
 const DOCTOR_BLUE_DARK = BRAND.actionDark;

@@ -1,4 +1,5 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import { getDoctorInitials } from "@/utils/format";
 import WalkInOrderDialog from "@/components/lab/WalkInOrderDialog";
 import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
@@ -23,14 +24,6 @@ import { useSocket } from "@/hooks/useSocket";
 import { QUEUE_POLL_MS } from "@/constants/intervals";
 import { QUEUE_STATUS, needsVitals, hasVitals, isWaitingForCare, isInConsultation } from "@/constants/queueStatus";
 
-const getDoctorInitials = (doctorName?: string) => {
-  if (!doctorName || doctorName === "Unknown") return "";
-  const cleanName = doctorName.replace(/^Dr\.\s*/i, "");
-  const parts = cleanName.split(" ").filter(Boolean);
-  if (parts.length === 0) return "";
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-};
 
 const NURSE_PURPLE = BRAND.action;
 const NURSE_PURPLE_DARK = BRAND.actionDark;

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { SEMANTIC } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -25,10 +24,8 @@ import FormSkeleton from "@/components/skeletons/FormSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import FormHeader from "@/components/layout/FormHeader";
 import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
-import { formatINRAuto } from "@/utils/format";
+import { formatINRAuto, formatDate } from "@/utils/format";
 
-const fmtDate = (d: unknown) =>
-  d ? new Date(d as string).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
 export default function OnboardingForm() {
   const { t } = useTranslation();
@@ -172,7 +169,7 @@ export default function OnboardingForm() {
                       <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Last payment</Typography>
                       <Typography sx={{ fontWeight: 700 }}>
                         {onboardingData.billing?.lastPaymentAt
-                          ? `${fmtDate(onboardingData.billing.lastPaymentAt)} · ${onboardingData.billing.lastPaymentMethod || "—"}`
+                          ? `${formatDate(onboardingData.billing.lastPaymentAt)} · ${onboardingData.billing.lastPaymentMethod || "—"}`
                           : "—"}
                       </Typography>
                     </Grid>
@@ -187,7 +184,7 @@ export default function OnboardingForm() {
                             sx={{ fontWeight: 700, height: 20 }}
                           />
                           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                            {formatINRAuto(onboardingData.billing.latestInvoiceAmount)} · due {fmtDate(onboardingData.billing.latestInvoiceDueDate)}
+                            {formatINRAuto(onboardingData.billing.latestInvoiceAmount)} · due {formatDate(onboardingData.billing.latestInvoiceDueDate)}
                           </Typography>
                         </Box>
                       ) : (

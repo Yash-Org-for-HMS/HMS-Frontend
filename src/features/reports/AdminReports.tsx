@@ -1,4 +1,5 @@
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import SimpleTable from "@/features/reports/kit/SimpleTable";
 import KpiCard from "@/features/reports/kit/KpiCard";
 import { apiGet, apiGetList } from "@/api/client";
 import type {
@@ -23,14 +24,12 @@ import { exportTableToExcel } from "@/utils/exportExcel";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import ErrorState from "@/components/ErrorState";
 import { apiErrorText } from "@/utils/apiError";
-import { formatINRAuto } from "@/utils/format";
+import { formatINRAuto, formatDate } from "@/utils/format";
 import { ReportNavLayout, type ReportGroup } from "@/features/reports/kit";
 
 const ACCENT = BRAND.action; // indigo #6366f1
 
 const inr = formatINRAuto;
-const fmtDate = (d: unknown) =>
-  d ? new Date(d as string).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 const cap = (s: unknown) => {
   const str = String(s ?? "").replace(/_/g, " ");
   return str ? str.charAt(0).toUpperCase() + str.slice(1) : "—";
@@ -51,45 +50,6 @@ async function fetchAllRows<T>(endpoint: string, params: Record<string, unknown>
 }
 
 // ── Shared presentational helpers (mirrors reception/Reports.tsx) ────────────
-
-function SimpleTable({ title, head, rows }: { title: string; head: string[]; rows: (string | number)[][] }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.primary" }}>{title}</Typography>
-        <Box sx={{ flex: 1 }} />
-        {rows.length > 0 && (
-          <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />} onClick={() => exportTableToExcel(title, head, rows)}
-            sx={{ textTransform: "none", color: ACCENT }}>Excel</Button>
-        )}
-      </Box>
-      {rows.length === 0 ? (
-        <Typography variant="body2" sx={{ color: "text.secondary", py: 2, textAlign: "center" }}>No data</Typography>
-      ) : (
-        <TableContainer sx={{ maxHeight: 560 }}>
-          <Table size="small" stickyHeader>
-            <TableHead>
-              <TableRow>
-                {head.map((h, i) => (
-                  <TableCell key={h} align={i === 0 ? "left" : "right"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider", bgcolor: "background.paper" }}>{h}</TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((r, ri) => (
-                <TableRow key={ri} hover>
-                  {r.map((c, ci) => (
-                    <TableCell key={ci} align={ci === 0 ? "left" : "right"} sx={{ borderColor: "divider", color: ci === 0 ? "text.primary" : "text.secondary", fontWeight: ci === 0 ? 600 : 500 }}>{c}</TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </Paper>
-  );
-}
 
 // Boolean checkmark cell for onboarding checkpoints.
 const YesNo = ({ v }: { v: boolean }) =>
@@ -161,7 +121,7 @@ function HospitalsReport() {
     cap(h.status),
     planNames(h),
     Number(h._count?.branches ?? 0),
-    fmtDate(h.createdAt),
+    formatDate(h.createdAt),
   ]);
   const active = data.filter((h) => h.status === "active").length;
   const suspended = data.filter((h) => h.status === "suspended").length;
@@ -197,7 +157,7 @@ function LeadsReport() {
     l.phone || "—",
     cap(l.leadStatus),
     l.assignedUser ? `${l.assignedUser.firstName || ""} ${l.assignedUser.lastName || ""}`.trim() || "—" : "—",
-    fmtDate(l.createdAt),
+    formatDate(l.createdAt),
   ]);
 
   // Stage counts (drive the KPI tiles).
@@ -230,8 +190,8 @@ function TrialsReport() {
 
   const rows = data.map((t) => [
     t.lead?.hospitalName || "—",
-    fmtDate(t.trialStartDate),
-    fmtDate(t.trialEndDate),
+    formatDate(t.trialStartDate),
+    formatDate(t.trialEndDate),
     cap(t.trialStatus),
     t.autoExpire ? "Yes" : "No",
   ]);
@@ -356,12 +316,12 @@ function OnboardingReport() {
     o.hospital?.planName || "—",
     o.primaryAdmin?.name || "—",
     o.primaryAdmin?.email || "—",
-    fmtDate(o.hospital?.createdAt),
+    formatDate(o.hospital?.createdAt),
     o.tenantSetupCompleted ? "Yes" : "No",
     o.defaultRolesSeeded ? "Yes" : "No",
     o.paymentVerified ? "Yes" : "No",
     Number(o.billing?.totalPaid || 0),
-    o.billing?.lastPaymentAt ? fmtDate(o.billing.lastPaymentAt) : "—",
+    o.billing?.lastPaymentAt ? formatDate(o.billing.lastPaymentAt) : "—",
     o.billing?.latestInvoiceStatus || "—",
     cap(o.onboardingStatus),
     blockedOn(o),
@@ -455,7 +415,7 @@ function OnboardingReport() {
                         <Typography variant="body2" sx={{ color: "text.primary" }}>{o.primaryAdmin?.name || "—"}</Typography>
                         {o.primaryAdmin?.email && <Typography variant="caption" sx={{ color: "text.secondary" }}>{o.primaryAdmin.email}</Typography>}
                       </TableCell>
-                      <TableCell sx={{ borderColor: "divider", color: "text.secondary", whiteSpace: "nowrap" }}>{fmtDate(o.hospital?.createdAt)}</TableCell>
+                      <TableCell sx={{ borderColor: "divider", color: "text.secondary", whiteSpace: "nowrap" }}>{formatDate(o.hospital?.createdAt)}</TableCell>
                       <TableCell sx={{ borderColor: "divider" }}>
                         <Box sx={{ display: "flex", gap: 0.5 }}>
                           <Tooltip title={`Tenant setup ${o.tenantSetupCompleted ? "done" : "pending"}`}><Box sx={{ display: "flex" }}><YesNo v={!!o.tenantSetupCompleted} /></Box></Tooltip>
@@ -476,7 +436,7 @@ function OnboardingReport() {
                       </TableCell>
                       <TableCell sx={{ borderColor: "divider", whiteSpace: "nowrap" }}>
                         <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>{inr(o.billing?.totalPaid)}</Typography>
-                        {o.billing?.lastPaymentAt && <Typography variant="caption" sx={{ color: "text.secondary" }}>{fmtDate(o.billing.lastPaymentAt)}</Typography>}
+                        {o.billing?.lastPaymentAt && <Typography variant="caption" sx={{ color: "text.secondary" }}>{formatDate(o.billing.lastPaymentAt)}</Typography>}
                       </TableCell>
                       <TableCell sx={{ borderColor: "divider", whiteSpace: "nowrap" }}>
                         {o.billing?.latestInvoiceStatus ? (

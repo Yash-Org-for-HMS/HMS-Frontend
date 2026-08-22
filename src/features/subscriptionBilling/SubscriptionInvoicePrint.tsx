@@ -3,12 +3,10 @@ import { useParams } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
 import { getApiErrorMessage } from "@/utils/apiError";
-import { formatINR } from "@/utils/format";
+import { formatINR, formatDate } from "@/utils/format";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import BillDocument from "@/components/billing/BillDocument";
 
-const fmtDate = (d?: string | null) =>
-  d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
 /** One recorded payment against a subscription invoice. */
 interface SubscriptionPaymentRow {
@@ -85,8 +83,8 @@ export default function SubscriptionInvoicePrint() {
         title="Subscription Invoice"
         metaLeft={[
           { label: "Invoice", value: inv.invoiceNumber },
-          { label: "Issued", value: fmtDate(inv.issuedAt) },
-          { label: "Due", value: fmtDate(inv.dueDate) },
+          { label: "Issued", value: formatDate(inv.issuedAt) },
+          { label: "Due", value: formatDate(inv.dueDate) },
         ]}
         metaRight={[
           { label: "Status", value: statusLabel },
@@ -106,7 +104,7 @@ export default function SubscriptionInvoicePrint() {
               {inv.payments.map((pay: SubscriptionPaymentRow) => (
                 <div key={pay.subscriptionPaymentId} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#4b5563", marginBottom: 4 }}>
                   <span>
-                    {fmtDate(pay.paidAt)} • {pay.method}
+                    {formatDate(pay.paidAt)} • {pay.method}
                     {pay.reference ? ` (Ref: ${pay.reference})` : ""}
                     {pay.recordedByName ? ` • recorded by ${pay.recordedByName}` : ""}
                   </span>
@@ -137,7 +135,7 @@ export default function SubscriptionInvoicePrint() {
             <tr>
               <td style={cell}>
                 {inv.planName} — {inv.billingCycle === "ANNUAL" ? "Annual" : "Monthly"} subscription
-                <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>Period: {fmtDate(inv.periodStart)} – {fmtDate(inv.periodEnd)}</div>
+                <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>Period: {formatDate(inv.periodStart)} – {formatDate(inv.periodEnd)}</div>
               </td>
               <td style={{ ...cell, textAlign: "right", fontWeight: 600 }}>{formatINR(inv.amount)}</td>
             </tr>

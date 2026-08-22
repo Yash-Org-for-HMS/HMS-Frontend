@@ -1,18 +1,17 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import { formatDate, formatDateTime } from "@/utils/format";
+import SimpleTable from "@/features/reports/kit/SimpleTable";
 import KpiCard from "@/features/reports/kit/KpiCard";
 import { useMemo, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
-  Box, Typography, Paper, TextField, Button, ButtonGroup,
-  Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
+  Box, Paper, TextField, Button, ButtonGroup,
 } from "@mui/material";
 import {
   GroupRounded, MonitorHeartRounded, WarningAmberRounded, BadgeRounded,
-  FileDownloadRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
-import { exportTableToExcel } from "@/utils/exportExcel";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import ErrorState from "@/components/ErrorState";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
@@ -28,49 +27,8 @@ const PRESETS = [
   { key: "30d", label: "30 days", from: () => dayjs().subtract(29, "day"), to: () => dayjs() },
 ];
 
-const fmtDate = (d: string) => dayjs(d).format("DD MMM YYYY");
-const fmtDateTime = (d: string) => dayjs(d).format("DD MMM YYYY, hh:mm A");
 
 // Downloadable table — every report on this page ends in one of these.
-function SimpleTable({ title, head, rows, dense, note }: { title: string; head: string[]; rows: (string | number)[][]; dense?: boolean; note?: React.ReactNode }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{title}</Typography>
-        <Box sx={{ flex: 1 }} />
-        {rows.length > 0 && (
-          <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />} onClick={() => exportTableToExcel(title, head, rows)}
-            sx={{ textTransform: "none", color: NURSE_PURPLE }}>Excel</Button>
-        )}
-      </Box>
-      {note && <Box sx={{ mb: 1.5 }}>{note}</Box>}
-      {rows.length === 0 ? (
-        <Typography variant="body2" sx={{ color: "text.secondary", py: 2, textAlign: "center" }}>No data in this range</Typography>
-      ) : (
-        <TableContainer sx={{ maxHeight: dense ? 340 : 560 }}>
-          <Table size="small" stickyHeader>
-            <TableHead>
-              <TableRow>
-                {head.map((h, i) => (
-                  <TableCell key={h} align={i === 0 ? "left" : "right"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider", bgcolor: "background.paper" }}>{h}</TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((r, ri) => (
-                <TableRow key={ri} hover>
-                  {r.map((c, ci) => (
-                    <TableCell key={ci} align={ci === 0 ? "left" : "right"} sx={{ borderColor: "divider", color: ci === 0 ? "text.primary" : "text.secondary", fontWeight: ci === 0 ? 600 : 500 }}>{c}</TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </Paper>
-  );
-}
 
 // ── Reports fed by the shared /nurse/reports payload ─────────────────────────
 
@@ -96,7 +54,7 @@ function SummaryReport({ data }: { data: any }) {
           value={s?.staffRecording || 0} current={s?.staffRecording} previous={p?.staffRecording} />
       </Box>
       <SimpleTable title="Daily vitals recorded" head={["Date", "Vitals"]}
-        rows={trend.map((t) => [fmtDate(t.date), Number(t.count)])} />
+        rows={trend.map((t) => [formatDate(t.date), Number(t.count)])} />
     </Box>
   );
 }
@@ -107,7 +65,7 @@ function VitalsRegisterReport({ data }: { data: any }) {
     <SimpleTable
       title="Vitals register"
       head={["Date", "Patient", "UHID", "BP", "Pulse", "Temp (°C)", "SpO2 (%)", "Weight (kg)", "Recorded by"]}
-      rows={vitalsList.map((v) => [fmtDateTime(v.date), v.patientName, v.uhid, v.bp, v.pulse, v.temperatureC, v.oxygenSaturation, v.weightKg, v.recordedBy])}
+      rows={vitalsList.map((v) => [formatDateTime(v.date), v.patientName, v.uhid, v.bp, v.pulse, v.temperatureC, v.oxygenSaturation, v.weightKg, v.recordedBy])}
       note={<ReportTruncationNote truncated={data?.truncated} totalRows={data?.totalRows} shownRows={data?.shownRows} />}
     />
   );
@@ -119,7 +77,7 @@ function AbnormalVitalsReport({ data }: { data: any }) {
     <SimpleTable
       title="Abnormal vitals — needs review"
       head={["Date", "Patient", "UHID", "BP", "Pulse", "Temp (°C)", "SpO2 (%)", "Flags", "Recorded by"]}
-      rows={abnormalList.map((v) => [fmtDateTime(v.date), v.patientName, v.uhid, v.bp, v.pulse, v.temperatureC, v.oxygenSaturation, v.flags.join(", "), v.recordedBy])}
+      rows={abnormalList.map((v) => [formatDateTime(v.date), v.patientName, v.uhid, v.bp, v.pulse, v.temperatureC, v.oxygenSaturation, v.flags.join(", "), v.recordedBy])}
     />
   );
 }
@@ -146,7 +104,7 @@ function InpatientsReport({ to }: { to: string }) {
   if (isLoading) return <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><HeartbeatLoader size={22} /></Box>;
   return (
     <SimpleTable title="Current inpatients" head={["Patient", "UHID", "Bed", "Admitted", "Days"]}
-      rows={rows.map((r) => [r.patientName, r.uhid, r.bed, fmtDate(r.admissionDate), Number(r.days)])} />
+      rows={rows.map((r) => [r.patientName, r.uhid, r.bed, formatDate(r.admissionDate), Number(r.days)])} />
   );
 }
 
@@ -160,7 +118,7 @@ function DischargesReport({ from, to }: { from: string; to: string }) {
   if (isLoading) return <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><HeartbeatLoader size={22} /></Box>;
   return (
     <SimpleTable title="Discharges" head={["Patient", "UHID", "Bed", "Admitted", "Discharged", "Length of stay"]}
-      rows={rows.map((r) => [r.patientName, r.uhid, r.bed, fmtDate(r.admissionDate), r.dischargeDate ? fmtDate(r.dischargeDate) : "—", Number(r.lengthOfStay)])} />
+      rows={rows.map((r) => [r.patientName, r.uhid, r.bed, formatDate(r.admissionDate), r.dischargeDate ? formatDate(r.dischargeDate) : "—", Number(r.lengthOfStay)])} />
   );
 }
 
@@ -174,7 +132,7 @@ function AdmissionsReport({ from, to }: { from: string; to: string }) {
   if (isLoading) return <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><HeartbeatLoader size={22} /></Box>;
   return (
     <SimpleTable title="Admissions" head={["Patient", "UHID", "Bed", "Admitted", "Status"]}
-      rows={rows.map((r) => [r.patientName, r.uhid, r.bed, fmtDate(r.admissionDate), r.status])} />
+      rows={rows.map((r) => [r.patientName, r.uhid, r.bed, formatDate(r.admissionDate), r.status])} />
   );
 }
 

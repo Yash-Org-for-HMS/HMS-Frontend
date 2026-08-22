@@ -1,21 +1,19 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import SimpleTable from "@/features/reports/kit/SimpleTable";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Grid, TextField, Tabs, Tab, Button, MenuItem,
-  Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
+  Box, Paper, Grid, TextField, Tabs, Tab, Button, MenuItem,
 } from "@mui/material";
 import {
   EventRounded, CheckCircleRounded, CancelRounded, PaymentsRounded,
   PersonAddRounded, TrendingUpRounded, AccessTimeRounded, ReplayRounded, AccountBalanceWalletRounded,
-  HotelRounded, LocalHotelRounded, MeetingRoomRounded, CallSplitRounded, MedicalInformationRounded,
-  FileDownloadRounded, GroupRounded,
+  HotelRounded, LocalHotelRounded, MeetingRoomRounded, CallSplitRounded, MedicalInformationRounded, GroupRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import ErrorState from "@/components/ErrorState";
 import PageHeader from "@/components/layout/PageHeader";
-import { exportTableToExcel } from "@/utils/exportExcel";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
@@ -160,8 +158,8 @@ export function ReferralsByDoctor() {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["report-referrals", range.from, range.to, type, referrerId],
     queryFn: async () => (await axiosInstance.get("/reception/reports/referrals", {
-      params: { from: range.from, to: range.to, type: type || undefined, referrerId: referrerId || undefined },
-    })).data.data,
+      params: { from: range.from, to: range.to, type: type || undefined, referrerId: referrerId || undefined }
+    })).data.data
   });
   const s = data?.summary;
   const prev = data?.previous;
@@ -264,8 +262,8 @@ export function DailyOpd() {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["report-daily-opd", date, doctorId, departmentId, statusId],
     queryFn: async () => (await axiosInstance.get("/reception/reports/daily-opd", {
-      params: { date, doctorId: doctorId || undefined, departmentId: departmentId || undefined, statusId: statusId || undefined },
-    })).data.data,
+      params: { date, doctorId: doctorId || undefined, departmentId: departmentId || undefined, statusId: statusId || undefined }
+    })).data.data
   });
   const t = data?.totals;
   const clear = () => { setDoctorId(""); setDepartmentId(""); setStatusId(""); };
@@ -322,9 +320,9 @@ export function OpdVisitRegister() {
       params: {
         from: range.from, to: range.to,
         doctorId: doctorId || undefined, departmentId: departmentId || undefined, statusId: statusId || undefined,
-        visitType: visitType || undefined,
-      },
-    })).data.data,
+        visitType: visitType || undefined
+      }
+    })).data.data
   });
 
   const rows: any[] = data?.rows ?? [];
@@ -410,8 +408,8 @@ export function Analytics() {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["report-analytics", from, to, doctorId, departmentId, statusId],
     queryFn: async () => (await axiosInstance.get("/reception/reports/appointment-analytics", {
-      params: { from, to, doctorId: doctorId || undefined, departmentId: departmentId || undefined, statusId: statusId || undefined },
-    })).data.data,
+      params: { from, to, doctorId: doctorId || undefined, departmentId: departmentId || undefined, statusId: statusId || undefined }
+    })).data.data
   });
   const t = data?.totals;
   const p = data?.previous;
@@ -451,8 +449,8 @@ export function Collection() {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["report-collection", from, to, paymentMethodId, collectedBy],
     queryFn: async () => (await axiosInstance.get("/reception/reports/collection", {
-      params: { from, to, paymentMethodId: paymentMethodId || undefined, collectedBy: collectedBy || undefined },
-    })).data.data,
+      params: { from, to, paymentMethodId: paymentMethodId || undefined, collectedBy: collectedBy || undefined }
+    })).data.data
   });
   const t = data?.totals;
   const p = data?.previous;
@@ -518,36 +516,3 @@ function Toolbar({ children, onClear }: { children: React.ReactNode; onClear?: (
 
 function Loading() { return <ReportSkeleton />; }
 
-function SimpleTable({ title, head, rows, note }: { title: string; head: string[]; rows: string[][]; note?: React.ReactNode }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.primary" }}>{title}</Typography>
-        <Box sx={{ flex: 1 }} />
-        {rows.length > 0 && (
-          <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />} onClick={() => exportTableToExcel(title, head, rows)}
-            sx={{ textTransform: "none", color: BRAND.action }}>Excel</Button>
-        )}
-      </Box>
-      {note && <Box sx={{ mb: 1.5 }}>{note}</Box>}
-      {rows.length === 0 ? (
-        <Typography variant="body2" sx={{ color: "text.secondary", py: 2, textAlign: "center" }}>No data</Typography>
-      ) : (
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>{head.map((h, i) => <TableCell key={h} align={i === 0 ? "left" : "right"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider" }}>{h}</TableCell>)}</TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((r, ri) => (
-                <TableRow key={ri} hover>
-                  {r.map((c, ci) => <TableCell key={ci} align={ci === 0 ? "left" : "right"} sx={{ borderColor: "divider", color: ci === 0 ? "text.primary" : "text.secondary", fontWeight: ci === 0 ? 600 : 500 }}>{c}</TableCell>)}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </Paper>
-  );
-}

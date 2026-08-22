@@ -18,14 +18,13 @@ import ErrorState from "@/components/ErrorState";
 import PageHeader from "@/components/layout/PageHeader";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
-import { formatINRAuto } from "@/utils/format";
+import { formatINRAuto, formatDate } from "@/utils/format";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = BRAND.action;
 const inr = formatINRAuto;
 const rangeFrom = (days: number): DateRange => ({ from: dayjs().subtract(days, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
-const fmtDate = (v: unknown) => (v ? dayjs(v as string).format("DD MMM YYYY") : "—");
 const ts = (v: unknown) => (v ? new Date(v as string).getTime() : 0);
 // Shared by tables over different row types, so these take unknown and stay
 // assignable to ReportColumn<T> for every T without forcing an index signature.
@@ -127,7 +126,7 @@ export function Outstanding() {
               { key: "invoiceNumber", label: "Invoice" },
               { key: "patientName", label: "Patient" },
               { key: "uhid", label: "UHID" },
-              { key: "invoiceDate", label: "Date", format: fmtDate, value: (r) => ts(r.invoiceDate) },
+              { key: "invoiceDate", label: "Date", format: formatDate, value: (r) => ts(r.invoiceDate) },
               money("netAmount", "Net"),
               money("paidAmount", "Paid"),
               money("balance", "Balance"),
@@ -178,7 +177,7 @@ export function UnreturnedAdvances() {
               { key: "admissionNumber", label: "Admission" },
               { key: "patientName", label: "Patient" },
               { key: "uhid", label: "UHID" },
-              { key: "closedOn", label: "Closed", format: fmtDate, value: (r) => ts(r.closedOn) },
+              { key: "closedOn", label: "Closed", format: formatDate, value: (r) => ts(r.closedOn) },
               money("collected", "Collected"),
               money("refunded", "Refunded"),
               money("amountOwed", "Owed back"),
@@ -253,7 +252,7 @@ export function PharmacyExpense() {
             title="Purchase orders"
             filename={`pharmacy_expense_${range.from}_${range.to}`}
             columns={[
-              { key: "orderDate", label: "Order date", format: fmtDate, value: (r) => ts(r.orderDate) },
+              { key: "orderDate", label: "Order date", format: formatDate, value: (r) => ts(r.orderDate) },
               { key: "supplier", label: "Supplier" },
               { key: "status", label: "Status" },
               money("amount", "Amount"),
@@ -321,7 +320,7 @@ export function PatientStatement() {
             filename={`statement_${selected.uhidNumber || selected.patientId}`}
             columns={[
               { key: "invoiceNumber", label: "Invoice" },
-              { key: "invoiceDate", label: "Date", format: fmtDate, value: (r) => ts(r.invoiceDate) },
+              { key: "invoiceDate", label: "Date", format: formatDate, value: (r) => ts(r.invoiceDate) },
               money("netAmount", "Net"),
               money("paidAmount", "Paid"),
               money("balance", "Balance"),

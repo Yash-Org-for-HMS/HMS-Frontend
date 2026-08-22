@@ -1,18 +1,18 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import { formatDate, formatDateTime } from "@/utils/format";
+import SimpleTable from "@/features/reports/kit/SimpleTable";
 import KpiCard from "@/features/reports/kit/KpiCard";
 import { useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
-  Box, Typography, Paper, TextField, Button, ButtonGroup,
-  Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
+  Box, Paper, TextField, Button, ButtonGroup,
 } from "@mui/material";
 import {
   GroupRounded, EventAvailableRounded, MedicationRounded,
-  ScienceRounded, MonitorHeartRounded, DescriptionRounded, FileDownloadRounded,
+  ScienceRounded, MonitorHeartRounded, DescriptionRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
-import { exportTableToExcel } from "@/utils/exportExcel";
 import ErrorState from "@/components/ErrorState";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -27,49 +27,8 @@ const PRESETS = [
   { key: "30d", label: "30 days", from: () => dayjs().subtract(29, "day"), to: () => dayjs() },
 ];
 
-const fmtDate = (d: string) => dayjs(d).format("DD MMM YYYY");
-const fmtDateTime = (d: string) => dayjs(d).format("DD MMM YYYY, hh:mm A");
 
 // Downloadable table — every report on this page ends in one of these.
-function SimpleTable({ title, head, rows, dense, note }: { title: string; head: string[]; rows: (string | number)[][]; dense?: boolean; note?: React.ReactNode }) {
-  return (
-    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{title}</Typography>
-        <Box sx={{ flex: 1 }} />
-        {rows.length > 0 && (
-          <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />} onClick={() => exportTableToExcel(title, head, rows)}
-            sx={{ textTransform: "none", color: DOCTOR_BLUE }}>Excel</Button>
-        )}
-      </Box>
-      {note && <Box sx={{ mb: 1.5 }}>{note}</Box>}
-      {rows.length === 0 ? (
-        <Typography variant="body2" sx={{ color: "text.secondary", py: 2, textAlign: "center" }}>No data in this range</Typography>
-      ) : (
-        <TableContainer sx={{ maxHeight: dense ? 340 : 560 }}>
-          <Table size="small" stickyHeader>
-            <TableHead>
-              <TableRow>
-                {head.map((h, i) => (
-                  <TableCell key={h} align={i === 0 ? "left" : "right"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider", bgcolor: "background.paper" }}>{h}</TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((r, ri) => (
-                <TableRow key={ri} hover>
-                  {r.map((c, ci) => (
-                    <TableCell key={ci} align={ci === 0 ? "left" : "right"} sx={{ borderColor: "divider", color: ci === 0 ? "text.primary" : "text.secondary", fontWeight: ci === 0 ? 600 : 500 }}>{c}</TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </Paper>
-  );
-}
 
 // ── Individual report views — each is one item in the sidebar, rendered on
 // its own rather than all stacked on one page. All read from the single
@@ -98,7 +57,7 @@ function SummaryReport({ data }: { data: any }) {
           value={s?.radiologyOrders || 0} current={s?.radiologyOrders} previous={p?.radiologyOrders} />
       </Box>
       <SimpleTable title="Daily consultations" head={["Date", "Consultations"]}
-        rows={trend.map((t) => [fmtDate(t.date), Number(t.count)])} />
+        rows={trend.map((t) => [formatDate(t.date), Number(t.count)])} />
     </Box>
   );
 }
@@ -149,7 +108,7 @@ function ConsultationsRegisterReport({ data }: { data: any }) {
     <SimpleTable
       title="Consultations register"
       head={["Date", "Patient", "UHID", "Diagnosis", "Prescriptions"]}
-      rows={consultationsList.map((c) => [fmtDateTime(c.date), c.patientName, c.uhid, c.diagnosis, Number(c.prescriptions)])}
+      rows={consultationsList.map((c) => [formatDateTime(c.date), c.patientName, c.uhid, c.diagnosis, Number(c.prescriptions)])}
       note={<ReportTruncationNote truncated={data?.truncated} totalRows={data?.totalRows} shownRows={data?.shownRows} />}
     />
   );

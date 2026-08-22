@@ -1,11 +1,12 @@
 import { useState, useCallback, useMemo } from "react";
+import { getDoctorInitials } from "@/utils/format";
 import { apiGetList } from "@/api/client";
 import type { QueueTokenRow, QueueAppointmentRef } from "./queue.types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Tooltip,
-  Alert, Menu, MenuItem, alpha
+  Alert, Menu, MenuItem, alpha,
 } from "@mui/material";
 import {
   MoreVertRounded, PlayArrowRounded, CheckCircleRounded,
@@ -72,14 +73,6 @@ function VisitTypeChip({ visitType }: { visitType?: string }) {
   );
 }
 
-const getDoctorInitials = (doctorName?: string) => {
-  if (!doctorName || doctorName === "Unknown") return "";
-  const cleanName = doctorName.replace(/^Dr\.\s*/i, "");
-  const parts = cleanName.split(" ").filter(Boolean);
-  if (parts.length === 0) return "";
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-};
 
 // `readOnly` renders a pure oversight view (hospital-admin Operations): the
 // per-token action buttons (call, complete, recall) and the row overflow menu
