@@ -1,5 +1,9 @@
 import { useState } from "react";
 import type { MedicationDose, MedicationOrder, PatientAllergyRow } from "@/types";
+import type {
+  ObservationRow, ObservationFieldDef, FluidEntryRow,
+  DoctorVisitRow, NursingNoteRow, HandoverShift, HandoverNote, HandoverSignOff,
+} from "./ipd.types";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -130,11 +134,11 @@ export default function TreatmentChart() {
   if (headerLoading) return <Box sx={{ p: 3 }}><ListSkeleton rows={8} /></Box>;
   if (isError) return <Box sx={{ p: 3 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></Box>;
 
-  const observations: any[] = (obs?.observations ?? []).filter((o: any) => !o.supersededByObservationId);
+  const observations: ObservationRow[] = (obs?.observations ?? []).filter((o: ObservationRow) => !o.supersededByObservationId);
   // Already narrowed to this patient's ward by the server, and still carrying
   // any switched-off field a reading on this day used.
-  const obsFields: any[] = obs?.fields ?? [];
-  const entries: any[] = (fluid?.entries ?? []).filter((e: any) => !e.supersededByEntryId);
+  const obsFields: ObservationFieldDef[] = obs?.fields ?? [];
+  const entries: FluidEntryRow[] = (fluid?.entries ?? []).filter((e: FluidEntryRow) => !e.supersededByEntryId);
   const totals = fluid?.totals;
   const allergies: PatientAllergyRow[] = header?.allergies ?? [];
 
@@ -150,13 +154,14 @@ export default function TreatmentChart() {
 
   // Oldest first: both read as a diary of the day, so they run the way the day
   // ran — unlike the dialogs, which put the newest on top for writing.
-  const asc = (a: any, b: any, k: string) => dayjs(a[k]).valueOf() - dayjs(b[k]).valueOf();
-  const visits: any[] = [...(visitData?.visits ?? [])]
-    .filter((v: any) => v.status !== "CANCELLED")
+  const asc = <T extends Record<string, unknown>>(a: T, b: T, k: keyof T & string) =>
+    dayjs(String(a[k])).valueOf() - dayjs(String(b[k])).valueOf();
+  const visits: DoctorVisitRow[] = [...(visitData?.visits ?? [])]
+    .filter((v: DoctorVisitRow) => v.status !== "CANCELLED")
     .sort((a, b) => asc(a, b, "visitDate"));
-  const nursingNotes: any[] = [...(notes ?? [])].sort((a, b) => asc(a, b, "createdAt"));
+  const nursingNotes: NursingNoteRow[] = [...(notes ?? [])].sort((a, b) => asc(a, b, "createdAt"));
 
-  const cell = (v: any, suffix = "") => (v === null || v === undefined ? "" : `${v}${suffix}`);
+  const cell = (v: string | number | null | undefined, suffix = "") => (v === null || v === undefined ? "" : `${v}${suffix}`);
 
   /**
    * Pins the time column while a chart wide enough to scroll does so. Dropped
@@ -173,7 +178,7 @@ export default function TreatmentChart() {
   };
 
   /** Outside the hospital's own normal range for that observation. Marked, never refused. */
-  const outOfNormal = (f: any, raw: any) => {
+  const outOfNormal = (f: ObservationFieldDef, raw: string | number | null | undefined) => {
     if (f?.dataType !== "NUMBER" || raw === undefined || raw === "") return false;
     const n = Number(raw);
     if (!Number.isFinite(n)) return false;
@@ -293,7 +298,7 @@ export default function TreatmentChart() {
                       // This hospital's own columns, in the order it set. They
                       // print with the rest — a sheet in the folder has to be
                       // the whole chart, not the standard part of it.
-                      ...obsFields.map((f: any) => (f.unit ? `${f.label} (${f.unit})` : f.label)),
+                      ...obsFields.map((f) => (f.unit ? `${f.label} (${f.unit})` : f.label)),
                       "Remark", "By",
                     ].map((h, i) => (
                       <TableCell key={h}
@@ -319,7 +324,7 @@ export default function TreatmentChart() {
                       <TableCell>{cell(o.spo2, "%")}</TableCell>
                       <TableCell>{cell(o.bloodSugar)}</TableCell>
                       <TableCell>{cell(o.painScore)}</TableCell>
-                      {obsFields.map((f: any) => {
+                      {obsFields.map((f) => {
                         const v = o.extras?.[f.observationFieldId];
                         const flag = outOfNormal(f, v);
                         return (
@@ -482,7 +487,7 @@ export default function TreatmentChart() {
             </Box>
           ) : (
             <Box sx={{ px: 2.5, py: 1 }}>
-              {visits.map((v: any, i: number) => (
+              {visits.map((v, i: number) => (
                 <Box key={v.visitId} sx={{ py: 1.25, borderTop: i ? "1px solid" : "none", borderColor: "divider" }}>
                   <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.25, flexWrap: "wrap" }}>
                     <Typography variant="body2" sx={{ fontWeight: 700 }}>{dayjs(v.visitDate).format("HH:mm")}</Typography>
@@ -510,7 +515,7 @@ export default function TreatmentChart() {
             </Box>
           ) : (
             <Box sx={{ px: 2.5, py: 1 }}>
-              {nursingNotes.map((n: any, i: number) => (
+              {nursingNotes.map((n, i: number) => (
                 <Box key={n.nursingNoteId} sx={{ py: 1.25, borderTop: i ? "1px solid" : "none", borderColor: "divider" }}>
                   <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.25 }}>
                     <Typography variant="body2" sx={{ fontWeight: 700 }}>{dayjs(n.createdAt).format("HH:mm")}</Typography>
@@ -525,7 +530,7 @@ export default function TreatmentChart() {
       </Box>
 
       <Box sx={{ display: tab === 1 ? "block" : "none", "@media print": { display: "block", pageBreakBefore: "always" } }}>
-        {(handover?.shifts ?? []).map((s: any) => (
+        {(handover?.shifts ?? []).map((s: HandoverShift) => (
           <Paper key={s.shiftName} elevation={0} className="print-block"
             sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden", mb: 2 }}>
             <Box sx={{ px: 2.5, py: 1.5, borderBottom: "1px solid", borderColor: "divider", display: "flex", justifyContent: "space-between", gap: 2 }}>
@@ -536,7 +541,7 @@ export default function TreatmentChart() {
               {s.notes.length === 0 ? (
                 <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>Nothing handed over.</Typography>
               ) : (
-                s.notes.map((n: any) => (
+                s.notes.map((n: HandoverNote) => (
                   <Box key={n.handoverEntryId} sx={{ mb: 1.5 }}>
                     <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>{n.noteText}</Typography>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>{n.author} · {dayjs(n.createdAt).format("DD MMM, HH:mm")}</Typography>
@@ -545,7 +550,7 @@ export default function TreatmentChart() {
               )}
               <Divider sx={{ my: 1.5 }} />
               <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                {s.signOffs.map((so: any) => (
+                {s.signOffs.map((so: HandoverSignOff) => (
                   <Box key={so.role} sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                     {so.signed
                       ? <CheckCircleRounded sx={{ fontSize: 16, color: SEMANTIC.success }} />
