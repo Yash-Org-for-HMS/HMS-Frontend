@@ -32,16 +32,12 @@ import IpdRadiologyOrdersDialog from "@/components/ipd/IpdRadiologyOrdersDialog"
 import { apiErrorText } from "@/utils/apiError";
 
 /**
- * The ward.
+ * The ward, grouped by ward — a flat list made a nurse pick their patients out
+ * of every other ward's.
  *
- * Grouped by ward, because a hospital with several wards was showing every
- * patient in one flat list — a nurse works one ward, and had to pick their
- * patients out of everybody else's.
- *
- * Two views, because they answer different questions. Cards show every action
- * with its name on and have room for the bed and the length of stay; the list
- * is dense, for a big ward where you are scanning for one patient. The choice
- * is remembered.
+ * Two views answering different questions: cards name every action and have
+ * room for bed and length of stay; the list is dense, for scanning a big ward
+ * for one patient. The choice is remembered.
  */
 
 const VIEW_KEY = "hms.ward.view";
@@ -101,19 +97,18 @@ export default function NurseWard() {
       }));
   }, [filtered]);
 
-  // Split by what the action IS, not by guesswork about frequency. Ten buttons
-  // on every card meant four rows of them per patient and nothing standing out;
-  // the split below encodes a real distinction:
+  // Split by what the action IS, not by guessed frequency — ten buttons a card
+  // meant four rows and nothing standing out:
   //
-  //   CHART   — recording what happened to this patient (the hourly work)
-  //   ORDER   — asking for something new (occasional, on the doctor's word)
+  //   CHART   — recording what happened (the hourly work)
+  //   ORDER   — asking for something new, on the doctor's word
   //   RECORD  — reference, read far more often than written
   //
-  // Every action stays on the card and one tap away. The grouping is there to
-  // make ten of them readable, not to hide six of them behind a menu — a ward
-  // nurse should not have to remember which drawer an action is in.
-  // Typed explicitly: inferred from the first list, `tone` narrows to the one
-  // literal colour it happens to contain and the muted entries below stop fitting.
+  // Every action stays on the card one tap away; the grouping makes ten of them
+  // readable, not to hide six behind a menu.
+  //
+  // Typed explicitly: inferred, `tone` narrows to the one literal colour the
+  // first list contains and the muted entries below stop fitting.
   /** The fields any ward action needs off the row it was opened from. */
   interface WardRow {
     admissionId: string;

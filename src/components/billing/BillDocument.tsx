@@ -6,14 +6,11 @@ import { SEMANTIC } from "@/styles/accents";
  * The single, consistent bill/receipt shell used by every printed billing
  * document in the product (OPD receipt, IPD final bill, POS-generated invoices).
  *
- * Deliberately built from plain elements + INLINE styles (no MUI `sx`): the
- * receipt dialogs print by copying this DOM's `innerHTML` into a bare iframe,
- * where emotion/MUI class styles would be lost. Inline styles survive that copy
- * AND render identically on screen.
+ * Plain elements with INLINE styles, not MUI `sx`: printing copies this DOM's
+ * `innerHTML` into a bare iframe, where emotion class styles would be lost.
  *
- * The line-item table is passed as `children` so each bill keeps the columns it
- * needs, while the header, title, meta grid, totals, footer and currency
- * (formatINR) stay identical everywhere.
+ * The line-item table is `children` so each bill keeps its own columns, while
+ * the header, totals, footer and currency stay identical everywhere.
  */
 
 export interface BillHospital {

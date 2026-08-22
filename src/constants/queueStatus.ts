@@ -3,13 +3,10 @@
  * (backend `prisma/seedQueueStates.ts`) and returned by `GET /reception/queue`
  * as each token's `statusCode`.
  *
- * These are named here because the Nursing Station dashboard was filtering on
- * codes that do not exist — "WAITING" and "IN_PROGRESS". Nothing errored and
- * nothing logged; the filters simply never matched. The "Patients Awaiting
- * Vitals" worklist was therefore permanently empty while patients sat in the
- * queue waiting for vitals, and the "In Consultation" tile was permanently 0.
- * Comparing a token's status against a bare string is what made that possible,
- * so compare against these instead.
+ * Named because the Nursing Station filtered on codes that do not exist
+ * ("WAITING", "IN_PROGRESS"). Nothing errored — the filters simply never
+ * matched, so the vitals worklist sat empty while patients waited. Compare
+ * against these rather than a bare string.
  */
 export const QUEUE_STATUS = {
   WAITING_FOR_VITALS: "WAITING_FOR_VITALS",

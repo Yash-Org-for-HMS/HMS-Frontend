@@ -29,14 +29,11 @@ const READY_CAP_MS = 3000;
 const CLEANUP_MS = 1000;
 
 /**
- * The document's CSS as markup safe to write into another document, in cascade
- * order.
+ * The document's CSS as markup safe to write elsewhere, in cascade order.
  *
- * <link> elements are copied verbatim: their URLs resolve against the
- * stylesheet's own location, which re-serialising the rules would not preserve.
- * A <style> is copied verbatim too when it actually contains text — only when
- * the tag is empty are its rules read from the CSSOM, which is the Emotion case
- * above and a no-op everywhere else.
+ * <link> is copied verbatim — its URLs resolve against the stylesheet's own
+ * location, which re-serialising would lose. <style> is copied verbatim when it
+ * has text; only an empty tag is read from the CSSOM (the Emotion case above).
  */
 function collectHeadCss(): string {
   const parts: string[] = [];

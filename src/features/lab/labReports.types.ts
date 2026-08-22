@@ -4,10 +4,9 @@ import type { Money } from "@/types";
  * Response shapes for the lab & radiology reports, mirrored from
  * backend/src/modules/lab/labReports.controller.ts.
  *
- * These live beside the feature rather than in the shared `@/types` barrel
- * because nothing else consumes them — a report row is not a domain entity, it
- * is one endpoint's projection, and pretending otherwise is how a shared types
- * file turns into a dumping ground.
+ * Beside the feature rather than in `@/types`: a report row is one endpoint's
+ * projection, not a domain entity, and pretending otherwise is how a shared
+ * types file becomes a dumping ground.
  *
  * Money is `Money` (decimal string | number) wherever the controller passes a
  * Prisma Decimal through, and plain `number` where it calls `.toNumber()`

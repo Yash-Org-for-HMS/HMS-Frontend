@@ -24,13 +24,11 @@ export function paidTotal(invoice?: { Payment?: Payment[] | null } | null): numb
 }
 
 /**
- * A refund only counts as money once an administrator has released it.
+ * A refund counts as money only once an administrator releases it.
  *
- * Refunds at or above the hospital's approval threshold are raised PENDING and
- * return nothing until approved, so there are two different questions here and
- * conflating them would either credit a patient before they were handed anything
- * (counting PENDING as returned) or let three pending refunds each claim the
- * same payment (ignoring PENDING entirely). They get separate functions.
+ * Two different questions, so two functions: counting PENDING as returned
+ * credits a patient before they were handed anything, while ignoring PENDING
+ * lets three pending refunds each claim the same payment.
  */
 const isCompleted = (r: Refund): boolean => String(r.refundStatus).toUpperCase() === "COMPLETED";
 

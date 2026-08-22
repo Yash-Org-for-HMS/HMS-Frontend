@@ -19,28 +19,22 @@ import { apiErrorText } from "@/utils/apiError";
 import dayjs from "dayjs";
 
 /**
- * The ward file: one page per admission, showing the whole chart day at once.
+ * The ward file: one page per admission, the whole chart day at once.
  *
- * The dialogs on the ward page are for RECORDING — quick, one thing at a time,
- * at the bedside. This is for READING: the day on one surface, in time order,
- * the way the paper file works and the reason it works. It is also what gets
- * printed and signed at discharge, so the print is a first-class output rather
- * than a browser afterthought.
+ * The ward dialogs are for RECORDING at the bedside; this is for READING — the
+ * day on one surface in time order, the way the paper file works. It is also
+ * what gets printed and signed at discharge, so print is a first-class output.
  */
 
 const ROW_H = 34;
 
 /**
- * How a dose reads on the chart.
+ * How a dose reads on the chart. A symbol AND a colour, never colour alone —
+ * this is printed, usually in black and white.
  *
- * A symbol AND a colour, never colour alone — the chart is printed, and it is
- * printed in black and white more often than not.
- *
- * "Not signed for" is the case worth having: a dose whose time has passed and
- * that nobody has recorded either way. It is not "due" — due is something in
- * the future you can still act on — and it is not "missed" either, because
- * nobody has said so. It is the gap on the chart that a drug round is supposed
- * to close, and it needs to look like one.
+ * "Not signed for" is the case worth having: a dose whose time has passed with
+ * nothing recorded either way. Not "due" (that is still actionable) and not
+ * "missed" (nobody has said so) — it is the gap a drug round should close.
  */
 const doseMark = (d: MedicationDose): { mark: string; label: string; color: string } => {
   if (d.status === "GIVEN") return { mark: "✓", label: "given", color: SEMANTIC.success };
@@ -51,13 +45,11 @@ const doseMark = (d: MedicationDose): { mark: string; label: string; color: stri
 };
 
 /**
- * Everything about the dose beyond its mark and its due time.
+ * Everything about a dose beyond its mark and due time.
  *
- * The note matters most: a dose recorded as missed or held without the reason
- * is half a record, and the reason is exactly what anyone reviewing the chart
- * came to read. The infused volume is here too — it is counted in the fluid
- * intake total, so the sheet has to show where those millilitres came from,
- * or the total has no working on paper.
+ * The note matters most — a dose missed or held without its reason is half a
+ * record. Infused volume is here because it feeds the fluid intake total, which
+ * otherwise has no working shown on paper.
  */
 const doseDetail = (d: MedicationDose): string => {
   const bits: string[] = [];
@@ -147,13 +139,10 @@ export default function TreatmentChart() {
   const allergies: PatientAllergyRow[] = header?.allergies ?? [];
 
   /**
-   * The drug chart for this day. An order earns a row if it has a dose due
-   * today OR is still live — a drug ordered this morning belongs on the chart
-   * before its first dose is due, and one awaiting the pharmacy has to be
-   * visible or nobody notices it never arrived.
-   *
-   * A cancelled order with no dose today is dropped: it is history, and it is
-   * still on the medicines list.
+   * The drug chart for this day. An order earns a row if a dose is due today OR
+   * it is still live — one ordered this morning belongs on the chart before its
+   * first dose, and one awaiting pharmacy must be visible or nobody notices it
+   * never arrived. A cancelled order with no dose today is history, and drops.
    */
   const marOrders: MedicationOrder[] = (mar ?? []).filter(
     (o: MedicationOrder) => (o.doses?.length ?? 0) > 0 || o.status === "ACTIVE" || o.status === "REQUESTED",

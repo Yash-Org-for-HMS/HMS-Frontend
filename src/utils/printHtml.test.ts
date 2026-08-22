@@ -5,15 +5,12 @@ import { printHtml } from "./printHtml";
  * Guards the one thing that made every Print button in the app produce an
  * unstyled page in production while looking perfect in dev.
  *
- * Emotion — MUI's engine — switches to the CSSOM `insertRule()` API when
- * NODE_ENV is production. Its <style data-emotion> tags are then EMPTY in the
- * DOM while holding hundreds of real rules. The old code copied `el.outerHTML`,
- * so it copied empty tags and lost the lot. Dev never showed it, and neither
- * does a typecheck or a build, which is why it reached a deployment.
+ * Emotion switches to CSSOM `insertRule()` in production, leaving its
+ * <style data-emotion> tags EMPTY while holding hundreds of rules — so copying
+ * `outerHTML` lost the lot. Neither dev, a typecheck nor a build shows it.
  *
- * The tests below therefore build style tags the same two ways Emotion does and
- * assert the rules survive. If someone "simplifies" the harvest back to
- * outerHTML, the first test fails here rather than silently in production.
+ * These build style tags both ways Emotion does and assert the rules survive,
+ * so "simplifying" back to outerHTML fails here rather than in production.
  */
 
 /**

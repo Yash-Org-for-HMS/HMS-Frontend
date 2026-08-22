@@ -15,16 +15,10 @@ import { API_URL } from "@/api/axios";
 const BLUE = BRAND.action;
 const BLUE_DARK = BRAND.actionDark;
 
-// The mark's gradient — the ONLY gradient in the panel, and it covers a badge no
-// bigger than 74px.
-//
-// It used to be `#38bdf8 -> #3b82f6 -> #1d4ed8`, a sky-to-navy ramp belonging to
-// no palette in this product (the app themes indigo from BRAND), painted onto
-// the badge, the primary button, the send button AND the chat bubbles, with an
-// 18px blurred copy of itself behind the badge at 0.55 opacity. Stacked up, that
-// turned the top of the panel into a dark blue cloud sitting next to an indigo
-// "Ask Dr. Dex" button it did not match. Everything else here is now flat BRAND
-// colour, and the halo is a tinted ring rather than a blur.
+// The mark's gradient — the ONLY gradient in the panel, on a badge under 74px.
+// It previously also painted the buttons and chat bubbles in a sky-to-navy ramp
+// belonging to no palette here, which read as a dark cloud beside the indigo
+// BRAND button. Everything else is flat BRAND, and the halo is a ring not a blur.
 const MARK_GRAD = `linear-gradient(140deg, #818cf8 0%, ${BRAND.action} 55%, ${BRAND.actionDark} 100%)`;
 
 const DEX_NAME = "Dr. Dex";
@@ -59,14 +53,10 @@ function authHeaders(extra: Record<string, string> = {}): Record<string, string>
 }
 
 /**
- * Dr. Dex's glyph, unbadged — a trace with a reading point at its head, since
- * reading this patient's record is Dex's whole job. Drawn from the same clinical
- * vocabulary as the vitals monitor rather than the four-pointed sparkle every AI
- * feature ships with; the sparkle also blurred into an indistinct blob at the
- * 28px size used beside each reply, where two strokes stay legible.
- *
- * Exported so the buttons that summon Dex carry Dex's own mark instead of that
- * same stock sparkle.
+ * Dr. Dex's glyph — a trace with a reading point at its head, from the same
+ * clinical vocabulary as the vitals monitor rather than the four-pointed
+ * sparkle every AI feature ships with, which also blurs at the 28px size used
+ * beside each reply. Exported so the buttons summoning Dex carry Dex's mark.
  */
 export function DexGlyph({ size = 20 }: { size?: number }) {
   return (
@@ -87,14 +77,9 @@ export function DexGlyph({ size = 20 }: { size?: number }) {
 }
 
 /**
- * The glyph in its badge.
- *
- * A rounded square, not a circle: every other round badge in this app is a
- * person's avatar, and Dex is not a person.
- *
- * `ring` replaces the old blurred halo with a flat tinted ring — it still lifts
- * the mark off the surface in the hero state without laying a dark cloud across
- * a quarter of the panel.
+ * The glyph in its badge. A rounded square, not a circle — every other round
+ * badge in this app is a person's avatar, and Dex is not a person. `ring` lifts
+ * the mark off the surface without the old blurred halo's dark cloud.
  */
 function DexMark({ size = 40, ring = false }: { size?: number; ring?: boolean }) {
   return (
