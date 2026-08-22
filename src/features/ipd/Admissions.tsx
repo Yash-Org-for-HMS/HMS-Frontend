@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import { SEMANTIC, NEUTRAL, BRAND, alpha } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
@@ -40,6 +40,44 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
   CANCELLED: { label: "Cancelled", color: NEUTRAL.muted },
 };
 const TABS = ["ADMITTED", "DISCHARGED", ""];
+
+/**
+ * The advance still held against an admission.
+ *
+ * On a live admission that is just a running balance. Once the admission is
+ * closed it is the patient's money the hospital still has, and the two cases
+ * looked identical — the same teal chip — so a discharged patient's ₹97,635
+ * read exactly like an inpatient's float.
+ *
+ * Discharge already forces the operator to say what happens to a leftover
+ * advance (refund it, or hold it with a reason), and the reconciliation check
+ * warns about one held with no reason. This is the same three states on screen,
+ * so what the check reports and what the ward sees cannot drift apart:
+ * running · held for a stated reason (on hover) · unexplained.
+ */
+function DepositChip({ admission }: {
+  admission: { depositBalance: number | string; status: string; advanceHoldReason?: string | null };
+}) {
+  const amount = inr(admission.depositBalance);
+  const closed = admission.status === "DISCHARGED" || admission.status === "CANCELLED";
+  if (!closed) {
+    return <Chip label={amount} size="small" sx={{ bgcolor: alpha(BRAND.action, 0.12), color: BRAND.action, fontWeight: 700 }} />;
+  }
+
+  const reason = (admission.advanceHoldReason || "").trim();
+  const tone = reason ? SEMANTIC.warning : SEMANTIC.danger;
+  return (
+    <Tooltip title={reason
+      ? `Held after discharge — ${reason}`
+      : "Held after discharge with no reason recorded. Refund it to the patient, or record why it stays."}>
+      <Chip
+        label={`${amount} held`}
+        size="small"
+        sx={{ bgcolor: alpha(tone, 0.14), color: tone, fontWeight: 700, border: `1px solid ${alpha(tone, 0.35)}` }}
+      />
+    </Tooltip>
+  );
+}
 
 // `readOnly` renders a pure oversight view (hospital-admin Operations): the
 // "Admit Patient" button and every per-row action (medicines, labs, radiology,
@@ -166,7 +204,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                     <TableCell sx={{ color: "text.secondary" }}>{a.days ?? "—"}</TableCell>
                     <TableCell align="right">
                       {Number(a.depositBalance) > 0
-                        ? <Chip label={inr(a.depositBalance)} size="small" sx={{ bgcolor: "rgba(8,145,178,0.12)", color: BRAND.action, fontWeight: 700 }} />
+                        ? <DepositChip admission={a} />
                         : <Typography variant="caption" sx={{ color: "text.disabled" }}>—</Typography>}
                     </TableCell>
                     <TableCell><Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700 }} /></TableCell>
