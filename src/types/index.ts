@@ -70,9 +70,15 @@ export interface LowStockAlert {
 
 export interface PharmacyOrder {
   pharmacyOrderId: string;
+  patientId?: string | null;
   status: string;
+  /** A Prisma Decimal — always a string on the wire. Number() before arithmetic. */
   totalAmount: string;
   createdAt: string;
+  /** Set when the sale was cancelled; shown beside the row. */
+  cancellationReason?: string | null;
+  /** The list endpoint includes these; a freshly created order may not. */
+  items?: PharmacyOrderLine[];
 }
 
 export interface PurchaseOrder {
@@ -348,9 +354,12 @@ export interface PrescriptionItem {
 export interface PendingPrescription {
   prescriptionId: string;
   patientId?: string | null;
-  patientName?: string;
-  uhid?: string;
-  doctorName?: string;
+  patientName?: string | null;
+  /** The payload spells this `uhidNumber`, not `uhid`. */
+  uhidNumber?: string | null;
+  doctorName?: string | null;
+  /** When it was written — the endpoint spreads the prescription row. */
+  prescriptionDate?: string | null;
   createdAt?: string;
   items: PrescriptionItem[];
 }

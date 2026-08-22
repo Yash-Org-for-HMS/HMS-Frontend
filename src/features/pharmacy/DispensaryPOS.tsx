@@ -1,7 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { formatDate } from "@/utils/format";
 import { prescriptionToCart } from "./prescriptionToCart";
-import type { MedicineCatalogRow, MedicineInventoryRow, DispensableMedicine, PendingPrescription } from "@/types";
+import type {
+  MedicineCatalogRow, MedicineInventoryRow, DispensableMedicine, PendingPrescription,
+  CartLine, PharmacyOrder, PharmacyOrderLine,
+} from "@/types";
 import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useLocation } from "react-router-dom";
@@ -59,12 +62,12 @@ export default function DispensaryPOS() {
   const sales = data?.sales || [];
 
   // Cart state
-  const [cart, setCart] = useState<any[]>([]);
+  const [cart, setCart] = useState<CartLine[]>([]);
   const [patientId, setPatientId] = useState("");
   const [selectedPrescriptionId, setSelectedPrescriptionId] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [showPOS, setShowPOS] = useState(false);
-  const [createdOrder, setCreatedOrder] = useState<any>(null);
+  const [createdOrder, setCreatedOrder] = useState<PharmacyOrder | null>(null);
   
   // Pagination for Today's Orders
   const [page, setPage] = useState(1);
@@ -73,7 +76,7 @@ export default function DispensaryPOS() {
   const todaysOrders = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return sales.filter((s: any) => new Date(s.createdAt) >= today);
+    return sales.filter((s: PharmacyOrder) => new Date(s.createdAt) >= today);
   }, [sales]);
 
   const pageCount = Math.ceil(todaysOrders.length / itemsPerPage);
@@ -83,8 +86,8 @@ export default function DispensaryPOS() {
   }, [todaysOrders, page]);
 
   // Reason-dialog targets (each dialog owns its own reason form + submit state).
-  const [orderToCancel, setOrderToCancel] = useState<any>(null);
-  const [prescriptionToDismiss, setPrescriptionToDismiss] = useState<any>(null);
+  const [orderToCancel, setOrderToCancel] = useState<PharmacyOrder | null>(null);
+  const [prescriptionToDismiss, setPrescriptionToDismiss] = useState<PendingPrescription | null>(null);
 
   // Listen for real-time queue updates
   useSocket({
@@ -109,7 +112,7 @@ export default function DispensaryPOS() {
     }));
   }, [medicines, medicineStock]);
 
-  const handleEditOrder = async (order: any) => {
+  const handleEditOrder = async (order: PharmacyOrder) => {
     const ok = await confirm({
       title: "Edit order",
       message: "Editing an order will cancel it and create a new one in the POS. Proceed?",
@@ -120,8 +123,8 @@ export default function DispensaryPOS() {
         await axiosInstance.put(`/pharmacy/orders/${order.pharmacyOrderId}/cancel`, { reason: "Editing Order" });
 
         // Load items into cart
-        const initialCart: any[] = [];
-        order.items.forEach((item: any) => {
+        const initialCart: CartLine[] = [];
+        (order.items ?? []).forEach((item: PharmacyOrderLine) => {
           const match = availableMedicines.find((m) => m.medicineId === item.medicineId);
           if (match) {
             initialCart.push({
@@ -145,10 +148,10 @@ export default function DispensaryPOS() {
   useEffect(() => {
     if (location.state?.editItems && availableMedicines.length > 0 && cart.length === 0) {
       const editItems = location.state.editItems;
-      const initialCart: any[] = [];
+      const initialCart: CartLine[] = [];
       const missingItems: string[] = [];
       
-      editItems.forEach((item: any) => {
+      editItems.forEach((item: PharmacyOrderLine) => {
         const match = availableMedicines.find((m) => m.medicineId === item.medicineId);
         if (match) {
           initialCart.push({
@@ -389,7 +392,7 @@ export default function DispensaryPOS() {
                   </Box>
                 ) : (
                   <List disablePadding>
-                    {pendingPrescriptions.map((p: any) => (
+                    {pendingPrescriptions.map((p: PendingPrescription) => (
                       <ListItem 
                         key={p.prescriptionId} 
                         disablePadding 
@@ -454,16 +457,18 @@ export default function DispensaryPOS() {
               <Box sx={{ display: 'flex', gap: 2, mb: 4, flexDirection: { xs: 'column', md: 'row' }, flexShrink: 0 }}>
                 <Autocomplete
                   options={availableMedicines}
-                  getOptionLabel={(option: any) => option.label}
+                  getOptionLabel={(option: DispensableMedicine) => option.label}
                   onChange={(e, newValue) => addToCart(newValue)}
-                  renderOption={(props, option: any) => (
-                    <Box component="li" {...props} sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                  renderOption={({ key, ...props }, option: DispensableMedicine) => (
+                    // MUI puts `key` inside props; React warns when a key is
+                    // spread rather than passed, so it is split out here.
+                    <Box component="li" key={key} {...props} sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                       <Box>
                         <Typography variant="body1" fontWeight={600}>{option.medicineName}</Typography>
                         <Typography variant="caption" color="text.secondary">{option.genericName}</Typography>
                       </Box>
                       <Box textAlign="right">
-                        <Typography variant="body2" fontWeight={600} color={SEMANTIC.success}>₹{parseFloat(option.sellingPrice).toFixed(2)}</Typography>
+                        <Typography variant="body2" fontWeight={600} color={SEMANTIC.success}>₹{Number(option.sellingPrice).toFixed(2)}</Typography>
                         <Typography variant="caption" color={option.inStock > 0 ? "text.secondary" : "error"}>
                           Stock: {option.inStock}
                         </Typography>
@@ -594,7 +599,7 @@ export default function DispensaryPOS() {
                 <TableBody>
                   {todaysOrders.length === 0 ? (
                     <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No orders today." size={110} /></TableCell></TableRow>
-                  ) : paginatedOrders.map((sale: any) => (
+                  ) : paginatedOrders.map((sale: PharmacyOrder) => (
                     <TableRow key={sale.pharmacyOrderId} sx={{ opacity: sale.status === 'cancelled' ? 0.6 : 1 }}>
                       <TableCell sx={{ fontFamily: 'monospace', fontWeight: 700 }}>
                         {sale.pharmacyOrderId.split('-')[0].toUpperCase()}
@@ -614,7 +619,7 @@ export default function DispensaryPOS() {
                         )}
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 800, color: SEMANTIC.success }}>
-                        ₹{parseFloat(sale.totalAmount).toFixed(2)}
+                        ₹{Number(sale.totalAmount).toFixed(2)}
                       </TableCell>
                       <TableCell align="right">
                         {/* Only UNPAID drafts can be edited/cancelled here. A paid+
@@ -646,6 +651,7 @@ export default function DispensaryPOS() {
         busyLabel="Cancelling..."
         onClose={() => setOrderToCancel(null)}
         onConfirm={async (reason) => {
+          if (!orderToCancel) return false;
           try {
             await axiosInstance.put(`/pharmacy/orders/${orderToCancel.pharmacyOrderId}/cancel`, { reason });
             fetchData();
@@ -668,6 +674,7 @@ export default function DispensaryPOS() {
         busyLabel="Dismissing..."
         onClose={() => setPrescriptionToDismiss(null)}
         onConfirm={async (reason) => {
+          if (!prescriptionToDismiss) return false;
           try {
             await axiosInstance.put(`/pharmacy/prescriptions/${prescriptionToDismiss.prescriptionId}/status`, { status: 'cancelled', reason });
             fetchData();
@@ -690,8 +697,8 @@ export default function DispensaryPOS() {
           item={{
             id: createdOrder.pharmacyOrderId,
             type: "PHARMACY",
-            description: `Pharmacy Sale: ${cart.map((c: any) => c.medicineName).join(', ')}`,
-            amount: createdOrder.totalAmount,
+            description: `Pharmacy Sale: ${cart.map((c: CartLine) => c.medicineName).join(', ')}`,
+            amount: Number(createdOrder.totalAmount),
             taxAmount: cartTax,
             date: createdOrder.createdAt || new Date()
           }}
