@@ -23,18 +23,13 @@ export interface SidebarNavItem {
  * The panel sidebar's navigation list: section headings, active state, module
  * locks and badges.
  *
- * This block was maintained as five copies (doctor, nurse, lab, pharmacy,
- * hospital-admin) and the cost was not hypothetical — the same one-line edit
- * had to be pasted into all five twice in a single sitting, first to stop a
- * section heading printing twice and then to fix the active-path rule. They had
- * also drifted apart while nobody was looking: the active row's tint was
- * alpha 0.08 in three of them and 0.12 in the other two, and the resting label
- * colour was NEUTRAL.muted in three and "text.secondary" in two. Both are
- * settled here on the majority spelling, so all five panels finally agree.
+ * Was five copies (doctor, nurse, lab, pharmacy, hospital-admin) that had
+ * drifted — active tint 0.08 in three and 0.12 in two — and needed the same
+ * one-line edit pasted into all five twice. Settled here on the majority.
  *
- * The reception and platform sidebars keep their own rendering — reception
- * draws a selection indicator this one has no concept of, and the platform
- * console reads a different auth context. Both use the shared active-path rule.
+ * Reception and the platform console keep their own rendering: one draws a
+ * selection indicator this has no concept of, the other reads a different auth
+ * context. Both still use the shared active-path rule.
  */
 export default function SidebarNav({
   items,

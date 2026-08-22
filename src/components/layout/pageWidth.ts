@@ -1,21 +1,14 @@
 /**
  * The two page widths.
  *
- * Most pages take no wrapper at all and fill the panel — right for tables,
- * queues and dashboards, where horizontal room is the point. The pages that
- * read better narrow pick one of these, and nothing invents a third number.
+ * Most pages take no wrapper and fill the panel; the ones that read better
+ * narrow pick one of these, and nothing invents a third. Page roots previously
+ * used nine different values (600…1400), so moving between two pages of the
+ * same kind shifted the left edge by up to 220px for no visible reason.
  *
- * The problem was never that some pages are narrow. It was that each one chose
- * its own width. Across the feature tree, page roots used 600, 800, 900, 920,
- * 1000, 1040, 1100, 1200 and 1400 — nine values — so moving between two pages
- * of the same kind shifted the left edge by up to 220px and the layout appeared
- * to jump for no reason a user could see. Measured in the browser at a 1600px
- * viewport, the hospital panel alone rendered content at 833, 888, 1000 and
- * 1277.
- *
- * Padding is deliberately NOT part of this. The panel layouts already apply
- * p: 3 to <main>; a wrapper that adds its own ends up sitting lower and further
- * in than every other page, which is what one of them was doing.
+ * Padding is deliberately NOT included — the panel layouts already apply p: 3
+ * to <main>, and a wrapper adding its own sits lower and further in than every
+ * other page.
  */
 
 /**

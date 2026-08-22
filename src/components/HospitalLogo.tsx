@@ -5,26 +5,14 @@ import { assetUrl } from "@/utils/assetUrl";
 /**
  * A hospital's logo, or the default mark when there isn't one.
  *
- * Two separate cases end up here and both must land on the mark:
+ * Two cases must both land on the mark: no logo was ever uploaded, and a logo
+ * was uploaded but the file is gone — the host's filesystem is ephemeral, so
+ * /uploads empties on deploy while logoUrl stays in the database and the
+ * request 404s. Without onError the browser draws a broken-image glyph.
  *
- *   No logo was ever uploaded. The old fallback was a flat indigo SQUARE with a
- *   generic MUI glyph in it, which reads as "image failed to load" rather than
- *   as a brand.
- *
- *   A logo WAS uploaded but the file is not there any more. The deployment host
- *   has an ephemeral filesystem, so anything written to /uploads is gone on the
- *   next deploy while logoUrl stays in the database — the row says there is a
- *   logo and the request 404s. Without an onError the browser draws its own
- *   broken-image glyph, which is worse than either outcome.
- *
- * So the image is attempted and the mark takes over the moment it fails. The
- * decision lives in this one component rather than at each call site, so the
- * sidebar and the profile preview cannot disagree about what "no logo" looks
- * like.
- *
- * Deliberately NOT used on printed bills, prescriptions or lab reports. Those
- * carry the hospital's own logo or nothing: a generic mark on a patient's legal
- * document implies a brand the hospital never chose.
+ * Deliberately NOT used on printed bills, prescriptions or lab reports: a
+ * generic mark on a patient's legal document implies a brand the hospital
+ * never chose.
  */
 
 // One rounded path rather than two crossing bars — overlapping rectangles go

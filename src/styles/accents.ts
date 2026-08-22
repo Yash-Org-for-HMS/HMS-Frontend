@@ -1,43 +1,18 @@
 /**
- * Product colour tokens — the single source of truth for accent & semantic
- * colours across every panel.
+ * Colour tokens — the single source of truth for accent and semantic colours.
  *
- * TWO layers (see the color-system plan):
- *
- *  1. Panel accents (`ACCENTS`) — each realm has its own brand colour so staff
- *     can tell at a glance which area of the app they're in (reception = cyan,
- *     doctor = blue, nursing = violet, super-admin = indigo, …). This is the
- *     intentional colour-coding; previously every accent was re-declared as a
- *     magic hex in ~25 files.
- *
- *  2. Semantic colours (`SEMANTIC`) — meaning-based, identical in every panel:
- *     success/money = emerald, danger = red, warning/pending = amber,
- *     info = blue. These mirror the MUI theme palette so `color="success"`
- *     etc. and these tokens stay in lockstep.
- *
- * `NEUTRAL` collects the handful of grey/line values that pages hardcode for
- * muted text and borders, kept in sync with the theme's text palette.
- *
- * Nothing here changes the base theme (white surfaces, text colours, tables);
- * it only names the accent/semantic vocabulary so the scattered hex literals
- * can converge on one definition (and stop drifting on case/shade).
+ * `SEMANTIC` is meaning-based and identical in every panel (success = emerald,
+ * danger = red, warning = amber, info = blue), mirroring the MUI palette so the
+ * two stay in lockstep. `NEUTRAL` holds the greys pages would otherwise
+ * hardcode. Naming them here is what stops ~700 hex literals drifting on shade.
  */
 
-// ── Layer 1: per-panel accents ────────────────────────────────────────────
-// SUPERSEDED for theming. Every panel now themes from BRAND below, so buttons,
-// sidebars and chrome are identical app-wide; a panel is identified by its
-// title and logo ("Pharmacy Portal"), not by colour.
-//
-// Why: maintaining seven accents across ~700 colour literals drifted badly in
-// practice — Hospital Admin shipped an EMERALD sidebar beside an indigo button,
-// Lab was emerald too, Pharmacy's sidebar was indigo, and three panels painted
-// buttons in another panel's colour entirely. One accent removes that whole
-// class of bug.
-//
-// Kept because non-layout code still imports these, and because restoring
-// per-panel branding only means passing them back to createPanelTheme.
-// NOTE: the first seven values (doctor…admin) must keep their exact values —
-// existing imports depend on them.
+// ── Per-panel accents ─────────────────────────────────────────────────────
+// SUPERSEDED for theming: every panel themes from BRAND below, so chrome is
+// identical app-wide and a panel is identified by title and logo, not colour.
+// Seven accents across ~700 literals drifted badly — panels shipped each
+// other's colours. Kept because non-layout code still imports these; the first
+// seven values must not change.
 export const ACCENTS = {
   doctor: "#3b82f6",
   doctorDark: "#2563eb",
@@ -107,17 +82,12 @@ export const NEUTRAL = {
 } as const;
 
 /**
- * The disabled state for any contained button carrying a gradient.
+ * Disabled state for contained buttons carrying a gradient.
  *
- * A gradient is a background-IMAGE. MUI's disabled rule only sets
- * background-COLOR, so without this the gradient paints over it and a disabled
- * button keeps its full brand colour — it reads as clickable, the user clicks,
- * nothing happens. The inherited label colour (rgba(0,0,0,.26)) only works on
- * MUI's grey; on the indigo gradient it measured 1.6:1.
- *
- * `background` rather than `backgroundColor` so the shorthand clears the image.
- * Applied by the theme's containedPrimary/containedSecondary, and again by
- * ActionButton, whose `sx` gradient outranks the theme override.
+ * A gradient is a background-IMAGE and MUI's disabled rule sets only
+ * background-COLOR, so without this a disabled button keeps its brand colour
+ * and reads as clickable. `background` (not `backgroundColor`) clears the
+ * image. Repeated in ActionButton, whose `sx` outranks the theme override.
  */
 export const DISABLED_CONTAINED = {
   background: "rgba(15, 23, 42, 0.08)",

@@ -5,21 +5,17 @@ import type { AxiosRequestConfig } from "axios";
  * Typed access to the API, and the one place that knows how a response is
  * wrapped.
  *
- * The backend answers in three envelope shapes that grew up alongside each
- * other:
+ * The backend answers in three envelope shapes:
  *
- *   { status: "success", data, pagination?: { total, page, limit, totalPages } }
- *   { success: true,     data, meta?:       { total, page, limit, totalPages } }
- *   { data, meta }                       (a few list endpoints)
+ *   { status: "success", data, pagination? }
+ *   { success: true,     data, meta? }
+ *   { data, meta }
  *
- * Every call site used to unwrap that by hand — `(await axiosInstance.get(url)).data.data`
- * — and type the result `any`, so a shape change surfaced as `undefined` three
- * components downstream rather than at the boundary. These helpers unwrap once
- * and hand back a typed value.
+ * Unwrapping them by hand at each call site, typed `any`, meant a shape change
+ * surfaced as `undefined` three components downstream, not at the boundary.
  *
- * They deliberately do NOT catch errors: an interceptor already handles 401
- * refresh, and swallowing anything else here would turn a failed request into
- * empty data, which is exactly the silent failure this is meant to end.
+ * Deliberately does NOT catch errors: an interceptor handles 401 refresh, and
+ * swallowing the rest would turn a failed request into empty data.
  */
 
 /** Pagination as the API reports it, under either `pagination` or `meta`. */

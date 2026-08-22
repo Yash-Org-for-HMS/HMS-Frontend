@@ -1,23 +1,12 @@
-// Shared, dependency-free client-side form validation. Forms across the app are
-// hand-rolled useState + MUI TextField, with errors previously only surfacing as
-// post-submit server toasts. These helpers add inline validation that mirrors
-// the backend rules (src/utils/validation.ts there), so the user gets immediate
-// field-level feedback and a bad request never leaves the browser.
+// Client-side form validation mirroring the backend rules, so a bad request
+// never leaves the browser and errors show inline rather than as a post-submit
+// toast.
 //
-// Usage:
-//   const errs = validate(formData, {
-//     firstName: [required("First name")],
-//     phone: [required("Phone"), isPhone],
-//     email: [isEmail],
-//     sellingPrice: [required("Price"), isNonNegativeNumber],
-//   });
+//   const errs = validate(formData, { phone: [required("Phone"), isPhone] });
 //   if (hasErrors(errs)) { setErrors(errs); return; }
-//   ...
-//   <TextField error={!!errors.phone} helperText={errors.phone || "hint"} />
 //
-// A rule returns "" when the value is acceptable, or a message string when not.
-// Rules are run in order and the first failing rule's message wins, so put
-// `required(...)` first when a field is mandatory.
+// A rule returns "" when the value is acceptable, or a message when not. Rules
+// run in order and the first failure wins, so put `required(...)` first.
 
 export type Rule = (value: unknown) => string;
 export type Rules<T> = Partial<Record<keyof T, Rule[]>>;

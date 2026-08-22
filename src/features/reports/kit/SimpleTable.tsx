@@ -12,15 +12,12 @@ import { BRAND } from "@/styles/accents";
  * header strings and rows of cells, and just wants them rendered with an Excel
  * button on top.
  *
- * This existed as five byte-for-byte copies — one each in the claim, doctor,
- * nurse, reception and platform report screens — which had already drifted:
- * the claims copy set its header type at 0.72rem against 0.75rem everywhere
- * else. One copy, so the next tweak lands on all five.
+ * Was five copies across the report screens, already drifting (the claims one
+ * set 0.72rem headers against 0.75rem elsewhere).
  *
- * Distinct from the sibling {@link ReportTable}, which takes raw row objects
- * plus column definitions and adds sorting, per-column formatting and cell
- * clamping. Prefer ReportTable for new report sections; this is for the many
- * existing call sites that hand over ready-made strings.
+ * Distinct from {@link ReportTable}, which takes row objects plus column
+ * definitions and adds sorting and formatting. Prefer that for new sections;
+ * this serves the many call sites that hand over ready-made strings.
  */
 export default function SimpleTable({
   title,

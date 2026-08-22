@@ -1,30 +1,16 @@
 /**
  * Print a fragment of the app through a hidden iframe.
  *
- * Seven screens each carried their own copy of this: clone every <style> and
- * <link rel="stylesheet"> out of <head>, write them into an iframe with the
- * markup to print, then call print() on a fixed timer. It looks right, it works
- * perfectly in `npm run dev`, and it prints an unstyled page in production —
- * which is why nobody caught it before the build was deployed.
+ * Two production-only traps, both invisible in `npm run dev`, which is why the
+ * seven hand-rolled copies of this all printed unstyled pages once built:
  *
- * Two independent reasons, both invisible to the dev server:
+ *   Emotion switches to CSSOM `insertRule()` in production, leaving the
+ *   <style data-emotion> tags EMPTY in the DOM — `outerHTML` copies nothing.
+ *   So rules are read off `sheet.cssRules`, not the tag's text.
  *
- *   EMPTY STYLE TAGS. Emotion — the engine behind every MUI component — switches
- *   to the CSSOM `insertRule()` API when NODE_ENV is production. The rules then
- *   live only in the stylesheet OBJECT; the <style data-emotion> tag itself is
- *   empty in the DOM. Measured on this app's build: 7 tags, 51 characters of
- *   markup each, holding 490 real CSS rules between them. `outerHTML` copies the
- *   empty tag and every MUI style is silently dropped. In dev Emotion appends
- *   ordinary text nodes instead (541 populated tags), so the same line copies
- *   everything and the output looks perfect.
- *
- *   LATE STYLESHEETS. Vite emits app CSS as an external <link> in a build but
- *   injects it through JS in dev — dev serves no stylesheet link at all. A
- *   cloned <link> has to be fetched before it applies, so a fixed timer races
- *   the network and can fire print() against a half-styled document.
- *
- * So the rules are read off `sheet.cssRules` rather than the tag's text, and
- * print() waits for the iframe to actually be ready instead of guessing.
+ *   Vite emits app CSS as an external <link> in a build but injects it via JS
+ *   in dev. A cloned <link> must be fetched before it applies, so print() waits
+ *   for the iframe to be ready rather than firing on a timer.
  */
 
 /**

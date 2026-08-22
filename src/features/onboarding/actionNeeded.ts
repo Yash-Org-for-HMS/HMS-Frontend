@@ -1,18 +1,13 @@
 /**
- * Which tenants and trials need a human to act, and how many distinct ones.
+ * Which tenants and trials need a human to act, and how many DISTINCT ones.
  *
- * Extracted from OnboardingList so the two rules that were wrong can be tested
- * rather than eyeballed:
+ * Extracted so two rules can be tested rather than eyeballed:
  *
- *   1. The "expiring soon" window had no lower bound, so an ACTIVE trial whose
- *      end date had already passed — the status flip is a job, so there is a
- *      gap — was listed as expiring, and the row template rendered any
- *      non-positive day count as "Expires today". A trial that lapsed a month
- *      ago read as expiring today.
- *
- *   2. The five buckets are not disjoint: a tenant can be suspended (or
- *      overdue) AND have an incomplete profile. Summing their lengths counted
- *      such a tenant twice, so the "total" was not a count of anything.
+ *   1. "Expiring soon" needs a lower bound. Without it a trial that lapsed a
+ *      month ago — the status flip is a job, so there is a gap — rendered as
+ *      "Expires today".
+ *   2. The buckets are NOT disjoint: a tenant can be suspended and have an
+ *      incomplete profile, so summing their lengths double-counts.
  */
 
 /** Days from now until `date`; negative once it is in the past. */

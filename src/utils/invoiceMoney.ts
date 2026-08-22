@@ -4,13 +4,9 @@ import type { Invoice, Payment, Refund, RefundablePayment } from "@/types";
  * The single definition of "how much has this invoice been paid, refunded and
  * what is still owed".
  *
- * This arithmetic was written out inline in seven places (BillingModal,
- * BillReceipt, InvoiceViewDialog, CheckoutDialog, LabReceiptDialog, PrintIpBill
- * and the IP bill print view), each with its own `(p: any) => Number(p.paidAmount)`
- * reduce. Seven copies of a money rule is seven chances for them to drift apart —
- * and because every copy typed the row as `any`, a backend field rename would
- * silently produce `Number(undefined)` → `NaN` → a total that reads as ₹0 rather
- * than failing loudly.
+ * Previously inlined in seven screens, each typing the row as `any` — so a
+ * backend field rename produced `Number(undefined)` → NaN → a total reading ₹0
+ * rather than failing loudly.
  *
  * Amounts arrive as decimal strings (Prisma `Decimal`), so everything goes
  * through `num()` before arithmetic.
@@ -81,20 +77,17 @@ export function isSettled(invoice?: Pick<Invoice, "netAmount"> & { Payment?: Pay
  * refundable amount. A payment already fully refunded drops out, so the refund
  * picker can never offer to return money twice.
  *
- * Counts PENDING refunds against the payment as well as COMPLETED ones — the
- * opposite of `refundedTotal`, and deliberately. A pending refund has not
- * returned any money, but it has SPOKEN FOR it; leaving it out here would let
- * the desk raise a second refund for the same payment while the first is still
- * waiting, and an admin would then approve both. The backend enforces the same
- * rule, so this only keeps the UI from offering what the server will refuse.
+ * Counts PENDING refunds as well as COMPLETED — deliberately the opposite of
+ * `refundedTotal`. A pending refund has returned no money but has spoken for
+ * it; without this the desk could raise a second refund against the same
+ * payment and an admin approve both. The backend enforces the same rule.
  */
 /**
  * How much of the outstanding balance exists only because money was handed back.
  *
- * A fully refunded invoice reads as "Balance Due ₹850" — arithmetically true
- * (nothing is paid any more) but indistinguishable on screen from a bill that
- * was never paid at all, so the desk is invited to collect it again. Splitting
- * the two lets the UI say WHY the balance is there.
+ * A fully refunded invoice reads "Balance Due ₹850" — true, but on screen
+ * indistinguishable from a bill never paid, so the desk is invited to collect
+ * it twice. Splitting the two lets the UI say why the balance is there.
  */
 export function balanceFromRefunds(
   invoice?: Pick<Invoice, "netAmount"> & { Payment?: Payment[] | null; Refund?: Refund[] | null } | null,

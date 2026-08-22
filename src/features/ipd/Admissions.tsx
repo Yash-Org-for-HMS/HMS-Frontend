@@ -42,15 +42,10 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 /**
  * The tabs, as the query each one runs.
  *
- * "To return" is not a status — it is the admissions the hospital still holds
- * money for after they closed. That population had no home: it existed as a
- * read-only report filed fifth under an admin-only heading, which the
- * receptionist who actually hands the cash back cannot open at all. Here it
- * sits beside the ward list, where the refund action already lives.
- *
- * The filter is server-side (see listAdmissions) because the balance is summed
- * from deposit entries rather than stored: narrowing the page in the browser
- * would drop rows out of a page and report the wrong total.
+ * "To return" is not a status but the closed admissions the hospital still
+ * holds money for. Its filter is server-side (see listAdmissions) because the
+ * balance is summed from deposit entries rather than stored — narrowing the
+ * page in the browser would drop rows and report the wrong total.
  */
 const TABS: { label: string; params: Record<string, string> }[] = [
   { label: "Current", params: { status: "ADMITTED" } },
@@ -62,16 +57,10 @@ const TABS: { label: string; params: Record<string, string> }[] = [
 /**
  * The advance still held against an admission.
  *
- * On a live admission that is just a running balance. Once the admission is
- * closed it is the patient's money the hospital still has, and the two cases
- * looked identical — the same teal chip — so a discharged patient's ₹97,635
- * read exactly like an inpatient's float.
- *
- * Discharge already forces the operator to say what happens to a leftover
- * advance (refund it, or hold it with a reason), and the reconciliation check
- * warns about one held with no reason. This is the same three states on screen,
- * so what the check reports and what the ward sees cannot drift apart:
- * running · held for a stated reason (on hover) · unexplained.
+ * On a live admission it is a running balance; once closed it is the patient's
+ * money the hospital still has. Shows the same three states the reconciliation
+ * check reports — running · held for a stated reason · unexplained — so the
+ * check and the ward cannot drift apart.
  */
 function DepositChip({ admission }: {
   admission: { depositBalance: number | string; status: string; advanceHoldReason?: string | null };
