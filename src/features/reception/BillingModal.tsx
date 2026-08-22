@@ -1,4 +1,5 @@
 import { printHtml } from "@/utils/printHtml";
+import type { InvoiceDetail, UnbilledItem, PaymentMethodRef, HospitalBillingProfile } from "@/types";
 import { useState, useEffect, useRef } from "react";
 import { paidTotal, refundedTotal } from "@/utils/invoiceMoney";
 import RefundSection from "@/components/billing/RefundSection";
@@ -36,15 +37,15 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const toast = useToast();
   const navigate = useNavigate();
   const { hospital } = useHospitalAuth();
-  const [invoice, setInvoice] = useState<any>(null);
+  const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   // This appointment's invoice only covers the consultation. If the patient has
   // OTHER unbilled charges (lab / pharmacy / radiology), surface them here so the
   // front desk doesn't silently miss them — with a one-click route to the full
   // consolidated billing screen that captures everything they owe.
-  const [otherCharges, setOtherCharges] = useState<any[]>([]);
+  const [otherCharges, setOtherCharges] = useState<UnbilledItem[]>([]);
   
   // Lookups
-  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodRef[]>([]);
   
   // Payment Form
   const [paymentAmount, setPaymentAmount] = useState<string>("");
@@ -60,7 +61,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const [socPickerOpen, setSocPickerOpen] = useState(false);
 
   // Hospital identity for the receipt header
-  const [hospitalProfile, setHospitalProfile] = useState<any>(null);
+  const [hospitalProfile, setHospitalProfile] = useState<HospitalBillingProfile | null>(null);
 
   // Discount & Tax
   const [defaultTaxPct, setDefaultTaxPct] = useState(0);
@@ -128,7 +129,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       if (currentInvoice?.patientId) {
         try {
           const unbilledRes = await axiosInstance.get(`/billing/unbilled/${currentInvoice.patientId}`);
-          const items: any[] = unbilledRes.data?.data || [];
+          const items: UnbilledItem[] = unbilledRes.data?.data || [];
           setOtherCharges(items.filter((it) => it.type !== "CONSULTATION"));
         } catch { /* non-blocking */ }
       }

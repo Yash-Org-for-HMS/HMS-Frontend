@@ -20,6 +20,7 @@ import InvoiceViewDialog from "@/components/reception/InvoiceViewDialog";
 import PageHeader from "@/components/layout/PageHeader";
 import { useSearchParams } from "react-router-dom";
 import { apiErrorText } from "@/utils/apiError";
+import type { InvoiceListRow } from "@/types";
 
 const ACCENT = BRAND.action;
 const STATUSES = [
@@ -98,7 +99,7 @@ function BillsList({ type, readOnly = false }: { type: "OPD" | "IPD"; readOnly?:
     placeholderData: keepPreviousData,
   });
 
-  const rows: any[] = data?.data || [];
+  const rows: InvoiceListRow[] = data?.data || [];
   const meta = data?.meta;
   const columnCount = isIpd ? 9 : 8;
 

@@ -1,12 +1,14 @@
 import type { CSSProperties } from "react";
+import type { InvoiceDetail, HospitalBillingProfile } from "@/types";
 import { paidTotal, refundedTotal, balanceOf, isSettled, balanceFromRefunds } from "@/utils/invoiceMoney";
 import { formatINR, formatDate } from "@/utils/format";
 import BillDocument from "@/components/billing/BillDocument";
 
 interface Props {
-  invoice: any;
-  hospitalProfile: any;
-  hospital: any;
+  invoice: InvoiceDetail;
+  hospitalProfile?: HospitalBillingProfile | null;
+  /** The session's hospital, used only as a fallback for the name. */
+  hospital?: { name?: string | null } | null;
   patientName: string;
   appointmentDate: string;
 }

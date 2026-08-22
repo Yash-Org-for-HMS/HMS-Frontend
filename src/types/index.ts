@@ -129,17 +129,24 @@ export interface InvoiceStatusRef {
 
 export interface InvoiceItem {
   invoiceItemId: string;
-  itemName: string;
+  /** The line's label. NOT `itemName` — that is ChargeItem, the SOC catalogue. */
+  description?: string | null;
   quantity: number;
   unitPrice: Money;
   totalPrice: Money;
+  grossAmount?: Money;
   discountAmount?: Money;
   taxAmount?: Money;
-  cgstAmount?: Money;
-  sgstAmount?: Money;
-  igstAmount?: Money;
   taxPercent?: Money;
   hsnCode?: string | null;
+  /** Groups the line on a printed bill (CONSULTATION, PHARMACY, LAB…). */
+  category?: string | null;
+  itemDate?: string | null;
+  batchNo?: string | null;
+  expiryDate?: string | null;
+  uom?: string | null;
+  manufacturer?: string | null;
+  orderingDoctor?: string | null;
 }
 
 export interface Invoice {
@@ -170,6 +177,118 @@ export interface Invoice {
  *  (paid − refunds already booked against that payment). */
 export interface RefundablePayment extends Payment {
   refundable: number;
+}
+
+/**
+ * One row of GET /reception/billing/invoices — the billing LIST, which is a
+ * different projection from the detail below: it denormalises the patient and
+ * carries a pre-computed balance, and has no line items.
+ */
+export interface InvoiceListRow {
+  invoiceId: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  appointmentId?: string | null;
+  admissionId?: string | null;
+  admissionNumber?: string | null;
+  patientName: string;
+  uhid: string;
+  netAmount: Money;
+  paidAmount: Money;
+  /** Already zeroed for a cancelled invoice by the server. */
+  balance: Money;
+  invoiceStatus: string;
+  statusLabel: string;
+  statusColor: string;
+  /** Refund raised but not yet released — no money has moved. */
+  refundPending: Money;
+}
+
+/**
+ * GET /reception/billing/invoices/:id/detail — the invoice row plus everything
+ * a bill or receipt needs to render, resolved server-side.
+ */
+export interface InvoiceDetail extends Invoice {
+  // The detail endpoint always returns these three, unlike a list row.
+  InvoiceItem: InvoiceItem[];
+  Payment: Payment[];
+  Refund: Refund[];
+  patient?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    uhidNumber?: string | null;
+    phone?: string | null;
+    dateOfBirth?: string | null;
+    addressLine1?: string | null;
+    addressLine2?: string | null;
+    city?: string | null;
+    district?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+  } | null;
+  hospital?: {
+    hospitalName?: string | null;
+    legalBusinessName?: string | null;
+    registrationNumber?: string | null;
+    addressLine1?: string | null;
+    addressLine2?: string | null;
+    landmark?: string | null;
+    city?: string | null;
+    postalCode?: string | null;
+    officialPhone?: string | null;
+    officialEmail?: string | null;
+    gstNumber?: string | null;
+    logoUrl?: string | null;
+  } | null;
+  /** Present only on an IPD bill. */
+  admission?: {
+    admissionNumber?: string | null;
+    admissionDate?: string | null;
+    dischargeDate?: string | null;
+    admittingDiagnosis?: string | null;
+    consultantName?: string | null;
+    bed?: { bedNumber?: string | null; bedType?: string | null; roomNumber?: string | null; wardName?: string | null; roomClass?: string | null } | null;
+  } | null;
+  /** Advance ledger for the admission: available = collected − applied − refunded. */
+  deposits?: { collected: number; applied: number; refunded: number; available: number } | null;
+}
+
+/** GET /reception/billing/lookups — the payment methods a receipt can offer. */
+export interface PaymentMethodRef {
+  paymentMethodId: number;
+  methodName: string;
+}
+export interface BillingLookups {
+  methods: PaymentMethodRef[];
+}
+
+/**
+ * GET /billing/unbilled/:patientId — work done but not yet on any invoice.
+ * Mirrors UnbilledItem in backend/src/modules/billing/billing.service.ts.
+ */
+export interface UnbilledItem {
+  /** Id of the source order/consultation, not of an invoice line. */
+  id: string;
+  type: "CONSULTATION" | "LAB" | "RADIOLOGY" | "PHARMACY";
+  description: string;
+  amount: number;
+  chargeItemId?: string | null;
+  taxPercent: number;
+  hsnCode?: string | null;
+  /** Authoritative when set — pharmacy orders mix GST rates across medicines. */
+  taxAmount?: number;
+}
+
+/** The hospital's own billing identity, as the profile endpoint returns it. */
+export interface HospitalBillingProfile {
+  hospitalName?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  postalCode?: string | null;
+  officialPhone?: string | null;
+  officialEmail?: string | null;
+  gstNumber?: string | null;
+  logoUrl?: string | null;
 }
 
 // ── Pharmacy / medication ────────────────────────────────────────────────────

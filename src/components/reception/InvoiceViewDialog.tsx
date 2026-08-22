@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import { CloseRounded, PrintRounded, PaymentRounded, CheckCircleRounded, BlockRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
+import type { InvoiceDetail, BillingLookups, InvoiceItem, Payment } from "@/types";
 import BillDocument from "@/components/billing/BillDocument";
 import RefundSection from "@/components/billing/RefundSection";
 import HeartbeatLoader from "../HeartbeatLoader";
@@ -35,12 +36,12 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
   const [paying, setPaying] = useState(false);
   const [voiding, setVoiding] = useState(false);
 
-  const { data: lookups } = useQuery({
+  const { data: lookups } = useQuery<BillingLookups>({
     queryKey: ["billing-lookups"],
     queryFn: async () => (await axiosInstance.get("/reception/billing/lookups")).data.data,
     enabled: open,
   });
-  const { data: invoice, isLoading, isError, error, refetch } = useQuery({
+  const { data: invoice, isLoading, isError, error, refetch } = useQuery<InvoiceDetail>({
     queryKey: ["invoice-detail", invoiceId],
     queryFn: async () => (await axiosInstance.get(`/reception/billing/invoices/${invoiceId}/detail`)).data.data,
     enabled: open && !!invoiceId,
@@ -142,7 +143,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                   afterTotals={invoice.Payment?.length > 0 ? (
                     <div style={{ marginTop: 16 }}>
                       <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: 1, marginBottom: 6 }}>PAYMENTS</div>
-                      {invoice.Payment.map((p: any, i: number) => (
+                      {invoice.Payment.map((p: Payment, i: number) => (
                         <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#4b5563", marginTop: 4 }}>
                           <span>{formatDate(p.createdAt)} · {p.paymentMethod?.methodName || "—"}</span>
                           <span>{formatINR(p.paidAmount)}</span>
@@ -152,7 +153,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                   ) : undefined}
                 >
                   {(() => {
-                    const showHsn = invoice.InvoiceItem?.some((it: any) => it.hsnCode);
+                    const showHsn = invoice.InvoiceItem?.some((it: InvoiceItem) => it.hsnCode);
                     return (
                   <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
                     <thead><tr>
@@ -162,7 +163,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                       <th style={{ ...cell, textAlign: "right", fontWeight: 700 }}>Amount</th>
                     </tr></thead>
                     <tbody>
-                      {invoice.InvoiceItem?.map((it: any, i: number) => (
+                      {invoice.InvoiceItem?.map((it: InvoiceItem, i: number) => (
                         <tr key={i}>
                           <td style={cell}>{it.description}</td>
                           {showHsn && <td style={cell}>{it.hsnCode || "—"}</td>}
@@ -210,7 +211,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                     </Grid>
                     <Grid size={{ xs: 4 }}>
                       <TextField select fullWidth size="small" label="Method" value={methodId} onChange={(e) => setMethodId(e.target.value)}>
-                        {(lookups?.methods || []).map((m: any) => <MenuItem key={m.paymentMethodId} value={m.paymentMethodId}>{m.methodName}</MenuItem>)}
+                        {(lookups?.methods || []).map((m) => <MenuItem key={m.paymentMethodId} value={m.paymentMethodId}>{m.methodName}</MenuItem>)}
                       </TextField>
                     </Grid>
                     <Grid size={{ xs: 3 }}>
