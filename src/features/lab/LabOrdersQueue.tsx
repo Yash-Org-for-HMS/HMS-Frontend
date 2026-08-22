@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatDate } from "@/utils/format";
 import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { orderStatusColor } from "@/utils/statusColors";
@@ -188,7 +189,7 @@ export default function LabOrdersQueue() {
                     )}
                   </TableCell>
                   <TableCell>{order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</TableCell>
-                  <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>{formatDate(order.createdAt)}</TableCell>
                   <TableCell>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
                       <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status) as any} size="small" />

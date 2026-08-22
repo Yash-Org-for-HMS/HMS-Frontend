@@ -56,7 +56,7 @@ import ErrorState from "@/components/ErrorState";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import StatCard from "@/components/StatCard";
 import { assetUrl } from "@/utils/assetUrl";
-import { formatINR } from "@/utils/format";
+import { formatINR, formatDate } from "@/utils/format";
 
 const ACCENT = BRAND.action;
 
@@ -184,7 +184,7 @@ export default function HospitalOverview() {
               )}
               <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>{data.hospitalCode}</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>· {activePlan}</Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>· Joined {new Date(data.createdAt).toLocaleDateString()}</Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>· Joined {formatDate(data.createdAt)}</Typography>
             </Box>
           </Box>
           <Box sx={{ display: "flex", gap: 1 }}>
@@ -224,7 +224,7 @@ export default function HospitalOverview() {
             <InfoRow label="GST Number" value={data.gstNumber} />
             <InfoRow label="Ownership Type" value={data.ownershipType} />
             <InfoRow label="Accreditation" value={data.accreditationType} />
-            <InfoRow label="License Expiry" value={data.licenseExpiryDate ? new Date(data.licenseExpiryDate).toLocaleDateString() : null} />
+            <InfoRow label="License Expiry" value={data.licenseExpiryDate ? formatDate(data.licenseExpiryDate) : null} />
           </Grid>
           <Divider sx={{ my: 2.5 }} />
           <SectionTitle>Contact</SectionTitle>
@@ -409,10 +409,10 @@ export default function HospitalOverview() {
                     {billing.invoices.map((inv: any) => (
                       <TableRow key={inv.subscriptionInvoiceId} hover>
                         <TableCell sx={{ fontFamily: "monospace", fontWeight: 600 }}>{inv.invoiceNumber}</TableCell>
-                        <TableCell sx={{ color: "text.secondary" }}>{new Date(inv.periodStart).toLocaleDateString()} – {new Date(inv.periodEnd).toLocaleDateString()}</TableCell>
+                        <TableCell sx={{ color: "text.secondary" }}>{formatDate(inv.periodStart)} – {formatDate(inv.periodEnd)}</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>{formatINR(inv.amount)}</TableCell>
                         <TableCell><Chip size="small" label={inv.phase.charAt(0) + inv.phase.slice(1).toLowerCase()} color={PHASE[inv.phase] || "default"} /></TableCell>
-                        <TableCell sx={{ color: "text.secondary" }}>{new Date(inv.dueDate).toLocaleDateString()}</TableCell>
+                        <TableCell sx={{ color: "text.secondary" }}>{formatDate(inv.dueDate)}</TableCell>
                         <TableCell align="right">
                           <Tooltip title="Print / download invoice">
                             <IconButton size="small" onClick={() => window.open(`/subscription-billing/invoices/${inv.subscriptionInvoiceId}/print`, "_blank")}><PrintRounded sx={{ fontSize: 16 }} /></IconButton>
@@ -511,8 +511,8 @@ export default function HospitalOverview() {
                 <TableBody>
                   {trials.map((t: any) => (
                     <TableRow key={t.hospitalTrialId} hover>
-                      <TableCell>{new Date(t.trialStartDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{new Date(t.trialEndDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{formatDate(t.trialStartDate)}</TableCell>
+                      <TableCell>{formatDate(t.trialEndDate)}</TableCell>
                       <TableCell>{t.autoExpire ? "Yes" : "No"}</TableCell>
                       <TableCell><Chip size="small" label={t.trialStatus} sx={{ textTransform: "capitalize", fontWeight: 600 }} color={t.trialStatus === "active" ? "primary" : t.trialStatus === "converted" ? "success" : "default"} /></TableCell>
                     </TableRow>

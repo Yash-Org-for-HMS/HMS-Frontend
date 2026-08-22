@@ -1,5 +1,6 @@
 import { Box, Typography, Chip } from "@mui/material";
 import { SearchRounded } from "@mui/icons-material";
+import { SEARCH_SHORTCUT } from "@/utils/shortcut";
 
 /**
  * Sidebar quick-search launcher. Opens the command palette (also reachable via
@@ -26,7 +27,7 @@ export default function SidebarSearch() {
       >
         <SearchRounded sx={{ fontSize: 18 }} />
         <Typography variant="body2" sx={{ flex: 1 }}>Search…</Typography>
-        <Chip label="⌘K" size="small" sx={{ height: 20, fontSize: "0.75rem", fontWeight: 700, bgcolor: "action.hover", color: "text.secondary" }} />
+        <Chip label={SEARCH_SHORTCUT} size="small" sx={{ height: 20, fontSize: "0.75rem", fontWeight: 700, bgcolor: "action.hover", color: "text.secondary" }} />
       </Box>
     </Box>
   );

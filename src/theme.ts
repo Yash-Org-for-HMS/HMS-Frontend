@@ -1,5 +1,5 @@
 import { createTheme, alpha, type ThemeOptions } from "@mui/material/styles";
-import { BRAND } from "./styles/accents";
+import { BRAND, DISABLED_CONTAINED } from "./styles/accents";
 
 const themeOptions: ThemeOptions = {
   palette: {
@@ -142,6 +142,7 @@ const themeOptions: ThemeOptions = {
             background: `linear-gradient(135deg, ${BRAND.actionDark} 0%, ${BRAND.action} 100%)`,
             boxShadow: `0 8px 20px -6px ${alpha(BRAND.action, 0.5)}`,
           },
+          "&.Mui-disabled": DISABLED_CONTAINED,
         },
         // Secondary/tertiary actions follow the same action colour, so a dialog
         // showing Cancel (text) beside Save (contained) reads as one control set
@@ -162,6 +163,7 @@ const themeOptions: ThemeOptions = {
             background: "linear-gradient(135deg, #DB2777 0%, #BE185D 100%)",
             boxShadow: "0 8px 20px -6px rgba(236, 72, 153, 0.5)",
           },
+          "&.Mui-disabled": DISABLED_CONTAINED,
         },
       },
     },

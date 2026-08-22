@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateTime, formatINRAuto } from "@/utils/format";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -228,7 +229,7 @@ export default function Dashboard() {
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <GroupCard
             title="Revenue & Plans" color="#F59E0B" icon={<AccountBalanceRounded />}
-            primary={{ label: "MRR (revenue)", value: `₹${stats.totalRevenue.toLocaleString()}` }}
+            primary={{ label: "MRR (revenue)", value: formatINRAuto(stats.totalRevenue) }}
             subs={[
               { label: "Active Plans", value: stats.activePlans },
               { label: "Hospital Admins", value: stats.hospitalAdminCount },
@@ -373,7 +374,7 @@ export default function Dashboard() {
                   <Typography variant="caption" sx={{ color: "text.secondary", flexShrink: 0 }}>{a.moduleName}</Typography>
                 )}
                 <Typography variant="caption" sx={{ color: "text.secondary", flexShrink: 0, width: 132, textAlign: "right" }}>
-                  {new Date(a.createdAt).toLocaleString()}
+                  {formatDateTime(a.createdAt)}
                 </Typography>
               </Box>
             ))}

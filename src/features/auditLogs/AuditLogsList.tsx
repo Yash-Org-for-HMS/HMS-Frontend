@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatDateTime } from "@/utils/format";
 import { SEMANTIC } from "@/styles/accents";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -163,7 +164,7 @@ export default function AuditLogsList() {
                   return (
                     <TableRow key={log.auditLogId} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
                       <TableCell sx={{ color: "text.primary", whiteSpace: "nowrap" }}>
-                        {new Date(log.createdAt).toLocaleString()}
+                        {formatDateTime(log.createdAt)}
                       </TableCell>
                       <TableCell sx={{ color: "text.primary" }}>
                         {log.hospitalId === "PLATFORM" ? (

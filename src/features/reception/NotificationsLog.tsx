@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatDateTime } from "@/utils/format";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   Box,
@@ -168,7 +169,7 @@ export default function NotificationsLog() {
                       </Box>
                     </TableCell>
                     <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>
-                      {notif.sentAt ? new Date(notif.sentAt).toLocaleString() : "N/A"}
+                      {notif.sentAt ? formatDateTime(notif.sentAt) : "N/A"}
                     </TableCell>
                   </TableRow>
                 ))

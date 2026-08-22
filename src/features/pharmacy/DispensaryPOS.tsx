@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { formatDate } from "@/utils/format";
 import { prescriptionToCart } from "./prescriptionToCart";
 import type { MedicineCatalogRow, MedicineInventoryRow, DispensableMedicine, PendingPrescription } from "@/types";
 import { SEMANTIC } from "@/styles/accents";
@@ -425,7 +426,7 @@ export default function DispensaryPOS() {
                           >
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mb: 1 }}>
                               <Typography fontWeight="700" variant="body2">{p.patientName || p.patientId || "Unknown Patient"}</Typography>
-                              <Chip size="small" label={`${p.items.length} items`} color="primary" variant="outlined" />
+                              <Chip size="small" label={`${p.items.length} ${p.items.length === 1 ? "item" : "items"}`} color="primary" variant="outlined" />
                             </Box>
                             {p.uhidNumber && (
                               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
@@ -433,7 +434,7 @@ export default function DispensaryPOS() {
                               </Typography>
                             )}
                             <Typography variant="caption" color="text.secondary">
-                              Date: {new Date(p.prescriptionDate).toLocaleDateString()}
+                              Date: {formatDate(p.prescriptionDate)}
                             </Typography>
                             <Button size="small" startIcon={<DownloadRounded />} sx={{ mt: 1, textTransform: 'none' }}>
                               Load to POS

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { formatDate } from "@/utils/format";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
@@ -31,6 +32,20 @@ const HEAD_SX = {
   fontSize: "inherit",
   color: "inherit",
 } as const;
+
+const isExpired = (expiryDate: string | Date) => new Date(expiryDate) < new Date();
+
+/**
+ * Colour for a single batch's quantity — a property of that batch, not of the
+ * medicine. Marks the exceptions and leaves a healthy batch neutral: an expired
+ * batch is stock nobody may dispense, and a zero batch is spent rather than
+ * alarming, so neither should wear the "in stock" green.
+ */
+function batchQtyColor(inv: { expiryDate: string | Date; availableQuantity: number }): string {
+  if (isExpired(inv.expiryDate)) return "error.main";
+  if (Number(inv.availableQuantity) <= 0) return "text.disabled";
+  return "success.main";
+}
 
 export default function InventoryManagement() {
   const theme = useTheme();
@@ -339,10 +354,25 @@ export default function InventoryManagement() {
                         )}
                       </TableCell>
                       <TableCell>{inv.batchNumber}</TableCell>
-                      <TableCell sx={{ color: new Date(inv.expiryDate) < new Date() ? 'error.main' : 'inherit' }}>
-                        {new Date(inv.expiryDate).toLocaleDateString()}
+                      <TableCell sx={{ color: isExpired(inv.expiryDate) ? 'error.main' : 'inherit', whiteSpace: 'nowrap' }}>
+                        {formatDate(inv.expiryDate)}
+                        {/* A red date alone was easy to miss on a batch that
+                            still holds units, which is exactly the batch nobody
+                            should dispense from. */}
+                        {isExpired(inv.expiryDate) && (
+                          <Box component="span" sx={{
+                            ml: 1, px: 0.75, py: 0.1, borderRadius: 1.5, fontSize: '0.7rem', fontWeight: 700,
+                            bgcolor: alpha(theme.palette.error.main, 0.15), color: 'error.dark',
+                          }}>
+                            Expired
+                          </Box>
+                        )}
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: lowStockMedicineIds.has(inv.medicineId) ? 'warning.main' : 'success.main' }}>
+                      {/* Batch-level quantity, so it is coloured by the BATCH.
+                          It used to follow the medicine-level low-stock flag,
+                          which painted a depleted 0-unit batch success-green
+                          whenever the medicine was healthy overall. */}
+                      <TableCell sx={{ fontWeight: 700, color: batchQtyColor(inv) }}>
                         {inv.availableQuantity}
                       </TableCell>
                       <TableCell sx={{ fontWeight: 700, color: lowStockMedicineIds.has(inv.medicineId) ? 'warning.main' : 'text.primary' }}>
@@ -391,7 +421,7 @@ export default function InventoryManagement() {
                     <TableRow key={po.purchaseOrderId} hover>
                       <TableCell sx={{ fontFamily: 'monospace' }}>{po.purchaseOrderId.split('-')[0].toUpperCase()}</TableCell>
                       <TableCell sx={{ fontWeight: 500 }}>{getSupplierName(po.supplierId)}</TableCell>
-                      <TableCell>{new Date(po.orderDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{formatDate(po.orderDate)}</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: totalReceived === 0 ? 'text.secondary' : totalReceived >= totalOrdered ? 'success.main' : 'warning.main' }}>
                         {totalReceived} / {totalOrdered}
                       </TableCell>

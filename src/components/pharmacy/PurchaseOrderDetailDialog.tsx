@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { formatDate } from "@/utils/format";
 import {
   Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, Chip,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, alpha,
@@ -65,7 +66,7 @@ export default function PurchaseOrderDetailDialog({ purchaseOrderId, onClose }: 
               </Box>
               <Box>
                 <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>ORDER DATE</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>{new Date(data.orderDate).toLocaleDateString()}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>{formatDate(data.orderDate)}</Typography>
               </Box>
               <Box>
                 <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>RECEIVED</Typography>
@@ -111,7 +112,7 @@ export default function PurchaseOrderDetailDialog({ purchaseOrderId, onClose }: 
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>{item.receivedBatchNumber}</Typography>
                             {item.receivedExpiryDate && (
                               <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                                exp {new Date(item.receivedExpiryDate).toLocaleDateString()}
+                                exp {formatDate(item.receivedExpiryDate)}
                               </Typography>
                             )}
                           </>

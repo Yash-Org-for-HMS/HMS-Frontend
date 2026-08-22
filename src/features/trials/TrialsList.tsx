@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatDate } from "@/utils/format";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { trialStatusColor } from "@/utils/statusColors";
@@ -246,10 +247,10 @@ export default function TrialsList() {
                       {trial.lead?.hospitalName || "Unknown"}
                     </TableCell>
                     <TableCell sx={{ color: "text.primary" }}>
-                      {new Date(trial.trialStartDate).toLocaleDateString()}
+                      {formatDate(trial.trialStartDate)}
                     </TableCell>
                     <TableCell sx={{ color: "text.primary" }}>
-                      {new Date(trial.trialEndDate).toLocaleDateString()}
+                      {formatDate(trial.trialEndDate)}
                     </TableCell>
                     <TableCell sx={{ color: "text.primary", fontWeight: 600 }}>
                       {trial.trialStatus === "active" ? calculateDaysRemaining(trial.trialEndDate) : "-"}

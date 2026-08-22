@@ -48,7 +48,10 @@ export default function StatCard({
 }: StatCardProps) {
   const clickable = Boolean(onClick);
   const horizontal = layout === "horizontal";
-  const displayValue = typeof value === "number" ? value.toLocaleString() : value;
+  // Locale pinned like every other figure in the app: a bare toLocaleString()
+  // follows the browser, so the same count grouped 1,20,148 for one user and
+  // 120,148 for another — beside formatINR values that always group en-IN.
+  const displayValue = typeof value === "number" ? value.toLocaleString("en-IN") : value;
   const tileSize = horizontal ? 44 : 40;
 
   // No baseline (no previous, or a previous of zero) means no honest percentage

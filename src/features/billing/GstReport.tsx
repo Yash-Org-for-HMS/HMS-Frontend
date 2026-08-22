@@ -11,7 +11,7 @@ import ErrorState from "@/components/ErrorState";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import PageHeader from "@/components/layout/PageHeader";
 import { apiErrorText } from "@/utils/apiError";
-import { formatINR } from "@/utils/format";
+import { formatINR, formatDate } from "@/utils/format";
 import { SEMANTIC } from "@/styles/accents";
 
 type Slab = { rate: number; taxableAmount: number; taxAmount: number; cgst: number; sgst: number; igst: number };
@@ -116,7 +116,7 @@ export default function GstReport() {
     const rows: (string | number)[][] = [
       ["Invoice No", "Date", "Patient", "UHID", "Taxable Value", "CGST", "SGST", "Total GST", "Exempt Value"],
       ...data.register.map((x) => [
-        x.invoiceNumber, new Date(x.invoiceDate).toLocaleDateString(), x.patientName, x.uhid ?? "",
+        x.invoiceNumber, formatDate(x.invoiceDate), x.patientName, x.uhid ?? "",
         x.taxableAmount, x.cgst, x.sgst, x.taxAmount, x.exemptAmount,
       ]),
     ];
@@ -300,7 +300,7 @@ export default function GstReport() {
                     data.register.map((x) => (
                       <TableRow key={x.invoiceId} hover>
                         <TableCell sx={{ fontFamily: "monospace" }}>{x.invoiceNumber}</TableCell>
-                        <TableCell>{new Date(x.invoiceDate).toLocaleDateString()}</TableCell>
+                        <TableCell>{formatDate(x.invoiceDate)}</TableCell>
                         <TableCell>
                           {x.patientName}
                           {x.uhid && <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{x.uhid}</Typography>}

@@ -35,13 +35,30 @@ export function calculateAge(dob?: string | number | Date | null): number | null
   return Math.floor((Date.now() - t) / (1000 * 60 * 60 * 24 * 365.25));
 }
 
+const DATE_FMT: Intl.DateTimeFormatOptions = { day: "2-digit", month: "short", year: "numeric" };
+
 /**
- * Format a date as a short Indian-locale date (e.g. "16/07/2026") — the same
- * `new Date(x).toLocaleDateString("en-IN")` that was inlined across the invoice,
- * appointment and patient list views. Accepts a Date, timestamp, or date string.
+ * Format a date as "16 Jul 2026" — the one date format in the app.
+ *
+ * Named month rather than a numeric one, and the locale pinned rather than left
+ * to the browser. Both matter: a bare `toLocaleDateString()` follows whatever
+ * locale the user's browser reports, so the same medicine expiry rendered
+ * `21/2/2027` for a receptionist on en-IN and `2/21/2027` for one on en-US —
+ * with `02/03/2027` meaning two different days on two screens. A month name
+ * cannot be misread whichever way the reader is used to.
+ *
+ * Accepts a Date, timestamp, or date string.
  */
 export function formatDate(value: string | number | Date): string {
-  return new Date(value).toLocaleDateString("en-IN");
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("en-IN", DATE_FMT);
+}
+
+/** The same date with a time beside it — "16 Jul 2026, 02:05 pm". */
+export function formatDateTime(value: string | number | Date): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-IN", { ...DATE_FMT, hour: "2-digit", minute: "2-digit", hour12: true });
 }
 
 /**

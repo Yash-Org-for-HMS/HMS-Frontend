@@ -106,6 +106,26 @@ export const NEUTRAL = {
   surface: "#f9fafb",
 } as const;
 
+/**
+ * The disabled state for any contained button carrying a gradient.
+ *
+ * A gradient is a background-IMAGE. MUI's disabled rule only sets
+ * background-COLOR, so without this the gradient paints over it and a disabled
+ * button keeps its full brand colour — it reads as clickable, the user clicks,
+ * nothing happens. The inherited label colour (rgba(0,0,0,.26)) only works on
+ * MUI's grey; on the indigo gradient it measured 1.6:1.
+ *
+ * `background` rather than `backgroundColor` so the shorthand clears the image.
+ * Applied by the theme's containedPrimary/containedSecondary, and again by
+ * ActionButton, whose `sx` gradient outranks the theme override.
+ */
+export const DISABLED_CONTAINED = {
+  background: "rgba(15, 23, 42, 0.08)",
+  // 3.8:1 on that ground — muted enough to read as inert, dark enough to read.
+  color: "rgba(15, 23, 42, 0.55)",
+  boxShadow: "none",
+} as const;
+
 export type AccentKey = keyof typeof ACCENTS;
 export type SemanticKey = keyof typeof SEMANTIC;
 

@@ -1,4 +1,5 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import { SEARCH_SHORTCUT } from "@/utils/shortcut";
 import { alpha } from "@mui/material/styles";
 import { formatINR } from "@/utils/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -251,7 +252,7 @@ export default function ReceptionDashboard() {
             </Button>
           </Box>
           <Typography variant="caption" sx={{ color: "text.disabled", display: "block", mt: 2, textAlign: "center" }}>
-            Tip: press ⌘K anywhere to search or jump
+            Tip: press {SEARCH_SHORTCUT} anywhere to search or jump
           </Typography>
         </Paper>
       </Box>

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { formatDate } from "@/utils/format";
 import { actionBuckets, daysUntil } from "./actionNeeded";
 import { useNavigate } from "react-router-dom";
 import { SEMANTIC, BRAND } from "@/styles/accents";
@@ -150,7 +151,7 @@ export default function OnboardingList() {
                 <Row
                   key={t.hospitalTrialId}
                   primary={t.lead?.hospitalName || "Unknown"}
-                  secondary={d <= 0 ? "Expires today" : `Expires in ${d} day${d === 1 ? "" : "s"} · ${new Date(t.trialEndDate).toLocaleDateString()}`}
+                  secondary={d <= 0 ? "Expires today" : `Expires in ${d} day${d === 1 ? "" : "s"} · ${formatDate(t.trialEndDate)}`}
                   actions={
                     <>
                       <Button size="small" variant="outlined" onClick={() => navigate("/trials")} sx={{ textTransform: "none" }}>Manage</Button>
@@ -167,7 +168,7 @@ export default function OnboardingList() {
               <Row
                 key={t.hospitalTrialId}
                 primary={t.lead?.hospitalName || "Unknown"}
-                secondary={`Trial ended ${new Date(t.trialEndDate).toLocaleDateString()}`}
+                secondary={`Trial ended ${formatDate(t.trialEndDate)}`}
                 actions={
                   <>
                     <Button size="small" variant="outlined" onClick={() => navigate("/trials")} sx={{ textTransform: "none" }}>Manage</Button>

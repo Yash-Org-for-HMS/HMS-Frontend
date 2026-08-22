@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { formatDate } from "@/utils/format";
 import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { orderStatusColor } from "@/utils/statusColors";
@@ -235,7 +236,7 @@ export default function RadiologyOrdersQueue() {
                     )}
                   </TableCell>
                   <TableCell>{order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</TableCell>
-                  <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
+                  <TableCell>{formatDate(order.orderDate)}</TableCell>
                   <TableCell>
                     <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status) as any} size="small" />
                     {order.verified && (

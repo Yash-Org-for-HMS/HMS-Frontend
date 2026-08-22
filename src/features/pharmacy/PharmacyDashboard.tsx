@@ -16,7 +16,7 @@ import AttentionList from "@/components/dashboard/AttentionList";
 import PharmacyPage from "./components/PharmacyPage";
 import type { LowStockAlert } from "@/types";
 import { apiErrorText } from "@/utils/apiError";
-import { formatINR } from "@/utils/format";
+import { formatINR, formatDate, formatDateTime } from "@/utils/format";
 
 interface ExpiringBatch {
   inventoryId: string;
@@ -171,7 +171,7 @@ export default function PharmacyDashboard() {
                     items={expiring.map((b) => ({
                       id: b.inventoryId,
                       primary: b.medicineName,
-                      secondary: `Batch ${b.batchNumber} · ${b.availableQuantity} in stock · expires ${new Date(b.expiryDate).toLocaleDateString()}`,
+                      secondary: `Batch ${b.batchNumber} · ${b.availableQuantity} in stock · expires ${formatDate(b.expiryDate)}`,
                       meta: b.daysLeft < 0 ? "Expired" : b.daysLeft === 0 ? "Today" : `${b.daysLeft}d`,
                       severity: (b.daysLeft < 0 ? "critical" : b.daysLeft <= 30 ? "warning" : "info") as "critical" | "warning" | "info",
                       icon: <EventBusyRounded sx={{ fontSize: 18 }} />,
@@ -216,7 +216,7 @@ export default function PharmacyDashboard() {
                                 {sale.itemCount} item{sale.itemCount === 1 ? "" : "s"}
                               </Typography>
                             </TableCell>
-                            <TableCell sx={{ color: "text.secondary" }}>{new Date(sale.createdAt).toLocaleString()}</TableCell>
+                            <TableCell sx={{ color: "text.secondary" }}>{formatDateTime(sale.createdAt)}</TableCell>
                             <TableCell align="right" sx={{ fontWeight: 700, color: SEMANTIC.success }}>{inr(Number(sale.totalAmount))}</TableCell>
                           </TableRow>
                         ))}

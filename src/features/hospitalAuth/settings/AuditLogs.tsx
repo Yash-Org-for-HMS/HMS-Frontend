@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { formatDateTime } from "@/utils/format";
 import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
 import { alpha } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
@@ -286,7 +287,7 @@ export default function AuditLogs() {
                     return (
                       <TableRow key={log.auditLogId} hover>
                         <TableCell sx={{ borderColor: "divider", color: "text.secondary", whiteSpace: "nowrap" }}>
-                          {new Date(log.createdAt).toLocaleString()}
+                          {formatDateTime(log.createdAt)}
                         </TableCell>
                         <TableCell sx={{ borderColor: "divider", color: "text.primary", fontWeight: 600 }}>
                           {log.user ? `${log.user.firstName} ${log.user.lastName}` : log.userId}
@@ -335,7 +336,7 @@ export default function AuditLogs() {
             {selectedLog ? `${labelOf(selectedLog.actionType)} — ${selectedLog.moduleName}` : ""}
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {selectedLog && `${selectedLog.user ? `${selectedLog.user.firstName} ${selectedLog.user.lastName}` : selectedLog.userId} · ${new Date(selectedLog.createdAt).toLocaleString()}`}
+            {selectedLog && `${selectedLog.user ? `${selectedLog.user.firstName} ${selectedLog.user.lastName}` : selectedLog.userId} · ${formatDateTime(selectedLog.createdAt)}`}
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ p: 0 }}>

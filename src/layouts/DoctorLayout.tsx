@@ -67,8 +67,11 @@ export default function DoctorLayout() {
     { text: "My Patients", icon: <PeopleAltRounded />, path: "/doctor/patients", badge: 0, section: "My Work" },
     { text: "All Patients", icon: <GroupsRounded />, path: "/doctor/all-patients", badge: 0, section: "My Work" },
     { text: "Results", icon: <ScienceRounded />, path: "/doctor/results", badge: badges?.resultsReady || 0, section: "My Work", module: "Laboratory" },
-    { text: "My Reports", icon: <AssessmentRounded />, path: "/doctor/reports", badge: 0, section: "Insights" },
+    // Kept beside the other My Work entries. The heading below is emitted when
+    // the section changes from the previous row, so an item listed away from
+    // its own group prints that group's heading a second time.
     { text: "My Leave", icon: <EventBusyRounded />, path: "/doctor/leaves", badge: 0, section: "My Work" },
+    { text: "My Reports", icon: <AssessmentRounded />, path: "/doctor/reports", badge: 0, section: "Insights" },
   ];
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
@@ -100,7 +103,9 @@ export default function DoctorLayout() {
           const locked = (item as any).module && !isModuleEnabled((item as any).module);
           return (
             <Box key={item.text}>
-              {(idx === 0 || arr[idx - 1].section !== item.section) && (
+              {/* First row of its section, not merely a change from the previous
+                  row — so a heading can never be printed twice. */}
+              {arr.findIndex((m) => m.section === item.section) === idx && (
                 <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", fontSize: "0.75rem", px: 1.5, pt: idx === 0 ? 0 : 1.75, pb: 0.5 }}>
                   {item.section}
                 </Typography>

@@ -15,7 +15,7 @@ import {
 } from "@mui/icons-material";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { typeScale } from "@/styles/typography";
-import { getInitials } from "@/utils/format";
+import { getInitials, formatDateTime } from "@/utils/format";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import { axiosInstance } from "@/api/axios";
@@ -266,7 +266,7 @@ export default function UpdateLabOrder() {
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>
               <Fact icon={<AccessTimeRounded fontSize="small" />} label="Collected At">
-                {collected ? new Date(order.sampleCollectedAt).toLocaleString() : "—"}
+                {collected ? formatDateTime(order.sampleCollectedAt) : "—"}
               </Fact>
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>

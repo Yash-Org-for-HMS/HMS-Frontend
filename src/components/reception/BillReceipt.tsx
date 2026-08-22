@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { paidTotal, refundedTotal, balanceOf, isSettled, balanceFromRefunds } from "@/utils/invoiceMoney";
-import { formatINR } from "@/utils/format";
+import { formatINR, formatDate } from "@/utils/format";
 import BillDocument from "@/components/billing/BillDocument";
 
 interface Props {
@@ -35,7 +35,7 @@ export default function BillReceipt({ invoice, hospitalProfile, hospital, patien
           <div style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", letterSpacing: 1, marginBottom: 8 }}>PAYMENT HISTORY</div>
           {invoice.Payment.map((p: any, idx: number) => (
             <div key={idx} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 12, color: "#4b5563" }}>
-              <span>{new Date().toLocaleDateString()} • {p.paymentMethod?.methodName}{p.transactionReference ? ` (Ref: ${p.transactionReference})` : ""}</span>
+              <span>{formatDate(new Date())} • {p.paymentMethod?.methodName}{p.transactionReference ? ` (Ref: ${p.transactionReference})` : ""}</span>
               <span style={{ fontWeight: 700 }}>{formatINR(p.paidAmount)}</span>
             </div>
           ))}
@@ -46,7 +46,7 @@ export default function BillReceipt({ invoice, hospitalProfile, hospital, patien
           <div style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", letterSpacing: 1, marginBottom: 8 }}>REFUNDS</div>
           {invoice.Refund.map((r: any, idx: number) => (
             <div key={idx} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 12, color: "#4b5563" }}>
-              <span>{r.processedAt ? new Date(r.processedAt).toLocaleDateString() : "—"} • {r.refundReason || "Refund"}</span>
+              <span>{r.processedAt ? formatDate(r.processedAt) : "—"} • {r.refundReason || "Refund"}</span>
               <span style={{ fontWeight: 700, color: "#8b5cf6" }}>- {formatINR(r.refundAmount)}</span>
             </div>
           ))}
@@ -66,11 +66,11 @@ export default function BillReceipt({ invoice, hospitalProfile, hospital, patien
       title="Payment Receipt"
       metaLeft={[
         { label: "Receipt No", value: invoice.invoiceNumber },
-        { label: "Date", value: new Date(invoice.invoiceDate).toLocaleDateString() },
+        { label: "Date", value: formatDate(invoice.invoiceDate) },
       ]}
       metaRight={[
         { label: "Patient", value: patientName },
-        { label: "Appt Date", value: new Date(appointmentDate).toLocaleDateString() },
+        { label: "Appt Date", value: formatDate(appointmentDate) },
       ]}
       totals={{
         subtotal: Number(invoice?.grossAmount || 0),

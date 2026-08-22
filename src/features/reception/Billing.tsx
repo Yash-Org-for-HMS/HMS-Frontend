@@ -1,4 +1,4 @@
-import { SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
 import { formatINR, formatDate } from "@/utils/format";
 import { useEffect, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
@@ -30,6 +30,18 @@ const STATUSES = [
   { code: "REFUNDED", label: "Refunded" },
   { code: "CANCELLED", label: "Cancelled" },
 ];
+
+/**
+ * Statuses whose zero balance says nothing about payment: a cancelled bill was
+ * voided and a draft was never issued, so neither owes anything and neither was
+ * settled. Their balance is shown neutral rather than in the "paid" green.
+ */
+const NOT_A_LIVE_BILL = new Set(["CANCELLED", "DRAFT"]);
+
+function balanceColor(r: { balance: number | string; invoiceStatus?: string }): string {
+  if (NOT_A_LIVE_BILL.has(String(r.invoiceStatus ?? "").toUpperCase())) return NEUTRAL.muted;
+  return Number(r.balance) > 0.005 ? SEMANTIC.danger : SEMANTIC.success;
+}
 
 // OPD (appointment-billed) and IPD (admission-billed) bills are structurally
 // different — different origin, different columns worth showing, different
@@ -134,7 +146,11 @@ function BillsList({ type, readOnly = false }: { type: "OPD" | "IPD"; readOnly?:
                   <TableCell sx={{ color: "text.secondary" }}>{formatDate(r.invoiceDate)}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(r.netAmount)}</TableCell>
                   <TableCell align="right" sx={{ color: "text.secondary" }}>{formatINR(r.paidAmount)}</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700, color: Number(r.balance) > 0.005 ? SEMANTIC.danger : SEMANTIC.success }}>{formatINR(r.balance)}</TableCell>
+                  {/* Green here means "settled by payment". A cancelled or draft
+                      invoice also carries a zero balance, but because it was
+                      never a live bill — painting that green read as "paid" on
+                      money nobody ever collected, so it stays neutral. */}
+                  <TableCell align="right" sx={{ fontWeight: 700, color: balanceColor(r) }}>{formatINR(r.balance)}</TableCell>
                   <TableCell>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
                       <StatusChip label={r.statusLabel} color={r.statusColor} />

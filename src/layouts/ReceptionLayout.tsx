@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEARCH_SHORTCUT } from "@/utils/shortcut";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
@@ -144,7 +145,7 @@ export default function ReceptionLayout() {
         >
           <SearchRounded sx={{ fontSize: 18 }} />
           <Typography variant="body2" sx={{ flex: 1 }}>Search…</Typography>
-          <Chip label="⌘K" size="small" sx={{ height: 20, fontSize: "0.75rem", fontWeight: 700, bgcolor: "action.hover", color: "text.secondary" }} />
+          <Chip label={SEARCH_SHORTCUT} size="small" sx={{ height: 20, fontSize: "0.75rem", fontWeight: 700, bgcolor: "action.hover", color: "text.secondary" }} />
         </Box>
       </Box>
 

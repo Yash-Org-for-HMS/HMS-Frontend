@@ -251,7 +251,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                         <TableCell padding="checkbox">
                           <Checkbox checked={selectedItemIds.has(item.id)} onChange={() => handleToggleItem(item.id)} />
                         </TableCell>
-                        <TableCell>{new Date(item.date).toLocaleDateString()}</TableCell>
+                        <TableCell>{formatDate(item.date)}</TableCell>
                         <TableCell>
                           <Typography variant="caption" sx={{ 
                             px: 1, py: 0.5, borderRadius: 1, fontWeight: 700,

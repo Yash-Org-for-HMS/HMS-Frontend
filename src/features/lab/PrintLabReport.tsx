@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatDate, formatDateTime } from "@/utils/format";
 import { assetUrl } from "@/utils/assetUrl";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { Box, Typography, Table, TableBody, TableCell, TableHead, TableRow, Grid, Divider } from "@mui/material";
@@ -98,7 +99,7 @@ export default function PrintLabReport() {
             Laboratory Report
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
-            <strong>Date:</strong> {new Date().toLocaleDateString()}
+            <strong>Date:</strong> {formatDate(new Date())}
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             <strong>Order ID:</strong> {order.sampleBarcode}
@@ -136,7 +137,7 @@ export default function PrintLabReport() {
             <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 600, width: "120px" }}>Sample Collected:</Typography>
               <Typography variant="body2">
-                {order.sampleCollectedAt ? new Date(order.sampleCollectedAt).toLocaleString() : "N/A"}
+                {order.sampleCollectedAt ? formatDateTime(order.sampleCollectedAt) : "N/A"}
               </Typography>
             </Box>
           </Grid>

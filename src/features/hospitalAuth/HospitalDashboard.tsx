@@ -22,7 +22,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import StatCard from "@/components/StatCard";
 import AttentionList from "@/components/dashboard/AttentionList";
-import { formatINR } from "@/utils/format";
+import { formatINR, formatDateTime } from "@/utils/format";
 import { useNavigate } from "react-router-dom";
 import {
   PeopleAltRounded,
@@ -394,7 +394,7 @@ export default function HospitalDashboard() {
                       })()}
                       <ListItemText
                         primary={activity.action}
-                        secondary={new Date(activity.timestamp).toLocaleString()}
+                        secondary={formatDateTime(activity.timestamp)}
                         primaryTypographyProps={{ color: "text.primary", fontWeight: 500, fontSize: "0.875rem" }}
                         secondaryTypographyProps={{ color: "text.secondary", fontSize: "0.75rem" }}
                       />

@@ -1,4 +1,5 @@
 import { Button, type ButtonProps } from "@mui/material";
+import { DISABLED_CONTAINED } from "@/styles/accents";
 
 interface ActionButtonProps extends ButtonProps {
   /** Gradient start color — the module's accent. */
@@ -32,6 +33,9 @@ export default function ActionButton({
         background: gradient,
         boxShadow: "0 4px 14px rgba(0,0,0,0.18)",
         "&:hover": { background: gradient, filter: "brightness(0.95)" },
+        // Repeated here because this `sx` gradient outranks the theme's own
+        // containedPrimary disabled rule.
+        "&.Mui-disabled": DISABLED_CONTAINED,
         ...sx,
       }}
       {...rest}

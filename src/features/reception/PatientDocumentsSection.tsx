@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDate } from "@/utils/format";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { assetUrl } from "@/utils/assetUrl";
 import { useQuery } from "@tanstack/react-query";
@@ -133,7 +134,7 @@ export default function PatientDocumentsSection({ patientId, readOnly = false }:
                     {doc.documentType}
                   </Typography>
                   <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
-                    {doc.fileSizeKb} KB • {new Date(doc.createdAt).toLocaleDateString()}
+                    {doc.fileSizeKb} KB • {formatDate(doc.createdAt)}
                   </Typography>
                   <Chip 
                     label={doc.mimeType.split("/")[1]?.toUpperCase() || "FILE"} 

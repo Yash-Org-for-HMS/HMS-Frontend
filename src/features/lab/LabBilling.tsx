@@ -7,7 +7,7 @@ import {
 import { PointOfSaleRounded, ScienceRounded, BiotechRounded, ReceiptLongRounded, PrintRounded } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
-import { formatINR } from "@/utils/format";
+import { formatINR, formatDate } from "@/utils/format";
 import { paymentStatusColor } from "@/utils/statusColors";
 import PageHeader from "@/components/layout/PageHeader";
 import StatCard from "@/components/StatCard";
@@ -189,7 +189,7 @@ export default function LabBilling() {
                   const amt = amountOf(o);
                   return (
                     <TableRow key={o.key} hover>
-                      <TableCell>{new Date(o.date).toLocaleDateString()}</TableCell>
+                      <TableCell>{formatDate(o.date)}</TableCell>
                       <TableCell>
                         <Box sx={{ fontWeight: 600 }}>{o.patientName}</Box>
                         {o.uhid && <Box sx={{ fontSize: "0.75rem", color: "text.secondary" }}>{o.uhid}</Box>}
