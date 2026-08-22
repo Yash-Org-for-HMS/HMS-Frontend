@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { AdmissionClaimRef, AdmissionDetail, BedSegment, PendingCharge, RoomClassRef } from "@/features/ipd/ipd.types";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
@@ -37,7 +38,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const [roomClassOverride, setRoomClassOverride] = useState<string | null>(null);
 
   // Pull the admission detail for the bed-charge preview.
-  const { data: detail, isLoading: detailLoading, isError: detailError, refetch: refetchDetail } = useQuery({
+  const { data: detail, isLoading: detailLoading, isError: detailError, refetch: refetchDetail } = useQuery<AdmissionDetail>({
     queryKey: ["ipd-admission", admissionId],
     queryFn: async () => (await axiosInstance.get(`/ipd/admissions/${admissionId}`)).data.data,
     enabled: open,
@@ -47,14 +48,14 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // amount tells us how much of this bill the payer covers vs the patient.
   const { data: claims = [] } = useQuery({
     queryKey: ["ipd-admission-claim", admissionId],
-    queryFn: async () => (await axiosInstance.get("/claims", { params: { admissionId } })).data.data as any[],
+    queryFn: async () => (await axiosInstance.get("/claims", { params: { admissionId } })).data.data as AdmissionClaimRef[],
     enabled: open,
   });
   const claim = claims[0];
   const claimApproved = claim ? Number(claim.preAuthApprovedAmount || 0) : 0;
 
   // Active room classes (Schedule of Charges) — options for the pricing override.
-  const { data: roomClasses = [] } = useQuery<any[]>({
+  const { data: roomClasses = [] } = useQuery<RoomClassRef[]>({
     queryKey: ["soc-room-classes"],
     queryFn: async () => (await axiosInstance.get("/hospital/soc/room-classes")).data.data,
     enabled: open,
@@ -63,7 +64,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const billRoomClassId: string = roomClassOverride !== null ? roomClassOverride : (detail?.roomClassId || "");
   // Only active classes are selectable, but keep the currently-selected one even if it
   // was later deactivated (so the Select never renders an out-of-range/blank value).
-  const roomClassOptions: any[] = roomClasses.filter((rc) => rc.isActive || rc.roomClassId === billRoomClassId);
+  const roomClassOptions: RoomClassRef[] = roomClasses.filter((rc) => rc.isActive || rc.roomClassId === billRoomClassId);
   const billRoomClassName: string | null = roomClasses.find((rc) => rc.roomClassId === billRoomClassId)?.name ?? detail?.roomClassName ?? null;
 
   // Effective preview amount for a row. Picked SOC rows re-derive from the CURRENT
@@ -79,10 +80,10 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   };
 
   const bedCharge = Number(detail?.estimatedBedCharge || 0);
-  const bedSegments: any[] = detail?.bedSegments || [];
+  const bedSegments: BedSegment[] = detail?.bedSegments || [];
   // Clinical charges (doctor visits / lab / radiology) accrued during the stay
   // that will roll onto the final bill — previewed so the total is honest.
-  const pendingCharges: any[] = detail?.pendingCharges || [];
+  const pendingCharges: PendingCharge[] = detail?.pendingCharges || [];
   const pendingTotal = Number(detail?.pendingChargesTotal || 0);
   const extrasTotal = extras.reduce((s, e) => s + lineAmount(e), 0);
   // Per-line GST on picked charges (0% = exempt; bed/clinical/free-text carry none).
@@ -207,7 +208,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
                 helperText={detail?.roomClassName ? `Defaults to the patient's bed (${detail.roomClassName}); change to re-price rate-card charges.` : "Sets which price column applies to picked rate-card charges."}
               >
                 <MenuItem value=""><em>None (base price)</em></MenuItem>
-                {roomClassOptions.map((rc: any) => <MenuItem key={rc.roomClassId} value={rc.roomClassId}>{rc.name}{rc.isActive ? "" : " (inactive)"}</MenuItem>)}
+                {roomClassOptions.map((rc) => <MenuItem key={rc.roomClassId} value={rc.roomClassId}>{rc.name}{rc.isActive ? "" : " (inactive)"}</MenuItem>)}
               </TextField>
             )}
             {extras.map((e, i) => (

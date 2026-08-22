@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { AdmissionRow } from "./ipd.types";
 import { SEMANTIC, NEUTRAL, BRAND, alpha } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
@@ -32,7 +33,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 
-const inr = (n: any) => formatINR(n, 0);
+const inr = (n: number | string) => formatINR(n, 0);
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
   ADMITTED: { label: "Admitted", color: BRAND.action },
@@ -96,15 +97,16 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
   const [admitOpen, setAdmitOpen] = useState(false);
-  const [transferFor, setTransferFor] = useState<any>(null);
-  const [dischargeFor, setDischargeFor] = useState<any>(null);
-  const [depositFor, setDepositFor] = useState<{ row: any; mode: "collect" | "refund" } | null>(null);
-  const [surgeryFor, setSurgeryFor] = useState<any>(null);
-  const [medsFor, setMedsFor] = useState<any>(null);
-  const [labsFor, setLabsFor] = useState<any>(null);
-  const [radiologyFor, setRadiologyFor] = useState<any>(null);
-  const [visitsFor, setVisitsFor] = useState<any>(null);
-  const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: any }>({ anchor: null, row: null });
+  // Each dialog is opened for one admission row, so they all hold the same shape.
+  const [transferFor, setTransferFor] = useState<AdmissionRow | null>(null);
+  const [dischargeFor, setDischargeFor] = useState<AdmissionRow | null>(null);
+  const [depositFor, setDepositFor] = useState<{ row: AdmissionRow; mode: "collect" | "refund" } | null>(null);
+  const [surgeryFor, setSurgeryFor] = useState<AdmissionRow | null>(null);
+  const [medsFor, setMedsFor] = useState<AdmissionRow | null>(null);
+  const [labsFor, setLabsFor] = useState<AdmissionRow | null>(null);
+  const [radiologyFor, setRadiologyFor] = useState<AdmissionRow | null>(null);
+  const [visitsFor, setVisitsFor] = useState<AdmissionRow | null>(null);
+  const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: AdmissionRow | null }>({ anchor: null, row: null });
 
   const tabParams = TABS[tab].params;
   const tabKey = TABS[tab].label;
@@ -135,7 +137,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
   // "no reason recorded" and "deliberately held" stays type-checked.
   const owedRows: { depositBalance: number | string; advanceHoldReason?: string | null }[] = owedResp?.data || [];
   const owedTotal = owedRows.reduce((t, a) => t + Number(a.depositBalance || 0), 0);
-  const admissions: any[] = resp?.data || [];
+  const admissions: AdmissionRow[] = resp?.data || [];
   const meta = resp?.meta as { total: number; totalPages: number } | undefined;
 
   // Client-side sort of the current page (server owns filtering + paging).
@@ -150,7 +152,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
     status: (a) => (STATUS_META[a.status]?.label ?? a.status),
   });
 
-  const cancel = async (row: any) => {
+  const cancel = async (row: AdmissionRow) => {
     setMenu({ anchor: null, row: null });
     try {
       await axiosInstance.post(`/ipd/admissions/${row.admissionId}/cancel`);
@@ -318,12 +320,12 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
 
       <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={() => setMenu({ anchor: null, row: null })}>
         {menu.row?.status === "ADMITTED" && (
-          <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setDepositFor({ row: r, mode: "collect" }); }}>
+          <MenuItem onClick={() => { const r = menu.row; if (!r) return; setMenu({ anchor: null, row: null }); setDepositFor({ row: r, mode: "collect" }); }}>
             <SavingsRounded fontSize="small" sx={{ mr: 1, color: BRAND.action }} /> Collect deposit
           </MenuItem>
         )}
         {menu.row?.status === "ADMITTED" && (
-          <MenuItem onClick={() => cancel(menu.row)} sx={{ color: SEMANTIC.danger }}><CancelRounded fontSize="small" sx={{ mr: 1 }} /> Cancel admission</MenuItem>
+          <MenuItem onClick={() => { if (menu.row) cancel(menu.row); }} sx={{ color: SEMANTIC.danger }}><CancelRounded fontSize="small" sx={{ mr: 1 }} /> Cancel admission</MenuItem>
         )}
       </Menu>
 

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import type { BillingLookups } from "@/types";
+import type { AdmissionRow } from "@/features/ipd/ipd.types";
 import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
@@ -16,7 +18,7 @@ import HeartbeatLoader from "../HeartbeatLoader";
 interface Props {
   open: boolean;
   mode: "collect" | "refund";
-  admission: any; // { admissionId, patientName, depositBalance }
+  admission: AdmissionRow;
   onClose: () => void;
   onDone: () => void;
 }
@@ -30,7 +32,7 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
   const isRefund = mode === "refund";
   const held = Number(admission?.depositBalance || 0);
 
-  const { data: lookups } = useQuery({
+  const { data: lookups } = useQuery<BillingLookups>({
     queryKey: ["billing-lookups"],
     queryFn: async () => (await axiosInstance.get("/reception/billing/lookups")).data.data,
     enabled: open && !isRefund,
@@ -85,7 +87,7 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
           {!isRefund && (
             <TextField select fullWidth label="Payment method" value={methodId} onChange={(e) => setMethodId(e.target.value)}>
               <MenuItem value="">—</MenuItem>
-              {(lookups?.methods || []).map((m: any) => <MenuItem key={m.paymentMethodId} value={m.paymentMethodId}>{m.methodName}</MenuItem>)}
+              {(lookups?.methods || []).map((m) => <MenuItem key={m.paymentMethodId} value={m.paymentMethodId}>{m.methodName}</MenuItem>)}
             </TextField>
           )}
           <TextField fullWidth label="Note (optional)" value={reason} onChange={(e) => setReason(e.target.value)} multiline rows={2} />
