@@ -1,4 +1,5 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import { greetingFor } from "@/utils/greeting";
 import { alpha } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -56,7 +57,7 @@ export default function DoctorDashboard() {
   return (
     <Box sx={{ pb: 6 }}>
       <PageHeader
-        title={`Welcome, Dr. ${user?.lastName ?? ""}`}
+        title={greetingFor(user?.lastName ? `Dr. ${user.lastName}` : null)}
         subtitle={`Here is your schedule for today at ${hospital?.name || "the hospital"}.`}
       />
 {/* KPI Cards */}

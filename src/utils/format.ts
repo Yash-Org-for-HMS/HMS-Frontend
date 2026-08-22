@@ -54,6 +54,17 @@ export function formatDate(value: string | number | Date): string {
   return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("en-IN", DATE_FMT);
 }
 
+/**
+ * "Thursday, 22 August 2026" — the spelled-out form for a dashboard's date
+ * line. Pinned to en-IN like the rest; this one had been hardcoded to en-US,
+ * which put the month before the day on an Indian hospital's screen.
+ */
+export function formatLongDate(value: string | number | Date): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+}
+
 /** The same date with a time beside it — "16 Jul 2026, 02:05 pm". */
 export function formatDateTime(value: string | number | Date): string {
   const d = new Date(value);

@@ -1,4 +1,5 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import { greetingFor } from "@/utils/greeting";
 import { alpha } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -24,18 +25,6 @@ import { needsVitals, hasVitals, isInConsultation } from "@/constants/queueStatu
 
 const NURSE_PURPLE = BRAND.action;
 const NURSE_PURPLE_DARK = BRAND.actionDark;
-
-/**
- * Time-of-day greeting. This was fixed at "Good morning", which nursing of all
- * panels cannot get away with — the ward is staffed around the clock, and the
- * night shift was wished a good morning at 2am.
- */
-function greeting(now = new Date()): string {
-  const h = now.getHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
-}
 
 export default function NurseDashboard() {
   const { hospital, user } = useHospitalAuth();
@@ -94,7 +83,7 @@ export default function NurseDashboard() {
       {/* Header */}
       <PageHeader
         title="Nursing Station"
-        subtitle={`${greeting()}${user?.firstName ? `, ${user.firstName.trim()}` : ""}! Today's vitals overview for ${hospital?.name || "the hospital"}.`}
+        subtitle={`${greetingFor(user?.firstName)}! Today's vitals overview for ${hospital?.name || "the hospital"}.`}
       />
       {/* KPI Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>

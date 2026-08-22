@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { formatDateTime, formatINRAuto } from "@/utils/format";
+import { formatDateTime, formatINRAuto, formatLongDate } from "@/utils/format";
+import { greetingFor } from "@/utils/greeting";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -183,10 +184,10 @@ export default function Dashboard() {
       <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <Box>
           <Typography variant="h4" fontWeight="800" sx={{ color: "text.primary", mb: 1, letterSpacing: "-0.5px" }}>
-            Welcome back, {user?.firstName || "Admin"}
+            {greetingFor(user?.firstName || "Admin")}
           </Typography>
           <Typography variant="subtitle1" sx={{ color: "text.secondary", fontWeight: 500 }}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            {formatLongDate(new Date())}
           </Typography>
         </Box>
       </Box>

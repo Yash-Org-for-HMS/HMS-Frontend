@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { greetingFor } from "@/utils/greeting";
 import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
 import { alpha } from "@mui/material/styles";
 import {
@@ -162,7 +163,7 @@ export default function HospitalDashboard() {
     <Box sx={{ pb: 6 }}>
       <PageHeader
         title="Hospital Dashboard"
-        subtitle={`Welcome back, ${user?.firstName} ${user?.lastName}. Here's what's happening today.`}
+        subtitle={`${greetingFor(`${user?.firstName ?? ""} ${user?.lastName ?? ""}`)}. Here's what's happening today.`}
         actions={
           stats?.activePlanName ? (
             <Chip
