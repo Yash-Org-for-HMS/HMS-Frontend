@@ -5,7 +5,7 @@ import type {
   TestWiseResponse, LabTestWiseRow, RadiologyTypeRow,
   TurnaroundResponse, TatStat, TatDistributionRow, SlowestRow,
   PendingResponse, PendingRow, StageRow, AgingRow,
-  CriticalResponse, CriticalRow, RegisterResponse, RegisterRow,
+  CriticalResponse, CriticalRow, RegisterRow,
 } from "./labReports.types";
 import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";

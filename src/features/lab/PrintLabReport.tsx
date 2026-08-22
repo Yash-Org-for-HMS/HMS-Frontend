@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { LabOrderDetail, LabReportRow } from "./labOrders.types";
 import { formatDate, formatDateTime } from "@/utils/format";
 import { assetUrl } from "@/utils/assetUrl";
 import { getApiErrorMessage } from "@/utils/apiError";
@@ -9,7 +10,7 @@ import { useParams } from "react-router-dom";
 
 export default function PrintLabReport() {
   const { id } = useParams();
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<LabOrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -159,7 +160,7 @@ export default function PrintLabReport() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {order.reports?.map((report: any) => {
+            {order.reports?.map((report: LabReportRow) => {
               // Highlight abnormal results (basic check if value is outside numbers)
               // This is a naive check; in a real app, you'd parse ranges carefully.
               // For now, we just bold the result.

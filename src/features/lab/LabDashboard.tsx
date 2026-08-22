@@ -1,4 +1,5 @@
 import { Box, Grid, Button } from "@mui/material";
+import type { CriticalAlertRow, PendingLabRow, PendingRadiologyRow } from "./labOrders.types";
 import { SEMANTIC } from "@/styles/accents";
 import {
   ScienceRounded, CheckCircleRounded, PendingActionsRounded, BiotechRounded,
@@ -36,9 +37,9 @@ export default function LabDashboard() {
 
   const lab = data?.lab ?? { pending: 0, completedToday: 0, revenueToday: 0 };
   const rad = data?.radiology ?? { pending: 0, completedToday: 0, revenueToday: 0 };
-  const criticals: any[] = data?.criticalUnacknowledged ?? [];
-  const pendingLab: any[] = data?.pendingLab ?? [];
-  const pendingRad: any[] = data?.pendingRadiology ?? [];
+  const criticals: CriticalAlertRow[] = data?.criticalUnacknowledged ?? [];
+  const pendingLab: PendingLabRow[] = data?.pendingLab ?? [];
+  const pendingRad: PendingRadiologyRow[] = data?.pendingRadiology ?? [];
 
   if (loading) return <DashboardSkeleton />;
 

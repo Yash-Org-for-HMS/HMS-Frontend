@@ -13,6 +13,9 @@ export interface OrderPatientRef {
   firstName?: string | null;
   lastName?: string | null;
   uhidNumber?: string | null;
+  /** Detail endpoint only — the list payload stops at the name and UHID. */
+  dateOfBirth?: string | null;
+  genderId?: number | null;
 }
 
 export interface OrderDoctorRef {
@@ -27,6 +30,11 @@ export interface LabTestRef {
   testCode?: string | null;
   testName?: string | null;
   unit?: string | null;
+  defaultNormalRange?: string | null;
+  isProfile?: boolean | null;
+  chargeItemId?: string | null;
+  /** Catalog list price. A Prisma Decimal — Number() it before arithmetic. */
+  price?: Money | null;
 }
 
 /**
@@ -78,6 +86,28 @@ export interface LabOrderRow {
    */
   billingLockActive?: boolean;
   reports?: LabReportRow[];
+}
+
+/**
+ * GET /lab/orders/:id — the queue row plus the pathologist sign-off details and
+ * the joined test on every report, which the list path only gained recently.
+ */
+/** Letterhead fields for the printed report. */
+export interface ReportHospitalRef {
+  hospitalName?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  officialPhone?: string | null;
+  officialEmail?: string | null;
+  logoUrl?: string | null;
+}
+
+export interface LabOrderDetail extends LabOrderRow {
+  reports: LabReportRow[];
+  hospital?: ReportHospitalRef | null;
+  verifiedAt?: string | null;
+  verifiedByName?: string | null;
+  verifiedByPathologistId?: string | null;
 }
 
 /** The radiologist's write-up. findings/impression live HERE, not on the order. */
@@ -137,4 +167,61 @@ export interface UnbilledOrderItem {
   description: string;
   amount: Money;
   taxAmount?: Money;
+}
+
+/** Priority resolved from the lookup table — null when the order has none. */
+export interface OrderPriorityRef {
+  code?: string | null;
+  label?: string | null;
+  color?: string | null;
+}
+
+/** A critical result the ordering doctor has not acknowledged yet. */
+export interface CriticalAlertRow {
+  labReportId: string;
+  patientName: string;
+  testName: string;
+  resultValue?: string | null;
+  ageHours: number;
+}
+
+/** A queue item on the lab dashboard's backlog list. */
+export interface PendingLabRow {
+  labOrderId: string;
+  patientName: string;
+  sampleBarcode?: string | null;
+  /** "Awaiting sample" | "In process" — where the order sits on the bench. */
+  status: string;
+  ageHours: number;
+  ageDays: number;
+  priority?: OrderPriorityRef | null;
+}
+
+export interface PendingRadiologyRow {
+  radiologyOrderId: string;
+  patientName: string;
+  scanType?: string | null;
+  status?: string | null;
+  ageHours: number;
+  ageDays: number;
+  priority?: OrderPriorityRef | null;
+}
+
+/** A priced row of the lab or radiology catalog, grouped by category. */
+export interface CatalogRow {
+  chargeItemId?: string | null;
+  testCode?: string | null;
+  testName?: string | null;
+  /** A Prisma Decimal — Number() it before arithmetic. */
+  price?: Money | null;
+  category?: string | null;
+}
+
+export interface LabCatalogRow extends CatalogRow {
+  labTestId: string;
+  unit?: string | null;
+}
+
+export interface RadiologyCatalogRow extends CatalogRow {
+  radiologyTestId: string;
 }

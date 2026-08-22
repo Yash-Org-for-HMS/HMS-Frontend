@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import type { LabCatalogRow } from "./labOrders.types";
 import { apiErrorText } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -20,13 +21,13 @@ export default function LabTestCatalog() {
   const theme = useTheme();
   const [activeCat, setActiveCat] = useState<string>("");
 
-  const { data: tests = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+  const { data: tests = [], isLoading: loading, isError, error, refetch } = useQuery<LabCatalogRow[]>({
     queryKey: ["lab-tests"],
     queryFn: async () => (await axiosInstance.get("/lab/tests")).data.data || [],
   });
 
   const groups = useMemo(() => {
-    const by = new Map<string, any[]>();
+    const by = new Map<string, LabCatalogRow[]>();
     for (const t of tests) {
       const c = t.category || "Laboratory";
       if (!by.has(c)) by.set(c, []);

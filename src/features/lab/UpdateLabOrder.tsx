@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { LabOrderDetail, LabReportRow, UnbilledOrderItem } from "./labOrders.types";
 import { DETAIL_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
@@ -21,6 +22,9 @@ import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import { axiosInstance } from "@/api/axios";
 import { useParams, useNavigate } from "react-router-dom";
 import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
+
+/** The editable result rows, keyed by labReportId. */
+type ResultDraft = Record<string, { value: string; range: string; remarks: string; critical?: boolean }>;
 
 const LAB = BRAND.action;
 const LAB_DARK = BRAND.actionDark;
@@ -77,12 +81,12 @@ export default function UpdateLabOrder() {
   const [saving, setSaving] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [showPOS, setShowPOS] = useState(false);
-  const [results, setResults] = useState<Record<string, { value: string, range: string, remarks: string, critical?: boolean }>>({});
+  const [results, setResults] = useState<ResultDraft>({});
   const [message, setMessage] = useState<{type: "success" | "error", text: string} | null>(null);
 
   const { data: order, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ["lab-order", id],
-    queryFn: async () => (await axiosInstance.get(`/lab/orders/${id}`)).data.data,
+    queryFn: async (): Promise<LabOrderDetail> => (await axiosInstance.get(`/lab/orders/${id}`)).data.data,
     enabled: !!id,
   });
 
@@ -93,24 +97,24 @@ export default function UpdateLabOrder() {
     queryKey: ["lab-order-unbilled", order?.patientId, id],
     enabled: showPOS && !!order?.patientId,
     queryFn: async () => {
-      const items = (await axiosInstance.get(`/billing/unbilled/${order.patientId}`)).data.data || [];
-      return items.find((it: any) => it.id === order.labOrderId) || null;
+      const items = (await axiosInstance.get(`/billing/unbilled/${order!.patientId}`)).data.data || [];
+      return items.find((it: UnbilledOrderItem) => it.id === order!.labOrderId) || null;
     },
   });
 
   // Seed the editable result rows when the order loads (or after a refetch).
   useEffect(() => {
     if (!order) return;
-    const initialResults: any = {};
-    order.reports.forEach((r: any) => {
+    const initialResults: ResultDraft = {};
+    order.reports.forEach((r: LabReportRow) => {
       initialResults[r.labReportId] = {
-        value: r.resultValue === "PENDING" ? "" : r.resultValue,
-        range: r.normalRange === "N/A" ? "" : r.normalRange,
+        value: r.resultValue === "PENDING" ? "" : r.resultValue ?? "",
+        range: r.normalRange === "N/A" ? "" : r.normalRange ?? "",
         remarks: r.remarks || "",
         // undefined = no explicit call yet, so the rules decide. Seeded only when
         // the saved flag DISAGREES with the rules, so reopening a report keeps a
         // human override instead of silently reverting to the automatic verdict.
-        critical: r.isCritical !== evaluateCriticalValue(r.labTest?.testCode || "", r.resultValue || "") ? r.isCritical : undefined,
+        critical: r.isCritical !== evaluateCriticalValue(r.labTest?.testCode || "", r.resultValue || "") ? r.isCritical ?? undefined : undefined,
       };
     });
     setResults(initialResults);
@@ -161,7 +165,7 @@ export default function UpdateLabOrder() {
     return <ErrorState title="Couldn't load lab order" message={getApiErrorMessage(error, "Order not found")} onRetry={() => refetch()} />;
   }
 
-  const reports: any[] = order.reports ?? [];
+  const reports: LabReportRow[] = order.reports ?? [];
   const patientName = `${order.patient?.firstName || ""} ${order.patient?.lastName || ""}`.trim() || "Unknown patient";
   const doctorName = `${order.doctor?.user?.firstName || ""} ${order.doctor?.user?.lastName || ""}`.trim() || "—";
   const paid = order.paymentStatus === "PAID";
@@ -311,7 +315,7 @@ export default function UpdateLabOrder() {
         </Box>
 
         <Box sx={{ px: 3, pb: 1, display: "flex", flexDirection: "column", gap: 1.5 }}>
-          {reports.map((report: any) => {
+          {reports.map((report: LabReportRow) => {
             const rid = report.labReportId;
             const val = results[rid]?.value || "";
             const autoCritical = evaluateCriticalValue(report.labTest?.testCode || "", val);
@@ -423,13 +427,13 @@ export default function UpdateLabOrder() {
             setShowPOS(false);
             refetch();
           }}
-          patientId={order.patientId}
+          patientId={order.patientId ?? ""}
           patientName={`${order.patient?.firstName || ''} ${order.patient?.lastName || ''}`}
           item={{
             id: order.labOrderId,
             type: "LAB",
-            description: posItem?.description || `Lab Tests: ${order.reports?.map((r: any) => r.labTest?.testName).filter(Boolean).join(', ') || 'Pending Tests'}`,
-            amount: Number(posItem?.amount ?? order.reports?.reduce((sum: number, r: any) => sum + Number(r.labTest?.price || 0), 0) ?? 300),
+            description: posItem?.description || `Lab Tests: ${order.reports?.map((r) => r.labTest?.testName).filter(Boolean).join(', ') || 'Pending Tests'}`,
+            amount: Number(posItem?.amount ?? order.reports?.reduce((sum: number, r) => sum + Number(r.labTest?.price || 0), 0) ?? 300),
             taxPercent: Number(posItem?.taxPercent ?? 0),
             date: order.createdAt
           }}

@@ -56,7 +56,24 @@ const ACCENT = SEMANTIC.success;
 // The queue endpoint already returns both kinds in one shape, priced and
 // labelled — the two normalisers this replaces were doing that per source table
 // in the browser.
-function normalizeRow(o: any): BillableOrder {
+/** One row of GET /lab/billing-queue, before the client adds its list key. */
+interface BillableOrderRow {
+  kind: Kind;
+  id: string;
+  patientId: string;
+  patientName?: string | null;
+  uhid?: string | null;
+  description: string;
+  date: string;
+  paymentStatus?: string | null;
+  admissionNumber?: string | null;
+  billingLockActive?: boolean | null;
+  amount?: number | null;
+  billingDescription?: string | null;
+  taxPercent?: number | null;
+}
+
+function normalizeRow(o: BillableOrderRow): BillableOrder {
   return {
     key: `${o.kind}-${o.id}`,
     kind: o.kind,
@@ -125,7 +142,7 @@ export default function LabBilling() {
   const statusChip = (o: BillableOrder) => {
     if (o.admissionNumber) return <Chip label="On IP Bill" color="info" size="small" />;
     const label = o.paymentStatus === "UNPAID" ? "Unpaid" : o.paymentStatus.charAt(0) + o.paymentStatus.slice(1).toLowerCase();
-    return <Chip label={label} color={paymentStatusColor(o.paymentStatus) as any} size="small" />;
+    return <Chip label={label} color={paymentStatusColor(o.paymentStatus)} size="small" />;
   };
 
   if (isError) {

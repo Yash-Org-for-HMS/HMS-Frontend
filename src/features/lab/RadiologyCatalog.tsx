@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import type { RadiologyCatalogRow } from "./labOrders.types";
 import { apiErrorText } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -20,14 +21,14 @@ export default function RadiologyCatalog() {
   const theme = useTheme();
   const [activeCat, setActiveCat] = useState<string>(""); // "" = all categories
 
-  const { data: scans = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+  const { data: scans = [], isLoading: loading, isError, error, refetch } = useQuery<RadiologyCatalogRow[]>({
     queryKey: ["radiology-catalog"],
     queryFn: async () => (await axiosInstance.get("/lab/radiology-catalog")).data.data || [],
   });
 
   // Group tests by their SOC category, sorted; tests sorted by name within a group.
   const groups = useMemo(() => {
-    const by = new Map<string, any[]>();
+    const by = new Map<string, RadiologyCatalogRow[]>();
     for (const s of scans) {
       const c = s.category || "Radiology";
       if (!by.has(c)) by.set(c, []);
