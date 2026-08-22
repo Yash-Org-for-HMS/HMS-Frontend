@@ -39,7 +39,25 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
   DISCHARGED: { label: "Discharged", color: SEMANTIC.success },
   CANCELLED: { label: "Cancelled", color: NEUTRAL.muted },
 };
-const TABS = ["ADMITTED", "DISCHARGED", ""];
+/**
+ * The tabs, as the query each one runs.
+ *
+ * "To return" is not a status — it is the admissions the hospital still holds
+ * money for after they closed. That population had no home: it existed as a
+ * read-only report filed fifth under an admin-only heading, which the
+ * receptionist who actually hands the cash back cannot open at all. Here it
+ * sits beside the ward list, where the refund action already lives.
+ *
+ * The filter is server-side (see listAdmissions) because the balance is summed
+ * from deposit entries rather than stored: narrowing the page in the browser
+ * would drop rows out of a page and report the wrong total.
+ */
+const TABS: { label: string; params: Record<string, string> }[] = [
+  { label: "Current", params: { status: "ADMITTED" } },
+  { label: "Discharged", params: { status: "DISCHARGED" } },
+  { label: "All", params: {} },
+  { label: "To return", params: { pendingDeposit: "true" } },
+];
 
 /**
  * The advance still held against an admission.
@@ -99,20 +117,35 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
   const [visitsFor, setVisitsFor] = useState<any>(null);
   const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: any }>({ anchor: null, row: null });
 
-  const status = TABS[tab];
+  const tabParams = TABS[tab].params;
+  const tabKey = TABS[tab].label;
+  const isReturnTab = Boolean(tabParams.pendingDeposit);
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search.trim(), 350);
   // Search + tab drive a fresh first page (server-side search & paging).
-  useEffect(() => { setPage(1); }, [debouncedSearch, status]);
+  useEffect(() => { setPage(1); }, [debouncedSearch, tabKey]);
 
   const { data: resp, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["ipd-admissions", status, debouncedSearch, page],
+    queryKey: ["ipd-admissions", tabKey, debouncedSearch, page],
     queryFn: async () =>
       (await axiosInstance.get("/ipd/admissions", {
-        params: { ...(status ? { status } : {}), search: debouncedSearch || undefined, page, limit: 20 },
+        params: { ...tabParams, search: debouncedSearch || undefined, page, limit: 20 },
       })).data,
     placeholderData: keepPreviousData,
   });
+
+  // How much is waiting to go back, and to how many people — read once for the
+  // tab's badge so the number is visible without opening it.
+  const { data: owedResp } = useQuery({
+    queryKey: ["ipd-admissions-to-return"],
+    queryFn: async () =>
+      (await axiosInstance.get("/ipd/admissions", { params: { pendingDeposit: "true", limit: 100 } })).data,
+    refetchOnWindowFocus: true,
+  });
+  // Only the two fields the badge and summary read, so the split between
+  // "no reason recorded" and "deliberately held" stays type-checked.
+  const owedRows: { depositBalance: number | string; advanceHoldReason?: string | null }[] = owedResp?.data || [];
+  const owedTotal = owedRows.reduce((t, a) => t + Number(a.depositBalance || 0), 0);
   const admissions: any[] = resp?.data || [];
   const meta = resp?.meta as { total: number; totalPages: number } | undefined;
 
@@ -156,11 +189,62 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2, mb: 2 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ "& .MuiTab-root": { textTransform: "none", fontWeight: 600 }, "& .Mui-selected": { color: "#7c3aed !important" }, "& .MuiTabs-indicator": { bgcolor: BRAND.action } }}>
-          <Tab label="Current" /><Tab label="Discharged" /><Tab label="All" />
+          {TABS.map((t) => (
+            <Tab
+              key={t.label}
+              label={
+                // The count rides on the tab so money waiting to go back is
+                // visible without opening it — the whole failure this fixes was
+                // that nobody had a reason to look.
+                t.params.pendingDeposit && owedRows.length ? (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                    {t.label}
+                    <Chip label={owedRows.length} size="small" sx={{ height: 18, fontSize: "0.7rem", fontWeight: 700, bgcolor: alpha(SEMANTIC.warning, 0.16), color: SEMANTIC.warning }} />
+                  </Box>
+                ) : t.label
+              }
+            />
+          ))}
         </Tabs>
         <TextField placeholder="Search patient, IPD#, diagnosis…" value={search} onChange={(e) => setSearch(e.target.value)} size="small"
           InputProps={{ startAdornment: (<InputAdornment position="start"><SearchRounded sx={{ color: "text.secondary", fontSize: 20 }} /></InputAdornment>) }} sx={{ minWidth: 340 }} />
       </Box>
+
+      {/* What the tab is for, and what it adds up to. Split by whether a reason
+          was given at discharge, because only one of the two is an oversight. */}
+      {isReturnTab && owedRows.length > 0 && (
+        <Paper elevation={0} sx={{
+          borderRadius: 3, border: "1px solid", borderColor: alpha(SEMANTIC.warning, 0.35),
+          bgcolor: alpha(SEMANTIC.warning, 0.07), px: 2.5, py: 1.75, mb: 2,
+          display: "flex", alignItems: "center", gap: 3, flexWrap: "wrap",
+        }}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: SEMANTIC.warning, lineHeight: 1.2 }}>{inr(owedTotal)}</Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              still held across {owedRows.length} closed admission{owedRows.length === 1 ? "" : "s"}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", gap: 2.5, flexWrap: "wrap" }}>
+            {(() => {
+              const unexplained = owedRows.filter((a) => !(a.advanceHoldReason || "").trim());
+              const held = owedRows.length - unexplained.length;
+              return (
+                <>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    <b style={{ color: SEMANTIC.danger }}>{unexplained.length}</b> with no reason recorded
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    <b>{held}</b> deliberately held
+                  </Typography>
+                </>
+              );
+            })()}
+          </Box>
+          <Typography variant="caption" sx={{ color: "text.secondary", ml: "auto" }}>
+            Use the ↩ action on a row to return it to the patient.
+          </Typography>
+        </Paper>
+      )}
 
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
         <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
