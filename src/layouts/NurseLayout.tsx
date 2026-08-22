@@ -1,22 +1,17 @@
-import { SEMANTIC, alpha, BRAND } from "@/styles/accents";
-import { isNavItemActive } from "@/components/layout/navActive";
+import { alpha, BRAND } from "@/styles/accents";
+import SidebarNav from "@/components/layout/SidebarNav";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
 const nurseTheme = createPanelTheme(BRAND.action, BRAND.actionDark);
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
-  Box, Drawer, AppBar, Toolbar, List, Typography, Divider,
-  IconButton, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  useTheme, useMediaQuery,
+  Box, Drawer, AppBar, Toolbar, Divider, IconButton, useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import {
-  Menu as MenuIcon,
-  DashboardRounded,
-  PeopleAltRounded,
-  AssessmentRounded,
+  Menu as MenuIcon, DashboardRounded, PeopleAltRounded, AssessmentRounded,
   MedicationRounded,
-  LockRounded,
 } from "@mui/icons-material";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
@@ -27,7 +22,6 @@ import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
 
 const drawerWidth = 260;
-const NURSE_PURPLE = BRAND.action;
 
 export default function NurseLayout() {
   useEffect(() => {
@@ -70,58 +64,13 @@ export default function NurseLayout() {
 
       {/* Navigation */}
       <SidebarSearch />
-      <List sx={{ px: 1.5, pt: 2, flex: 1, overflowY: "auto" }}>
-        {menuItems.map((item, idx, arr) => {
-          const isActive = isNavItemActive(location.pathname, item.path);
-          const locked = (item as any).module && !isModuleEnabled((item as any).module);
-          return (
-            <Box key={item.text}>
-              {/* First row of its section, not merely a change from the previous
-                  row — so a heading can never be printed twice. */}
-              {arr.findIndex((m) => m.section === item.section) === idx && (
-                <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", fontSize: "0.75rem", px: 1.5, pt: idx === 0 ? 0 : 1.75, pb: 0.5 }}>
-                  {item.section}
-                </Typography>
-              )}
-              <ListItem disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton
-                onClick={() => {
-                  navigate(item.path);
-                  if (isMobile) setMobileOpen(false);
-                }}
-                sx={{
-                  borderRadius: 2,
-                  bgcolor: isActive ? alpha(BRAND.action, 0.12) : "transparent",
-                  "&:hover": { bgcolor: alpha(BRAND.action, 0.08) },
-                  transition: "all 0.15s ease",
-                }}
-              >
-                <ListItemIcon
-                  sx={{
-                    minWidth: 40,
-                    color: isActive ? NURSE_PURPLE : "text.secondary",
-                    transition: "color 0.15s ease",
-                    opacity: locked ? 0.55 : 1,
-                  }}
-                >
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.text}
-                  primaryTypographyProps={{
-                    fontSize: "0.875rem",
-                    fontWeight: isActive ? 600 : 500,
-                    color: isActive ? NURSE_PURPLE : "text.secondary",
-                    sx: { opacity: locked ? 0.6 : 1 },
-                  }}
-                />
-                {locked && <LockRounded sx={{ fontSize: 15, color: SEMANTIC.warning, ml: 1, flexShrink: 0 }} />}
-              </ListItemButton>
-            </ListItem>
-            </Box>
-          );
-        })}
-      </List>
+      <SidebarNav
+        items={menuItems}
+        currentPath={location.pathname}
+        onNavigate={(path) => { navigate(path); if (isMobile) setMobileOpen(false); }}
+        isLocked={(item) => Boolean(item.module) && !isModuleEnabled(item.module!)}
+        sx={{ px: 1.5, pt: 2 }}
+      />
 
       <Divider sx={{ borderColor: alpha(BRAND.action, 0.1) }} />
 
@@ -183,8 +132,8 @@ export default function NurseLayout() {
             "& .MuiDrawer-paper": {
               boxSizing: "border-box", width: drawerWidth, borderRight: "none",
               borderTopRightRadius: 24, borderBottomRightRadius: 24,
-              boxShadow: "4px 0 24px rgba(0,0,0,0.03)",
-            },
+              boxShadow: "4px 0 24px rgba(0,0,0,0.03)"
+            }
           }}
           open
         >

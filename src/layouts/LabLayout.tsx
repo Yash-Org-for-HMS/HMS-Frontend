@@ -1,35 +1,18 @@
 import { useState, useEffect } from "react";
-import { isNavItemActive } from "@/components/layout/navActive";
-import { SEMANTIC, NEUTRAL, alpha, BRAND } from "@/styles/accents";
+import SidebarNav from "@/components/layout/SidebarNav";
+import { BRAND } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
 const labTheme = createPanelTheme(BRAND.action, BRAND.actionDark);
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import ModuleGate from "@/components/ModuleGate";
 import {
-  Box,
-  Drawer,
-  AppBar,
-  Toolbar,
-  List,
-  Typography,
-  IconButton,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  useTheme,
-  useMediaQuery,
+  Box, Drawer, AppBar, Toolbar, IconButton, useTheme, useMediaQuery,
 } from "@mui/material";
 import {
-  Menu as MenuIcon,
-  DashboardRounded,
-  ScienceRounded,
-  SettingsAccessibilityRounded,
-  MenuBookRounded,
-  AssessmentRounded,
+  Menu as MenuIcon, DashboardRounded, ScienceRounded,
+  SettingsAccessibilityRounded, MenuBookRounded, AssessmentRounded,
   ReceiptLongRounded,
-  LockRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
@@ -77,35 +60,12 @@ export default function LabLayout() {
       />
       
       <SidebarSearch />
-      <List sx={{ px: 2, pt: 2, flex: 1, overflowY: "auto" }}>
-        {menuItems.map((item, idx, arr) => {
-          const isActive = isNavItemActive(location.pathname, item.path);
-          const locked = (item as any).module && !isModuleEnabled((item as any).module);
-          return (
-            <Box key={item.text}>
-              {/* First row of its section, not merely a change from the previous
-                  row — so a heading can never be printed twice. */}
-              {arr.findIndex((m) => m.section === item.section) === idx && (
-                <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", fontSize: "0.75rem", px: 1.5, pt: idx === 0 ? 0 : 1.75, pb: 0.5 }}>
-                  {item.section}
-                </Typography>
-              )}
-              <ListItem disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton
-                onClick={() => { navigate(item.path); if (isMobile) setMobileOpen(false); }}
-                sx={{ borderRadius: 2, bgcolor: isActive ? alpha(BRAND.action, 0.08) : "transparent", "&:hover": { bgcolor: "action.hover" } }}
-              >
-                <ListItemIcon sx={{ minWidth: 40, color: isActive ? BRAND.action : NEUTRAL.muted, opacity: locked ? 0.55 : 1 }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: isActive ? 600 : 500, color: isActive ? BRAND.action : NEUTRAL.muted, sx: { opacity: locked ? 0.6 : 1 } }} />
-                {locked && <LockRounded sx={{ fontSize: 15, color: SEMANTIC.warning, ml: 1, flexShrink: 0 }} />}
-              </ListItemButton>
-            </ListItem>
-            </Box>
-          );
-        })}
-      </List>
+      <SidebarNav
+        items={menuItems}
+        currentPath={location.pathname}
+        onNavigate={(path) => { navigate(path); if (isMobile) setMobileOpen(false); }}
+        isLocked={(item) => Boolean(item.module) && !isModuleEnabled(item.module!)}
+      />
 
       <Box sx={{ px: 2, pb: 1 }}>
         <BranchSwitcher />
