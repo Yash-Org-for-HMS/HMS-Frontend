@@ -246,7 +246,7 @@ export default function HospitalDashboard() {
           <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", height: "100%", display: "flex", flexDirection: "column" }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }}>Collections</Typography>
             <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
-              Money in over the last 30 days — counted the same way as the Day Book
+              Kept over the last 30 days, net of refunds — the same rule as the tile above and the Day Book
             </Typography>
             {ops?.money.trend?.length ? (
               <Box sx={{ flex: 1, minHeight: 190 }}>
