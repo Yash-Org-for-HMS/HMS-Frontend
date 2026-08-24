@@ -1,13 +1,14 @@
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import SimpleTable from "@/features/reports/kit/SimpleTable";
 import KpiCard from "@/features/reports/kit/KpiCard";
+import { useReportParam, useReportFlag } from "@/features/reports/kit/useReportParam";
+import ReportStatusChips from "@/features/reports/kit/ReportStatusChips";
 import { apiGet, apiGetList } from "@/api/client";
 import type {
   AdminDashboardStats, DashboardPlanRow, DashboardStatusRow, DashboardOnboardingRow,
   HospitalRegisterRow, LeadRegisterRow, TrialRegisterRow, PlanRegisterRow, PlanWithMrr,
   OnboardingRegisterRow, OnboardingGateKey,
 } from "./adminReports.types";
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
@@ -72,28 +73,46 @@ function OverviewReport() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-      {/* KPIs */}
+      {/* KPIs. A tile links to the register listing what it counted; the four
+          without one (patients, doctors, branches, plans-as-a-count) have no
+          platform-level register to open, so they stay plain rather than
+          promising a page that doesn't exist. */}
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Hospitals" value={data.totalHospitals ?? 0} sub={`${data.activeHospitals ?? 0} active`} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimerRounded />} label="Active Trials" value={data.activeTrials ?? 0} sub={`${data.expiredHospitals ?? 0} expired`} accent={SEMANTIC.warning} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonSearchRounded />} label="Leads" value={data.totalLeads ?? 0} sub={`${data.convertedLeads ?? 0} converted`} accent="#8b5cf6" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(data.totalRevenue)} sub="monthly recurring" accent={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CardMembershipRounded />} label="Plans" value={data.activePlans ?? 0} accent="#0891b2" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Hospitals" value={data.totalHospitals ?? 0} sub={`${data.activeHospitals ?? 0} active`} href="/reports?view=hospitals" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimerRounded />} label="Active Trials" value={data.activeTrials ?? 0} sub={`${data.expiredHospitals ?? 0} expired`} accent={SEMANTIC.warning} href="/reports?view=trials&status=active" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonSearchRounded />} label="Leads" value={data.totalLeads ?? 0} sub={`${data.convertedLeads ?? 0} converted`} accent="#8b5cf6" href="/reports?view=leads" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(data.totalRevenue)} sub="monthly recurring" accent={SEMANTIC.success} href="/reports?view=subscriptions" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CardMembershipRounded />} label="Plans" value={data.activePlans ?? 0} accent="#0891b2" href="/reports?view=subscriptions" /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupsRounded />} label="Patients" value={data.totalPatients ?? 0} accent="#ec4899" /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicalInformationRounded />} label="Doctors" value={data.totalDoctors ?? 0} accent={BRAND.action} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<StoreMallDirectoryRounded />} label="Branches" value={data.totalBranches ?? 0} accent={NEUTRAL.muted} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<StoreMallDirectoryRounded />} label="Branches" value={data.totalBranches ?? 0} accent={NEUTRAL.muted} href="/reports?view=hospitals" /></Grid>
       </Grid>
 
       {/* Downloadable summary tables */}
       <Grid container spacing={2.5}>
+        {/* Each row leads to the register that lists what it counted, filtered
+            to that row — a count on its own leaves the reader to go and work
+            out which records it meant. */}
         <Grid size={{ xs: 12, md: 4 }}>
-          <SimpleTable title="Branches by plan" head={["Plan", "Branches"]} rows={byPlan.map((p) => [p.planName ?? "—", Number(p.count)])} />
+          <SimpleTable
+            title="Branches by plan" head={["Plan", "Branches"]}
+            rows={byPlan.map((p) => [p.planName ?? "—", Number(p.count)])}
+            rowHref={(_r, i) => `/reports?view=hospitals&plan=${encodeURIComponent(byPlan[i].planName ?? "")}`}
+          />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
-          <SimpleTable title="Leads by stage" head={["Stage", "Leads"]} rows={byStatus.map((s) => [cap(s.status), Number(s.count)])} />
+          <SimpleTable
+            title="Leads by stage" head={["Stage", "Leads"]}
+            rows={byStatus.map((s) => [cap(s.status), Number(s.count)])}
+            rowHref={(_r, i) => `/reports?view=leads&status=${encodeURIComponent(byStatus[i].status ?? "")}`}
+          />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
-          <SimpleTable title="Onboarding progress" head={["Status", "Hospitals"]} rows={onboarding.map((o) => [cap(o.status), Number(o.count)])} />
+          <SimpleTable
+            title="Onboarding progress" head={["Status", "Hospitals"]}
+            rows={onboarding.map((o) => [cap(o.status), Number(o.count)])}
+            rowHref={(_r, i) => `/reports?view=onboarding&status=${encodeURIComponent(onboarding[i].status ?? "")}`}
+          />
         </Grid>
       </Grid>
     </Box>
@@ -103,6 +122,8 @@ function OverviewReport() {
 // ── Hospitals register (from /hospitals) ─────────────────────────────────────
 
 function HospitalsReport() {
+  const [statusFilter] = useReportParam("status", "all");
+  const [planFilter, setPlanFilter] = useReportParam("plan", "all");
   const { data = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-report-hospitals"],
     queryFn: () => fetchAllRows<HospitalRegisterRow>("/hospitals"),
@@ -115,7 +136,17 @@ function HospitalsReport() {
     const names = [...new Set((h.branches || []).map((b) => b.subscriptionPlan?.planName).filter(Boolean))];
     return names.length ? names.join(", ") : "—";
   };
-  const rows = data.map((h) => [
+  const active = data.filter((h) => h.status === "active").length;
+  const suspended = data.filter((h) => h.status === "suspended").length;
+
+  // Filtered by status and by plan, both from the URL, so the overview's
+  // "Branches by plan" row can land on exactly the tenants it counted.
+  const filtered = data.filter((h) => {
+    if (statusFilter !== "all" && h.status !== statusFilter) return false;
+    if (planFilter !== "all" && !(h.branches || []).some((b) => b.subscriptionPlan?.planName === planFilter)) return false;
+    return true;
+  });
+  const rows = filtered.map((h) => [
     `${h.hospitalName || "—"}`,
     h.hospitalCode || "—",
     cap(h.status),
@@ -123,8 +154,6 @@ function HospitalsReport() {
     Number(h._count?.branches ?? 0),
     formatDate(h.createdAt),
   ]);
-  const active = data.filter((h) => h.status === "active").length;
-  const suspended = data.filter((h) => h.status === "suspended").length;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -134,6 +163,18 @@ function HospitalsReport() {
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Suspended" value={suspended} accent={SEMANTIC.danger} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Branches" value={data.reduce((s: number, h) => s + Number(h._count?.branches ?? 0), 0)} accent={NEUTRAL.muted} /></Grid>
       </Grid>
+      <ReportStatusChips
+        options={[
+          { key: "all", label: "All", count: data.length },
+          { key: "active", label: "Active", count: active },
+          { key: "suspended", label: "Suspended", count: suspended },
+        ]}
+      />
+      {planFilter !== "all" && (
+        <Box>
+          <Chip size="small" label={`Plan: ${planFilter}`} onDelete={() => setPlanFilter("all")} sx={{ fontWeight: 600 }} />
+        </Box>
+      )}
       <SimpleTable title="Hospitals register" head={["Hospital", "Code", "Status", "Plan(s)", "Branches", "Registered"]} rows={rows} />
     </Box>
   );
@@ -142,6 +183,7 @@ function HospitalsReport() {
 // ── Sales pipeline / Leads (from /leads) ─────────────────────────────────────
 
 function LeadsReport() {
+  const [stageFilter] = useReportParam("status", "all");
   const { data = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-report-leads"],
     queryFn: () => fetchAllRows<LeadRegisterRow>("/leads"),
@@ -150,7 +192,12 @@ function LeadsReport() {
   if (isLoading) return <ReportSkeleton />;
   if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
-  const rows = data.map((l) => [
+  // Stage counts (drive the KPI tiles and the filter chips).
+  const counts: Record<string, number> = {};
+  data.forEach((l) => { counts[l.leadStatus] = (counts[l.leadStatus] || 0) + 1; });
+
+  const filtered = stageFilter === "all" ? data : data.filter((l) => l.leadStatus === stageFilter);
+  const rows = filtered.map((l) => [
     l.hospitalName || "—",
     l.contactPersonName || "—",
     l.email || "—",
@@ -160,9 +207,9 @@ function LeadsReport() {
     formatDate(l.createdAt),
   ]);
 
-  // Stage counts (drive the KPI tiles).
-  const counts: Record<string, number> = {};
-  data.forEach((l) => { counts[l.leadStatus] = (counts[l.leadStatus] || 0) + 1; });
+  // Every stage present in the data, so a stage the overview links to always
+  // has a chip — rather than a hardcoded list that silently drops new ones.
+  const stages = [...new Set(data.map((l) => l.leadStatus))].sort();
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -172,7 +219,14 @@ function LeadsReport() {
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<RocketLaunchRounded />} label="Trialing" value={counts["trialing"] || 0} accent={SEMANTIC.warning} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Lost" value={counts["lost"] || 0} accent={SEMANTIC.danger} /></Grid>
       </Grid>
-      <SimpleTable title="Leads register" head={["Hospital", "Contact", "Email", "Phone", "Stage", "Assigned to", "Created"]} rows={rows} />
+      <ReportStatusChips
+        options={[
+          { key: "all", label: "All", count: data.length },
+          ...stages.map((s) => ({ key: s, label: cap(s), count: counts[s] })),
+        ]}
+        accent="#8b5cf6"
+      />
+      <SimpleTable title="Leads register" head={["Hospital", "Contact", "Email", "Phone", "Stage", "Assigned to", "Created"]} rows={rows} accent="#8b5cf6" />
     </Box>
   );
 }
@@ -180,6 +234,7 @@ function LeadsReport() {
 // ── Trials (from /trials) ────────────────────────────────────────────────────
 
 function TrialsReport() {
+  const [statusFilter] = useReportParam("status", "all");
   const { data = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-report-trials"],
     queryFn: () => fetchAllRows<TrialRegisterRow>("/trials"),
@@ -188,24 +243,54 @@ function TrialsReport() {
   if (isLoading) return <ReportSkeleton />;
   if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
-  const rows = data.map((t) => [
+  const byState = (s: string) => data.filter((t) => t.trialStatus === s).length;
+  const filtered = statusFilter === "all" ? data : data.filter((t) => t.trialStatus === statusFilter);
+
+  // Days left is the reason to look at an active trial at all — it says which
+  // ones are about to lapse. The register showed only the end date, leaving
+  // that arithmetic to the reader.
+  const daysLeft = (t: TrialRegisterRow) => {
+    if (!t.trialEndDate) return null;
+    const ms = new Date(t.trialEndDate).getTime() - Date.now();
+    return Math.ceil(ms / 86_400_000);
+  };
+  const remaining = (t: TrialRegisterRow) => {
+    const d = daysLeft(t);
+    if (d == null) return "—";
+    if (t.trialStatus !== "active") return "—";
+    return d < 0 ? `${Math.abs(d)}d overdue` : d === 0 ? "today" : `${d}d`;
+  };
+
+  const rows = filtered.map((t) => [
     t.lead?.hospitalName || "—",
     formatDate(t.trialStartDate),
     formatDate(t.trialEndDate),
+    remaining(t),
     cap(t.trialStatus),
     t.autoExpire ? "Yes" : "No",
   ]);
-  const byState = (s: string) => data.filter((t) => t.trialStatus === s).length;
+
+  const states = [...new Set(data.map((t) => t.trialStatus))].filter(Boolean).sort() as string[];
+  const expiringSoon = data.filter((t) => {
+    const d = daysLeft(t);
+    return t.trialStatus === "active" && d != null && d >= 0 && d <= 7;
+  }).length;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimerRounded />} label="Total trials" value={data.length} accent={SEMANTIC.warning} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<RocketLaunchRounded />} label="Active" value={byState("active")} accent={BRAND.action} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} label="Expiring in 7 days" value={expiringSoon} accent={expiringSoon ? SEMANTIC.danger : NEUTRAL.muted} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Converted" value={byState("converted")} accent={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Expired" value={byState("expired")} accent={SEMANTIC.danger} /></Grid>
       </Grid>
-      <SimpleTable title="Trials register" head={["Hospital", "Start", "End", "Status", "Auto-expire"]} rows={rows} />
+      <ReportStatusChips
+        options={[
+          { key: "all", label: "All", count: data.length },
+          ...states.map((s) => ({ key: s, label: cap(s), count: byState(s) })),
+        ]}
+      />
+      <SimpleTable title="Trials register" head={["Hospital", "Start", "End", "Remaining", "Status", "Auto-expire"]} rows={rows} />
     </Box>
   );
 }
@@ -281,8 +366,9 @@ const GATE_LABELS: [OnboardingGateKey, string][] = [
 
 function OnboardingReport() {
   const navigate = useNavigate();
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [attentionOnly, setAttentionOnly] = useState(false);
+  // Both live in the URL so the dashboard can link straight to "the 4 pending".
+  const [statusFilter] = useReportParam("status", "all");
+  const [attentionOnly, setAttentionOnly] = useReportFlag("attention");
 
   const { data = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-report-onboarding"],
@@ -354,29 +440,24 @@ function OnboardingReport() {
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PeopleAltRounded />} label="Showing" value={filtered.length} sub={`of ${data.length}`} accent={NEUTRAL.muted} /></Grid>
       </Grid>
 
-      {/* Filters */}
-      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
-        {STATUS_FILTERS.map((f) => (
-          <Chip
-            key={f.key}
-            label={f.label}
-            size="small"
-            onClick={() => setStatusFilter(f.key)}
-            variant={statusFilter === f.key ? "filled" : "outlined"}
-            sx={statusFilter === f.key ? { bgcolor: ACCENT, color: "#fff", fontWeight: 700 } : { fontWeight: 600 }}
-          />
-        ))}
-        <Box sx={{ width: 1, height: 20, bgcolor: "divider", mx: 0.5 }} />
+      {/* Filters. Counts sit on the chips so the split is visible before choosing. */}
+      <ReportStatusChips
+        options={STATUS_FILTERS.map((f) => ({
+          ...f,
+          count: f.key === "all" ? data.length : data.filter((o) => o.onboardingStatus === f.key).length,
+        }))}
+        accent={ACCENT}
+      >
         <Chip
           icon={<WarningAmberRounded sx={{ fontSize: "16px !important" }} />}
           label={`Needs attention${mismatchCount + unverifiedPaidCount ? ` (${mismatchCount + unverifiedPaidCount})` : ""}`}
           size="small"
-          onClick={() => setAttentionOnly((v) => !v)}
+          onClick={() => setAttentionOnly(!attentionOnly)}
           variant={attentionOnly ? "filled" : "outlined"}
           color="warning"
           sx={{ fontWeight: 700 }}
         />
-      </Box>
+      </ReportStatusChips>
 
       <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
         <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
@@ -395,7 +476,7 @@ function OnboardingReport() {
             <Table size="small" stickyHeader sx={{ minWidth: 1180 }}>
               <TableHead>
                 <TableRow>
-                  {["Hospital", "City", "Plan", "Primary admin", "Registered", "Setup", "Payment", "Collected", "Latest invoice", "Status", "Blocked on", ""].map((h) => (
+                  {["Hospital", "City", "Plan", "Primary admin", "Registered", "Setup", "Payment", "Collected", "Latest invoice", "Status", ""].map((h) => (
                     <TableCell key={h} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider", bgcolor: "background.paper", whiteSpace: "nowrap" }}>{h}</TableCell>
                   ))}
                 </TableRow>
@@ -407,7 +488,17 @@ function OnboardingReport() {
                     <TableRow key={o.hospitalOnboardingId} hover sx={{ bgcolor: flagBg }}>
                       <TableCell sx={{ borderColor: "divider" }}>
                         <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>{o.hospital?.hospitalName || "—"}</Typography>
-                        <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>{o.hospital?.hospitalCode || "—"}</Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace", display: "block" }}>{o.hospital?.hospitalCode || "—"}</Typography>
+                        {/* What this tenant is still waiting on, beside its name.
+                            It used to sit in the last of twelve columns, off the
+                            right edge — so the register answered "which are
+                            pending" on screen but "pending on what" only after a
+                            horizontal scroll. */}
+                        {o.onboardingStatus !== "completed" && (
+                          <Typography variant="caption" sx={{ color: SEMANTIC.warningDark, fontWeight: 600, display: "block", mt: 0.25 }}>
+                            Waiting on: {blockedOn(o)}
+                          </Typography>
+                        )}
                       </TableCell>
                       <TableCell sx={{ borderColor: "divider", color: "text.secondary" }}>{o.hospital?.city || "—"}</TableCell>
                       <TableCell sx={{ borderColor: "divider", color: "text.secondary" }}>{o.hospital?.planName || "—"}</TableCell>
@@ -450,9 +541,6 @@ function OnboardingReport() {
                         <Chip label={cap(o.onboardingStatus)} size="small" sx={{ height: 20, fontWeight: 700, fontSize: "0.68rem",
                           bgcolor: o.onboardingStatus === "completed" ? "rgba(16,185,129,0.14)" : o.onboardingStatus === "stalled" ? "rgba(239,68,68,0.14)" : "rgba(148,163,184,0.18)",
                           color: o.onboardingStatus === "completed" ? SEMANTIC.successDark : o.onboardingStatus === "stalled" ? SEMANTIC.dangerDark : "text.secondary" }} />
-                      </TableCell>
-                      <TableCell sx={{ borderColor: "divider", color: "text.secondary", maxWidth: 200 }}>
-                        <Typography variant="caption">{blockedOn(o)}</Typography>
                       </TableCell>
                       <TableCell sx={{ borderColor: "divider" }} align="right">
                         <Tooltip title="Review onboarding">

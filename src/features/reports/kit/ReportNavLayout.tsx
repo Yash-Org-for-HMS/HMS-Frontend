@@ -1,6 +1,7 @@
 import { useMemo, useState, type ComponentType, type ReactNode } from "react";
 import { Box, Paper, List, ListItemButton, ListItemText, Collapse, Divider, Chip } from "@mui/material";
 import { ExpandLessRounded, ExpandMoreRounded } from "@mui/icons-material";
+import { useSearchParams } from "react-router-dom";
 import PageHeader from "@/components/layout/PageHeader";
 import { BRAND } from "@/styles/accents";
 
@@ -56,7 +57,25 @@ export default function ReportNavLayout({
   actions, toolbar, componentProps, contentState,
 }: Props) {
   const firstKey = groups[0]?.items[0]?.key ?? "";
-  const [active, setActive] = useState<string>(initialKey ?? firstKey);
+
+  /**
+   * The open report lives in the URL (`?view=`), so a report can be linked to,
+   * bookmarked and reached by the back button — and so a dashboard figure can
+   * hand off to the register that explains it, carrying its filter along.
+   *
+   * Falls back to the caller's initialKey, so a panel that never sets `view`
+   * behaves exactly as before.
+   */
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewParam = searchParams.get("view");
+  const known = groups.some((g) => g.items.some((i) => i.key === viewParam));
+  const active = known && viewParam ? viewParam : (initialKey ?? firstKey);
+
+  const selectReport = (key: string) => {
+    // Replace rather than merge: the previous report's filters mean nothing to
+    // the next one, and leaving them behind would silently pre-filter it.
+    setSearchParams({ view: key });
+  };
 
   // The active report may live in a group that a later filter removed (module
   // switched off, role changed). Fall back to the first available item rather
@@ -69,16 +88,13 @@ export default function ReportNavLayout({
     return groups[0]?.items[0]?.Comp;
   }, [active, groups]);
 
-  // Start with only the group holding the active report expanded. This reads
-  // from the FILTERED groups: deriving it from the unfiltered list opened a
-  // group that didn't contain the active report whenever the first group was
-  // hidden (e.g. IPD off, or a non-admin who can't see the finance group).
-  const [open, setOpen] = useState<Record<string, boolean>>(() => {
-    const key = initialKey ?? firstKey;
-    const activeHeading = groups.find((g) => g.items.some((i) => i.key === key))?.heading;
-    return Object.fromEntries(groups.map((g) => [g.heading, g.heading === activeHeading]));
-  });
-  const toggle = (heading: string) => setOpen((o) => ({ ...o, [heading]: !o[heading] }));
+  // Only what the user has explicitly toggled. Anything absent falls back to
+  // "open if it holds the active report" at render time, so arriving on a
+  // report by URL expands its group — the previous version computed this once
+  // at mount, which left the target group collapsed and the pane looking empty
+  // when a link pointed into it.
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const toggle = (heading: string, current: boolean) => setOpen((o) => ({ ...o, [heading]: !current }));
 
   return (
     <Box>
@@ -97,12 +113,12 @@ export default function ReportNavLayout({
         >
           <List dense disablePadding>
             {groups.map((g, gi) => {
-              const isOpen = open[g.heading] ?? false;
               const hasActive = g.items.some((i) => i.key === active);
+              const isOpen = open[g.heading] ?? hasActive;
               return (
                 <Box key={g.heading}>
                   {gi > 0 && <Divider />}
-                  <ListItemButton onClick={() => toggle(g.heading)} sx={{ py: 0.75, "&:hover": { bgcolor: "action.hover" } }}>
+                  <ListItemButton onClick={() => toggle(g.heading, isOpen)} sx={{ py: 0.75, "&:hover": { bgcolor: "action.hover" } }}>
                     <ListItemText
                       primary={g.heading}
                       primaryTypographyProps={{
@@ -124,7 +140,7 @@ export default function ReportNavLayout({
                       <ListItemButton
                         key={it.key}
                         selected={active === it.key}
-                        onClick={() => setActive(it.key)}
+                        onClick={() => selectReport(it.key)}
                         sx={{
                           py: 0.75, pl: 2.5,
                           "&.Mui-selected": { bgcolor: `${accent}14`, borderRight: `3px solid ${accent}` },

@@ -9,6 +9,7 @@ import {
   Container,
   Typography,
   Paper,
+  Button,
   } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import {
@@ -16,6 +17,7 @@ import {
   PeopleAltRounded,
   AccountBalanceRounded,
   BusinessRounded,
+  ArrowForwardRounded,
   } from "@mui/icons-material";
 import {
   BarChart,
@@ -27,6 +29,8 @@ import {
   LabelList,
   CartesianGrid,
 } from "recharts";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { BRAND } from "@/styles/accents";
 import { axiosInstance } from "@/api/axios";
 import { useAuth } from "@/providers/AuthContext";
 import ErrorState from "@/components/ErrorState";
@@ -92,6 +96,25 @@ const GroupCard = ({ title, icon, color, primary, subs }: any) => (
   </Paper>
 );
 
+/**
+ * The way out of a chart and into the rows behind it.
+ *
+ * The bars themselves are clickable, but nothing about a bar says so — this
+ * gives the card a visible, keyboard-reachable way through, and states where
+ * it goes.
+ */
+const ReportLink = ({ to, label }: { to: string; label: string }) => (
+  <Button
+    component={RouterLink}
+    to={to}
+    size="small"
+    endIcon={<ArrowForwardRounded sx={{ fontSize: "16px !important" }} />}
+    sx={{ textTransform: "none", fontWeight: 600, color: BRAND.action, flexShrink: 0 }}
+  >
+    {label}
+  </Button>
+);
+
 const ChartCard = ({ title, subtitle, right, height = 340, children }: any) => (
   <Paper elevation={0} sx={{ p: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, height, display: "flex", flexDirection: "column" }}>
     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 2, mb: 2 }}>
@@ -108,6 +131,7 @@ const ChartCard = ({ title, subtitle, right, height = 340, children }: any) => (
 export default function Dashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const {
     data: stats,
@@ -160,16 +184,18 @@ export default function Dashboard() {
     { key: "converted", label: "Converted" },
   ];
   const leadCounts: Record<string, number> = Object.fromEntries(stats.leadsByStatus.map((s) => [s.status, s.count]));
-  const funnelData = FUNNEL.map((f) => ({ stage: f.label, count: leadCounts[f.key] || 0 }));
+  const funnelData = FUNNEL.map((f) => ({ key: f.key, stage: f.label, count: leadCounts[f.key] || 0 }));
   const convRate = stats.totalLeads ? Math.round((stats.convertedLeads / stats.totalLeads) * 100) : 0;
 
 
   const planData = [...stats.hospitalsByPlan].sort((a, b) => b.count - a.count);
   const trendData = stats.hospitalsTrend ?? [];
   const activities = stats.recentActivities ?? [];
-  // Onboarding statuses arrive as raw enum values (in_progress, …).
+  // Onboarding statuses arrive as raw enum values (in_progress, …). The raw
+  // value is kept alongside the label because it is what the register filters on.
   const onboardingData = (stats.onboardingProgress ?? [])
     .map((o) => ({
+      status: o.status,
       label: o.status.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()),
       count: o.count,
     }))
@@ -250,9 +276,12 @@ export default function Dashboard() {
             // left a lot of dead space below/around a short 5-row bar list.
             height={280}
             right={
-              <Box sx={{ textAlign: "right" }}>
-                <Typography variant="h5" sx={{ fontWeight: 800, color: INDIGO, lineHeight: 1 }}>{convRate}%</Typography>
-                <Typography variant="caption" sx={{ color: "text.secondary" }}>conversion</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <ReportLink to="/reports?view=leads" label="View register" />
+                <Box sx={{ textAlign: "right" }}>
+                  <Typography variant="h5" sx={{ fontWeight: 800, color: INDIGO, lineHeight: 1 }}>{convRate}%</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>conversion</Typography>
+                </Box>
               </Box>
             }
           >
@@ -265,7 +294,14 @@ export default function Dashboard() {
                     anchors and the row reads as "nobody here" rather than as a
                     missing row. Without it four empty stages render as bare
                     labels and the funnel looks broken rather than early. */}
-                <Bar dataKey="count" fill={INDIGO} radius={[0, 4, 4, 0]} barSize={22} minPointSize={2}>
+                <Bar
+                  dataKey="count" fill={INDIGO} radius={[0, 4, 4, 0]} barSize={22} minPointSize={2}
+                  cursor="pointer"
+                  onClick={(d) => {
+                    const key = (d as unknown as { key?: string })?.key;
+                    if (key) navigate(`/reports?view=leads&status=${encodeURIComponent(key)}`);
+                  }}
+                >
                   <LabelList dataKey="count" position="right" style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
                 </Bar>
               </BarChart>
@@ -275,7 +311,12 @@ export default function Dashboard() {
 
         {/* Hospitals by plan — magnitude by category, single hue, sorted desc */}
         <Grid size={{ xs: 12, lg: 4 }}>
-          <ChartCard title="Hospitals by Plan" subtitle="Active subscriptions by plan" height={280}>
+          <ChartCard
+            title="Hospitals by Plan"
+            subtitle="Active subscriptions by plan"
+            height={280}
+            right={<ReportLink to="/reports?view=hospitals" label="View register" />}
+          >
             {planData.length === 0 ? (
               <Box sx={{ display: "grid", placeItems: "center", height: "100%" }}>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>No active plans yet.</Typography>
@@ -286,7 +327,14 @@ export default function Dashboard() {
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="planName" width={150} tick={{ fill: "#475569", fontSize: 13 }} axisLine={false} tickLine={false} />
                   <Tooltip cursor={{ fill: "rgba(20,184,166,0.06)" }} contentStyle={tooltipStyle} formatter={(v) => [v, "Hospitals"]} />
-                  <Bar dataKey="count" fill={TEAL} radius={[0, 4, 4, 0]} barSize={22}>
+                  <Bar
+                    dataKey="count" fill={TEAL} radius={[0, 4, 4, 0]} barSize={22}
+                    cursor="pointer"
+                    onClick={(d) => {
+                      const plan = (d as unknown as { planName?: string })?.planName;
+                      if (plan) navigate(`/reports?view=hospitals&plan=${encodeURIComponent(plan)}`);
+                    }}
+                  >
                     <LabelList dataKey="count" position="right" style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
                   </Bar>
                 </BarChart>
@@ -323,9 +371,16 @@ export default function Dashboard() {
           </ChartCard>
         </Grid>
 
-        {/* Onboarding progress — where tenants are stuck before going live. */}
+        {/* Onboarding progress — where tenants are stuck before going live.
+            A stage answers "how many"; the register behind it answers which
+            tenants and what each is still waiting on, so the bars lead there. */}
         <Grid size={{ xs: 12, lg: 4 }}>
-          <ChartCard title="Onboarding Progress" subtitle="Tenants by setup stage" height={280}>
+          <ChartCard
+            title="Onboarding Progress"
+            subtitle="Tenants by setup stage"
+            height={280}
+            right={<ReportLink to="/reports?view=onboarding" label="View register" />}
+          >
             {onboardingData.length === 0 ? (
               <Box sx={{ display: "grid", placeItems: "center", height: "100%", color: "text.secondary" }}>
                 <Typography variant="body2">Nothing in onboarding.</Typography>
@@ -336,7 +391,14 @@ export default function Dashboard() {
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="label" width={104} tick={{ fill: "#475569", fontSize: 12 }} axisLine={false} tickLine={false} />
                   <Tooltip cursor={{ fill: "rgba(20,184,166,0.06)" }} contentStyle={tooltipStyle} formatter={(v) => [v, "Tenants"]} />
-                  <Bar dataKey="count" fill={TEAL} radius={[0, 4, 4, 0]} barSize={20}>
+                  <Bar
+                    dataKey="count" fill={TEAL} radius={[0, 4, 4, 0]} barSize={20}
+                    cursor="pointer"
+                    onClick={(d) => {
+                      const status = (d as unknown as { status?: string })?.status;
+                      if (status) navigate(`/reports?view=onboarding&status=${encodeURIComponent(status)}`);
+                    }}
+                  >
                     <LabelList dataKey="count" position="right" style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
                   </Bar>
                 </BarChart>

@@ -3,7 +3,8 @@ import {
   Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow,
   TableContainer, Button,
 } from "@mui/material";
-import { FileDownloadRounded } from "@mui/icons-material";
+import { FileDownloadRounded, ChevronRightRounded } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import { exportTableToExcel } from "@/utils/exportExcel";
 import { BRAND } from "@/styles/accents";
 
@@ -26,6 +27,7 @@ export default function SimpleTable({
   dense,
   note,
   accent = BRAND.action,
+  rowHref,
 }: {
   title: string;
   head: string[];
@@ -34,7 +36,17 @@ export default function SimpleTable({
   note?: ReactNode;
   /** Excel-button colour. Defaults to the one action colour. */
   accent?: string;
+  /**
+   * Where a row leads. Given the row and its index, return a path to the
+   * register that explains it — or null for a row with nothing behind it.
+   *
+   * A summary row states a count and stops there, leaving the reader to go and
+   * work out which records it counted. When this is set the row becomes the
+   * way through to them.
+   */
+  rowHref?: (row: (string | number)[], index: number) => string | null;
 }) {
+  const navigate = useNavigate();
   return (
     <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
       <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
@@ -59,13 +71,35 @@ export default function SimpleTable({
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map((r, ri) => (
-                <TableRow key={ri} hover>
-                  {r.map((c, ci) => (
-                    <TableCell key={ci} align={ci === 0 ? "left" : "right"} sx={{ borderColor: "divider", color: ci === 0 ? "text.primary" : "text.secondary", fontWeight: ci === 0 ? 600 : 500 }}>{c}</TableCell>
-                  ))}
-                </TableRow>
-              ))}
+              {rows.map((r, ri) => {
+                const href = rowHref?.(r, ri) ?? null;
+                return (
+                  <TableRow
+                    key={ri}
+                    hover
+                    onClick={href ? () => navigate(href) : undefined}
+                    // Reachable by keyboard, and announced as a link — which is
+                    // what activating it does.
+                    tabIndex={href ? 0 : undefined}
+                    role={href ? "link" : undefined}
+                    onKeyDown={href ? (e) => {
+                      if (e.key === "Enter") { e.preventDefault(); navigate(href); }
+                    } : undefined}
+                    sx={href ? { cursor: "pointer", "&:focus-visible": { outline: `2px solid ${accent}`, outlineOffset: -2 } } : undefined}
+                  >
+                    {r.map((c, ci) => (
+                      <TableCell key={ci} align={ci === 0 ? "left" : "right"} sx={{ borderColor: "divider", color: ci === 0 ? "text.primary" : "text.secondary", fontWeight: ci === 0 ? 600 : 500 }}>
+                        {ci === r.length - 1 && href ? (
+                          <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                            {c}
+                            <ChevronRightRounded sx={{ fontSize: 16, color: accent }} />
+                          </Box>
+                        ) : c}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>

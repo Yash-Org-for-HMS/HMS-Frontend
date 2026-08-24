@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Box, Paper, Typography, Tooltip } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { ArrowUpwardRounded, ArrowDownwardRounded, RemoveRounded } from "@mui/icons-material";
+import { Link as RouterLink } from "react-router-dom";
 import { computeDelta, seriesColor } from "./chartTheme";
 
 export interface KpiCardProps {
@@ -19,6 +20,12 @@ export interface KpiCardProps {
   accent?: string;
   /** Extra caption under the value (e.g. "of 210 total"). */
   sub?: ReactNode;
+  /**
+   * Where this figure's records live. Set it and the tile becomes a link to the
+   * register behind the number, so a reader who wants to know which records
+   * make it up can go and see them instead of hunting for the right report.
+   */
+  href?: string;
 }
 
 /**
@@ -27,7 +34,7 @@ export interface KpiCardProps {
  * insight, not a bare figure.
  */
 export default function KpiCard({
-  label, value, current, previous, higherIsBetter = true, icon, accent = seriesColor(0), sub,
+  label, value, current, previous, higherIsBetter = true, icon, accent = seriesColor(0), sub, href,
 }: KpiCardProps) {
   const delta = current != null ? computeDelta(current, previous, higherIsBetter) : null;
   const showDelta = delta != null && delta.mode !== "none";
@@ -46,7 +53,20 @@ export default function KpiCard({
   const DeltaIcon = delta?.dir === "up" ? ArrowUpwardRounded : delta?.dir === "down" ? ArrowDownwardRounded : RemoveRounded;
 
   return (
-    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, height: "100%", bgcolor: "background.paper", border: "1px solid", borderColor: "divider", display: "flex", flexDirection: "column", gap: 1 }}>
+    <Paper
+      elevation={0}
+      {...(href ? { component: RouterLink, to: href } : {})}
+      sx={{
+        p: 2.5, borderRadius: 3, height: "100%", bgcolor: "background.paper",
+        border: "1px solid", borderColor: "divider", display: "flex", flexDirection: "column", gap: 1,
+        ...(href ? {
+          textDecoration: "none", cursor: "pointer",
+          transition: "border-color 120ms, box-shadow 120ms",
+          "&:hover": { borderColor: accent, boxShadow: "0 4px 16px rgba(15,23,42,0.06)" },
+          "&:focus-visible": { outline: `2px solid ${accent}`, outlineOffset: 2 },
+        } : {}),
+      }}
+    >
       {/* The label gets the full row beside the icon. It used to share that row
           with the delta chip, which left roughly half the width for a caption
           like "AVG TIME TO RESULT" — it wrapped onto three lines and pushed the
