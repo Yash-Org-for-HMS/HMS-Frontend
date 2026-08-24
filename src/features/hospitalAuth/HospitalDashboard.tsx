@@ -145,19 +145,31 @@ export default function HospitalDashboard() {
   const setupComplete = stats.pendingTasks.length > 0 && stats.pendingTasks.every((t) => t.completed);
 
   const occupancy = ops?.capacity;
-  const attentionItems = (ops?.attention ?? []).map((a) => ({
-    id: a.id,
-    primary: a.primary,
-    secondary: a.secondary,
-    meta: a.meta,
-    severity: a.severity,
-    icon: <WarningAmberRounded sx={{ fontSize: 18 }} />,
-    onClick: a.id.startsWith("invoice:")
-      ? () => navigate("/hospital/billing")
-      : a.id.startsWith("stock:") || a.id.startsWith("po:")
-        ? () => navigate("/hospital/reports")
-        : undefined,
-  }));
+
+  /**
+   * Each row goes to the register that explains it, not to the panel it vaguely
+   * belongs to. Stock and purchase-order rows used to land on the reports hub
+   * with no report chosen, and an unacknowledged critical result — the most
+   * severe row on the list, shown first — had no link at all.
+   */
+  const ATTENTION_ROUTES: [string, string][] = [
+    ["critical:", "/hospital/reports?view=lab-critical"],
+    ["stock:", "/hospital/reports?view=reorder-list"],
+    ["invoice:", "/hospital/reports?view=outstanding"],
+    ["po:", "/hospital/reports?view=supplier-ledger"],
+  ];
+  const attentionItems = (ops?.attention ?? []).map((a) => {
+    const route = ATTENTION_ROUTES.find(([prefix]) => a.id.startsWith(prefix))?.[1];
+    return {
+      id: a.id,
+      primary: a.primary,
+      secondary: a.secondary,
+      meta: a.meta,
+      severity: a.severity,
+      icon: <WarningAmberRounded sx={{ fontSize: 18 }} />,
+      onClick: route ? () => navigate(route) : undefined,
+    };
+  });
 
   return (
     <Box sx={{ pb: 6 }}>
@@ -198,6 +210,7 @@ export default function HospitalDashboard() {
                 : "on bills of any date"
             }
             icon={<CurrencyRupeeRounded />} color={SEMANTIC.success} loading={opsLoading}
+            onClick={() => navigate("/hospital/reports?view=day-book")}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -205,7 +218,7 @@ export default function HospitalDashboard() {
             label="Outstanding" value={inr(ops?.money.outstandingAmount ?? 0)}
             sub={`${ops?.money.outstandingCount ?? 0} unpaid bill${ops?.money.outstandingCount === 1 ? "" : "s"}`}
             icon={<ReceiptLongRounded />} color={SEMANTIC.danger} loading={opsLoading}
-            onClick={() => navigate("/hospital/billing")}
+            onClick={() => navigate("/hospital/reports?view=outstanding")}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -224,6 +237,7 @@ export default function HospitalDashboard() {
             deltaLabel="vs the same weekday last week"
             sub={ops ? `${ops.flow.admissionsToday} admitted · ${ops.flow.dischargesToday} discharged` : undefined}
             icon={<EventAvailableRounded />} color={BRAND.actionDark} loading={opsLoading}
+            onClick={() => navigate("/hospital/reports?view=opd-visits")}
           />
         </Grid>
       </Grid>
