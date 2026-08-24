@@ -3,11 +3,12 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Box, Typography, Button, TextField,
+  Box, Typography, Button, TextField, IconButton,
   Paper, MenuItem, Link
 } from "@mui/material";
 import RadiologyTestPicker, { type PickedRadTest } from "@/components/lab/RadiologyTestPicker";
-import { SaveRounded, CameraAltRounded, DescriptionRounded } from "@mui/icons-material";
+import type { RadiologyOrderRow, RadiologyReportRow } from "@/features/lab/labOrders.types";
+import { SaveRounded, CameraAltRounded, DescriptionRounded, AddRounded, DeleteRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
@@ -17,6 +18,9 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 
 const DOCTOR_BLUE = BRAND.action;
+
+/** One scan queued for submission. price is display-only — the server prices from SOC. */
+type RadiologyScanLine = { chargeItemId: string; scanType: string; radiologistNotes: string; price: number };
 
 interface RadiologyOrderFormProps {
   consultationId?: string | null;
@@ -41,15 +45,39 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedPriority, setSelectedPriority] = useState(1);
   const [radiologistNotes, setRadiologistNotes] = useState("");
+  // A radiology order holds one scan, so ordering several means several orders.
+  // Notes ride on each line: "suspected tibial fracture" belongs to the X-ray,
+  // not to a chest CT ordered in the same breath.
+  const [basket, setBasket] = useState<RadiologyScanLine[]>([]);
 
-  const { data: existingOrders = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
+  const lineFor = (t: PickedRadTest): RadiologyScanLine => ({
+    chargeItemId: t.chargeItemId,
+    scanType: t.testName,
+    radiologistNotes: radiologistNotes.trim(),
+    price: Number(t.price),
+  });
+
+  const addToBasket = () => {
+    if (!selectedTest) return;
+    setBasket((prev) => [...prev, lineFor(selectedTest)]);
+    setSelectedTest(null);
+    setRadiologistNotes("");
+  };
+  const removeFromBasket = (idx: number) => setBasket((prev) => prev.filter((_, i) => i !== idx));
+
+  // A scan picked but not yet "added" still counts, so ordering a single scan
+  // needs no extra Add click — Add is only for stacking several.
+  const effectiveScans = selectedTest ? [...basket, lineFor(selectedTest)] : basket;
+  const estTotal = effectiveScans.reduce((sum, s) => sum + (s.price || 0), 0);
+
+  const { data: existingOrders = [], isLoading: loading, isError, error, refetch } = useQuery<RadiologyOrderRow[]>({
     queryKey: ["radiology-orders", consultationId],
     queryFn: async () => (await axiosInstance.get(`/doctor/radiology-orders/consultations/${consultationId}`)).data.data || [],
     enabled: !!consultationId,
   });
 
   const handleSubmit = async () => {
-    if (!selectedTest) {
+    if (effectiveScans.length === 0) {
       toast.error("Please select a radiology test.");
       return;
     }
@@ -65,19 +93,22 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
         }
       }
 
-      // Send the SOC test's chargeItemId (price master) + its name for display.
+      // Send each SOC test's chargeItemId (price master) + its name for display.
       await axiosInstance.post(`/doctor/radiology-orders/consultations/${targetConsultationId}`, {
         patientId,
         priorityId: selectedPriority,
-        chargeItemId: selectedTest.chargeItemId,
-        scanType: selectedTest.testName,
-        radiologistNotes
+        scans: effectiveScans.map((s) => ({
+          chargeItemId: s.chargeItemId,
+          scanType: s.scanType,
+          radiologistNotes: s.radiologistNotes,
+        })),
       });
 
-      toast.success("Radiology order created successfully!");
+      toast.success(`${effectiveScans.length} radiology order${effectiveScans.length === 1 ? "" : "s"} created successfully!`);
       setSelectedTest(null);
       setSelectedPriority(1);
       setRadiologistNotes("");
+      setBasket([]);
       // Refresh list (covers both the existing consultation and a freshly-created one)
       qc.invalidateQueries({ queryKey: ["radiology-orders"] });
     } catch (err: unknown) {
@@ -102,7 +133,30 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
                 {selectedTest.testName} <Typography component="span" sx={{ color: "text.secondary" }}>· ₹{Number(selectedTest.price).toFixed(0)}</Typography>
               </Typography>
             )}
+            <Button onClick={addToBasket} disabled={!selectedTest} startIcon={<AddRounded />}
+              sx={{ textTransform: "none", ml: "auto", color: DOCTOR_BLUE }}>
+              Add another
+            </Button>
           </Box>
+
+          {basket.length > 0 && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+              {basket.map((s, idx) => (
+                <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 1, px: 1.5, py: 1, borderRadius: 1.5, bgcolor: "action.hover" }}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{s.scanType}</Typography>
+                    {s.radiologistNotes && (
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{s.radiologistNotes}</Typography>
+                    )}
+                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: "text.secondary" }}>₹{(s.price || 0).toFixed(0)}</Typography>
+                  <IconButton size="small" onClick={() => removeFromBasket(idx)} aria-label={`Remove ${s.scanType}`}>
+                    <DeleteRounded fontSize="small" />
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
+          )}
           <TextField
             select
             fullWidth
@@ -126,15 +180,20 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
           />
         </Box>
         
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-          <Button 
-            variant="contained" 
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 2, mt: 2 }}>
+          {effectiveScans.length > 0 && (
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              {effectiveScans.length} scan{effectiveScans.length === 1 ? "" : "s"} · <Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>₹{estTotal.toFixed(0)}</Box>
+            </Typography>
+          )}
+          <Button
+            variant="contained"
             startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             sx={{ bgcolor: DOCTOR_BLUE }}
             onClick={handleSubmit}
-            disabled={saving || !selectedTest}
+            disabled={saving || effectiveScans.length === 0}
           >
-            Submit Radiology Order
+            Submit Radiology Order{effectiveScans.length > 1 ? "s" : ""}
           </Button>
         </Box>
       </Paper>
@@ -183,7 +242,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
                     <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "flex", alignItems: "center", gap: 0.5 }}>
                       <DescriptionRounded fontSize="inherit" /> Report
                     </Typography>
-                    {order.reports.map((r: any, rIdx: number) => (
+                    {order.reports.map((r: RadiologyReportRow, rIdx: number) => (
                       <Box key={rIdx} sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                         {r.findings && (
                           <Typography variant="body2"><strong>Findings:</strong> {r.findings}</Typography>
