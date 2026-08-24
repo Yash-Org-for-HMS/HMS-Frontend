@@ -1,4 +1,9 @@
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import type { ReactNode } from "react";
+import type {
+  HospitalOverviewData, OverviewBranch, OverviewUser, SubscriptionInvoiceRow,
+  HospitalTrialRow, PlanRow,
+} from "./hospitalOverview.types";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -60,7 +65,7 @@ import { formatINR, formatDate } from "@/utils/format";
 
 const ACCENT = BRAND.action;
 
-const InfoRow = ({ label, value }: { label: string; value: any }) => (
+const InfoRow = ({ label, value }: { label: string; value: ReactNode }) => (
   <Grid size={{ xs: 12, sm: 6 }}>
     <Typography variant="caption" sx={{ color: "text.secondary" }}>{label}</Typography>
     <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 500, wordBreak: "break-word" }}>
@@ -69,13 +74,13 @@ const InfoRow = ({ label, value }: { label: string; value: any }) => (
   </Grid>
 );
 
-const SectionTitle = ({ children }: { children: any }) => (
+const SectionTitle = ({ children }: { children: ReactNode }) => (
   <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, mt: 1, mb: 1.5 }}>
     {children}
   </Typography>
 );
 
-const Panel = ({ value, index, children }: { value: number; index: number; children: any }) =>
+const Panel = ({ value, index, children }: { value: number; index: number; children: ReactNode }) =>
   value === index ? <Box sx={{ pt: 3 }}>{children}</Box> : null;
 
 const cardSx = { p: { xs: 2.5, md: 4 }, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider" };
@@ -90,7 +95,7 @@ export default function HospitalOverview() {
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const toast = useToast();
 
-  const { data, isLoading: loading, isError, error, refetch } = useQuery<any>({
+  const { data, isLoading: loading, isError, error, refetch } = useQuery<HospitalOverviewData>({
     queryKey: ["hospital-overview", id],
     queryFn: async () => (await axiosInstance.get(`/hospitals/${id}/overview`)).data.data,
     enabled: !!id,
@@ -104,7 +109,7 @@ export default function HospitalOverview() {
     },
   });
 
-  const { data: plans = [] } = useQuery<any[]>({
+  const { data: plans = [] } = useQuery<PlanRow[]>({
     queryKey: ["plans", "change-plan-options"],
     queryFn: async () => (await axiosInstance.get("/plans", { params: { limit: 100 } })).data.data,
     enabled: changePlanOpen,
@@ -112,7 +117,7 @@ export default function HospitalOverview() {
 
   const changePlan = useMutation({
     mutationFn: async (newPlanId: string) => (await axiosInstance.post(`/hospitals/${id}/change-plan`, { newPlanId })).data.data,
-    onSuccess: (res: any) => {
+    onSuccess: (res: { message?: string } | null) => {
       toast.success(res?.message || "Plan updated");
       setChangePlanOpen(false);
       setSelectedPlanId("");
@@ -133,9 +138,9 @@ export default function HospitalOverview() {
   }
 
   const onboarding = data.onboarding?.[0];
-  const activeTrial = data.lead?.trials?.find((t: any) => t.trialStatus === "active");
-  const trials: any[] = data.lead?.trials ?? [];
-  const users: any[] = data.users ?? [];
+  const activeTrial = data.lead?.trials?.find((t) => t.trialStatus === "active");
+  const trials: HospitalTrialRow[] = data.lead?.trials ?? [];
+  const users: OverviewUser[] = data.users ?? [];
   const activePlan = data.branches?.[0]?.subscriptionPlan?.planName || "No plan assigned";
   const billing = data.billing;
   const quotas = data.quotas;
@@ -319,7 +324,7 @@ export default function HospitalOverview() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {data.branches.map((b: any) => (
+                  {data.branches.map((b: OverviewBranch) => (
                     <TableRow key={b.branchId} hover>
                       <TableCell sx={{ fontFamily: "monospace", fontWeight: 600 }}>{b.branchCode}</TableCell>
                       <TableCell>{b.branchName}</TableCell>
@@ -349,7 +354,7 @@ export default function HospitalOverview() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {users.map((u: any) => (
+                  {users.map((u) => (
                     <TableRow key={u.userId} hover>
                       <TableCell sx={{ fontWeight: 500 }}>{[u.firstName, u.lastName].filter(Boolean).join(" ") || "—"}</TableCell>
                       <TableCell sx={{ color: "text.secondary" }}>{u.email}</TableCell>
@@ -387,7 +392,7 @@ export default function HospitalOverview() {
               <InfoRow label="MRR (this tenant)" value={formatINR(billing.mrr)} />
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>Outstanding</Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600, color: billing.outstanding > 0 ? SEMANTIC.danger : SEMANTIC.success }}>
+                <Typography variant="body1" sx={{ fontWeight: 600, color: Number(billing.outstanding) > 0 ? SEMANTIC.danger : SEMANTIC.success }}>
                   {formatINR(billing.outstanding)}
                 </Typography>
               </Grid>
@@ -406,7 +411,7 @@ export default function HospitalOverview() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {billing.invoices.map((inv: any) => (
+                    {billing.invoices.map((inv: SubscriptionInvoiceRow) => (
                       <TableRow key={inv.subscriptionInvoiceId} hover>
                         <TableCell sx={{ fontFamily: "monospace", fontWeight: 600 }}>{inv.invoiceNumber}</TableCell>
                         <TableCell sx={{ color: "text.secondary" }}>{formatDate(inv.periodStart)} – {formatDate(inv.periodEnd)}</TableCell>
@@ -434,7 +439,7 @@ export default function HospitalOverview() {
         <Paper sx={{ ...cardSx, mb: 3 }}>
           <SectionTitle>Plans by branch</SectionTitle>
           <Grid container spacing={2}>
-            {data.branches?.length ? data.branches.map((b: any) => (
+            {data.branches?.length ? data.branches.map((b: OverviewBranch) => (
               <Grid size={{ xs: 12, sm: 6 }} key={b.branchId}>
                 <Box sx={{ p: 2, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
                   <Typography variant="body2" fontWeight={700}>{b.branchName}</Typography>
@@ -509,7 +514,7 @@ export default function HospitalOverview() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {trials.map((t: any) => (
+                  {trials.map((t) => (
                     <TableRow key={t.hospitalTrialId} hover>
                       <TableCell>{formatDate(t.trialStartDate)}</TableCell>
                       <TableCell>{formatDate(t.trialEndDate)}</TableCell>
@@ -535,7 +540,7 @@ export default function HospitalOverview() {
             {plans.length === 0 ? (
               <MenuItem value="" disabled>Loading plans…</MenuItem>
             ) : (
-              plans.map((p: any) => (
+              plans.map((p) => (
                 <MenuItem key={p.planId} value={p.planId} disabled={p.planId === billing?.currentPlanId}>
                   {p.planName} — ₹{billing?.cycle === "ANNUAL" ? `${p.annualPrice}/yr` : `${p.monthlyPrice}/mo`}
                   {p.planId === billing?.currentPlanId ? " (current)" : ""}
