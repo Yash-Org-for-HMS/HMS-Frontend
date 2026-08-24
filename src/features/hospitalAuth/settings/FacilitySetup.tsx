@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
-import { ACCENTS, SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import type {
+  IpdStructure, WardNode, RoomNode, BedNode, RoomClass, FacilityKind, FacilityEditTarget, SetupForm,
+  RoomClassRent, RoomClassRentsResponse,
+} from "./facility.types";
+import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -38,19 +42,19 @@ const Tile = ({ label, value, color }: { label: string; value: number; color: st
 
 export default function FacilitySetup() {
   const [setupAnchor, setSetupAnchor] = useState<null | HTMLElement>(null);
-  const [dialog, setDialog] = useState<null | { kind: "ward" | "room" | "bed"; edit?: any }>(null);
+  const [dialog, setDialog] = useState<null | { kind: FacilityKind; edit?: FacilityEditTarget }>(null);
   const [rentOpen, setRentOpen] = useState(false);
 
-  const { data, isLoading, isError, error, refetch } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery<IpdStructure>({
     queryKey: ["ipd-structure"],
     queryFn: async () => (await axiosInstance.get("/ipd/structure")).data.data,
   });
   const summary = data?.summary;
-  const wards: any[] = data?.wards || [];
+  const wards: WardNode[] = data?.wards || [];
 
   // Active room classes (Schedule of Charges) — pickable per bed to drive room-wise
   // pricing of charges on the discharge bill.
-  const { data: roomClasses = [] } = useQuery<any[]>({
+  const { data: roomClasses = [] } = useQuery<RoomClass[]>({
     queryKey: ["soc-room-classes"],
     queryFn: async () => (await axiosInstance.get("/hospital/soc/room-classes")).data.data,
   });
@@ -105,7 +109,7 @@ export default function FacilitySetup() {
                     </IconButton>
                   </Tooltip>
                 </Box>
-                {w.rooms.length === 0 ? <Typography variant="body2" sx={{ color: "text.secondary", py: 1 }}>No rooms</Typography> : w.rooms.map((r: any) => (
+                {w.rooms.length === 0 ? <Typography variant="body2" sx={{ color: "text.secondary", py: 1 }}>No rooms</Typography> : w.rooms.map((r: RoomNode) => (
                   <Box key={r.roomId} sx={{ mb: 1.5 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                       <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>Room {r.roomNumber} · {r.roomType}</Typography>
@@ -116,7 +120,7 @@ export default function FacilitySetup() {
                       </Tooltip>
                     </Box>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.5 }}>
-                      {r.beds.length === 0 ? <Typography variant="caption" sx={{ color: "text.disabled" }}>No beds</Typography> : r.beds.map((b: any) => {
+                      {r.beds.length === 0 ? <Typography variant="caption" sx={{ color: "text.disabled" }}>No beds</Typography> : r.beds.map((b: BedNode) => {
                         const color = STATUS_COLOR[b.status] || NEUTRAL.muted;
                         return (
                           <Tooltip key={b.bedId} title={b.occupant ? `${b.occupant.patientName} (${b.occupant.uhid}) — edit details` : `${b.status} — click to edit details`}>
@@ -172,11 +176,11 @@ function RoomRentDialog({ onClose, onDone }: { onClose: () => void; onDone: () =
   const [newRent, setNewRent] = useState("");
   const [adding, setAdding] = useState(false);
 
-  const { data, isLoading, refetch } = useQuery<any>({
+  const { data, isLoading, refetch } = useQuery<RoomClassRentsResponse>({
     queryKey: ["room-class-rents"],
     queryFn: async () => (await axiosInstance.get("/ipd/room-class-rents")).data.data,
   });
-  const classes: any[] = data?.rents || [];
+  const classes: RoomClassRent[] = data?.rents || [];
   const missingTiers = COMMON_TIERS.filter(
     (t) => !classes.some((c) => String(c.name).toLowerCase() === t.toLowerCase()),
   );
@@ -322,11 +326,11 @@ function RoomRentDialog({ onClose, onDone }: { onClose: () => void; onDone: () =
   );
 }
 
-function SetupDialog({ kind, edit, wards, roomClasses, onClose, onDone }: { kind: "ward" | "room" | "bed"; edit?: any; wards: any[]; roomClasses: any[]; onClose: () => void; onDone: () => void }) {
+function SetupDialog({ kind, edit, wards, roomClasses, onClose, onDone }: { kind: FacilityKind; edit?: FacilityEditTarget; wards: WardNode[]; roomClasses: RoomClass[]; onClose: () => void; onDone: () => void }) {
   const toast = useToast();
   const isEdit = Boolean(edit?.wardId || edit?.roomId || edit?.bedId);
   const [saving, setSaving] = useState(false);
-  const [f, setF] = useState<any>(() => {
+  const [f, setF] = useState<SetupForm>(() => {
     const base = { wardType: "general", roomType: "general", bedType: "regular", floorNumber: "1", roomClassId: "" };
     if (!edit) return base;
     return {
@@ -345,17 +349,17 @@ function SetupDialog({ kind, edit, wards, roomClasses, onClose, onDone }: { kind
       roomClassId: edit.roomClassId ?? "",
     };
   });
-  const set = (k: string, v: any) => setF((p: any) => ({ ...p, [k]: v }));
+  const set = <K extends keyof SetupForm>(k: K, v: SetupForm[K]) => setF((prev) => ({ ...prev, [k]: v }));
 
   // SOC-driven daily rent per room class — used to auto-fill the bed's daily charge.
-  const { data: rentInfo } = useQuery<any>({
+  const { data: rentInfo } = useQuery<RoomClassRentsResponse>({
     queryKey: ["room-class-rents"],
     queryFn: async () => (await axiosInstance.get("/ipd/room-class-rents")).data.data,
     enabled: kind === "bed",
   });
   const rentFor = (rcId: string): number | null => {
     if (!rentInfo?.configured) return null;
-    const row = (rentInfo.rents || []).find((r: any) => r.roomClassId === rcId);
+    const row = (rentInfo.rents || []).find((r) => r.roomClassId === rcId);
     return row && row.rent != null ? Number(row.rent) : (rentInfo.baseRent ?? null);
   };
   // Picking a room class fills the daily rent from SOC (still editable afterwards).
@@ -414,14 +418,14 @@ function SetupDialog({ kind, edit, wards, roomClasses, onClose, onDone }: { kind
           </>)}
           {kind === "bed" && (<>
             <TextField select fullWidth required label="Ward" value={f.wardId || ""} disabled={editingBed} onChange={(e) => { set("wardId", e.target.value); set("roomId", ""); }}>{wards.map((w) => <MenuItem key={w.wardId} value={w.wardId}>{w.wardName}</MenuItem>)}</TextField>
-            <TextField select fullWidth required label="Room" value={f.roomId || ""} disabled={editingBed || !f.wardId} onChange={(e) => set("roomId", e.target.value)} helperText={!editingBed && f.wardId && rooms.length === 0 ? "Add a room to this ward first" : undefined}>{rooms.map((r: any) => <MenuItem key={r.roomId} value={r.roomId}>Room {r.roomNumber}</MenuItem>)}</TextField>
+            <TextField select fullWidth required label="Room" value={f.roomId || ""} disabled={editingBed || !f.wardId} onChange={(e) => set("roomId", e.target.value)} helperText={!editingBed && f.wardId && rooms.length === 0 ? "Add a room to this ward first" : undefined}>{rooms.map((r) => <MenuItem key={r.roomId} value={r.roomId}>Room {r.roomNumber}</MenuItem>)}</TextField>
             <TextField fullWidth required label="Bed number" value={f.bedNumber || ""} onChange={(e) => set("bedNumber", e.target.value)} />
             <TextField select fullWidth label="Bed type" value={f.bedType} onChange={(e) => set("bedType", e.target.value)}>{BED_TYPES.map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField>
             <TextField select fullWidth label="Room class (pricing)" value={f.roomClassId || ""} onChange={(e) => pickClass(e.target.value)}
               helperText="Sets the price tier for this bed's charges — and fills the daily rent from the Schedule of Charges.">
               <MenuItem value=""><em>None (base price)</em></MenuItem>
               {/* Active classes, plus the bed's current class even if later deactivated. */}
-              {roomClasses.filter((rc: any) => rc.isActive || rc.roomClassId === f.roomClassId).map((rc: any) => <MenuItem key={rc.roomClassId} value={rc.roomClassId}>{rc.name}{rc.isActive ? "" : " (inactive)"}</MenuItem>)}
+              {roomClasses.filter((rc) => rc.isActive || rc.roomClassId === f.roomClassId).map((rc) => <MenuItem key={rc.roomClassId} value={rc.roomClassId}>{rc.name}{rc.isActive ? "" : " (inactive)"}</MenuItem>)}
             </TextField>
             <TextField fullWidth type="number" label="Daily charge (₹)" value={f.dailyCharge || ""} onChange={(e) => set("dailyCharge", e.target.value)}
               helperText={rentInfo?.configured
