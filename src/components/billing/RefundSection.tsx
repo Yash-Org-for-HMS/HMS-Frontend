@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Box, Button, Chip, TextField, MenuItem, Typography, Radio, RadioGroup, FormControlLabel } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
 import { getApiErrorMessage } from "@/utils/apiError";
@@ -10,6 +11,15 @@ import { formatINR } from "@/utils/format";
 import RefundReceiptDialog from "@/components/billing/RefundReceiptDialog";
 import { SEMANTIC } from "@/styles/accents";
 import type { Invoice, Refund } from "@/types";
+
+/** A medicine from this bill that can still go back on the shelf. */
+interface ReturnableMedicine {
+  medicineId: string;
+  medicineName: string;
+  dispensed: number;
+  returned: number;
+  returnable: number;
+}
 
 /**
  * Refunding money already collected on an invoice: what has been returned, and
@@ -44,6 +54,23 @@ export default function RefundSection({
   const [voidInvoice, setVoidInvoice] = useState(false);
   const [busy, setBusy] = useState(false);
   const [receiptFor, setReceiptFor] = useState<string | null>(null);
+  /** Units of each medicine physically handed back, keyed by medicineId. */
+  const [returning, setReturning] = useState<Record<string, string>>({});
+
+  // Medicines from this bill that can still go back on the shelf. Server-derived
+  // from the stock ledger (dispensed minus already returned), so a second refund
+  // on the same bill offers only what is genuinely left rather than the original
+  // quantity again.
+  const { data: returnable = [] } = useQuery<ReturnableMedicine[]>({
+    queryKey: ["returnable-medicines", invoice?.invoiceId],
+    queryFn: async () =>
+      (await axiosInstance.get(`/reception/billing/invoices/${invoice!.invoiceId}/returnable-medicines`)).data.data,
+    enabled: !!invoice?.invoiceId && !readOnly,
+    // A returned strip changes this, and so does another desk refunding the
+    // same bill; stale numbers here would let the counter over-return.
+    staleTime: 0,
+  });
+  const canReturn = returnable.filter((r) => r.returnable > 0);
 
   const refunds = invoice?.Refund ?? [];
   const refundable = refundablePayments(invoice);
@@ -100,11 +127,17 @@ export default function RefundSection({
         paymentMethodId: methodId === "" ? null : Number(methodId),
         voidInvoice: canVoid && voidInvoice,
         referenceNumber: reference.trim() || null,
+        // Only what was actually handed back. Money can come back without goods
+        // (a billing error), so this is never inferred from the amount.
+        returnedItems: canReturn
+          .map((r) => ({ medicineId: r.medicineId, quantity: Number(returning[r.medicineId] || 0) }))
+          .filter((r) => r.quantity > 0),
       });
       // The server's message differs when the refund only got RAISED — saying
       // "processed" for one awaiting approval would tell the desk the patient
       // had been paid when they have not.
       toast.success(res.data?.message || "Refund processed");
+      setReturning({});
       reset();
       await onChanged?.();
     } catch (err) {
@@ -202,6 +235,41 @@ export default function RefundSection({
             helperText={`Max refundable: ${selectedMax.toFixed(2)} INR`}
             sx={{ mb: 2 }}
           />
+
+          {canReturn.length > 0 && (
+            <Box sx={{ mb: 2, p: 1.5, borderRadius: 1.5, bgcolor: "action.hover" }}>
+              <Typography variant="caption" sx={{ display: "block", fontWeight: 700, color: "text.primary", mb: 0.25 }}>
+                Medicines handed back
+              </Typography>
+              <Typography variant="caption" sx={{ display: "block", color: "text.secondary", mb: 1 }}>
+                Only what physically returns to the shelf. Leave at zero if the money is
+                going back but the medicine is not — a broken seal cannot be resold.
+              </Typography>
+              {canReturn.map((r) => {
+                const typed = Number(returning[r.medicineId] || 0);
+                const over = typed > r.returnable;
+                return (
+                  <Box key={r.medicineId} sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 0.5 }}>
+                    <Typography variant="body2" sx={{ flex: 1, minWidth: 0, fontWeight: 600 }} noWrap>
+                      {r.medicineName}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary", whiteSpace: "nowrap" }}>
+                      {r.returned > 0
+                        ? `${r.returnable} of ${r.dispensed} left`
+                        : `${r.dispensed} dispensed`}
+                    </Typography>
+                    <TextField
+                      size="small" type="number" label="Back" value={returning[r.medicineId] ?? ""}
+                      onChange={(e) => setReturning((prev) => ({ ...prev, [r.medicineId]: e.target.value }))}
+                      inputProps={{ min: 0, max: r.returnable, step: 1 }}
+                      error={over}
+                      sx={{ width: 96 }}
+                    />
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
 
           {canVoid && (
             <Box sx={{ mb: 2, p: 1.5, borderRadius: 1.5, bgcolor: "action.hover" }}>
