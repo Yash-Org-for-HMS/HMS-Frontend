@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import {
   AssignmentTurnedInRounded, AddRounded, GestureRounded, UploadFileRounded,
-  OpenInNewRounded, CloseRounded, DoNotDisturbRounded,
+  OpenInNewRounded, CloseRounded, DoNotDisturbRounded, PrintRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import HeartbeatLoader from "../HeartbeatLoader";
@@ -92,6 +92,14 @@ export default function ConsentFormsSection({ patientId, patientName, readOnly =
                     )}
                     {f.signatureUrl && (
                       <Button size="small" startIcon={<GestureRounded />} onClick={() => window.open(assetUrl(f.signatureUrl), "_blank")} sx={{ textTransform: "none", color: ACCENT }}>Signature</Button>
+                    )}
+                    {/* Available before signing too: the unsigned copy is what
+                        you hand a patient to sign on paper, and it prints
+                        marked as unsigned so the two can't be confused. */}
+                    {f.status !== "CANCELLED" && (
+                      <Button size="small" startIcon={<PrintRounded />}
+                        onClick={() => window.open(`/reception/consent-forms/${f.consentFormId}/print`, "_blank")}
+                        sx={{ textTransform: "none", color: ACCENT }}>Print</Button>
                     )}
                     {f.documentUrl && (
                       <Button size="small" startIcon={<OpenInNewRounded />} onClick={() => window.open(assetUrl(f.documentUrl), "_blank")} sx={{ textTransform: "none", color: ACCENT }}>File</Button>

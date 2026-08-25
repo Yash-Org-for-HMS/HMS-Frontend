@@ -60,7 +60,8 @@ export default function FormBuilder() {
   const toast = useToast();
   const [formData, setFormData] = useState({
     formName: "",
-    formType: "Patient Registration",
+    // The category the app actually offers somewhere — see the API's list.
+    formType: "Consent Form",
     description: "",
   });
 

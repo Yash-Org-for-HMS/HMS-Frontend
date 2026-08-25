@@ -127,6 +127,7 @@ const RadiologyOrdersQueue = lazy(() => import("@/features/lab/RadiologyOrdersQu
 const LabTestCatalog = lazy(() => import("@/features/lab/LabTestCatalog"));
 const PrintLabReport = lazy(() => import("@/features/lab/PrintLabReport"));
 const PrintIpBill = lazy(() => import("@/features/billing/PrintIpBill"));
+const PrintConsentForm = lazy(() => import("@/features/reception/PrintConsentForm"));
 const RadiologyCatalog = lazy(() => import("@/features/lab/RadiologyCatalog"));
 const LabReports = lazy(() => import("@/features/lab/LabReports"));
 const LabBilling = lazy(() => import("@/features/lab/LabBilling"));
@@ -330,8 +331,9 @@ function App() {
             <Route path="/reception/claims/:id/edit" element={el(ClaimForm)} />
             <Route path="/reception/notifications" element={el(NotificationsLog)} />
           </Route>
-          {/* Full-page printable IP bill (rendered outside the layout shell). */}
+          {/* Full-page printables, rendered outside the layout shell. */}
           <Route path="/reception/billing/invoices/:invoiceId/ip-bill/print" element={el(PrintIpBill)} />
+          <Route path="/reception/consent-forms/:id/print" element={el(PrintConsentForm)} />
         </Route>
         {/* ── Nurse Panel Routes ────────────────────────────────────── */}
         <Route element={<HospitalProtectedRoute panel="nurse" />}>
