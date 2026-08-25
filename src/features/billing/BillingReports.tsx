@@ -241,14 +241,46 @@ export function ServiceWise() {
                 and nothing on either card explained why. */}
             <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Total line value" value={inr(data.totals.total)} sub="Before invoice discount and tax" /></Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Services" value={String(data.totals.services)} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.warning} label="Line discount" value={inr(data.totals.discount ?? 0)} sub="Given away on the lines themselves" /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.info} label="Line tax" value={inr(data.totals.tax ?? 0)} /></Grid>
           </Grid>
+
+          {/* Which part of the hospital the money comes from. The rows below
+              answer "which service"; only the category answers that, and it
+              was on every line item without ever being grouped. */}
+          {(data.byCategory ?? []).length > 0 && (
+            <Box sx={{ mb: 2.5 }}>
+              <ReportTable
+                title="Revenue mix by category"
+                filename={`service_wise_by_category_${range.from}_${range.to}`}
+                maxHeight={320}
+                columns={[
+                  { key: "category", label: "Category" },
+                  { key: "quantity", label: "Qty", align: "right" },
+                  { key: "invoices", label: "Bills", align: "right" },
+                  money("amount", "Amount"),
+                  { key: "sharePct", label: "Share", align: "right", format: (v) => `${Number(v).toFixed(1)}%`, value: (r) => Number((r as { sharePct?: number }).sharePct) },
+                ]}
+                rows={data.byCategory ?? []}
+              />
+            </Box>
+          )}
+
           <ReportTable
             title="Service-wise revenue"
             filename={`service_wise_${range.from}_${range.to}`}
             columns={[
               { key: "service", label: "Service" },
+              { key: "category", label: "Category" },
               { key: "quantity", label: "Qty", align: "right" },
+              // One large line and fifty small ones are the same revenue and a
+              // very different business, so the bill count earns its column.
+              { key: "invoices", label: "Bills", align: "right" },
+              money("avgPrice", "Avg price"),
+              money("discount", "Discount"),
+              money("tax", "Tax"),
               money("amount", "Amount"),
+              { key: "sharePct", label: "Share", align: "right", format: (v) => `${Number(v).toFixed(1)}%`, value: (r) => Number((r as { sharePct?: number }).sharePct) },
             ]}
             rows={rows}
           />

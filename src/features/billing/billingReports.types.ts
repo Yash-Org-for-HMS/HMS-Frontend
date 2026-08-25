@@ -88,13 +88,32 @@ export interface UnreturnedAdvancesResponse extends Truncatable {
 
 export interface ServiceWiseRow {
   service: string;
+  /** CONSULTATION / PHARMACY / LAB / ROOM… "Uncategorised" when the line has none. */
+  category: string;
   quantity: number;
+  /** Distinct bills the service appeared on, not units sold. */
+  invoices: number;
+  avgPrice: Money;
+  gross: Money;
+  discount: Money;
+  tax: Money;
   amount: Money;
+  /** Percent of the window's total line value, one decimal place. */
+  sharePct: number;
+}
+
+export interface ServiceCategoryRow {
+  category: string;
+  quantity: number;
+  invoices: number;
+  amount: Money;
+  sharePct: number;
 }
 
 /** Not capped: the service list is bounded by the charge catalog. */
 export interface ServiceWiseResponse {
-  totals: { services: number; total: Money };
+  totals: { services: number; total: Money; gross?: Money; discount?: Money; tax?: Money };
+  byCategory?: ServiceCategoryRow[];
   rows: ServiceWiseRow[];
 }
 
