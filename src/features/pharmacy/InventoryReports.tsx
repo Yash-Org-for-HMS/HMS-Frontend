@@ -38,8 +38,12 @@ export function StockValuation() {
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<Inventory2Rounded />} accent={SEMANTIC.success} label="Retail value" value={inr(data.totals.retailValue)} sub={`as of ${data.asOf}`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.info} label="Est. cost value" value={inr(data.totals.costValue)} sub="from latest purchase price" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent="#8b5cf6" label="Est. margin" value={inr(data.totals.estMargin)} /></Grid>
+            {/* Cost and margin cover only the SKUs with a supplier price on
+                record. Saying so on the tile stops a partial figure being read
+                as a whole one - it used to be arithmetic on a fixed 70%-of-price
+                assumption for every medicine. */}
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.info} label="Cost value" value={inr(data.totals.costValue)} sub={costCoverage(data.totals)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent="#8b5cf6" label="Margin on costed stock" value={inr(data.totals.estMargin)} sub={data.totals.skusWithCost ? `on ${inr(data.totals.costedRetailValue)} retail` : "no costs on record"} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CategoryRounded />} accent={SEMANTIC.warning} label="SKUs / units" value={`${data.totals.skus} / ${data.totals.units}`} /></Grid>
           </Grid>
           <ReportTable
@@ -50,8 +54,8 @@ export function StockValuation() {
               num("quantity", "Qty"),
               money("sellingPrice", "Selling price"),
               money("retailValue", "Retail value"),
-              money("unitCost", "Est. unit cost"),
-              money("costValue", "Est. cost value"),
+              money("unitCost", "Unit cost"),
+              money("costValue", "Cost value"),
             ]}
             rows={rows}
             truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
@@ -60,6 +64,21 @@ export function StockValuation() {
       )}
     </Box>
   );
+}
+
+/**
+ * What the cost figure actually covers.
+ *
+ * A medicine only has a cost once a supplier price has been confirmed on a
+ * receipt; until then it is excluded rather than estimated, so the tile has to
+ * say how much of the shelf it speaks for.
+ */
+function costCoverage(t: { skusWithCost?: number; skusWithoutCost?: number }): string {
+  const withCost = t.skusWithCost ?? 0;
+  const without = t.skusWithoutCost ?? 0;
+  if (!without) return "every SKU has a supplier price";
+  if (!withCost) return "no supplier prices recorded yet";
+  return `${withCost} of ${withCost + without} SKUs priced`;
 }
 
 // ── Expiry & Expiry-Loss (snapshot) ───────────────────────────────────────────

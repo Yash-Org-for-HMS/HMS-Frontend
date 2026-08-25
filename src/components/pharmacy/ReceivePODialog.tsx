@@ -37,6 +37,10 @@ export default function ReceivePODialog({ po, onClose, suppliers, getMedicineNam
           receivedQuantity: item.orderedQuantity - item.receivedQuantity,
           batchNumber: "",
           expiryDate: "",
+          // Pre-filled from the order, but only counts as a real cost once it is
+          // submitted here: a PO raised automatically priced itself at a fraction
+          // of the selling price purely to have a number on the line.
+          unitPrice: item.unitPrice != null ? String(item.unitPrice) : "",
         }))
     );
   }, [po]);
@@ -64,6 +68,9 @@ export default function ReceivePODialog({ po, onClose, suppliers, getMedicineNam
           receivedQuantity: item.receivedQuantity,
           batchNumber: item.batchNumber,
           expiryDate: item.expiryDate,
+          // Blank means "invoice not here yet" — the server then leaves the
+          // line's cost unconfirmed rather than banking a guess.
+          unitPrice: item.unitPrice === "" ? undefined : Number(item.unitPrice),
           supplierId: po.supplierId || supplierId,
         })),
       });
@@ -107,7 +114,7 @@ export default function ReceivePODialog({ po, onClose, suppliers, getMedicineNam
           </TextField>
         )}
         {items.map((item, idx) => (
-          <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 2, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+          <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 2, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
             <Box>
               <Typography variant="subtitle2" color="primary">{getMedicineName(item.medicineId)}</Typography>
               <Typography variant="caption" color="text.secondary">Ordered: {item.orderedQuantity}</Typography>
@@ -127,6 +134,17 @@ export default function ReceivePODialog({ po, onClose, suppliers, getMedicineNam
               newItems[idx].expiryDate = e.target.value;
               setItems(newItems);
             }} />
+            {/* The price actually invoiced. This is the only moment a cost
+                becomes trustworthy, so it is asked for here rather than
+                inherited silently from whatever the PO was raised at. */}
+            <TextField type="number" label="Cost / unit" size="small" value={item.unitPrice}
+              helperText="Leave blank if the invoice isn't here"
+              inputProps={{ min: 0, step: "0.01" }}
+              onChange={e => {
+                const newItems = [...items];
+                newItems[idx].unitPrice = e.target.value;
+                setItems(newItems);
+              }} />
           </Box>
         ))}
       </DialogContent>
