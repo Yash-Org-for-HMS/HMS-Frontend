@@ -11,7 +11,7 @@ import { alpha } from "@mui/material/styles";
 import {
   SearchRounded, MedicationRounded, MedicalServicesRounded, DescriptionRounded, VaccinesRounded,
   ScienceRounded, CameraAltRounded,
-  MonitorHeartRounded, WaterDropRounded, SwapHorizRounded, AssignmentRounded,
+  MonitorHeartRounded, WaterDropRounded, SwapHorizRounded, AssignmentRounded, Inventory2Rounded,
   HotelRounded, ViewModuleRounded, ViewListRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -30,6 +30,7 @@ import IpdLabOrdersDialog from "@/components/ipd/IpdLabOrdersDialog";
 import SurgeryDialog from "@/components/ipd/SurgeryDialog";
 import IpdMedicinesDialog from "@/components/ipd/IpdMedicinesDialog";
 import IpdRadiologyOrdersDialog from "@/components/ipd/IpdRadiologyOrdersDialog";
+import AdmissionChargesDialog from "@/components/ipd/AdmissionChargesDialog";
 import { apiErrorText } from "@/utils/apiError";
 
 /**
@@ -61,6 +62,7 @@ export default function NurseWard() {
   const [radiologyFor, setRadiologyFor] = useState<AdmissionRow | null>(null);
   const [surgeryFor, setSurgeryFor] = useState<AdmissionRow | null>(null);
   const [assignMedsFor, setAssignMedsFor] = useState<AdmissionRow | null>(null);
+  const [chargesFor, setChargesFor] = useState<AdmissionRow | null>(null);
   const navigate = useNavigate();
 
   const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<AdmissionRow[]>({
@@ -140,6 +142,9 @@ export default function NurseWard() {
         // discharge bill rather than raising a separate OPD invoice.
         { key: "labs", label: "Investigations", icon: <ScienceRounded fontSize="small" />, open: setLabsFor, tone: BRAND.action },
         { key: "imaging", label: "Imaging", icon: <CameraAltRounded fontSize="small" />, open: setRadiologyFor, tone: BRAND.action },
+        // Consumables reach the bill only if the ward records them — nothing
+        // else in the system knows a dressing pack was opened.
+        { key: "charges", label: "Consumables", icon: <Inventory2Rounded fontSize="small" />, open: setChargesFor, tone: BRAND.action },
       ],
     },
     {
@@ -374,6 +379,7 @@ export default function NurseWard() {
       {radiologyFor && <IpdRadiologyOrdersDialog open admission={radiologyFor} onClose={() => setRadiologyFor(null)} />}
       {surgeryFor && <SurgeryDialog open admission={surgeryFor} onClose={() => setSurgeryFor(null)} />}
       {assignMedsFor && <IpdMedicinesDialog open admission={assignMedsFor} onClose={() => setAssignMedsFor(null)} />}
+      {chargesFor && <AdmissionChargesDialog open admission={chargesFor} onClose={() => setChargesFor(null)} />}
     </Box>
   );
 }

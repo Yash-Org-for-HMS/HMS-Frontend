@@ -25,8 +25,10 @@ export type PickedCharge = { chargeItemId: string; itemName: string; price: numb
 // When `roomClassId` is given, the displayed/returned price reflects that room
 // class's matrix price (falling back to base); the server re-prices authoritatively.
 // `roomClassName` (optional) is shown so the operator knows which class the prices reflect.
-export default function SocChargePicker({ open, onClose, onPick, accent = "#6366f1", roomClassId, roomClassName }: {
+export default function SocChargePicker({ open, onClose, onPick, accent = "#6366f1", roomClassId, roomClassName, preferCategories }: {
   open: boolean; onClose: () => void; onPick: (c: PickedCharge) => void; accent?: string; roomClassId?: string | null; roomClassName?: string | null;
+  /** Category names to open on, best match first; falls back to the first category. */
+  preferCategories?: string[];
 }) {
   const [categoryId, setCategoryId] = useState("");
   const [search, setSearch] = useState("");
@@ -37,7 +39,18 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#6366
     enabled: open,
   });
   const activeCats = useMemo(() => categories.filter((c) => c.isActive), [categories]);
-  const effectiveCategoryId = categoryId || activeCats[0]?.chargeCategoryId || "";
+  // A caller that knows what it is looking for says so, rather than opening on
+  // whichever category happens to sort first — the ward wants consumables, not
+  // whatever the catalogue lists at the top.
+  const preferredId = useMemo(() => {
+    if (!preferCategories?.length) return "";
+    for (const want of preferCategories) {
+      const hit = activeCats.find((c) => (c.categoryName || "").toLowerCase().includes(want.toLowerCase()));
+      if (hit) return hit.chargeCategoryId;
+    }
+    return "";
+  }, [activeCats, preferCategories]);
+  const effectiveCategoryId = categoryId || preferredId || activeCats[0]?.chargeCategoryId || "";
 
   const { data: items = [], isLoading: itemsLoading } = useQuery<Item[]>({
     queryKey: ["soc-picker-items", effectiveCategoryId],
