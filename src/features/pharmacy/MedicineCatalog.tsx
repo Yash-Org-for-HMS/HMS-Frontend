@@ -38,7 +38,7 @@ export default function MedicineCatalog() {
   const confirm = useConfirm();
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
-  const { data: taxGaps } = useQuery<{ total: number; missingHsn: number }>({
+  const { data: taxGaps } = useQuery<{ total: number; missingHsn: number; missingCost: number }>({
     queryKey: ["pharmacy-tax-gaps"],
     queryFn: async () => (await axiosInstance.get("/pharmacy/medicines/tax-gaps")).data.data,
   });
@@ -54,6 +54,9 @@ export default function MedicineCatalog() {
   const [sellingPrice, setSellingPrice] = useState("");
   // Show only medicines that would bill without an HSN code.
   const [taxOnly, setTaxOnly] = useState(false);
+  // Show only medicines with no cost from any source.
+  const [costOnly, setCostOnly] = useState(false);
+  const [costPrice, setCostPrice] = useState("");
   const [gstPercent, setGstPercent] = useState("");
   const [hsnCode, setHsnCode] = useState("");
   const [minStockLevel, setMinStockLevel] = useState("10");
@@ -77,7 +80,7 @@ export default function MedicineCatalog() {
   useEffect(() => { setPage(1); }, [orderBy, order]);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["pharmacy-medicines", page, debouncedSearch, orderBy, order, taxOnly],
+    queryKey: ["pharmacy-medicines", page, debouncedSearch, orderBy, order, taxOnly, costOnly],
     queryFn: async () =>
       (await axiosInstance.get("/pharmacy/medicines", {
         params: {
@@ -85,6 +88,7 @@ export default function MedicineCatalog() {
           limit: ROWS_PER_PAGE,
           search: debouncedSearch || undefined,
           taxIncomplete: taxOnly || undefined,
+          costMissing: costOnly || undefined,
           sortBy: orderBy || undefined,
           sortOrder: order,
         },
@@ -103,6 +107,7 @@ export default function MedicineCatalog() {
     setSellingPrice("");
     setGstPercent("");
     setHsnCode("");
+    setCostPrice("");
     setMinStockLevel("10");
     setDefaultSupplierId("");
     setErrorMsg("");
@@ -118,6 +123,7 @@ export default function MedicineCatalog() {
     setSellingPrice(med.sellingPrice.toString());
     setGstPercent(med.gstPercent != null && Number(med.gstPercent) > 0 ? med.gstPercent.toString() : "");
     setHsnCode(med.hsnCode || "");
+    setCostPrice(med.costPrice != null ? String(med.costPrice) : "");
     setMinStockLevel(med.minStockLevel?.toString() || "10");
     setDefaultSupplierId(med.defaultSupplierId || "");
     setErrorMsg("");
@@ -161,6 +167,8 @@ export default function MedicineCatalog() {
         sellingPrice: parseFloat(sellingPrice),
         gstPercent: gstPercent === "" ? 0 : parseFloat(gstPercent),
         hsnCode: hsnCode.trim() || null,
+        // Blank clears it, which is how a wrong typed cost is withdrawn.
+        costPrice: costPrice.trim() === "" ? null : parseFloat(costPrice),
         minStockLevel: parseInt(minStockLevel) || 10,
         defaultSupplierId: defaultSupplierId || null
       };
@@ -237,17 +245,28 @@ export default function MedicineCatalog() {
         {/* Stated once, over the whole catalog. A medicine with no HSN still
             sells perfectly well — it just bills without a code on the line, and
             nothing anywhere said so. */}
-        {!!taxGaps?.missingHsn && (
-          <Alert
-            severity="warning"
-            sx={{ borderRadius: 0 }}
-            action={
-              <Button size="small" color="inherit" onClick={() => { setTaxOnly((v) => !v); setPage(1); }} sx={{ textTransform: "none", fontWeight: 700 }}>
-                {taxOnly ? "Show all" : "Show these"}
-              </Button>
-            }
-          >
-            {taxGaps.missingHsn} of {taxGaps.total} medicines have no HSN/SAC code — their lines print on the tax invoice without one.
+        {(!!taxGaps?.missingHsn || !!taxGaps?.missingCost) && (
+          <Alert severity="warning" sx={{ borderRadius: 0 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+              {!!taxGaps?.missingHsn && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                  <span>{taxGaps.missingHsn} of {taxGaps.total} have no HSN/SAC — those lines print on the tax invoice without one.</span>
+                  <Button size="small" color="inherit" onClick={() => { setTaxOnly((v) => !v); setCostOnly(false); setPage(1); }}
+                    sx={{ textTransform: "none", fontWeight: 700 }}>
+                    {taxOnly ? "Show all" : "Show these"}
+                  </Button>
+                </Box>
+              )}
+              {!!taxGaps?.missingCost && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                  <span>{taxGaps.missingCost} of {taxGaps.total} have no cost on record — stock valuation cannot speak for them.</span>
+                  <Button size="small" color="inherit" onClick={() => { setCostOnly((v) => !v); setTaxOnly(false); setPage(1); }}
+                    sx={{ textTransform: "none", fontWeight: 700 }}>
+                    {costOnly ? "Show all" : "Show these"}
+                  </Button>
+                </Box>
+              )}
+            </Box>
           </Alert>
         )}
         <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider', bgcolor: alpha(theme.palette.background.paper, 0.5) }}>
@@ -453,6 +472,19 @@ export default function MedicineCatalog() {
                 error={!!fieldErrors.gstPercent}
                 helperText={fieldErrors.gstPercent || "0 = zero-rated. Applied per medicine on the bill."}
               />
+              <TextField
+                label="Cost / unit (optional)"
+                type="number"
+                value={costPrice}
+                onChange={(e) => setCostPrice(e.target.value)}
+                fullWidth
+                variant="outlined"
+                inputProps={{ min: 0, step: "0.01" }}
+                helperText="Used to value stock until a supplier invoice supersedes it"
+              />
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
                 label="HSN/SAC"
                 value={hsnCode}

@@ -55,6 +55,7 @@ export function StockValuation() {
               money("sellingPrice", "Selling price"),
               money("retailValue", "Retail value"),
               money("unitCost", "Unit cost"),
+              { key: "costSource", label: "Cost from", format: (v) => (v === "invoiced" ? "Supplier invoice" : v === "entered" ? "Entered" : "—"), value: (r) => r.costSource ?? "" },
               money("costValue", "Cost value"),
             ]}
             rows={rows}
@@ -73,12 +74,16 @@ export function StockValuation() {
  * receipt; until then it is excluded rather than estimated, so the tile has to
  * say how much of the shelf it speaks for.
  */
-function costCoverage(t: { skusWithCost?: number; skusWithoutCost?: number }): string {
+function costCoverage(t: { skusWithCost?: number; skusWithoutCost?: number; skusCostInvoiced?: number; skusCostEntered?: number }): string {
   const withCost = t.skusWithCost ?? 0;
   const without = t.skusWithoutCost ?? 0;
-  if (!without) return "every SKU has a supplier price";
-  if (!withCost) return "no supplier prices recorded yet";
-  return `${withCost} of ${withCost + without} SKUs priced`;
+  const entered = t.skusCostEntered ?? 0;
+  if (!withCost) return "no costs recorded yet";
+  // A typed cost values stock perfectly well, but it is not what a supplier
+  // billed - so the tile says how much of the figure rests on one.
+  const suffix = entered ? ` (${entered} entered by hand)` : "";
+  if (!without) return `every SKU priced${suffix}`;
+  return `${withCost} of ${withCost + without} SKUs priced${suffix}`;
 }
 
 // ── Expiry & Expiry-Loss (snapshot) ───────────────────────────────────────────
