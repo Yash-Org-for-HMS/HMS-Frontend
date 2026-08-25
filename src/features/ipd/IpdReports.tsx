@@ -140,20 +140,49 @@ export function IpRegistrations() {
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <KpiCard icon={<PersonAddRounded />} accent={ACCENT} label="Admissions" value={String(data.totals.admissions)} current={data.totals.admissions} previous={prev?.admissions} />
             </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <KpiCard icon={<LocalHotelRounded />} accent={SEMANTIC.info} label="Still admitted" value={String(data.totals.stillAdmitted ?? 0)} />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <KpiCard icon={<AccessTimeRounded />} accent="#8b5cf6" label="Average stay" value={`${data.totals.avgStayDays ?? 0} d`} />
+            </Grid>
           </Grid>
           {hasPlottableData(trend, ["admissions"]) && (
             <Box sx={{ mb: 2.5 }}>
               <TrendChart title="Admissions per day" data={trend} xKey="date" series={[{ key: "admissions", label: "Admissions", type: "area" }]} />
             </Box>
           )}
+
+          {/* Where the admissions went and who took them. The register listed
+              beds and dates without ever saying which ward carried the load or
+              which consultant is accountable for the stay. */}
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            {([["byWard", "By ward"], ["byDoctor", "By admitting doctor"], ["byStatus", "By status"]] as const).map(([key, title]) => (
+              <Grid key={key} size={{ xs: 12, md: 4 }}>
+                <ReportTable
+                  title={title}
+                  filename={`ip_registrations_${key}_${range.from}_${range.to}`}
+                  maxHeight={260}
+                  columns={[{ key: "label", label: title.replace(/^By /, "") }, { key: "count", label: "Admissions", align: "right" }]}
+                  rows={(data as Record<string, unknown>)[key] as { label: string; count: number }[] ?? []}
+                />
+              </Grid>
+            ))}
+          </Grid>
+
           <ReportTable
             title="IP registration detail"
             filename={`ip_registrations_${range.from}_${range.to}`}
             columns={[
+              { key: "admissionNumber", label: "Admission #" },
               { key: "patientName", label: "Patient" },
               { key: "uhid", label: "UHID" },
               { key: "bed", label: "Bed" },
+              { key: "doctorName", label: "Doctor" },
+              { key: "diagnosis", label: "Admitting diagnosis" },
               { key: "admissionDate", label: "Admitted", format: formatDate, value: (r) => ts(r.admissionDate) },
+              // Days so far while the stay runs, total once it has ended.
+              { key: "days", label: "Days", align: "right" },
               { key: "status", label: "Status" },
             ]}
             rows={rows}
@@ -189,6 +218,27 @@ export function IpAdvances() {
               <TrendChart title="Advance collected per day" data={trend} xKey="date" series={[{ key: "amount", label: "Advance", type: "bar" }]} valueFormatter={inr} />
             </Box>
           )}
+          {/* Which tender the money came through and who took it — the two
+              questions the Day Book answers for counter collections, and this
+              register could answer for neither. */}
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            {([["byMethod", "By payment method", "Method"], ["byCollector", "By collector", "Collector"]] as const).map(([key, title, head]) => (
+              <Grid key={key} size={{ xs: 12, md: 6 }}>
+                <ReportTable
+                  title={title}
+                  filename={`ip_advances_${key}_${range.from}_${range.to}`}
+                  maxHeight={260}
+                  columns={[
+                    { key: "label", label: head },
+                    { key: "count", label: "Advances", align: "right" },
+                    { key: "amount", label: "Amount", align: "right", format: (v) => inr(v as number), value: (r) => Number((r as { amount?: number }).amount) },
+                  ]}
+                  rows={(data as Record<string, unknown>)[key] as { label: string; count: number; amount: number }[] ?? []}
+                />
+              </Grid>
+            ))}
+          </Grid>
+
           <ReportTable
             title="IP advance detail"
             filename={`ip_advances_${range.from}_${range.to}`}
@@ -196,7 +246,12 @@ export function IpAdvances() {
               { key: "date", label: "Date", format: (v) => dayjs(v).format("DD MMM YY HH:mm"), value: (r) => ts(r.date) },
               { key: "patientName", label: "Patient" },
               { key: "uhid", label: "UHID" },
+              // An advance is against a stay; without the admission it cannot
+              // be traced back to what it was paying for.
+              { key: "admissionNumber", label: "Admission #" },
+              { key: "admissionStatus", label: "Stay" },
               { key: "method", label: "Method" },
+              { key: "collectedBy", label: "Collected by" },
               { key: "amount", label: "Amount", align: "right", format: (v) => inr(v), value: (r) => Number(r.amount) },
             ]}
             rows={rows}
