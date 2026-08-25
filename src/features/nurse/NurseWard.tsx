@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import type { AdmissionRow } from "@/features/ipd/ipd.types";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -50,19 +51,19 @@ export default function NurseWard() {
   const [view, setView] = useState<"cards" | "list">(
     () => (localStorage.getItem(VIEW_KEY) as "cards" | "list") || "cards",
   );
-  const [chartFor, setChartFor] = useState<any>(null);
-  const [visitsFor, setVisitsFor] = useState<any>(null);
-  const [notesFor, setNotesFor] = useState<any>(null);
-  const [obsFor, setObsFor] = useState<any>(null);
-  const [fluidFor, setFluidFor] = useState<any>(null);
-  const [handoverFor, setHandoverFor] = useState<any>(null);
-  const [labsFor, setLabsFor] = useState<any>(null);
-  const [radiologyFor, setRadiologyFor] = useState<any>(null);
-  const [surgeryFor, setSurgeryFor] = useState<WardRow | null>(null);
-  const [assignMedsFor, setAssignMedsFor] = useState<WardRow | null>(null);
+  const [chartFor, setChartFor] = useState<AdmissionRow | null>(null);
+  const [visitsFor, setVisitsFor] = useState<AdmissionRow | null>(null);
+  const [notesFor, setNotesFor] = useState<AdmissionRow | null>(null);
+  const [obsFor, setObsFor] = useState<AdmissionRow | null>(null);
+  const [fluidFor, setFluidFor] = useState<AdmissionRow | null>(null);
+  const [handoverFor, setHandoverFor] = useState<AdmissionRow | null>(null);
+  const [labsFor, setLabsFor] = useState<AdmissionRow | null>(null);
+  const [radiologyFor, setRadiologyFor] = useState<AdmissionRow | null>(null);
+  const [surgeryFor, setSurgeryFor] = useState<AdmissionRow | null>(null);
+  const [assignMedsFor, setAssignMedsFor] = useState<AdmissionRow | null>(null);
   const navigate = useNavigate();
 
-  const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<any[]>({
+  const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<AdmissionRow[]>({
     queryKey: ["nurse-ward-admissions"],
     queryFn: async () => (await axiosInstance.get("/ipd/admissions", { params: { status: "ADMITTED" } })).data.data,
   });
@@ -71,7 +72,12 @@ export default function NurseWard() {
   const filtered = useMemo(
     () =>
       s
-        ? admissions.filter((a) => [a.patientName, a.uhid, a.bed?.label].filter(Boolean).some((v: string) => v.toLowerCase().includes(s)))
+        ? admissions.filter((a) =>
+            // A type guard rather than filter(Boolean), which TS does not narrow —
+            // a patient with no bed label has a nullish entry here.
+            [a.patientName, a.uhid, a.bed?.label]
+              .filter((v): v is string => !!v)
+              .some((v) => v.toLowerCase().includes(s)))
         : admissions,
     [admissions, s],
   );
@@ -79,7 +85,7 @@ export default function NurseWard() {
   // Grouped by ward, each ward ordered by room then bed — the order a nurse
   // walks the ward in, rather than whatever order the API returned.
   const groups = useMemo(() => {
-    const byWard = new Map<string, any[]>();
+    const byWard = new Map<string, AdmissionRow[]>();
     for (const a of filtered) {
       const ward = a.bed?.wardName || "No ward assigned";
       (byWard.get(ward) ?? byWard.set(ward, []).get(ward)!).push(a);
@@ -109,19 +115,11 @@ export default function NurseWard() {
   //
   // Typed explicitly: inferred, `tone` narrows to the one literal colour the
   // first list contains and the muted entries below stop fitting.
-  /** The fields any ward action needs off the row it was opened from. */
-  interface WardRow {
-    admissionId: string;
-    patientId?: string | null;
-    patientName?: string;
-    uhid?: string;
-  }
-
   interface WardAction {
     key: string;
     label: string;
     icon: React.ReactNode;
-    open: (row: WardRow) => void;
+    open: (row: AdmissionRow) => void;
     tone: string;
   }
 
@@ -170,9 +168,9 @@ export default function NurseWard() {
   };
 
   /** Room · bed, built from the parts — the API's composed label reads "Bed Bed 1". */
-  const bedText = (a: any) => [a.bed?.roomNumber, a.bed?.bedNumber].filter(Boolean).join(" · ");
+  const bedText = (a: AdmissionRow) => [a.bed?.roomNumber, a.bed?.bedNumber].filter(Boolean).join(" · ");
 
-  const PatientCard = ({ a }: { a: any }) => (
+  const PatientCard = ({ a }: { a: AdmissionRow }) => (
     <Paper
       elevation={0}
       sx={{
@@ -245,7 +243,7 @@ export default function NurseWard() {
     </Paper>
   );
 
-  const PatientTable = ({ list }: { list: any[] }) => (
+  const PatientTable = ({ list }: { list: AdmissionRow[] }) => (
     <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
       <TableContainer>
         <Table size="small">

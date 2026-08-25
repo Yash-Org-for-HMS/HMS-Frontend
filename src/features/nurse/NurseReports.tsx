@@ -1,4 +1,6 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import type { NurseReportsData, VitalsRow } from "./nurseReports.types";
+import type { InPatientsReport, DischargesReport, IpRegistrationsReport } from "@/features/ipd/ipdReports.types";
 import { formatDate, formatDateTime } from "@/utils/format";
 import SimpleTable from "@/features/reports/kit/SimpleTable";
 import KpiCard from "@/features/reports/kit/KpiCard";
@@ -32,12 +34,12 @@ const PRESETS = [
 
 // ── Reports fed by the shared /nurse/reports payload ─────────────────────────
 
-function SummaryReport({ data }: { data: any }) {
+function SummaryReport({ data }: { data: NurseReportsData }) {
   const s = data?.summary;
   // The equal-length window before this one, so each count says which way it
   // is moving rather than standing alone.
   const p = data?.previous;
-  const trend: any[] = data?.trend || [];
+  const trend: NurseReportsData["trend"] = data?.trend || [];
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(4,1fr)" }, gap: 1.5 }}>
@@ -59,31 +61,45 @@ function SummaryReport({ data }: { data: any }) {
   );
 }
 
-function VitalsRegisterReport({ data }: { data: any }) {
-  const vitalsList: any[] = data?.vitalsList || [];
+function VitalsRegisterReport({ data }: { data: NurseReportsData }) {
+  const vitalsList: VitalsRow[] = data?.vitalsList || [];
   return (
     <SimpleTable
       title="Vitals register"
       head={["Date", "Patient", "UHID", "BP", "Pulse", "Temp (°C)", "SpO2 (%)", "Weight (kg)", "Recorded by"]}
-      rows={vitalsList.map((v) => [formatDateTime(v.date), v.patientName, v.uhid, v.bp, v.pulse, v.temperatureC, v.oxygenSaturation, v.weightKg, v.recordedBy])}
+      // ?? not ||: a reading of 0 is a real observation (a pain score, a blood
+      // sugar), and || would blank it as though it were never taken.
+      rows={vitalsList.map((v) => [
+        formatDateTime(v.date), v.patientName, v.uhid,
+        v.bp ?? "—", v.pulse ?? "—", v.temperatureC ?? "—", v.oxygenSaturation ?? "—", v.weightKg ?? "—",
+        v.recordedBy ?? "—",
+      ])}
       note={<ReportTruncationNote truncated={data?.truncated} totalRows={data?.totalRows} shownRows={data?.shownRows} />}
     />
   );
 }
 
-function AbnormalVitalsReport({ data }: { data: any }) {
-  const abnormalList: any[] = data?.abnormalList || [];
+function AbnormalVitalsReport({ data }: { data: NurseReportsData }) {
+  const abnormalList: VitalsRow[] = data?.abnormalList || [];
   return (
     <SimpleTable
       title="Abnormal vitals — needs review"
       head={["Date", "Patient", "UHID", "BP", "Pulse", "Temp (°C)", "SpO2 (%)", "Flags", "Recorded by"]}
-      rows={abnormalList.map((v) => [formatDateTime(v.date), v.patientName, v.uhid, v.bp, v.pulse, v.temperatureC, v.oxygenSaturation, v.flags.join(", "), v.recordedBy])}
+      // flags is what puts a row on this list, but it is still nullable on the
+      // wire — joining it unguarded would throw on the one row that arrived
+      // without it, taking the whole register down.
+      rows={abnormalList.map((v) => [
+        formatDateTime(v.date), v.patientName, v.uhid,
+        v.bp ?? "—", v.pulse ?? "—", v.temperatureC ?? "—", v.oxygenSaturation ?? "—",
+        (v.flags ?? []).join(", ") || "—",
+        v.recordedBy ?? "—",
+      ])}
     />
   );
 }
 
-function StaffWorkloadReport({ data }: { data: any }) {
-  const byStaff: any[] = data?.byStaff || [];
+function StaffWorkloadReport({ data }: { data: NurseReportsData }) {
+  const byStaff: NurseReportsData["byStaff"] = data?.byStaff || [];
   return (
     <SimpleTable title="Vitals recorded by staff" head={["Staff", "Vitals recorded"]}
       rows={byStaff.map((r) => [r.staffName, Number(r.count)])} />
@@ -97,48 +113,48 @@ function StaffWorkloadReport({ data }: { data: any }) {
 function InpatientsReport({ to }: { to: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ["nurse-ipd-inpatients", to],
-    queryFn: async () => (await axiosInstance.get("/ipd/reports/inpatients", { params: { asOf: to } })).data.data,
+    queryFn: async (): Promise<InPatientsReport> => (await axiosInstance.get("/ipd/reports/inpatients", { params: { asOf: to } })).data.data,
     placeholderData: keepPreviousData,
   });
-  const rows: any[] = data?.rows || [];
+  const rows = data?.rows ?? [];
   if (isLoading) return <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><HeartbeatLoader size={22} /></Box>;
   return (
     <SimpleTable title="Current inpatients" head={["Patient", "UHID", "Bed", "Admitted", "Days"]}
-      rows={rows.map((r) => [r.patientName, r.uhid, r.bed, formatDate(r.admissionDate), Number(r.days)])} />
+      rows={rows.map((r) => [r.patientName, r.uhid, r.bed || "—", formatDate(r.admissionDate), Number(r.days)])} />
   );
 }
 
 function DischargesReport({ from, to }: { from: string; to: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ["nurse-ipd-discharges", from, to],
-    queryFn: async () => (await axiosInstance.get("/ipd/reports/discharges", { params: { from, to } })).data.data,
+    queryFn: async (): Promise<DischargesReport> => (await axiosInstance.get("/ipd/reports/discharges", { params: { from, to } })).data.data,
     placeholderData: keepPreviousData,
   });
-  const rows: any[] = data?.rows || [];
+  const rows = data?.rows ?? [];
   if (isLoading) return <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><HeartbeatLoader size={22} /></Box>;
   return (
     <SimpleTable title="Discharges" head={["Patient", "UHID", "Bed", "Admitted", "Discharged", "Length of stay"]}
-      rows={rows.map((r) => [r.patientName, r.uhid, r.bed, formatDate(r.admissionDate), r.dischargeDate ? formatDate(r.dischargeDate) : "—", Number(r.lengthOfStay)])} />
+      rows={rows.map((r) => [r.patientName, r.uhid, r.bed || "—", formatDate(r.admissionDate), r.dischargeDate ? formatDate(r.dischargeDate) : "—", Number(r.lengthOfStay)])} />
   );
 }
 
 function AdmissionsReport({ from, to }: { from: string; to: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ["nurse-ipd-registrations", from, to],
-    queryFn: async () => (await axiosInstance.get("/ipd/reports/registrations", { params: { from, to } })).data.data,
+    queryFn: async (): Promise<IpRegistrationsReport> => (await axiosInstance.get("/ipd/reports/registrations", { params: { from, to } })).data.data,
     placeholderData: keepPreviousData,
   });
-  const rows: any[] = data?.rows || [];
+  const rows = data?.rows ?? [];
   if (isLoading) return <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><HeartbeatLoader size={22} /></Box>;
   return (
     <SimpleTable title="Admissions" head={["Patient", "UHID", "Bed", "Admitted", "Status"]}
-      rows={rows.map((r) => [r.patientName, r.uhid, r.bed, formatDate(r.admissionDate), r.status])} />
+      rows={rows.map((r) => [r.patientName, r.uhid, r.bed || "—", formatDate(r.admissionDate), r.status])} />
   );
 }
 
 // ── Report catalogue — one entry per sidebar item, grouped like ReportsHub. ──
 
-type ReportItem = { key: string; label: string; Comp: React.ComponentType<{ data: any; from: string; to: string }> };
+type ReportItem = { key: string; label: string; Comp: React.ComponentType<{ data: NurseReportsData; from: string; to: string }> };
 type ReportGroup = { heading: string; module?: string; items: ReportItem[] };
 
 const GROUPS: ReportGroup[] = [
