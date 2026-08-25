@@ -28,9 +28,26 @@ interface Props {
   readOnly?: boolean;
 }
 
+/** Batch and expiry per medicine on a bill, derived from the stock ledger. */
+interface DispensedMedicine {
+  medicineId: string;
+  medicineName: string;
+  batches: { batchNumber: string; expiryDate: string; quantity: number }[];
+}
+
 export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged, readOnly = false }: Props) {
   const toast = useToast();
   const receiptRef = useRef<HTMLDivElement>(null);
+
+  // Which batch each medicine on this bill came off. Derived server-side from
+  // the stock ledger: the invoice is written BEFORE the stock moves (dispensing
+  // happens at payment), so there is nothing to store on the line at the time,
+  // and one medicine can come off several batches.
+  const { data: dispensedBatches = [] } = useQuery<DispensedMedicine[]>({
+    queryKey: ["dispensed-batches", invoiceId],
+    queryFn: async () => (await axiosInstance.get(`/reception/billing/invoices/${invoiceId}/dispensed-batches`)).data.data,
+    enabled: !!invoiceId && open,
+  });
   const [amount, setAmount] = useState("");
   const [methodId, setMethodId] = useState("");
   const [paying, setPaying] = useState(false);
@@ -140,16 +157,43 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                           : `Includes ${formatINR(reopenedByRefund)} returned by refund.`)
                       : undefined,
                   }}
-                  afterTotals={invoice.Payment?.length > 0 ? (
-                    <div style={{ marginTop: 16 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: 1, marginBottom: 6 }}>PAYMENTS</div>
-                      {invoice.Payment.map((p: Payment, i: number) => (
-                        <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#4b5563", marginTop: 4 }}>
-                          <span>{formatDate(p.createdAt)} · {p.paymentMethod?.methodName || "—"}</span>
-                          <span>{formatINR(p.paidAmount)}</span>
+                  afterTotals={(invoice.Payment?.length > 0 || dispensedBatches.length > 0) ? (
+                    <>
+                      {/* The dispensing record. A counter bill printed the
+                          medicine and the price but never which batch left the
+                          shelf, so the copy the patient keeps could not be
+                          matched against a recall. Absent on a bill dispensed
+                          before the ledger recorded a batch — printing nothing
+                          is better than printing a guess. */}
+                      {dispensedBatches.length > 0 && (
+                        <div style={{ marginTop: 16 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: 1, marginBottom: 6 }}>
+                            MEDICINES DISPENSED — BATCH &amp; EXPIRY
+                          </div>
+                          {dispensedBatches.map((m) => (
+                            <div key={m.medicineId} style={{ fontSize: 12, color: "#4b5563", marginTop: 4 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                                <span style={{ fontWeight: 600 }}>{m.medicineName}</span>
+                                <span style={{ textAlign: "right" }}>
+                                  {m.batches.map((b) => `${b.batchNumber} · exp ${formatDate(b.expiryDate)}${m.batches.length > 1 ? ` (${b.quantity})` : ""}`).join("; ")}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      )}
+                      {invoice.Payment?.length > 0 && (
+                        <div style={{ marginTop: 16 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: 1, marginBottom: 6 }}>PAYMENTS</div>
+                          {invoice.Payment.map((p: Payment, i: number) => (
+                            <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#4b5563", marginTop: 4 }}>
+                              <span>{formatDate(p.createdAt)} · {p.paymentMethod?.methodName || "—"}</span>
+                              <span>{formatINR(p.paidAmount)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   ) : undefined}
                 >
                   {(() => {
