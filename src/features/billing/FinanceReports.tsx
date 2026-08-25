@@ -22,7 +22,7 @@ import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 import { SEMANTIC } from "@/styles/accents";
-import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, useReportFilterOptions, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, TrendChart, hasPlottableData, useReportFilterOptions, type DateRange } from "@/features/reports/kit";
 
 const inr = formatINRAuto;
 const rangeFrom = (days: number): DateRange => ({ from: dayjs().subtract(days, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
@@ -47,6 +47,7 @@ export function DayBook() {
   const bySource: DayBookSourceRow[] = data?.bySource ?? [];
   const byCollector: DayBookCollectorRow[] = data?.byCollector ?? [];
   const rows: DayBookRow[] = data?.rows ?? [];
+  const trend = data?.trend ?? [];
   const prev = data?.previous;
 
   return (
@@ -60,6 +61,22 @@ export function DayBook() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceRounded />} accent={SEMANTIC.info} label="Net position" value={inr(data.totals.net)} current={Number(data.totals.net)} previous={prev ? Number(prev.net) : undefined} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SwapVertRounded />} accent="#8b5cf6" label="Movements" value={String(data.totals.movements)} /></Grid>
           </Grid>
+
+          {/* In against out per day. The series was fetched and never drawn,
+              so a range wider than one day could only be read as one net
+              figure — a heavy refund day and a quiet one looked identical. */}
+          {hasPlottableData(trend, ["in", "out"]) && (
+            <Box sx={{ mb: 2.5 }}>
+              <TrendChart
+                title="Money in and out" subtitle="Per day, on a cash basis"
+                data={trend} xKey="date" valueFormatter={inr}
+                series={[
+                  { key: "in", label: "In", type: "area" },
+                  { key: "out", label: "Out", type: "line" },
+                ]}
+              />
+            </Box>
+          )}
 
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -145,6 +162,7 @@ export function RevenueAnalytics() {
   const byCategory: RevenueCategoryRow[] = data?.byCategory ?? [];
   const byDoctor: RevenueDoctorRow[] = data?.byDoctor ?? [];
   const byDepartment: RevenueDepartmentRow[] = data?.byDepartment ?? [];
+  const trend = data?.trend ?? [];
   const prev = data?.previous;
 
   return (
@@ -161,6 +179,19 @@ export function RevenueAnalytics() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalOfferRounded />} accent={SEMANTIC.warning} label="Discount" value={inr(data.totals.discount)} current={Number(data.totals.discount)} previous={prev ? Number(prev.discount) : undefined} higherIsBetter={false} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.info} label="Tax (GST)" value={inr(data.totals.tax)} current={Number(data.totals.tax)} previous={prev ? Number(prev.tax) : undefined} /></Grid>
           </Grid>
+
+          {/* The daily series came back with every request and nothing drew it,
+              so the report showed what revenue was made of but never how it
+              moved — the one question a range invites. */}
+          {hasPlottableData(trend, ["net"]) && (
+            <Box sx={{ mb: 2.5 }}>
+              <TrendChart
+                title="Revenue over time" subtitle="Net billed per day"
+                data={trend} xKey="date" valueFormatter={inr}
+                series={[{ key: "net", label: "Net revenue", type: "area" }]}
+              />
+            </Box>
+          )}
 
           <Grid container spacing={2.5}>
             <Grid size={{ xs: 12, md: 6 }}>

@@ -20,7 +20,7 @@ import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto, formatDate } from "@/utils/format";
 import { SEMANTIC, BRAND } from "@/styles/accents";
-import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportTable, TrendChart, hasPlottableData, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = BRAND.action;
 const inr = formatINRAuto;
@@ -63,6 +63,8 @@ export function Receipts() {
     queryFn: () => apiGet<ReceiptsResponse>("/reception/reports/receipts", { params: { from: range.from, to: range.to } }),
   });
   const rows: ReceiptRow[] = data?.rows ?? [];
+  const trend = data?.trend ?? [];
+  const byMethod = data?.byMethod ?? [];
   const prev = data?.previous;
 
   return (
@@ -78,6 +80,32 @@ export function Receipts() {
             <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<AccountBalanceRounded />} accent={SEMANTIC.info} label="From payers (claims)" value={inr(data.totals.fromPayer ?? 0)} /></Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Receipts" value={String(data.totals.count)} current={data.totals.count} previous={prev?.count} /></Grid>
           </Grid>
+          {/* Both came back with every request and neither was rendered. The
+              method split is what a desk reconciles a drawer against; the
+              series is what makes a multi-day range readable as more than one
+              total. */}
+          {hasPlottableData(trend, ["amount"]) && (
+            <Box sx={{ mb: 2.5 }}>
+              <TrendChart
+                title="Received over time" subtitle="Per day"
+                data={trend} xKey="date" valueFormatter={inr}
+                series={[{ key: "amount", label: "Received", type: "area" }]}
+              />
+            </Box>
+          )}
+
+          {byMethod.length > 0 && (
+            <Box sx={{ mb: 2.5 }}>
+              <ReportTable
+                title="By payment method"
+                filename={`receipts_by_method_${range.from}_${range.to}`}
+                maxHeight={280}
+                columns={[{ key: "method", label: "Method" }, money("amount", "Amount")]}
+                rows={byMethod}
+              />
+            </Box>
+          )}
+
           <ReportTable
             title="Receipt ledger"
             filename={`receipts_${range.from}_${range.to}`}
@@ -237,6 +265,7 @@ export function PharmacyExpense() {
     queryFn: () => apiGet<PharmacyExpenseResponse>("/reception/reports/pharmacy-expense", { params: { from: range.from, to: range.to } }),
   });
   const rows: PharmacyExpenseRow[] = data?.rows ?? [];
+  const trend = data?.trend ?? [];
   const prev = data?.previous;
 
   return (
@@ -248,6 +277,19 @@ export function PharmacyExpense() {
             <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<Inventory2Rounded />} accent={SEMANTIC.warning} label="Total spend" value={inr(data.totals.total)} current={Number(data.totals.total)} previous={prev ? Number(prev.total) : undefined} higherIsBetter={false} /></Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Purchase orders" value={String(data.totals.purchaseOrders)} current={data.totals.purchaseOrders} previous={prev?.purchaseOrders} higherIsBetter={false} /></Grid>
           </Grid>
+          {/* Spend per day. Fetched on every request and never drawn, so a
+              month of purchasing read as a single total with no sense of
+              whether it was steady or one large order. */}
+          {hasPlottableData(trend, ["amount"]) && (
+            <Box sx={{ mb: 2.5 }}>
+              <TrendChart
+                title="Spend over time" subtitle="Purchase-order value per day"
+                data={trend} xKey="date" valueFormatter={inr}
+                series={[{ key: "amount", label: "Spend", type: "area" }]}
+              />
+            </Box>
+          )}
+
           <ReportTable
             title="Purchase orders"
             filename={`pharmacy_expense_${range.from}_${range.to}`}

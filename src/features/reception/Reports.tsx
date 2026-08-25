@@ -17,7 +17,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportTable, ReportTruncationNote, TrendChart, hasPlottableData, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportTable, ReportTruncationNote, TrendChart, BreakdownBar, hasPlottableData, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = BRAND.action;
 const inr = formatINRAuto;
@@ -291,7 +291,23 @@ export function DailyOpd() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="New patients" value={String(t.newPatients)} accent="#ec4899" /></Grid>
           </Grid>
 
-          <SimpleTable title="By department" head={["Department", "Appointments"]} rows={data.byDepartment.map((d: any) => [d.departmentName, String(d.count)])} />
+          {/* By doctor and by status came back with every request and neither
+              was rendered — the summary said how many appointments there were
+              without saying who saw them or where they ended up. */}
+          <Grid container spacing={2.5}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <SimpleTable title="By department" head={["Department", "Appointments"]}
+                rows={data.byDepartment.map((d: any) => [d.departmentName, String(d.count)])} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <SimpleTable title="By doctor" head={["Doctor", "Total", "Completed"]}
+                rows={(data.byDoctor ?? []).map((d: { doctorName: string; total: number; completed: number }) => [d.doctorName, String(d.total), String(d.completed)])} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <SimpleTable title="By status" head={["Status", "Appointments"]}
+                rows={(data.byStatus ?? []).map((s: { label: string; count: number }) => [s.label, String(s.count)])} />
+            </Grid>
+          </Grid>
         </Box>
       )}
     </Box>
@@ -431,7 +447,41 @@ export function Analytics() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent="#8b5cf6" label="Avg / day" value={String(t.avgPerDay)} current={t.avgPerDay} previous={p?.avgPerDay} /></Grid>
           </Grid>
 
-          <SimpleTable title="Top doctors" head={["Doctor", "Appointments"]} rows={data.byDoctor.map((d: any) => [d.doctorName, String(d.count)])} />
+          {/* When the clinic is busy, which is what this report is for and what
+              it used to leave out: the endpoint already returns the hour-of-day
+              and weekday distributions, and nothing rendered them. Hour first —
+              it is the one that drives how a day is staffed. */}
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 12, lg: 7 }}>
+              <BreakdownBar
+                title="By hour of day" subtitle="When appointments are booked"
+                data={(data.byHour ?? []).map((h: { hour: number; count: number }) => ({
+                  ...h, label: `${String(h.hour).padStart(2, "0")}:00`,
+                }))}
+                categoryKey="label" valueKey="count" valueName="Appointments"
+                horizontal={false} labelWidth={40}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 5 }}>
+              <BreakdownBar
+                title="By weekday" subtitle="Which days carry the load"
+                data={data.byWeekday ?? []} categoryKey="day" valueKey="count"
+                valueName="Appointments" colorIndex={1} labelWidth={90}
+              />
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={2.5}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <SimpleTable title="Top doctors" head={["Doctor", "Appointments"]} rows={data.byDoctor.map((d: any) => [d.doctorName, String(d.count)])} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              {/* The completion and cancellation rates above are two slices of
+                  this; the rest of the statuses had nowhere to appear. */}
+              <SimpleTable title="By status" head={["Status", "Appointments"]}
+                rows={(data.byStatus ?? []).map((s: { label: string; count: number }) => [s.label, String(s.count)])} />
+            </Grid>
+          </Grid>
         </Box>
       )}
     </Box>
@@ -471,7 +521,29 @@ export function Collection() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent="#8b5cf6" label="Transactions" value={String(t.transactions)} current={t.transactions} previous={p?.transactions} /></Grid>
           </Grid>
 
-          <SimpleTable title="By collector" head={["Collector", "Txns", "Amount"]} rows={data.byCollector.map((c: any) => [c.collector, String(c.count), inr(c.amount)])} />
+          {/* The endpoint returns four breakdowns and only the collector one
+              was rendered. Method is the one a desk actually reconciles
+              against — the cash drawer has to match the cash line, and there
+              was no cash line. */}
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <SimpleTable title="By payment method" head={["Method", "Txns", "Amount"]}
+                rows={(data.byMethod ?? []).map((m: { method: string; count: number; amount: number }) => [m.method, String(m.count), inr(m.amount)])} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <SimpleTable title="By collector" head={["Collector", "Txns", "Amount"]}
+                rows={data.byCollector.map((c: any) => [c.collector, String(c.count), inr(c.amount)])} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              {/* Which shift took the money — the handover question. */}
+              <SimpleTable title="By shift" head={["Shift", "Txns", "Amount"]}
+                rows={(data.byShift ?? []).map((s: { shift: string; count: number; amount: number }) => [s.shift, String(s.count), inr(s.amount)])} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <SimpleTable title="By day" head={["Date", "Txns", "Amount"]}
+                rows={(data.byDay ?? []).map((d: { date: string; count: number; amount: number }) => [dayjs(d.date).format("DD MMM YYYY"), String(d.count), inr(d.amount)])} />
+            </Grid>
+          </Grid>
         </Box>
       )}
     </Box>
