@@ -20,6 +20,9 @@ import { formatINRAuto } from "@/utils/format";
 import { KpiCard, ReportFilters, ReportTable, ReportTruncationNote, TrendChart, BreakdownBar, hasPlottableData, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = BRAND.action;
+
+/** A one-line breakdown row: a label and how many fall under it. */
+type Tally = { label: string; count: number };
 const inr = formatINRAuto;
 
 export default function Reports() {
@@ -74,9 +77,41 @@ export function OpRegistration() {
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="Registrations" value={String(data.totals.registrations)} accent={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CallSplitRounded />} label="Referred in" value={String(data.totals.withReferral ?? 0)} sub={`${data.totals.registrations - (data.totals.withReferral ?? 0)} walk-in`} accent={SEMANTIC.info} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupRounded />} label="Average age" value={data.totals.avgAge == null ? "—" : `${data.totals.avgAge}`} accent="#8b5cf6" /></Grid>
           </Grid>
-          <SimpleTable title="Registered patients" head={["UHID", "Name", "Phone", "Registered", "Referral"]}
-            rows={rows.map((r) => [r.uhid, r.name, r.phone, dayjs(r.registeredOn).format("DD MMM YYYY"), r.referral])}
+
+          {/* Who registered, not just how many. Age, gender and city were on
+              the record all along and none of them reached this page, so it
+              could not say who the hospital is drawing or from where. */}
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <SimpleTable title="By gender" head={["Gender", "Patients"]}
+                rows={(data.byGender ?? []).map((g: Tally) => [g.label, String(g.count)])} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <SimpleTable title="By age" head={["Age band", "Patients"]}
+                rows={(data.byAgeBand ?? []).map((a: Tally) => [a.label, String(a.count)])} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              {/* Names the referrer where there is one — "Doctor" said a
+                  referral existed without saying whose. */}
+              <SimpleTable title="By referral source" head={["Source", "Patients"]}
+                rows={(data.bySource ?? []).map((s: Tally) => [s.label, String(s.count)])} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <SimpleTable title="Top cities" head={["City", "Patients"]}
+                rows={(data.byCity ?? []).map((c: Tally) => [c.label, String(c.count)])} />
+            </Grid>
+          </Grid>
+
+          <SimpleTable title="Registered patients" head={["UHID", "Name", "Gender", "Age", "Phone", "City", "Registered", "Referred by"]}
+            rows={rows.map((r) => [
+              r.uhid, r.name, r.gender ?? "—", r.age == null ? "—" : String(r.age),
+              r.phone, r.city ?? "—",
+              dayjs(r.registeredOn).format("DD MMM YYYY"),
+              r.referrerName ?? r.referral,
+            ])}
             note={<ReportTruncationNote truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows} />} />
         </Box>
       )}
