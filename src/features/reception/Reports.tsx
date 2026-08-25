@@ -177,8 +177,32 @@ export function DiagnosisWise() {
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicalInformationRounded />} label="Consultations" value={String(data.totals.consultations)} accent={ACCENT} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} label="Distinct diagnoses" value={String(data.totals.distinctDiagnoses)} accent="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupRounded />} label="Patients" value={String(data.totals.patients ?? 0)} accent={SEMANTIC.info} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="With follow-up" value={String(data.totals.withFollowUp ?? 0)} accent={SEMANTIC.warning} /></Grid>
           </Grid>
-          <SimpleTable title="Diagnoses" head={["Diagnosis", "Consultations"]} rows={rows.map((r) => [r.diagnosis, String(r.count)])} />
+
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <SimpleTable title="By doctor" head={["Doctor", "Consultations"]}
+                rows={(data.byDoctor ?? []).map((d: { doctor: string; count: number }) => [d.doctor, String(d.count)])} />
+            </Grid>
+          </Grid>
+
+          {/* A diagnosis on its own is a word and a number. Patients separates
+              a condition seen ten times in two people from one seen ten times
+              in ten; the rest says who presents with it and who treats it. */}
+          <SimpleTable
+            title="Diagnoses"
+            head={["Diagnosis", "Consultations", "Patients", "Share", "Usual doctor", "Gender split", "Avg age", "Follow-ups", "Last seen"]}
+            rows={rows.map((r) => [
+              r.diagnosis, String(r.count), String(r.patients ?? 0),
+              `${Number(r.sharePct ?? 0).toFixed(1)}%`,
+              r.topDoctor ?? "—",
+              r.genderSplit || "—",
+              r.avgAge == null ? "—" : String(r.avgAge),
+              String(r.followUps ?? 0),
+              r.lastSeen ? dayjs(r.lastSeen).format("DD MMM YYYY") : "—",
+            ])} />
         </Box>
       )}
     </Box>
