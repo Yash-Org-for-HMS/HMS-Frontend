@@ -21,6 +21,8 @@ import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto, formatDate } from "@/utils/format";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { KpiCard, ReportFilters, ReportTable, TrendChart, hasPlottableData, type DateRange } from "@/features/reports/kit";
+import ReportStatusChips from "@/features/reports/kit/ReportStatusChips";
+import { useReportParam } from "@/features/reports/kit/useReportParam";
 
 const ACCENT = BRAND.action;
 const inr = formatINRAuto;
@@ -173,20 +175,35 @@ export function Outstanding() {
 function refundStatusChip(s: string) {
   const c = s === "Refunded" ? { bg: "rgba(16,185,129,0.14)", fg: "#0f9d78" }
     : s === "Partially refunded" ? { bg: "rgba(245,158,11,0.16)", fg: "#b45309" }
+    : s === "Held" ? { bg: "rgba(100,116,139,0.16)", fg: "#475569" }
     : { bg: "rgba(239,68,68,0.12)", fg: "#dc2626" };
   return <Chip label={s} size="small" sx={{ height: 20, fontSize: "0.68rem", fontWeight: 700, bgcolor: c.bg, color: c.fg }} />;
 }
 
 // Advance deposits owed BACK to patients: closed (discharged/cancelled) admissions
 // with a held deposit. Read-only oversight — shows a ledger-derived refund status
-// (Pending / Partially refunded / Refunded); refunds are processed in the admission
-// deposit flow, and this reflects them automatically. Snapshot.
+// (Pending / Held / Partially refunded / Refunded); refunds are processed in the
+// admission deposit flow, and this reflects them automatically. Snapshot.
+//
+// Already-refunded rows are carried here on purpose: an IPD advance refund writes
+// only a DepositEntry(REFUNDED) and never a Refund row, so the Refund Register
+// cannot see it — drop it here and a refund the hospital actually paid appears in
+// no report at all. But a settled row is not an "unreturned advance", so the
+// default view is the money still to return and the filter says which is which.
 export function UnreturnedAdvances() {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["billing-report-unreturned-advances"],
     queryFn: () => apiGet<UnreturnedAdvancesResponse>("/reception/reports/unreturned-advances"),
   });
-  const rows: UnreturnedAdvanceRow[] = data?.rows ?? [];
+  const [view] = useReportParam("advance", "owed");
+  const allRows: UnreturnedAdvanceRow[] = data?.rows ?? [];
+  // Split on the amount, not on the status label: the two predicates are exact
+  // complements, so every row lands in exactly one chip and the counts add up
+  // even if a new status string is introduced.
+  const rows =
+    view === "all" ? allRows
+    : view === "refunded" ? allRows.filter((r) => Number(r.amountOwed) <= 0)
+    : allRows.filter((r) => Number(r.amountOwed) > 0);
 
   return (
     <Box>
@@ -194,13 +211,30 @@ export function UnreturnedAdvances() {
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 12, sm: 4, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.danger} label="Owed to patients" value={inr(data.totals.totalOwed)} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={SEMANTIC.warning} label="Pending refunds" value={String(data.totals.pending)} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Refunded" value={String(data.totals.refunded)} /></Grid>
+            {/* "Pending" also counts deliberately-held advances, so it is the
+                count still to return rather than a queue of oversights. */}
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={SEMANTIC.warning} label="Still to return" value={String(data.totals.pending)} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Already refunded" value={String(data.totals.refunded)} /></Grid>
           </Grid>
+          <Box sx={{ mb: 2 }}>
+            <ReportStatusChips
+              param="advance"
+              fallback="owed"
+              options={[
+                { key: "owed", label: "To refund", count: data.totals.pending },
+                { key: "refunded", label: "Refunded", count: data.totals.refunded },
+                { key: "all", label: "All", count: data.totalRows },
+              ]}
+            />
+          </Box>
           <ReportTable
-            title="Unreturned advances (deposits to refund)"
-            filename="unreturned_advances"
-            emptyText="No unreturned advances — every closed admission's deposit is settled."
+            title={view === "refunded" ? "Advances already refunded" : view === "all" ? "Closed-admission advances" : "Unreturned advances (deposits to refund)"}
+            filename={view === "refunded" ? "refunded_advances" : "unreturned_advances"}
+            emptyText={
+              view === "refunded" ? "No advance has been refunded yet."
+              : view === "all" ? "No closed admission has an advance to account for."
+              : "No unreturned advances — every closed admission's deposit is settled."
+            }
             columns={[
               { key: "admissionNumber", label: "Admission" },
               { key: "patientName", label: "Patient" },
