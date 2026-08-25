@@ -6,7 +6,7 @@ import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, useTheme, alpha, Tabs, Tab, MenuItem, Select, IconButton, Tooltip, TextField, InputAdornment
 } from "@mui/material";
-import { AddRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded, SearchRounded, TuneRounded } from "@mui/icons-material";
+import { AddRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded, SearchRounded, TuneRounded, PersonSearchRounded } from "@mui/icons-material";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
@@ -22,6 +22,7 @@ import AutoGeneratePODialog from "@/components/pharmacy/AutoGeneratePODialog";
 import ReceivePODialog from "@/components/pharmacy/ReceivePODialog";
 import EditBatchDialog from "@/components/pharmacy/EditBatchDialog";
 import AdjustStockDialog from "@/components/pharmacy/AdjustStockDialog";
+import BatchRecipientsDialog from "@/components/pharmacy/BatchRecipientsDialog";
 import PurchaseOrderDetailDialog from "@/components/pharmacy/PurchaseOrderDetailDialog";
 
 // Match the existing plain (non-uppercase) table-head look, overriding
@@ -56,6 +57,8 @@ export default function InventoryManagement() {
   // Writing off or recounting a batch - the only path that changes a quantity
   // without a sale or a delivery behind it.
   const [adjustItem, setAdjustItem] = useState<any>(null);
+  // Recall trace: which patients hold units from a batch.
+  const [traceItem, setTraceItem] = useState<any>(null);
 
   const [inventory, setInventory] = useState<any[]>([]);
   const [stockTotal, setStockTotal] = useState(0);
@@ -394,6 +397,11 @@ export default function InventoryManagement() {
                             <TuneRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
+                        <Tooltip title="Who has this batch — recall trace">
+                          <IconButton size="small" onClick={() => setTraceItem(inv)}>
+                            <PersonSearchRounded fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -567,6 +575,10 @@ export default function InventoryManagement() {
         getMedicineName={getMedicineName}
         onSaved={() => fetchInventory(stockPage)}
       />
+
+      {traceItem && (
+        <BatchRecipientsDialog open inventoryId={traceItem.inventoryId} onClose={() => setTraceItem(null)} />
+      )}
 
       {adjustItem && (
         <AdjustStockDialog
