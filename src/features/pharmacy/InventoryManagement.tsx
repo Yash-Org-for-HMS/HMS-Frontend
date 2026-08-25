@@ -6,7 +6,7 @@ import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, useTheme, alpha, Tabs, Tab, MenuItem, Select, IconButton, Tooltip, TextField, InputAdornment
 } from "@mui/material";
-import { AddRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded, SearchRounded } from "@mui/icons-material";
+import { AddRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded, SearchRounded, TuneRounded } from "@mui/icons-material";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
@@ -21,6 +21,7 @@ import CreatePODialog from "@/components/pharmacy/CreatePODialog";
 import AutoGeneratePODialog from "@/components/pharmacy/AutoGeneratePODialog";
 import ReceivePODialog from "@/components/pharmacy/ReceivePODialog";
 import EditBatchDialog from "@/components/pharmacy/EditBatchDialog";
+import AdjustStockDialog from "@/components/pharmacy/AdjustStockDialog";
 import PurchaseOrderDetailDialog from "@/components/pharmacy/PurchaseOrderDetailDialog";
 
 // Match the existing plain (non-uppercase) table-head look, overriding
@@ -52,6 +53,9 @@ export default function InventoryManagement() {
   const toast = useToast();
   const { activeBranchId } = useHospitalAuth();
   const [tabValue, setTabValue] = useState(0);
+  // Writing off or recounting a batch - the only path that changes a quantity
+  // without a sale or a delivery behind it.
+  const [adjustItem, setAdjustItem] = useState<any>(null);
 
   const [inventory, setInventory] = useState<any[]>([]);
   const [stockTotal, setStockTotal] = useState(0);
@@ -385,6 +389,11 @@ export default function InventoryManagement() {
                             <EditRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
+                        <Tooltip title="Write off, recount, or see this batch history">
+                          <IconButton size="small" onClick={() => setAdjustItem(inv)}>
+                            <TuneRounded fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -558,6 +567,15 @@ export default function InventoryManagement() {
         getMedicineName={getMedicineName}
         onSaved={() => fetchInventory(stockPage)}
       />
+
+      {adjustItem && (
+        <AdjustStockDialog
+          open
+          batch={{ ...adjustItem, medicineName: getMedicineName(adjustItem.medicineId) }}
+          onClose={() => setAdjustItem(null)}
+          onDone={() => { setAdjustItem(null); fetchInventory(stockPage); }}
+        />
+      )}
     </PharmacyPage>
   );
 }
