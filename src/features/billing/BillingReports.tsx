@@ -7,7 +7,7 @@ import type {
   PatientStatementResponse, PatientStatementInvoice, PatientSearchRow,
 } from "./billingReports.types";
 import { useQuery } from "@tanstack/react-query";
-import { Box, Paper, Grid, TextField, Tabs, Tab, Autocomplete, Chip } from "@mui/material";
+import { Box, Paper, Grid, TextField, Tabs, Tab, Autocomplete, Chip, Button } from "@mui/material";
 import {
   AccountBalanceWalletRounded, ReceiptLongRounded, PaymentsRounded,
   TrendingUpRounded, PersonRounded, SavingsRounded, Inventory2Rounded,
@@ -22,6 +22,8 @@ import { formatINRAuto, formatDate } from "@/utils/format";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { KpiCard, ReportFilters, ReportTable, TrendChart, hasPlottableData, type DateRange } from "@/features/reports/kit";
 import ReportStatusChips from "@/features/reports/kit/ReportStatusChips";
+import DepositDialog from "@/components/ipd/DepositDialog";
+import { UndoRounded } from "@mui/icons-material";
 import { useReportParam } from "@/features/reports/kit/useReportParam";
 
 const ACCENT = BRAND.action;
@@ -196,6 +198,7 @@ export function UnreturnedAdvances() {
     queryFn: () => apiGet<UnreturnedAdvancesResponse>("/reception/reports/unreturned-advances"),
   });
   const [view] = useReportParam("advance", "owed");
+  const [refundFor, setRefundFor] = useState<UnreturnedAdvanceRow | null>(null);
   const allRows: UnreturnedAdvanceRow[] = data?.rows ?? [];
   // Split on the amount, not on the status label: the two predicates are exact
   // complements, so every row lands in exactly one chip and the counts add up
@@ -244,10 +247,31 @@ export function UnreturnedAdvances() {
               money("refunded", "Refunded"),
               money("amountOwed", "Owed back"),
               { key: "refundStatus", label: "Status", format: (v) => refundStatusChip(v), value: (r) => r.refundStatus },
+              // Refunded rows have nothing left to return, so the column is only
+              // carried on the views where it can act. `value` keeps the CSV
+              // column blank rather than exporting a button's label.
+              ...(view === "refunded" ? [] : [{
+                key: "action", label: "", align: "right" as const, sortable: false as const, sticky: "right" as const, exportable: false as const,
+                format: (_v: unknown, r: UnreturnedAdvanceRow) => (Number(r.amountOwed) > 0 ? (
+                  <Button size="small" variant="outlined" startIcon={<UndoRounded />} onClick={() => setRefundFor(r)}
+                    sx={{ textTransform: "none", fontWeight: 700, whiteSpace: "nowrap", color: "#8b5cf6", borderColor: "rgba(139,92,246,0.5)" }}>
+                    Return money
+                  </Button>
+                ) : null),
+              }]),
             ]}
             rows={rows}
             truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
           />
+          {refundFor && (
+            <DepositDialog
+              open
+              mode="refund"
+              admission={{ admissionId: refundFor.admissionId, patientName: refundFor.patientName, depositBalance: refundFor.amountOwed }}
+              onClose={() => setRefundFor(null)}
+              onDone={() => { setRefundFor(null); refetch(); }}
+            />
+          )}
         </Box>
       )}
     </Box>

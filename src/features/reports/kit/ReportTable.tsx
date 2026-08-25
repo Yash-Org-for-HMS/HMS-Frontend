@@ -24,6 +24,21 @@ export interface ReportColumn<T = any> {
    * is unaffected — it always carries the full value.
    */
   maxWidth?: number;
+  /**
+   * Pin this column to the right edge while the rest scrolls under it.
+   *
+   * A register wide enough to scroll puts its last column off-screen, which is
+   * fatal for a row ACTION: measured on the advances report, the button sat
+   * 67-707px past the edge at every width from 1920 down to 1280, so the one
+   * control the report exists for could only be found by scrolling sideways.
+   * Opt-in, so no existing table's layout changes.
+   */
+  sticky?: "right";
+  /**
+   * Leave this column out of the CSV. For a column that holds a control rather
+   * than a value — exporting it adds a blank column to every row of the file.
+   */
+  exportable?: false;
 }
 
 /**
@@ -60,6 +75,17 @@ export default function ReportTable<T = any>({ columns, rows, filename, title, m
 
   const raw = (col: ReportColumn<T>, row: T) => (col.value ? col.value(row) : (row as any)[col.key]);
 
+  const stickySx = (c: ReportColumn<T>, header: boolean) =>
+    c.sticky !== "right" ? undefined : {
+      position: "sticky" as const,
+      right: 0,
+      // Above the scrolling cells; the sticky header already sits at 2.
+      zIndex: header ? 3 : 1,
+      bgcolor: "background.paper",
+      borderLeft: "1px solid",
+      borderLeftColor: "divider",
+    };
+
   const sorted = useMemo(() => {
     if (!sortKey) return rows;
     const col = columns.find((c) => c.key === sortKey);
@@ -82,8 +108,9 @@ export default function ReportTable<T = any>({ columns, rows, filename, title, m
   };
 
   const doExport = () => {
-    const head = columns.map((c) => c.label);
-    const matrix = sorted.map((row) => columns.map((c) => {
+    const cols = columns.filter((c) => c.exportable !== false);
+    const head = cols.map((c) => c.label);
+    const matrix = sorted.map((row) => cols.map((c) => {
       const v = raw(c, row);
       return typeof v === "number" ? v : String(v ?? "");
     }));
@@ -117,7 +144,7 @@ export default function ReportTable<T = any>({ columns, rows, filename, title, m
             <TableHead>
               <TableRow>
                 {columns.map((c) => (
-                  <TableCell key={c.key} align={c.align || "left"} sortDirection={sortKey === c.key ? dir : false}>
+                  <TableCell key={c.key} align={c.align || "left"} sortDirection={sortKey === c.key ? dir : false} sx={stickySx(c, true)}>
                     {c.sortable === false ? c.label : (
                       <TableSortLabel active={sortKey === c.key} direction={sortKey === c.key ? dir : "desc"} onClick={() => onSort(c.key)}>
                         {c.label}
@@ -140,6 +167,7 @@ export default function ReportTable<T = any>({ columns, rows, filename, title, m
                         maxWidth: c.maxWidth ?? CELL_MAX_WIDTH,
                         overflow: "hidden",
                         textOverflow: "ellipsis",
+                        ...stickySx(c, false),
                       }}
                     >
                       {c.format ? c.format((row as any)[c.key], row) : (row as any)[c.key]}

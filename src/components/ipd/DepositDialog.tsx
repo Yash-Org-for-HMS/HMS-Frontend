@@ -15,10 +15,13 @@ import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 
 
+/** Only what the dialog reads — see DepositTarget below. */
+export type DepositTarget = Pick<AdmissionRow, "admissionId" | "patientName" | "depositBalance">;
+
 interface Props {
   open: boolean;
   mode: "collect" | "refund";
-  admission: AdmissionRow;
+  admission: DepositTarget;
   onClose: () => void;
   onDone: () => void;
 }
