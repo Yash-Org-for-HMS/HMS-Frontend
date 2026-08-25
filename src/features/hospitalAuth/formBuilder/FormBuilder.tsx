@@ -27,6 +27,9 @@ import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import FormSkeleton from "@/components/skeletons/FormSkeleton";
 
+/** A form category, as the API defines it. */
+type FormCategory = { value: string; description: string };
+
 const FIELD_TYPES = [
   { value: "text", label: "Text Input" },
   { value: "number", label: "Number Input" },
@@ -62,6 +65,17 @@ export default function FormBuilder() {
   });
 
   const [fields, setFields] = useState<any[]>([]);
+
+  /**
+   * The categories the API will accept. Held server-side so the dropdown and
+   * the validation can't disagree — and so moving these into master data later
+   * changes nothing here.
+   */
+  const { data: categories = [] } = useQuery<FormCategory[]>({
+    queryKey: ["form-categories"],
+    queryFn: async () => (await axiosInstance.get("/hospital/form-builder/categories")).data.data,
+    staleTime: 60 * 60 * 1000,
+  });
 
   const { data: template, isLoading: templateLoading, isError, error, refetch } = useQuery({
     queryKey: ["form-template", id],
@@ -197,20 +211,23 @@ export default function FormBuilder() {
                 sx={{ mb: 3, ...textFieldProps.sx }}
               />
 
+              {/* Options come from the API rather than being repeated here: the
+                  category decides where the template is offered, and a list
+                  that drifted from what the server accepts would offer a
+                  choice that fails to save. */}
               <TextField
                 select
                 label="Form Category"
                 value={formData.formType}
                 onChange={(e) => setFormData({ ...formData, formType: e.target.value })}
                 required
+                helperText={categories.find((c) => c.value === formData.formType)?.description ?? "Decides where this form is offered"}
                 {...textFieldProps}
                 sx={{ mb: 3, ...textFieldProps.sx }}
               >
-                <MenuItem value="Patient Registration">Patient Registration</MenuItem>
-                <MenuItem value="Consent Form">Consent Form</MenuItem>
-                <MenuItem value="Clinical Intake">Clinical Intake</MenuItem>
-                <MenuItem value="Insurance">Insurance</MenuItem>
-                <MenuItem value="Other">Other</MenuItem>
+                {categories.map((c) => (
+                  <MenuItem key={c.value} value={c.value}>{c.value}</MenuItem>
+                ))}
               </TextField>
 
               <TextField

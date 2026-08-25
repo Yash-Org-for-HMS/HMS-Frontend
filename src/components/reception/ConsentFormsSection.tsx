@@ -148,9 +148,13 @@ function IssueConsentDialog({ patientId, onClose, onIssued }: { patientId: strin
   const [values, setValues] = useState<FormValues>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Consent templates only. This listed every form the hospital had ever
+  // built, so an Insurance or Clinical Intake template sat in the consent
+  // picker beside the real consent forms and could be issued as one.
   const { data: templates = [] } = useQuery<any[]>({
-    queryKey: ["form-templates"],
-    queryFn: async () => (await axiosInstance.get("/hospital/form-builder")).data.data,
+    queryKey: ["form-templates", "Consent Form"],
+    queryFn: async () =>
+      (await axiosInstance.get("/hospital/form-builder", { params: { formType: "Consent Form" } })).data.data,
   });
 
   // Load the selected template's fields so they can be filled at issue time.
@@ -199,10 +203,18 @@ function IssueConsentDialog({ patientId, onClose, onIssued }: { patientId: strin
           <TextField select fullWidth label="Consent template" value={templateId}
             onChange={(e) => { setTemplateId(e.target.value); setValues({}); setErrors({}); const t = templates.find((x) => x.formTemplateId === e.target.value); if (t) setTitle(t.formName || ""); }}>
             <MenuItem value="">— Custom (no template) —</MenuItem>
+            {/* Every option is a Consent Form now, so the category suffix that
+                used to disambiguate them says nothing worth the space. */}
             {templates.map((t) => (
-              <MenuItem key={t.formTemplateId} value={t.formTemplateId}>{t.formName} {t.formType ? `(${t.formType})` : ""}</MenuItem>
+              <MenuItem key={t.formTemplateId} value={t.formTemplateId}>{t.formName}</MenuItem>
             ))}
           </TextField>
+          {templates.length === 0 && (
+            <Typography variant="caption" sx={{ color: "text.secondary", mt: -1.5 }}>
+              No consent templates yet — build one under Form Builder with the category
+              "Consent Form", or issue a custom form below.
+            </Typography>
+          )}
           <TextField fullWidth label="Title" value={title} onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Surgical Consent" helperText="Pre-filled from the template; edit if needed" />
 
