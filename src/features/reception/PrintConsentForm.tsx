@@ -35,13 +35,45 @@ interface ConsentPrintData {
   responses: ConsentResponse[];
 }
 
+const isBlank = (v: unknown) => v === null || v === undefined || v === "";
+
 /** Checkboxes store booleans; a bare "true" on a signed document reads badly. */
 const show = (v: unknown, fieldType?: string | null): string => {
-  if (v === null || v === undefined || v === "") return "—";
+  if (isBlank(v)) return "—";
   if (typeof v === "boolean") return v ? "Yes" : "No";
   if (fieldType === "date") return formatDate(String(v));
   return String(v);
 };
+
+/**
+ * What an unanswered field prints as.
+ *
+ * A hospital hands a patient the unsigned form to complete by hand, so an
+ * unanswered field has to be something you can write on. It used to print an
+ * em dash, which made a blank consent a page of dashes — the paper route the
+ * upload-a-scan flow depends on did not actually work.
+ */
+function AnswerCell({ value, fieldType }: { value: unknown; fieldType?: string | null }) {
+  if (!isBlank(value)) {
+    return <Typography sx={{ fontSize: "10.5pt", fontWeight: 600, textAlign: "right" }}>{show(value, fieldType)}</Typography>;
+  }
+  // An unticked checkbox is a box to tick, not a line to write on.
+  if (fieldType === "checkbox") {
+    return (
+      <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
+          <Box sx={{ width: 11, height: 11, border: "1.2px solid #000" }} />
+          <Typography sx={{ fontSize: "10pt" }}>Yes</Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
+          <Box sx={{ width: 11, height: 11, border: "1.2px solid #000" }} />
+          <Typography sx={{ fontSize: "10pt" }}>No</Typography>
+        </Box>
+      </Box>
+    );
+  }
+  return <Box sx={{ width: 190, borderBottom: "1px solid #999", alignSelf: "flex-end", mb: 0.4 }} />;
+}
 
 /**
  * A signed consent as a document.
@@ -144,9 +176,9 @@ export default function PrintConsentForm() {
             Details recorded
           </Typography>
           {form.responses.map((r, i) => (
-            <Box key={i} sx={{ display: "flex", justifyContent: "space-between", gap: 3, py: 0.7, borderBottom: "1px solid #eee" }}>
+            <Box key={i} sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 3, py: 0.7, borderBottom: "1px solid #eee", minHeight: 26 }}>
               <Typography sx={{ fontSize: "10.5pt", color: "#333" }}>{r.label}</Typography>
-              <Typography sx={{ fontSize: "10.5pt", fontWeight: 600, textAlign: "right" }}>{show(r.value, r.fieldType)}</Typography>
+              <AnswerCell value={r.value} fieldType={r.fieldType} />
             </Box>
           ))}
         </Box>
@@ -172,10 +204,15 @@ export default function PrintConsentForm() {
           </Box>
           <Divider sx={{ borderColor: "#000" }} />
           <Typography sx={{ ...label, mt: 0.5 }}>Signature</Typography>
-          <Typography sx={value}>{form.signedByName || "—"}</Typography>
-          {form.signedByRelation && (
-            <Typography sx={{ fontSize: "9.5pt", color: "#555" }}>Relation to patient: {form.signedByRelation}</Typography>
-          )}
+          {/* On an unsigned copy these are lines to write on, not values to
+              read — an em dash here left nowhere to put a name. */}
+          {signed
+            ? <Typography sx={value}>{form.signedByName}</Typography>
+            : <Box sx={{ height: 15, borderBottom: "1px solid #999", mt: 1.4 }} />}
+          <Typography sx={{ fontSize: "9.5pt", color: "#555", mt: signed ? 0 : 0.4 }}>
+            Relation to patient{form.signedByRelation ? `: ${form.signedByRelation}` : ""}
+          </Typography>
+          {!signed && <Box sx={{ height: 15, borderBottom: "1px solid #999" }} />}
           {signed && form.updatedAt && (
             <Typography sx={{ fontSize: "9.5pt", color: "#555" }}>{formatDateTime(form.updatedAt)}</Typography>
           )}
@@ -184,7 +221,9 @@ export default function PrintConsentForm() {
           <Box sx={{ minHeight: 68 }} />
           <Divider sx={{ borderColor: "#000" }} />
           <Typography sx={{ ...label, mt: 0.5 }}>Witness</Typography>
-          <Typography sx={value}>{form.witnessName || "—"}</Typography>
+          {signed
+            ? <Typography sx={value}>{form.witnessName || "—"}</Typography>
+            : <Box sx={{ height: 15, borderBottom: "1px solid #999", mt: 1.4 }} />}
         </Grid>
       </Grid>
 
