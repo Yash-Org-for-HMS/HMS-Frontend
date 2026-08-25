@@ -4,7 +4,7 @@ import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha, InputAdornment
+  TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha, InputAdornment, Chip, Alert
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded, SearchRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
@@ -38,6 +38,10 @@ export default function MedicineCatalog() {
   const confirm = useConfirm();
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
+  const { data: taxGaps } = useQuery<{ total: number; missingHsn: number }>({
+    queryKey: ["pharmacy-tax-gaps"],
+    queryFn: async () => (await axiosInstance.get("/pharmacy/medicines/tax-gaps")).data.data,
+  });
   const { orderBy, order, onSort } = useServerSort();
 
   const [openDialog, setOpenDialog] = useState(false);
@@ -48,6 +52,8 @@ export default function MedicineCatalog() {
   const [genericName, setGenericName] = useState("");
   const [manufacturer, setManufacturer] = useState("");
   const [sellingPrice, setSellingPrice] = useState("");
+  // Show only medicines that would bill without an HSN code.
+  const [taxOnly, setTaxOnly] = useState(false);
   const [gstPercent, setGstPercent] = useState("");
   const [hsnCode, setHsnCode] = useState("");
   const [minStockLevel, setMinStockLevel] = useState("10");
@@ -71,13 +77,14 @@ export default function MedicineCatalog() {
   useEffect(() => { setPage(1); }, [orderBy, order]);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["pharmacy-medicines", page, debouncedSearch, orderBy, order],
+    queryKey: ["pharmacy-medicines", page, debouncedSearch, orderBy, order, taxOnly],
     queryFn: async () =>
       (await axiosInstance.get("/pharmacy/medicines", {
         params: {
           page,
           limit: ROWS_PER_PAGE,
           search: debouncedSearch || undefined,
+          taxIncomplete: taxOnly || undefined,
           sortBy: orderBy || undefined,
           sortOrder: order,
         },
@@ -227,6 +234,22 @@ export default function MedicineCatalog() {
         background: 'rgba(255, 255, 255, 0.8)',
         backdropFilter: 'blur(20px)',
       }}>
+        {/* Stated once, over the whole catalog. A medicine with no HSN still
+            sells perfectly well — it just bills without a code on the line, and
+            nothing anywhere said so. */}
+        {!!taxGaps?.missingHsn && (
+          <Alert
+            severity="warning"
+            sx={{ borderRadius: 0 }}
+            action={
+              <Button size="small" color="inherit" onClick={() => { setTaxOnly((v) => !v); setPage(1); }} sx={{ textTransform: "none", fontWeight: 700 }}>
+                {taxOnly ? "Show all" : "Show these"}
+              </Button>
+            }
+          >
+            {taxGaps.missingHsn} of {taxGaps.total} medicines have no HSN/SAC code — their lines print on the tax invoice without one.
+          </Alert>
+        )}
         <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider', bgcolor: alpha(theme.palette.background.paper, 0.5) }}>
           <TextField
             placeholder="Search by Brand, Generic, or Code..."
@@ -291,6 +314,15 @@ export default function MedicineCatalog() {
                           <Typography component="span" sx={{ ml: 0.5, fontSize: 11, color: 'text.secondary', fontWeight: 500 }}>
                             +{Number(med.gstPercent)}% GST
                           </Typography>
+                        )}
+                        {/* GST 0 is not flagged — plenty of drugs are genuinely
+                            zero-rated, and marking those would teach the reader
+                            to ignore the marker. A missing HSN is unambiguous. */}
+                        {!med.hsnCode && (
+                          <Tooltip title="No HSN/SAC code — this medicine bills without one on the tax invoice">
+                            <Chip label="No HSN" size="small" sx={{ ml: 1, height: 18, fontSize: 10, fontWeight: 700,
+                              bgcolor: `${SEMANTIC.warning}22`, color: SEMANTIC.warning }} />
+                          </Tooltip>
                         )}
                       </TableCell>
                       <TableCell align="right">
@@ -419,15 +451,16 @@ export default function MedicineCatalog() {
                 variant="outlined"
                 inputProps={{ min: 0, max: 100 }}
                 error={!!fieldErrors.gstPercent}
-                helperText={fieldErrors.gstPercent || "Blank / 0 = untaxed"}
+                helperText={fieldErrors.gstPercent || "0 = zero-rated. Applied per medicine on the bill."}
               />
               <TextField
-                label="HSN/SAC (optional)"
+                label="HSN/SAC"
                 value={hsnCode}
                 onChange={(e) => setHsnCode(e.target.value)}
                 fullWidth
                 variant="outlined"
                 inputProps={{ maxLength: 10 }}
+                helperText={hsnCode.trim() ? " " : "Prints on the tax invoice line"}
               />
             </Box>
 
