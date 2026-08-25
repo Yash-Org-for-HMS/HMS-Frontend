@@ -14,6 +14,7 @@ import {
   TodayRounded, BadgeRounded, WcRounded, BloodtypeRounded, LocalPhoneRounded,
   EmailRounded, LocationOnRounded, TimelineRounded,
   FolderSharedRounded, UploadFileRounded, DescriptionRounded, OpenInNewRounded, DeleteOutlineRounded,
+  HotelRounded, Inventory2Rounded,
 } from "@mui/icons-material";
 import { getInitials } from "@/utils/format";
 import { axiosInstance } from "@/api/axios";
@@ -26,6 +27,8 @@ import ErrorState from "@/components/ErrorState";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import StatCard from "@/components/StatCard";
+import AdmissionChargesDialog from "@/components/ipd/AdmissionChargesDialog";
+import type { AdmissionRow } from "@/features/ipd/ipd.types";
 import { typeScale } from "@/styles/typography";
 import { sanitizeRichText } from "@/utils/sanitizeHtml";
 import { apiErrorText } from "@/utils/apiError";
@@ -87,6 +90,16 @@ export default function DoctorPatientProfile() {
     queryFn: async () => (await axiosInstance.get(`/ipd/patients/${id}/surgeries`)).data.data,
     enabled: !!id,
   });
+
+  // Is this patient on a ward right now? The doctor panel had no way to tell,
+  // so a clinician on rounds could not see they were looking at an inpatient.
+  const admissionQ = useQuery<AdmissionRow | null>({
+    queryKey: ["patient-current-admission", id],
+    queryFn: async () => (await axiosInstance.get(`/ipd/patients/${id}/current-admission`)).data.data,
+    enabled: !!id,
+  });
+  const admission = admissionQ.data ?? null;
+  const [chargesOpen, setChargesOpen] = useState(false);
 
   const [mainTab, setMainTab] = useState(0);
   const p = patientQ.data;
@@ -172,6 +185,30 @@ export default function DoctorPatientProfile() {
           </Box>
         )}
       </Paper>
+
+      {/* ── Currently admitted ──
+          Consumables reach the discharge bill only if somebody at the bedside
+          records them; a doctor is at the bedside and could not, so this is
+          the same dialog the nurse ward uses, reached from the patient the
+          doctor already has open. */}
+      {admission && (
+        <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 3, border: "1px solid", borderColor: alpha(SEMANTIC.warning, 0.4), bgcolor: alpha(SEMANTIC.warning, 0.06),
+          display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+          <HotelRounded sx={{ color: SEMANTIC.warning }} />
+          <Box sx={{ flex: 1, minWidth: 200 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+              Currently admitted{admission.admissionNumber ? ` · ${admission.admissionNumber}` : ""}
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              {[admission.bed?.label, admission.days != null ? `day ${admission.days} of stay` : null].filter(Boolean).join(" · ")}
+            </Typography>
+          </Box>
+          <Button size="small" variant="outlined" startIcon={<Inventory2Rounded />} onClick={() => setChargesOpen(true)}
+            sx={{ textTransform: "none", fontWeight: 700, color: SEMANTIC.warning, borderColor: alpha(SEMANTIC.warning, 0.5) }}>
+            Consumables
+          </Button>
+        </Paper>
+      )}
 
       {/* Stat tiles */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
@@ -267,6 +304,10 @@ export default function DoctorPatientProfile() {
           </Box>
         </Paper>
       </Box>
+
+      {admission && chargesOpen && (
+        <AdmissionChargesDialog open admission={admission} onClose={() => setChargesOpen(false)} />
+      )}
     </Box>
   );
 }
