@@ -47,12 +47,11 @@ export default function FormTemplatesList() {
 
   const term = q.trim().toLowerCase();
   const filtered = term
-    ? templates.filter((t) => (t.formName || "").toLowerCase().includes(term) || (t.formType || "").toLowerCase().includes(term) || (t.description || "").toLowerCase().includes(term))
+    ? templates.filter((t) => (t.formName || "").toLowerCase().includes(term) || (t.description || "").toLowerCase().includes(term))
     : templates;
 
   const { sorted, orderBy, order, onSort } = useTableSort(filtered, {
     name: (t) => t.formName ?? null,
-    category: (t) => t.formType ?? null,
     fields: (t) => t.fieldsCount ?? null,
     status: (t) => (t.isActive ? "Active" : "Inactive"),
   });
@@ -77,7 +76,7 @@ export default function FormTemplatesList() {
     <Box>
       <PageHeader
         title="Form Builder"
-        subtitle="Design and manage custom forms for Patient Registration, Consent, and more."
+        subtitle="Design the forms this hospital issues to patients. Name it whatever you call it — every form is offered from the patient's profile."
         actions={
           <Button
             variant="contained"
@@ -96,7 +95,7 @@ export default function FormTemplatesList() {
 
       <TextField
         size="small"
-        placeholder="Search forms by name, type, or description…"
+        placeholder="Search forms by name or description…"
         value={q}
         onChange={(e) => setQ(e.target.value)}
         sx={{ mb: 2, width: "100%", maxWidth: 440 }}
@@ -113,7 +112,6 @@ export default function FormTemplatesList() {
             <TableHead>
               <TableRow>
                 <SortableHeadCell label="Form Name" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
-                <SortableHeadCell label="Category" sortKey="category" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
                 <SortableHeadCell label="Total Fields" sortKey="fields" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
                 <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
                 <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", fontWeight: 600, bgcolor: "background.default" }}>Actions</TableCell>
@@ -138,9 +136,6 @@ export default function FormTemplatesList() {
                       <Typography variant="caption" display="block" sx={{ color: "text.secondary", mt: 0.5, ml: 3.5 }}>
                         {t.description}
                       </Typography>
-                    </TableCell>
-                    <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
-                      <Chip label={t.formType} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.primary" }} />
                     </TableCell>
                     <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       <Chip label={`${t.fieldsCount} Fields`} size="small" sx={{ bgcolor: "rgba(56, 189, 248, 0.1)", color: "#38bdf8" }} />

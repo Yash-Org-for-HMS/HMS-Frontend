@@ -335,7 +335,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
           <Tab icon={<CalendarTodayRounded fontSize="small" />} iconPosition="start" label={`Appointments${stats.total ? ` (${stats.total})` : ""}`} />
           <Tab icon={<ReceiptLongRounded fontSize="small" />} iconPosition="start" label={`Billing${invoices.length ? ` (${invoices.length})` : ""}`} disabled={!billingEnabled} />
           <Tab icon={<EventRepeatRounded fontSize="small" />} iconPosition="start" label="Records" />
-          <Tab icon={<BadgeRounded fontSize="small" />} iconPosition="start" label="Consent" />
+          <Tab icon={<BadgeRounded fontSize="small" />} iconPosition="start" label="Forms" />
           <Tab icon={<VaccinesRounded fontSize="small" />} iconPosition="start" label="Vaccinations" />
           <Tab icon={<MedicalServicesRounded fontSize="small" />} iconPosition="start" label="Surgeries" />
           <Tab icon={<ContactPhoneRounded fontSize="small" />} iconPosition="start" label="Documents" />

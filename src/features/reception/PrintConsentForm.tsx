@@ -146,7 +146,7 @@ export default function PrintConsentForm() {
       <Divider sx={{ borderColor: "#000", borderBottomWidth: 2, mb: 2 }} />
 
       <Typography sx={{ fontSize: "13pt", fontWeight: 700, textAlign: "center", mb: 0.5, textTransform: "uppercase", letterSpacing: 0.5 }}>
-        {form.title || "Consent Form"}
+        {form.title || "Form"}
       </Typography>
       {/* An unsigned copy must not be mistaken for a signed one. */}
       <Typography sx={{ fontSize: "9.5pt", textAlign: "center", color: signed ? "#166534" : "#92400e", mb: 2.5, fontWeight: 600 }}>

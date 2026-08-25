@@ -54,7 +54,7 @@ export default function ConsentFormsSection({ patientId, patientName, readOnly =
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, gap: 1, flexWrap: "wrap" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <AssignmentTurnedInRounded sx={{ color: ACCENT }} fontSize="small" />
-          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }}>Consent Forms</Typography>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }}>Forms</Typography>
         </Box>
         {!readOnly && (
           <Button size="small" variant="outlined" startIcon={<AddRounded />} onClick={() => setIssueOpen(true)}
@@ -156,13 +156,13 @@ function IssueConsentDialog({ patientId, onClose, onIssued }: { patientId: strin
   const [values, setValues] = useState<FormValues>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Consent templates only. This listed every form the hospital had ever
-  // built, so an Insurance or Clinical Intake template sat in the consent
-  // picker beside the real consent forms and could be issued as one.
+  // Every active template the hospital has built. Filtering by category was
+  // what hid a hospital's own form from the desk meant to issue it — one of
+  // three templates was a consent form parked under "Other", unissuable.
   const { data: templates = [] } = useQuery<any[]>({
-    queryKey: ["form-templates", "Consent Form"],
+    queryKey: ["form-templates"],
     queryFn: async () =>
-      (await axiosInstance.get("/hospital/form-builder", { params: { formType: "Consent Form" } })).data.data,
+      (await axiosInstance.get("/hospital/form-builder")).data.data,
   });
 
   // Load the selected template's fields so they can be filled at issue time.
@@ -205,10 +205,10 @@ function IssueConsentDialog({ patientId, onClose, onIssued }: { patientId: strin
 
   return (
     <Dialog open onClose={saving ? undefined : onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Issue Consent Form</DialogTitle>
+      <DialogTitle>Issue Form</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>
-          <TextField select fullWidth label="Consent template" value={templateId}
+          <TextField select fullWidth label="Form template" value={templateId}
             onChange={(e) => { setTemplateId(e.target.value); setValues({}); setErrors({}); const t = templates.find((x) => x.formTemplateId === e.target.value); if (t) setTitle(t.formName || ""); }}>
             <MenuItem value="">— Custom (no template) —</MenuItem>
             {/* Every option is a Consent Form now, so the category suffix that
@@ -219,8 +219,8 @@ function IssueConsentDialog({ patientId, onClose, onIssued }: { patientId: strin
           </TextField>
           {templates.length === 0 && (
             <Typography variant="caption" sx={{ color: "text.secondary", mt: -1.5 }}>
-              No consent templates yet — build one under Form Builder with the category
-              "Consent Form", or issue a custom form below.
+              No form templates yet — build one under Form Builder, or issue a
+              custom form below.
             </Typography>
           )}
           <TextField fullWidth label="Title" value={title} onChange={(e) => setTitle(e.target.value)}
