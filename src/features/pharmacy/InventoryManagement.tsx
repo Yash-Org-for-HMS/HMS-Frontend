@@ -6,7 +6,7 @@ import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, useTheme, alpha, Tabs, Tab, MenuItem, Select, IconButton, Tooltip, TextField, InputAdornment
 } from "@mui/material";
-import { AddRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded, SearchRounded, TuneRounded, PersonSearchRounded } from "@mui/icons-material";
+import { AddRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded, SearchRounded, TuneRounded, PersonSearchRounded, AssignmentReturnRounded } from "@mui/icons-material";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
@@ -23,6 +23,8 @@ import ReceivePODialog from "@/components/pharmacy/ReceivePODialog";
 import EditBatchDialog from "@/components/pharmacy/EditBatchDialog";
 import AdjustStockDialog from "@/components/pharmacy/AdjustStockDialog";
 import BatchRecipientsDialog from "@/components/pharmacy/BatchRecipientsDialog";
+import SupplierReturnDialog from "@/components/pharmacy/SupplierReturnDialog";
+import SupplierReturnsTab from "@/components/pharmacy/SupplierReturnsTab";
 import PurchaseOrderDetailDialog from "@/components/pharmacy/PurchaseOrderDetailDialog";
 
 // Match the existing plain (non-uppercase) table-head look, overriding
@@ -59,6 +61,8 @@ export default function InventoryManagement() {
   const [adjustItem, setAdjustItem] = useState<any>(null);
   // Recall trace: which patients hold units from a batch.
   const [traceItem, setTraceItem] = useState<any>(null);
+  // Sending a batch back to the supplier for credit, rather than writing it off.
+  const [returnItem, setReturnItem] = useState<any>(null);
 
   const [inventory, setInventory] = useState<any[]>([]);
   const [stockTotal, setStockTotal] = useState(0);
@@ -267,6 +271,7 @@ export default function InventoryManagement() {
         <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: alpha(theme.palette.background.paper, 0.5) }}>
           <Tab label="Current Stock" sx={{ fontWeight: 600 }} />
           <Tab label="Purchase Orders" sx={{ fontWeight: 600 }} />
+          <Tab label="Supplier Returns" sx={{ fontWeight: 600 }} />
           <Tab label={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               Low Stock Alerts
@@ -303,7 +308,7 @@ export default function InventoryManagement() {
               }}
             />
           ) : <Box />}
-          {tabValue === 2 && (
+          {tabValue === 3 && (
             <Button
               variant="contained"
               color="warning"
@@ -402,6 +407,13 @@ export default function InventoryManagement() {
                             <PersonSearchRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
+                        {inv.availableQuantity > 0 && (
+                          <Tooltip title="Return to supplier for credit">
+                            <IconButton size="small" onClick={() => setReturnItem(inv)}>
+                              <AssignmentReturnRounded fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -477,8 +489,16 @@ export default function InventoryManagement() {
               <PaginationBar page={poPage} pageCount={poPageCount} total={poTotal} onChange={setPoPage} />
             </Box>
 
-            {/* Tab 2: Low Stock Alerts */}
-            <Box role="tabpanel" hidden={tabValue !== 2}>
+            {/* Tab 2: Supplier Returns — mounted only when open, so the
+                register is not fetched on every visit to Current Stock. */}
+            {tabValue === 2 && (
+              <Box role="tabpanel">
+                <SupplierReturnsTab />
+              </Box>
+            )}
+
+            {/* Tab 3: Low Stock Alerts */}
+            <Box role="tabpanel" hidden={tabValue !== 3}>
               <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
               <Table stickyHeader>
                 <TableHead>
@@ -578,6 +598,15 @@ export default function InventoryManagement() {
 
       {traceItem && (
         <BatchRecipientsDialog open inventoryId={traceItem.inventoryId} onClose={() => setTraceItem(null)} />
+      )}
+
+      {returnItem && (
+        <SupplierReturnDialog
+          open
+          batch={{ ...returnItem, medicineName: getMedicineName(returnItem.medicineId) }}
+          onClose={() => setReturnItem(null)}
+          onDone={() => { setReturnItem(null); fetchInventory(stockPage); }}
+        />
       )}
 
       {adjustItem && (
