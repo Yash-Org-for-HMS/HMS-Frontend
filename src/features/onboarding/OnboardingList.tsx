@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDate } from "@/utils/format";
 import { actionBuckets, daysUntil } from "./actionNeeded";
+import { graceText } from "@/features/subscriptionBilling/grace";
 import { useNavigate } from "react-router-dom";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import {
@@ -195,7 +196,10 @@ export default function OnboardingList() {
               <Row
                 key={h.hospitalId}
                 primary={h.hospitalName}
-                secondary={`Code ${h.hospitalCode} · subscription payment overdue — suspends after the grace period`}
+                // "Suspends after the grace period" gave no way to tell a tenant
+                // with a week left from one going dark tomorrow. Both the count
+                // and the date, so it can be acted on or diarised.
+                secondary={`Code ${h.hospitalCode} · overdue since ${formatDate(h.oldestDueDate)} · ${graceText(h.graceDaysLeft)}`}
                 actions={<Button size="small" variant="outlined" startIcon={<VisibilityRounded />} onClick={() => navigate(`/hospitals/${h.hospitalId}/overview`)} sx={{ textTransform: "none" }}>View</Button>}
               />
             ))}

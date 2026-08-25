@@ -23,6 +23,8 @@ import ErrorState from "@/components/ErrorState";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import PaymentsRegister from "./PaymentsRegister";
 import SubscriptionInvoiceDialog from "./SubscriptionInvoiceDialog";
+import { graceText } from "./grace";
+import type { SubscriptionInvoiceListRow } from "./subscriptionBilling.types";
 
 const PAY_METHODS = ["Cash", "Bank Transfer", "UPI", "Card", "Cheque", "Other"];
 const STATUS_FILTERS = [
@@ -68,7 +70,7 @@ export default function SubscriptionBilling() {
     queryKey: ["subscription-invoices", statusFilter, page],
     queryFn: async () => (await axiosInstance.get("/subscription-billing/invoices", { params })).data,
   });
-  const invoices: any[] = resp?.data || [];
+  const invoices: SubscriptionInvoiceListRow[] = resp?.data || [];
   const pagination = resp?.pagination as { totalPages: number } | undefined;
 
   const refreshAll = () => {
@@ -125,7 +127,7 @@ export default function SubscriptionBilling() {
   const [tab, setTab] = useState<"invoices" | "payments">("invoices");
   const [detailFor, setDetailFor] = useState<string | null>(null);
 
-  const handleVoid = async (inv: any) => {
+  const handleVoid = async (inv: SubscriptionInvoiceListRow) => {
     const yes = await confirm({ title: "Void invoice", message: `Void ${inv.invoiceNumber}? This cannot be undone.`, confirmText: "Void", destructive: true });
     if (yes) voidMutation.mutate(inv.subscriptionInvoiceId);
   };
@@ -223,7 +225,14 @@ export default function SubscriptionBilling() {
                     <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem" }}>{formatDate(inv.periodStart)} – {formatDate(inv.periodEnd)}</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(inv.amount)}</TableCell>
                     <TableCell><Chip label={PHASE_LABEL[inv.phase] || inv.status} color={PHASE_COLOR[inv.phase] || "default"} size="small" /></TableCell>
-                    <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem" }}>{formatDate(inv.dueDate)}</TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem" }}>
+                      {formatDate(inv.dueDate)}
+                      {inv.graceDaysLeft != null && (
+                        <Box component="span" sx={{ display: "block", fontWeight: 700, color: inv.graceDaysLeft <= 2 ? SEMANTIC.danger : SEMANTIC.warning }}>
+                          {graceText(inv.graceDaysLeft)}
+                        </Box>
+                      )}
+                    </TableCell>
                     <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                       <Box sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end", alignItems: "center" }}>
                         <Tooltip title="Print / download invoice">

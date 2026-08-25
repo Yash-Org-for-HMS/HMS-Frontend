@@ -52,6 +52,11 @@ export interface OverviewBilling {
   cycleAmount: Money;
   mrr: Money;
   outstanding: Money;
+  /** Grace-period countdown; all three null unless the tenant is overdue. */
+  oldestDueDate?: string | null;
+  graceEndsAt?: string | null;
+  /** Whole days left, floored. 0 = today; negative = the window already closed. */
+  graceDaysLeft?: number | null;
   currentPlanId?: string | null;
   pendingPlanId?: string | null;
   pendingPlanName?: string | null;

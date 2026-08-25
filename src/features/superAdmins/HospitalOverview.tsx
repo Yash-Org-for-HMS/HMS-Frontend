@@ -62,6 +62,7 @@ import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import StatCard from "@/components/StatCard";
 import { assetUrl } from "@/utils/assetUrl";
 import { formatINR, formatDate } from "@/utils/format";
+import { graceText, graceShort } from "@/features/subscriptionBilling/grace";
 
 const ACCENT = BRAND.action;
 
@@ -185,7 +186,13 @@ export default function HospitalOverview() {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.75, flexWrap: "wrap" }}>
               <Chip size="small" label={lifecycle.label} sx={{ fontWeight: 700, bgcolor: `${lifecycle.color}22`, color: lifecycle.color }} />
               {billing && billing.state !== "active" && (
-                <Chip size="small" label={billingState[billing.state]?.label} sx={{ fontWeight: 700, bgcolor: `${billingState[billing.state]?.color}22`, color: billingState[billing.state]?.color }} />
+                <Chip
+                  size="small"
+                  // The countdown rides on the status chip rather than a chip of
+                  // its own: "Payment overdue" without "5 days left" is the gap.
+                  label={[billingState[billing.state]?.label, graceShort(billing.graceDaysLeft)].filter(Boolean).join(" · ")}
+                  sx={{ fontWeight: 700, bgcolor: `${billingState[billing.state]?.color}22`, color: billingState[billing.state]?.color }}
+                />
               )}
               <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>{data.hospitalCode}</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>· {activePlan}</Typography>
@@ -378,6 +385,12 @@ export default function HospitalOverview() {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2, flexWrap: "wrap" }}>
               <SectionTitle>Subscription Billing</SectionTitle>
               <Chip size="small" label={billingState[billing.state]?.label} sx={{ fontWeight: 700, bgcolor: `${billingState[billing.state]?.color}22`, color: billingState[billing.state]?.color }} />
+              {billing.state !== "active" && (
+                <Typography variant="caption" sx={{ color: billingState[billing.state]?.color, fontWeight: 700 }}>
+                  Overdue since {formatDate(billing.oldestDueDate)} · {graceText(billing.graceDaysLeft)}
+                  {billing.graceEndsAt ? ` (${formatDate(billing.graceEndsAt)})` : ""}
+                </Typography>
+              )}
               {billing.pendingPlanName && (
                 <Chip size="small" label={`Downgrade → ${billing.pendingPlanName} (next cycle)`} sx={{ fontWeight: 600, bgcolor: "rgba(245,158,11,0.12)", color: SEMANTIC.warning }} />
               )}
