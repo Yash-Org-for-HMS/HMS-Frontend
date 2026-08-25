@@ -1,4 +1,8 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import type {
+  DoctorReportsData, TrendPoint, DiagnosisCount, GenderSplitRow,
+  MedicineCount, StatusCount, ConsultationRegisterRow,
+} from "./doctorReports.types";
 import { formatDate, formatDateTime } from "@/utils/format";
 import SimpleTable from "@/features/reports/kit/SimpleTable";
 import KpiCard from "@/features/reports/kit/KpiCard";
@@ -34,12 +38,12 @@ const PRESETS = [
 // its own rather than all stacked on one page. All read from the single
 // already-fetched payload (one backend call powers every report here). ─────
 
-function SummaryReport({ data }: { data: any }) {
+function SummaryReport({ data }: { data: DoctorReportsData }) {
   const s = data?.summary;
   // The equal-length window before this one, so each count says which way it is
   // moving rather than standing alone.
   const p = data?.previous;
-  const trend: any[] = data?.trend || [];
+  const trend: TrendPoint[] = data?.trend || [];
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(3,1fr)", md: "repeat(6,1fr)" }, gap: 1.5 }}>
@@ -62,53 +66,53 @@ function SummaryReport({ data }: { data: any }) {
   );
 }
 
-function DiagnosesReport({ data }: { data: any }) {
-  const topDiagnoses: any[] = data?.topDiagnoses || [];
+function DiagnosesReport({ data }: { data: DoctorReportsData }) {
+  const topDiagnoses: DiagnosisCount[] = data?.topDiagnoses || [];
   return (
     <SimpleTable title="Diagnoses breakdown" head={["Diagnosis", "Cases"]}
       rows={topDiagnoses.map((d) => [d.diagnosis, Number(d.count)])} />
   );
 }
 
-function GenderReport({ data }: { data: any }) {
-  const genderSplit: any[] = data?.genderSplit || [];
+function GenderReport({ data }: { data: DoctorReportsData }) {
+  const genderSplit: GenderSplitRow[] = data?.genderSplit || [];
   return (
     <SimpleTable title="Gender split" head={["Gender", "Patients"]}
       rows={genderSplit.map((g) => [g.label, Number(g.count)])} />
   );
 }
 
-function MedicinesReport({ data }: { data: any }) {
-  const topMedicines: any[] = data?.topMedicines || [];
+function MedicinesReport({ data }: { data: DoctorReportsData }) {
+  const topMedicines: MedicineCount[] = data?.topMedicines || [];
   return (
     <SimpleTable title="Top prescribed medicines" head={["Medicine", "Times prescribed", "Total qty"]}
       rows={topMedicines.map((m) => [m.medicineName, Number(m.timesPrescribed), Number(m.totalQuantity)])} />
   );
 }
 
-function LabOrdersReport({ data }: { data: any }) {
-  const labStatusBreakdown: any[] = data?.labStatusBreakdown || [];
+function LabOrdersReport({ data }: { data: DoctorReportsData }) {
+  const labStatusBreakdown: StatusCount[] = data?.labStatusBreakdown || [];
   return (
     <SimpleTable title="Lab orders — status" head={["Status", "Orders"]}
       rows={labStatusBreakdown.map((r) => [r.status, Number(r.count)])} />
   );
 }
 
-function RadiologyOrdersReport({ data }: { data: any }) {
-  const radStatusBreakdown: any[] = data?.radStatusBreakdown || [];
+function RadiologyOrdersReport({ data }: { data: DoctorReportsData }) {
+  const radStatusBreakdown: StatusCount[] = data?.radStatusBreakdown || [];
   return (
     <SimpleTable title="Radiology orders — status" head={["Status", "Orders"]}
       rows={radStatusBreakdown.map((r) => [r.status, Number(r.count)])} />
   );
 }
 
-function ConsultationsRegisterReport({ data }: { data: any }) {
-  const consultationsList: any[] = data?.consultationsList || [];
+function ConsultationsRegisterReport({ data }: { data: DoctorReportsData }) {
+  const consultationsList: ConsultationRegisterRow[] = data?.consultationsList || [];
   return (
     <SimpleTable
       title="Consultations register"
       head={["Date", "Patient", "UHID", "Diagnosis", "Prescriptions"]}
-      rows={consultationsList.map((c) => [formatDateTime(c.date), c.patientName, c.uhid, c.diagnosis, Number(c.prescriptions)])}
+      rows={consultationsList.map((c) => [formatDateTime(c.date), c.patientName, c.uhid, c.diagnosis || "—", Number(c.prescriptions)])}
       note={<ReportTruncationNote truncated={data?.truncated} totalRows={data?.totalRows} shownRows={data?.shownRows} />}
     />
   );
@@ -116,7 +120,7 @@ function ConsultationsRegisterReport({ data }: { data: any }) {
 
 // ── Report catalogue — one entry per sidebar item, grouped like ReportsHub. ──
 
-type ReportItem = { key: string; label: string; Comp: React.ComponentType<{ data: any }> };
+type ReportItem = { key: string; label: string; Comp: React.ComponentType<{ data: DoctorReportsData }> };
 type ReportGroup = { heading: string; items: ReportItem[] };
 
 const GROUPS: ReportGroup[] = [
