@@ -137,13 +137,19 @@ export default function DoctorsList() {
                 <TableCell sx={HEAD_SX}>Specialization</TableCell>
                 <SortableHeadCell label="License No." sortKey="license" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
                 <SortableHeadCell label="Fee" sortKey="fee" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+                {/* Whether the doctor can still be booked. Deactivating the
+                    account drops them from reception's booking dropdowns, but
+                    this list showed every doctor identically — so the roster
+                    here and the doctors reception could actually pick from
+                    disagreed, with nothing on screen to explain it. */}
+                <TableCell sx={HEAD_SX}>Status</TableCell>
                 <TableCell align="right" sx={HEAD_SX}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {doctors.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
+                  <TableCell colSpan={7} sx={{ py: 3, borderBottom: "none" }}>
                     <Mascot pose="nothing-here-yet" subtitle="No doctors found." size={120} />
                   </TableCell>
                 </TableRow>
@@ -169,6 +175,15 @@ export default function DoctorsList() {
                     </TableCell>
                     <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {doctor.consultationFee ? `₹${doctor.consultationFee}` : "-"}
+                    </TableCell>
+                    <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
+                      {doctor.user?.isActive === false ? (
+                        <Tooltip title="This doctor's account is deactivated, so they cannot be booked. Reactivate under Staff & Users.">
+                          <Chip label="Inactive" size="small" sx={{ bgcolor: "rgba(244, 63, 94, 0.12)", color: SEMANTIC.dangerLight, fontWeight: 600 }} />
+                        </Tooltip>
+                      ) : (
+                        <Chip label="Active" size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: SEMANTIC.successLight, fontWeight: 600 }} />
+                      )}
                     </TableCell>
                     <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Tooltip title="Configure Schedule">

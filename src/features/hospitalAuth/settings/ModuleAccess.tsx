@@ -60,7 +60,7 @@ export default function ModuleAccess() {
     const ok = await confirm({
       title: enabled ? `Enable ${module}?` : `Disable ${module}?`,
       message: enabled
-        ? `Staff with the matching role permission will be able to use ${module} right away.`
+        ? `Staff whose role covers ${module} will be able to use it right away.`
         : `Staff will lose access to ${module} immediately, hospital-wide. You can turn it back on anytime.`,
       confirmText: enabled ? "Enable" : "Disable",
       destructive: !enabled,
@@ -81,10 +81,16 @@ export default function ModuleAccess() {
           <Typography sx={{ color: "text.secondary", fontWeight: 700 }}>+</Typography>
           <Chip label="Your toggles" sx={{ bgcolor: SEMANTIC.info, color: "#fff", fontWeight: 600 }} />
           <Typography sx={{ color: "text.secondary", fontWeight: 700 }}>+</Typography>
-          <Chip label="RBAC (Roles)" sx={{ bgcolor: SEMANTIC.success, color: "#fff", fontWeight: 600 }} />
+          {/* The third gate is the user's ROLE, not a configurable permission
+              set: tenant-authored roles and the permission matrix were removed,
+              and /hospital/permissions-matrix now redirects to Staff & Users.
+              The old wording sent admins looking for a screen that no longer
+              exists, and named a concept the product no longer has. */}
+          <Chip label="Staff role" sx={{ bgcolor: SEMANTIC.success, color: "#fff", fontWeight: 600 }} />
         </Box>
         <Typography variant="caption" display="block" sx={{ mt: 1.5, color: "text.secondary" }}>
-          * Turning a module on here still requires staff to hold the matching Role permission to use it.
+          * Turning a module on here opens it for the hospital. Who can actually use it
+          depends on each person's role, which you set on their record under Staff &amp; Users.
         </Typography>
       </Paper>
 
