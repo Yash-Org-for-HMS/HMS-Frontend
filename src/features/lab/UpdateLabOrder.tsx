@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { usePrintWindow } from "@/utils/usePrintWindow";
 import type { LabOrderDetail, LabReportRow } from "./labOrders.types";
 import type { UnbilledItem } from "@/types";
 import { DETAIL_PAGE_WIDTH } from "@/components/layout/pageWidth";
@@ -77,6 +78,7 @@ function Fact({ icon, label, children }: { icon: React.ReactNode; label: string;
 }
 
 export default function UpdateLabOrder() {
+  const openPrint = usePrintWindow();
   const { id } = useParams();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
@@ -220,7 +222,7 @@ export default function UpdateLabOrder() {
           )}
           {(order.status === "COMPLETED" || order.status === "VERIFIED") && (
             <Button variant="contained" startIcon={<PrintRounded />}
-              onClick={() => window.open(`/lab/orders/${id}/print`, '_blank')}
+              onClick={() => openPrint(`/lab/orders/${id}/print`)}
               sx={{ bgcolor: LAB_DARK, "&:hover": { bgcolor: LAB } }}>
               Print Report
             </Button>

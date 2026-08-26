@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { usePrintWindow } from "@/utils/usePrintWindow";
 import { printHtml } from "@/utils/printHtml";
 import { paidTotal, refundedTotal, balanceOf, isSettled, balanceFromRefunds } from "@/utils/invoiceMoney";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
@@ -36,6 +37,7 @@ interface DispensedMedicine {
 }
 
 export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged, readOnly = false }: Props) {
+  const openPrint = usePrintWindow();
   const toast = useToast();
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -293,7 +295,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
         )}
         {invoice?.admissionId && (
           <Button variant="outlined" startIcon={<PrintRounded />} disabled={!invoice}
-            onClick={() => window.open(`/reception/billing/invoices/${invoiceId}/ip-bill/print`, "_blank")}
+            onClick={() => openPrint(`/reception/billing/invoices/${invoiceId}/ip-bill/print`)}
             sx={{ borderColor: BRAND.action, color: BRAND.actionDark }}>Print IP Bill</Button>
         )}
         <Button variant="contained" startIcon={<PrintRounded />} disabled={!invoice} onClick={print}>{invoice?.admissionId ? "Receipt" : "Print"}</Button>

@@ -10,6 +10,7 @@ import ErrorState from "@/components/ErrorState";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { formatINR } from "@/utils/format";
 import { SEMANTIC } from "@/styles/accents";
+import { usePrintWindow } from "@/utils/usePrintWindow";
 
 /**
  * One subscription invoice, and how it was actually paid.
@@ -59,6 +60,7 @@ const Meta = ({ label, value }: { label: string; value: React.ReactNode }) => (
 export default function SubscriptionInvoiceDialog({
   invoiceId, open, onClose,
 }: { invoiceId: string | null; open: boolean; onClose: () => void }) {
+  const openPrint = usePrintWindow();
   const { data: inv, isLoading, isError, error } = useQuery<InvoiceDetail>({
     queryKey: ["subscription-invoice", invoiceId],
     enabled: open && !!invoiceId,
@@ -146,7 +148,7 @@ export default function SubscriptionInvoiceDialog({
         <Button onClick={onClose} color="inherit">Close</Button>
         <Button
           variant="outlined" startIcon={<PrintRounded />} disabled={!inv}
-          onClick={() => window.open(`/subscription-billing/invoices/${invoiceId}/print`, "_blank")}
+          onClick={() => openPrint(`/subscription-billing/invoices/${invoiceId}/print`)}
           sx={{ textTransform: "none", fontWeight: 700 }}
         >
           Print invoice

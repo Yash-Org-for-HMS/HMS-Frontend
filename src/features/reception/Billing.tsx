@@ -1,4 +1,5 @@
 import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
+import { usePrintWindow } from "@/utils/usePrintWindow";
 import { formatINR, formatDate } from "@/utils/format";
 import { useEffect, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
@@ -76,6 +77,7 @@ export default function Billing({ readOnly = false }: { readOnly?: boolean } = {
 }
 
 function BillsList({ type, readOnly = false }: { type: "OPD" | "IPD"; readOnly?: boolean }) {
+  const openPrint = usePrintWindow();
   const isIpd = type === "IPD";
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -178,7 +180,7 @@ function BillsList({ type, readOnly = false }: { type: "OPD" | "IPD"; readOnly?:
                   <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     {isIpd && (
                       <Tooltip title="Print IP Bill">
-                        <IconButton size="small" onClick={() => window.open(`/reception/billing/invoices/${r.invoiceId}/ip-bill/print`, "_blank")} sx={{ color: "text.secondary" }}>
+                        <IconButton size="small" onClick={() => openPrint(`/reception/billing/invoices/${r.invoiceId}/ip-bill/print`)} sx={{ color: "text.secondary" }}>
                           <PrintRounded fontSize="small" />
                         </IconButton>
                       </Tooltip>

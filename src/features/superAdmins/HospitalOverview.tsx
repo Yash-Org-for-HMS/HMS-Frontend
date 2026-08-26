@@ -1,4 +1,5 @@
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import { usePrintWindow } from "@/utils/usePrintWindow";
 import type { ReactNode } from "react";
 import type {
   HospitalOverviewData, OverviewBranch, OverviewUser, SubscriptionInvoiceRow,
@@ -87,6 +88,7 @@ const Panel = ({ value, index, children }: { value: number; index: number; child
 const cardSx = { p: { xs: 2.5, md: 4 }, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider" };
 
 export default function HospitalOverview() {
+  const openPrint = usePrintWindow();
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -433,7 +435,7 @@ export default function HospitalOverview() {
                         <TableCell sx={{ color: "text.secondary" }}>{formatDate(inv.dueDate)}</TableCell>
                         <TableCell align="right">
                           <Tooltip title="Print / download invoice">
-                            <IconButton size="small" onClick={() => window.open(`/subscription-billing/invoices/${inv.subscriptionInvoiceId}/print`, "_blank")}><PrintRounded sx={{ fontSize: 16 }} /></IconButton>
+                            <IconButton size="small" onClick={() => openPrint(`/subscription-billing/invoices/${inv.subscriptionInvoiceId}/print`)}><PrintRounded sx={{ fontSize: 16 }} /></IconButton>
                           </Tooltip>
                         </TableCell>
                       </TableRow>

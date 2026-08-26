@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { usePrintWindow } from "@/utils/usePrintWindow";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -45,6 +46,7 @@ const PHASE_LABEL: Record<string, string> = {
 const headSx = { color: "text.secondary", fontWeight: 600, fontSize: "0.875rem", bgcolor: "background.paper" } as const;
 
 export default function SubscriptionBilling() {
+  const openPrint = usePrintWindow();
   const qc = useQueryClient();
   const toast = useToast();
   const confirm = useConfirm();
@@ -236,7 +238,7 @@ export default function SubscriptionBilling() {
                     <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                       <Box sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end", alignItems: "center" }}>
                         <Tooltip title="Print / download invoice">
-                          <IconButton size="small" onClick={() => window.open(`/subscription-billing/invoices/${inv.subscriptionInvoiceId}/print`, "_blank")}><PrintRounded fontSize="small" /></IconButton>
+                          <IconButton size="small" onClick={() => openPrint(`/subscription-billing/invoices/${inv.subscriptionInvoiceId}/print`)}><PrintRounded fontSize="small" /></IconButton>
                         </Tooltip>
                         {inv.status === "UNPAID" ? (
                           <>

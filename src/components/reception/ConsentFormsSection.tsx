@@ -1,4 +1,5 @@
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
+import { usePrintWindow } from "@/utils/usePrintWindow";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -29,6 +30,7 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 };
 
 export default function ConsentFormsSection({ patientId, patientName, readOnly = false }: { patientId: string; patientName?: string; readOnly?: boolean }) {
+  const openPrint = usePrintWindow();
   const toast = useToast();
   const [issueOpen, setIssueOpen] = useState(false);
   const [signTarget, setSignTarget] = useState<any>(null);
@@ -98,7 +100,7 @@ export default function ConsentFormsSection({ patientId, patientName, readOnly =
                         marked as unsigned so the two can't be confused. */}
                     {f.status !== "CANCELLED" && (
                       <Button size="small" startIcon={<PrintRounded />}
-                        onClick={() => window.open(`/reception/consent-forms/${f.consentFormId}/print`, "_blank")}
+                        onClick={() => openPrint(`/reception/consent-forms/${f.consentFormId}/print`)}
                         sx={{ textTransform: "none", color: ACCENT }}>Print</Button>
                     )}
                     {f.documentUrl && (
