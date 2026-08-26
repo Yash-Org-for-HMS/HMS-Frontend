@@ -183,6 +183,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
       genderId: [required("Gender")],
       bloodGroupId: [required("Blood group")],
       phone: [required("Phone number"), isPhone],
+      city: [required("City")],
       email: [isEmail],
       emergencyContactPhone: [isPhone],
     });
@@ -443,6 +444,8 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
           />
         </Grid>
         <GeoAddressPicker
+          required={["city"]}
+          errors={{ city: errors.city }}
           value={{ stateName: formData.state, districtName: formData.district, city: formData.city, pincode: formData.postalCode }}
           onChange={(patch) => setFormData((prev) => ({
             ...prev,

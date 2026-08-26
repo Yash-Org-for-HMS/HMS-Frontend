@@ -19,7 +19,14 @@ interface Props {
   /** Patch carries ids AND names so both id- and name-based forms can read it. */
   onChange: (patch: GeoValue) => void;
   colSpan?: number;
-  required?: boolean;
+  /**
+   * Which address fields are mandatory. A boolean marks all of them; a list
+   * marks only those named. Per-field because forms differ on this — a patient
+   * must have a city but needs no state, district or pincode, and marking all
+   * four required to get the asterisk onto one of them would be a lie about the
+   * other three.
+   */
+  required?: boolean | Array<"state" | "district" | "city" | "pincode">;
   showPincode?: boolean;
   disabled?: boolean;
   /**
@@ -39,6 +46,8 @@ interface Props {
  * Renders <Grid> items; use inside a <Grid container>.
  */
 export default function GeoAddressPicker({ value, onChange, colSpan = 3, required, showPincode = true, disabled = false, errors = {} }: Props) {
+  const isRequired = (field: "state" | "district" | "city" | "pincode") =>
+    Array.isArray(required) ? required.includes(field) : !!required;
   const { data: states = [] } = useQuery<GeoOption[]>({
     queryKey: ["geo-states"],
     queryFn: async () => (await axiosInstance.get("/geo/states")).data.data,
@@ -91,7 +100,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
     <>
       <Grid size={{ xs: 12, md: colSpan }}>
         <TextField
-          select fullWidth label="State" required={required} disabled={disabled}
+          select fullWidth label="State" required={isRequired("state")} disabled={disabled}
           error={!!errors.state} helperText={errors.state}
           value={stateId}
           onChange={(e) => {
@@ -106,7 +115,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
 
       <Grid size={{ xs: 12, md: colSpan }}>
         <TextField
-          select fullWidth label="District" required={required}
+          select fullWidth label="District" required={isRequired("district")}
           value={districtId} disabled={disabled || !stateId}
           onChange={(e) => {
             const id = Number(e.target.value);
@@ -120,7 +129,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
 
       <Grid size={{ xs: 12, md: colSpan }}>
         <TextField
-          fullWidth label="City / Town" required={required} disabled={disabled}
+          fullWidth label="City / Town" required={isRequired("city")} disabled={disabled}
           error={!!errors.city} helperText={errors.city}
           value={city}
           onChange={(e) => onChange({ city: e.target.value })}
@@ -131,7 +140,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
       {showPincode && (
         <Grid size={{ xs: 12, md: colSpan }}>
           <TextField
-            fullWidth label="Pincode" required={required} disabled={disabled}
+            fullWidth label="Pincode" required={isRequired("pincode")} disabled={disabled}
             value={pincode}
             inputProps={{ inputMode: "numeric", maxLength: 6 }}
             onChange={(e) => onChange({ pincode: e.target.value.replace(/\D/g, "").slice(0, 6) })}
