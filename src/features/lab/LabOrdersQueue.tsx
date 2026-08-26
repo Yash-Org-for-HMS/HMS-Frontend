@@ -45,6 +45,22 @@ export default function LabOrdersQueue() {
   const orders: LabOrderRow[] = data?.data ?? [];
   const totalPages: number = data?.pagination?.totalPages ?? 1;
 
+  // How many samples are still waiting from BEFORE today. The queue opens on
+  // Today's Queue, so on a quiet morning it showed "No lab orders — all caught
+  // up" while samples from previous days sat unlogged: nothing on the screen
+  // said the backlog existed, and finding it meant knowing to click a tab. One
+  // count fixes both halves — the tab carries it, and the empty state points at
+  // it instead of claiming there is nothing to do.
+  const { data: pastPending } = useQuery({
+    queryKey: ["lab-orders-queue-past-count"],
+    queryFn: async () => {
+      const res = await axiosInstance.get(`/lab/orders`, { params: { bucket: "past_pending", page: 1, limit: 1 } });
+      return res.data;
+    },
+    refetchInterval: QUEUE_POLL_MS,
+  });
+  const pastPendingCount: number = pastPending?.pagination?.total ?? 0;
+
   const [collectOrder, setCollectOrder] = useState<LabOrderRow | null>(null);
   const [barcodeInput, setBarcodeInput] = useState("");
   const [collecting, setCollecting] = useState(false);
@@ -136,7 +152,22 @@ export default function LabOrdersQueue() {
       <Paper sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} variant="scrollable" scrollButtons="auto">
           <Tab label="Today's Queue" />
-          <Tab label="Past Pending" />
+          <Tab
+            label={
+              pastPendingCount > 0 ? (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  Past Pending
+                  <Chip
+                    label={pastPendingCount}
+                    size="small"
+                    sx={{ height: 20, fontWeight: 700, bgcolor: "warning.main", color: "#fff", ".MuiChip-label": { px: 0.75 } }}
+                  />
+                </Box>
+              ) : (
+                "Past Pending"
+              )
+            }
+          />
           <Tab label="Completed" />
           <Tab label="All Orders" />
         </Tabs>
@@ -146,7 +177,16 @@ export default function LabOrdersQueue() {
         {loading ? (
           <ListSkeleton rows={6} />
         ) : orders.length === 0 ? (
-          <Mascot pose="all-caught-up" title="No lab orders" subtitle="No lab orders found." />
+          tabValue === 0 && pastPendingCount > 0 ? (
+            <Mascot
+              pose="nothing-here-yet"
+              title="Nothing new today"
+              subtitle={`${pastPendingCount} sample${pastPendingCount === 1 ? "" : "s"} from earlier days ${pastPendingCount === 1 ? "is" : "are"} still waiting.`}
+              action={<Button variant="contained" onClick={() => setTabValue(1)}>Show past pending</Button>}
+            />
+          ) : (
+            <Mascot pose="all-caught-up" title="No lab orders" subtitle="No lab orders found." />
+          )
         ) : (
           <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
           <Table stickyHeader>

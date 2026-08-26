@@ -47,6 +47,19 @@ export default function RadiologyOrdersQueue() {
   const orders: RadiologyOrderRow[] = data?.data ?? [];
   const totalPages: number = data?.pagination?.totalPages ?? 1;
 
+  // Scans still waiting from BEFORE today. Same reason as the lab queue: this
+  // page opens on Today's Queue, so an unread scan from three days ago sat
+  // behind a tab under an empty state that read "all caught up".
+  const { data: pastPending } = useQuery({
+    queryKey: ["radiology-orders-queue-past-count"],
+    queryFn: async () => {
+      const res = await axiosInstance.get(`/lab/radiology-orders`, { params: { bucket: "past_pending", page: 1, limit: 1 } });
+      return res.data;
+    },
+    refetchInterval: QUEUE_POLL_MS,
+  });
+  const pastPendingCount: number = pastPending?.pagination?.total ?? 0;
+
 
   const [editOrder, setEditOrder] = useState<RadiologyOrderRow | null>(null);
   const [status, setStatus] = useState("PENDING");
@@ -185,7 +198,22 @@ export default function RadiologyOrdersQueue() {
       <Paper sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} variant="scrollable" scrollButtons="auto">
           <Tab label="Today's Queue" />
-          <Tab label="Past Pending" />
+          <Tab
+            label={
+              pastPendingCount > 0 ? (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  Past Pending
+                  <Chip
+                    label={pastPendingCount}
+                    size="small"
+                    sx={{ height: 20, fontWeight: 700, bgcolor: "warning.main", color: "#fff", ".MuiChip-label": { px: 0.75 } }}
+                  />
+                </Box>
+              ) : (
+                "Past Pending"
+              )
+            }
+          />
           <Tab label="Completed" />
           <Tab label="All Orders" />
         </Tabs>
@@ -195,7 +223,16 @@ export default function RadiologyOrdersQueue() {
         {loading ? (
           <ListSkeleton rows={6} />
         ) : orders.length === 0 ? (
-          <Mascot pose="all-caught-up" title="No radiology orders" subtitle="No radiology orders found." />
+          tabValue === 0 && pastPendingCount > 0 ? (
+            <Mascot
+              pose="nothing-here-yet"
+              title="Nothing new today"
+              subtitle={`${pastPendingCount} scan${pastPendingCount === 1 ? "" : "s"} from earlier days ${pastPendingCount === 1 ? "is" : "are"} still waiting.`}
+              action={<Button variant="contained" onClick={() => setTabValue(1)}>Show past pending</Button>}
+            />
+          ) : (
+            <Mascot pose="all-caught-up" title="No radiology orders" subtitle="No radiology orders found." />
+          )
         ) : (
           <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
           <Table stickyHeader>
