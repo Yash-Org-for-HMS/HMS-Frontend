@@ -200,8 +200,15 @@ export default function FinancialDashboard() {
               boxShadow: "0 4px 24px rgba(0,0,0,0.02)"
             }}
           >
-            <Typography variant="h6" sx={{ color: "text.primary", mb: 2, fontWeight: 600 }}>
+            {/* Both charts below say what they measure. They report different
+                things from the tiles above and from each other — billed value
+                vs money received — and unlabelled they read as three attempts
+                at one number that happen to disagree. */}
+            <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600 }}>
               Revenue Source
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
+              Billed value of settled invoices, by department
             </Typography>
             <Box sx={{ flexGrow: 1, minHeight: 0 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -243,8 +250,11 @@ export default function FinancialDashboard() {
               boxShadow: "0 4px 24px rgba(0,0,0,0.02)"
             }}
           >
-            <Typography variant="h6" sx={{ color: "text.primary", mb: 2, fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600 }}>
               Payment Methods
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
+              How that money was tendered — before refunds
             </Typography>
             <Box sx={{ flexGrow: 1, minHeight: 0 }}>
               <ResponsiveContainer width="100%" height="100%">
