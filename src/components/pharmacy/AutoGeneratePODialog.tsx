@@ -27,7 +27,19 @@ interface Props {
 // ordering the full gap again on top of a delivery that's already in motion.
 const suggestedQty = (minStock: number, currentStock: number, pendingStock: number) =>
   Math.max((minStock || 0) * 2 - (currentStock || 0) - (pendingStock || 0), 0);
-const suggestedPrice = (sellingPrice: any) => Number(((Number(sellingPrice) || 0) * 0.7).toFixed(2));
+/**
+ * What to order a line at.
+ *
+ * `resolvedCost` is the server's answer — the latest supplier-confirmed price,
+ * then one typed on the medicine. Falling back to a fraction of the SELLING
+ * price is a last resort for a medicine nobody has ever costed; it was the
+ * default here, so this screen offered 22.75 for a drug the same payload said
+ * costs 20.40.
+ */
+const suggestedPrice = (med: any) =>
+  med?.resolvedCost != null
+    ? Number(med.resolvedCost)
+    : Number(((Number(med?.sellingPrice) || 0) * 0.7).toFixed(2));
 const rowFromMedicine = (med: any, currentStock: number | null, pendingStock: number, low: boolean) => ({
   medicineId: med.medicineId,
   medicineName: med.medicineName,
@@ -42,7 +54,9 @@ const rowFromMedicine = (med: any, currentStock: number | null, pendingStock: nu
   orderedQuantity: low
     ? suggestedQty(med.minStockLevel ?? 0, currentStock ?? 0, pendingStock)
     : Math.max(suggestedQty(med.minStockLevel ?? 0, currentStock ?? 0, pendingStock), med.minStockLevel || 1),
-  unitPrice: suggestedPrice(med.sellingPrice),
+  unitPrice: suggestedPrice(med),
+  // So the row can say where its price came from rather than implying it is known.
+  costKnown: med?.resolvedCost != null,
   supplierId: med.defaultSupplierId || "",
   low,
 });
@@ -72,6 +86,13 @@ export default function AutoGeneratePODialog({ open, onClose, lowStockAlerts, me
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  // How many low-stock medicines were dropped because a delivery already
+  // covers them. Without this the dialog opens empty beside a "Low Stock
+  // Alerts 3" badge and reads as broken rather than as nothing-to-do.
+  const coveredByPending = lowStockAlerts.filter(
+    (a: any) => suggestedQty(a.minStockLevel ?? 0, a.currentStock ?? 0, a.pendingStock ?? 0) <= 0,
+  ).length;
 
   const addMedicine = (med: any) => {
     if (!med || rows.some((r) => r.medicineId === med.medicineId)) return;
@@ -137,7 +158,18 @@ export default function AutoGeneratePODialog({ open, onClose, lowStockAlerts, me
         />
 
         {rows.length === 0 ? (
-          <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', py: 2 }}>No items — add a medicine to order.</Typography>
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            {/* An empty list beside a "Low Stock Alerts 3" badge reads as broken.
+                Naming the reason turns it into a finished answer. */}
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              {coveredByPending > 0
+                ? `Nothing to order — a purchase order already on the way covers ${coveredByPending === 1 ? "the low-stock medicine" : `all ${coveredByPending} low-stock medicines`}.`
+                : "Nothing is below its reorder level right now."}
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              Add a medicine above to order anyway.
+            </Typography>
+          </Box>
         ) : (
           <TableContainer>
             <Table size="small">
