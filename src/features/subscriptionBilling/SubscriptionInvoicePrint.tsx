@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAutoPrint } from "@/utils/useAutoPrint";
 import { useParams } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
@@ -37,12 +38,7 @@ export default function SubscriptionInvoicePrint() {
     })();
   }, [id]);
 
-  useEffect(() => {
-    if (!loading && inv) {
-      const t = setTimeout(() => window.print(), 500);
-      return () => clearTimeout(t);
-    }
-  }, [loading, inv]);
+  useAutoPrint(!loading && !!inv);
 
   if (loading) return <DetailSkeleton />;
   if (error) return <Typography color="error" sx={{ p: 4 }}>{error}</Typography>;

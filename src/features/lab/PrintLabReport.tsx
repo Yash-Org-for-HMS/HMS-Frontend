@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAutoPrint } from "@/utils/useAutoPrint";
 import type { LabOrderDetail, LabReportRow } from "./labOrders.types";
 import { formatDate, formatDateTime } from "@/utils/format";
 import { assetUrl } from "@/utils/assetUrl";
@@ -30,14 +31,9 @@ export default function PrintLabReport() {
     fetchOrder();
   }, [id]);
 
-  useEffect(() => {
-    // Automatically trigger print dialog when data is loaded
-    if (!loading && order) {
-      setTimeout(() => {
-        window.print();
-      }, 500);
-    }
-  }, [loading, order]);
+  // The old timer also never cleared, so a tab closed mid-wait still called
+  // print() on an unmounted page.
+  useAutoPrint(!loading && !!order);
 
   if (loading) return <DetailSkeleton />;
   if (error) return <Typography color="error">{error}</Typography>;

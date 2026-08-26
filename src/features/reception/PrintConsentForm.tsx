@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAutoPrint } from "@/utils/useAutoPrint";
 import { Box, Typography, Divider, Grid } from "@mui/material";
 import { useParams } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
@@ -104,12 +105,9 @@ export default function PrintConsentForm() {
     return () => { cancelled = true; };
   }, [id]);
 
-  useEffect(() => {
-    if (!loading && form) {
-      const t = setTimeout(() => window.print(), 500);
-      return () => clearTimeout(t);
-    }
-  }, [loading, form]);
+  // Waits for fonts and the hospital logo rather than a fixed 500ms — see
+  // useAutoPrint. The timer was enough locally and a coin-flip on a deployment.
+  useAutoPrint(!loading && !!form);
 
   if (loading) return <DetailSkeleton />;
   if (error) return <Typography color="error" sx={{ p: 4 }}>{error}</Typography>;
