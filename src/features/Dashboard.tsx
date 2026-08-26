@@ -39,6 +39,10 @@ import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 interface DashboardStats {
   totalHospitals: number;
   activeHospitals: number;
+  /** Live tenants with a subscription invoice past its due date. */
+  tenantsOverdue?: number;
+  /** Of those, the ones whose grace window has already closed. */
+  tenantsPastGrace?: number;
   trialHospitals: number;
   expiredHospitals: number;
   totalLeads: number;
@@ -225,9 +229,13 @@ export default function Dashboard() {
             title="Tenants" color="#3B82F6" icon={<LocalHospitalRounded />}
             primary={{ label: "Total Hospitals", value: stats.totalHospitals }}
             subs={[
+              // "Active" is the status COLUMN, flipped lazily at the tenant's
+              // next login, so a tenant days from lockout still counts here.
+              // Payment overdue sits beside it rather than being left to Action
+              // Needed, which was reporting the opposite one click away.
               { label: "Active", value: stats.activeHospitals, color: "#10B981" },
+              { label: "Payment overdue", value: stats.tenantsOverdue ?? 0, color: (stats.tenantsOverdue ?? 0) > 0 ? "#EF4444" : "#94A3B8" },
               { label: "On Trial", value: stats.trialHospitals, color: "#F59E0B" },
-              { label: "Expired", value: stats.expiredHospitals, color: "#EF4444" },
             ]}
           />
         </Grid>
