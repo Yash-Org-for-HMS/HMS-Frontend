@@ -37,6 +37,9 @@ const TYPE_COLOR: Record<string, string> = {
   DISPENSE: BRAND.action,
   RETURN: SEMANTIC.info,
   ADJUSTMENT: SEMANTIC.warning,
+  // Its own colour, not the grey fallback: a claim against a supplier is not
+  // an unrecognised movement, and it is not a write-off either.
+  SUPPLIER_RETURN: "#8b5cf6",
 };
 
 /**

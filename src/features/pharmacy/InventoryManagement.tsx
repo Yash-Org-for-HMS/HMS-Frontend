@@ -4,7 +4,7 @@ import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Button, useTheme, alpha, Tabs, Tab, MenuItem, Select, IconButton, Tooltip, TextField, InputAdornment
+  Button, useTheme, alpha, Tabs, Tab, MenuItem, Select, IconButton, Tooltip, TextField, InputAdornment, FormControlLabel, Switch
 } from "@mui/material";
 import { AddRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded, SearchRounded, TuneRounded, PersonSearchRounded, AssignmentReturnRounded } from "@mui/icons-material";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -63,6 +63,9 @@ export default function InventoryManagement() {
   const [traceItem, setTraceItem] = useState<any>(null);
   // Sending a batch back to the supplier for credit, rather than writing it off.
   const [returnItem, setReturnItem] = useState<any>(null);
+  // Depleted batches are hidden by default — nothing can be done with one but
+  // read its history, and they accumulate for ever.
+  const [hideDepleted, setHideDepleted] = useState(true);
 
   const [inventory, setInventory] = useState<any[]>([]);
   const [stockTotal, setStockTotal] = useState(0);
@@ -120,6 +123,7 @@ export default function InventoryManagement() {
         search: debouncedStockSearch || undefined,
         sortBy: stockSort.orderBy || undefined,
         sortOrder: stockSort.order,
+        hideDepleted: hideDepleted || undefined,
       },
     });
     setInventory(res.data.data || []);
@@ -194,7 +198,7 @@ export default function InventoryManagement() {
     setStockPage(1);
     fetchInventory(1).catch(err => toast.error(getApiErrorMessage(err, "Failed to search inventory")));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedStockSearch]);
+  }, [debouncedStockSearch, hideDepleted]);
 
   useEffect(() => {
     if (!didMount.current) return;
@@ -308,6 +312,14 @@ export default function InventoryManagement() {
               }}
             />
           ) : <Box />}
+          {/* Says what it is hiding rather than silently shortening the list. */}
+          {tabValue === 0 && (
+            <FormControlLabel
+              control={<Switch size="small" checked={hideDepleted} onChange={(e) => { setHideDepleted(e.target.checked); setStockPage(1); }} />}
+              label={<Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Hide empty batches</Typography>}
+              sx={{ ml: 1, mr: 0 }}
+            />
+          )}
           {tabValue === 3 && (
             <Button
               variant="contained"
@@ -391,7 +403,7 @@ export default function InventoryManagement() {
                         {inv.medicineTotalStock ?? inv.availableQuantity}
                       </TableCell>
                       <TableCell>{getSupplierName(inv.supplierId)}</TableCell>
-                      <TableCell align="right">
+                      <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
                         <Tooltip title="Correct batch no. / expiry date">
                           <IconButton size="small" onClick={() => setEditInvItem(inv)}>
                             <EditRounded fontSize="small" />
