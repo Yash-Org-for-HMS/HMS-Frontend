@@ -437,6 +437,29 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
                             </Tooltip>
                           </>
                         )}
+                        {/* A checked-in patient who leaves before being seen, or a
+                            check-in ticked by mistake, had no way out: this cell
+                            handled only Scheduled and Completed, so every other
+                            status rendered an empty Actions column. The row sat
+                            there permanently — the API has always supported
+                            cancelling it and the handler below was already
+                            wired, the button was simply never offered.
+
+                            Not Edit or Check In: the patient is already here. */}
+                        {appt.statusLabel === 'Checked In' && (
+                          <>
+                            <Tooltip title="Billing">
+                              <IconButton size="small" onClick={() => setBillingDialog({ open: true, appt })} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.warning, bgcolor: "rgba(245,158,11,0.08)" } }}>
+                                <ReceiptRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Cancel">
+                              <IconButton size="small" onClick={() => setActionDialog({ open: true, type: 'cancel', appt })} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger, bgcolor: "rgba(239,68,68,0.08)" } }}>
+                                <CancelRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </>
+                        )}
                         {appt.statusLabel === 'Completed' && (
                           <>
                             <Tooltip title="Book Follow-up">
