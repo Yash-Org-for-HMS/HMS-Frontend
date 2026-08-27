@@ -40,6 +40,18 @@ const EMPTY_DROPDOWNS = { departments: [], doctors: [], statuses: [], doctorSche
 // and the submitted datetime) — this only formats it for display.
 const fmt12h = (hhmm: string) => dayjs(`2000-01-01T${hhmm}`).format("h:mm A");
 
+/**
+ * Today as the date input writes it: LOCAL calendar date, not UTC.
+ *
+ * Three places in this form worked this out for themselves and one of them
+ * used toISOString(), which is UTC — so east of Greenwich, every booking made
+ * before 05:30 IST disagreed with the other two about what day it was.
+ */
+function todayLocal(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export default function AppointmentForm({ isEmbedded = false, prefilledPatientId, initialDoctorId: doctorIdProp, initialDate: dateProp, onSuccess, onCancel }: AppointmentFormProps = {}) {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -218,8 +230,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     // editing an existing today-dated appointment never breaks. Uses the LOCAL
     // date (not UTC) so the cut is correct around midnight.
     const now = new Date();
-    const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const isToday = formData.appointmentDate === localToday;
+    const isToday = formData.appointmentDate === todayLocal();
     if (isToday) {
       const nowHM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       rawSlots = rawSlots.filter((s) => s > nowHM);
@@ -239,14 +250,12 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     setAllSlotsPassedToday(isToday && scheduledCount > 0 && openSlots.length === 0);
   }, [formData.doctorId, formData.appointmentDate, dropdowns, availability, nowTick]);
 
+  // Check-in follows the date, and it is not merely a default: the toggle is
+  // hidden for any date but today (see the render), so leaving a stale `true`
+  // behind would check a patient in through a control nobody can see. Moving
+  // the date off today clears it.
   useEffect(() => {
-    // Default checkInImmediately to true only if appointment is for today
-    const today = new Date().toISOString().split('T')[0];
-    if (formData.appointmentDate === today && !id) {
-      setCheckInImmediately(true);
-    } else {
-      setCheckInImmediately(false);
-    }
+    setCheckInImmediately(formData.appointmentDate === todayLocal() && !id);
   }, [formData.appointmentDate, id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -325,10 +334,10 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   // Local (not UTC) "today" as YYYY-MM-DD for the date picker's min. Blocks
   // selecting past dates on a new booking; when editing an already-past
   // appointment, keep its own date selectable so unrelated edits still work.
-  const localTodayStr = (() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  })();
+  const localTodayStr = todayLocal();
+  // You cannot walk a patient to the desk for a date that has not arrived, so
+  // the live-queue toggle only makes sense for a booking made for today.
+  const bookingForToday = formData.appointmentDate === localTodayStr;
   const minApptDate = id && formData.appointmentDate && formData.appointmentDate < localTodayStr
     ? formData.appointmentDate
     : localTodayStr;
@@ -477,19 +486,29 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
             />
           </Grid>
           <Grid size={{ xs: 12 }} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 2 }}>
-            <FormControlLabel
-              control={
-                <Switch 
-                  checked={checkInImmediately} 
-                  onChange={(e) => setCheckInImmediately(e.target.checked)} 
-                  sx={{
-                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#06b6d4" },
-                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: "#06b6d4" }
-                  }}
-                />
-              }
-              label={<Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>Check-In Immediately (Live Queue)</Typography>}
-            />
+            {/* Only for a booking made for today — nobody is standing at the
+                desk for a date that has not arrived. Offered on every date, it
+                put patients into TODAY's live queue for next week's
+                appointment, where the doctor saw them among the people actually
+                waiting. The empty Box keeps the buttons on the right; this row
+                is space-between. */}
+            {bookingForToday ? (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={checkInImmediately}
+                    onChange={(e) => setCheckInImmediately(e.target.checked)}
+                    sx={{
+                      "& .MuiSwitch-switchBase.Mui-checked": { color: "#06b6d4" },
+                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: "#06b6d4" }
+                    }}
+                  />
+                }
+                label={<Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>Check-In Immediately (Live Queue)</Typography>}
+              />
+            ) : (
+              <Box />
+            )}
             <Box sx={{ display: "flex", gap: 2 }}>
               <Button variant="outlined" onClick={() => { if (isEmbedded && onCancel) onCancel(); else navigate(-1); }} sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none" }}>
                 Cancel
