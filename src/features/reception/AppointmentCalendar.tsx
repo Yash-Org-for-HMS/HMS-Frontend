@@ -122,10 +122,10 @@ export default function AppointmentCalendar() {
       {/* Toolbar */}
       <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          <IconButton size="small" onClick={() => step(-1)}><ChevronLeftRounded /></IconButton>
+          <IconButton size="small" aria-label="Previous period" onClick={() => step(-1)}><ChevronLeftRounded /></IconButton>
           <Button size="small" startIcon={<TodayRounded />} onClick={() => setAnchor(dayjs().startOf("day"))}
             sx={{ textTransform: "none", color: "text.secondary" }}>Today</Button>
-          <IconButton size="small" onClick={() => step(1)}><ChevronRightRounded /></IconButton>
+          <IconButton size="small" aria-label="Next period" onClick={() => step(1)}><ChevronRightRounded /></IconButton>
         </Box>
 
         <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary", minWidth: 200 }}>

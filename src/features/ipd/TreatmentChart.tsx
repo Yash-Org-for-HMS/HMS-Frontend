@@ -225,11 +225,11 @@ export default function TreatmentChart() {
       <Box className="no-print" sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, mb: 2, flexWrap: "wrap" }}>
         <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ textTransform: "none" }}>Back to ward</Button>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <IconButton size="small" onClick={() => setDayOffset((d) => d - 1)}><ChevronLeftRounded /></IconButton>
+          <IconButton size="small" aria-label="Previous chart day" onClick={() => setDayOffset((d) => d - 1)}><ChevronLeftRounded /></IconButton>
           <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 150, textAlign: "center" }}>
             {dayOffset === 0 ? "Today" : dayStart.format("DD MMM YYYY")} · {chartDayStart}–{chartDayStart}
           </Typography>
-          <IconButton size="small" onClick={() => setDayOffset((d) => d + 1)} disabled={dayOffset >= 0}><ChevronRightRounded /></IconButton>
+          <IconButton size="small" aria-label="Next chart day" onClick={() => setDayOffset((d) => d + 1)} disabled={dayOffset >= 0}><ChevronRightRounded /></IconButton>
           <Button variant="outlined" startIcon={<PrintRounded />} onClick={() => window.print()} sx={{ textTransform: "none", ml: 1 }}>Print</Button>
         </Box>
       </Box>

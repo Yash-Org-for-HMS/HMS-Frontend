@@ -256,11 +256,11 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
             </Box>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <IconButton size="small" onClick={() => setDayOffset((d) => d - 1)}><ChevronLeftRounded /></IconButton>
+            <IconButton size="small" aria-label="Previous chart day" onClick={() => setDayOffset((d) => d - 1)}><ChevronLeftRounded /></IconButton>
             <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 116, textAlign: "center" }}>
               {dayOffset === 0 ? "Today" : day.format("DD MMM")}
             </Typography>
-            <IconButton size="small" onClick={() => setDayOffset((d) => d + 1)} disabled={dayOffset >= 0}><ChevronRightRounded /></IconButton>
+            <IconButton size="small" aria-label="Next chart day" onClick={() => setDayOffset((d) => d + 1)} disabled={dayOffset >= 0}><ChevronRightRounded /></IconButton>
           </Box>
         </DialogTitle>
 
