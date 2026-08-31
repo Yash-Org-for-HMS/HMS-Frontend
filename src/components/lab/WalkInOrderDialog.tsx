@@ -78,11 +78,13 @@ export default function WalkInOrderDialog({
   const toggleLabTest = (t: PickedLabTest) =>
     setLabBasket((prev) => prev.some((i) => i.chargeItemId === t.chargeItemId) ? prev.filter((i) => i.chargeItemId !== t.chargeItemId) : [...prev, t]);
 
-  // Patient search (shared endpoint used by the billing screen). Only fires
-  // once the user has typed enough to narrow results.
+  // Patient search, served by the lab router so the lab panel guard admits it.
+  // Only the lab and radiology queues reach this: the nurse always passes a
+  // patient in, so the search never runs there. Only fires once the user has
+  // typed enough to narrow results.
   const { data: patients = [], isFetching: searchingPatients } = useQuery<any[]>({
     queryKey: ["walkin-patient-search", patientQuery],
-    queryFn: async () => (await axiosInstance.get("/reception/patients", { params: { search: patientQuery } })).data.data || [],
+    queryFn: async () => (await axiosInstance.get("/lab/patients", { params: { search: patientQuery } })).data.data || [],
     enabled: open && patientQuery.trim().length >= 2,
   });
 
