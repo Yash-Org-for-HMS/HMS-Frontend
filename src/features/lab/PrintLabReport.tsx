@@ -39,6 +39,21 @@ export default function PrintLabReport() {
   if (error) return <Typography color="error">{error}</Typography>;
   if (!order) return <Typography>Order not found</Typography>;
 
+  // The date this report belongs to, NOT the day someone pressed print.
+  //
+  // The header used new Date(), so a report signed off on the 27th printed as
+  // the 31st four days later, and reprinting an old report silently re-dated
+  // it. On a clinical document the date is part of the record.
+  //
+  // Preference order: when it was verified, else when the sample was taken,
+  // else when the order was raised.
+  const verifiedAt = (order.reports ?? [])
+    .map((r: LabReportRow) => r.verifiedAt)
+    .filter(Boolean)
+    .sort()
+    .pop();
+  const reportDate = verifiedAt || order.sampleCollectedAt || order.createdAt;
+
   return (
     <Box sx={{ 
       width: "210mm", 
@@ -96,7 +111,7 @@ export default function PrintLabReport() {
             Laboratory Report
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
-            <strong>Date:</strong> {formatDate(new Date())}
+            <strong>Date:</strong> {formatDate(reportDate)}
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             <strong>Order ID:</strong> {order.sampleBarcode}
