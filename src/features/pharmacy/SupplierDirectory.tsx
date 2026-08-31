@@ -417,6 +417,11 @@ export default function SupplierDirectory() {
               <Box sx={{ gridColumn: '1 / -1' }}>
                 <Grid container spacing={2}>
                   <GeoAddressPicker
+                    // State and city are required by the validator above, so
+                    // they carry the asterisk. Without it the form looked
+                    // complete, Save appeared to do nothing, and the reason
+                    // only showed up after pressing it.
+                    required={["state", "city"]}
                     showPincode={false} colSpan={6}
                     errors={{ state: fieldErrors.stateLoc, city: fieldErrors.city }}
                     value={{ stateName: stateLoc, districtName: districtLoc, city }}
