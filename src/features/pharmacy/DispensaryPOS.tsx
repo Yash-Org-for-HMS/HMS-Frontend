@@ -488,15 +488,21 @@ export default function DispensaryPOS() {
                   clearOnBlur
                 />
                 
+                {/* Required, despite reading "Optional" for a long time: the
+                    sale is settled through /billing/poc-payment, which needs a
+                    patient to raise the invoice against. Without one the order
+                    was created and the payment then failed, stranding an
+                    unpaid order the pharmacist had to go back and fix. */}
                 <TextField 
                   label="Patient ID" 
+                  required
                   variant="outlined" 
                   size="small"
                   value={patientId}
                   onChange={(e) => setPatientId(e.target.value)}
                   sx={{ width: { xs: '100%', md: '250px' } }}
                   placeholder="e.g. PAT-1234"
-                  helperText={selectedPrescriptionId ? "Auto-filled" : "Optional"}
+                  helperText={selectedPrescriptionId ? "Auto-filled" : "Needed to bill the sale"}
                 />
               </Box>
 
@@ -557,7 +563,7 @@ export default function DispensaryPOS() {
                   size="large"
                   startIcon={<PaymentRounded />}
                   onClick={handleCheckout}
-                  disabled={cart.length === 0 || processing || !activeBranchId}
+                  disabled={cart.length === 0 || processing || !activeBranchId || !patientId.trim()}
                   sx={{
                     px: { xs: 4, md: 6 },
                     py: 1.5,
