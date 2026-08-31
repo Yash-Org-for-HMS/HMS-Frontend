@@ -54,6 +54,11 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
   const [methodId, setMethodId] = useState("");
   const [paying, setPaying] = useState(false);
   const [voiding, setVoiding] = useState(false);
+  // The void endpoint requires a reason (min 3 chars) — it is an audited
+  // financial action. This used to be a window.confirm, which cannot collect
+  // one, so every void returned 400 and the invoice never cancelled.
+  const [voidOpen, setVoidOpen] = useState(false);
+  const [voidReason, setVoidReason] = useState("");
 
   const { data: lookups } = useQuery<BillingLookups>({
     queryKey: ["billing-lookups"],
@@ -100,11 +105,14 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
   const canVoid = !readOnly && !!invoice && !invoice.admissionId && !isCancelled && (totalPaid - totalRefunded) <= 0.005;
 
   const voidInvoice = async () => {
-    if (!window.confirm("Void this invoice? Its charges will return to unbilled so they can be re-invoiced. This can't be undone.")) return;
+    const reason = voidReason.trim();
+    if (reason.length < 3) return;
     setVoiding(true);
     try {
-      await axiosInstance.post(`/reception/billing/invoices/${invoiceId}/cancel`);
+      await axiosInstance.post(`/reception/billing/invoices/${invoiceId}/cancel`, { reason });
       toast.success("Invoice voided");
+      setVoidOpen(false);
+      setVoidReason("");
       onChanged?.();
       onClose();
     } catch (err: unknown) {
@@ -125,6 +133,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
   const cell: React.CSSProperties = { padding: "6px 8px", borderBottom: "1px solid #eee", fontSize: 13 };
 
   return (
+    <>
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         Invoice {invoice?.invoiceNumber || ""}
@@ -290,7 +299,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit">Close</Button>
         {canVoid && (
-          <Button variant="outlined" color="error" startIcon={<BlockRounded />} disabled={voiding} onClick={voidInvoice}
+          <Button variant="outlined" color="error" startIcon={<BlockRounded />} disabled={voiding} onClick={() => setVoidOpen(true)}
             sx={{ mr: "auto" }}>{voiding ? "Voiding…" : "Void invoice"}</Button>
         )}
         {invoice?.admissionId && (
@@ -301,5 +310,28 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
         <Button variant="contained" startIcon={<PrintRounded />} disabled={!invoice} onClick={print}>{invoice?.admissionId ? "Receipt" : "Print"}</Button>
       </DialogActions>
     </Dialog>
+
+    <Dialog open={voidOpen} onClose={() => setVoidOpen(false)} maxWidth="xs" fullWidth>
+      <DialogTitle>Void this invoice?</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Its charges return to unbilled so they can be re-invoiced. This can't be undone.
+        </Typography>
+        <TextField
+          autoFocus fullWidth multiline minRows={2} label="Reason" required
+          value={voidReason} onChange={(e) => setVoidReason(e.target.value)}
+          placeholder="e.g. duplicate invoice raised in error"
+          helperText="Recorded against the void in the audit trail."
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setVoidOpen(false)}>Cancel</Button>
+        <Button color="error" variant="contained" onClick={voidInvoice}
+          disabled={voiding || voidReason.trim().length < 3}>
+          {voiding ? "Voiding…" : "Void invoice"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+    </>
   );
 }
