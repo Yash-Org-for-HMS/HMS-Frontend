@@ -98,7 +98,7 @@ export default function Branches() {
         title="Branches"
         subtitle="The locations this hospital operates. Staff and records are scoped to the branch they belong to."
         actions={
-          <Tooltip title={atLimit ? `Your ${quota?.planName} plan allows ${quota?.limit} branches. Contact your provider to add more.` : ""}>
+          <Tooltip title={atLimit ? `${quota?.planName} includes ${quota?.limit} branches. Contact your provider to add more.` : ""}>
             <span>
               <Button variant="contained" startIcon={<AddRounded />} onClick={openCreate} disabled={atLimit}>
                 Open a branch
@@ -110,7 +110,7 @@ export default function Branches() {
 
       {quota?.limit != null && (
         <Alert severity={atLimit ? "warning" : "info"} sx={{ mb: 3, borderRadius: 2 }}>
-          Using <strong>{quota.used} of {quota.limit}</strong> branches on the {quota.planName} plan.
+          Using <strong>{quota.used} of {quota.limit}</strong> branches included in {quota.planName}.
           {atLimit && " You'll need a larger plan to open another."}
         </Alert>
       )}
