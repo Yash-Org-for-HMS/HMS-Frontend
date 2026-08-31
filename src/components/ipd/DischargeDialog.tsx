@@ -86,9 +86,14 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const pendingCharges: PendingCharge[] = detail?.pendingCharges || [];
   const pendingTotal = Number(detail?.pendingChargesTotal || 0);
   const extrasTotal = extras.reduce((s, e) => s + lineAmount(e), 0);
-  // Per-line GST on picked charges (0% = exempt; bed/clinical/free-text carry none).
-  // Mirrors the server, which re-taxes authoritatively from the rate card.
-  const taxTotal = extras.reduce((s, e) => s + lineAmount(e) * ((e.taxPercent || 0) / 100), 0);
+  // Per-line GST, from BOTH sources. Charges accrued during the stay carry
+  // their own tax — a dispensed medicine is taxed at its rate-card GST — and
+  // so do charges picked here. Only the picked ones used to be counted, so a
+  // stay with any medicines showed a "Final bill total" below the invoice the
+  // patient actually received. Mirrors the server, which re-taxes
+  // authoritatively from the rate card.
+  const pendingTax = pendingCharges.reduce((s, c) => s + (Number(c.taxAmount) || 0), 0);
+  const taxTotal = pendingTax + extras.reduce((s, e) => s + lineAmount(e) * ((e.taxPercent || 0) / 100), 0);
   const total = bedCharge + pendingTotal + extrasTotal + taxTotal;
   const deposit = Number(detail?.depositBalance || 0);
   const depositApplied = Math.min(deposit, total);
