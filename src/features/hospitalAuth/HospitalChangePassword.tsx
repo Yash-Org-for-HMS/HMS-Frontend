@@ -25,7 +25,13 @@ export default function HospitalChangePassword() {
 
   const { login } = useHospitalAuth();
   const navigate = useNavigate();
-  const tempToken = sessionStorage.getItem("hospitalTempToken");
+  // Captured once, on mount. The guard below asks whether this page was
+  // reached with a temp token — not whether one is still in storage. The
+  // success path clears the token and then signs the user in, so re-reading
+  // it every render made that clear fire the guard: the moment the new
+  // password was accepted, the user was redirected back to the login screen
+  // instead of into the panel.
+  const [tempToken] = useState(() => sessionStorage.getItem("hospitalTempToken"));
 
   useEffect(() => {
     if (!tempToken) navigate("/hospital/login");
