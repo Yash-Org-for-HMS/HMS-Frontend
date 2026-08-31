@@ -63,7 +63,6 @@ export default function HospitalLayout() {
     { text: "Admissions", icon: <LocalHotelRounded />, path: "/hospital/ipd/admissions", adminOnly: true, module: "IPD", section: "Operations" },
     { text: "Bed Board", icon: <HotelRounded />, path: "/hospital/ipd/beds", adminOnly: true, module: "IPD", section: "Operations" },
     { text: "Billing Overview", icon: <ReceiptLongRounded />, path: "/hospital/billing", adminOnly: true, module: "Billing", section: "Operations" },
-    { text: "Branches", icon: <DomainRounded />, path: "/hospital/branches", adminOnly: true, section: "Organization" },
     { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", adminOnly: true, section: "Organization" },
     { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", adminOnly: true, section: "Organization" },
     { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", adminOnly: true, section: "Organization" },

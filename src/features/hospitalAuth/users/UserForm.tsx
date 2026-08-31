@@ -17,7 +17,6 @@ import {
   Divider,
   InputAdornment,
   IconButton,
-  Chip,
 } from "@mui/material";
 import {
   SaveRounded,
@@ -107,9 +106,6 @@ export default function UserForm() {
     employeeCode: "",
     departmentId: "",
     branchId: "",
-    // Every branch this person may work at. The home branch above says where
-    // they are based; this is the set they can switch between.
-    branchIds: [] as string[],
     dateOfJoining: "",
     designation: "",
     addressLine1: "",
@@ -146,7 +142,6 @@ export default function UserForm() {
       employeeCode: user.employeeCode || "",
       departmentId: user.departmentId || "",
       branchId: user.branchId || "",
-      branchIds: (user.branchAssignments ?? []).map((a: { branchId: string }) => a.branchId),
       dateOfJoining: user.dateOfJoining
         ? new Date(user.dateOfJoining).toISOString().split("T")[0]
         : "",
@@ -363,46 +358,11 @@ export default function UserForm() {
                   </TextField>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField select label="Home Branch" name="branchId" value={formData.branchId} onChange={handleChange} {...textFieldProps}
-                    helperText="Where they are based — the branch they land on at login.">
+                  <TextField select label="Assign Branch" name="branchId" value={formData.branchId} onChange={handleChange} {...textFieldProps}>
                     <MenuItem value="">None</MenuItem>
                     {branches.map((b) => <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>)}
                   </TextField>
                 </Grid>
-                {/* Only worth showing once there is somewhere else to work.
-                    Staff used to be stuck on a single branch: this set is what
-                    resolveBranchContext reads first, so it is what actually
-                    lets someone cover two sites. */}
-                {branches.length > 1 && (
-                  <Grid size={{ xs: 12 }}>
-                    <TextField
-                      select label="Also works at" {...textFieldProps}
-                      value={formData.branchIds}
-                      onChange={(e) => setFormData({ ...formData, branchIds: (typeof e.target.value === "string" ? e.target.value.split(",") : e.target.value) as unknown as string[] })}
-                      slotProps={{
-                        select: {
-                          multiple: true,
-                          renderValue: (selected: unknown) => {
-                            const ids = selected as string[];
-                            if (!ids.length) return "Home branch only";
-                            return (
-                              <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                                {ids.map((id) => (
-                                  <Chip key={id} size="small" label={branches.find((b) => b.branchId === id)?.branchName ?? id} />
-                                ))}
-                              </Box>
-                            );
-                          },
-                        },
-                      }}
-                      helperText="Leave empty to keep them on their home branch. The home branch is always included."
-                    >
-                      {branches.map((b) => (
-                        <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
-                )}
               </Grid>
             </TabPanel>
 
