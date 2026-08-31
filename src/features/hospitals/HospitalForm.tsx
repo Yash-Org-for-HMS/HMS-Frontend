@@ -162,7 +162,17 @@ export default function HospitalForm() {
       if (isEdit) {
         await axiosInstance.put(`/hospitals/${id}`, formData);
       } else {
-        await axiosInstance.post("/hospitals", formData);
+        const res = await axiosInstance.post("/hospitals", formData);
+        // Creating a hospital also mints its admin login, and the API returns
+        // that one-time password for the super admin to hand over. This is the
+        // only chance anyone gets to see it — it is hashed on save and is not
+        // recoverable. The response used to be discarded, so every hospital
+        // created here got an admin account whose password nobody ever knew.
+        const admin = res.data?.data?.adminCredentials;
+        if (admin?.temporaryPassword) {
+          setConvertResult({ email: admin.email, temporaryPassword: admin.temporaryPassword });
+          return;
+        }
       }
       navigate("/hospitals");
     } catch (err: unknown) {
@@ -513,7 +523,7 @@ export default function HospitalForm() {
         onSaved={() => setReload(r => r + 1)}
       />
 
-      {/* One-time admin credentials after a trial conversion.
+      {/* One-time admin credentials, after a trial conversion or a direct create.
           Was a plain Alert with the password as selectable text and no copy
           button — a one-time secret you had to highlight by hand and risk
           mistyping. The shared dialog copies each field, or both together. */}
