@@ -18,7 +18,7 @@ import {
   QrCode2Rounded, ReceiptLongRounded, MoreVertRounded, EventRounded,
   PaymentsRounded, AccountBalanceWalletRounded, VaccinesRounded, MedicalServicesRounded,
 } from "@mui/icons-material";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import ErrorState from "@/components/ErrorState";
@@ -96,7 +96,19 @@ function SectionCard({ title, icon, action, children }: { title: string; icon: R
 // Operations section's "staff still do the work; the admin observes" design.
 // Every mutating affordance on the page (and the nested tab sections it
 // renders) is threaded through this single flag.
-export default function PatientProfile({ readOnly = false }: { readOnly?: boolean } = {}) {
+/**
+ * `canRecordVaccinations` opens up the immunisation tab alone while the rest of
+ * the page stays read-only. A nurse is the person who actually gives the dose,
+ * and the API has always let her (vaccinationAccess admits NURSE for
+ * administer/skip/undo) — only this page said otherwise, so the record was
+ * signed by whoever happened to be at the desk. Deliberately narrow: the same
+ * readOnly flag also governs demographics, billing and consent, and a nurse
+ * should not be editing an invoice.
+ */
+export default function PatientProfile(
+  { readOnly = false, canRecordVaccinations = false }:
+  { readOnly?: boolean; canRecordVaccinations?: boolean } = {},
+) {
   const navigate = useNavigate();
   const { id } = useParams();
   const toast = useToast();
@@ -114,7 +126,13 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
     enabled: !!id,
   });
 
-  const [tab, setTab] = useState(0);
+  // The immunisation worklist sends a nurse straight to the tab she needs.
+  // Named rather than an index, so re-ordering the tabs cannot silently point
+  // it somewhere else.
+  const location = useLocation();
+  const TAB_BY_NAME: Record<string, number> = { vaccinations: 5 };
+  const requestedTab = (location.state as { tab?: string } | null)?.tab;
+  const [tab, setTab] = useState(requestedTab ? TAB_BY_NAME[requestedTab] ?? 0 : 0);
   const { isModuleEnabled } = useEnabledModules();
   const billingEnabled = isModuleEnabled("Billing");
   const [notifProcessing, setNotifProcessing] = useState(false);
@@ -223,8 +241,10 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, gap: 1, flexWrap: "wrap" }}>
         <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ color: "text.secondary", textTransform: "none", fontWeight: 600 }}>Back to patients</Button>
         {readOnly && (
-          <Tooltip title="You're viewing this record; booking, editing and billing happen in the reception/clinical panels.">
-            <Chip label="Read-only oversight view" size="small" sx={{ bgcolor: alpha(ACCENT, 0.1), color: ACCENT, fontWeight: 600 }} />
+          <Tooltip title={canRecordVaccinations
+            ? "You can record immunisations here; booking, editing and billing happen in the reception panel."
+            : "You're viewing this record; booking, editing and billing happen in the reception/clinical panels."}>
+            <Chip label={canRecordVaccinations ? "Oversight view · immunisations editable" : "Read-only oversight view"} size="small" sx={{ bgcolor: alpha(ACCENT, 0.1), color: ACCENT, fontWeight: 600 }} />
           </Tooltip>
         )}
       </Box>
@@ -531,7 +551,7 @@ export default function PatientProfile({ readOnly = false }: { readOnly?: boolea
           patientName={`${patient.firstName || ""} ${patient.lastName || ""}`.trim()}
           patientUhid={patient.uhidNumber}
           patientDob={patient.dateOfBirth}
-          readOnly={readOnly}
+          readOnly={readOnly && !canRecordVaccinations}
         />
       )}
 
