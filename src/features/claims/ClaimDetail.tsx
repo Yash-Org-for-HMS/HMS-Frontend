@@ -97,7 +97,11 @@ export default function ClaimDetail() {
             {/* Reconciliation — what the payer owes vs what the patient must cover. */}
             <Grid container spacing={1.5} sx={{ mb: 1 }}>
               {[
-                ["Billed", claim.reconciliation?.billed, BRAND.action],
+                // Not "Billed": this is finalClaimedAmount, falling back to the
+                // linked bill's net until a figure has been formally claimed. The
+                // reports use finalClaimedAmount alone, so the same word meant two
+                // different numbers across the module.
+                ["Claim value", claim.reconciliation?.billed, BRAND.action],
                 ["Approved", claim.reconciliation?.approved, SEMANTIC.info],
                 ["Settled", claim.reconciliation?.settled, SEMANTIC.success],
                 ["Patient pays", claim.reconciliation?.patientResponsibility, SEMANTIC.danger],

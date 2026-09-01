@@ -64,11 +64,11 @@ function OverviewReport({ data }: { data: ClaimReportsResponse }) {
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
         <SimpleTable title="Claims by status" head={["Status", "Claims"]} rows={status.map((r) => [r.label, Number(r.count)])} />
         <SimpleTable title="Amount summary" head={["Metric", "Amount"]} rows={[
-          ["Total billed", inr(s.totalBilled)],
+          ["Claimed from payer", inr(s.totalBilled)],
           ["Total pre-auth approved", inr(s.totalApproved)],
           ["Total settled by payers", inr(s.totalSettled)],
           ["Outstanding from payers", inr(s.outstandingFromPayer)],
-          ["Patient shortfall (billed − approved)", inr(s.patientShortfall)],
+          ["Patient shortfall (claimed − approved)", inr(s.patientShortfall)],
         ]} />
       </Box>
     </Box>
