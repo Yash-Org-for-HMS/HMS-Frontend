@@ -20,6 +20,7 @@ import {
   Dialog,
   DialogContent,
   TextField,
+  MenuItem,
   InputAdornment,
   Avatar,
   Divider,
@@ -341,9 +342,20 @@ export default function UsersList() {
     password: "",
   });
 
+  // Filtered on the server: the list is paged, so narrowing in the browser
+  // would only ever filter the page already fetched and quietly hide the rest.
+  const [roleFilter, setRoleFilter] = useState("");
+
+  const { data: roleOptions = [] } = useQuery<{ roleId: string; roleName: string }[]>({
+    queryKey: ["hospital-user-roles"],
+    queryFn: async () => (await axiosInstance.get("/hospital/users/dropdowns")).data.data.roles,
+  });
+
   const { data: users = [], isLoading, isError, error, refetch } = useQuery<User[]>({
-    queryKey: ["hospital-users-list"],
-    queryFn: async () => (await axiosInstance.get("/hospital/users")).data.data,
+    queryKey: ["hospital-users-list", roleFilter],
+    queryFn: async () => (await axiosInstance.get("/hospital/users", {
+      params: { roleId: roleFilter || undefined },
+    })).data.data,
   });
 
   const { sorted, orderBy, order, onSort } = useTableSort(users, {
@@ -395,6 +407,27 @@ export default function UsersList() {
           }
         />
 
+        <Box sx={{ display: "flex", gap: 1.5, mb: 2, flexWrap: "wrap", alignItems: "center" }}>
+          <TextField
+            select size="small" label="Role" value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            sx={{ minWidth: 220 }}
+          >
+            <MenuItem value="">All roles</MenuItem>
+            {roleOptions.map((r) => (
+              <MenuItem key={r.roleId} value={r.roleId}>{r.roleName}</MenuItem>
+            ))}
+          </TextField>
+          {roleFilter && (
+            <Button size="small" onClick={() => setRoleFilter("")} sx={{ textTransform: "none" }}>
+              Clear
+            </Button>
+          )}
+          <Typography variant="body2" sx={{ color: "text.secondary", ml: "auto" }}>
+            {users.length} {users.length === 1 ? "person" : "people"}
+          </Typography>
+        </Box>
+
         <TableContainer
           component={Paper}
           sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "calc(100vh - 300px)" }}
@@ -422,7 +455,7 @@ export default function UsersList() {
               ) : sorted.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
-                    <Mascot pose="nothing-here-yet" subtitle="No staff members found." size={120} />
+                    <Mascot pose="nothing-here-yet" subtitle={roleFilter ? "No staff in this role." : "No staff members found."} size={120} />
                   </TableCell>
                 </TableRow>
               ) : (

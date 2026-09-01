@@ -17,6 +17,7 @@ import {
   TableRow,
   TablePagination,
   TextField,
+  MenuItem,
   Typography,
   Tooltip,
   Dialog,
@@ -69,6 +70,7 @@ export default function UsersList() {
   const confirm = useConfirm();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, 500);
+  const [roleFilter, setRoleFilter] = useState("");
   const [resetCreds, setResetCreds] = useState<{ email: string; temporaryPassword: string; name: string } | null>(null);
 
   // Pagination
@@ -86,13 +88,18 @@ export default function UsersList() {
   // Reset to the first page whenever the sort changes (TablePagination is 0-based).
   useEffect(() => {
     setPage(0);
-  }, [orderBy, order]);
+  }, [orderBy, order, roleFilter]);
+
+  const { data: roleOptions = [] } = useQuery<{ roleId: string; roleName: string }[]>({
+    queryKey: ["rbac-role-options"],
+    queryFn: async () => (await axiosInstance.get("/rbac/roles", { params: { limit: 200 } })).data.data,
+  });
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["rbac-users", page, rowsPerPage, debouncedSearch, orderBy, order],
+    queryKey: ["rbac-users", page, rowsPerPage, debouncedSearch, roleFilter, orderBy, order],
     queryFn: async () =>
       (await axiosInstance.get("/rbac/users", {
-        params: { page: page + 1, limit: rowsPerPage, search: debouncedSearch || undefined, sortBy: orderBy || undefined, sortOrder: order },
+        params: { page: page + 1, limit: rowsPerPage, search: debouncedSearch || undefined, roleId: roleFilter || undefined, sortBy: orderBy || undefined, sortOrder: order },
       })).data,
   });
   const users: User[] = data?.data ?? [];
@@ -154,6 +161,16 @@ export default function UsersList() {
       </Alert>
 
       <FilterBar>
+        <TextField
+          select size="small" label="Role" value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          sx={{ minWidth: 200, "& .MuiOutlinedInput-root": { bgcolor: "background.paper" } }}
+        >
+          <MenuItem value="">All roles</MenuItem>
+          {roleOptions.map((r) => (
+            <MenuItem key={r.roleId} value={r.roleId}>{r.roleName}</MenuItem>
+          ))}
+        </TextField>
         <TextField
           placeholder="Search by name, email, or employee code..."
           size="small"
