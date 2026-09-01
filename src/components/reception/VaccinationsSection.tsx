@@ -390,7 +390,11 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
       <Dialog open={!!actionTarget} onClose={() => (saving ? undefined : setActionTarget(null))} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {actionTarget?.kind === "administer" ? <CheckCircleRounded sx={{ color: SEMANTIC.success }} /> : <EventBusyRounded sx={{ color: "text.secondary" }} />}
-          {actionTarget?.kind === "administer" ? "Mark dose administered" : "Mark dose skipped"}
+          {actionTarget?.kind === "administer"
+            ? "Mark dose administered"
+            : actionTarget?.kind === "external"
+              ? "Record a dose given elsewhere"
+              : "Mark dose skipped"}
         </DialogTitle>
         <DialogContent dividers>
           {actionTarget && (
