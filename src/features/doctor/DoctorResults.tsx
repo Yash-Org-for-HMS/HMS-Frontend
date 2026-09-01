@@ -331,20 +331,42 @@ function LabDetail({ reports }: { reports: any[] }) {
               bgcolor: critical ? "rgba(239,68,68,0.04)" : "background.paper",
             }}>
               {/* Test name + prominent result value */}
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
-                <Box sx={{ minWidth: 0 }}>
+              <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
+                <Box sx={{ minWidth: 0, flex: "1 1 auto" }}>
                   <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>{rep.testName || "Test"}</Typography>
                   {rep.testCode && <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>{rep.testCode}</Typography>}
                 </Box>
                 {rep.pending ? (
                   <Chip label="Pending" size="small" sx={{ bgcolor: "rgba(245,158,11,0.15)", color: SEMANTIC.warningDark, fontWeight: 600, height: 22 }} />
                 ) : (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
-                    {critical && <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 18 }} />}
-                    <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.1, color: critical ? SEMANTIC.danger : "text.primary" }}>
-                      {rep.resultValue}
-                    </Typography>
-                  </Box>
+                  // A result value is anything from a single scalar ("13.1 g/dL") to a
+                  // full multi-analyte narrative. The big right-aligned treatment only
+                  // suits the first: with flexShrink: 0 a long one refused to give up any
+                  // width, crushed the test name to one word per line, drew straight over
+                  // it and then ran past the edge of the card. A long value now takes its
+                  // own line at body size; a short one keeps the prominent treatment.
+                  (() => {
+                    const value = String(rep.resultValue ?? "");
+                    const long = value.length > 28;
+                    return (
+                      <Box sx={{
+                        display: "flex", alignItems: "center", gap: 0.5, minWidth: 0,
+                        ...(long ? { flexBasis: "100%", mt: 0.25 } : { flexShrink: 0 }),
+                      }}>
+                        {critical && <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 18, flexShrink: 0 }} />}
+                        <Typography
+                          variant={long ? "body2" : "h6"}
+                          sx={{
+                            fontWeight: 800, lineHeight: long ? 1.45 : 1.1, minWidth: 0,
+                            overflowWrap: "anywhere",
+                            color: critical ? SEMANTIC.danger : "text.primary",
+                          }}
+                        >
+                          {value}
+                        </Typography>
+                      </Box>
+                    );
+                  })()
                 )}
               </Box>
 
