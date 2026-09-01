@@ -248,6 +248,16 @@ function EditVaccineDialog({ vaccine, onClose, onDone }: { vaccine: Vaccine; onC
           <TextField fullWidth multiline minRows={2} label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
           <FormControlLabel control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />}
             label={isActive ? "Active — assignable to patients" : "Inactive — hidden from the assign picker"} />
+          <Box>
+            <FormControlLabel
+              control={<Switch checked={autoSchedule} onChange={(e) => setAutoSchedule(e.target.checked)} />}
+              label="Add to every child&apos;s schedule automatically"
+            />
+            <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
+              Off keeps it in the catalogue and assignable by hand, without showing as a
+              due dose for every child.
+            </Typography>
+          </Box>
         </Stack>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
