@@ -77,13 +77,13 @@ function OverviewReport({ data }: { data: ClaimReportsResponse }) {
 
 function PayerReport({ data }: { data: ClaimReportsResponse }) {
   const rows: ClaimPayerRow[] = data?.payerWise || [];
-  return <SimpleTable title="Payer-wise volume & amounts" head={["Payer", "Claims", "Billed", "Approved", "Settled", "Outstanding"]}
+  return <SimpleTable title="Payer-wise volume & amounts" head={["Payer", "Claims", "Claimed", "Approved", "Settled", "Outstanding"]}
     rows={rows.map((r) => [r.payerName, r.count, inr(r.billed), inr(r.approved), inr(r.settled), inr(r.outstanding)])} />;
 }
 
 function SchemeReport({ data }: { data: ClaimReportsResponse }) {
   const rows: ClaimSchemeRow[] = data?.schemeWise || [];
-  return <SimpleTable title="Scheme-wise volume & amounts" head={["Scheme", "Claims", "Billed", "Approved", "Settled"]}
+  return <SimpleTable title="Scheme-wise volume & amounts" head={["Scheme", "Claims", "Claimed", "Approved", "Settled"]}
     rows={rows.map((r) => [r.scheme, r.count, inr(r.billed), inr(r.approved), inr(r.settled)])} />;
 }
 
@@ -119,13 +119,13 @@ function AgingReport({ data }: { data: ClaimReportsResponse }) {
 
 function RejectionsReport({ data }: { data: ClaimReportsResponse }) {
   const rows: ClaimRejectionRow[] = data?.rejections || [];
-  return <SimpleTable title="Rejected claims" head={["Claim #", "Patient", "Payer", "Status", "Billed", "When"]}
+  return <SimpleTable title="Rejected claims" head={["Claim #", "Patient", "Payer", "Status", "Claimed", "When"]}
     rows={rows.map((r) => [r.claimNumber, r.patientName, r.payerName, r.status, inr(r.billed), formatDate(r.at)])} />;
 }
 
 function RegisterReport({ data }: { data: ClaimReportsResponse }) {
   const rows: ClaimRegisterRow[] = data?.register || [];
-  return <SimpleTable title="Claims register" head={["Claim #", "Patient", "UHID", "Payer", "Scheme", "Status", "Billed", "Approved", "Settled", "Registered"]}
+  return <SimpleTable title="Claims register" head={["Claim #", "Patient", "UHID", "Payer", "Scheme", "Status", "Claimed", "Approved", "Settled", "Registered"]}
     rows={rows.map((r) => [r.claimNumber, r.patientName, r.uhid, r.payerName, r.scheme, r.status, inr(r.billed), inr(r.approved), inr(r.settled), formatDate(r.registeredAt)])}
     note={<ReportTruncationNote truncated={data?.truncated} totalRows={data?.totalRows} shownRows={data?.shownRows} />} />;
 }
