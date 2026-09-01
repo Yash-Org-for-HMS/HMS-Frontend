@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -90,16 +90,25 @@ export default function UsersList() {
     setPage(0);
   }, [orderBy, order, roleFilter]);
 
-  const { data: roleOptions = [] } = useQuery<{ roleId: string; roleName: string }[]>({
+  // Roles are per-hospital rows, so the platform list gets one DOCTOR per
+  // tenant — nine of them here. Collapsed to one entry per role code: the
+  // duplicates were not just noise, picking the wrong one silently filtered
+  // to a single hospital's staff.
+  const { data: allRoles = [] } = useQuery<{ roleId: string; roleName: string; roleCode: string }[]>({
     queryKey: ["rbac-role-options"],
-    queryFn: async () => (await axiosInstance.get("/rbac/roles", { params: { limit: 200 } })).data.data,
+    queryFn: async () => (await axiosInstance.get("/rbac/roles", { params: { limit: 1000 } })).data.data,
   });
+  const roleOptions = useMemo(() => {
+    const seen = new Map<string, { roleCode: string; roleName: string }>();
+    for (const r of allRoles) if (r.roleCode && !seen.has(r.roleCode)) seen.set(r.roleCode, { roleCode: r.roleCode, roleName: r.roleName });
+    return [...seen.values()].sort((a, b) => a.roleName.localeCompare(b.roleName));
+  }, [allRoles]);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["rbac-users", page, rowsPerPage, debouncedSearch, roleFilter, orderBy, order],
     queryFn: async () =>
       (await axiosInstance.get("/rbac/users", {
-        params: { page: page + 1, limit: rowsPerPage, search: debouncedSearch || undefined, roleId: roleFilter || undefined, sortBy: orderBy || undefined, sortOrder: order },
+        params: { page: page + 1, limit: rowsPerPage, search: debouncedSearch || undefined, roleCode: roleFilter || undefined, sortBy: orderBy || undefined, sortOrder: order },
       })).data,
   });
   const users: User[] = data?.data ?? [];
@@ -168,7 +177,7 @@ export default function UsersList() {
         >
           <MenuItem value="">All roles</MenuItem>
           {roleOptions.map((r) => (
-            <MenuItem key={r.roleId} value={r.roleId}>{r.roleName}</MenuItem>
+            <MenuItem key={r.roleCode} value={r.roleCode}>{r.roleName}</MenuItem>
           ))}
         </TextField>
         <TextField
