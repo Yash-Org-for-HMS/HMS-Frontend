@@ -119,11 +119,14 @@ export default function ReceptionDashboard() {
   // request is guaranteed to 403 otherwise, so every dashboard load on an
   // OPD-only hospital logged a forbidden error that looked like a fault and
   // was not one. The tile still falls back to an em dash either way.
-  const { isModuleEnabled } = useEnabledModules();
+  const { loaded: modulesLoaded, isModuleEnabled } = useEnabledModules();
   const { data: bedData } = useQuery({
     queryKey: ["dashboard-beds"],
     queryFn: async () => (await axiosInstance.get("/ipd/structure")).data.data,
-    enabled: isModuleEnabled("IPD"),
+    // Both halves matter: isModuleEnabled() answers "yes" while the module
+    // list is still loading, so gating on it alone still fired the request on
+    // first render — which is exactly the 403 this was meant to stop.
+    enabled: modulesLoaded && isModuleEnabled("IPD"),
     retry: 0,
   });
   const beds = bedData?.summary;
