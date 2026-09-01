@@ -127,8 +127,9 @@ export default function PatientProfile(
   });
 
   // The immunisation worklist sends a nurse straight to the tab she needs.
-  // Named rather than an index, so re-ordering the tabs cannot silently point
-  // it somewhere else.
+  // Callers pass a name, so the index lives in exactly one place; the tabs
+  // below are literal JSX in order, so re-ordering them still means updating
+  // this map — one line, rather than hunting every navigate() in the app.
   const location = useLocation();
   const TAB_BY_NAME: Record<string, number> = { vaccinations: 5 };
   const requestedTab = (location.state as { tab?: string } | null)?.tab;
