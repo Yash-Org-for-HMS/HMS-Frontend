@@ -698,6 +698,9 @@ export default function DispensaryPOS() {
           open={showPOS}
           onClose={handlePOSClose}
           onSuccess={handlePOSSuccess}
+          // Refresh the till the moment the money lands, not after the receipt
+          // animation — otherwise Today's Orders shows the sale as unpaid.
+          onPaid={() => fetchData()}
           patientId={createdOrder.patientId || patientId || "Walk-in"}
           patientName={patientId ? `Patient ID: ${patientId}` : "Walk-in Patient"}
           item={{

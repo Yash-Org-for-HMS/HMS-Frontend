@@ -1,4 +1,5 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { SEARCH_SHORTCUT } from "@/utils/shortcut";
 import { alpha } from "@mui/material/styles";
 import { formatINR } from "@/utils/format";
@@ -114,10 +115,15 @@ export default function ReceptionDashboard() {
   const outstandingCount = outstandingRows.length;
   const outstandingDue = outstandingRows.reduce((s: number, r: any) => s + Number(r.balance), 0);
 
-  // Bed availability (best-effort; IPD may be unavailable).
+  // Bed availability. Only asked for when the tenant actually has IPD: the
+  // request is guaranteed to 403 otherwise, so every dashboard load on an
+  // OPD-only hospital logged a forbidden error that looked like a fault and
+  // was not one. The tile still falls back to an em dash either way.
+  const { isModuleEnabled } = useEnabledModules();
   const { data: bedData } = useQuery({
     queryKey: ["dashboard-beds"],
     queryFn: async () => (await axiosInstance.get("/ipd/structure")).data.data,
+    enabled: isModuleEnabled("IPD"),
     retry: 0,
   });
   const beds = bedData?.summary;

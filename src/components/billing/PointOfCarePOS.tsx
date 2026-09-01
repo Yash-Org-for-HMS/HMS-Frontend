@@ -13,6 +13,13 @@ interface PointOfCarePOSProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  /**
+   * Fired the moment the payment is recorded, before the success animation.
+   * onSuccess runs behind a 2s delay so the receipt can be read, and callers
+   * were refreshing their data there — so a till showed a just-paid sale as
+   * unpaid for as long as the animation lasted.
+   */
+  onPaid?: () => void;
   patientId: string;
   patientName: string;
   item: {
@@ -26,7 +33,7 @@ interface PointOfCarePOSProps {
   };
 }
 
-export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, patientName, item }: PointOfCarePOSProps) {
+export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patientId, patientName, item }: PointOfCarePOSProps) {
   const theme = useTheme();
   
   const [discount, setDiscount] = useState<number | "">("");
@@ -61,6 +68,7 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, patientId, pa
       const res = await axiosInstance.post("/billing/poc-payment", payload);
       setReceiptData(res.data.data);
       setSuccess(true);
+      onPaid?.();
       
       // Delay closing to show success animation
       setTimeout(() => {
