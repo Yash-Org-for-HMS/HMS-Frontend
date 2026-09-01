@@ -23,7 +23,7 @@ import { formatINRAuto } from "@/utils/format";
 const ACCENT = BRAND.action;
 
 type ScheduleItem = { scheduleItemId: string; doseLabel: string; ageLabel: string; recommendedAgeDays: number; sortOrder: number };
-type Vaccine = { vaccineId: string; vaccineCode: string; vaccineName: string; description: string | null; price: number | string | null; isActive: boolean; isGlobal: boolean; scheduleItems: ScheduleItem[] };
+type Vaccine = { vaccineId: string; vaccineCode: string; vaccineName: string; description: string | null; price: number | string | null; isActive: boolean; autoSchedule: boolean; isGlobal: boolean; scheduleItems: ScheduleItem[] };
 const inr = formatINRAuto;
 
 // The catalog every "+ Add Vaccine" picker (Reception patient profile) draws
@@ -164,12 +164,16 @@ function AddVaccineDialog({ onClose, onDone }: { onClose: () => void; onDone: ()
   const [vaccineName, setVaccineName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  // Off by default: a vaccine added here is usually optional or private, and
+  // auto-scheduling it would put it on every child as a dose that soon reads as
+  // overdue. The seeded government series ships with this on.
+  const [autoSchedule, setAutoSchedule] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
     setSaving(true);
     try {
-      await axiosInstance.post("/vaccination/admin/vaccines", { vaccineCode, vaccineName, description: description || undefined, price: price ? Number(price) : undefined });
+      await axiosInstance.post("/vaccination/admin/vaccines", { vaccineCode, vaccineName, description: description || undefined, price: price ? Number(price) : undefined, autoSchedule });
       toast.success("Vaccine added");
       onDone();
     } catch (err: unknown) {
@@ -186,6 +190,16 @@ function AddVaccineDialog({ onClose, onDone }: { onClose: () => void; onDone: ()
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>
           <TextField fullWidth required label="Vaccine name" placeholder="e.g. Seasonal Flu Shot" value={vaccineName} onChange={(e) => setVaccineName(e.target.value)} />
           <TextField fullWidth required label="Code" placeholder="e.g. FLU" helperText="Short unique code, letters/numbers only" value={vaccineCode} onChange={(e) => setVaccineCode(e.target.value.toUpperCase())} />
+          <Box>
+            <FormControlLabel
+              control={<Switch checked={autoSchedule} onChange={(e) => setAutoSchedule(e.target.checked)} />}
+              label="Add to every child&apos;s schedule automatically"
+            />
+            <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
+              Leave off for an optional or private vaccine — it stays in the catalogue and can
+              still be added to a patient by hand, without showing as a due dose for every child.
+            </Typography>
+          </Box>
           <TextField fullWidth type="number" label="Price (₹, optional)" placeholder="Leave blank if free" helperText="Administering this vaccine will raise a charge for this amount" value={price} onChange={(e) => setPrice(e.target.value)}
                 inputProps={{ min: 0, max: 10000000 }}
               />
@@ -206,12 +220,13 @@ function EditVaccineDialog({ vaccine, onClose, onDone }: { vaccine: Vaccine; onC
   const [description, setDescription] = useState(vaccine.description || "");
   const [price, setPrice] = useState(vaccine.price != null ? String(vaccine.price) : "");
   const [isActive, setIsActive] = useState(vaccine.isActive);
+  const [autoSchedule, setAutoSchedule] = useState(vaccine.autoSchedule);
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
     setSaving(true);
     try {
-      await axiosInstance.put(`/vaccination/admin/vaccines/${vaccine.vaccineId}`, { vaccineName, description, isActive, price: price === "" ? null : Number(price) });
+      await axiosInstance.put(`/vaccination/admin/vaccines/${vaccine.vaccineId}`, { vaccineName, description, isActive, autoSchedule, price: price === "" ? null : Number(price) });
       toast.success("Vaccine updated");
       onDone();
     } catch (err: unknown) {

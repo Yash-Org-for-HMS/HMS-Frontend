@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import {
   VaccinesRounded, ChevronLeftRounded, ChevronRightRounded, TodayRounded,
-  CheckCircleRounded, BlockRounded, ReplayRounded, EventBusyRounded, AddRounded,
+  CheckCircleRounded, BlockRounded, HistoryRounded, ReplayRounded, EventBusyRounded, AddRounded,
   ReceiptLongRounded, PrintRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -32,6 +32,9 @@ const STATE_META: Record<string, { label: string; color: string }> = {
   UPCOMING: { label: "Upcoming", color: NEUTRAL.muted },
   DONE: { label: "Done", color: SEMANTIC.success },
   SKIPPED: { label: "Skipped", color: "#94a3b8" },
+  // Given, but not by us. Distinct from Done so a reader can tell whether this
+  // hospital administered the dose or is recording someone else's.
+  GIVEN_ELSEWHERE: { label: "Given elsewhere", color: "#0ea5e9" },
 };
 
 type Row = {
@@ -101,10 +104,13 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
     if (invoiceId) qc.invalidateQueries({ queryKey: ["patient-billing", patientId] });
   };
   const [anchor, setAnchor] = useState<Dayjs>(dayjs().startOf("month"));
-  const [actionTarget, setActionTarget] = useState<{ row: Row; kind: "administer" | "skip" } | null>(null);
+  const [actionTarget, setActionTarget] = useState<{ row: Row; kind: "administer" | "skip" | "external" } | null>(null);
   const [administeredDate, setAdministeredDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [batchNumber, setBatchNumber] = useState("");
   const [notes, setNotes] = useState("");
+  // Where a dose given elsewhere was evidenced from — a card and a parent's
+  // recollection are not the same thing, and the record should say which.
+  const [externalSource, setExternalSource] = useState("Immunisation card");
   const [saving, setSaving] = useState(false);
 
   // "+ Add Vaccine" — assign any catalog vaccine to this patient outside the
@@ -159,6 +165,15 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
     setActionTarget({ row, kind: "skip" });
     setNotes("");
   };
+  // A dose the child already had somewhere else. Dated, because when it was
+  // given is the clinically useful part, and sourced, because a parent's
+  // recollection and a printed card are not the same evidence.
+  const openExternal = (row: Row) => {
+    setActionTarget({ row, kind: "external" });
+    setAdministeredDate(dayjs().format("YYYY-MM-DD"));
+    setNotes("");
+    setExternalSource("Immunisation card");
+  };
 
   const submitAction = async () => {
     if (!actionTarget) return;
@@ -170,6 +185,11 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
         });
         invalidateBillingIfCharged(res.data?.data?.invoiceId);
         toast.success(`${actionTarget.row.vaccineName} (${actionTarget.row.doseLabel}) marked administered`);
+      } else if (actionTarget.kind === "external") {
+        await axiosInstance.put(`/vaccination/records/${actionTarget.row.patientVaccinationId}/external`, {
+          administeredDate, source: externalSource || undefined, notes: notes || undefined,
+        });
+        toast.success(`${actionTarget.row.vaccineName} (${actionTarget.row.doseLabel}) recorded as given elsewhere`);
       } else {
         await axiosInstance.put(`/vaccination/records/${actionTarget.row.patientVaccinationId}/skip`, { notes: notes || undefined });
         toast.success(`${actionTarget.row.vaccineName} (${actionTarget.row.doseLabel}) marked skipped`);
@@ -343,12 +363,15 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
                             <Tooltip title="Mark administered">
                               <IconButton size="small" onClick={() => openAdminister(r)} sx={{ color: SEMANTIC.success }}><CheckCircleRounded fontSize="small" /></IconButton>
                             </Tooltip>
+                            <Tooltip title="Already given elsewhere">
+                              <IconButton size="small" onClick={() => openExternal(r)} sx={{ color: STATE_META.GIVEN_ELSEWHERE.color }}><HistoryRounded fontSize="small" /></IconButton>
+                            </Tooltip>
                             <Tooltip title="Mark skipped / not applicable">
                               <IconButton size="small" onClick={() => openSkip(r)} sx={{ color: "text.secondary" }}><BlockRounded fontSize="small" /></IconButton>
                             </Tooltip>
                           </>
                         )}
-                        {!readOnly && (r.state === "DONE" || r.state === "SKIPPED") && (
+                        {!readOnly && (r.state === "DONE" || r.state === "SKIPPED" || r.state === "GIVEN_ELSEWHERE") && (
                           <Tooltip title="Undo">
                             <IconButton size="small" onClick={() => undo(r)} sx={{ color: "text.secondary" }}><ReplayRounded fontSize="small" /></IconButton>
                           </Tooltip>
@@ -375,9 +398,22 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
               {actionTarget.row.vaccineName} — {actionTarget.row.doseLabel}
             </Typography>
           )}
-          {actionTarget?.kind === "administer" && (
-            <TextField fullWidth type="date" label="Administered date" InputLabelProps={{ shrink: true }} sx={{ mb: 2 }}
+          {actionTarget?.kind === "external" && (
+            <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+              Recorded as already given — this raises no charge and is not credited to this hospital.
+            </Typography>
+          )}
+          {(actionTarget?.kind === "administer" || actionTarget?.kind === "external") && (
+            <TextField fullWidth type="date" label={actionTarget?.kind === "external" ? "Date given" : "Administered date"} InputLabelProps={{ shrink: true }} sx={{ mb: 2 }}
               value={administeredDate} onChange={(e) => setAdministeredDate(e.target.value)} inputProps={{ max: dayjs().format("YYYY-MM-DD") }} />
+          )}
+          {actionTarget?.kind === "external" && (
+            <TextField select fullWidth label="Evidence" sx={{ mb: 2 }} value={externalSource} onChange={(e) => setExternalSource(e.target.value)}>
+              <MenuItem value="Immunisation card">Immunisation card</MenuItem>
+              <MenuItem value="Hospital / clinic record">Hospital / clinic record</MenuItem>
+              <MenuItem value="Government centre record">Government centre record</MenuItem>
+              <MenuItem value="Reported by parent">Reported by parent</MenuItem>
+            </TextField>
           )}
           {actionTarget?.kind === "administer" && (
             <TextField fullWidth label="Batch number (optional)" sx={{ mb: 2 }} value={batchNumber} onChange={(e) => setBatchNumber(e.target.value)} />
