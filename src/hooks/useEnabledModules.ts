@@ -20,7 +20,7 @@ export function useEnabledModules() {
   const hasHospitalSession =
     typeof window !== "undefined" && !!sessionStorage.getItem("hospitalAccessToken");
 
-  const { data } = useQuery({
+  const { data, isPending, isError, fetchStatus } = useQuery({
     queryKey: ["enabled-modules"],
     queryFn: async () =>
       (await axiosInstance.get("/hospital/module-access")).data.data as {
@@ -32,8 +32,17 @@ export function useEnabledModules() {
   });
 
   const enabled = new Set(data?.enabledModules ?? []);
+
+  // Whether the answer is still outstanding — as opposed to known, or given
+  // up on. Callers that must not act before the answer arrives wait on this
+  // rather than on `loaded`, which stays false forever when the request
+  // fails and would strand them. An errored or idle query is NOT deciding:
+  // fail-open is the deliberate posture here, and the API is the real gate.
+  const deciding = hasHospitalSession && isPending && !isError && fetchStatus !== "idle";
+
   return {
     loaded: !!data,
+    deciding,
     enabledModules: enabled,
     /** True if the item should be shown. No module tag → always shown. */
     isModuleEnabled: (moduleKey?: string) => !moduleKey || !data || enabled.has(moduleKey),

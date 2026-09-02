@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Box, Typography, Chip } from "@mui/material";
 import { LockRounded, WorkspacePremiumRounded } from "@mui/icons-material";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
+import PageSkeleton from "@/components/PageSkeleton";
 import { SEMANTIC, alpha } from "@/styles/accents";
 
 // Friendly labels for the licensable modules (mirrors config/modules on the API).
@@ -49,13 +50,24 @@ export function ModuleLocked({ module, feature, description }: { module: string;
 
 /**
  * Wraps a plan-gated page/panel. When the hospital's plan doesn't include the
- * module, it renders the upsell instead of the children. Fail-open: until module
- * state is known, children render normally (the API still enforces).
+ * module, it renders the upsell instead of the children.
+ *
+ * While the answer is still in flight the children are HELD, not rendered. They
+ * used to render immediately, which meant every gated page mounted, fired its
+ * queries, collected 403s, and only then flipped to the upsell — and a page
+ * whose error state catches faster than the gate flips showed "Something went
+ * wrong" to a tenant whose only problem was not having bought the module.
+ *
+ * Still fail-open, which is the deliberate posture: if the module call ERRORS
+ * we stop waiting and render the children, because a transient fetch failure
+ * must never hide a feature the hospital owns. The API remains the real gate.
  */
 export default function ModuleGate({
   module, feature, description, children,
 }: { module: string; feature?: string; description?: string; children: ReactNode }) {
-  const { loaded, isModuleEnabled } = useEnabledModules();
+  const { loaded, deciding, isModuleEnabled } = useEnabledModules();
+
+  if (deciding) return <PageSkeleton />;
 
   if (loaded && !isModuleEnabled(module)) {
     return <ModuleLocked module={module} feature={feature} description={description} />;
