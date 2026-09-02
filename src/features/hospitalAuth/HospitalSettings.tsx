@@ -19,7 +19,6 @@ import {
 } from "@mui/material";
 import {
   SaveRounded,
-  AccessTimeRounded,
   LanguageRounded,
   SettingsSuggestRounded,
   ReceiptRounded,
@@ -67,9 +66,6 @@ export default function HospitalSettings() {
   const [saving, setSaving] = useState(false);
   const toast = useToast();
   const [formData, setFormData] = useState({
-    // Appointment Settings
-    appointmentDuration: 15,
-    bufferTime: 5,
 
     // Localization
     languageCode: "en",
@@ -105,8 +101,6 @@ export default function HospitalSettings() {
     const hospital = settingsData.hospital || {};
     const settings = settingsData.settings || {};
     setFormData({
-      appointmentDuration: settings.appointmentDuration ?? 15,
-      bufferTime: settings.bufferTime ?? 5,
       languageCode: hospital.languageCode || "en",
       timezone: hospital.timezone || "UTC",
       dateFormat: hospital.dateFormat || "YYYY-MM-DD",
@@ -214,45 +208,17 @@ export default function HospitalSettings() {
               },
             }}
           >
-            <Tab icon={<AccessTimeRounded sx={{ mr: 1 }} />} iconPosition="start" label="Appointment Settings" {...a11yProps(0)} />
-            <Tab icon={<LanguageRounded sx={{ mr: 1 }} />} iconPosition="start" label="Localization" {...a11yProps(1)} />
-            <Tab icon={<SettingsSuggestRounded sx={{ mr: 1 }} />} iconPosition="start" label="System Settings" {...a11yProps(2)} />
-            <Tab icon={<ReceiptRounded sx={{ mr: 1 }} />} iconPosition="start" label="Billing Defaults" {...a11yProps(3)} />
-            <Tab icon={<MedicalServicesRounded sx={{ mr: 1 }} />} iconPosition="start" label="Clinical Workflow" {...a11yProps(4)} />
+            <Tab icon={<LanguageRounded sx={{ mr: 1 }} />} iconPosition="start" label="Localization" {...a11yProps(0)} />
+            <Tab icon={<SettingsSuggestRounded sx={{ mr: 1 }} />} iconPosition="start" label="System Settings" {...a11yProps(1)} />
+            <Tab icon={<ReceiptRounded sx={{ mr: 1 }} />} iconPosition="start" label="Billing Defaults" {...a11yProps(2)} />
+            <Tab icon={<MedicalServicesRounded sx={{ mr: 1 }} />} iconPosition="start" label="Clinical Workflow" {...a11yProps(3)} />
           </Tabs>
         </Box>
 
         <Box sx={{ p: 4 }}>
-          {/* Appointment Settings Tab */}
-          <CustomTabPanel value={tabValue} index={0}>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Appointment Duration (mins)"
-                  name="appointmentDuration"
-                  value={formData.appointmentDuration}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Buffer Time (mins)"
-                  name="bufferTime"
-                  value={formData.bufferTime}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
-            </Grid>
-          </CustomTabPanel>
 
           {/* Localization Tab */}
-          <CustomTabPanel value={tabValue} index={1}>
+          <CustomTabPanel value={tabValue} index={0}>
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
@@ -297,7 +263,7 @@ export default function HospitalSettings() {
           </CustomTabPanel>
 
           {/* System Settings Tab */}
-          <CustomTabPanel value={tabValue} index={2}>
+          <CustomTabPanel value={tabValue} index={1}>
             <Grid container spacing={3}>
               <Grid size={{ xs: 12 }}>
                 <FormControlLabel
@@ -336,7 +302,7 @@ export default function HospitalSettings() {
           </CustomTabPanel>
 
           {/* Billing Defaults Tab */}
-          <CustomTabPanel value={tabValue} index={3}>
+          <CustomTabPanel value={tabValue} index={2}>
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
@@ -420,7 +386,7 @@ export default function HospitalSettings() {
           </CustomTabPanel>
 
           {/* Clinical Workflow Tab */}
-          <CustomTabPanel value={tabValue} index={4}>
+          <CustomTabPanel value={tabValue} index={3}>
             <Box sx={{ mb: 3 }}>
               <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, mb: 0.5 }}>
                 Who Records Patient Vitals?
