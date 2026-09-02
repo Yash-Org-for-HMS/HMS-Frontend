@@ -70,10 +70,8 @@ export default function HospitalSettings() {
     // Localization
     languageCode: "en",
     timezone: "UTC",
-    dateFormat: "YYYY-MM-DD",
 
     // System Settings
-    queueEnabled: true,
     smsEnabled: true,
     emailEnabled: true,
     whatsappEnabled: false,
@@ -81,7 +79,6 @@ export default function HospitalSettings() {
     // Billing Defaults
     currencyCode: "INR",
     taxPercentage: 0,
-    invoicePrefix: "INV-",
 
     // Clinical Workflow
     vitalsCollector: "RECEPTIONIST" as "RECEPTIONIST" | "NURSE",
@@ -103,14 +100,11 @@ export default function HospitalSettings() {
     setFormData({
       languageCode: hospital.languageCode || "en",
       timezone: hospital.timezone || "UTC",
-      dateFormat: hospital.dateFormat || "YYYY-MM-DD",
-      queueEnabled: settings.queueEnabled ?? true,
       smsEnabled: settings.smsEnabled ?? true,
       emailEnabled: settings.emailEnabled ?? true,
       whatsappEnabled: settings.whatsappEnabled ?? false,
       currencyCode: settings.currencyCode || "INR",
       taxPercentage: settings.taxPercentage ?? 0,
-      invoicePrefix: settings.invoicePrefix || "INV-",
       vitalsCollector: (settings.vitalsCollector as "RECEPTIONIST" | "NURSE") || "RECEPTIONIST",
       billingStrategy: (settings.billingStrategy as "PRE_PAID" | "POST_PAID") || "PRE_PAID",
       refundApprovalThreshold: settings.refundApprovalThreshold != null ? String(settings.refundApprovalThreshold) : "5000",
@@ -245,33 +239,12 @@ export default function HospitalSettings() {
                   placeholder="e.g. Asia/Kolkata"
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Date Format"
-                  name="dateFormat"
-                  value={formData.dateFormat}
-                  onChange={handleChange}
-                >
-                  <MenuItem value="YYYY-MM-DD">YYYY-MM-DD</MenuItem>
-                  <MenuItem value="DD/MM/YYYY">DD/MM/YYYY</MenuItem>
-                  <MenuItem value="MM/DD/YYYY">MM/DD/YYYY</MenuItem>
-                </TextField>
-              </Grid>
             </Grid>
           </CustomTabPanel>
 
           {/* System Settings Tab */}
           <CustomTabPanel value={tabValue} index={1}>
             <Grid container spacing={3}>
-              <Grid size={{ xs: 12 }}>
-                <FormControlLabel
-                  control={<Switch checked={formData.queueEnabled} onChange={handleChange} name="queueEnabled" color="primary" />}
-                  label="Enable Patient Queue System"
-                  sx={{ color: "text.primary" }}
-                />
-              </Grid>
               <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle2" sx={{ color: "text.secondary", mb: 2 }}>Notification Preferences</Typography>
                 <Grid container spacing={2}>
@@ -312,16 +285,6 @@ export default function HospitalSettings() {
                   value={formData.currencyCode}
                   onChange={handleChange}
                   placeholder="e.g. USD, INR"
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="Invoice Prefix"
-                  name="invoicePrefix"
-                  value={formData.invoicePrefix}
-                  onChange={handleChange}
-                  placeholder="e.g. INV-"
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
