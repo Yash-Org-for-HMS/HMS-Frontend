@@ -127,24 +127,7 @@ export default function ConsentFormsSection({ patientId, patientName, readOnly =
         <SignConsentDialog form={signTarget} patientName={patientName} onClose={() => setSignTarget(null)} onSigned={() => { setSignTarget(null); refetch(); }} />
       )}
       {responsesTarget && (
-        <Dialog open onClose={() => setResponsesTarget(null)} maxWidth="xs" fullWidth>
-          <DialogTitle>{responsesTarget.title} — responses</DialogTitle>
-          <DialogContent dividers>
-            <Stack spacing={1.2}>
-              {Object.entries(responsesTarget.responseDataJson as Record<string, any>).map(([k, v]) => (
-                <Box key={k} sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>{k}</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "right" }}>
-                    {typeof v === "boolean" ? (v ? "Yes" : "No") : String(v ?? "—") || "—"}
-                  </Typography>
-                </Box>
-              ))}
-            </Stack>
-          </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setResponsesTarget(null)}>Close</Button>
-          </DialogActions>
-        </Dialog>
+        <ConsentResponsesDialog form={responsesTarget} onClose={() => setResponsesTarget(null)} />
       )}
     </Paper>
   );
@@ -388,6 +371,64 @@ function SignConsentDialog({ form, patientName, onClose, onSigned }: { form: any
 >
           Sign & File
         </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+/**
+ * The answers on an issued form, as they were asked.
+ *
+ * This read the raw responseDataJson and printed its KEYS, so staff saw
+ * "procedure_explained_to_patient_by" on screen while the printed document —
+ * built from the same record — showed "Procedure explained to patient by".
+ *
+ * Rather than resolve labels a second time here, it asks the detail endpoint
+ * the print view already uses: that pairs each answer with its template label
+ * IN THE TEMPLATE'S ORDER, and includes fields nobody filled, so the dialog
+ * now shows what was asked as well as what was answered. One resolver, one
+ * answer — the alternative is two copies of the rule drifting apart.
+ */
+function ConsentResponsesDialog({ form, onClose }: { form: any; onClose: () => void }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["consent-form", form.consentFormId],
+    queryFn: async () => (await axiosInstance.get(`/reception/consent-forms/${form.consentFormId}`)).data.data,
+  });
+  const rows: { label: string; fieldType?: string; value: unknown }[] = data?.responses ?? [];
+
+  const show = (v: unknown, fieldType?: string) => {
+    if (v === null || v === undefined || v === "") return "—";
+    if (typeof v === "boolean") return v ? "Yes" : "No";
+    if (Array.isArray(v)) return v.length ? v.join(", ") : "—";
+    if (fieldType === "date") { const d = dayjs(String(v)); return d.isValid() ? d.format("DD MMM YYYY") : String(v); }
+    return String(v);
+  };
+
+  return (
+    <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>{form.title} — responses</DialogTitle>
+      <DialogContent dividers>
+        {isLoading ? (
+          <ListSkeleton rows={3} />
+        ) : isError ? (
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>Couldn't load the answers.</Typography>
+        ) : rows.length === 0 ? (
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>Nothing was recorded on this form.</Typography>
+        ) : (
+          <Stack spacing={1.2}>
+            {rows.map((r, i) => (
+              <Box key={i} sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>{r.label}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "right" }}>
+                  {show(r.value, r.fieldType)}
+                </Typography>
+              </Box>
+            ))}
+          </Stack>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );
