@@ -78,7 +78,7 @@ export default function HospitalLayout() {
     { text: "Ward Chart Settings", icon: <MonitorHeartRounded />, path: "/hospital/ward-chart", adminOnly: true, module: "IPD", section: "Configuration" },
     { text: "Vaccine Catalog", icon: <VaccinesRounded />, path: "/hospital/vaccines", adminOnly: true, section: "Configuration" },
     { text: "Schedule of Charges", icon: <ReceiptLongRounded />, path: "/hospital/soc", adminOnly: true, section: "Configuration" },
-    { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/hospital/medicines", adminOnly: true, section: "Configuration" },
+    { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/hospital/medicines", adminOnly: true, module: "Pharmacy", section: "Configuration" },
     { text: "Form Builder", icon: <DynamicFormRounded />, path: "/hospital/form-builder", adminOnly: true, section: "Configuration" },
     { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", adminOnly: true, section: "Configuration" },
     { text: "Audit Logs", icon: <SecurityRounded />, path: "/hospital/audit-logs", adminOnly: true, section: "System" },

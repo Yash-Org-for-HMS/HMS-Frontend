@@ -281,7 +281,7 @@ function App() {
             <Route path="/hospital/ward-chart" element={elGated(WardChartSettings, "IPD", "Ward Chart Settings")} />
             <Route path="/hospital/vaccines" element={el(VaccineCatalog)} />
             <Route path="/hospital/soc" element={el(ScheduleOfCharges)} />
-            <Route path="/hospital/medicines" element={el(MedicineCatalog)} />
+            <Route path="/hospital/medicines" element={elGated(MedicineCatalog, "Pharmacy", "Medicine Catalog")} />
             <Route path="/hospital/form-builder" element={el(FormTemplatesList)} />
             <Route path="/hospital/form-builder/new" element={el(FormBuilder)} />
             <Route path="/hospital/form-builder/:id/edit" element={el(FormBuilder)} />
