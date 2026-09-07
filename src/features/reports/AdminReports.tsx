@@ -16,12 +16,24 @@ import {
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
 } from "@mui/material";
 import {
-  FileDownloadRounded, LocalHospitalRounded, PeopleAltRounded, StoreMallDirectoryRounded,
+  FileDownloadRounded, PictureAsPdfRounded, LocalHospitalRounded, PeopleAltRounded, StoreMallDirectoryRounded,
   PersonSearchRounded, GroupsRounded, MedicalInformationRounded, ShowChartRounded,
   TimerRounded, CardMembershipRounded, RocketLaunchRounded, AccountBalanceWalletRounded,
   CheckCircleRounded, HighlightOffRounded, WarningAmberRounded, InfoOutlined, ArrowForwardRounded,
 } from "@mui/icons-material";
 import { exportTableToExcel } from "@/utils/exportExcel";
+
+/**
+ * Pull the PDF writer in only when someone asks for a PDF.
+ *
+ * Imported statically it is reachable from the eager graph, and Vite adds a
+ * modulepreload for its ~116 kB jspdf chunk — downloaded by every visitor,
+ * including the many who never export anything.
+ */
+const loadPdfExport = async (...args: Parameters<typeof import("@/utils/exportPdf")["exportTableToPdf"]>) => {
+  const { exportTableToPdf } = await import("@/utils/exportPdf");
+  return exportTableToPdf(...args);
+};
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import ErrorState from "@/components/ErrorState";
 import { apiErrorText } from "@/utils/apiError";
@@ -464,9 +476,17 @@ function OnboardingReport() {
           <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Onboarding register</Typography>
           <Box sx={{ flex: 1 }} />
           {exportRows.length > 0 && (
-            <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />}
-              onClick={() => exportTableToExcel("Onboarding register", exportHead, exportRows)}
-              sx={{ textTransform: "none", color: ACCENT }}>Excel</Button>
+            /* Hand-rolled table (status chips + an action column), so it does
+               not inherit the kit's buttons — both exports are wired off the
+               same rows the Excel one already prepared. */
+            <Box sx={{ display: "flex", gap: 0.5 }}>
+              <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />}
+                onClick={() => exportTableToExcel("Onboarding register", exportHead, exportRows)}
+                sx={{ textTransform: "none", color: ACCENT }}>Excel</Button>
+              <Button size="small" startIcon={<PictureAsPdfRounded fontSize="small" />}
+                onClick={() => void loadPdfExport("Onboarding register", exportHead, exportRows)}
+                sx={{ textTransform: "none", color: ACCENT }}>PDF</Button>
+            </Box>
           )}
         </Box>
         {filtered.length === 0 ? (

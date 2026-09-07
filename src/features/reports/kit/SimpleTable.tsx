@@ -3,9 +3,21 @@ import {
   Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow,
   TableContainer, Button,
 } from "@mui/material";
-import { FileDownloadRounded, ChevronRightRounded } from "@mui/icons-material";
+import { FileDownloadRounded, ChevronRightRounded, PictureAsPdfRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { exportTableToExcel } from "@/utils/exportExcel";
+
+/**
+ * Pull the PDF writer in only when someone asks for a PDF.
+ *
+ * Imported statically it is reachable from the eager graph, and Vite adds a
+ * modulepreload for its ~116 kB jspdf chunk — downloaded by every visitor,
+ * including the many who never export anything.
+ */
+const loadPdfExport = async (...args: Parameters<typeof import("@/utils/exportPdf")["exportTableToPdf"]>) => {
+  const { exportTableToPdf } = await import("@/utils/exportPdf");
+  return exportTableToPdf(...args);
+};
 import { BRAND } from "@/styles/accents";
 
 /**
@@ -28,6 +40,7 @@ export default function SimpleTable({
   note,
   accent = BRAND.action,
   rowHref,
+  period,
 }: {
   title: string;
   head: string[];
@@ -45,6 +58,12 @@ export default function SimpleTable({
    * way through to them.
    */
   rowHref?: (row: (string | number)[], index: number) => string | null;
+  /**
+   * The period the figures cover, printed under the title in the PDF. A
+   * filed report page with no date range on it is how a correct number turns
+   * into a wrong one — on screen the filter bar says it, on paper nothing does.
+   */
+  period?: string;
 }) {
   const navigate = useNavigate();
   return (
@@ -53,8 +72,12 @@ export default function SimpleTable({
         <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{title}</Typography>
         <Box sx={{ flex: 1 }} />
         {rows.length > 0 && (
-          <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />} onClick={() => exportTableToExcel(title, head, rows)}
-            sx={{ textTransform: "none", color: accent }}>Excel</Button>
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />} onClick={() => exportTableToExcel(title, head, rows)}
+              sx={{ textTransform: "none", color: accent }}>Excel</Button>
+            <Button size="small" startIcon={<PictureAsPdfRounded fontSize="small" />} onClick={() => void loadPdfExport(title, head, rows, period)}
+              sx={{ textTransform: "none", color: accent }}>PDF</Button>
+          </Box>
         )}
       </Box>
       {note && <Box sx={{ mb: 1.5 }}>{note}</Box>}

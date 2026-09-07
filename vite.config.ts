@@ -52,6 +52,11 @@ export default defineConfig(async () => {
           if (id.includes("@tiptap") || id.includes("prosemirror")) return "vendor-editor";
           // Lottie player + wasm binding — only the (lazy) HeartbeatLottie needs it.
           if (id.includes("@lottiefiles")) return "vendor-lottie";
+          // PDF export — left OUT of manual chunking on purpose. It is reached only
+          // through a dynamic import, so Rollup places it in the async graph by
+          // itself; naming it here instead produced a shared vendor chunk that
+          // index.html modulepreloaded, downloading it for every visitor.
+          if (id.includes("jspdf")) return;
           // Real-time client — only used inside queue/POS screens (all lazy), not at login.
           if (id.includes("socket.io") || id.includes("engine.io")) return "vendor-socket";
           if (id.includes("@mui") || id.includes("@emotion")) return "vendor-mui";

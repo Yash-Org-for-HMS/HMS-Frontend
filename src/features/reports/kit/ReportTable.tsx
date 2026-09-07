@@ -3,9 +3,21 @@ import {
   Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow,
   TableSortLabel, Button, TableContainer,
 } from "@mui/material";
-import { FileDownloadRounded } from "@mui/icons-material";
+import { FileDownloadRounded, PictureAsPdfRounded } from "@mui/icons-material";
 import Mascot from "@/components/Mascot";
 import { exportTableToExcel } from "@/utils/exportExcel";
+
+/**
+ * Pull the PDF writer in only when someone asks for a PDF.
+ *
+ * Imported statically it is reachable from the eager graph, and Vite adds a
+ * modulepreload for its ~116 kB jspdf chunk — downloaded by every visitor,
+ * including the many who never export anything.
+ */
+const loadPdfExport = async (...args: Parameters<typeof import("@/utils/exportPdf")["exportTableToPdf"]>) => {
+  const { exportTableToPdf } = await import("@/utils/exportPdf");
+  return exportTableToPdf(...args);
+};
 import ReportTruncationNote from "./ReportTruncationNote";
 
 export interface ReportColumn<T = any> {
@@ -107,23 +119,44 @@ export default function ReportTable<T = any>({ columns, rows, filename, title, m
     else { setSortKey(key); setDir("desc"); }
   };
 
-  const doExport = () => {
+  // One shaping of the rows, two destinations — so the spreadsheet and the
+  // printed page can never disagree about what the report contained.
+  const exportMatrix = () => {
     const cols = columns.filter((c) => c.exportable !== false);
-    const head = cols.map((c) => c.label);
-    const matrix = sorted.map((row) => cols.map((c) => {
-      const v = raw(c, row);
-      return typeof v === "number" ? v : String(v ?? "");
-    }));
+    return {
+      head: cols.map((c) => c.label),
+      matrix: sorted.map((row) => cols.map((c) => {
+        const v = raw(c, row);
+        return typeof v === "number" ? v : String(v ?? "");
+      })),
+    };
+  };
+
+  const doExport = () => {
+    const { head, matrix } = exportMatrix();
     exportTableToExcel(filename, head, matrix);
+  };
+
+  const doExportPdf = () => {
+    const { head, matrix } = exportMatrix();
+    // The truncation note is on screen; carry it onto the page too, or a
+    // printed extract silently reads as the whole set.
+    const period = truncated ? `Showing ${(shownRows ?? 0).toLocaleString()} of ${(totalRows ?? 0).toLocaleString()} rows` : undefined;
+    void loadPdfExport(title || filename, head, matrix, period);
   };
 
   return (
     <Paper elevation={0} sx={{ borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2.5, py: 1.5, gap: 1 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{title}</Typography>
-        <Button size="small" startIcon={<FileDownloadRounded />} onClick={doExport} disabled={!rows.length}>
-          Export CSV
-        </Button>
+        <Box sx={{ display: "flex", gap: 0.5 }}>
+          <Button size="small" startIcon={<FileDownloadRounded />} onClick={doExport} disabled={!rows.length}>
+            Export CSV
+          </Button>
+          <Button size="small" startIcon={<PictureAsPdfRounded />} onClick={doExportPdf} disabled={!rows.length}>
+            PDF
+          </Button>
+        </Box>
       </Box>
       {truncated && (
         <Box sx={{ px: 2.5, pb: 1.5 }}>
