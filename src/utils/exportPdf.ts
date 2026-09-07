@@ -27,8 +27,32 @@ function letterhead(): { hospital: string; branch: string | null; user: string |
   return { hospital: h?.name || "Hospital", branch: b?.name || null, user: name || u?.email || null };
 }
 
+/**
+ * jsPDF's built-in Helvetica is WinAnsi-encoded and has no glyph for ₹, so it
+ * renders as "¹" — every money column on every financial report would print
+ * corrupted. Embedding a Unicode font would cost a few hundred kB on a chunk
+ * that is already the largest thing we load, to gain one character.
+ *
+ * "Rs." is the ordinary way that character is written on Indian invoices when
+ * a font cannot carry it, so the substitution is the conventional spelling
+ * rather than a degradation. Other non-WinAnsi characters are transliterated
+ * where there is an obvious equivalent and dropped otherwise, which is still
+ * better than a wrong glyph — a wrong character reads as data.
+ */
+function pdfSafe(v: unknown): string {
+  if (v === null || v === undefined) return "";
+  return String(v)
+    // Rupee sign; the optional space collapses both spellings to one.
+    .replace(/\u20B9\s?/g, "Rs. ")
+    .replace(/[\u2018\u2019]/g, "'")   // curly single quotes
+    .replace(/[\u201C\u201D]/g, '"')   // curly double quotes
+    .replace(/[\u2013\u2014]/g, "-")   // en / em dash
+    .replace(/\u2022/g, "-")            // bullet
+    .replace(/\u00A0/g, " ");           // non-breaking space
+}
+
 function safeName(name: string): string {
-  const base = name.replace(/[\/:*?"<>|]+/g, "-").replace(/\s+/g, "_").slice(0, 120) || "report";
+  const base = name.replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, "_").slice(0, 120) || "report";
   return base.endsWith(".pdf") ? base : `${base}.pdf`;
 }
 
@@ -58,23 +82,23 @@ export async function exportTableToPdf(
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text(hospital, 40, 42);
+  doc.text(pdfSafe(hospital), 40, 42);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(90);
-  if (branch) doc.text(branch, 40, 58);
+  if (branch) doc.text(pdfSafe(branch), 40, 58);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(20);
-  doc.text(title, 40, branch ? 80 : 66);
+  doc.text(pdfSafe(title), 40, branch ? 80 : 66);
 
   if (subtitle) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(110);
-    doc.text(subtitle, 40, branch ? 95 : 81);
+    doc.text(pdfSafe(subtitle), 40, branch ? 95 : 81);
   }
 
   const generated = `Generated ${new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}`;
@@ -83,8 +107,8 @@ export async function exportTableToPdf(
   doc.text(user ? `${generated} · ${user}` : generated, pageWidth - 40, 42, { align: "right" });
 
   autoTable(doc, {
-    head: [head],
-    body: rows.map((r) => r.map((c) => (c === null || c === undefined ? "" : String(c)))),
+    head: [head.map(pdfSafe)],
+    body: rows.map((r) => r.map(pdfSafe)),
     startY: (subtitle ? (branch ? 108 : 94) : (branch ? 92 : 78)),
     styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
     headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold" },
