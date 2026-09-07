@@ -166,9 +166,9 @@ export default function LabDashboard() {
               meta: ageLabel(o.ageDays, o.ageHours),
               severity: ageSeverity(o.ageDays),
               icon: <MonitorHeartRounded sx={{ fontSize: 18 }} />,
-              // Radiology has no detail route — the queue edits in a dialog — so
-              // the order is named in the URL and the queue opens it on arrival.
-              onClick: () => navigate(`/lab/radiology?order=${o.radiologyOrderId}`),
+              // Radiology is edited in a dialog over the queue, so this id opens
+              // that dialog — shareable, refreshable, closed by Back.
+              onClick: () => navigate(`/lab/radiology/${o.radiologyOrderId}`),
             }))}
             maxRows={6}
             totalCount={rad.pending}

@@ -377,6 +377,9 @@ function App() {
             <Route path="/lab/orders" element={el(LabOrdersQueue)} />
             <Route path="/lab/orders/:id" element={el(UpdateLabOrder)} />
             <Route path="/lab/radiology" element={el(RadiologyOrdersQueue)} />
+            {/* Same screen, with one scan open over it — radiology is edited in
+                a dialog, so the id addresses the dialog rather than a page. */}
+            <Route path="/lab/radiology/:id" element={el(RadiologyOrdersQueue)} />
             <Route path="/lab/catalog" element={el(LabTestCatalog)} />
             <Route path="/lab/radiology-catalog" element={el(RadiologyCatalog)} />
             <Route path="/lab/billing" element={elGated(LabBilling, "Billing", "Lab Billing")} />

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import type { RadiologyOrderRow } from "./labOrders.types";
 import type { UnbilledItem } from "@/types";
 import { formatDate } from "@/utils/format";
@@ -30,14 +30,15 @@ const BUCKETS = ["today_pending", "past_pending", "completed", "all"];
 
 export default function RadiologyOrdersQueue() {
   const toast = useToast();
-  // A row on the Lab & Radiology dashboard links here naming one order.
-  // Radiology has no detail route — this queue edits in a dialog — so the
-  // order is opened on arrival instead.
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedOrderId = searchParams.get("order");
-  // Start on "All" for a deep link: the order being chased is usually days
-  // old, and the default Today bucket would not contain it.
-  const [tabValue, setTabValue] = useState(requestedOrderId ? 3 : 0);
+  // One scan is addressable as /lab/radiology/:id. Radiology is edited in a
+  // dialog rather than on its own page, so the id opens that dialog OVER the
+  // queue — which keeps the worklist behind it, and makes the URL, a refresh,
+  // and the Back button all mean the same thing.
+  const navigate = useNavigate();
+  const { id: routeOrderId } = useParams<{ id?: string }>();
+  // Land on "All" when arriving by URL: the scan being chased is usually days
+  // old, so the default Today bucket would not show its row behind the dialog.
+  const [tabValue, setTabValue] = useState(routeOrderId ? 3 : 0);
   const [page, setPage] = useState(1);
 
   // Switching tabs resets to the first page.
@@ -72,19 +73,38 @@ export default function RadiologyOrdersQueue() {
 
   const [editOrder, setEditOrder] = useState<RadiologyOrderRow | null>(null);
 
-  // Open the linked order once its row has loaded, then clear the parameter:
-  // reopening it on every refresh (or on Back, after the user closed it) would
-  // be worse than not deep-linking at all. If it cannot be found the queue is
-  // simply left open on All, which is where the reader can go looking.
-  const deepLinkHandled = useRef(false);
+  // Everything the dialog needs, set in one place — used both when a row is
+  // clicked (the row is already in hand) and when arriving by URL (it is not).
+  const applyOrder = (order: RadiologyOrderRow | null) => {
+    setEditOrder(order);
+    setStatus(order?.status || "PENDING");
+    setNotes(order?.radiologistNotes || "");
+    setReportUrl(order?.reportUrl || "");
+  };
+
+  // The URL is what decides whether the dialog is open, so a refresh reopens
+  // it and Back closes it. The order is taken from the loaded page when it is
+  // there, and fetched by id when it is not — a scan linked from a dashboard
+  // is often on a page, or in a bucket, the queue has not loaded.
   useEffect(() => {
-    if (!requestedOrderId || deepLinkHandled.current || orders.length === 0) return;
-    const match = orders.find((o) => o.radiologyOrderId === requestedOrderId);
-    deepLinkHandled.current = true;
-    if (match) setEditOrder(match);
-    searchParams.delete("order");
-    setSearchParams(searchParams, { replace: true });
-  }, [requestedOrderId, orders, searchParams, setSearchParams]);
+    let cancelled = false;
+    if (!routeOrderId) { applyOrder(null); return; }
+    if (editOrder?.radiologyOrderId === routeOrderId) return;
+    const loaded = orders.find((o) => o.radiologyOrderId === routeOrderId);
+    if (loaded) { applyOrder(loaded); return; }
+    (async () => {
+      try {
+        const res = await axiosInstance.get(`/lab/radiology-orders/${routeOrderId}`);
+        if (!cancelled) applyOrder(res.data?.data ?? null);
+      } catch {
+        // Gone, or another tenant's id. Drop back to the plain queue rather
+        // than leaving a URL that promises an order it cannot show.
+        if (!cancelled) { toast.error("That radiology order could not be opened."); navigate("/lab/radiology", { replace: true }); }
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeOrderId, orders]);
   const [status, setStatus] = useState("PENDING");
   const [notes, setNotes] = useState("");
   const [reportUrl, setReportUrl] = useState("");
@@ -118,14 +138,18 @@ export default function RadiologyOrdersQueue() {
 
 
   const handleEditClick = (order: RadiologyOrderRow) => {
-    setEditOrder(order);
-    setStatus(order.status || "PENDING");
-    setNotes(order.radiologistNotes || "");
-    setReportUrl(order.reportUrl || "");
+    // Bind immediately so the dialog opens without waiting on the navigation,
+    // then put the order in the URL so it can be shared, refreshed and closed
+    // with Back like any other page.
+    applyOrder(order);
+    navigate(`/lab/radiology/${order.radiologyOrderId}`);
   };
 
   const handleClose = () => {
-    setEditOrder(null);
+    // Closing is a navigation, so the URL never claims an order is open when
+    // it is not. The effect above clears the dialog when the id goes away.
+    if (routeOrderId) navigate("/lab/radiology");
+    else applyOrder(null);
   };
 
   // Serves both the file picker (target.files) and a drag-and-drop
