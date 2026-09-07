@@ -3,7 +3,7 @@ import SimpleTable from "@/features/reports/kit/SimpleTable";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Paper, Grid, TextField, Tabs, Tab, Button, MenuItem,
+  Box, Paper, Grid, TextField, Tabs, Tab, Button, MenuItem, TablePagination,
 } from "@mui/material";
 import {
   EventRounded, CheckCircleRounded, CancelRounded, PaymentsRounded,
@@ -120,6 +120,13 @@ export function OpRegistration() {
 }
 
 // ── OP Bills ─────────────────────────────────────────────────────────────────
+/** One invoice as a table row — used for the page on screen and for exports,
+ *  so a downloaded file cannot be formatted differently from the report. */
+const toRow = (r: any) => [
+  r.invoiceNumber, r.patientName, r.uhid, dayjs(r.invoiceDate).format("DD MMM YYYY"),
+  inr(r.netAmount), inr(r.paidAmount), inr(r.balance), r.statusLabel,
+];
+
 export function OpBills() {
   const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
   const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
@@ -127,18 +134,38 @@ export function OpBills() {
   const [departmentId, setDepartmentId] = useState("");
   const { data: opts } = useFilterOptions();
   const ref = useRef<HTMLDivElement>(null);
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["report-op-bills", from, to, doctorId, departmentId],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/op-bills", { params: { from, to, doctorId: doctorId || undefined, departmentId: departmentId || undefined } })).data.data,
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(100);
+  // Changing a filter must go back to the first page — staying on page 40 of
+  // a result that now has three pages shows an empty table and looks broken.
+  const resetPage = <T,>(set: (v: T) => void) => (v: T) => { setPage(0); set(v); };
+
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["report-op-bills", from, to, doctorId, departmentId, page, pageSize],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/op-bills", {
+      params: { from, to, doctorId: doctorId || undefined, departmentId: departmentId || undefined,
+                page: page + 1, limit: pageSize },
+    })).data.data,
+    placeholderData: (prev) => prev,
   });
   const rows: any[] = data?.rows ?? [];
+
+  // Excel and PDF must contain the whole report, not the page on screen. The
+  // endpoint returns everything when no page is asked for, so the export
+  // fetches that separately rather than handing over whatever is visible.
+  const fetchAllRows = async () => {
+    const res = await axiosInstance.get("/reception/reports/op-bills", {
+      params: { from, to, doctorId: doctorId || undefined, departmentId: departmentId || undefined },
+    });
+    return (res.data.data?.rows ?? []).map(toRow);
+  };
   return (
     <Box>
       <Toolbar>
-        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
-        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
-        <FilterSelect label="Doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
-        <FilterSelect label="Department" value={departmentId} onChange={setDepartmentId} options={opts?.departments} />
+        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => resetPage(setFrom)(e.target.value)} sx={{ minWidth: 160 }} />
+        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => resetPage(setTo)(e.target.value)} sx={{ minWidth: 160 }} />
+        <FilterSelect label="Doctor" value={doctorId} onChange={resetPage(setDoctorId)} options={opts?.doctors} />
+        <FilterSelect label="Department" value={departmentId} onChange={resetPage(setDepartmentId)} options={opts?.departments} />
       </Toolbar>
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
@@ -148,8 +175,19 @@ export function OpBills() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} label="Collected" value={inr(data.totals.collected)} accent={SEMANTIC.success} /></Grid>
           </Grid>
           <SimpleTable title="OPD invoices" head={["Invoice", "Patient", "UHID", "Date", "Net", "Paid", "Balance", "Status"]}
-            rows={rows.map((r) => [r.invoiceNumber, r.patientName, r.uhid, dayjs(r.invoiceDate).format("DD MMM YYYY"), inr(r.netAmount), inr(r.paidAmount), inr(r.balance), r.statusLabel])}
-            note={<ReportTruncationNote truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows} />} />
+            rows={rows.map(toRow)}
+            exportRows={fetchAllRows}
+            period={`${dayjs(from).format("DD MMM YYYY")} to ${dayjs(to).format("DD MMM YYYY")}`} />
+          <TablePagination
+            component="div"
+            count={data.totalRows ?? rows.length}
+            page={page}
+            onPageChange={(_, p) => setPage(p)}
+            rowsPerPage={pageSize}
+            rowsPerPageOptions={[50, 100, 250]}
+            onRowsPerPageChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }}
+            sx={{ opacity: isFetching ? 0.6 : 1 }}
+          />
         </Box>
       )}
     </Box>

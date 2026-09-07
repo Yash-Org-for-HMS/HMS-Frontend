@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow,
   TableContainer, Button,
@@ -41,6 +41,7 @@ export default function SimpleTable({
   accent = BRAND.action,
   rowHref,
   period,
+  exportRows,
 }: {
   title: string;
   head: string[];
@@ -64,8 +65,30 @@ export default function SimpleTable({
    * into a wrong one — on screen the filter bar says it, on paper nothing does.
    */
   period?: string;
+  /**
+   * Where the EXPORT's rows come from, when the table on screen is only one
+   * page of them. Without this an export silently contains whatever page the
+   * reader happened to be on, which is the worst kind of wrong: a file that
+   * looks complete and is not.
+   */
+  exportRows?: () => Promise<(string | number)[][]>;
 }) {
   const navigate = useNavigate();
+  const [exporting, setExporting] = useState<"" | "excel" | "pdf">("");
+
+  // Paged tables fetch the full set first; unpaged ones already hold it.
+  const run = async (kind: "excel" | "pdf") => {
+    if (exporting) return;
+    setExporting(kind);
+    try {
+      const all = exportRows ? await exportRows() : rows;
+      if (kind === "excel") exportTableToExcel(title, head, all);
+      else await loadPdfExport(title, head, all, period);
+    } finally {
+      setExporting("");
+    }
+  };
+
   return (
     <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
       <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
@@ -73,10 +96,10 @@ export default function SimpleTable({
         <Box sx={{ flex: 1 }} />
         {rows.length > 0 && (
           <Box sx={{ display: "flex", gap: 0.5 }}>
-            <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />} onClick={() => exportTableToExcel(title, head, rows)}
-              sx={{ textTransform: "none", color: accent }}>Excel</Button>
-            <Button size="small" startIcon={<PictureAsPdfRounded fontSize="small" />} onClick={() => void loadPdfExport(title, head, rows, period)}
-              sx={{ textTransform: "none", color: accent }}>PDF</Button>
+            <Button size="small" disabled={!!exporting} startIcon={<FileDownloadRounded fontSize="small" />} onClick={() => void run("excel")}
+              sx={{ textTransform: "none", color: accent }}>{exporting === "excel" ? "Preparing…" : "Excel"}</Button>
+            <Button size="small" disabled={!!exporting} startIcon={<PictureAsPdfRounded fontSize="small" />} onClick={() => void run("pdf")}
+              sx={{ textTransform: "none", color: accent }}>{exporting === "pdf" ? "Preparing…" : "PDF"}</Button>
           </Box>
         )}
       </Box>
