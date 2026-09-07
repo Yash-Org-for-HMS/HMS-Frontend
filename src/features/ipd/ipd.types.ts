@@ -82,6 +82,14 @@ export interface AdmissionDetail extends AdmissionRow {
   estimatedBedCharge: Money;
   pendingCharges: PendingCharge[];
   pendingChargesTotal: Money;
+  /**
+   * Medicines the ward requested that the pharmacy has not confirmed. NOT in
+   * the charges above and not in the total — nothing has been dispensed — but
+   * shown so that "no medicines" and "medicines still waiting" do not look
+   * identical on the discharge screen.
+   */
+  awaitingPharmacy?: { ipMedOrderId: string; medicineName: string | null; quantity: number | null; totalPrice: Money; orderedAt?: string }[];
+  awaitingPharmacyTotal?: Money;
   roomClassId?: string | null;
   roomClassName?: string | null;
   deposits?: { entryType: string; amount: Money; createdAt?: string }[];

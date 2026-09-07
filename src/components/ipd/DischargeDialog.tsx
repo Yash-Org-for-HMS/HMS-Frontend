@@ -85,6 +85,9 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // that will roll onto the final bill — previewed so the total is honest.
   const pendingCharges: PendingCharge[] = detail?.pendingCharges || [];
   const pendingTotal = Number(detail?.pendingChargesTotal || 0);
+  // Requested, not dispensed: shown but never added to the total.
+  const awaitingPharmacy = detail?.awaitingPharmacy ?? [];
+  const awaitingPharmacyTotal = Number(detail?.awaitingPharmacyTotal || 0);
   const extrasTotal = extras.reduce((s, e) => s + lineAmount(e), 0);
   // Per-line GST, from BOTH sources. Charges accrued during the stay carry
   // their own tax — a dispensed medicine is taxed at its rate-card GST — and
@@ -196,6 +199,33 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
                 </Box>
               </Stack>
             </Box>
+          )}
+
+          {/* Requested but not dispensed, so correctly outside the total above.
+              Left unsaid, though, a stay whose medicines are all still waiting
+              looks exactly like a stay that had none — and discharging on that
+              figure means the pharmacy's confirmation lands after the bill. */}
+          {awaitingPharmacy.length > 0 && (
+            <Alert severity="warning" sx={{ borderRadius: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
+                {awaitingPharmacy.length} medicine{awaitingPharmacy.length === 1 ? "" : "s"} still awaiting pharmacy — not in this bill
+              </Typography>
+              <Stack spacing={0.25} sx={{ mb: 0.75 }}>
+                {awaitingPharmacy.map((m) => (
+                  <Box key={m.ipMedOrderId} sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      {m.medicineName || "Medicine"}{m.quantity ? ` × ${m.quantity}` : ""}
+                    </Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>{formatINR(Number(m.totalPrice || 0))}</Typography>
+                  </Box>
+                ))}
+              </Stack>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                Nothing has been dispensed, so these are not billable yet. Have the pharmacy
+                confirm or reject them before discharging, or roughly {formatINR(awaitingPharmacyTotal)} will
+                fall outside this bill.
+              </Typography>
+            </Alert>
           )}
 
           <Box>
