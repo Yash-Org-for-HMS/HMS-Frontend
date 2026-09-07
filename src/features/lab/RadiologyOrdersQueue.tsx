@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import type { RadiologyOrderRow } from "./labOrders.types";
 import type { UnbilledItem } from "@/types";
 import { formatDate } from "@/utils/format";
@@ -29,7 +30,14 @@ const BUCKETS = ["today_pending", "past_pending", "completed", "all"];
 
 export default function RadiologyOrdersQueue() {
   const toast = useToast();
-  const [tabValue, setTabValue] = useState(0);
+  // A row on the Lab & Radiology dashboard links here naming one order.
+  // Radiology has no detail route — this queue edits in a dialog — so the
+  // order is opened on arrival instead.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedOrderId = searchParams.get("order");
+  // Start on "All" for a deep link: the order being chased is usually days
+  // old, and the default Today bucket would not contain it.
+  const [tabValue, setTabValue] = useState(requestedOrderId ? 3 : 0);
   const [page, setPage] = useState(1);
 
   // Switching tabs resets to the first page.
@@ -45,6 +53,7 @@ export default function RadiologyOrdersQueue() {
     placeholderData: keepPreviousData,
   });
   const orders: RadiologyOrderRow[] = data?.data ?? [];
+
   const totalPages: number = data?.pagination?.totalPages ?? 1;
 
   // Scans still waiting from BEFORE today. Same reason as the lab queue: this
@@ -62,6 +71,20 @@ export default function RadiologyOrdersQueue() {
 
 
   const [editOrder, setEditOrder] = useState<RadiologyOrderRow | null>(null);
+
+  // Open the linked order once its row has loaded, then clear the parameter:
+  // reopening it on every refresh (or on Back, after the user closed it) would
+  // be worse than not deep-linking at all. If it cannot be found the queue is
+  // simply left open on All, which is where the reader can go looking.
+  const deepLinkHandled = useRef(false);
+  useEffect(() => {
+    if (!requestedOrderId || deepLinkHandled.current || orders.length === 0) return;
+    const match = orders.find((o) => o.radiologyOrderId === requestedOrderId);
+    deepLinkHandled.current = true;
+    if (match) setEditOrder(match);
+    searchParams.delete("order");
+    setSearchParams(searchParams, { replace: true });
+  }, [requestedOrderId, orders, searchParams, setSearchParams]);
   const [status, setStatus] = useState("PENDING");
   const [notes, setNotes] = useState("");
   const [reportUrl, setReportUrl] = useState("");

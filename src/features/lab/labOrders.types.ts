@@ -170,6 +170,8 @@ export interface OrderPriorityRef {
 /** A critical result the ordering doctor has not acknowledged yet. */
 export interface CriticalAlertRow {
   labReportId: string;
+  /** The order the result belongs to — what a click on the row opens. */
+  labOrderId: string | null;
   patientName: string;
   testName: string;
   resultValue?: string | null;

@@ -118,7 +118,10 @@ export default function LabDashboard() {
               meta: c.ageHours >= 24 ? `${Math.floor(c.ageHours / 24)}d` : `${c.ageHours}h`,
               severity: "critical" as const,
               icon: <CrisisAlertRounded sx={{ fontSize: 18 }} />,
-              onClick: () => navigate("/lab/orders"),
+              // Open the result itself. Falling back to the worklist only when
+              // the report has somehow lost its order — every row used to do
+              // that, which made the whole list a link to one page.
+              onClick: () => navigate(c.labOrderId ? `/lab/orders/${c.labOrderId}` : "/lab/orders"),
             }))}
             actionLabel="Lab worklist"
             onAction={() => navigate("/lab/orders")}
@@ -142,7 +145,7 @@ export default function LabDashboard() {
               meta: ageLabel(o.ageDays, o.ageHours),
               severity: ageSeverity(o.ageDays),
               icon: <PendingActionsRounded sx={{ fontSize: 18 }} />,
-              onClick: () => navigate("/lab/orders"),
+              onClick: () => navigate(`/lab/orders/${o.labOrderId}`),
             }))}
             maxRows={6}
             totalCount={lab.pending}
@@ -163,7 +166,9 @@ export default function LabDashboard() {
               meta: ageLabel(o.ageDays, o.ageHours),
               severity: ageSeverity(o.ageDays),
               icon: <MonitorHeartRounded sx={{ fontSize: 18 }} />,
-              onClick: () => navigate("/lab/radiology"),
+              // Radiology has no detail route — the queue edits in a dialog — so
+              // the order is named in the URL and the queue opens it on arrival.
+              onClick: () => navigate(`/lab/radiology?order=${o.radiologyOrderId}`),
             }))}
             maxRows={6}
             totalCount={rad.pending}
