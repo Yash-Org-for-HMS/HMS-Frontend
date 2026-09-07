@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import {
   Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow,
-  TableSortLabel, Button, TableContainer,
+  TableSortLabel, Button, TableContainer, TablePagination,
 } from "@mui/material";
 import { FileDownloadRounded, PictureAsPdfRounded } from "@mui/icons-material";
 import Mascot from "@/components/Mascot";
@@ -65,10 +65,28 @@ export interface ReportColumn<T = any> {
  */
 const CELL_MAX_WIDTH = 320;
 
-export default function ReportTable<T = any>({ columns, rows, filename, title, maxHeight = 460, emptyText = "No data for this period.", truncated, totalRows, shownRows }: {
+export default function ReportTable<T = any>({ columns, rows, filename, title, maxHeight = 460, emptyText = "No data for this period.", truncated, totalRows, shownRows, pagination, exportRows }: {
   columns: ReportColumn<T>[];
   rows: T[];
   filename: string;
+  /**
+   * Page state, when the caller is showing one page of a larger report.
+   * Omit it and the table behaves exactly as before.
+   */
+  pagination?: {
+    page: number;            // zero-based, as MUI counts
+    pageSize: number;
+    totalRows: number;
+    onPageChange: (page: number) => void;
+    onPageSizeChange: (size: number) => void;
+    busy?: boolean;
+  };
+  /**
+   * Where the EXPORT's rows come from when the table holds only a page.
+   * Without it a download silently contains the page on screen — a file that
+   * looks complete and is not.
+   */
+  exportRows?: () => Promise<Record<string, unknown>[]>;
   title?: string;
   maxHeight?: number;
   emptyText?: string;
@@ -121,28 +139,35 @@ export default function ReportTable<T = any>({ columns, rows, filename, title, m
 
   // One shaping of the rows, two destinations — so the spreadsheet and the
   // printed page can never disagree about what the report contained.
-  const exportMatrix = () => {
+  const exportMatrix = (source: T[] = sorted) => {
     const cols = columns.filter((c) => c.exportable !== false);
     return {
       head: cols.map((c) => c.label),
-      matrix: sorted.map((row) => cols.map((c) => {
+      matrix: source.map((row) => cols.map((c) => {
         const v = raw(c, row);
         return typeof v === "number" ? v : String(v ?? "");
       })),
     };
   };
 
-  const doExport = () => {
-    const { head, matrix } = exportMatrix();
-    exportTableToExcel(filename, head, matrix);
-  };
+  const [exporting, setExporting] = useState<"" | "excel" | "pdf">("");
 
-  const doExportPdf = () => {
-    const { head, matrix } = exportMatrix();
-    // The truncation note is on screen; carry it onto the page too, or a
-    // printed extract silently reads as the whole set.
-    const period = truncated ? `Showing ${(shownRows ?? 0).toLocaleString()} of ${(totalRows ?? 0).toLocaleString()} rows` : undefined;
-    void loadPdfExport(title || filename, head, matrix, period);
+  // A paged table holds one page, so the export fetches the whole report
+  // first. Unpaged tables already have everything and skip the round trip.
+  const runExport = async (kind: "excel" | "pdf") => {
+    if (exporting) return;
+    setExporting(kind);
+    try {
+      const all = exportRows ? await exportRows() : sorted;
+      const { head, matrix } = exportMatrix(all as T[]);
+      const period = truncated
+        ? `Showing ${(shownRows ?? 0).toLocaleString()} of ${(totalRows ?? 0).toLocaleString()} rows`
+        : undefined;
+      if (kind === "excel") exportTableToExcel(filename, head, matrix);
+      else await loadPdfExport(title || filename, head, matrix, period);
+    } finally {
+      setExporting("");
+    }
   };
 
   return (
@@ -150,11 +175,11 @@ export default function ReportTable<T = any>({ columns, rows, filename, title, m
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2.5, py: 1.5, gap: 1 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{title}</Typography>
         <Box sx={{ display: "flex", gap: 0.5 }}>
-          <Button size="small" startIcon={<FileDownloadRounded />} onClick={doExport} disabled={!rows.length}>
-            Export CSV
+          <Button size="small" startIcon={<FileDownloadRounded />} onClick={() => void runExport("excel")} disabled={!rows.length || !!exporting}>
+            {exporting === "excel" ? "Preparing…" : "Export CSV"}
           </Button>
-          <Button size="small" startIcon={<PictureAsPdfRounded />} onClick={doExportPdf} disabled={!rows.length}>
-            PDF
+          <Button size="small" startIcon={<PictureAsPdfRounded />} onClick={() => void runExport("pdf")} disabled={!rows.length || !!exporting}>
+            {exporting === "pdf" ? "Preparing…" : "PDF"}
           </Button>
         </Box>
       </Box>
@@ -211,6 +236,18 @@ export default function ReportTable<T = any>({ columns, rows, filename, title, m
             </TableBody>
           </Table>
         </TableContainer>
+      )}
+      {pagination && pagination.totalRows > 0 && (
+        <TablePagination
+          component="div"
+          count={pagination.totalRows}
+          page={pagination.page}
+          onPageChange={(_, p) => pagination.onPageChange(p)}
+          rowsPerPage={pagination.pageSize}
+          rowsPerPageOptions={[50, 100, 250]}
+          onRowsPerPageChange={(e) => pagination.onPageSizeChange(Number(e.target.value))}
+          sx={{ opacity: pagination.busy ? 0.6 : 1, borderTop: "1px solid", borderColor: "divider" }}
+        />
       )}
     </Paper>
   );

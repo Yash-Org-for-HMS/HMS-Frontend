@@ -21,6 +21,7 @@ import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto, formatDate } from "@/utils/format";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { KpiCard, ReportFilters, ReportTable, TrendChart, hasPlottableData, type DateRange } from "@/features/reports/kit";
+import { useReportPaging } from "@/features/reports/kit/useReportPaging";
 import ReportStatusChips from "@/features/reports/kit/ReportStatusChips";
 import DepositDialog from "@/components/ipd/DepositDialog";
 import { UndoRounded } from "@mui/icons-material";
@@ -62,10 +63,23 @@ export default function BillingReports() {
 
 export function Receipts() {
   const [range, setRange] = useState<DateRange>(() => rangeFrom(6));
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["billing-report-receipts", range.from, range.to],
-    queryFn: () => apiGet<ReceiptsResponse>("/reception/reports/receipts", { params: { from: range.from, to: range.to } }),
+  const paging = useReportPaging();
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["billing-report-receipts", range.from, range.to, paging.page, paging.pageSize],
+    queryFn: () => apiGet<ReceiptsResponse>("/reception/reports/receipts", {
+      params: { from: range.from, to: range.to, ...paging.params },
+    }),
+    // Hold the current page on screen while the next one loads, or the table
+    // empties and refills on every click.
+    placeholderData: (prev) => prev,
   });
+
+  // Exports must be the whole ledger, not the page being looked at. The
+  // endpoint returns everything when no page is asked for.
+  const allReceipts = async () =>
+    (await apiGet<ReceiptsResponse>("/reception/reports/receipts", {
+      params: { from: range.from, to: range.to },
+    })).rows as unknown as Record<string, unknown>[];
   const rows: ReceiptRow[] = data?.rows ?? [];
   const trend = data?.trend ?? [];
   const byMethod = data?.byMethod ?? [];
@@ -73,7 +87,7 @@ export function Receipts() {
 
   return (
     <Box>
-      <ReportFilters value={range} onChange={setRange} />
+      <ReportFilters value={range} onChange={paging.onFilterChange(setRange)} />
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
@@ -126,6 +140,8 @@ export function Receipts() {
             ]}
             rows={rows}
             truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+            pagination={paging.bind(data.totalRows ?? rows.length, isFetching)}
+            exportRows={allReceipts}
           />
         </Box>
       )}
