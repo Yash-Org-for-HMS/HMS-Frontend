@@ -135,6 +135,11 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   const [medicineQuery, setMedicineQuery] = useState("");
   const [medicineOptions, setMedicineOptions] = useState<PrescribableMedicine[]>([]);
   const [medicineLoading, setMedicineLoading] = useState(false);
+  // A doctor at a new hospital types a drug name and, with an empty catalogue,
+  // sees NOTHING happen — freeSolo suppresses the no-options popper, so the
+  // empty state written above never rendered. Silence reads as "the search is
+  // broken", when in fact a custom name is prescribable; this says so.
+  const noMedicineMatches = medicineQuery.trim().length >= 2 && !medicineLoading && medicineOptions.length === 0;
   // freeSolo: the Autocomplete hands back a raw string when the doctor types a
   // medicine that is not in the catalog. handleAddItem already branches on that
   // (isCustom), so the state genuinely holds either — say so rather than widen to any.
@@ -532,7 +537,9 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
                return label;
             }}
             loading={medicineLoading}
-            noOptionsText={<Mascot pose="no-matches" subtitle="No matching medicines" size={72} sx={{ py: 1 }} />}
+            /* No noOptionsText here: MUI does not render the no-options popper
+               at all when freeSolo is set, so one was written and never seen.
+               The guidance is helper text under the field instead. */
             value={selectedMedicine}
             onInputChange={(e, newInputValue) => setMedicineQuery(newInputValue)}
             onChange={(e, newValue) => setSelectedMedicine(newValue)}
@@ -554,6 +561,9 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
                 label="Search Medicine or Type Custom"
                 placeholder="e.g. Paracetamol"
                 size="small"
+                helperText={noMedicineMatches
+                  ? "Nothing in the medicine catalogue matches. You can still prescribe this by name — type it and press Add Medicine."
+                  : " "}
                 InputProps={{
                   ...params.InputProps,
                   endAdornment: (
