@@ -28,6 +28,7 @@ import {
   ResponsiveContainer,
   LabelList,
   CartesianGrid,
+  Cell,
 } from "recharts";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { BRAND } from "@/styles/accents";
@@ -55,6 +56,8 @@ interface DashboardStats {
   totalPatients: number;
   totalBranches: number;
   totalRevenue: number;
+  /** MRR × 12. Sent by the API; the fallback covers an older cached payload. */
+  arr?: number;
   hospitalsByPlan: Array<{ planName: string; count: number }>;
   onboardingProgress: Array<{ status: string; count: number }>;
   leadsByStatus: Array<{ status: string; count: number }>;
@@ -66,6 +69,9 @@ interface DashboardStats {
     createdAt: string;
   }>;
 }
+
+/** "demo_done" -> "Demo done". Raw enum values reach the UI in a few places. */
+const titleCase = (s: string) => s.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
 
 const GroupCard = ({ title, icon, color, primary, subs }: any) => (
   <Paper
@@ -180,15 +186,30 @@ export default function Dashboard() {
   const BLUE = "#3b82f6";    // single-hue for tenant growth; matches the TENANTS tile
   const tooltipStyle = { backgroundColor: "#FFFFFF", border: "1px solid rgba(15,23,42,0.1)", borderRadius: 8, color: "#0F172A", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", fontSize: 13 } as const;
 
+  // Every stage a lead can be in, in pipeline order. This listed five of the
+  // seven: `trialing` and `lost` were missing, so leads sitting in either were
+  // drawn nowhere while the tile above still counted them in Total Leads — the
+  // bars did not add up to the total and nothing on screen said why.
+  //
+  // Lost is not a funnel stage, it is the exit, so it is coloured apart and
+  // sits at the bottom rather than pretending to be a step on the way in.
   const FUNNEL = [
     { key: "new", label: "New" },
     { key: "contacted", label: "Contacted" },
     { key: "qualified", label: "Qualified" },
     { key: "demo_done", label: "Demo done" },
+    { key: "trialing", label: "On trial" },
     { key: "converted", label: "Converted" },
+    { key: "lost", label: "Lost", exit: true },
   ];
   const leadCounts: Record<string, number> = Object.fromEntries(stats.leadsByStatus.map((s) => [s.status, s.count]));
-  const funnelData = FUNNEL.map((f) => ({ key: f.key, stage: f.label, count: leadCounts[f.key] || 0 }));
+  const funnelData = FUNNEL.map((f) => ({ key: f.key, stage: f.label, count: leadCounts[f.key] || 0, exit: !!f.exit }));
+  // A stage the backend knows about and this list does not would vanish again,
+  // so anything unrecognised is shown rather than silently dropped.
+  const KNOWN = new Set(FUNNEL.map((f) => f.key));
+  for (const s of stats.leadsByStatus) {
+    if (!KNOWN.has(s.status)) funnelData.push({ key: s.status, stage: titleCase(s.status), count: s.count, exit: true });
+  }
   const convRate = stats.totalLeads ? Math.round((stats.convertedLeads / stats.totalLeads) * 100) : 0;
 
 
@@ -200,7 +221,7 @@ export default function Dashboard() {
   const onboardingData = (stats.onboardingProgress ?? [])
     .map((o) => ({
       status: o.status,
-      label: o.status.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()),
+      label: titleCase(o.status),
       count: o.count,
     }))
     .sort((a, b) => b.count - a.count);
@@ -264,8 +285,13 @@ export default function Dashboard() {
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <GroupCard
             title="Revenue & Plans" color="#F59E0B" icon={<AccountBalanceRounded />}
-            primary={{ label: "MRR (revenue)", value: formatINRAuto(stats.totalRevenue) }}
+            // "MRR" on its own kept raising the question of whether yearly
+            // customers were in it. They are — an annual plan is counted as a
+            // twelfth per month — so the label says so, and ARR sits beside it
+            // for anyone who wants the year.
+            primary={{ label: "MRR · yearly plans ÷ 12", value: formatINRAuto(stats.totalRevenue) }}
             subs={[
+              { label: "ARR", value: formatINRAuto(stats.arr ?? stats.totalRevenue * 12) },
               { label: "Active Plans", value: stats.activePlans },
               { label: "Hospital Admins", value: stats.hospitalAdminCount },
             ]}
@@ -279,10 +305,9 @@ export default function Dashboard() {
         <Grid size={{ xs: 12, lg: 8 }}>
           <ChartCard
             title="Lead Conversion Funnel"
-            subtitle={`${stats.convertedLeads} of ${stats.totalLeads} leads converted`}
-            // 5 fixed stages — content-sized instead of the 340 default, which
-            // left a lot of dead space below/around a short 5-row bar list.
-            height={280}
+            subtitle={`${stats.convertedLeads} of ${stats.totalLeads} leads converted · all ${stats.totalLeads} shown below`}
+            // Seven stages now, so it needs the room the five-row version did not.
+            height={340}
             right={
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <ReportLink to="/reports?view=leads" label="View register" />
@@ -310,6 +335,10 @@ export default function Dashboard() {
                     if (key) navigate(`/reports?view=leads&status=${encodeURIComponent(key)}`);
                   }}
                 >
+                  {/* Lost is an exit, not a step, so it is greyed rather than
+                      drawn in the funnel's hue — it must be visible (those
+                      leads exist) without reading as progress. */}
+                  {funnelData.map((d) => <Cell key={d.key} fill={d.exit ? "#94a3b8" : INDIGO} />)}
                   <LabelList dataKey="count" position="right" style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
                 </Bar>
               </BarChart>
@@ -385,7 +414,10 @@ export default function Dashboard() {
         <Grid size={{ xs: 12, lg: 4 }}>
           <ChartCard
             title="Onboarding Progress"
-            subtitle="Tenants by setup stage"
+            // Says what the bars actually cover. "Tenants by setup stage" left
+            // it open whether this was a recent window or a sample; it is every
+            // live tenant that has an onboarding record, with no date filter.
+            subtitle={`Every live tenant · ${onboardingData.reduce((s, o) => s + o.count, 0)} in setup`}
             height={280}
             right={<ReportLink to="/reports?view=onboarding" label="View register" />}
           >

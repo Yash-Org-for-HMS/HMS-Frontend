@@ -135,3 +135,58 @@ export interface AdminDashboardStats {
   leadsByStatus?: DashboardStatusRow[];
   onboardingProgress?: DashboardOnboardingRow[];
 }
+
+/**
+ * Where a tenant stands on its subscription right now — derived on the server,
+ * never stored, so it cannot go stale the way a status column does.
+ *
+ * TRIAL      inside a trial; not billed yet, so not overdue either
+ * NO_PLAN    live tenant with no plan assigned — nothing to bill
+ * NEVER_PAID has a plan but has never settled an invoice
+ * PAST_GRACE overdue long enough that access is cut at next login
+ * OVERDUE    past a due date, still inside the grace window
+ * DUE_SOON   paid, but the paid-for period ends within a fortnight
+ * ACTIVE     paid up with room to spare
+ */
+export type TenantSubscriptionState =
+  | "TRIAL" | "NO_PLAN" | "NEVER_PAID" | "PAST_GRACE" | "OVERDUE" | "DUE_SOON" | "ACTIVE";
+
+export interface TenantSubscriptionRow {
+  hospitalId: string;
+  hospitalName: string;
+  hospitalCode: string | null;
+  hospitalStatus: string;
+  customerSince: string;
+  planName: string | null;
+  billingCycle: "MONTHLY" | "ANNUAL";
+  /** What they pay per cycle — a year's price for an annual tenant. */
+  price: Money | null;
+  /** The same figure per month, so annual and monthly rows compare. */
+  monthlyEquivalent: Money | null;
+  /** End of the last period actually PAID for. Null = never paid. */
+  paidUntil: string | null;
+  /** Days from today to paidUntil. Null when there is nothing to count down to. */
+  daysLeft: number | null;
+  lastPaidAt: string | null;
+  nextInvoiceNumber: string | null;
+  nextAmount: Money | null;
+  nextDueDate: string | null;
+  daysOverdue: number;
+  state: TenantSubscriptionState;
+}
+
+export interface TenantSubscriptionsResponse {
+  rows: TenantSubscriptionRow[];
+  totals: {
+    tenants: number;
+    withPlan: number;
+    onTrial: number;
+    noPlan: number;
+    overdue: number;
+    pastGrace: number;
+    expiringIn30Days: number;
+    annual: number;
+    monthly: number;
+    mrr: Money;
+  };
+}

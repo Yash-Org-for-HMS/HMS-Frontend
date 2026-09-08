@@ -8,9 +8,10 @@ import type {
   AdminDashboardStats, DashboardPlanRow, DashboardStatusRow, DashboardOnboardingRow,
   HospitalRegisterRow, LeadRegisterRow, TrialRegisterRow, PlanRegisterRow, PlanWithMrr,
   OnboardingRegisterRow, OnboardingGateKey,
+  TenantSubscriptionsResponse, TenantSubscriptionRow, TenantSubscriptionState,
 } from "./adminReports.types";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
   Box, Paper, Typography, Button, Grid, Chip, Tooltip,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
@@ -158,6 +159,7 @@ function HospitalsReport() {
     if (planFilter !== "all" && !(h.branches || []).some((b) => b.subscriptionPlan?.planName === planFilter)) return false;
     return true;
   });
+  const branchesInView = filtered.reduce((s: number, h) => s + Number(h._count?.branches ?? 0), 0);
   const rows = filtered.map((h) => [
     `${h.hospitalName || "—"}`,
     h.hospitalCode || "—",
@@ -173,7 +175,20 @@ function HospitalsReport() {
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Total" value={data.length} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Active" value={active} accent={SEMANTIC.success} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Suspended" value={suspended} accent={SEMANTIC.danger} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Branches" value={data.reduce((s: number, h) => s + Number(h._count?.branches ?? 0), 0)} accent={NEUTRAL.muted} /></Grid>
+        {/* Branches in the CURRENT VIEW, not platform-wide. It used to sum
+            every hospital regardless of the filters, so it repeated the number
+            already on the Overview and sat unchanged while you filtered to
+            "Suspended" or to one plan — the one tile on the row that ignored
+            what you had asked for. */}
+        <Grid size={{ xs: 6, md: 3 }}>
+          <KpiCard
+            icon={<StoreMallDirectoryRounded />}
+            label="Branches in view"
+            value={branchesInView}
+            sub={filtered.length === data.length ? "across all tenants" : `across ${filtered.length} of ${data.length} tenants`}
+            accent={NEUTRAL.muted}
+          />
+        </Grid>
       </Grid>
       <ReportStatusChips
         options={[
@@ -342,7 +357,7 @@ function SubscriptionsReport() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CardMembershipRounded />} label="Plans" value={data.length} accent="#0891b2" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Subscribed branches" value={totalBranches} accent={NEUTRAL.muted} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Branches on a plan" value={totalBranches} accent={NEUTRAL.muted} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(totalMrr)} sub="monthly recurring" accent={SEMANTIC.success} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ShowChartRounded />} label="Est. ARR" value={inr(totalMrr * 12)} sub="annualised" accent="#8b5cf6" /></Grid>
       </Grid>
@@ -351,6 +366,202 @@ function SubscriptionsReport() {
         head={["Plan", "Monthly", "Annual", "Max doctors", "Max branches", "Max storage (GB)", "Branches", "Est. MRR"]}
         rows={rows}
       />
+    </Box>
+  );
+}
+
+// ── Tenant subscriptions (from /subscription-billing/tenants) ────────────────
+// Which tenant is on which plan, paid up until when, and how long that has left.
+//
+// This view did not exist. Subscription Billing lists INVOICES — what was
+// billed — and the hospitals register showed a plan name with no dates, so
+// "who lapses this month" could only be answered by reading the invoice list
+// and reconstructing it per hospital in your head.
+
+const SUB_STATE: Record<TenantSubscriptionState, { label: string; color: string; note: string }> = {
+  ACTIVE: { label: "Active", color: SEMANTIC.success, note: "Paid up" },
+  DUE_SOON: { label: "Due soon", color: SEMANTIC.warning, note: "Subscription ends within 14 days" },
+  OVERDUE: { label: "Overdue", color: SEMANTIC.danger, note: "Past a due date, still inside the grace window" },
+  PAST_GRACE: { label: "Access at risk", color: SEMANTIC.danger, note: "Grace window closed — locked out at next login" },
+  NEVER_PAID: { label: "Never paid", color: SEMANTIC.danger, note: "Has a plan but has never settled an invoice" },
+  TRIAL: { label: "On trial", color: "#8b5cf6", note: "Inside a trial — not billed yet" },
+  NO_PLAN: { label: "No plan", color: NEUTRAL.muted, note: "No plan assigned, so nothing to bill" },
+};
+
+const SUB_FILTERS: { key: string; label: string; match: (r: TenantSubscriptionRow) => boolean }[] = [
+  { key: "all", label: "All", match: () => true },
+  { key: "attention", label: "Needs attention", match: (r) => ["OVERDUE", "PAST_GRACE", "NEVER_PAID"].includes(r.state) },
+  { key: "expiring", label: "Expiring in 30 days", match: (r) => r.daysLeft != null && r.daysLeft >= 0 && r.daysLeft <= 30 },
+  { key: "trial", label: "On trial", match: (r) => r.state === "TRIAL" },
+  { key: "noplan", label: "No plan", match: (r) => r.state === "NO_PLAN" },
+];
+
+/** "in 42 days" / "12 days ago" / "—". A bare date makes the reader do the sum. */
+function daysText(days: number | null): string {
+  if (days == null) return "—";
+  if (days === 0) return "today";
+  return days > 0 ? `in ${days} day${days === 1 ? "" : "s"}` : `${-days} day${days === -1 ? "" : "s"} ago`;
+}
+
+function TenantSubscriptionsReport() {
+  const [filter] = useReportParam("state", "all");
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["admin-report-tenant-subscriptions"],
+    queryFn: () => apiGet<TenantSubscriptionsResponse>("/subscription-billing/tenants"),
+  });
+
+  if (isLoading) return <ReportSkeleton />;
+  if (isError || !data) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
+
+  const rows = data.rows ?? [];
+  const t = data.totals;
+  const active = SUB_FILTERS.find((f) => f.key === filter) ?? SUB_FILTERS[0];
+  const filtered = rows.filter(active.match);
+
+  const exportHead = [
+    "Hospital", "Code", "Plan", "Cycle", "Price per cycle", "Monthly equivalent",
+    "Paid until", "Days left", "Last paid", "Next invoice", "Next amount", "Next due", "State", "Customer since",
+  ];
+  const exportRows = filtered.map((r) => [
+    r.hospitalName, r.hospitalCode || "—", r.planName || "—",
+    r.billingCycle === "ANNUAL" ? "Annual" : "Monthly",
+    r.price == null ? "—" : Number(r.price),
+    r.monthlyEquivalent == null ? "—" : Number(r.monthlyEquivalent),
+    r.paidUntil ? formatDate(r.paidUntil) : "—",
+    r.daysLeft == null ? "—" : r.daysLeft,
+    r.lastPaidAt ? formatDate(r.lastPaidAt) : "—",
+    r.nextInvoiceNumber || "—",
+    r.nextAmount == null ? "—" : Number(r.nextAmount),
+    r.nextDueDate ? formatDate(r.nextDueDate) : "—",
+    SUB_STATE[r.state].label,
+    formatDate(r.customerSince),
+  ]);
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <KpiCard icon={<LocalHospitalRounded />} label="Tenants" value={t.tenants} sub={`${t.withPlan} on a plan · ${t.noPlan} without`} />
+        </Grid>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <KpiCard icon={<AccountBalanceWalletRounded />} label="MRR" value={inr(t.mrr)} sub={`${t.monthly} monthly · ${t.annual} annual`} accent={SEMANTIC.success} />
+        </Grid>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Tooltip title="Subscriptions whose paid-for period ends within 30 days. Renew or invoice these before they lapse.">
+            <Box>
+              <KpiCard icon={<TimerRounded />} label="Expiring in 30 days" value={t.expiringIn30Days} sub="renew before these lapse"
+                accent={t.expiringIn30Days ? SEMANTIC.warning : NEUTRAL.muted} />
+            </Box>
+          </Tooltip>
+        </Grid>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Tooltip title="Past a due date. Those beyond the grace window are locked out at their next login.">
+            <Box>
+              <KpiCard icon={<WarningAmberRounded />} label="Overdue" value={t.overdue}
+                sub={t.pastGrace ? `${t.pastGrace} past grace — access at risk` : "all still inside grace"}
+                accent={t.overdue ? SEMANTIC.danger : NEUTRAL.muted} />
+            </Box>
+          </Tooltip>
+        </Grid>
+      </Grid>
+
+      <ReportStatusChips
+        options={SUB_FILTERS.map((f) => ({ key: f.key, label: f.label, count: rows.filter(f.match).length }))}
+        accent={ACCENT}
+        param="state"
+      />
+
+      <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Tenant subscriptions</Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              "Paid until" is the end of the last period money was actually taken for — not the last period billed.
+            </Typography>
+          </Box>
+          <Box sx={{ flex: 1 }} />
+          {exportRows.length > 0 && (
+            <Box sx={{ display: "flex", gap: 0.5 }}>
+              <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />}
+                onClick={() => exportTableToExcel("Tenant subscriptions", exportHead, exportRows)}
+                sx={{ textTransform: "none", color: ACCENT }}>Excel</Button>
+              <Button size="small" startIcon={<PictureAsPdfRounded fontSize="small" />}
+                onClick={() => void loadPdfExport("Tenant subscriptions", exportHead, exportRows)}
+                sx={{ textTransform: "none", color: ACCENT }}>PDF</Button>
+            </Box>
+          )}
+        </Box>
+        {filtered.length === 0 ? (
+          <Typography variant="body2" sx={{ color: "text.secondary", py: 2, textAlign: "center" }}>No tenants match this filter.</Typography>
+        ) : (
+          <TableContainer sx={{ maxHeight: 620, overflowX: "auto" }}>
+            <Table size="small" stickyHeader sx={{ minWidth: 1080 }}>
+              <TableHead>
+                <TableRow>
+                  {["Hospital", "Plan", "Cycle", "Price", "Paid until", "Time left", "Next due", "State", ""].map((h) => (
+                    <TableCell key={h} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider", bgcolor: "background.paper", whiteSpace: "nowrap" }}>{h}</TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filtered.map((r) => {
+                  const s = SUB_STATE[r.state];
+                  // Colour the countdown, not just the state chip — the number
+                  // is what the reader is scanning for.
+                  const leftColor = r.daysLeft == null ? "text.secondary"
+                    : r.daysLeft < 0 ? SEMANTIC.danger
+                      : r.daysLeft <= 14 ? SEMANTIC.warning : "text.primary";
+                  return (
+                    <TableRow key={r.hospitalId} hover>
+                      <TableCell sx={{ borderColor: "divider" }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{r.hospitalName}</Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>{r.hospitalCode || "—"}</Typography>
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider" }}>{r.planName || "—"}</TableCell>
+                      <TableCell sx={{ borderColor: "divider" }}>{r.billingCycle === "ANNUAL" ? "Annual" : "Monthly"}</TableCell>
+                      <TableCell sx={{ borderColor: "divider", whiteSpace: "nowrap" }}>
+                        {r.price == null ? "—" : inr(r.price)}
+                        {r.billingCycle === "ANNUAL" && r.monthlyEquivalent != null && (
+                          <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{inr(r.monthlyEquivalent)}/mo</Typography>
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider", whiteSpace: "nowrap" }}>
+                        {r.paidUntil ? formatDate(r.paidUntil) : <Typography variant="caption" sx={{ color: "text.secondary" }}>never paid</Typography>}
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider", whiteSpace: "nowrap", color: leftColor, fontWeight: 600 }}>
+                        {daysText(r.daysLeft)}
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider", whiteSpace: "nowrap" }}>
+                        {r.nextDueDate ? (
+                          <>
+                            {formatDate(r.nextDueDate)}
+                            <Typography variant="caption" sx={{ color: r.daysOverdue > 0 ? SEMANTIC.danger : "text.secondary", display: "block" }}>
+                              {r.nextAmount == null ? "" : `${inr(r.nextAmount)} · `}
+                              {r.daysOverdue > 0 ? `${r.daysOverdue} day${r.daysOverdue === 1 ? "" : "s"} overdue` : "not yet due"}
+                            </Typography>
+                          </>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider" }}>
+                        <Tooltip title={s.note}>
+                          <Chip size="small" label={s.label} sx={{ bgcolor: `${s.color}1a`, color: s.color, fontWeight: 700 }} />
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider" }}>
+                        <Button size="small" endIcon={<ArrowForwardRounded sx={{ fontSize: "16px !important" }} />}
+                          component={RouterLink} to={`/hospitals/${r.hospitalId}/overview`}
+                          sx={{ textTransform: "none", color: ACCENT, whiteSpace: "nowrap" }}>
+                          Open
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Paper>
     </Box>
   );
 }
@@ -423,7 +634,7 @@ function OnboardingReport() {
     o.billing?.latestInvoiceStatus || "—",
     cap(o.onboardingStatus),
     blockedOn(o),
-    o.paymentMismatch ? "Verified, nothing on file" : o.paymentUnverifiedButPaid ? "Paid, not verified" : "—",
+    o.paymentMismatch ? "Ticked, but never paid" : o.paymentUnverifiedButPaid ? "Paid, awaiting tick" : "—",
   ]);
   const exportHead = [
     "Hospital", "Code", "City", "Plan", "Primary admin", "Admin email", "Registered",
@@ -439,14 +650,30 @@ function OnboardingReport() {
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Stalled" value={stalled} accent={SEMANTIC.danger} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Collected to date" value={inr(totalCollected)} accent={SEMANTIC.success} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Payment verified" value={verifiedCount} accent="#0891b2" /></Grid>
+        {/* These two cross-check the manual "Payment verified" tick against
+            real money in Subscription Billing. The explanation used to live
+            only in a hover tooltip, so the labels had to be decoded — the
+            caption now says what the number means without hovering. */}
         <Grid size={{ xs: 6, md: 3 }}>
-          <Tooltip title="Marked Payment Verified, but no payment is on file in Subscription Billing">
-            <Box><KpiCard icon={<WarningAmberRounded />} label="Verified w/o payment" value={mismatchCount} accent={mismatchCount ? SEMANTIC.danger : NEUTRAL.muted} /></Box>
+          <Tooltip title="Someone ticked Payment Verified on these tenants, but Subscription Billing holds no payment from them at all.">
+            <Box>
+              <KpiCard
+                icon={<WarningAmberRounded />} label="Ticked, but never paid"
+                value={mismatchCount} sub="verified with no payment on file"
+                accent={mismatchCount ? SEMANTIC.danger : NEUTRAL.muted}
+              />
+            </Box>
           </Tooltip>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Tooltip title="Has a real payment on file, but Payment Verified isn't checked yet">
-            <Box><KpiCard icon={<InfoOutlined />} label="Paid, not verified" value={unverifiedPaidCount} accent={unverifiedPaidCount ? SEMANTIC.warning : NEUTRAL.muted} /></Box>
+          <Tooltip title="These tenants have really paid — the money is in Subscription Billing — but nobody has ticked Payment Verified, so onboarding still reads as blocked.">
+            <Box>
+              <KpiCard
+                icon={<InfoOutlined />} label="Paid, awaiting tick"
+                value={unverifiedPaidCount} sub="money received, box not ticked"
+                accent={unverifiedPaidCount ? SEMANTIC.warning : NEUTRAL.muted}
+              />
+            </Box>
           </Tooltip>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PeopleAltRounded />} label="Showing" value={filtered.length} sub={`of ${data.length}`} accent={NEUTRAL.muted} /></Grid>
@@ -599,7 +826,15 @@ const GROUPS: ReportGroup[] = [
       { key: "trials", label: "Trials", Comp: TrialsReport },
     ],
   },
-  { heading: "Revenue", items: [{ key: "subscriptions", label: "Subscriptions", Comp: SubscriptionsReport }] },
+  {
+    heading: "Revenue",
+    items: [
+      // Per-tenant first: "is this hospital paid up" is asked far more often
+      // than "what does the Pro plan cost".
+      { key: "tenant-subscriptions", label: "Tenant Subscriptions", Comp: TenantSubscriptionsReport },
+      { key: "subscriptions", label: "Plans & Pricing", Comp: SubscriptionsReport },
+    ],
+  },
 ];
 
 export default function AdminReports() {

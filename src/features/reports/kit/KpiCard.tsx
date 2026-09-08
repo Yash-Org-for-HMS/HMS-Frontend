@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Box, Paper, Typography, Tooltip } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { ArrowUpwardRounded, ArrowDownwardRounded, RemoveRounded } from "@mui/icons-material";
+import { ArrowUpwardRounded, ArrowDownwardRounded, RemoveRounded, ChevronRightRounded } from "@mui/icons-material";
 import { Link as RouterLink } from "react-router-dom";
 import { computeDelta, seriesColor } from "./chartTheme";
 
@@ -62,7 +62,11 @@ export default function KpiCard({
         ...(href ? {
           textDecoration: "none", cursor: "pointer",
           transition: "border-color 120ms, box-shadow 120ms",
-          "&:hover": { borderColor: accent, boxShadow: "0 4px 16px rgba(15,23,42,0.06)" },
+          "&:hover": {
+            borderColor: accent,
+            boxShadow: "0 4px 16px rgba(15,23,42,0.06)",
+            "& .kpi-chevron": { color: accent, transform: "translateX(2px)" },
+          },
           "&:focus-visible": { outline: `2px solid ${accent}`, outlineOffset: 2 },
         } : {}),
       }}
@@ -81,6 +85,19 @@ export default function KpiCard({
         <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4, lineHeight: 1.2 }}>
           {label}
         </Typography>
+        {/* Says the tile opens something, before you touch it.
+            Some tiles in a grid link to a register and some have no register
+            to open, and the only thing separating them was a border colour on
+            hover — which you cannot see until the pointer is already on the
+            card, and never on a touch screen. The chevron makes the difference
+            visible at rest. It deepens on hover so the affordance still
+            responds. */}
+        {href && (
+          <ChevronRightRounded
+            className="kpi-chevron"
+            sx={{ ml: "auto", flexShrink: 0, fontSize: 18, color: "text.disabled", transition: "color 120ms, transform 120ms" }}
+          />
+        )}
       </Box>
 
       <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 1, mt: "auto" }}>
