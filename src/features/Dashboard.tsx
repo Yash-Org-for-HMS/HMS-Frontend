@@ -60,6 +60,15 @@ interface DashboardStats {
   arr?: number;
   hospitalsByPlan: Array<{ planName: string; count: number }>;
   onboardingProgress: Array<{ status: string; count: number }>;
+  /** Tenants still waiting on each onboarding checkpoint. See the card below. */
+  onboardingSteps?: {
+    total: number;
+    completed: number;
+    waitingTenantSetup: number;
+    waitingRoles: number;
+    waitingPayment: number;
+    readyToGoLive: number;
+  };
   leadsByStatus: Array<{ status: string; count: number }>;
   hospitalsTrend: Array<{ month: string; count: number }>;
   recentActivities: Array<{
@@ -216,15 +225,21 @@ export default function Dashboard() {
   const planData = [...stats.hospitalsByPlan].sort((a, b) => b.count - a.count);
   const trendData = stats.hospitalsTrend ?? [];
   const activities = stats.recentActivities ?? [];
-  // Onboarding statuses arrive as raw enum values (in_progress, …). The raw
-  // value is kept alongside the label because it is what the register filters on.
-  const onboardingData = (stats.onboardingProgress ?? [])
-    .map((o) => ({
-      status: o.status,
-      label: titleCase(o.status),
-      count: o.count,
-    }))
-    .sort((a, b) => b.count - a.count);
+  // The three onboarding checkpoints, counted as tenants STILL WAITING on each
+  // — plus the ones with all three ticked that nobody has switched to
+  // completed. This used to plot onboardingStatus, a column that is set by
+  // hand and that nothing in the backend ever advances, so a tenant two steps
+  // in was drawn identically to one that had not started.
+  //
+  // In step order, not sorted by size: the order is the process, and
+  // reordering it every time a count changes makes the card unreadable.
+  const onboardingSteps = stats.onboardingSteps;
+  const stepData = onboardingSteps ? [
+    { step: "tenant-setup", label: "Tenant setup", count: onboardingSteps.waitingTenantSetup },
+    { step: "roles", label: "Roles seeded", count: onboardingSteps.waitingRoles },
+    { step: "payment", label: "Payment verified", count: onboardingSteps.waitingPayment },
+    { step: "ready", label: "Ready to go live", count: onboardingSteps.readyToGoLive },
+  ] : [];
 
   // Shared chart card (title + optional right-slot headline + plot area).
 
@@ -409,36 +424,39 @@ export default function Dashboard() {
         </Grid>
 
         {/* Onboarding progress — where tenants are stuck before going live.
-            A stage answers "how many"; the register behind it answers which
-            tenants and what each is still waiting on, so the bars lead there. */}
+            A bar answers "how many"; the register behind it answers which
+            tenants, so the bars lead there. */}
         <Grid size={{ xs: 12, lg: 4 }}>
           <ChartCard
             title="Onboarding Progress"
-            // Says what the bars actually cover. "Tenants by setup stage" left
-            // it open whether this was a recent window or a sample; it is every
-            // live tenant that has an onboarding record, with no date filter.
-            subtitle={`Every live tenant · ${onboardingData.reduce((s, o) => s + o.count, 0)} in setup`}
+            subtitle={onboardingSteps
+              ? `${stepData.reduce((s, o) => s + o.count, 0) === 0 ? "Nothing outstanding" : "Tenants still waiting"} · ${onboardingSteps.completed} of ${onboardingSteps.total} live`
+              : "Tenants still waiting on each step"}
             height={280}
             right={<ReportLink to="/reports?view=onboarding" label="View register" />}
           >
-            {onboardingData.length === 0 ? (
+            {!onboardingSteps || onboardingSteps.total === 0 ? (
               <Box sx={{ display: "grid", placeItems: "center", height: "100%", color: "text.secondary" }}>
                 <Typography variant="body2">Nothing in onboarding.</Typography>
               </Box>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={onboardingData} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
+                <BarChart data={stepData} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
                   <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="label" width={104} tick={{ fill: "#475569", fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="label" width={112} tick={{ fill: "#475569", fontSize: 12 }} axisLine={false} tickLine={false} />
                   <Tooltip cursor={{ fill: "rgba(20,184,166,0.06)" }} contentStyle={tooltipStyle} formatter={(v) => [v, "Tenants"]} />
                   <Bar
-                    dataKey="count" fill={TEAL} radius={[0, 4, 4, 0]} barSize={20}
+                    dataKey="count" fill={TEAL} radius={[0, 4, 4, 0]} barSize={20} minPointSize={2}
                     cursor="pointer"
                     onClick={(d) => {
-                      const status = (d as unknown as { status?: string })?.status;
-                      if (status) navigate(`/reports?view=onboarding&status=${encodeURIComponent(status)}`);
+                      const step = (d as unknown as { step?: string })?.step;
+                      if (step) navigate(`/reports?view=onboarding&step=${encodeURIComponent(step)}`);
                     }}
                   >
+                    {/* "Ready to go live" is not a blockage, it is a job waiting
+                        for someone — green, so it reads as the one to action
+                        rather than another queue. */}
+                    {stepData.map((d) => <Cell key={d.step} fill={d.step === "ready" ? "#10b981" : TEAL} />)}
                     <LabelList dataKey="count" position="right" style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
                   </Bar>
                 </BarChart>

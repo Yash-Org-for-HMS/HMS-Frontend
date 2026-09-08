@@ -122,7 +122,7 @@ function OverviewReport() {
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <SimpleTable
-            title="Onboarding progress" head={["Status", "Hospitals"]}
+            title="Onboarding by status" head={["Status", "Hospitals"]}
             rows={onboarding.map((o) => [cap(o.status), Number(o.count)])}
             rowHref={(_r, i) => `/reports?view=onboarding&status=${encodeURIComponent(onboarding[i].status ?? "")}`}
           />
@@ -607,6 +607,29 @@ const STATUS_FILTERS = [
   { key: "stalled", label: "Stalled" },
 ];
 
+/**
+ * The checkpoint filters, matching the dashboard card's bars exactly.
+ *
+ * "Waiting on step X" excludes tenants already marked completed — they are not
+ * waiting on anything — which is the same rule the dashboard counts by. If the
+ * two drifted, a bar would say 4 and open a table of 6.
+ */
+const STEP_MATCH: Record<string, (o: OnboardingRegisterRow) => boolean> = {
+  "tenant-setup": (o) => o.onboardingStatus !== "completed" && !o.tenantSetupCompleted,
+  roles: (o) => o.onboardingStatus !== "completed" && !o.defaultRolesSeeded,
+  payment: (o) => o.onboardingStatus !== "completed" && !o.paymentVerified,
+  // The gates are nullable on the wire, so coerce — a null gate is "not done",
+  // which is the same thing false means here.
+  ready: (o) => o.onboardingStatus !== "completed"
+    && !!o.tenantSetupCompleted && !!o.defaultRolesSeeded && !!o.paymentVerified,
+};
+const STEP_LABELS: Record<string, string> = {
+  "tenant-setup": "Waiting on tenant setup",
+  roles: "Waiting on roles seeded",
+  payment: "Waiting on payment verified",
+  ready: "Ready to go live",
+};
+
 const GATE_LABELS: [OnboardingGateKey, string][] = [
   ["tenantSetupCompleted", "Tenant setup"],
   ["defaultRolesSeeded", "Roles seeded"],
@@ -618,6 +641,10 @@ function OnboardingReport() {
   // Both live in the URL so the dashboard can link straight to "the 4 pending".
   const [statusFilter] = useReportParam("status", "all");
   const [attentionOnly, setAttentionOnly] = useReportFlag("attention");
+  // Which checkpoint a tenant is still waiting on — the dashboard's Onboarding
+  // Progress bars link straight in here, so a count leads to the tenants
+  // behind it rather than to the whole table.
+  const [stepFilter, setStepFilter] = useReportParam("step", "all");
 
   const { data = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-report-onboarding"],
@@ -638,6 +665,7 @@ function OnboardingReport() {
   const filtered = data.filter((o) => {
     if (statusFilter !== "all" && o.onboardingStatus !== statusFilter) return false;
     if (attentionOnly && !o.paymentMismatch && !o.paymentUnverifiedButPaid) return false;
+    if (stepFilter !== "all" && !STEP_MATCH[stepFilter]?.(o)) return false;
     return true;
   });
 
@@ -723,6 +751,15 @@ function OnboardingReport() {
           sx={{ fontWeight: 700 }}
         />
       </ReportStatusChips>
+
+      {/* Arriving from a dashboard bar, the table is already filtered — saying
+          so, removably, is the difference between "these are the four" and
+          "where did everyone go". */}
+      {stepFilter !== "all" && STEP_LABELS[stepFilter] && (
+        <Box>
+          <Chip size="small" label={STEP_LABELS[stepFilter]} onDelete={() => setStepFilter("all")} sx={{ fontWeight: 600 }} />
+        </Box>
+      )}
 
       <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
         <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
