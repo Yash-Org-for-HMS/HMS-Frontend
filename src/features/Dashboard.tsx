@@ -293,7 +293,7 @@ export default function Dashboard() {
             subs={[
               { label: "ARR", value: formatINRAuto(stats.arr ?? stats.totalRevenue * 12) },
               { label: "Active Plans", value: stats.activePlans },
-              { label: "Hospital Admins", value: stats.hospitalAdminCount },
+              { label: "Admins", value: stats.hospitalAdminCount },
             ]}
           />
         </Grid>

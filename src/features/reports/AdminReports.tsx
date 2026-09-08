@@ -498,8 +498,19 @@ function TenantSubscriptionsReport() {
             <Table size="small" stickyHeader sx={{ minWidth: 1080 }}>
               <TableHead>
                 <TableRow>
-                  {["Hospital", "Plan", "Cycle", "Price", "Paid until", "Time left", "Next due", "State", ""].map((h) => (
-                    <TableCell key={h} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider", bgcolor: "background.paper", whiteSpace: "nowrap" }}>{h}</TableCell>
+                  {["Hospital", "Plan", "Cycle", "Price", "Paid until", "Time left", "Next due", "State", ""].map((h, i) => (
+                    <TableCell
+                      key={h}
+                      sx={{
+                        color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase",
+                        borderColor: "divider", bgcolor: "background.paper", whiteSpace: "nowrap",
+                        // The action column stays put while the rest scrolls
+                        // under it: this table is wider than the pane at every
+                        // normal width, and a row action you can only reach by
+                        // scrolling sideways is one nobody finds.
+                        ...(i === 8 ? { position: "sticky", right: 0, zIndex: 3, borderLeft: "1px solid", borderLeftColor: "divider" } : {}),
+                      }}
+                    >{h}</TableCell>
                   ))}
                 </TableRow>
               </TableHead>
@@ -547,7 +558,7 @@ function TenantSubscriptionsReport() {
                           <Chip size="small" label={s.label} sx={{ bgcolor: `${s.color}1a`, color: s.color, fontWeight: 700 }} />
                         </Tooltip>
                       </TableCell>
-                      <TableCell sx={{ borderColor: "divider" }}>
+                      <TableCell sx={{ borderColor: "divider", position: "sticky", right: 0, zIndex: 1, bgcolor: "background.paper", borderLeft: "1px solid", borderLeftColor: "divider" }}>
                         <Button size="small" endIcon={<ArrowForwardRounded sx={{ fontSize: "16px !important" }} />}
                           component={RouterLink} to={`/hospitals/${r.hospitalId}/overview`}
                           sx={{ textTransform: "none", color: ACCENT, whiteSpace: "nowrap" }}>
