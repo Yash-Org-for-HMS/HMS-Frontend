@@ -443,7 +443,7 @@ export default function Dashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stepData} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
                   <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="label" width={112} tick={{ fill: "#475569", fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="label" width={134} tick={{ fill: "#475569", fontSize: 12 }} axisLine={false} tickLine={false} />
                   <Tooltip cursor={{ fill: "rgba(20,184,166,0.06)" }} contentStyle={tooltipStyle} formatter={(v) => [v, "Tenants"]} />
                   <Bar
                     dataKey="count" fill={TEAL} radius={[0, 4, 4, 0]} barSize={20} minPointSize={2}
