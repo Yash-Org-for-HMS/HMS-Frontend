@@ -274,8 +274,15 @@ function App() {
                 own panel — the Reports hub does not carry them because each is a
                 self-contained page with its own navigation. Same components,
                 reachable from where an admin actually looks. */}
-            <Route path="/hospital/claims/reports" element={elGated(ClaimReports, "Claims", "Insurance Reports")} />
-            <Route path="/hospital/nurse-reports" element={elGated(NurseReports, "IPD", "Nursing Reports")} />
+            {/* Ungated, matching the routes these components already have under
+                /reception and /nurse. There is no "Claims" module — the module
+                list is OPD, Doctor, IPD, Laboratory, Pharmacy, Billing — so
+                gating on one locked the page permanently. And nursing reports
+                are mostly vitals, which a hospital without IPD still records;
+                the page already hides its own Ward & Beds group when IPD is
+                off, which is the right granularity. */}
+            <Route path="/hospital/claims/reports" element={el(ClaimReports)} />
+            <Route path="/hospital/nurse-reports" element={el(NurseReports)} />
             <Route path="/hospital/module-access" element={el(ModuleAccess)} />
             <Route path="/hospital/doctors" element={el(DoctorsList)} />
 
