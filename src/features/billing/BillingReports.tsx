@@ -21,7 +21,7 @@ import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto, formatDate } from "@/utils/format";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { KpiCard, ReportFilters, ReportTable, TrendChart, hasPlottableData, type DateRange } from "@/features/reports/kit";
-import { useReportPaging } from "@/features/reports/kit/useReportPaging";
+import { useReportPaging } from "@/features/reports/kit";
 import ReportStatusChips from "@/features/reports/kit/ReportStatusChips";
 import DepositDialog from "@/components/ipd/DepositDialog";
 import { UndoRounded } from "@mui/icons-material";

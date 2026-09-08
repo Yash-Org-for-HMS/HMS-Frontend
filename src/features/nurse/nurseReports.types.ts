@@ -47,7 +47,20 @@ export interface NurseReportsData {
   /** The same rows, narrowed to those carrying a flag. */
   abnormalList: VitalsRow[];
   byStaff: { staffName: string; count: number }[];
+  /**
+   * Page state for each register separately — they page on their own keys
+   * (vitalsPage/vitalsLimit, abnormalPage/abnormalLimit) because one shared
+   * `page` would move both tables at once.
+   */
+  vitalsMeta: ReportPageMeta;
+  abnormalMeta: ReportPageMeta;
+}
+
+export interface ReportPageMeta {
   truncated: boolean;
   totalRows: number;
   shownRows: number;
+  page?: number;
+  pageSize?: number;
+  totalPages?: number;
 }

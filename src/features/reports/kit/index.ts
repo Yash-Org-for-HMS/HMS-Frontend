@@ -12,3 +12,4 @@ export type { Series } from "./ReportCharts";
 export { CHART_SERIES, seriesColor, computeDelta, CHART_INK, DELTA_GOOD, DELTA_BAD } from "./chartTheme";
 export { default as ReportNavLayout } from "./ReportNavLayout";
 export type { ReportItem, ReportGroup } from "./ReportNavLayout";
+export { useReportPaging } from "./useReportPaging";

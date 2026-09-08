@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import {
   Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow,
-  TableContainer, Button,
+  TableContainer, Button, TablePagination,
 } from "@mui/material";
 import { FileDownloadRounded, ChevronRightRounded, PictureAsPdfRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -42,6 +42,7 @@ export default function SimpleTable({
   rowHref,
   period,
   exportRows,
+  pagination,
 }: {
   title: string;
   head: string[];
@@ -72,6 +73,19 @@ export default function SimpleTable({
    * looks complete and is not.
    */
   exportRows?: () => Promise<(string | number)[][]>;
+  /**
+   * Page state, when the caller is showing one page of a larger report.
+   * Omit it and the table behaves exactly as before. Matches
+   * {@link ReportTable}'s prop so the two page identically.
+   */
+  pagination?: {
+    page: number;            // zero-based, as MUI counts
+    pageSize: number;
+    totalRows: number;
+    onPageChange: (page: number) => void;
+    onPageSizeChange: (size: number) => void;
+    busy?: boolean;
+  };
 }) {
   const navigate = useNavigate();
   const [exporting, setExporting] = useState<"" | "excel" | "pdf">("");
@@ -149,6 +163,18 @@ export default function SimpleTable({
             </TableBody>
           </Table>
         </TableContainer>
+      )}
+      {pagination && pagination.totalRows > 0 && (
+        <TablePagination
+          component="div"
+          count={pagination.totalRows}
+          page={pagination.page}
+          onPageChange={(_, p) => pagination.onPageChange(p)}
+          rowsPerPage={pagination.pageSize}
+          rowsPerPageOptions={[50, 100, 250]}
+          onRowsPerPageChange={(e) => pagination.onPageSizeChange(Number(e.target.value))}
+          sx={{ opacity: pagination.busy ? 0.6 : 1, borderTop: "1px solid", borderColor: "divider" }}
+        />
       )}
     </Paper>
   );

@@ -20,7 +20,7 @@ import ErrorState from "@/components/ErrorState";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, ReportNavLayout, useReportFilterOptions, type DateRange, type ReportGroup } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, ReportNavLayout, useReportFilterOptions, useReportPaging, type DateRange, type ReportGroup } from "@/features/reports/kit";
 import dayjs from "dayjs";
 
 const inr = formatINRAuto;
@@ -243,11 +243,16 @@ export function Turnaround() {
 // radiology awaiting a report, with aging buckets and the oldest offenders.
 export function Pending() {
   const [doctorId, setDoctorId] = useState("");
+  const paging = useReportPaging();
   const { data: opts } = useReportFilterOptions();
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["lab-pending", doctorId],
-    queryFn: () => apiGet<PendingResponse>("/lab/reports/pending", { params: { doctorId: doctorId || undefined } }),
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["lab-pending", doctorId, paging.page, paging.pageSize],
+    queryFn: () => apiGet<PendingResponse>("/lab/reports/pending", { params: { doctorId: doctorId || undefined, ...paging.params } }),
+    placeholderData: (prev) => prev,
   });
+  // The stage and aging breakdowns above cover every open order, not the page.
+  const allPendingRows = async () =>
+    ((await apiGet<PendingResponse>("/lab/reports/pending", { params: { doctorId: doctorId || undefined } })).rows ?? []) as unknown as Record<string, unknown>[];
   const rows: PendingRow[] = data?.rows ?? [];
   const byStage: StageRow[] = data?.byStage ?? [];
   const aging: AgingRow[] = data?.aging ?? [];
@@ -255,7 +260,7 @@ export function Pending() {
   return (
     <Box>
       <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, alignItems: "center", flexWrap: "wrap" }}>
-        <ReportFilterSelect label="Ordering doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
+        <ReportFilterSelect label="Ordering doctor" value={doctorId} onChange={paging.onFilterChange(setDoctorId)} options={opts?.doctors} />
         {data && <Typography variant="caption" sx={{ color: "text.secondary" }}>Live snapshot as of {data.asOf} · open orders from the last {data.lookbackDays} days</Typography>}
       </Box>
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
@@ -293,7 +298,8 @@ export function Pending() {
               { key: "orderedOn", label: "Ordered" },
             ]}
             rows={rows}
-            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+            pagination={paging.bind(data.totalRows ?? rows.length, isFetching)}
+            exportRows={allPendingRows}
           />
         </Box>
       )}
@@ -357,22 +363,42 @@ export function OrderRegister() {
   const [doctorId, setDoctorId] = useState("");
   const [status, setStatus] = useState("");
   const { data: opts } = useReportFilterOptions();
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["lab-register", range.from, range.to, doctorId, status],
+  // Two registers in one response, so each pages on its own keys. A single
+  // `page` would scroll both tables at once and mean the right thing for
+  // neither — and a reader on page 12 of the lab register has no business
+  // being moved through radiology at the same time.
+  const labPaging = useReportPaging({ prefix: "lab" });
+  const radPaging = useReportPaging({ prefix: "rad" });
+
+  const registerParams = { from: range.from, to: range.to, doctorId: doctorId || undefined, status: status || undefined };
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["lab-register", range.from, range.to, doctorId, status, labPaging.page, labPaging.pageSize, radPaging.page, radPaging.pageSize],
     queryFn: async () =>
       (await axiosInstance.get("/lab/reports/register", {
-        params: { from: range.from, to: range.to, doctorId: doctorId || undefined, status: status || undefined },
+        params: { ...registerParams, ...labPaging.params, ...radPaging.params },
       })).data.data,
     placeholderData: keepPreviousData,
   });
   const labRows: RegisterRow[] = data?.lab?.rows ?? [];
   const radRows: RegisterRow[] = data?.radiology?.rows ?? [];
 
+  // Sending no page at all is what returns the whole register — which is what
+  // an export has to contain, not the page the reader happened to be on.
+  const fetchWhole = async (half: "lab" | "radiology") =>
+    ((await axiosInstance.get("/lab/reports/register", { params: registerParams })).data.data?.[half]?.rows ?? []) as Record<string, unknown>[];
+
+  // Both filters change both registers, so both go back to page 1.
+  const onFilter = <T,>(set: (v: T) => void) => (v: T) => {
+    labPaging.onPageChange(0);
+    radPaging.onPageChange(0);
+    set(v);
+  };
+
   return (
     <Box>
-      <ReportFilters value={range} onChange={setRange}>
-        <ReportFilterSelect label="Ordering doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
-        <TextField select size="small" label="Status" value={status} onChange={(e) => setStatus(e.target.value)} sx={{ minWidth: 180 }}>
+      <ReportFilters value={range} onChange={onFilter(setRange)}>
+        <ReportFilterSelect label="Ordering doctor" value={doctorId} onChange={onFilter(setDoctorId)} options={opts?.doctors} />
+        <TextField select size="small" label="Status" value={status} onChange={(e) => onFilter(setStatus)(e.target.value)} sx={{ minWidth: 180 }}>
           <MenuItem value="">All statuses</MenuItem>
           <MenuItem value="Awaiting collection">Awaiting collection (lab)</MenuItem>
           <MenuItem value="In process">In process (lab)</MenuItem>
@@ -412,7 +438,8 @@ export function OrderRegister() {
                 { key: "paymentStatus", label: "Payment" },
               ]}
               rows={labRows}
-              truncated={data.lab.truncated} totalRows={data.lab.totalRows} shownRows={data.lab.shownRows}
+              pagination={labPaging.bind(data.lab.totalRows ?? labRows.length, isFetching)}
+              exportRows={() => fetchWhole("lab")}
             />
           </Box>
 
@@ -434,7 +461,8 @@ export function OrderRegister() {
               { key: "paymentStatus", label: "Payment" },
             ]}
             rows={radRows}
-            truncated={data.radiology.truncated} totalRows={data.radiology.totalRows} shownRows={data.radiology.shownRows}
+            pagination={radPaging.bind(data.radiology.totalRows ?? radRows.length, isFetching)}
+            exportRows={() => fetchWhole("radiology")}
           />
         </Box>
       )}

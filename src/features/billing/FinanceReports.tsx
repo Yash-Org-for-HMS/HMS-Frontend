@@ -22,7 +22,7 @@ import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 import { SEMANTIC } from "@/styles/accents";
-import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, TrendChart, hasPlottableData, useReportFilterOptions, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, TrendChart, hasPlottableData, useReportFilterOptions, useReportPaging, type DateRange } from "@/features/reports/kit";
 
 const inr = formatINRAuto;
 const rangeFrom = (days: number): DateRange => ({ from: dayjs().subtract(days, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
@@ -39,10 +39,17 @@ const money = (key: string, label: string) =>
 // tender. Distinct from Revenue (which is billed/accrual).
 export function DayBook() {
   const [range, setRange] = useState<DateRange>(() => rangeFrom(0)); // defaults to today
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["finance-day-book", range.from, range.to],
-    queryFn: () => apiGet<DayBookResponse>("/reception/reports/day-book", { params: { from: range.from, to: range.to } }),
+  const paging = useReportPaging();
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["finance-day-book", range.from, range.to, paging.page, paging.pageSize],
+    queryFn: () => apiGet<DayBookResponse>("/reception/reports/day-book", { params: { from: range.from, to: range.to, ...paging.params } }),
+    placeholderData: (prev) => prev,
   });
+  // Every figure above the ledger — money in, out, net, the per-mode
+  // reconciliation — is computed over the whole period server-side, so they
+  // stay whole while the ledger below shows one page.
+  const allLedgerRows = async () =>
+    ((await apiGet<DayBookResponse>("/reception/reports/day-book", { params: { from: range.from, to: range.to } })).rows ?? []) as unknown as Record<string, unknown>[];
   const byMode: DayBookModeRow[] = data?.byMode ?? [];
   const bySource: DayBookSourceRow[] = data?.bySource ?? [];
   const byCollector: DayBookCollectorRow[] = data?.byCollector ?? [];
@@ -52,7 +59,7 @@ export function DayBook() {
 
   return (
     <Box>
-      <ReportFilters value={range} onChange={setRange} />
+      <ReportFilters value={range} onChange={paging.onFilterChange(setRange)} />
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
@@ -139,7 +146,8 @@ export function DayBook() {
               money("outAmount", "Out"),
             ]}
             rows={rows}
-            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+            pagination={paging.bind(data.totalRows ?? rows.length, isFetching)}
+            exportRows={allLedgerRows}
           />
         </Box>
       )}
@@ -268,16 +276,20 @@ export function RefundRegister() {
 // ── Discount / concession register ────────────────────────────────────────────
 export function DiscountRegister() {
   const [range, setRange] = useState<DateRange>(() => rangeFrom(29));
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["finance-discounts", range.from, range.to],
-    queryFn: () => apiGet<DiscountRegisterResponse>("/reception/reports/discount-register", { params: { from: range.from, to: range.to } }),
+  const paging = useReportPaging();
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["finance-discounts", range.from, range.to, paging.page, paging.pageSize],
+    queryFn: () => apiGet<DiscountRegisterResponse>("/reception/reports/discount-register", { params: { from: range.from, to: range.to, ...paging.params } }),
+    placeholderData: (prev) => prev,
   });
+  const allDiscountRows = async () =>
+    ((await apiGet<DiscountRegisterResponse>("/reception/reports/discount-register", { params: { from: range.from, to: range.to } })).rows ?? []) as unknown as Record<string, unknown>[];
   const byUser = data?.byUser ?? [];
   const rows: DiscountRow[] = data?.rows ?? [];
 
   return (
     <Box>
-      <ReportFilters value={range} onChange={setRange} />
+      <ReportFilters value={range} onChange={paging.onFilterChange(setRange)} />
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
@@ -304,7 +316,8 @@ export function DiscountRegister() {
               { key: "reason", label: "Reason" },
             ]}
             rows={rows}
-            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+            pagination={paging.bind(data.totalRows ?? rows.length, isFetching)}
+            exportRows={allDiscountRows}
           />
         </Box>
       )}

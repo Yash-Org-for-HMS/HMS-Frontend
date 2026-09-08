@@ -19,7 +19,7 @@ import ErrorState from "@/components/ErrorState";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText } from "@/utils/apiError";
-import { ReportTruncationNote, ReportNavLayout } from "@/features/reports/kit";
+import { ReportNavLayout, useReportPaging } from "@/features/reports/kit";
 
 const NURSE_PURPLE = BRAND.action;
 
@@ -31,6 +31,21 @@ const PRESETS = [
 
 
 // Downloadable table — every report on this page ends in one of these.
+
+/**
+ * What every report on this page is handed. The two vitals registers come from
+ * the same payload but are separate lists, so each carries its own page state
+ * rather than sharing one that would move both at once.
+ */
+type Paging = ReturnType<typeof useReportPaging>;
+type ReportProps = {
+  data: NurseReportsData;
+  from: string;
+  to: string;
+  vitalsPaging: Paging;
+  abnormalPaging: Paging;
+  busy?: boolean;
+};
 
 // ── Reports fed by the shared /nurse/reports payload ─────────────────────────
 
@@ -61,39 +76,55 @@ function SummaryReport({ data }: { data: NurseReportsData }) {
   );
 }
 
-function VitalsRegisterReport({ data }: { data: NurseReportsData }) {
+// One reading as a table row, in each register's own shape. Shared by the page
+// on screen and by its export, so a download can't be shaped differently.
+// ?? not ||: a reading of 0 is a real observation (a pain score, a blood
+// sugar), and || would blank it as though it were never taken.
+const toVitalsRow = (v: VitalsRow) => [
+  formatDateTime(v.date), v.patientName, v.uhid,
+  v.bp ?? "—", v.pulse ?? "—", v.temperatureC ?? "—", v.oxygenSaturation ?? "—", v.weightKg ?? "—",
+  v.recordedBy ?? "—",
+];
+// flags is what puts a row on the abnormal list, but it is still nullable on
+// the wire — joining it unguarded would throw on the one row that arrived
+// without it, taking the whole register down.
+const toAbnormalRow = (v: VitalsRow) => [
+  formatDateTime(v.date), v.patientName, v.uhid,
+  v.bp ?? "—", v.pulse ?? "—", v.temperatureC ?? "—", v.oxygenSaturation ?? "—",
+  (v.flags ?? []).join(", ") || "—",
+  v.recordedBy ?? "—",
+];
+
+/** The whole (unpaged) payload, for an export. Asking for no page is what gets it. */
+const fetchWholeReport = async (from: string, to: string): Promise<NurseReportsData> =>
+  (await axiosInstance.get("/nurse/reports", { params: { from, to } })).data.data;
+
+function VitalsRegisterReport({ data, from, to, vitalsPaging, busy }: ReportProps) {
   const vitalsList: VitalsRow[] = data?.vitalsList || [];
+  const total = data?.vitalsMeta?.totalRows ?? vitalsList.length;
   return (
     <SimpleTable
       title="Vitals register"
       head={["Date", "Patient", "UHID", "BP", "Pulse", "Temp (°C)", "SpO2 (%)", "Weight (kg)", "Recorded by"]}
-      // ?? not ||: a reading of 0 is a real observation (a pain score, a blood
-      // sugar), and || would blank it as though it were never taken.
-      rows={vitalsList.map((v) => [
-        formatDateTime(v.date), v.patientName, v.uhid,
-        v.bp ?? "—", v.pulse ?? "—", v.temperatureC ?? "—", v.oxygenSaturation ?? "—", v.weightKg ?? "—",
-        v.recordedBy ?? "—",
-      ])}
-      note={<ReportTruncationNote truncated={data?.truncated} totalRows={data?.totalRows} shownRows={data?.shownRows} />}
+      rows={vitalsList.map(toVitalsRow)}
+      exportRows={async () => ((await fetchWholeReport(from, to)).vitalsList ?? []).map(toVitalsRow)}
+      period={`${formatDate(from)} to ${formatDate(to)}`}
+      pagination={vitalsPaging.bind(total, busy)}
     />
   );
 }
 
-function AbnormalVitalsReport({ data }: { data: NurseReportsData }) {
+function AbnormalVitalsReport({ data, from, to, abnormalPaging, busy }: ReportProps) {
   const abnormalList: VitalsRow[] = data?.abnormalList || [];
+  const total = data?.abnormalMeta?.totalRows ?? abnormalList.length;
   return (
     <SimpleTable
       title="Abnormal vitals — needs review"
       head={["Date", "Patient", "UHID", "BP", "Pulse", "Temp (°C)", "SpO2 (%)", "Flags", "Recorded by"]}
-      // flags is what puts a row on this list, but it is still nullable on the
-      // wire — joining it unguarded would throw on the one row that arrived
-      // without it, taking the whole register down.
-      rows={abnormalList.map((v) => [
-        formatDateTime(v.date), v.patientName, v.uhid,
-        v.bp ?? "—", v.pulse ?? "—", v.temperatureC ?? "—", v.oxygenSaturation ?? "—",
-        (v.flags ?? []).join(", ") || "—",
-        v.recordedBy ?? "—",
-      ])}
+      rows={abnormalList.map(toAbnormalRow)}
+      exportRows={async () => ((await fetchWholeReport(from, to)).abnormalList ?? []).map(toAbnormalRow)}
+      period={`${formatDate(from)} to ${formatDate(to)}`}
+      pagination={abnormalPaging.bind(total, busy)}
     />
   );
 }
@@ -154,7 +185,7 @@ function AdmissionsReport({ from, to }: { from: string; to: string }) {
 
 // ── Report catalogue — one entry per sidebar item, grouped like ReportsHub. ──
 
-type ReportItem = { key: string; label: string; Comp: React.ComponentType<{ data: NurseReportsData; from: string; to: string }> };
+type ReportItem = { key: string; label: string; Comp: React.ComponentType<ReportProps> };
 type ReportGroup = { heading: string; module?: string; items: ReportItem[] };
 
 const GROUPS: ReportGroup[] = [
@@ -186,8 +217,17 @@ export default function NurseReports() {
   const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
   const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
 
+  // Each register pages on its own keys — see ReportProps.
+  const vitalsPaging = useReportPaging({ prefix: "vitals" });
+  const abnormalPaging = useReportPaging({ prefix: "abnormal" });
+
+  // Narrowing the range while on page 40 of a register would leave the reader
+  // staring at an empty table, so every date change sends both back to page 1.
+  const firstPage = () => { vitalsPaging.onPageChange(0); abnormalPaging.onPageChange(0); };
+
   const applyPreset = (p: typeof PRESETS[number]) => {
     setPreset(p.key);
+    firstPage();
     setFrom(p.from().format("YYYY-MM-DD"));
     setTo(p.to().format("YYYY-MM-DD"));
   };
@@ -197,8 +237,10 @@ export default function NurseReports() {
   // The Ward & Beds group calls the existing IPD reports endpoints directly
   // (no point duplicating that data/logic in a new nurse-side query).
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["nurse-reports", from, to],
-    queryFn: async () => (await axiosInstance.get("/nurse/reports", { params: { from, to } })).data.data,
+    queryKey: ["nurse-reports", from, to, vitalsPaging.page, vitalsPaging.pageSize, abnormalPaging.page, abnormalPaging.pageSize],
+    queryFn: async () => (await axiosInstance.get("/nurse/reports", {
+      params: { from, to, ...vitalsPaging.params, ...abnormalPaging.params },
+    })).data.data,
     placeholderData: keepPreviousData,
   });
 
@@ -218,8 +260,8 @@ export default function NurseReports() {
         ))}
       </ButtonGroup>
       <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-        <TextField size="small" type="date" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => { setFrom(e.target.value); setPreset(""); }} />
-        <TextField size="small" type="date" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => { setTo(e.target.value); setPreset(""); }} />
+        <TextField size="small" type="date" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => { setFrom(e.target.value); setPreset(""); firstPage(); }} />
+        <TextField size="small" type="date" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => { setTo(e.target.value); setPreset(""); firstPage(); }} />
       </Box>
     </Paper>
   );
@@ -232,7 +274,7 @@ export default function NurseReports() {
       accent={NURSE_PURPLE}
       actions={isFetching ? <HeartbeatLoader size={22} /> : undefined}
       toolbar={toolbar}
-      componentProps={{ data, from, to }}
+      componentProps={{ data, from, to, vitalsPaging, abnormalPaging, busy: isFetching }}
       contentState={
         isLoading ? <ReportSkeleton />
           : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />

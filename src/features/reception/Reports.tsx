@@ -3,7 +3,7 @@ import SimpleTable from "@/features/reports/kit/SimpleTable";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Paper, Grid, TextField, Tabs, Tab, Button, MenuItem, TablePagination,
+  Box, Paper, Grid, TextField, Tabs, Tab, Button, MenuItem,
 } from "@mui/material";
 import {
   EventRounded, CheckCircleRounded, CancelRounded, PaymentsRounded,
@@ -17,7 +17,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportTable, ReportTruncationNote, TrendChart, BreakdownBar, hasPlottableData, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportTable, TrendChart, BreakdownBar, hasPlottableData, useReportPaging, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = BRAND.action;
 
@@ -58,20 +58,38 @@ export default function Reports() {
 }
 
 // ── OP Registration ──────────────────────────────────────────────────────────
+/** One registered patient as a table row — shared by the page on screen and by
+ *  the export, so a downloaded file can't be shaped differently from the report. */
+const toRegistrationRow = (r: any) => [
+  r.uhid, r.name, r.gender ?? "—", r.age == null ? "—" : String(r.age),
+  r.phone, r.city ?? "—",
+  dayjs(r.registeredOn).format("DD MMM YYYY"),
+  r.referrerName ?? r.referral,
+];
+
 export function OpRegistration() {
   const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
   const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
   const ref = useRef<HTMLDivElement>(null);
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["report-op-registration", from, to],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/op-registration", { params: { from, to } })).data.data,
+  const paging = useReportPaging();
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["report-op-registration", from, to, paging.page, paging.pageSize],
+    queryFn: async () => (await axiosInstance.get("/reception/reports/op-registration", { params: { from, to, ...paging.params } })).data.data,
+    placeholderData: (prev) => prev,
   });
   const rows: any[] = data?.rows ?? [];
+  // The gender / age / source / city breakdowns above are computed over the
+  // whole period server-side, so they stay whole while this shows one page.
+  // The export goes back for everything rather than saving what's visible.
+  const fetchAllRows = async () => {
+    const res = await axiosInstance.get("/reception/reports/op-registration", { params: { from, to } });
+    return (res.data.data?.rows ?? []).map(toRegistrationRow);
+  };
   return (
     <Box>
       <Toolbar>
-        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ minWidth: 160 }} />
-        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ minWidth: 160 }} />
+        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => paging.onFilterChange(setFrom)(e.target.value)} sx={{ minWidth: 160 }} />
+        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => paging.onFilterChange(setTo)(e.target.value)} sx={{ minWidth: 160 }} />
       </Toolbar>
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
@@ -106,13 +124,10 @@ export function OpRegistration() {
           </Grid>
 
           <SimpleTable title="Registered patients" head={["UHID", "Name", "Gender", "Age", "Phone", "City", "Registered", "Referred by"]}
-            rows={rows.map((r) => [
-              r.uhid, r.name, r.gender ?? "—", r.age == null ? "—" : String(r.age),
-              r.phone, r.city ?? "—",
-              dayjs(r.registeredOn).format("DD MMM YYYY"),
-              r.referrerName ?? r.referral,
-            ])}
-            note={<ReportTruncationNote truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows} />} />
+            rows={rows.map(toRegistrationRow)}
+            exportRows={fetchAllRows}
+            period={`${dayjs(from).format("DD MMM YYYY")} to ${dayjs(to).format("DD MMM YYYY")}`}
+            pagination={paging.bind(data.totalRows ?? rows.length, isFetching)} />
         </Box>
       )}
     </Box>
@@ -134,17 +149,13 @@ export function OpBills() {
   const [departmentId, setDepartmentId] = useState("");
   const { data: opts } = useFilterOptions();
   const ref = useRef<HTMLDivElement>(null);
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(100);
-  // Changing a filter must go back to the first page — staying on page 40 of
-  // a result that now has three pages shows an empty table and looks broken.
-  const resetPage = <T,>(set: (v: T) => void) => (v: T) => { setPage(0); set(v); };
+  const paging = useReportPaging();
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["report-op-bills", from, to, doctorId, departmentId, page, pageSize],
+    queryKey: ["report-op-bills", from, to, doctorId, departmentId, paging.page, paging.pageSize],
     queryFn: async () => (await axiosInstance.get("/reception/reports/op-bills", {
       params: { from, to, doctorId: doctorId || undefined, departmentId: departmentId || undefined,
-                page: page + 1, limit: pageSize },
+                ...paging.params },
     })).data.data,
     placeholderData: (prev) => prev,
   });
@@ -162,10 +173,10 @@ export function OpBills() {
   return (
     <Box>
       <Toolbar>
-        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => resetPage(setFrom)(e.target.value)} sx={{ minWidth: 160 }} />
-        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => resetPage(setTo)(e.target.value)} sx={{ minWidth: 160 }} />
-        <FilterSelect label="Doctor" value={doctorId} onChange={resetPage(setDoctorId)} options={opts?.doctors} />
-        <FilterSelect label="Department" value={departmentId} onChange={resetPage(setDepartmentId)} options={opts?.departments} />
+        <TextField type="date" size="small" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => paging.onFilterChange(setFrom)(e.target.value)} sx={{ minWidth: 160 }} />
+        <TextField type="date" size="small" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => paging.onFilterChange(setTo)(e.target.value)} sx={{ minWidth: 160 }} />
+        <FilterSelect label="Doctor" value={doctorId} onChange={paging.onFilterChange(setDoctorId)} options={opts?.doctors} />
+        <FilterSelect label="Department" value={departmentId} onChange={paging.onFilterChange(setDepartmentId)} options={opts?.departments} />
       </Toolbar>
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
@@ -177,17 +188,8 @@ export function OpBills() {
           <SimpleTable title="OPD invoices" head={["Invoice", "Patient", "UHID", "Date", "Net", "Paid", "Balance", "Status"]}
             rows={rows.map(toRow)}
             exportRows={fetchAllRows}
-            period={`${dayjs(from).format("DD MMM YYYY")} to ${dayjs(to).format("DD MMM YYYY")}`} />
-          <TablePagination
-            component="div"
-            count={data.totalRows ?? rows.length}
-            page={page}
-            onPageChange={(_, p) => setPage(p)}
-            rowsPerPage={pageSize}
-            rowsPerPageOptions={[50, 100, 250]}
-            onRowsPerPageChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }}
-            sx={{ opacity: isFetching ? 0.6 : 1 }}
-          />
+            period={`${dayjs(from).format("DD MMM YYYY")} to ${dayjs(to).format("DD MMM YYYY")}`}
+            pagination={paging.bind(data.totalRows ?? rows.length, isFetching)} />
         </Box>
       )}
     </Box>
@@ -426,17 +428,26 @@ export function OpdVisitRegister() {
   const [statusId, setStatusId] = useState("");
   const [visitType, setVisitType] = useState("");
   const { data: opts } = useFilterOptions();
+  const paging = useReportPaging();
 
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["report-opd-visits", range.from, range.to, doctorId, departmentId, statusId, visitType],
+  const visitParams = {
+    from: range.from, to: range.to,
+    doctorId: doctorId || undefined, departmentId: departmentId || undefined, statusId: statusId || undefined,
+    visitType: visitType || undefined,
+  };
+
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["report-opd-visits", range.from, range.to, doctorId, departmentId, statusId, visitType, paging.page, paging.pageSize],
     queryFn: async () => (await axiosInstance.get("/reception/reports/opd-visits", {
-      params: {
-        from: range.from, to: range.to,
-        doctorId: doctorId || undefined, departmentId: departmentId || undefined, statusId: statusId || undefined,
-        visitType: visitType || undefined
-      }
-    })).data.data
+      params: { ...visitParams, ...paging.params }
+    })).data.data,
+    placeholderData: (prev) => prev,
   });
+
+  // The day-wise summary and every KPI above cover the whole period — only the
+  // visit detail below is a page, and its export goes back for all of it.
+  const allVisitRows = async () =>
+    ((await axiosInstance.get("/reception/reports/opd-visits", { params: visitParams })).data.data?.rows ?? []) as Record<string, unknown>[];
 
   const rows: any[] = data?.rows ?? [];
   const byDate: any[] = data?.byDate ?? [];
@@ -444,12 +455,12 @@ export function OpdVisitRegister() {
 
   return (
     <Box>
-      <ReportFilters value={range} onChange={setRange}>
-        <FilterSelect label="Doctor" value={doctorId} onChange={setDoctorId} options={opts?.doctors} />
-        <FilterSelect label="Department" value={departmentId} onChange={setDepartmentId} options={opts?.departments} />
-        <FilterSelect label="Status" value={statusId} onChange={setStatusId} options={opts?.appointmentStatuses} />
+      <ReportFilters value={range} onChange={paging.onFilterChange(setRange)}>
+        <FilterSelect label="Doctor" value={doctorId} onChange={paging.onFilterChange(setDoctorId)} options={opts?.doctors} />
+        <FilterSelect label="Department" value={departmentId} onChange={paging.onFilterChange(setDepartmentId)} options={opts?.departments} />
+        <FilterSelect label="Status" value={statusId} onChange={paging.onFilterChange(setStatusId)} options={opts?.appointmentStatuses} />
         <FilterSelect
-          label="Visit type" value={visitType} onChange={setVisitType}
+          label="Visit type" value={visitType} onChange={paging.onFilterChange(setVisitType)}
           options={[{ id: "First visit", name: "First visit" }, { id: "Repeat", name: "Repeat" }, { id: "Follow-up", name: "Follow-up" }]}
         />
       </ReportFilters>
@@ -501,7 +512,8 @@ export function OpdVisitRegister() {
             ]}
             rows={rows}
             emptyText="No OPD visits in this period."
-            truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+            pagination={paging.bind(data.totalRows ?? rows.length, isFetching)}
+            exportRows={allVisitRows}
           />
         </Box>
       )}

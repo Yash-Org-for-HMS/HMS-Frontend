@@ -11,10 +11,18 @@ import { useCallback, useState } from "react";
  * `params` is spread straight into the request. Sending `page` at all is what
  * asks the server for a page — omit it and the endpoints return the whole
  * report, which is how the exports get everything.
+ *
+ * `prefix` is for a report that returns TWO detail lists (the lab register's
+ * lab and radiology halves; the nurse report's vitals and abnormal readings).
+ * One shared `page` would move both tables at once, so each list gets its own
+ * hook with its own key pair — `labPage`/`labLimit`, `radPage`/`radLimit` —
+ * matching what pageRows() reads on the server.
  */
-export function useReportPaging(initialSize = 100) {
+export function useReportPaging({ size = 100, prefix }: { size?: number; prefix?: string } = {}) {
   const [page, setPage] = useState(0);          // zero-based, as MUI counts
-  const [pageSize, setPageSize] = useState(initialSize);
+  const [pageSize, setPageSize] = useState(size);
+  const pageKey = prefix ? `${prefix}Page` : "page";
+  const limitKey = prefix ? `${prefix}Limit` : "limit";
 
   /** Wrap a filter's setter so changing it returns to the first page. */
   const onFilterChange = useCallback(
@@ -26,7 +34,7 @@ export function useReportPaging(initialSize = 100) {
     page,
     pageSize,
     /** Query params for the request — server pages are 1-based. */
-    params: { page: page + 1, limit: pageSize },
+    params: { [pageKey]: page + 1, [limitKey]: pageSize } as Record<string, number>,
     onPageChange: setPage,
     onPageSizeChange: useCallback((size: number) => { setPageSize(size); setPage(0); }, []),
     onFilterChange,
