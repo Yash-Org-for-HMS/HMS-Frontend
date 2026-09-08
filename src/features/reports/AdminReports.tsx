@@ -495,20 +495,24 @@ function TenantSubscriptionsReport() {
           <Typography variant="body2" sx={{ color: "text.secondary", py: 2, textAlign: "center" }}>No tenants match this filter.</Typography>
         ) : (
           <TableContainer sx={{ maxHeight: 620, overflowX: "auto" }}>
-            <Table size="small" stickyHeader sx={{ minWidth: 1080 }}>
+            <Table size="small" stickyHeader sx={{ minWidth: 820 }}>
               <TableHead>
                 <TableRow>
-                  {["Hospital", "Plan", "Cycle", "Price", "Paid until", "Time left", "Next due", "State", ""].map((h, i) => (
+                  {/* Seven columns, not nine. Cycle folded into Price ("₹40,000/mo"
+                      carries both) and the countdown folded under Paid until,
+                      because at nine the table was wider than its pane and
+                      something always scrolled out of reach — first the row
+                      action, then, once that was pinned, the state chip. Making
+                      it fit beats choosing which column to lose. */}
+                  {["Hospital", "Plan", "Price", "Paid until", "Next due", "State", ""].map((h, i) => (
                     <TableCell
                       key={h}
                       sx={{
                         color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase",
                         borderColor: "divider", bgcolor: "background.paper", whiteSpace: "nowrap",
-                        // The action column stays put while the rest scrolls
-                        // under it: this table is wider than the pane at every
-                        // normal width, and a row action you can only reach by
-                        // scrolling sideways is one nobody finds.
-                        ...(i === 8 ? { position: "sticky", right: 0, zIndex: 3, borderLeft: "1px solid", borderLeftColor: "divider" } : {}),
+                        // Belt and braces: on a narrow window the action still
+                        // stays put rather than scrolling away.
+                        ...(i === 6 ? { position: "sticky", right: 0, zIndex: 3, borderLeft: "1px solid", borderLeftColor: "divider" } : {}),
                       }}
                     >{h}</TableCell>
                   ))}
@@ -529,18 +533,24 @@ function TenantSubscriptionsReport() {
                         <Typography variant="caption" sx={{ color: "text.secondary" }}>{r.hospitalCode || "—"}</Typography>
                       </TableCell>
                       <TableCell sx={{ borderColor: "divider" }}>{r.planName || "—"}</TableCell>
-                      <TableCell sx={{ borderColor: "divider" }}>{r.billingCycle === "ANNUAL" ? "Annual" : "Monthly"}</TableCell>
                       <TableCell sx={{ borderColor: "divider", whiteSpace: "nowrap" }}>
-                        {r.price == null ? "—" : inr(r.price)}
+                        {r.price == null ? "—" : `${inr(r.price)}${r.billingCycle === "ANNUAL" ? "/yr" : "/mo"}`}
+                        {/* Annual rows also carry the monthly figure, so a
+                            yearly tenant and a monthly one can be compared
+                            without doing the division in your head. */}
                         {r.billingCycle === "ANNUAL" && r.monthlyEquivalent != null && (
                           <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{inr(r.monthlyEquivalent)}/mo</Typography>
                         )}
                       </TableCell>
                       <TableCell sx={{ borderColor: "divider", whiteSpace: "nowrap" }}>
-                        {r.paidUntil ? formatDate(r.paidUntil) : <Typography variant="caption" sx={{ color: "text.secondary" }}>never paid</Typography>}
-                      </TableCell>
-                      <TableCell sx={{ borderColor: "divider", whiteSpace: "nowrap", color: leftColor, fontWeight: 600 }}>
-                        {daysText(r.daysLeft)}
+                        {r.paidUntil ? (
+                          <>
+                            {formatDate(r.paidUntil)}
+                            <Typography variant="caption" sx={{ color: leftColor, fontWeight: 700, display: "block" }}>
+                              {r.daysLeft != null && r.daysLeft < 0 ? `lapsed ${daysText(r.daysLeft)}` : daysText(r.daysLeft)}
+                            </Typography>
+                          </>
+                        ) : <Typography variant="caption" sx={{ color: "text.secondary" }}>never paid</Typography>}
                       </TableCell>
                       <TableCell sx={{ borderColor: "divider", whiteSpace: "nowrap" }}>
                         {r.nextDueDate ? (
@@ -551,7 +561,7 @@ function TenantSubscriptionsReport() {
                               {r.daysOverdue > 0 ? `${r.daysOverdue} day${r.daysOverdue === 1 ? "" : "s"} overdue` : "not yet due"}
                             </Typography>
                           </>
-                        ) : "—"}
+                        ) : <Typography variant="caption" sx={{ color: "text.secondary" }}>nothing raised</Typography>}
                       </TableCell>
                       <TableCell sx={{ borderColor: "divider" }}>
                         <Tooltip title={s.note}>
