@@ -269,6 +269,13 @@ function App() {
             <Route path="/hospital/gst-report" element={elGated(GstReport, "Billing", "GST Report")} />
             <Route path="/hospital/refund-approvals" element={elGated(RefundApprovals, "Billing", "Refund Approvals")} />
             <Route path="/hospital/reports" element={el(Reports)} />
+            {/* Insurance and nursing reports existed only at /reception/claims/reports
+                and /nurse/reports, so a hospital admin had no way to them from their
+                own panel — the Reports hub does not carry them because each is a
+                self-contained page with its own navigation. Same components,
+                reachable from where an admin actually looks. */}
+            <Route path="/hospital/claims/reports" element={elGated(ClaimReports, "Claims", "Insurance Reports")} />
+            <Route path="/hospital/nurse-reports" element={elGated(NurseReports, "IPD", "Nursing Reports")} />
             <Route path="/hospital/module-access" element={el(ModuleAccess)} />
             <Route path="/hospital/doctors" element={el(DoctorsList)} />
 

@@ -54,6 +54,8 @@ export default function HospitalLayout() {
     // different people, so this never appears for the desk that raises them.
     { text: "Refund Approvals", icon: <AccountBalanceRounded />, path: "/hospital/refund-approvals", adminOnly: true, module: "Billing", section: "Overview" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/hospital/reports", section: "Overview" },
+    { text: "Insurance Reports", icon: <AssessmentRounded />, path: "/hospital/claims/reports", adminOnly: true, module: "Claims", section: "Overview" },
+    { text: "Nursing Reports", icon: <AssessmentRounded />, path: "/hospital/nurse-reports", adminOnly: true, module: "IPD", section: "Overview" },
     // Operations: hospital-wide, read-oriented windows into day-to-day activity.
     // Admin-only (mirrors the backend org-wide data view for H_ADMIN); these
     // reuse the existing reception/IPD pages, mounted under the admin shell.

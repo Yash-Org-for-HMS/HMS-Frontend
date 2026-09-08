@@ -74,13 +74,26 @@ interface DashboardStats {
   recentActivities: Array<{
     activityLogId: string;
     moduleName: string | null;
+    /** A readable sentence — "Rajesh Sharma created an invoice". */
     description: string;
+    /** Which tenant it happened in; null for platform-level actions. */
+    hospitalName?: string | null;
+    /** Raw action code, so a destructive one can be marked. */
+    actionType?: string | null;
     createdAt: string;
   }>;
 }
 
 /** "demo_done" -> "Demo done". Raw enum values reach the UI in a few places. */
 const titleCase = (s: string) => s.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+
+/** Red for anything that removed or blocked something, amber for a refusal. */
+const activityColor = (action?: string | null) => {
+  const a = (action || "").toUpperCase();
+  if (/DELETE|SUSPEND|CANCEL|VOID|REJECT|DEACTIVATE/.test(a)) return "#ef4444";
+  if (/FAIL|LOCK/.test(a)) return "#f59e0b";
+  return "#3b82f6";
+};
 
 const GroupCard = ({ title, icon, color, primary, subs }: any) => (
   <Paper
@@ -487,10 +500,20 @@ export default function Dashboard() {
                   borderTop: i === 0 ? "none" : "1px solid", borderColor: "divider",
                 }}
               >
-                <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: BLUE, flexShrink: 0 }} />
+                {/* Destructive actions get a red dot. Ten identical blue dots
+                    is decoration; the point of a feed is that something
+                    unusual catches the eye. */}
+                <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: activityColor(a.actionType), flexShrink: 0 }} />
                 <Typography variant="body2" sx={{ flex: 1, minWidth: 0, color: "text.primary" }} noWrap>
                   {a.description}
                 </Typography>
+                {/* Which tenant, because "created an invoice" across a whole
+                    platform means nothing without knowing whose. */}
+                {a.hospitalName && (
+                  <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600, flexShrink: 0, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {a.hospitalName}
+                  </Typography>
+                )}
                 {a.moduleName && (
                   <Typography variant="caption" sx={{ color: "text.secondary", flexShrink: 0 }}>{a.moduleName}</Typography>
                 )}

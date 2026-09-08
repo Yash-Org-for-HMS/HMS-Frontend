@@ -184,6 +184,18 @@ export function OpBills() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} label="Invoices" value={String(data.totals.invoices)} accent={ACCENT} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Billed" value={inr(data.totals.billed)} accent="#8b5cf6" /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} label="Collected" value={inr(data.totals.collected)} accent={SEMANTIC.success} /></Grid>
+            {/* What is still owed. Every row already carried a balance and
+                nothing added it up, so the report showed billed and collected
+                and left the reader to subtract — which is the one figure a
+                desk actually chases. */}
+            <Grid size={{ xs: 6, md: 3 }}>
+              <KpiCard
+                icon={<AccountBalanceWalletRounded />} label="Outstanding"
+                value={inr(data.totals.outstanding ?? 0)}
+                sub={`across ${data.totals.unpaidInvoices ?? 0} unpaid invoice${(data.totals.unpaidInvoices ?? 0) === 1 ? "" : "s"}`}
+                accent={Number(data.totals.outstanding ?? 0) > 0 ? SEMANTIC.danger : SEMANTIC.success}
+              />
+            </Grid>
           </Grid>
           <SimpleTable title="OPD invoices" head={["Invoice", "Patient", "UHID", "Date", "Net", "Paid", "Balance", "Status"]}
             rows={rows.map(toRow)}
