@@ -383,14 +383,17 @@ const SUB_STATE: Record<TenantSubscriptionState, { label: string; color: string;
   DUE_SOON: { label: "Due soon", color: SEMANTIC.warning, note: "Subscription ends within 14 days" },
   OVERDUE: { label: "Overdue", color: SEMANTIC.danger, note: "Past a due date, still inside the grace window" },
   PAST_GRACE: { label: "Access at risk", color: SEMANTIC.danger, note: "Grace window closed — locked out at next login" },
-  NEVER_PAID: { label: "Never paid", color: SEMANTIC.danger, note: "Has a plan but has never settled an invoice" },
+  AWAITING_FIRST: { label: "Awaiting 1st payment", color: SEMANTIC.warning, note: "Invoiced for the first time and that invoice is not due yet — nothing is wrong here" },
+  NOT_INVOICED: { label: "Not invoiced", color: SEMANTIC.danger, note: "On a plan, but no invoice has ever been raised — revenue nobody is asking for" },
   TRIAL: { label: "On trial", color: "#8b5cf6", note: "Inside a trial — not billed yet" },
   NO_PLAN: { label: "No plan", color: NEUTRAL.muted, note: "No plan assigned, so nothing to bill" },
 };
 
 const SUB_FILTERS: { key: string; label: string; match: (r: TenantSubscriptionRow) => boolean }[] = [
   { key: "all", label: "All", match: () => true },
-  { key: "attention", label: "Needs attention", match: (r) => ["OVERDUE", "PAST_GRACE", "NEVER_PAID"].includes(r.state) },
+  // Awaiting a first payment is deliberately NOT attention: the invoice is out
+  // and not due yet. Never having been invoiced at all is.
+  { key: "attention", label: "Needs attention", match: (r) => ["OVERDUE", "PAST_GRACE", "NOT_INVOICED"].includes(r.state) },
   { key: "expiring", label: "Expiring in 30 days", match: (r) => r.daysLeft != null && r.daysLeft >= 0 && r.daysLeft <= 30 },
   { key: "trial", label: "On trial", match: (r) => r.state === "TRIAL" },
   { key: "noplan", label: "No plan", match: (r) => r.state === "NO_PLAN" },
@@ -458,7 +461,9 @@ function TenantSubscriptionsReport() {
           <Tooltip title="Past a due date. Those beyond the grace window are locked out at their next login.">
             <Box>
               <KpiCard icon={<WarningAmberRounded />} label="Overdue" value={t.overdue}
-                sub={t.pastGrace ? `${t.pastGrace} past grace — access at risk` : "all still inside grace"}
+                sub={t.pastGrace ? `${t.pastGrace} past grace — access at risk`
+                  : t.notInvoiced ? `${t.notInvoiced} never invoiced`
+                    : "all still inside grace"}
                 accent={t.overdue ? SEMANTIC.danger : NEUTRAL.muted} />
             </Box>
           </Tooltip>

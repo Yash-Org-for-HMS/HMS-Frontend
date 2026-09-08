@@ -142,14 +142,15 @@ export interface AdminDashboardStats {
  *
  * TRIAL      inside a trial; not billed yet, so not overdue either
  * NO_PLAN    live tenant with no plan assigned — nothing to bill
- * NEVER_PAID has a plan but has never settled an invoice
+ * AWAITING_FIRST invoiced for the first time, and that invoice is not due yet
+ * NOT_INVOICED   on a plan but no invoice has ever been raised
  * PAST_GRACE overdue long enough that access is cut at next login
  * OVERDUE    past a due date, still inside the grace window
  * DUE_SOON   paid, but the paid-for period ends within a fortnight
  * ACTIVE     paid up with room to spare
  */
 export type TenantSubscriptionState =
-  | "TRIAL" | "NO_PLAN" | "NEVER_PAID" | "PAST_GRACE" | "OVERDUE" | "DUE_SOON" | "ACTIVE";
+  | "TRIAL" | "NO_PLAN" | "AWAITING_FIRST" | "NOT_INVOICED" | "PAST_GRACE" | "OVERDUE" | "DUE_SOON" | "ACTIVE";
 
 export interface TenantSubscriptionRow {
   hospitalId: string;
@@ -184,6 +185,7 @@ export interface TenantSubscriptionsResponse {
     noPlan: number;
     overdue: number;
     pastGrace: number;
+    notInvoiced: number;
     expiringIn30Days: number;
     annual: number;
     monthly: number;
