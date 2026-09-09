@@ -114,6 +114,25 @@ export default function TrialsList() {
     }
   };
 
+/**
+ * What the row should SAY this trial's outcome is.
+ *
+ * "lost" lives on the LEAD — TrialStatus only has active / expired /
+ * converted, and marking a prospect lost deliberately leaves the trial at
+ * "expired" because it really did expire. Reading only the trial column meant
+ * cancelling a prospect changed nothing on this screen: the chip still said
+ * Expired, and the "Cancel (mark as lost)" action stayed on the menu with
+ * nothing left to do.
+ */
+function outcomeOf(trial: { trialStatus: string; lead?: { leadStatus?: string | null } | null }) {
+  if (trial.lead?.leadStatus === "lost") return { key: "lost", label: "Lost", color: "error" as const };
+  if (trial.trialStatus === "converted" || trial.lead?.leadStatus === "converted") {
+    return { key: "converted", label: "Converted", color: "success" as const };
+  }
+  if (trial.trialStatus === "active") return { key: "active", label: "Active", color: "primary" as const };
+  return { key: "expired", label: "Expired", color: "error" as const };
+}
+
   // Cancel the trial and move the lead to "Lost".
   const handleMarkLost = async () => {
     const trial = selectedTrial;
@@ -200,6 +219,10 @@ export default function TrialsList() {
           <MenuItem value="active">{t("trials.statusActive")}</MenuItem>
           <MenuItem value="expired">{t("trials.statusExpired")}</MenuItem>
           <MenuItem value="converted">{t("trials.statusConverted")}</MenuItem>
+          {/* Not a TrialStatus — it lives on the lead. Without it the cancelled
+              prospects were only reachable under "Expired", which is the label
+              their row no longer carries. */}
+          <MenuItem value="lost">Lost</MenuItem>
         </TextField>
       </FilterBar>
 
@@ -256,12 +279,17 @@ export default function TrialsList() {
                       {trial.trialStatus === "active" ? calculateDaysRemaining(trial.trialEndDate) : "-"}
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={t(`trials.status${trial.trialStatus.charAt(0).toUpperCase() + trial.trialStatus.slice(1)}`)}
-                        color={trialStatusColor(trial.trialStatus) as any}
-                        size="small"
-                        sx={{ fontWeight: 600 }}
-                      />
+                      {(() => {
+                        const o = outcomeOf(trial);
+                        return (
+                          <Chip
+                            label={o.key === "lost" ? o.label : t(`trials.status${o.label}`)}
+                            color={o.color}
+                            size="small"
+                            sx={{ fontWeight: 600 }}
+                          />
+                        );
+                      })()}
                     </TableCell>
                     <TableCell align="right">
                       <IconButton onClick={(e) => openActionMenu(e, trial)} sx={{ color: "text.secondary" }}>
@@ -301,6 +329,18 @@ export default function TrialsList() {
       >
         {selectedTrial?.trialStatus === "converted"
           ? [<MenuItem key="done" disabled>Already converted to a hospital</MenuItem>]
+          : selectedTrial && outcomeOf(selectedTrial).key === "lost"
+            // Already cancelled. Only "they came back" is left: offering
+            // "Cancel (mark as lost)" again was the bug — it re-wrote a lead
+            // that was already lost and appeared to do nothing. Extend and
+            // Expire are gone too; reviving the trial while the lead stays
+            // lost would just create a new disagreement between the two.
+            ? [
+                <MenuItem key="lost-note" disabled>Marked as lost</MenuItem>,
+                <MenuItem key="convert" onClick={openConvert}>
+                  <RocketLaunchRounded sx={{ mr: 1.5, fontSize: 20, color: SEMANTIC.successLight }} /> Convert anyway (they came back)
+                </MenuItem>,
+              ]
           : [
               <MenuItem key="convert" onClick={openConvert}>
                 <RocketLaunchRounded sx={{ mr: 1.5, fontSize: 20, color: SEMANTIC.successLight }} /> Convert to hospital &amp; assign plan
