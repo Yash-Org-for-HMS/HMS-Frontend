@@ -8,6 +8,11 @@
  *      "Expires today".
  *   2. The buckets are NOT disjoint: a tenant can be suspended and have an
  *      incomplete profile, so summing their lengths double-counts.
+ *   3. A trial whose LEAD is already closed needs nobody. Marking a lead lost
+ *      does not touch its trial row — and should not, because the trial really
+ *      did expire and overwriting that would lose the difference between
+ *      "expired, then we gave up" and "lost before it ever expired". The
+ *      outcome lives on the lead, so this list has to read it.
  */
 
 /** Days from now until `date`; negative once it is in the past. */
@@ -21,6 +26,23 @@ export interface TrialLike {
   hospitalTrialId: string;
   trialStatus: string;
   trialEndDate: string;
+  /** The trial's lead, as /trials returns it. Absent on an orphaned trial. */
+  lead?: { leadStatus?: string | null } | null;
+}
+
+/**
+ * A lead nobody needs to chase any more.
+ *
+ * "lost" is the one that was broken: it is set from the Leads screen, writes
+ * only the lead row, and left the expired trial sitting in Action Needed
+ * forever with no way to clear it. "converted" already cascades to the trial,
+ * so it is belt-and-braces here rather than a fix.
+ */
+const CLOSED_LEAD = new Set(["lost", "converted"]);
+
+function leadClosed(t: TrialLike): boolean {
+  const s = t.lead?.leadStatus;
+  return !!s && CLOSED_LEAD.has(s);
 }
 
 export interface HospitalLike {
@@ -60,6 +82,7 @@ export function actionBuckets<T extends TrialLike, H extends HospitalLike>(
   // Bounded at BOTH ends: still running, and due within the window.
   const expiring = trials
     .filter((t) => {
+      if (leadClosed(t)) return false;
       if (t.trialStatus !== "active") return false;
       const d = daysUntil(t.trialEndDate, now);
       return d >= 0 && d <= EXPIRY_WINDOW_DAYS;
@@ -69,7 +92,7 @@ export function actionBuckets<T extends TrialLike, H extends HospitalLike>(
   // Lapsed trials join the expired list rather than falling off the page —
   // dropping them would be worse than the mislabelling this replaces.
   const expired = trials
-    .filter((t) => t.trialStatus === "expired" || lapsed(t, now))
+    .filter((t) => !leadClosed(t) && (t.trialStatus === "expired" || lapsed(t, now)))
     .sort((a, b) => daysUntil(b.trialEndDate, now) - daysUntil(a.trialEndDate, now));
 
   // The DB status column is flipped lazily (at the tenant admin's next login,

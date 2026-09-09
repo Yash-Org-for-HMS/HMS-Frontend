@@ -71,6 +71,35 @@ describe("trial buckets", () => {
     expect(r.expired.map((t) => t.hospitalTrialId)).toEqual(["d", "c"]);
   });
 
+  // The reported bug: a lead marked lost left its expired trial listed here
+  // with no way to clear it, because marking a lead lost writes only the lead.
+  it("drops an expired trial once its lead is marked lost", () => {
+    const t = { ...trial("t1", "expired", -5), lead: { leadStatus: "lost" } };
+    const r = actionBuckets([t], [], NOW);
+    expect(r.expired).toEqual([]);
+    expect(r.trialCount).toBe(0);
+  });
+
+  it("drops a still-expiring trial once its lead is marked lost", () => {
+    const t = { ...trial("t1", "active", 3), lead: { leadStatus: "lost" } };
+    expect(actionBuckets([t], [], NOW).expiring).toEqual([]);
+  });
+
+  it("drops a trial whose lead converted", () => {
+    const t = { ...trial("t1", "expired", -2), lead: { leadStatus: "converted" } };
+    expect(actionBuckets([t], [], NOW).expired).toEqual([]);
+  });
+
+  it("keeps a trial whose lead is still open", () => {
+    const t = { ...trial("t1", "expired", -2), lead: { leadStatus: "trialing" } };
+    expect(actionBuckets([t], [], NOW).expired.map((x) => x.hospitalTrialId)).toEqual(["t1"]);
+  });
+
+  it("keeps a trial with no lead attached rather than silently hiding it", () => {
+    const r = actionBuckets([trial("t1", "expired", -2)], [], NOW);
+    expect(r.expired.map((t) => t.hospitalTrialId)).toEqual(["t1"]);
+  });
+
   it("ignores a trial that is neither active nor expired", () => {
     const r = actionBuckets([trial("conv", "converted", -3)], [], NOW);
     expect(r.expiring).toEqual([]);
