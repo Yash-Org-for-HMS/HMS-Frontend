@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import {
   MedicalServicesRounded, BuildRounded, CheckCircleRounded, CleaningServicesRounded,
-  AddRounded, EditRounded, DeleteOutlineRounded,
+  PersonRounded, AddRounded, EditRounded, DeleteOutlineRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -27,6 +27,14 @@ type Theatre = {
   status: string;
   isActive: boolean;
   notes: string | null;
+  /** Who is in it right now — null unless the theatre is occupied. */
+  occupant: {
+    admissionId: string;
+    admissionNumber: string;
+    patientName: string;
+    uhid: string;
+    heldBed: string | null;
+  } | null;
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -155,6 +163,21 @@ export default function TheatreBoard({ manage = false }: { manage?: boolean } = 
                     size="small" label={STATUS_LABEL[t.status] ?? t.status}
                     sx={{ bgcolor: `${color}1a`, color, fontWeight: 700, mb: 1 }}
                   />
+                  {/* The board's whole question is "whose case is running in
+                      there" — a status chip on its own answers the easy half. */}
+                  {t.occupant && (
+                    <Box sx={{ mb: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary", display: "flex", alignItems: "center", gap: 0.5 }} noWrap>
+                        <PersonRounded sx={{ fontSize: 15, color }} /> {t.occupant.patientName}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }} noWrap>
+                        {t.occupant.uhid} · {t.occupant.admissionNumber}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }} noWrap>
+                        {t.occupant.heldBed ? `Bed ${t.occupant.heldBed} is being held` : "No bed held"}
+                      </Typography>
+                    </Box>
+                  )}
                   <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
                     {TYPE_LABEL[t.theatreType] ?? t.theatreType}
                     {t.theatreCode ? ` · ${t.theatreCode}` : ""}

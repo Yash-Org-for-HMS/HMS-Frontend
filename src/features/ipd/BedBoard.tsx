@@ -41,6 +41,14 @@ type BoardBed = {
 type PickTheatre = { operatingTheatreId: string; theatreName: string; status: string };
 type PickBed = { bedId: string; bedNumber: string; label?: string };
 
+/** Where the occupant is, when it isn't this bed. Empty string when it is. */
+function awayText(o?: BoardOccupant | null): string {
+  if (!o?.location || o.location === "BED") return "";
+  if (o.location === "OT") return `In ${o.theatreName || "theatre"}`;
+  if (o.location === "RECOVERY") return "In recovery";
+  return "In pre-op";
+}
+
 // Read-only structure + day-to-day bed STATUS changes only. Adding/editing
 // wards, rooms, and beds is hospital configuration, managed from the Hospital
 // Admin panel (Ward & Bed Setup) — not from Reception.
@@ -116,7 +124,10 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
                       {r.beds.length === 0 ? <Typography variant="caption" sx={{ color: "text.disabled" }}>No beds</Typography> : r.beds.map((b: BoardBed) => {
                         const color = STATUS_COLOR[b.status] || NEUTRAL.muted;
                         return (
-                          <Tooltip key={b.bedId} title={b.occupant ? `${b.occupant.patientName} (${b.occupant.uhid})` : b.status}>
+                          // The tile is 130px wide, so a theatre called
+                          // "Cardiac Theatre 2" clips. The tooltip is where
+                          // the full name has to be readable.
+                          <Tooltip key={b.bedId} title={b.occupant ? `${b.occupant.patientName} (${b.occupant.uhid})${awayText(b.occupant) ? ` — ${awayText(b.occupant)}` : ""}` : b.status}>
                             <Box onClick={readOnly ? undefined : (e) => setBedMenu({ anchor: e.currentTarget, bed: b })}
                               sx={{ cursor: readOnly ? "default" : "pointer", width: 130, p: 1.25, borderRadius: 2, border: "1px solid", borderColor: `${color}55`, bgcolor: `${color}12`, ...(readOnly ? {} : { "&:hover": { borderColor: color } }) }}>
                               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -130,12 +141,10 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
                                   {/* A patient in theatre is still admitted to this bed, and is not
                                       in it. Saying so is the whole point of the movement work —
                                       a nurse looking for them should not be sent to an empty bed. */}
-                                  {b.occupant.location && b.occupant.location !== "BED" && (
+                                  {awayText(b.occupant) && (
                                     <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 700, display: "flex", alignItems: "center", gap: 0.3 }} noWrap>
                                       <MedicalServicesRounded sx={{ fontSize: 12 }} />
-                                      {b.occupant.location === "OT" ? `In ${b.occupant.theatreName || "theatre"}`
-                                        : b.occupant.location === "RECOVERY" ? "In recovery"
-                                        : "In pre-op"}
+                                      {awayText(b.occupant)}
                                     </Typography>
                                   )}
                                 </>
@@ -157,7 +166,7 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
       {/* Bed status menu */}
       <Menu anchorEl={bedMenu.anchor} open={Boolean(bedMenu.anchor)} onClose={() => setBedMenu({ anchor: null, bed: null })}>
         {bedMenu.bed?.status === "OCCUPIED"
-          ? (bedMenu.bed?.occupant?.location && bedMenu.bed.occupant.location !== "BED"
+          ? (awayText(bedMenu.bed?.occupant)
             ? [
                 <MenuItem key="back" onClick={() => setMoveDialog({ mode: "return", bed: bedMenu.bed })}>
                   <MeetingRoomRounded fontSize="small" sx={{ mr: 1, color: SEMANTIC.success }} /> Bring back from theatre
@@ -202,9 +211,13 @@ function TheatreMoveDialog({ mode, bed, onClose, onDone }: { mode: "send" | "ret
   const toast = useToast();
   const [theatreId, setTheatreId] = useState("");
   const [releaseBed, setReleaseBed] = useState(false);
-  const [toBedId, setToBedId] = useState("");
   const [reason, setReason] = useState("");
   const admissionId = bed?.occupant?.admissionId;
+  // A patient shown on a bed tile while away in theatre is holding that bed,
+  // so it is the obvious place to bring them back to — and it is not in the
+  // free-bed list, since it is still marked occupied for them.
+  const heldBedId = mode === "return" && bed?.bedId ? bed.bedId : "";
+  const [toBedId, setToBedId] = useState(heldBedId);
 
   const { data: theatres } = useQuery({
     queryKey: ["ot-theatres-pick"],
@@ -236,6 +249,7 @@ function TheatreMoveDialog({ mode, bed, onClose, onDone }: { mode: "send" | "ret
       <DialogContent>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
           {bed?.occupant?.patientName} · {bed?.occupant?.uhid} · Bed {bed?.bedNumber}
+          {awayText(bed?.occupant) ? ` · ${awayText(bed?.occupant)}` : ""}
         </Typography>
         <Stack spacing={2}>
           {mode === "send" ? (
@@ -255,7 +269,12 @@ function TheatreMoveDialog({ mode, bed, onClose, onDone }: { mode: "send" | "ret
             </>
           ) : (
             <TextField select label="Where to" fullWidth value={toBedId} onChange={(e) => setToBedId(e.target.value)}
-              helperText="Leave blank to send them to recovery">
+              helperText={heldBedId
+                ? `Bed ${bed?.bedNumber} is being held for them either way — recovery just records that they are not in it yet`
+                : "No bed is being held — pick one, or send them to recovery"}>
+              {heldBedId && (
+                <MenuItem value={heldBedId}>Back to bed {bed?.bedNumber} (held for them)</MenuItem>
+              )}
               <MenuItem value=""><em>Recovery</em></MenuItem>
               {(freeBeds ?? []).map((b: PickBed) => (
                 <MenuItem key={b.bedId} value={b.bedId}>{b.label || b.bedNumber}</MenuItem>
