@@ -55,6 +55,17 @@ const GIVERS = [
   { value: "NEXT_OF_KIN", label: "Next of kin" },
   { value: "GUARDIAN", label: "Guardian" },
 ];
+const CHARGE_TYPES: { value: string; label: string }[] = [
+  { value: "SURGEON_FEE", label: "Surgeon fee" },
+  { value: "ASSISTANT_FEE", label: "Assistant fee" },
+  { value: "ANAESTHETIST_FEE", label: "Anaesthetist fee" },
+  { value: "OT_CHARGE", label: "Theatre charge" },
+  { value: "ANAESTHESIA_CHARGE", label: "Anaesthesia charge" },
+  { value: "RECOVERY_CHARGE", label: "Recovery charge" },
+  { value: "CONSUMABLE", label: "Consumable" },
+  { value: "IMPLANT", label: "Implant" },
+  { value: "OTHER", label: "Other" },
+];
 const TIMES: { key: string; label: string }[] = [
   { key: "wheeledInAt", label: "Wheeled in" },
   { key: "anaesthesiaStart", label: "Anaesthesia start" },
@@ -130,6 +141,7 @@ export default function OtCaseRecord() {
           <Tab label="Procedure" />
           <Tab label="Implants" />
           <Tab label="Consent" />
+          <Tab label="Billing" />
         </Tabs>
       </Paper>
 
@@ -139,7 +151,155 @@ export default function OtCaseRecord() {
       {tab === 3 && <ProcedureTab id={id} record={recordQ.data?.record} onSaved={refreshAll} />}
       {tab === 4 && <ImplantsTab id={id} implants={recordQ.data?.implants ?? []} onSaved={refreshAll} />}
       {tab === 5 && <ConsentTab id={id} consents={consentsQ.data ?? []} onSaved={refreshAll} />}
+      {tab === 6 && <BillingTab id={id} />}
     </Box>
+  );
+}
+
+// ── Billing ──────────────────────────────────────────────────────────────────
+
+/**
+ * The theatre bill, line by line.
+ *
+ * "Auto-price" builds the standard lines from what the case already knows — who
+ * was in the room, how long the theatre was used for, which implants went in.
+ * It adds only what is missing, so pressing it twice is safe, and it says so
+ * rather than silently doing nothing.
+ */
+function BillingTab({ id }: { id: string }) {
+  const toast = useToast();
+  const qc = useQueryClient();
+  const [f, setF] = useState({ chargeType: "OTHER", description: "", unitPrice: "", quantity: "1", taxPercent: "0" });
+  const [rates, setRates] = useState({ surgeonFee: "", assistantFee: "", anaesthetistFee: "", otHourlyRate: "", anaesthesiaCharge: "", recoveryCharge: "" });
+
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["ot-case-charges", id],
+    queryFn: async () => (await axiosInstance.get(`/ipd/ot/cases/${id}/charges`)).data.data,
+  });
+
+  const add = useMutation({
+    mutationFn: async () => axiosInstance.post(`/ipd/ot/cases/${id}/charges`, {
+      chargeType: f.chargeType, description: f.description.trim(),
+      unitPrice: f.unitPrice ? Number(f.unitPrice) : 0,
+      quantity: Number(f.quantity) || 1,
+      taxPercent: f.taxPercent ? Number(f.taxPercent) : 0,
+    }),
+    onSuccess: () => { toast.success("Line added"); setF({ ...f, description: "", unitPrice: "" }); refetch(); },
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not add the line")),
+  });
+  const remove = useMutation({
+    mutationFn: async (chargeId: string) => axiosInstance.delete(`/ipd/ot/cases/${id}/charges/${chargeId}`),
+    onSuccess: () => { toast.success("Removed"); refetch(); },
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not remove the line")),
+  });
+  const auto = useMutation({
+    mutationFn: async () => axiosInstance.post(`/ipd/ot/cases/${id}/charges/auto`, {
+      rates: Object.fromEntries(Object.entries(rates).filter(([, v]) => v !== "").map(([k, v]) => [k, Number(v)])),
+    }),
+    onSuccess: (r) => {
+      toast.success(r.data?.data?.note ?? "Priced");
+      qc.invalidateQueries({ queryKey: ["ot-case-charges", id] });
+    },
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not price the case")),
+  });
+
+  if (isLoading) return <ListSkeleton />;
+  if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
+
+  const charges = (data?.charges ?? []) as Record<string, string | number | null>[];
+  const s = data?.summary ?? {};
+
+  return (
+    <>
+      <Section title="The bill for this case">
+        {charges.length === 0 ? (
+          <Typography variant="body2" sx={{ color: "text.secondary", py: 2 }}>
+            No lines yet. Until there are, this case bills on its single price
+            {s.flatPrice ? ` of ₹${Number(s.flatPrice).toLocaleString("en-IN")}` : ""}.
+          </Typography>
+        ) : (
+          <Stack spacing={1}>
+            {charges.map((c) => (
+              <Box key={String(c.surgeryChargeId)} sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>{String(c.description)}</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                    {String(c.label)}
+                    {Number(c.quantity) > 1 ? ` · ${c.quantity} × ₹${Number(c.unitPrice).toLocaleString("en-IN")}` : ""}
+                    {Number(c.taxPercent) > 0 ? ` · ${c.taxPercent}% tax` : ""}
+                    {c.invoiceItemId ? " · on a bill" : ""}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  ₹{Number(c.totalPrice).toLocaleString("en-IN")}
+                </Typography>
+                {!c.invoiceItemId && (
+                  <IconButton size="small" onClick={() => remove.mutate(String(c.surgeryChargeId))} aria-label="Remove line">
+                    <DeleteOutlineRounded fontSize="small" />
+                  </IconButton>
+                )}
+              </Box>
+            ))}
+            <Box sx={{ display: "flex", justifyContent: "space-between", pt: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
+              <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                Total {Number(s.tax) > 0 ? `(including ₹${Number(s.tax).toLocaleString("en-IN")} tax)` : ""}
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 800 }}>₹{Number(s.total ?? 0).toLocaleString("en-IN")}</Typography>
+            </Box>
+            {Number(s.billed) > 0 && (
+              <Alert severity="info">
+                {s.billed} of {charges.length} lines are already on a bill and can no longer be removed here.
+              </Alert>
+            )}
+          </Stack>
+        )}
+      </Section>
+
+      <Section title="Price it from what the case knows">
+        <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+          Builds the standard lines from the team recorded, the theatre time actually used, and the implants
+          entered. Leave a rate blank to skip that line. Running this twice adds nothing.
+        </Typography>
+        <Grid container spacing={2}>
+          {([
+            ["surgeonFee", "Surgeon fee"], ["assistantFee", "Assistant fee"], ["anaesthetistFee", "Anaesthetist fee"],
+            ["otHourlyRate", "Theatre, per hour"], ["anaesthesiaCharge", "Anaesthesia"], ["recoveryCharge", "Recovery"],
+          ] as [keyof typeof rates, string][]).map(([k, label]) => (
+            <Grid size={{ xs: 6, md: 4 }} key={k}>
+              <TextField fullWidth size="small" label={label} value={rates[k]}
+                onChange={(e) => setRates({ ...rates, [k]: e.target.value })} />
+            </Grid>
+          ))}
+        </Grid>
+        <Button variant="contained" size="large" sx={{ mt: 2, textTransform: "none", fontWeight: 700 }}
+          disabled={auto.isPending} onClick={() => auto.mutate()}>
+          {auto.isPending ? "Pricing…" : "Build the standard lines"}
+        </Button>
+      </Section>
+
+      <Section title="Add a line by hand">
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField select fullWidth label="Type" value={f.chargeType} onChange={(e) => setF({ ...f, chargeType: e.target.value })}>
+              {CHARGE_TYPES.map((c) => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
+            </TextField>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 8 }}>
+            <TextField fullWidth required label="Description" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
+          </Grid>
+          <Grid size={{ xs: 4 }}><TextField fullWidth label="Price" value={f.unitPrice} onChange={(e) => setF({ ...f, unitPrice: e.target.value })} /></Grid>
+          <Grid size={{ xs: 4 }}><TextField fullWidth type="number" label="Quantity" value={f.quantity} onChange={(e) => setF({ ...f, quantity: e.target.value })} /></Grid>
+          <Grid size={{ xs: 4 }}>
+            <TextField fullWidth label="Tax %" value={f.taxPercent} onChange={(e) => setF({ ...f, taxPercent: e.target.value })}
+              helperText="Charged on top" />
+          </Grid>
+        </Grid>
+        <Button variant="contained" size="large" startIcon={<AddRounded />} sx={{ mt: 2, textTransform: "none", fontWeight: 700 }}
+          disabled={!f.description.trim() || add.isPending} onClick={() => add.mutate()}>
+          Add the line
+        </Button>
+      </Section>
+    </>
   );
 }
 
