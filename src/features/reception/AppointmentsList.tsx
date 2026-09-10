@@ -10,8 +10,8 @@ import {
 import {
   AddRounded, SearchRounded, CancelRounded, CheckCircleRounded,
   WarningAmberRounded, ReceiptRounded, NotificationsActiveRounded, ChecklistRounded,
-  NotesRounded, ChevronLeftRounded, ChevronRightRounded, CalendarMonthRounded,
-  FilterAltRounded, EventRepeatRounded
+  ChevronLeftRounded, ChevronRightRounded, CalendarMonthRounded,
+  FilterAltRounded, EventRepeatRounded, EditCalendarRounded
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
@@ -415,9 +415,9 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
                                 <CheckCircleRounded fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="Edit / Add Notes">
+                            <Tooltip title="Reschedule — change the time, date or doctor">
                               <IconButton size="small" onClick={() => navigate(`/reception/appointments/${appt.appointmentId}/edit`)} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.info, bgcolor: "rgba(59,130,246,0.08)" } }}>
-                                <NotesRounded fontSize="small" />
+                                <EditCalendarRounded fontSize="small" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Billing">
