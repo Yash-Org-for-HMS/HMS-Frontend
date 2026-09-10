@@ -13,7 +13,7 @@ import {
 import {
   Menu as MenuIcon, DashboardRounded, LocalHospitalRounded, PeopleRounded,
   CalendarTodayRounded, SettingsRounded, DomainRounded, BadgeRounded,
-  WidgetsRounded, MedicalServicesRounded, DatasetRounded,
+  WidgetsRounded, MedicalServicesRounded, DatasetRounded, EventNoteRounded,
   DynamicFormRounded, SecurityRounded, AccountBalanceRounded,
   AssessmentRounded, HotelRounded, MonitorHeartRounded, VaccinesRounded,
   MedicationRounded, LocalHotelRounded, ReceiptLongRounded,
@@ -64,6 +64,7 @@ export default function HospitalLayout() {
     { text: "Patient Queue", icon: <FormatListNumberedRounded />, path: "/hospital/queue", adminOnly: true, section: "Operations" },
     { text: "Admissions", icon: <LocalHotelRounded />, path: "/hospital/ipd/admissions", adminOnly: true, module: "IPD", section: "Operations" },
     { text: "Bed Board", icon: <HotelRounded />, path: "/hospital/ipd/beds", adminOnly: true, module: "IPD", section: "Operations" },
+    { text: "Operating List", icon: <EventNoteRounded />, path: "/hospital/ipd/ot-schedule", adminOnly: true, module: "IPD", section: "Operations" },
     { text: "Billing Overview", icon: <ReceiptLongRounded />, path: "/hospital/billing", adminOnly: true, module: "Billing", section: "Operations" },
     { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", adminOnly: true, section: "Organization" },
     { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", adminOnly: true, section: "Organization" },

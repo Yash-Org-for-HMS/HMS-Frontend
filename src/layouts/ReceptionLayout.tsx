@@ -42,6 +42,7 @@ import {
   NotificationsRounded,
   HealthAndSafetyRounded,
   LockRounded,
+  EventNoteRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { assetUrl } from "@/utils/assetUrl";
@@ -96,6 +97,7 @@ export default function ReceptionLayout() {
         { text: "Admissions", icon: <LocalHotelRounded />, path: "/reception/ipd/admissions", module: "IPD" },
         { text: "Bed Management", icon: <HotelRounded />, path: "/reception/ipd/beds", module: "IPD" },
         { text: "Theatre Board", icon: <MedicalServicesRounded />, path: "/reception/ipd/theatres", module: "IPD" },
+        { text: "Operating List", icon: <EventNoteRounded />, path: "/reception/ipd/ot-schedule", module: "IPD" },
       ],
     },
     {
