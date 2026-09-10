@@ -94,6 +94,7 @@ const ReferralsList = lazy(() => import("@/features/reception/ReferralsList"));
 const Reports = lazy(() => import("@/features/reception/ReportsHub"));
 const Admissions = lazy(() => import("@/features/ipd/Admissions"));
 const BedBoard = lazy(() => import("@/features/ipd/BedBoard"));
+const TheatreBoard = lazy(() => import("@/features/ipd/TheatreBoard"));
 const QueueDashboard = lazy(() => import("@/features/reception/QueueDashboard"));
 const Billing = lazy(() => import("@/features/reception/Billing"));
 const NotificationsLog = lazy(() => import("@/features/reception/NotificationsLog"));
@@ -292,6 +293,7 @@ function App() {
             <Route path="/hospital/doctors/:id/leaves" element={el(DoctorLeaves)} />
             <Route path="/hospital/lookups" element={el(LookupManager)} />
             <Route path="/hospital/facility-setup" element={elGated(FacilitySetup, "IPD", "Ward & Bed Setup")} />
+            <Route path="/hospital/theatres" element={elGated(TheatreBoard, "IPD", "Operating Theatres", { manage: true })} />
             <Route path="/hospital/ward-chart" element={elGated(WardChartSettings, "IPD", "Ward Chart Settings")} />
             <Route path="/hospital/vaccines" element={el(VaccineCatalog)} />
             <Route path="/hospital/soc" element={el(ScheduleOfCharges)} />
@@ -336,6 +338,7 @@ function App() {
             <Route path="/reception/reports" element={el(Reports)} />
             <Route path="/reception/ipd/admissions" element={elGated(Admissions, "IPD", "Admissions")} />
             <Route path="/reception/ipd/beds" element={elGated(BedBoard, "IPD", "Bed Management")} />
+            <Route path="/reception/ipd/theatres" element={elGated(TheatreBoard, "IPD", "Theatre Board")} />
 
             <Route path="/reception/queue" element={el(QueueDashboard)} />
             <Route path="/reception/billing" element={elGated(Billing, "Billing", "Billing")} />

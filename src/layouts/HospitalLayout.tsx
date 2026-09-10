@@ -77,6 +77,7 @@ export default function HospitalLayout() {
     // permission-code bypass) — adminOnly here matches that exactly so a
     // custom role never sees a link that would just 403.
     { text: "Ward & Bed Setup", icon: <HotelRounded />, path: "/hospital/facility-setup", adminOnly: true, module: "IPD", section: "Configuration" },
+    { text: "Operating Theatres", icon: <MedicalServicesRounded />, path: "/hospital/theatres", adminOnly: true, module: "IPD", section: "Configuration" },
     { text: "Ward Chart Settings", icon: <MonitorHeartRounded />, path: "/hospital/ward-chart", adminOnly: true, module: "IPD", section: "Configuration" },
     { text: "Vaccine Catalog", icon: <VaccinesRounded />, path: "/hospital/vaccines", adminOnly: true, section: "Configuration" },
     { text: "Schedule of Charges", icon: <ReceiptLongRounded />, path: "/hospital/soc", adminOnly: true, section: "Configuration" },

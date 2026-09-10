@@ -95,6 +95,7 @@ export default function ReceptionLayout() {
       items: [
         { text: "Admissions", icon: <LocalHotelRounded />, path: "/reception/ipd/admissions", module: "IPD" },
         { text: "Bed Management", icon: <HotelRounded />, path: "/reception/ipd/beds", module: "IPD" },
+        { text: "Theatre Board", icon: <MedicalServicesRounded />, path: "/reception/ipd/theatres", module: "IPD" },
       ],
     },
     {
