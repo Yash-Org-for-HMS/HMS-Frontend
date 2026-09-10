@@ -100,41 +100,24 @@ const Tile = ({ label, value, color }: { label: string; value: number; color: st
   </Paper>
 );
 
-export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } = {}) {
-  const toast = useToast();
-  const qc = useQueryClient();
-  const navigate = useNavigate();
-  // The record lives under whichever panel the user is already in.
-  const basePath = readOnly ? "/hospital" : "/reception";
-  const [date, setDate] = useState(() => isoDay(new Date()));
-  const [booking, setBooking] = useState<{ theatreId: string | null } | null>(null);
-  const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: OtCase | null }>({ anchor: null, row: null });
-  const [cancelling, setCancelling] = useState<OtCase | null>(null);
-
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["ot-day-list", date],
-    queryFn: async () => (await axiosInstance.get(`/ipd/ot/list?date=${date}`)).data.data,
-  });
-
-  const setStatus = useMutation({
-    mutationFn: async (v: { id: string; status: string }) =>
-      axiosInstance.put(`/ipd/ot/cases/${v.id}`, { status: v.status }),
-    onSuccess: () => { toast.success("Case updated"); qc.invalidateQueries({ queryKey: ["ot-day-list"] }); },
-    onError: (e) => toast.error(getApiErrorMessage(e, "Could not update the case")),
-  });
-
-  const shiftDay = (days: number) => {
-    const d = new Date(date + "T12:00:00");
-    d.setDate(d.getDate() + days);
-    setDate(isoDay(d));
-  };
-
-  const lists: TheatreList[] = data?.lists ?? [];
-  const emergencies: OtCase[] = data?.emergencies ?? [];
-  const unassigned: OtCase[] = data?.unassigned ?? [];
-  const s = data?.summary ?? { total: 0, scheduled: 0, inProgress: 0, completed: 0, cancelled: 0, emergencies: 0 };
-
-  const CaseRow = ({ c, showTheatre = false }: { c: OtCase; showTheatre?: boolean }) => (
+/**
+ * One case on the list.
+ *
+ * At module scope on purpose. Defined inside OtSchedule it took a new function
+ * identity on every render, so React treated it as a different component type
+ * and remounted every row whenever any state changed. That included the row
+ * holding the button the actions menu was anchored to: by the time the menu
+ * opened, its anchor was a detached node, and MUI — with nothing to measure —
+ * dropped the menu in the top-left corner of the screen.
+ */
+function CaseRow({ c, showTheatre = false, readOnly, onOpen, onMenu }: {
+  c: OtCase;
+  showTheatre?: boolean;
+  readOnly: boolean;
+  onOpen: (c: OtCase) => void;
+  onMenu: (el: HTMLElement, c: OtCase) => void;
+}) {
+  return (
     <Box
       sx={{
         p: 1.5, borderRadius: 2, border: "1px solid", borderColor: "divider",
@@ -145,7 +128,7 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
     >
       <Box
         sx={{ minWidth: 0, flex: 1, cursor: "pointer" }}
-        onClick={() => navigate(`${basePath}/ipd/ot-cases/${c.surgeryId}`)}
+        onClick={() => onOpen(c)}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
           {c.listPosition && !c.isEmergency && (
@@ -186,7 +169,7 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
       {!readOnly && c.status !== "CANCELLED" && (
         <Box
           component="button"
-          onClick={(e: React.MouseEvent<HTMLElement>) => setMenu({ anchor: e.currentTarget, row: c })}
+          onClick={(e: React.MouseEvent<HTMLElement>) => onMenu(e.currentTarget, c)}
           sx={{ border: "none", bgcolor: "transparent", cursor: "pointer", p: 0.5, color: "text.secondary", lineHeight: 0 }}
           aria-label={`Actions for ${c.procedureName}`}
         >
@@ -195,6 +178,49 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
       )}
     </Box>
   );
+}
+
+export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } = {}) {
+  const toast = useToast();
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  // The record lives under whichever panel the user is already in.
+  const basePath = readOnly ? "/hospital" : "/reception";
+  const [date, setDate] = useState(() => isoDay(new Date()));
+  const [booking, setBooking] = useState<{ theatreId: string | null } | null>(null);
+  const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: OtCase | null }>({ anchor: null, row: null });
+  const [cancelling, setCancelling] = useState<OtCase | null>(null);
+
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["ot-day-list", date],
+    queryFn: async () => (await axiosInstance.get(`/ipd/ot/list?date=${date}`)).data.data,
+  });
+
+  const setStatus = useMutation({
+    mutationFn: async (v: { id: string; status: string }) =>
+      axiosInstance.put(`/ipd/ot/cases/${v.id}`, { status: v.status }),
+    onSuccess: () => { toast.success("Case updated"); qc.invalidateQueries({ queryKey: ["ot-day-list"] }); },
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not update the case")),
+  });
+
+  const shiftDay = (days: number) => {
+    const d = new Date(date + "T12:00:00");
+    d.setDate(d.getDate() + days);
+    setDate(isoDay(d));
+  };
+
+  const lists: TheatreList[] = data?.lists ?? [];
+  const emergencies: OtCase[] = data?.emergencies ?? [];
+  const unassigned: OtCase[] = data?.unassigned ?? [];
+  const s = data?.summary ?? { total: 0, scheduled: 0, inProgress: 0, completed: 0, cancelled: 0, emergencies: 0 };
+
+  // Passed rather than closed over, so CaseRow can live at module scope and
+  // keep a stable identity across renders.
+  const rowProps = {
+    readOnly,
+    onOpen: (row: OtCase) => navigate(`${basePath}/ipd/ot-cases/${row.surgeryId}`),
+    onMenu: (el: HTMLElement, row: OtCase) => setMenu({ anchor: el, row }),
+  };
 
   return (
     <Box>
@@ -264,7 +290,7 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
                     <Typography variant="body2" sx={{ color: "text.secondary", py: 2, textAlign: "center" }}>
                       Nothing booked
                     </Typography>
-                  ) : l.cases.map((c) => <CaseRow key={c.surgeryId} c={c} />)}
+                  ) : l.cases.map((c) => <CaseRow key={c.surgeryId} c={c} {...rowProps} />)}
                 </Stack>
                 {!readOnly && (
                   <Button fullWidth size="small" startIcon={<AddRounded />} sx={{ mt: 1.5, textTransform: "none" }}
@@ -286,14 +312,14 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Out of order</Typography>
                 </Box>
                 <Stack spacing={1}>
-                  {emergencies.map((c) => <CaseRow key={c.surgeryId} c={c} showTheatre />)}
+                  {emergencies.map((c) => <CaseRow key={c.surgeryId} c={c} showTheatre {...rowProps} />)}
                   {emergencies.length > 0 && unassigned.length > 0 && <Divider />}
                   {unassigned.length > 0 && (
                     <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>
                       Booked with no theatre yet
                     </Typography>
                   )}
-                  {unassigned.map((c) => <CaseRow key={c.surgeryId} c={c} showTheatre />)}
+                  {unassigned.map((c) => <CaseRow key={c.surgeryId} c={c} showTheatre {...rowProps} />)}
                 </Stack>
               </Paper>
             </Grid>
