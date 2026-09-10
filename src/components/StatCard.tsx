@@ -163,10 +163,20 @@ export default function StatCard({
         >
           {label}
         </Typography>
-        {sub && (
-          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
-            {sub}
-          </Typography>
+        {/* The sub-line is skeletoned too, not just the number. Most callers
+            build it from a `?? 0` fallback, so while the query is in flight it
+            reads as a statement of fact — "No beds configured" on a ward with
+            55 beds, "0 unpaid bills" before the bills have arrived. A card that
+            asserts something false for a second is worse than one that says
+            nothing yet. */}
+        {loading ? (
+          sub && <Skeleton width={110} height={16} sx={{ mt: 0.5 }} />
+        ) : (
+          sub && (
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
+              {sub}
+            </Typography>
+          )
         )}
       </Box>
 
