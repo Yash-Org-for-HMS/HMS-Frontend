@@ -346,12 +346,15 @@ function ChecklistTab({ id, data, onSaved }: { id: string; data: Record<string, 
 
   const [ticks, setTicks] = useState<Record<string, Record<string, boolean>>>({});
   const [countForm, setCountForm] = useState<Record<string, string>>({});
-  const [laterality, setLaterality] = useState("");
+  // null until the user touches it, so the saved side shows through until
+  // they deliberately change it.
+  const [lateralityEdit, setLateralityEdit] = useState<string | null>(null);
+  const laterality = lateralityEdit ?? (cl?.laterality ? String(cl.laterality) : "");
 
-  const stageMeta: { stage: string; title: string; when: string; atKey: string }[] = [
-    { stage: "SIGN_IN", title: "Sign In", when: "Before anaesthesia", atKey: "signInAt" },
-    { stage: "TIME_OUT", title: "Time Out", when: "Before the incision", atKey: "timeOutAt" },
-    { stage: "SIGN_OUT", title: "Sign Out", when: "Before the patient leaves", atKey: "signOutAt" },
+  const stageMeta: { stage: string; title: string; when: string; atKey: string; itemsKey: string }[] = [
+    { stage: "SIGN_IN", title: "Sign In", when: "Before anaesthesia", atKey: "signInAt", itemsKey: "signInItems" },
+    { stage: "TIME_OUT", title: "Time Out", when: "Before the incision", atKey: "timeOutAt", itemsKey: "timeOutItems" },
+    { stage: "SIGN_OUT", title: "Sign Out", when: "Before the patient leaves", atKey: "signOutAt", itemsKey: "signOutItems" },
   ];
 
   const countRow = (label: string, inKey: string, outKey: string) => {
@@ -379,7 +382,12 @@ function ChecklistTab({ id, data, onSaved }: { id: string; data: Record<string, 
       {stageMeta.map((m) => {
         const signedAt = cl?.[m.atKey] as string | undefined;
         const stageItems = items?.[m.stage] ?? [];
-        const current = ticks[m.stage] ?? {};
+        // Start from what was actually signed, not from an empty form. A
+        // signed stage that renders every box unticked is not just wrong to
+        // look at — pressing "Re-sign" would record the whole stage as NOT
+        // done and quietly erase the record.
+        const saved = (cl?.[m.itemsKey] as unknown as Record<string, boolean> | null) ?? {};
+        const current = ticks[m.stage] ?? saved;
         const allTicked = stageItems.length > 0 && stageItems.every((k) => current[k]);
         return (
           <Section
@@ -410,7 +418,7 @@ function ChecklistTab({ id, data, onSaved }: { id: string; data: Record<string, 
             </Grid>
             {m.stage === "SIGN_IN" && (
               <TextField select size="small" label="Side" sx={{ mt: 2, width: 200 }} value={laterality}
-                onChange={(e) => setLaterality(e.target.value)}
+                onChange={(e) => setLateralityEdit(e.target.value)}
                 helperText="For anything with a left and a right">
                 <MenuItem value=""><em>Not applicable</em></MenuItem>
                 <MenuItem value="LEFT">Left</MenuItem>
