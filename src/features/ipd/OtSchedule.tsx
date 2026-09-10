@@ -130,7 +130,7 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
   const unassigned: OtCase[] = data?.unassigned ?? [];
   const s = data?.summary ?? { total: 0, scheduled: 0, inProgress: 0, completed: 0, cancelled: 0, emergencies: 0 };
 
-  const CaseRow = ({ c }: { c: OtCase }) => (
+  const CaseRow = ({ c, showTheatre = false }: { c: OtCase; showTheatre?: boolean }) => (
     <Box
       sx={{
         p: 1.5, borderRadius: 2, border: "1px solid", borderColor: "divider",
@@ -161,6 +161,11 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
           <PersonRounded sx={{ fontSize: 12 }} /> {c.patientName} · {c.uhid}
           {c.admissionId ? "" : " · day case"}
         </Typography>
+        {showTheatre && (
+          <Typography variant="caption" sx={{ color: BRAND.action, fontWeight: 700, display: "block" }} noWrap>
+            {c.theatreName || "No theatre assigned"}
+          </Typography>
+        )}
         <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }} noWrap>
           {c.surgeonName || "No surgeon named"}
           {c.anaesthesiaType ? ` · ${ANAESTHESIA_LABEL[c.anaesthesiaType] ?? c.anaesthesiaType}` : ""}
@@ -232,13 +237,19 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
         </Paper>
       ) : (
         <Grid container spacing={2}>
-          {lists.map((l) => (
+          {lists.map((l) => {
+            // A cancelled case still belongs on the sheet — it is why the slot
+            // is free — but it is not work the theatre is doing, so the count
+            // is of live cases and says separately what was called off.
+            const live = l.cases.filter((c) => c.status !== "CANCELLED").length;
+            const called = l.cases.length - live;
+            return (
             <Grid key={l.operatingTheatreId} size={{ xs: 12, md: 6, lg: 4 }}>
               <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
                   <MedicalServicesRounded sx={{ color: BRAND.action, fontSize: 20 }} />
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, flex: 1, minWidth: 0 }} noWrap>{l.theatreName}</Typography>
-                  <Chip size="small" label={`${l.cases.length} case${l.cases.length === 1 ? "" : "s"}`}
+                  <Chip size="small" label={`${live} case${live === 1 ? "" : "s"}${called ? ` · ${called} off` : ""}`}
                     sx={{ height: 20, fontSize: "0.65rem", fontWeight: 700 }} />
                 </Box>
                 <Stack spacing={1}>
@@ -256,7 +267,8 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
                 )}
               </Paper>
             </Grid>
-          ))}
+            );
+          })}
 
           {/* Out-of-order work, kept out of the numbered lists but never hidden. */}
           {(emergencies.length > 0 || unassigned.length > 0) && (
@@ -267,14 +279,14 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Out of order</Typography>
                 </Box>
                 <Stack spacing={1}>
-                  {emergencies.map((c) => <CaseRow key={c.surgeryId} c={c} />)}
+                  {emergencies.map((c) => <CaseRow key={c.surgeryId} c={c} showTheatre />)}
                   {emergencies.length > 0 && unassigned.length > 0 && <Divider />}
                   {unassigned.length > 0 && (
                     <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>
                       Booked with no theatre yet
                     </Typography>
                   )}
-                  {unassigned.map((c) => <CaseRow key={c.surgeryId} c={c} />)}
+                  {unassigned.map((c) => <CaseRow key={c.surgeryId} c={c} showTheatre />)}
                 </Stack>
               </Paper>
             </Grid>
@@ -343,11 +355,11 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
     isEmergency: false, price: "", notes: "",
   });
 
-  const { data: theatres } = useQuery({
+  const { data: theatres, isLoading: loadingTheatres } = useQuery({
     queryKey: ["ot-theatres-pick"],
     queryFn: async () => (await axiosInstance.get("/ipd/theatres")).data.data,
   });
-  const { data: admissions } = useQuery({
+  const { data: admissions, isLoading: loadingAdmissions } = useQuery({
     queryKey: ["ot-admissions-pick"],
     queryFn: async () => (await axiosInstance.get("/ipd/admissions", { params: { status: "ADMITTED", limit: 200 } })).data,
     enabled: !dayCase,
@@ -417,7 +429,9 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
             />
           ) : (
             <TextField select label="Admission" required fullWidth value={admissionId} onChange={(e) => setAdmissionId(e.target.value)}
-              helperText={admissionRows.length ? "Currently admitted patients" : "No admitted patients"}>
+              helperText={loadingAdmissions ? "Loading…"
+                : admissionRows.length ? "Currently admitted patients"
+                : "No admitted patients"}>
               {admissionRows.map((a) => (
                 <MenuItem key={String(a.admissionId)} value={String(a.admissionId)}>
                   {String(a.patientName ?? "Patient")} · {String(a.uhid ?? "")} · {String(a.admissionNumber ?? "")}
@@ -454,7 +468,7 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
 
           <TextField select label="Theatre" fullWidth value={form.operatingTheatreId}
             onChange={(e) => setForm({ ...form, operatingTheatreId: e.target.value })}
-            helperText="Leave blank to book the case without a slot yet">
+            helperText={loadingTheatres ? "Loading…" : "Leave blank to book the case without a slot yet"}>
             <MenuItem value=""><em>No theatre yet</em></MenuItem>
             {theatreRows.map((t) => <MenuItem key={t.operatingTheatreId} value={t.operatingTheatreId}>{t.theatreName}</MenuItem>)}
           </TextField>
