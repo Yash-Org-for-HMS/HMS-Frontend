@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -102,6 +103,9 @@ const Tile = ({ label, value, color }: { label: string; value: number; color: st
 export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } = {}) {
   const toast = useToast();
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  // The record lives under whichever panel the user is already in.
+  const basePath = readOnly ? "/hospital" : "/reception";
   const [date, setDate] = useState(() => isoDay(new Date()));
   const [booking, setBooking] = useState<{ theatreId: string | null } | null>(null);
   const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: OtCase | null }>({ anchor: null, row: null });
@@ -139,7 +143,10 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
         display: "flex", gap: 1, alignItems: "flex-start",
       }}
     >
-      <Box sx={{ minWidth: 0, flex: 1 }}>
+      <Box
+        sx={{ minWidth: 0, flex: 1, cursor: "pointer" }}
+        onClick={() => navigate(`${basePath}/ipd/ot-cases/${c.surgeryId}`)}
+      >
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
           {c.listPosition && !c.isEmergency && (
             <Typography variant="caption" sx={{ fontWeight: 800, color: "text.secondary" }}>#{c.listPosition}</Typography>
@@ -305,10 +312,8 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
             Mark finished
           </MenuItem>
         )}
-        <MenuItem onClick={() => { setBooking({ theatreId: menu.row?.operatingTheatreId ?? null }); }} disabled>
-          {/* Editing a booked case is the reschedule dialog; kept visible so the
-              action is discoverable even before it is reachable from here. */}
-          Reschedule — open the case
+        <MenuItem onClick={() => { navigate(`${basePath}/ipd/ot-cases/${menu.row!.surgeryId}`); }}>
+          Open the record
         </MenuItem>
         <MenuItem onClick={() => { setCancelling(menu.row); setMenu({ anchor: null, row: null }); }} sx={{ color: SEMANTIC.danger }}>
           Cancel this case
