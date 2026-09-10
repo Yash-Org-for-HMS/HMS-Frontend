@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Grid, Chip, Menu, MenuItem, Tooltip,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Stack,
+  FormControlLabel, Switch,
 } from "@mui/material";
 import {
   EventSeatRounded, BuildRounded, CheckCircleRounded,
-  PersonRounded, ApartmentRounded,
+  PersonRounded, ApartmentRounded, MedicalServicesRounded, MeetingRoomRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -19,6 +21,25 @@ import PageHeader from "@/components/layout/PageHeader";
 const STATUS_COLOR: Record<string, string> = {
   AVAILABLE: SEMANTIC.success, OCCUPIED: SEMANTIC.danger, RESERVED: SEMANTIC.warning, MAINTENANCE: NEUTRAL.muted,
 };
+
+// A bed as the board sees it. `location` is where the patient actually is —
+// a held bed keeps its occupant while they are away in theatre.
+type BoardOccupant = {
+  admissionId: string;
+  patientName: string;
+  uhid: string;
+  location?: string | null;
+  theatreName?: string | null;
+};
+type BoardBed = {
+  bedId: string;
+  bedNumber: string;
+  bedType: string;
+  status: string;
+  occupant?: BoardOccupant | null;
+};
+type PickTheatre = { operatingTheatreId: string; theatreName: string; status: string };
+type PickBed = { bedId: string; bedNumber: string; label?: string };
 
 // Read-only structure + day-to-day bed STATUS changes only. Adding/editing
 // wards, rooms, and beds is hospital configuration, managed from the Hospital
@@ -36,7 +57,8 @@ const Tile = ({ label, value, color }: { label: string; value: number; color: st
 
 export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = {}) {
   const toast = useToast();
-  const [bedMenu, setBedMenu] = useState<{ anchor: HTMLElement | null; bed: any }>({ anchor: null, bed: null });
+  const [bedMenu, setBedMenu] = useState<{ anchor: HTMLElement | null; bed: BoardBed | null }>({ anchor: null, bed: null });
+  const [moveDialog, setMoveDialog] = useState<{ mode: "send" | "return"; bed: BoardBed | null } | null>(null);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["ipd-structure"],
@@ -91,7 +113,7 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
                   <Box key={r.roomId} sx={{ mb: 1.5 }}>
                     <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>Room {r.roomNumber} · {r.roomType}</Typography>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.5 }}>
-                      {r.beds.length === 0 ? <Typography variant="caption" sx={{ color: "text.disabled" }}>No beds</Typography> : r.beds.map((b: any) => {
+                      {r.beds.length === 0 ? <Typography variant="caption" sx={{ color: "text.disabled" }}>No beds</Typography> : r.beds.map((b: BoardBed) => {
                         const color = STATUS_COLOR[b.status] || NEUTRAL.muted;
                         return (
                           <Tooltip key={b.bedId} title={b.occupant ? `${b.occupant.patientName} (${b.occupant.uhid})` : b.status}>
@@ -103,7 +125,20 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
                               </Box>
                               <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{b.bedType}</Typography>
                               {b.occupant ? (
-                                <Typography variant="caption" sx={{ color, fontWeight: 600, display: "flex", alignItems: "center", gap: 0.3 }} noWrap><PersonRounded sx={{ fontSize: 12 }} /> {b.occupant.patientName}</Typography>
+                                <>
+                                  <Typography variant="caption" sx={{ color, fontWeight: 600, display: "flex", alignItems: "center", gap: 0.3 }} noWrap><PersonRounded sx={{ fontSize: 12 }} /> {b.occupant.patientName}</Typography>
+                                  {/* A patient in theatre is still admitted to this bed, and is not
+                                      in it. Saying so is the whole point of the movement work —
+                                      a nurse looking for them should not be sent to an empty bed. */}
+                                  {b.occupant.location && b.occupant.location !== "BED" && (
+                                    <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 700, display: "flex", alignItems: "center", gap: 0.3 }} noWrap>
+                                      <MedicalServicesRounded sx={{ fontSize: 12 }} />
+                                      {b.occupant.location === "OT" ? `In ${b.occupant.theatreName || "theatre"}`
+                                        : b.occupant.location === "RECOVERY" ? "In recovery"
+                                        : "In pre-op"}
+                                    </Typography>
+                                  )}
+                                </>
                               ) : (
                                 <Typography variant="caption" sx={{ color, fontWeight: 700, textTransform: "capitalize" }}>{b.status.toLowerCase()}</Typography>
                               )}
@@ -122,13 +157,122 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
       {/* Bed status menu */}
       <Menu anchorEl={bedMenu.anchor} open={Boolean(bedMenu.anchor)} onClose={() => setBedMenu({ anchor: null, bed: null })}>
         {bedMenu.bed?.status === "OCCUPIED"
-          ? <MenuItem disabled>Occupied — manage via Admissions</MenuItem>
+          ? (bedMenu.bed?.occupant?.location && bedMenu.bed.occupant.location !== "BED"
+            ? [
+                <MenuItem key="back" onClick={() => setMoveDialog({ mode: "return", bed: bedMenu.bed })}>
+                  <MeetingRoomRounded fontSize="small" sx={{ mr: 1, color: SEMANTIC.success }} /> Bring back from theatre
+                </MenuItem>,
+              ]
+            : [
+                <MenuItem key="ot" onClick={() => setMoveDialog({ mode: "send", bed: bedMenu.bed })}>
+                  <MedicalServicesRounded fontSize="small" sx={{ mr: 1, color: SEMANTIC.warning }} /> Send to theatre
+                </MenuItem>,
+              ])
           : [
-            <MenuItem key="a" disabled={bedMenu.bed?.status === "AVAILABLE"} onClick={() => setBedStatus(bedMenu.bed.bedId, "AVAILABLE")}><CheckCircleRounded fontSize="small" sx={{ mr: 1, color: STATUS_COLOR.AVAILABLE }} /> Mark available</MenuItem>,
-            <MenuItem key="r" disabled={bedMenu.bed?.status === "RESERVED"} onClick={() => setBedStatus(bedMenu.bed.bedId, "RESERVED")}><EventSeatRounded fontSize="small" sx={{ mr: 1, color: STATUS_COLOR.RESERVED }} /> Reserve</MenuItem>,
-            <MenuItem key="m" disabled={bedMenu.bed?.status === "MAINTENANCE"} onClick={() => setBedStatus(bedMenu.bed.bedId, "MAINTENANCE")}><BuildRounded fontSize="small" sx={{ mr: 1, color: STATUS_COLOR.MAINTENANCE }} /> Maintenance</MenuItem>,
+            <MenuItem key="a" disabled={bedMenu.bed?.status === "AVAILABLE"} onClick={() => bedMenu.bed && setBedStatus(bedMenu.bed.bedId, "AVAILABLE")}><CheckCircleRounded fontSize="small" sx={{ mr: 1, color: STATUS_COLOR.AVAILABLE }} /> Mark available</MenuItem>,
+            <MenuItem key="r" disabled={bedMenu.bed?.status === "RESERVED"} onClick={() => bedMenu.bed && setBedStatus(bedMenu.bed.bedId, "RESERVED")}><EventSeatRounded fontSize="small" sx={{ mr: 1, color: STATUS_COLOR.RESERVED }} /> Reserve</MenuItem>,
+            <MenuItem key="m" disabled={bedMenu.bed?.status === "MAINTENANCE"} onClick={() => bedMenu.bed && setBedStatus(bedMenu.bed.bedId, "MAINTENANCE")}><BuildRounded fontSize="small" sx={{ mr: 1, color: STATUS_COLOR.MAINTENANCE }} /> Maintenance</MenuItem>,
           ]}
       </Menu>
+
+      {moveDialog && (
+        <TheatreMoveDialog
+          mode={moveDialog.mode}
+          bed={moveDialog.bed}
+          onClose={() => { setMoveDialog(null); setBedMenu({ anchor: null, bed: null }); }}
+          onDone={() => { setMoveDialog(null); setBedMenu({ anchor: null, bed: null }); refetch(); }}
+        />
+      )}
     </Box>
+  );
+}
+
+/**
+ * Moving a patient to theatre, or bringing them back.
+ *
+ * Send asks which theatre, and whether to keep the bed. Held is the default and
+ * the safe one: release it and the patient can come out of theatre to find
+ * somebody else in it, which is the argument the ward has at six o'clock.
+ *
+ * Return asks where they are going — back to the bed being held, a different
+ * bed, or recovery — because a post-operative patient often does not go back
+ * to the ward they came from.
+ */
+function TheatreMoveDialog({ mode, bed, onClose, onDone }: { mode: "send" | "return"; bed: BoardBed | null; onClose: () => void; onDone: () => void }) {
+  const toast = useToast();
+  const [theatreId, setTheatreId] = useState("");
+  const [releaseBed, setReleaseBed] = useState(false);
+  const [toBedId, setToBedId] = useState("");
+  const [reason, setReason] = useState("");
+  const admissionId = bed?.occupant?.admissionId;
+
+  const { data: theatres } = useQuery({
+    queryKey: ["ot-theatres-pick"],
+    queryFn: async () => (await axiosInstance.get("/ipd/theatres")).data.data,
+    enabled: mode === "send",
+  });
+  const { data: freeBeds } = useQuery({
+    queryKey: ["free-beds-pick"],
+    queryFn: async () => (await axiosInstance.get("/ipd/beds/available")).data.data,
+    enabled: mode === "return",
+  });
+
+  const go = useMutation({
+    mutationFn: async () =>
+      mode === "send"
+        ? axiosInstance.post(`/ipd/admissions/${admissionId}/send-to-theatre`, { theatreId, releaseBed, reason: reason.trim() || undefined })
+        : axiosInstance.post(`/ipd/admissions/${admissionId}/return-from-theatre`, { toBedId: toBedId || undefined, reason: reason.trim() || undefined }),
+    onSuccess: () => { toast.success(mode === "send" ? "Patient sent to theatre" : "Patient back from theatre"); onDone(); },
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not move the patient")),
+  });
+
+  const available: PickTheatre[] = (theatres?.theatres ?? []).filter((t: PickTheatre) => t.status === "AVAILABLE");
+
+  return (
+    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ fontWeight: 700 }}>
+        {mode === "send" ? "Send to theatre" : "Bring back from theatre"}
+      </DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+          {bed?.occupant?.patientName} · {bed?.occupant?.uhid} · Bed {bed?.bedNumber}
+        </Typography>
+        <Stack spacing={2}>
+          {mode === "send" ? (
+            <>
+              <TextField select label="Theatre" required fullWidth value={theatreId} onChange={(e) => setTheatreId(e.target.value)}
+                helperText={available.length ? "Only theatres that are free right now" : "No theatre is free — one may be in use, being cleaned, or under maintenance"}>
+                {available.map((t) => (
+                  <MenuItem key={t.operatingTheatreId} value={t.operatingTheatreId}>{t.theatreName}</MenuItem>
+                ))}
+              </TextField>
+              <FormControlLabel
+                control={<Switch checked={!releaseBed} onChange={(e) => setReleaseBed(!e.target.checked)} />}
+                label={releaseBed
+                  ? "Bed will be released — they will need a new one on the way back"
+                  : "Keep this bed for them"}
+              />
+            </>
+          ) : (
+            <TextField select label="Where to" fullWidth value={toBedId} onChange={(e) => setToBedId(e.target.value)}
+              helperText="Leave blank to send them to recovery">
+              <MenuItem value=""><em>Recovery</em></MenuItem>
+              {(freeBeds ?? []).map((b: PickBed) => (
+                <MenuItem key={b.bedId} value={b.bedId}>{b.label || b.bedNumber}</MenuItem>
+              ))}
+            </TextField>
+          )}
+          <TextField label="Reason (optional)" fullWidth value={reason} onChange={(e) => setReason(e.target.value)} />
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onClose} sx={{ textTransform: "none" }}>Cancel</Button>
+        <Button variant="contained" sx={{ textTransform: "none" }}
+          disabled={go.isPending || (mode === "send" && !theatreId)}
+          onClick={() => go.mutate()}>
+          {go.isPending ? "Moving…" : mode === "send" ? "Send to theatre" : "Bring back"}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
