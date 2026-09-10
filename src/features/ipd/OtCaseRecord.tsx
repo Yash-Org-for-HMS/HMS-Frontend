@@ -104,6 +104,12 @@ export default function OtCaseRecord() {
     qc.invalidateQueries({ queryKey: ["ot-case-record", id] });
     qc.invalidateQueries({ queryKey: ["ot-case-checklist", id] });
     qc.invalidateQueries({ queryKey: ["ot-case-consents", id] });
+    // Wheeling in and out moves the patient, so the ward board and the theatre
+    // board are stale the moment it happens.
+    qc.invalidateQueries({ queryKey: ["ipd-structure"] });
+    qc.invalidateQueries({ queryKey: ["ot-theatres-pick"] });
+    qc.invalidateQueries({ queryKey: ["ot-theatres"] });
+    qc.invalidateQueries({ queryKey: ["ot-day-list"] });
   };
 
   if (recordQ.isLoading) return <ListSkeleton />;
@@ -610,8 +616,27 @@ function AddTeamDialog({ id, onClose, onDone }: { id: string; onClose: () => voi
 // ── Anaesthesia, with the six timestamps ─────────────────────────────────────
 
 function AnaesthesiaTab({ id, record, onSaved }: { id: string; record: Record<string, string | number | null> | null; onSaved: () => void }) {
+  const toast = useToast();
   const save = useSectionSave(id, onSaved, "Anaesthesia saved");
-  const stampTime = useSectionSave(id, onSaved, "Time recorded");
+  // Wheeling in and out moves the patient as well as recording the time, so
+  // the toast has to say so — a button that quietly does two things is a
+  // button people stop trusting.
+  const stampTime = useMutation({
+    mutationFn: async (body: Record<string, unknown>) =>
+      (await axiosInstance.put(`/ipd/ot/cases/${id}/record`, body)).data,
+    onSuccess: (res) => {
+      const m = (res as { movement?: { status?: string } } | undefined)?.movement?.status;
+      toast.success(
+        m === "moved" ? "Time recorded — the patient has been moved, and the ward board now shows it"
+          : m === "no-theatre" ? "Time recorded. No theatre is booked for this case, so the patient was not moved"
+          : m === "theatre-busy" ? "Time recorded. The theatre is not free, so the patient was not moved — check the theatre board"
+          : m === "no-admission" ? "Time recorded (day case — there is no ward bed to move them from)"
+          : "Time recorded",
+      );
+      onSaved();
+    },
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not record the time")),
+  });
   const [f, setF] = useState<Record<string, string>>({});
   const val = (k: string) => f[k] ?? (record?.[k] != null ? String(record[k]) : "");
 
