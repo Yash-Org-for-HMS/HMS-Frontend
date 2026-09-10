@@ -142,7 +142,9 @@ function Utilisation({ d }: { d: Any }) {
         <Grid size={{ xs: 6, md: 3 }}><Tile label="Cases" value={totals?.cases ?? 0} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><Tile label="Hours used" value={totals?.actualHours ?? 0} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><Tile label="Hours available" value={totals?.availableHours ?? 0} sub={`${val(d, ["openHoursPerDay"])} h a day × ${val(d, ["days"])} days`} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><Tile label="Utilisation" value={totals?.utilisationPct == null ? "—" : `${totals.utilisationPct}%`} color={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><Tile label="Utilisation" value={totals?.utilisationPct == null ? "—" : `${totals.utilisationPct}%`}
+          sub={totals?.utilisationPct == null ? "Nothing measurable yet" : undefined}
+          color={totals?.utilisationPct == null ? undefined : SEMANTIC.success} /></Grid>
       </Grid>
 
       {/* The number is only as good as the records behind it, and saying so is
