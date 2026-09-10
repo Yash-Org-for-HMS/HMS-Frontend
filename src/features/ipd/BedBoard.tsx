@@ -169,7 +169,8 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
           ? (awayText(bedMenu.bed?.occupant)
             ? [
                 <MenuItem key="back" onClick={() => setMoveDialog({ mode: "return", bed: bedMenu.bed })}>
-                  <MeetingRoomRounded fontSize="small" sx={{ mr: 1, color: SEMANTIC.success }} /> Bring back from theatre
+                  <MeetingRoomRounded fontSize="small" sx={{ mr: 1, color: SEMANTIC.success }} />
+                  {bedMenu.bed?.occupant?.location === "RECOVERY" ? "Bring back from recovery" : "Bring back from theatre"}
                 </MenuItem>,
               ]
             : [
@@ -244,7 +245,9 @@ function TheatreMoveDialog({ mode, bed, onClose, onDone }: { mode: "send" | "ret
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ fontWeight: 700 }}>
-        {mode === "send" ? "Send to theatre" : "Bring back from theatre"}
+        {mode === "send" ? "Send to theatre"
+          : bed?.occupant?.location === "RECOVERY" ? "Bring back from recovery"
+          : "Bring back from theatre"}
       </DialogTitle>
       <DialogContent>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
