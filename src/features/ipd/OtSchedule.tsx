@@ -93,6 +93,53 @@ const clock = (s: string | null) =>
 const caseWindow = (c: OtCase) =>
   c.scheduledStart ? `${clock(c.scheduledStart)} – ${clock(c.scheduledEnd)}` : "No time set";
 
+/** Somebody on the team: one of ours, or a name typed in. */
+type TeamPick = { doctorId?: string; userId?: string; externalName?: string; label: string } | null;
+type TeamOption = { key: string; label: string; doctorId?: string; userId?: string };
+
+/** Only ever one of the three, so the API never has to guess which was meant. */
+const pickPayload = (p: NonNullable<TeamPick>) =>
+  p.doctorId ? { doctorId: p.doctorId }
+    : p.userId ? { userId: p.userId }
+    : { externalName: p.label };
+
+/**
+ * Pick a person, or write one.
+ *
+ * freeSolo on purpose: a visiting surgeon or an agency nurse is really in the
+ * room and has no login here, and refusing to record them because of that would
+ * make the record wrong rather than tidy.
+ */
+function TeamPicker({ label, options, value, onChange }: {
+  label: string;
+  options: TeamOption[];
+  value: TeamPick;
+  onChange: (v: TeamPick) => void;
+}) {
+  return (
+    <Autocomplete
+      freeSolo
+      options={options}
+      value={value ? ({ key: "current", label: value.label } as TeamOption) : null}
+      getOptionLabel={(o) => (typeof o === "string" ? o : o.label)}
+      isOptionEqualToValue={(o, v) => o.label === v.label}
+      onChange={(_, v) => {
+        if (!v) return onChange(null);
+        if (typeof v === "string") return onChange({ externalName: v, label: v });
+        onChange({ doctorId: v.doctorId, userId: v.userId, label: v.label });
+      }}
+      onInputChange={(_, v, reason) => {
+        // Typing a name that is not on the list still counts as naming them.
+        if (reason === "input") onChange(v ? { externalName: v, label: v } : null);
+      }}
+      renderInput={(p) => (
+        <TextField {...p} label={label}
+          helperText={options.length ? "Pick from the list, or type a name" : "Type a name"} />
+      )}
+    />
+  );
+}
+
 const Tile = ({ label, value, color }: { label: string; value: number; color: string }) => (
   <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", textAlign: "center" }}>
     <Typography variant="h5" sx={{ fontWeight: 800, color }}>{value}</Typography>
@@ -384,8 +431,14 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
     procedureName: "", surgeryType: "MAJOR", surgeonId: "", anaesthesiaType: "",
     operatingTheatreId: theatreId ?? "", startTime: "09:00", endTime: "10:00",
     isEmergency: false, price: "", notes: "",
+    assistant: null as TeamPick, anaesthetist: null as TeamPick,
   });
 
+  // Doctors AND nursing/technical staff, readable by any ward user.
+  const { data: teamOpts } = useQuery({
+    queryKey: ["ot-team-options"],
+    queryFn: async () => (await axiosInstance.get("/ipd/ot/team-options")).data.data,
+  });
   const { data: theatres, isLoading: loadingTheatres } = useQuery({
     queryKey: ["ot-theatres-pick"],
     queryFn: async () => (await axiosInstance.get("/ipd/theatres")).data.data,
@@ -419,6 +472,10 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
         scheduledStart: form.operatingTheatreId ? start : undefined,
         scheduledEnd: form.operatingTheatreId ? end : undefined,
         isEmergency: form.isEmergency,
+        team: [
+          ...(form.assistant ? [{ teamRole: "ASSISTANT", ...pickPayload(form.assistant) }] : []),
+          ...(form.anaesthetist ? [{ teamRole: "ANAESTHETIST", ...pickPayload(form.anaesthetist) }] : []),
+        ],
         price: form.price ? Number(form.price) : undefined,
         notes: form.notes.trim() || undefined,
       });
@@ -432,6 +489,14 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
   // in from the axios body.
   const admissionRows = (admissions?.data ?? []) as Record<string, unknown>[];
   const doctors = (dropdowns?.doctors ?? []) as { doctorId: string; user?: { firstName?: string; lastName?: string } }[];
+  // Doctors first, then nursing and technical staff — an assistant is usually a
+  // doctor and an anaesthetist always is, so they should not be scrolled past.
+  const teamOptions: TeamOption[] = [
+    ...((teamOpts?.doctors ?? []) as { doctorId: string; name: string }[])
+      .map((d) => ({ key: "d:" + d.doctorId, label: d.name, doctorId: d.doctorId })),
+    ...((teamOpts?.staff ?? []) as { userId: string; name: string; roleName: string }[])
+      .map((s) => ({ key: "u:" + s.userId, label: `${s.name} (${s.roleName})`, userId: s.userId })),
+  ];
   const canSave = form.procedureName.trim() && (dayCase ? patientId : admissionId);
 
   return (
@@ -496,6 +561,23 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
               </MenuItem>
             ))}
           </TextField>
+
+          {/* The rest of the team. Pick from the list or just type a name — a
+              visiting anaesthetist has no login here and still has to be on the
+              record. Anyone else (scrub nurse, second assistant) is added on
+              the case's Team tab once it is booked. */}
+          <TeamPicker
+            label="Assistant surgeon"
+            options={teamOptions}
+            value={form.assistant}
+            onChange={(v) => setForm({ ...form, assistant: v })}
+          />
+          <TeamPicker
+            label="Anaesthetist"
+            options={teamOptions}
+            value={form.anaesthetist}
+            onChange={(v) => setForm({ ...form, anaesthetist: v })}
+          />
 
           <TextField select label="Theatre" fullWidth value={form.operatingTheatreId}
             onChange={(e) => setForm({ ...form, operatingTheatreId: e.target.value })}

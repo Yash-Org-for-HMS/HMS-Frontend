@@ -547,10 +547,11 @@ function AddTeamDialog({ id, onClose, onDone }: { id: string; onClose: () => voi
     queryKey: ["appointment-dropdowns"],
     queryFn: async () => (await axiosInstance.get("/reception/appointments/dropdowns")).data.data,
   });
-  const { data: staff, isLoading: loadingStaff } = useQuery({
-    queryKey: ["hospital-users-pick"],
-    queryFn: async () => (await axiosInstance.get("/hospital/users", { params: { limit: 200 } })).data.data,
-    enabled: who === "staff",
+  // /hospital/users is admin-only, so this returned 403 and rendered an
+  // empty list for the nurses and receptionists who actually fill this in.
+  const { data: teamOpts, isLoading: loadingStaff } = useQuery({
+    queryKey: ["ot-team-options"],
+    queryFn: async () => (await axiosInstance.get("/ipd/ot/team-options")).data.data,
   });
 
   const add = useMutation({
@@ -565,7 +566,7 @@ function AddTeamDialog({ id, onClose, onDone }: { id: string; onClose: () => voi
   });
 
   const doctors = (dropdowns?.doctors ?? []) as { doctorId: string; user?: { firstName?: string; lastName?: string } }[];
-  const staffRows = (Array.isArray(staff) ? staff : staff?.users ?? []) as { userId: string; firstName?: string; lastName?: string; roleName?: string }[];
+  const staffRows = (teamOpts?.staff ?? []) as { userId: string; name: string; roleName: string }[];
   const canSave = who === "doctor" ? !!doctorId : who === "staff" ? !!userId : !!externalName.trim();
 
   return (
@@ -594,7 +595,7 @@ function AddTeamDialog({ id, onClose, onDone }: { id: string; onClose: () => voi
             <TextField select label="Staff member" fullWidth value={userId} onChange={(e) => setUserId(e.target.value)}
               helperText={loadingStaff ? "Loading…" : staffRows.length ? undefined : "No staff found"}>
               {staffRows.map((s) => (
-                <MenuItem key={s.userId} value={s.userId}>{s.firstName} {s.lastName} · {s.roleName}</MenuItem>
+                <MenuItem key={s.userId} value={s.userId}>{s.name} · {s.roleName}</MenuItem>
               ))}
             </TextField>
           )}
