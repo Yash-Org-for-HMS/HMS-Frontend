@@ -163,6 +163,11 @@ function IssueDialog({ ward, onClose, onDone }: { ward: WardSummary; onClose: ()
               select fullWidth size="small" label="Batch"
               value={sourceBatchId} onChange={(e) => setSourceBatchId(e.target.value)}
               helperText="Leave as is to take the one expiring soonest."
+              // Without displayEmpty the default choice renders as a blank box:
+              // the batch about to be issued would be the one thing the issue
+              // screen did not show you.
+              SelectProps={{ displayEmpty: true }}
+              InputLabelProps={{ shrink: true }}
             >
               <MenuItem value="">
                 Soonest to expire ({batches[0].batchNumber ?? "unbatched"}, {batches[0].quantityOnHand} left)
