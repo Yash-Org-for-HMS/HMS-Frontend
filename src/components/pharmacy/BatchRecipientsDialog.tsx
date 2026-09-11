@@ -121,8 +121,13 @@ export default function BatchRecipientsDialog({
               {/* Shown only where ward stock is actually in use. For a hospital
                   that never issues to a cupboard this is structurally zero, and
                   a permanent 0 tile makes the three that matter harder to read. */}
+              {/* Blue, like the shelf, and deliberately NOT the amber of
+                  "cannot be traced": the colour here answers one question,
+                  which is whether somebody can go and collect these units. A
+                  cupboard two corridors away and a box nobody can find are
+                  opposite answers, and wore the same colour. */}
               {(data.totals.inWards > 0 || data.wards?.length > 0) && (
-                <Stat label="In ward cupboards" value={data.totals.inWards} color={SEMANTIC.warning} />
+                <Stat label="In ward cupboards" value={data.totals.inWards} color={SEMANTIC.infoDark} />
               )}
               <Stat label="Held by patients" value={data.totals.withPatients} color={SEMANTIC.danger} />
               <Stat label="Cannot be traced" value={data.totals.untraced} color={SEMANTIC.warning} />
@@ -138,7 +143,7 @@ export default function BatchRecipientsDialog({
                 {data.wards.map((w) => (
                   <Box key={w.wardId}
                     sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 1, borderBottom: "1px solid", borderColor: "divider" }}>
-                    <LocalHospitalRounded sx={{ fontSize: 18, color: SEMANTIC.warning }} />
+                    <LocalHospitalRounded sx={{ fontSize: 18, color: SEMANTIC.infoDark }} />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography variant="body2" sx={{ fontWeight: 700 }} noWrap>{w.wardName}</Typography>
                       <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>
@@ -148,7 +153,7 @@ export default function BatchRecipientsDialog({
                       </Typography>
                     </Box>
                     <Typography variant="body2" sx={{ width: 92, textAlign: "right", fontWeight: 800, fontVariantNumeric: "tabular-nums",
-                      color: w.quantity > 0 ? SEMANTIC.warning : "text.disabled" }}>
+                      color: w.quantity > 0 ? SEMANTIC.infoDark : "text.disabled" }}>
                       {w.quantity} unit{w.quantity === 1 ? "" : "s"}
                     </Typography>
                   </Box>
