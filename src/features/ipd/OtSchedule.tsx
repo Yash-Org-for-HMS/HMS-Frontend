@@ -379,19 +379,19 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
       )}
 
       <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={() => setMenu({ anchor: null, row: null })}>
-        {menu.row?.status === "SCHEDULED" && (
-          <MenuItem onClick={() => { setStatus.mutate({ id: menu.row!.surgeryId, status: "IN_PROGRESS" }); setMenu({ anchor: null, row: null }); }}>
-            Mark wheeled in
-          </MenuItem>
-        )}
+        {/* "Mark wheeled in" used to live here and set the status only — the
+            list said "In theatre" while the patient was still in bed and the
+            theatre still read free. Wheeling in and out is one action with one
+            implementation, and it lives on the case record where the rest of
+            the journey is. This menu opens that. */}
+        <MenuItem onClick={() => { navigate(`${basePath}/ipd/ot-cases/${menu.row!.surgeryId}`); }}>
+          {menu.row?.status === "SCHEDULED" ? "Open the case — wheel in, record, sign out" : "Open the record"}
+        </MenuItem>
         {menu.row?.status === "IN_PROGRESS" && (
           <MenuItem onClick={() => { setStatus.mutate({ id: menu.row!.surgeryId, status: "COMPLETED" }); setMenu({ anchor: null, row: null }); }}>
-            Mark finished
+            Mark the case finished
           </MenuItem>
         )}
-        <MenuItem onClick={() => { navigate(`${basePath}/ipd/ot-cases/${menu.row!.surgeryId}`); }}>
-          Open the record
-        </MenuItem>
         <MenuItem onClick={() => { setCancelling(menu.row); setMenu({ anchor: null, row: null }); }} sx={{ color: SEMANTIC.danger }}>
           Cancel this case
         </MenuItem>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useIsNursePanel } from "./panelBase";
+import CaseJourney from "./CaseJourney";
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -86,8 +87,10 @@ export default function OtCaseRecord() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const toast = useToast();
   const isNurse = useIsNursePanel();
   const [tab, setTab] = useState(0);
+  const [placing, setPlacing] = useState(false);
 
   const recordQ = useQuery({
     queryKey: ["ot-case-record", id],
@@ -113,6 +116,32 @@ export default function OtCaseRecord() {
     qc.invalidateQueries({ queryKey: ["ot-theatres"] });
     qc.invalidateQueries({ queryKey: ["ot-day-list"] });
   };
+
+  /**
+   * The journey's one action.
+   *
+   * Both wheel events go through the record endpoint — the same path the times
+   * have always used — so there is exactly one way a patient moves, whichever
+   * screen the button was pressed on.
+   */
+  const journeyAction = useMutation({
+    mutationFn: async (a: "WHEEL_IN" | "WHEEL_OUT") =>
+      (await axiosInstance.put(`/ipd/ot/cases/${id}/record`, {
+        [a === "WHEEL_IN" ? "wheeledInAt" : "wheeledOutAt"]: new Date().toISOString(),
+      })).data,
+    onSuccess: (res, a) => {
+      const m = (res as { movement?: { status?: string } } | undefined)?.movement?.status;
+      toast.success(
+        m === "moved"
+          ? a === "WHEEL_IN" ? "In theatre — the ward board now shows them away" : "Out to recovery — their bed is still held"
+          : m === "no-theatre" ? "Time recorded. No theatre is booked for this case, so the patient was not moved"
+          : m === "theatre-busy" ? "Time recorded. The theatre is not free, so the patient was not moved"
+          : "Time recorded",
+      );
+      refreshAll();
+    },
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not move the patient")),
+  });
 
   if (recordQ.isLoading) return <ListSkeleton />;
   if (recordQ.isError) return <ErrorState message={apiErrorText(recordQ.error)} onRetry={() => recordQ.refetch()} />;
@@ -140,6 +169,24 @@ export default function OtCaseRecord() {
         </Alert>
       )}
 
+      {/* The journey, and the single next action. Everything below is detail
+          to be filled in; this is how the case is actually driven. */}
+      <CaseJourney
+        j={{
+          status: surgery?.status ?? "SCHEDULED",
+          patientLocation: surgery?.patientLocation ?? null,
+          bedNumber: surgery?.bedNumber ?? null,
+          theatreName: recordQ.data?.surgery?.theatreName ?? null,
+          wheeledInAt: recordQ.data?.record?.wheeledInAt ?? null,
+          wheeledOutAt: recordQ.data?.record?.wheeledOutAt ?? null,
+        }}
+        busy={journeyAction.isPending}
+        onAction={(a) => {
+          if (a === "PLACE_IN_BED") return setPlacing(true);
+          journeyAction.mutate(a);
+        }}
+      />
+
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
           sx={{ px: 1, "& .MuiTab-root": { textTransform: "none", fontWeight: 700, minHeight: 56 } }}>
@@ -163,6 +210,15 @@ export default function OtCaseRecord() {
       {tab === 4 && <ImplantsTab id={id} implants={recordQ.data?.implants ?? []} onSaved={refreshAll} />}
       {tab === 5 && <ConsentTab id={id} consents={consentsQ.data ?? []} onSaved={refreshAll} />}
       {tab === 6 && !isNurse && <BillingTab id={id} />}
+
+      {placing && surgery?.admissionId && (
+        <PlaceFromRecoveryDialog
+          admissionId={surgery.admissionId}
+          heldBed={surgery.bedHeldForReturn ? surgery.bedNumber : null}
+          onClose={() => setPlacing(false)}
+          onDone={() => { setPlacing(false); refreshAll(); }}
+        />
+      )}
     </Box>
   );
 }
@@ -447,7 +503,9 @@ function ChecklistTab({ id, data, onSaved }: { id: string; data: Record<string, 
                   extra: m.stage === "SIGN_IN" ? { siteMarked: !!current.SITE_MARKED, laterality: laterality || undefined } : undefined,
                 })}
               >
-                {signedAt ? `Re-sign ${m.title}` : `Sign ${m.title}`}
+                {/* The stage titles are already verbs — "Sign In", "Time Out",
+                    "Sign Out" — so prefixing "Sign" produced "Sign Sign In". */}
+                {signedAt ? `Re-confirm ${m.title}` : `Confirm ${m.title}`}
               </Button>
               {!allTicked && stageItems.length > 0 && (
                 <Typography variant="caption" sx={{ color: "text.secondary", ml: 2 }}>
@@ -960,6 +1018,67 @@ function WithdrawDialog({ id, consent, onClose, onDone }: {
         <Button variant="contained" color="error" sx={{ textTransform: "none" }}
           disabled={!reason.trim() || go.isPending} onClick={() => go.mutate()}>
           Withdraw
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+/**
+ * Placing a patient after recovery, from the case itself.
+ *
+ * The same move the bed board offers — this is the second door, and it exists
+ * because the person driving the case should not have to leave it to finish
+ * the journey. Both go through return-from-theatre, so they cannot diverge.
+ */
+function PlaceFromRecoveryDialog({ admissionId, heldBed, onClose, onDone }: {
+  admissionId: string; heldBed: string | null; onClose: () => void; onDone: () => void;
+}) {
+  const toast = useToast();
+  const [toBedId, setToBedId] = useState("");
+
+  const { data: freeBeds, isLoading } = useQuery({
+    queryKey: ["free-beds-pick"],
+    queryFn: async () => (await axiosInstance.get("/ipd/beds/available")).data.data,
+  });
+
+  const go = useMutation({
+    mutationFn: async () =>
+      axiosInstance.post(`/ipd/admissions/${admissionId}/return-from-theatre`, {
+        toBedId: toBedId || undefined,
+        reason: "Placed from recovery",
+      }),
+    onSuccess: () => { toast.success("Patient placed"); onDone(); },
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not place them")),
+  });
+
+  const beds = (freeBeds ?? []) as { bedId: string; bedNumber: string; label?: string }[];
+
+  return (
+    <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle sx={{ fontWeight: 700 }}>Place in a bed</DialogTitle>
+      <DialogContent>
+        {heldBed ? (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Bed {heldBed} is being held for them. Leave the choice blank to put them back in it.
+          </Alert>
+        ) : (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            They have no bed — their old one was released on the way in. Choose one.
+          </Alert>
+        )}
+        <TextField select fullWidth label="Bed" value={toBedId} onChange={(e) => setToBedId(e.target.value)}
+          required={!heldBed}
+          helperText={isLoading ? "Loading…" : beds.length ? "Beds free right now" : "No bed is free"}>
+          {heldBed && <MenuItem value=""><em>Back to bed {heldBed}</em></MenuItem>}
+          {beds.map((b) => <MenuItem key={b.bedId} value={b.bedId}>{b.label || b.bedNumber}</MenuItem>)}
+        </TextField>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onClose} sx={{ textTransform: "none" }}>Cancel</Button>
+        <Button variant="contained" sx={{ textTransform: "none" }}
+          disabled={go.isPending || (!heldBed && !toBedId)} onClick={() => go.mutate()}>
+          {go.isPending ? "Placing…" : "Place them"}
         </Button>
       </DialogActions>
     </Dialog>
