@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { usePanelBase } from "./panelBase";
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -232,7 +233,10 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
   const qc = useQueryClient();
   const navigate = useNavigate();
   // The record lives under whichever panel the user is already in.
-  const basePath = readOnly ? "/hospital" : "/reception";
+  // Read off the URL rather than assumed. This screen is mounted under
+  // reception, nurse and hospital-admin, and hardcoding "/reception" sent a
+  // nurse opening a case straight out of her own panel.
+  const basePath = usePanelBase();
   const [date, setDate] = useState(() => isoDay(new Date()));
   const [booking, setBooking] = useState<{ theatreId: string | null } | null>(null);
   const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: OtCase | null }>({ anchor: null, row: null });

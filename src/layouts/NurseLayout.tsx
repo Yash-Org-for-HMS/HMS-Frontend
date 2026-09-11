@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon, DashboardRounded, PeopleAltRounded, AssessmentRounded,
-  MedicationRounded, VaccinesRounded,
+  MedicationRounded, VaccinesRounded, HotelRounded, MedicalServicesRounded, EventNoteRounded,
 } from "@mui/icons-material";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
@@ -41,6 +41,12 @@ export default function NurseLayout() {
     { text: "Patient Queue", icon: <PeopleAltRounded />, path: "/nurse/queue", section: "Patient Care" },
     { text: "Ward", icon: <MedicationRounded />, path: "/nurse/ward", section: "Patient Care", module: "IPD" },
     { text: "Immunisations", icon: <VaccinesRounded />, path: "/nurse/immunisations", section: "Patient Care" },
+    // Taking a patient to theatre and bringing them back is a nursing job.
+    // These screens existed but were reachable only from Reception, so the
+    // people who actually do the work had no way to record it.
+    { text: "Bed Board", icon: <HotelRounded />, path: "/nurse/ipd/beds", section: "Theatre & Beds", module: "IPD" },
+    { text: "Theatre Board", icon: <MedicalServicesRounded />, path: "/nurse/ipd/theatres", section: "Theatre & Beds", module: "IPD" },
+    { text: "Operating List", icon: <EventNoteRounded />, path: "/nurse/ipd/ot-schedule", section: "Theatre & Beds", module: "IPD" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/nurse/reports", section: "Reports" },
   ];
 

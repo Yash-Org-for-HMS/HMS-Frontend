@@ -369,6 +369,13 @@ function App() {
             <Route path="/nurse/queue" element={el(NurseQueue)} />
             <Route path="/nurse/ward" element={elGated(NurseWard, "IPD", "Ward")} />
             <Route path="/nurse/chart/:admissionId" element={elGated(TreatmentChart, "IPD", "Treatment Chart")} />
+            {/* Theatre, from the nurse panel. Moving a patient to and from OT
+                is a nursing action, and until now every one of these screens
+                was reachable only from Reception. */}
+            <Route path="/nurse/ipd/beds" element={elGated(BedBoard, "IPD", "Bed Board")} />
+            <Route path="/nurse/ipd/theatres" element={elGated(TheatreBoard, "IPD", "Theatre Board")} />
+            <Route path="/nurse/ipd/ot-schedule" element={elGated(OtSchedule, "IPD", "Operating List")} />
+            <Route path="/nurse/ipd/ot-cases/:id" element={elGated(OtCaseRecord, "IPD", "Operative Record")} />
             <Route path="/nurse/immunisations" element={el(NurseImmunisations)} />
             <Route path="/nurse/reports" element={el(NurseReports)} />
             {/* Read-only view under the Nurse shell — a nurse opening a patient (e.g. via

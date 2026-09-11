@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useIsNursePanel } from "./panelBase";
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -85,6 +86,7 @@ export default function OtCaseRecord() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const isNurse = useIsNursePanel();
   const [tab, setTab] = useState(0);
 
   const recordQ = useQuery({
@@ -147,7 +149,10 @@ export default function OtCaseRecord() {
           <Tab label="Procedure" />
           <Tab label="Implants" />
           <Tab label="Consent" />
-          <Tab label="Billing" />
+          {/* What a case costs is a billing decision. The scrub nurse runs the
+              checklist and counts the swabs; she does not set the surgeon's
+              fee, and the API refuses it for her too. */}
+          {!isNurse && <Tab label="Billing" />}
         </Tabs>
       </Paper>
 
@@ -157,7 +162,7 @@ export default function OtCaseRecord() {
       {tab === 3 && <ProcedureTab id={id} record={recordQ.data?.record} onSaved={refreshAll} />}
       {tab === 4 && <ImplantsTab id={id} implants={recordQ.data?.implants ?? []} onSaved={refreshAll} />}
       {tab === 5 && <ConsentTab id={id} consents={consentsQ.data ?? []} onSaved={refreshAll} />}
-      {tab === 6 && <BillingTab id={id} />}
+      {tab === 6 && !isNurse && <BillingTab id={id} />}
     </Box>
   );
 }
