@@ -12,6 +12,7 @@ import {
 import {
   Menu as MenuIcon, DashboardRounded, PeopleAltRounded, AssessmentRounded,
   MedicationRounded, VaccinesRounded, HotelRounded, MedicalServicesRounded, EventNoteRounded,
+  WarehouseRounded,
 } from "@mui/icons-material";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
@@ -40,6 +41,7 @@ export default function NurseLayout() {
     { text: "Dashboard", icon: <DashboardRounded />, path: "/nurse/dashboard", section: "Overview" },
     { text: "Patient Queue", icon: <PeopleAltRounded />, path: "/nurse/queue", section: "Patient Care" },
     { text: "Ward", icon: <MedicationRounded />, path: "/nurse/ward", section: "Patient Care", module: "IPD" },
+    { text: "Ward Stock", icon: <WarehouseRounded />, path: "/nurse/ward-stock", section: "Patient Care", module: "IPD" },
     { text: "Immunisations", icon: <VaccinesRounded />, path: "/nurse/immunisations", section: "Patient Care" },
     // Taking a patient to theatre and bringing them back is a nursing job.
     // These screens existed but were reachable only from Reception, so the

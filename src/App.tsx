@@ -145,6 +145,9 @@ const InventoryManagement = lazy(() => import("@/features/pharmacy/InventoryMana
 const DispensaryPOS = lazy(() => import("@/features/pharmacy/DispensaryPOS"));
 const PharmacyReports = lazy(() => import("@/features/pharmacy/PharmacyReports"));
 const IpdMedicationRequests = lazy(() => import("@/features/pharmacy/IpdMedicationRequests"));
+// Shared between the pharmacy and nurse shells: the store issues, the ward
+// holds and returns, and both need to be looking at the same numbers.
+const WardStock = lazy(() => import("@/features/pharmacy/WardStock"));
 
 // Wrap a lazy page in a Suspense boundary with the skeleton fallback. The
 // boundary sits at the page-content level (inside each layout's <Outlet/>), so
@@ -376,6 +379,7 @@ function App() {
             <Route path="/nurse/ipd/theatres" element={elGated(TheatreBoard, "IPD", "Theatre Board")} />
             <Route path="/nurse/ipd/ot-schedule" element={elGated(OtSchedule, "IPD", "Operating List")} />
             <Route path="/nurse/ipd/ot-cases/:id" element={elGated(OtCaseRecord, "IPD", "Operative Record")} />
+            <Route path="/nurse/ward-stock" element={elGated(WardStock, "IPD", "Ward Stock")} />
             <Route path="/nurse/immunisations" element={el(NurseImmunisations)} />
             <Route path="/nurse/reports" element={el(NurseReports)} />
             {/* Read-only view under the Nurse shell — a nurse opening a patient (e.g. via
@@ -427,6 +431,7 @@ function App() {
             <Route path="/pharmacy/medicines" element={el(MedicineCatalog)} />
             <Route path="/pharmacy/suppliers" element={el(SupplierDirectory)} />
             <Route path="/pharmacy/inventory" element={el(InventoryManagement)} />
+            <Route path="/pharmacy/ward-stock" element={elGated(WardStock, "IPD", "Ward Stock")} />
             <Route path="/pharmacy/ipd-requests" element={elGated(IpdMedicationRequests, "IPD", "IPD Medication Requests")} />
             <Route path="/pharmacy/pos" element={el(DispensaryPOS)} />
             <Route path="/pharmacy/reports" element={el(PharmacyReports)} />

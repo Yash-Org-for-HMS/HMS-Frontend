@@ -3,7 +3,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography,
   Chip, Divider, Alert, Link, Tooltip,
 } from "@mui/material";
-import { PersonSearchRounded, FileDownloadRounded, WarningAmberRounded } from "@mui/icons-material";
+import { PersonSearchRounded, FileDownloadRounded, WarningAmberRounded, LocalHospitalRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { formatDate, formatDateTime } from "@/utils/format";
 import { SEMANTIC, NEUTRAL } from "@/styles/accents";
@@ -32,10 +32,21 @@ interface Untraced {
   lastAt: string | null;
 }
 
+/** Units sitting in a ward cupboard: off the shelf, with nobody yet. */
+interface WardHolding {
+  wardId: string;
+  wardName: string;
+  quantity: number;
+  issued: number;
+  returned: number;
+  lastIssuedAt: string;
+}
+
 interface TraceResponse {
   batch: { batchNumber: string; expiryDate: string; availableQuantity: number; medicineName: string };
-  totals: { withPatients: number; untraced: number; onShelf: number; patients: number };
+  totals: { withPatients: number; inWards: number; untraced: number; onShelf: number; patients: number };
   recipients: Recipient[];
+  wards: WardHolding[];
   untraced: Untraced[];
 }
 
@@ -107,9 +118,43 @@ export default function BatchRecipientsDialog({
           <>
             <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
               <Stat label="Still on the shelf" value={data.totals.onShelf} color={SEMANTIC.info} />
+              {/* Shown only where ward stock is actually in use. For a hospital
+                  that never issues to a cupboard this is structurally zero, and
+                  a permanent 0 tile makes the three that matter harder to read. */}
+              {(data.totals.inWards > 0 || data.wards?.length > 0) && (
+                <Stat label="In ward cupboards" value={data.totals.inWards} color={SEMANTIC.warning} />
+              )}
               <Stat label="Held by patients" value={data.totals.withPatients} color={SEMANTIC.danger} />
               <Stat label="Cannot be traced" value={data.totals.untraced} color={SEMANTIC.warning} />
             </Box>
+
+            {/* Collectable stock, so it comes before the call list: pulling a
+                box off a ward shelf is faster and surer than phoning anyone. */}
+            {data.wards?.length > 0 && (
+              <Box sx={{ mb: 2.5 }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 1 }}>
+                  COLLECT FROM THESE WARDS · {data.wards.length}
+                </Typography>
+                {data.wards.map((w) => (
+                  <Box key={w.wardId}
+                    sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 1, borderBottom: "1px solid", borderColor: "divider" }}>
+                    <LocalHospitalRounded sx={{ fontSize: 18, color: SEMANTIC.warning }} />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }} noWrap>{w.wardName}</Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>
+                        {w.issued} issued
+                        {w.returned > 0 ? `, ${w.returned} already returned` : ""}
+                        {` · last ${formatDate(w.lastIssuedAt)}`}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" sx={{ width: 92, textAlign: "right", fontWeight: 800, fontVariantNumeric: "tabular-nums",
+                      color: w.quantity > 0 ? SEMANTIC.warning : "text.disabled" }}>
+                      {w.quantity} unit{w.quantity === 1 ? "" : "s"}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            )}
 
             {/* Stated plainly. A call list that silently omits what it could not
                 account for reads as complete when it is not. */}
