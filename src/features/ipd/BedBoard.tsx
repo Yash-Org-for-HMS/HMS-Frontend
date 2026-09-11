@@ -40,6 +40,14 @@ type BoardBed = {
 };
 type PickTheatre = { operatingTheatreId: string; theatreName: string; status: string };
 type PickBed = { bedId: string; bedNumber: string; label?: string };
+type BedlessPatient = {
+  admissionId: string;
+  admissionNumber: string;
+  patientName: string;
+  uhid: string;
+  location: string;
+  theatreName: string | null;
+};
 
 /** Where the occupant is, when it isn't this bed. Empty string when it is. */
 function awayText(o?: BoardOccupant | null): string {
@@ -67,6 +75,7 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
   const toast = useToast();
   const [bedMenu, setBedMenu] = useState<{ anchor: HTMLElement | null; bed: BoardBed | null }>({ anchor: null, bed: null });
   const [moveDialog, setMoveDialog] = useState<{ mode: "send" | "return"; bed: BoardBed | null } | null>(null);
+  const [placing, setPlacing] = useState<BedlessPatient | null>(null);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["ipd-structure"],
@@ -74,6 +83,8 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
   });
   const summary = data?.summary;
   const wards: any[] = data?.wards || [];
+  /** Admitted with no bed — invisible on this board without their own strip. */
+  const awaitingBed = (data?.awaitingBed ?? []) as BedlessPatient[];
 
   const setBedStatus = async (bedId: string, status: string) => {
     setBedMenu({ anchor: null, bed: null });
@@ -102,6 +113,46 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
           <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Reserved" value={summary.reserved} color={STATUS_COLOR.RESERVED} /></Grid>
           <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Maintenance" value={summary.maintenance} color={STATUS_COLOR.MAINTENANCE} /></Grid>
         </Grid>
+      )}
+
+      {/* Admitted, but in no bed at all — most often just out of theatre with
+          the bed released on the way in. This board draws patients through
+          beds, so without this strip they appear nowhere on it: no bed, the
+          theatre already freed, and a nurse looking for them has nothing to
+          look at. They are the first thing on the screen because somebody has
+          to find them a bed. */}
+      {awaitingBed.length > 0 && (
+        <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 3, border: "2px solid", borderColor: SEMANTIC.warning, bgcolor: `${SEMANTIC.warning}0a` }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+            <MeetingRoomRounded sx={{ color: SEMANTIC.warning }} />
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+              {awaitingBed.length} patient{awaitingBed.length === 1 ? "" : "s"} with no bed
+            </Typography>
+          </Box>
+          <Stack spacing={1}>
+            {awaitingBed.map((a) => (
+              <Box key={a.admissionId} sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.5, borderRadius: 2, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
+                <PersonRounded sx={{ color: SEMANTIC.warning }} />
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }} noWrap>{a.patientName} · {a.uhid}</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    {a.location === "RECOVERY" ? "In recovery"
+                      : a.location === "OT" ? `In ${a.theatreName || "theatre"}`
+                      : a.location === "PRE_OP" ? "In pre-op"
+                      : "Waiting for a bed"}
+                    {" · "}{a.admissionNumber}
+                  </Typography>
+                </Box>
+                {!readOnly && a.location !== "OT" && (
+                  <Button size="small" variant="contained" sx={{ textTransform: "none", fontWeight: 700 }}
+                    onClick={() => setPlacing(a)}>
+                    Place in a bed
+                  </Button>
+                )}
+              </Box>
+            ))}
+          </Stack>
+        </Paper>
       )}
 
       {isLoading ? <ListSkeleton />
@@ -191,6 +242,13 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
           bed={moveDialog.bed}
           onClose={() => { setMoveDialog(null); setBedMenu({ anchor: null, bed: null }); }}
           onDone={() => { setMoveDialog(null); setBedMenu({ anchor: null, bed: null }); refetch(); }}
+        />
+      )}
+      {placing && (
+        <PlaceInBedDialog
+          patient={placing}
+          onClose={() => setPlacing(null)}
+          onDone={() => { setPlacing(null); refetch(); }}
         />
       )}
     </Box>
@@ -293,6 +351,58 @@ function TheatreMoveDialog({ mode, bed, onClose, onDone }: { mode: "send" | "ret
           disabled={go.isPending || (mode === "send" && !theatreId)}
           onClick={() => go.mutate()}>
           {go.isPending ? "Moving…" : mode === "send" ? "Send to theatre" : "Bring back"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+/**
+ * Giving a bed to a patient who has none.
+ *
+ * Reached from the strip at the top of the board. The usual case is a patient
+ * just out of theatre whose bed was released on the way in — they are in
+ * recovery and somebody has to decide where they go next, which is exactly the
+ * decision releasing the bed deferred.
+ */
+function PlaceInBedDialog({ patient, onClose, onDone }: {
+  patient: BedlessPatient; onClose: () => void; onDone: () => void;
+}) {
+  const toast = useToast();
+  const [toBedId, setToBedId] = useState("");
+
+  const { data: freeBeds, isLoading } = useQuery({
+    queryKey: ["free-beds-pick"],
+    queryFn: async () => (await axiosInstance.get("/ipd/beds/available")).data.data,
+  });
+
+  const go = useMutation({
+    mutationFn: async () =>
+      axiosInstance.post(`/ipd/admissions/${patient.admissionId}/return-from-theatre`, { toBedId, reason: "Placed from recovery" }),
+    onSuccess: () => { toast.success("Patient placed in a bed"); onDone(); },
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not place them")),
+  });
+
+  const beds = (freeBeds ?? []) as PickBed[];
+
+  return (
+    <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle sx={{ fontWeight: 700 }}>Place in a bed</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+          {patient.patientName} · {patient.uhid} · {patient.location === "RECOVERY" ? "in recovery" : "waiting"}
+        </Typography>
+        <TextField select required fullWidth label="Bed" value={toBedId} onChange={(e) => setToBedId(e.target.value)}
+          helperText={isLoading ? "Loading…" : beds.length ? "Beds free right now" : "No bed is free"}>
+          {beds.map((b) => (
+            <MenuItem key={b.bedId} value={b.bedId}>{b.label || b.bedNumber}</MenuItem>
+          ))}
+        </TextField>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onClose} sx={{ textTransform: "none" }}>Cancel</Button>
+        <Button variant="contained" sx={{ textTransform: "none" }} disabled={!toBedId || go.isPending} onClick={() => go.mutate()}>
+          {go.isPending ? "Placing…" : "Place them"}
         </Button>
       </DialogActions>
     </Dialog>
