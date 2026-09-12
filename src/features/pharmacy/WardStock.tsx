@@ -12,7 +12,7 @@ import {
   WarningAmberRounded, ChevronRightRounded, HealingRounded, FactCheckRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
-import { formatDate, formatDateTime } from "@/utils/format";
+import { formatDate, formatDateTime, formatINRAuto } from "@/utils/format";
 import { SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { useToast } from "@/providers/ToastContext";
 import { useIsNursePanel } from "@/features/ipd/panelBase";
@@ -1321,6 +1321,316 @@ function LogTab() {
   );
 }
 
+/* ── reports ────────────────────────────────────────────────────────────── */
+
+interface PositionReport {
+  asAt: string;
+  wards: Array<{ wardId: string; wardName: string; lines: number; units: number; listValue: string; expiredUnits: number; expiringUnits: number; belowPar: number }>;
+  totals: { wards: number; lines: number; units: number; listValue: string; expiredUnits: number; expiringUnits: number; belowPar: number; medicineUnitsOffValuation: number };
+}
+interface ConsumptionReport {
+  period: { from: string; to: string };
+  wards: Array<{ wardId: string; wardName: string; lines: number; units: number; patients: number; billedUnits: number; billedValue: string; absorbedUnits: number; absorbedValue: string }>;
+  items: Array<{ stockItemId: string; name: string; unit: string | null; units: number; value: string }>;
+  totals: { records: number; lines: number; units: number; billedValue: string; absorbedValue: string };
+}
+interface VarianceReport {
+  period: { from: string; to: string };
+  wards: Array<{
+    wardId: string; wardName: string; unitsHeld: number; counts: number; lines: number;
+    agreed: number; off: number; unitsShort: number; unitsOver: number; shortValue: string;
+    lastCountedAt: string | null; neverCounted: boolean;
+  }>;
+  totals: { counts: number; lines: number; off: number; unitsShort: number; unitsOver: number; shortValue: string; wardsNeverCounted: number };
+}
+
+/** The last 30 days, which is the window these reports default to. */
+function defaultRange(): { from: string; to: string } {
+  const to = new Date();
+  const from = new Date(to.getTime() - 30 * 86400000);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  return { from: iso(from), to: iso(to) };
+}
+
+/**
+ * What ward stock costs, where it goes, and what goes missing.
+ *
+ * Three questions kept apart rather than blended into one dashboard, because
+ * each is read by a different person for a different reason. Everything is
+ * priced at LIST - the charge price for a consumable, the selling price for a
+ * drug - and never at cost, because a charge item has no cost field: nobody
+ * records what a box of gloves cost. Said on screen as well as in the code,
+ * since a number labelled "value" is otherwise read as a balance-sheet figure.
+ */
+function ReportsTab() {
+  const [view, setView] = useState<"position" | "consumption" | "variance">("position");
+  const [range, setRange] = useState(defaultRange);
+  const qs = `?from=${range.from}&to=${range.to}`;
+
+  const position = useQuery({
+    queryKey: ["ws-report-position"],
+    queryFn: () => get<PositionReport>("/pharmacy/ward-stock/reports/position"),
+    enabled: view === "position",
+  });
+  const consumption = useQuery({
+    queryKey: ["ws-report-consumption", range.from, range.to],
+    queryFn: () => get<ConsumptionReport>(`/pharmacy/ward-stock/reports/consumption${qs}`),
+    enabled: view === "consumption",
+  });
+  const variance = useQuery({
+    queryKey: ["ws-report-variance", range.from, range.to],
+    queryFn: () => get<VarianceReport>(`/pharmacy/ward-stock/reports/variance${qs}`),
+    enabled: view === "variance",
+  });
+
+  const active = view === "position" ? position : view === "consumption" ? consumption : variance;
+
+  return (
+    <Box>
+      <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, alignItems: "center", flexWrap: "wrap" }}>
+        <Tabs value={view} onChange={(_, v) => setView(v)} sx={{ minHeight: 36, "& .MuiTab-root": { minHeight: 36, py: 0 } }}>
+          <Tab value="position" label="In the cupboards" sx={{ textTransform: "none", fontWeight: 700 }} />
+          <Tab value="consumption" label="What was used" sx={{ textTransform: "none", fontWeight: 700 }} />
+          <Tab value="variance" label="What went missing" sx={{ textTransform: "none", fontWeight: 700 }} />
+        </Tabs>
+        <Box sx={{ flex: 1 }} />
+        {/* The position report is "right now" and has no window to choose. */}
+        {view !== "position" && (
+          <>
+            <TextField
+              size="small" type="date" label="From" value={range.from} InputLabelProps={{ shrink: true }}
+              onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))}
+            />
+            <TextField
+              size="small" type="date" label="To" value={range.to} InputLabelProps={{ shrink: true }}
+              onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))}
+            />
+          </>
+        )}
+      </Box>
+
+      {active.isError ? (
+        <ErrorState message={apiErrorText(active.error)} onRetry={() => active.refetch()} />
+      ) : active.isLoading || !active.data ? (
+        <ListSkeleton rows={5} />
+      ) : view === "position" ? (
+        <PositionView data={position.data as PositionReport} />
+      ) : view === "consumption" ? (
+        <ConsumptionView data={consumption.data as ConsumptionReport} />
+      ) : (
+        <VarianceView data={variance.data as VarianceReport} />
+      )}
+    </Box>
+  );
+}
+
+function PositionView({ data }: { data: PositionReport }) {
+  if (!data.wards.length) return <Empty>No ward is holding any stock.</Empty>;
+  return (
+    <Box>
+      <Box sx={{ display: "flex", gap: 1.5, mb: 2, flexWrap: "wrap" }}>
+        <Stat label="Units in cupboards" value={data.totals.units} color={SEMANTIC.info} />
+        <Stat label="List value" value={formatINRAuto(data.totals.listValue)} color={SEMANTIC.success} />
+        {data.totals.expiredUnits > 0 && <Stat label="Expired units" value={data.totals.expiredUnits} color={SEMANTIC.danger} />}
+        {data.totals.expiringUnits > 0 && <Stat label="Expiring in 30 days" value={data.totals.expiringUnits} color={SEMANTIC.warning} />}
+        {data.totals.belowPar > 0 && <Stat label="Lines below par" value={data.totals.belowPar} color={SEMANTIC.warning} />}
+      </Box>
+
+      {/* The one thing this report knows that no other report does. */}
+      {data.totals.medicineUnitsOffValuation > 0 && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          {data.totals.medicineUnitsOffValuation} drug unit{data.totals.medicineUnitsOffValuation === 1 ? "" : "s"} sit
+          in ward cupboards. Issuing to a ward takes them out of pharmacy inventory, so they are not in the
+          Stock Valuation report — the hospital's stock is that report plus this one.
+        </Alert>
+      )}
+
+      <TableContainer component={Paper} variant="outlined" sx={{ overflowX: "auto" }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 700 }}>Ward</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Lines</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Units</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">List value</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Expired</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Expiring</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Below par</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {data.wards.map((w) => (
+              <TableRow key={w.wardId} hover>
+                <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>{w.wardName}</Typography></TableCell>
+                <TableCell align="right">{w.lines}</TableCell>
+                <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>{w.units}</TableCell>
+                <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>{formatINRAuto(w.listValue)}</TableCell>
+                <TableCell align="right">
+                  <Typography variant="body2" sx={{ fontWeight: w.expiredUnits ? 800 : 400, color: w.expiredUnits ? SEMANTIC.danger : "text.disabled" }}>
+                    {w.expiredUnits || "—"}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  <Typography variant="body2" sx={{ color: w.expiringUnits ? SEMANTIC.warning : "text.disabled" }}>
+                    {w.expiringUnits || "—"}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  <Typography variant="body2" sx={{ color: w.belowPar ? SEMANTIC.warning : "text.disabled" }}>
+                    {w.belowPar || "—"}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+}
+
+function ConsumptionView({ data }: { data: ConsumptionReport }) {
+  if (!data.wards.length) return <Empty>Nothing was used out of a ward cupboard in this window.</Empty>;
+  return (
+    <Box>
+      <Box sx={{ display: "flex", gap: 1.5, mb: 2, flexWrap: "wrap" }}>
+        <Stat label="Units used" value={data.totals.units} color={SEMANTIC.info} />
+        <Stat label="Billed to patients" value={formatINRAuto(data.totals.billedValue)} color={SEMANTIC.success} />
+        <Stat label="Absorbed as floor stock" value={formatINRAuto(data.totals.absorbedValue)} color={SEMANTIC.warning} />
+      </Box>
+      {/* Two numbers of different kinds, and reading the second as revenue lost
+          would be wrong — it is the size of a decision, taken on purpose. */}
+      <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
+        Billed is what patients were actually charged. Absorbed is what the same units would have billed at
+        list price had they not been marked floor stock — the size of that decision, not a loss.
+        Prices exclude GST.
+      </Typography>
+
+      <TableContainer component={Paper} variant="outlined" sx={{ overflowX: "auto", mb: 2.5 }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 700 }}>Ward</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Patients</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Units</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Billed</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Absorbed</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {data.wards.map((w) => (
+              <TableRow key={w.wardId} hover>
+                <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>{w.wardName}</Typography></TableCell>
+                <TableCell align="right">{w.patients}</TableCell>
+                <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>{w.units}</TableCell>
+                <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>
+                  {formatINRAuto(w.billedValue)}
+                  <Typography component="span" variant="caption" sx={{ color: "text.secondary", ml: 0.5 }}>
+                    ({w.billedUnits})
+                  </Typography>
+                </TableCell>
+                <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>
+                  {formatINRAuto(w.absorbedValue)}
+                  <Typography component="span" variant="caption" sx={{ color: "text.secondary", ml: 0.5 }}>
+                    ({w.absorbedUnits})
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {data.items.length > 0 && (
+        <>
+          <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 1 }}>
+            MOST USED · {data.items.length}
+          </Typography>
+          {data.items.map((i) => (
+            <Box key={i.stockItemId}
+              sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 0.8, borderBottom: "1px solid", borderColor: "divider" }}>
+              <Typography variant="body2" sx={{ flex: 1, fontWeight: 600 }} noWrap>{i.name}</Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>{formatINRAuto(i.value)}</Typography>
+              <Typography variant="body2" sx={{ width: 90, textAlign: "right", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+                {units(i.units, i.unit)}
+              </Typography>
+            </Box>
+          ))}
+        </>
+      )}
+    </Box>
+  );
+}
+
+function VarianceView({ data }: { data: VarianceReport }) {
+  if (!data.wards.length) return <Empty>No ward holds stock yet, so there is nothing to count.</Empty>;
+  return (
+    <Box>
+      <Box sx={{ display: "flex", gap: 1.5, mb: 2, flexWrap: "wrap" }}>
+        <Stat label="Counts done" value={data.totals.counts} color={SEMANTIC.info} />
+        <Stat label="Units short" value={data.totals.unitsShort} color={SEMANTIC.danger} />
+        {data.totals.unitsOver > 0 && <Stat label="Units over" value={data.totals.unitsOver} color={SEMANTIC.warning} />}
+        <Stat label="Value short" value={formatINRAuto(data.totals.shortValue)} color={SEMANTIC.danger} />
+        {data.totals.wardsNeverCounted > 0 && (
+          <Stat label="Never counted" value={data.totals.wardsNeverCounted} color={SEMANTIC.warning} />
+        )}
+      </Box>
+
+      <TableContainer component={Paper} variant="outlined" sx={{ overflowX: "auto" }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 700 }}>Ward</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Holding</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Counts</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Lines off</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Short</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Over</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Value short</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Last counted</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {data.wards.map((w) => (
+              <TableRow key={w.wardId} hover>
+                <TableCell>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{w.wardName}</Typography>
+                  {/* A ward nobody has counted is a finding, not an empty row. */}
+                  {w.neverCounted && (
+                    <Chip size="small" label="never counted"
+                      sx={{ height: 18, fontSize: 11, fontWeight: 700, mt: 0.3, bgcolor: `${SEMANTIC.warning}1f`, color: SEMANTIC.warning }} />
+                  )}
+                </TableCell>
+                <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>{w.unitsHeld}</TableCell>
+                <TableCell align="right">{w.counts || "—"}</TableCell>
+                <TableCell align="right">{w.off || "—"}</TableCell>
+                <TableCell align="right">
+                  <Typography variant="body2" sx={{ fontWeight: w.unitsShort ? 800 : 400, color: w.unitsShort ? SEMANTIC.danger : "text.disabled" }}>
+                    {w.unitsShort || "—"}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  <Typography variant="body2" sx={{ color: w.unitsOver ? SEMANTIC.warning : "text.disabled" }}>
+                    {w.unitsOver || "—"}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>
+                  {w.unitsShort ? formatINRAuto(w.shortValue) : "—"}
+                </TableCell>
+                <TableCell align="right">
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    {w.lastCountedAt ? formatDate(w.lastCountedAt) : "—"}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+}
+
 /* ── page ───────────────────────────────────────────────────────────────── */
 
 export default function WardStock() {
@@ -1336,6 +1646,7 @@ export default function WardStock() {
       { label: "To reorder", node: <ReorderTab /> },
       { label: "Central store", node: <StoreTab /> },
       { label: "Movement log", node: <LogTab /> },
+      { label: "Reports", node: <ReportsTab /> },
     ];
 
   return (
