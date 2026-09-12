@@ -379,7 +379,10 @@ function App() {
             <Route path="/nurse/ipd/theatres" element={elGated(TheatreBoard, "IPD", "Theatre Board")} />
             <Route path="/nurse/ipd/ot-schedule" element={elGated(OtSchedule, "IPD", "Operating List")} />
             <Route path="/nurse/ipd/ot-cases/:id" element={elGated(OtCaseRecord, "IPD", "Operative Record")} />
-            <Route path="/nurse/ward-stock" element={elGated(WardStock, "IPD", "Ward Stock")} />
+            {/* Gated on Pharmacy, not IPD: the nurse panel already implies wards, and
+                what ward stock additionally needs is a central store to draw from.
+                The pharmacy panel gates the same page on IPD, for the mirror reason. */}
+            <Route path="/nurse/ward-stock" element={elGated(WardStock, "Pharmacy", "Ward Stock")} />
             <Route path="/nurse/immunisations" element={el(NurseImmunisations)} />
             <Route path="/nurse/reports" element={el(NurseReports)} />
             {/* Read-only view under the Nurse shell — a nurse opening a patient (e.g. via
