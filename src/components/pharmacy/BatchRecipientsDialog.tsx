@@ -39,6 +39,8 @@ interface WardHolding {
   quantity: number;
   issued: number;
   returned: number;
+  /** Used on patients out of this cupboard — those people are in the list below. */
+  consumed: number;
   lastIssuedAt: string;
 }
 
@@ -146,9 +148,14 @@ export default function BatchRecipientsDialog({
                     <LocalHospitalRounded sx={{ fontSize: 18, color: SEMANTIC.infoDark }} />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography variant="body2" sx={{ fontWeight: 700 }} noWrap>{w.wardName}</Typography>
+                      {/* Where the rest of it went, so the number on the right
+                          reads as a remainder rather than a mystery. Units used
+                          on patients are not missing — the people who got them
+                          are in the call list below. */}
                       <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>
                         {w.issued} issued
-                        {w.returned > 0 ? `, ${w.returned} already returned` : ""}
+                        {w.consumed > 0 ? `, ${w.consumed} used on patients` : ""}
+                        {w.returned > 0 ? `, ${w.returned} sent back` : ""}
                         {` · last ${formatDate(w.lastIssuedAt)}`}
                       </Typography>
                     </Box>

@@ -82,15 +82,31 @@ export default function AdmissionChargesDialog({
     if (!basket.length) return;
     setSaving(true);
     try {
-      await axiosInstance.post(`/ipd/admissions/${admission.admissionId}/charges`, {
+      const res = await axiosInstance.post(`/ipd/admissions/${admission.admissionId}/charges`, {
         items: basket.map((l) => ({ chargeItemId: l.chargeItemId, quantity: l.quantity })),
       });
       toast.success(`${basket.length} item${basket.length === 1 ? "" : "s"} recorded`);
+
+      /**
+       * Recording an item now also takes it off the ward that held it, so the
+       * screen has to say when that did not happen. A silent failure here is
+       * exactly how a bill and a cupboard start disagreeing — and nothing else
+       * reconciles the two.
+       */
+      const short = (res.data?.stock?.lines ?? []).filter((l: { note?: string | null }) => l.note);
+      for (const l of short as Array<{ itemName: string; note: string }>) {
+        toast.warning(`${l.itemName}: ${l.note}`);
+      }
+
       setBasket([]);
       refetch();
       // The discharge preview reads the same rows, so it must not go stale.
       qc.invalidateQueries({ queryKey: ["ipd-admission", admission.admissionId] });
       qc.invalidateQueries({ queryKey: ["admissions"] });
+      // So does the ward's own cupboard, on whichever screen shows it next.
+      qc.invalidateQueries({ queryKey: ["ward-stock-ward"] });
+      qc.invalidateQueries({ queryKey: ["ward-stock-wards"] });
+      qc.invalidateQueries({ queryKey: ["ward-stock-items"] });
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Could not record these items"));
     } finally {
@@ -101,12 +117,17 @@ export default function AdmissionChargesDialog({
   const voidCharge = async (reason: string): Promise<boolean> => {
     if (!voidTarget) return true;
     try {
-      await axiosInstance.put(`/ipd/admissions/${admission.admissionId}/charges/${voidTarget.admissionChargeId}/void`, { reason });
+      const res = await axiosInstance.put(`/ipd/admissions/${admission.admissionId}/charges/${voidTarget.admissionChargeId}/void`, { reason });
       toast.success("Item removed from the bill");
+      // Taking a line off the bill puts its stock back on the ward, and says so
+      // — including when it could not, which is the case somebody has to act on.
+      if (res.data?.stockNote) toast.info(res.data.stockNote);
       setVoidTarget(null);
       refetch();
       // The discharge preview reads the same rows, so it must not go stale.
       qc.invalidateQueries({ queryKey: ["ipd-admission", admission.admissionId] });
+      qc.invalidateQueries({ queryKey: ["ward-stock-ward"] });
+      qc.invalidateQueries({ queryKey: ["ward-stock-wards"] });
       return true;
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Could not remove this item"));

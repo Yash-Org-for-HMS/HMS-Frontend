@@ -9,7 +9,7 @@ import {
 import {
   AddRounded, SearchRounded, ArrowBackRounded, LocalShippingRounded,
   AssignmentReturnRounded, InventoryRounded, DeleteOutlineRounded,
-  WarningAmberRounded, ChevronRightRounded,
+  WarningAmberRounded, ChevronRightRounded, HealingRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { formatDate, formatDateTime } from "@/utils/format";
@@ -420,6 +420,208 @@ function AddItemDialog({ onClose, onDone }: { onClose: () => void; onDone: () =>
   );
 }
 
+/**
+ * Record what was used on a patient, out of this ward's cupboard.
+ *
+ * The same event the patient's chart records, reached from the other end. It
+ * posts to one service, so the bill and the cupboard cannot come to different
+ * conclusions about it.
+ */
+function ConsumeDialog({ ward, stock, onClose, onDone }: {
+  ward: WardSummary;
+  stock: WardStockRow[];
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const toast = useToast();
+  const [admissionId, setAdmissionId] = useState("");
+  const [stockItemId, setStockItemId] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const [notes, setNotes] = useState("");
+  const [basket, setBasket] = useState<Array<{ stockItemId: string; name: string; quantity: number; billsToPatient: boolean }>>([]);
+
+  const { data: patients, isLoading: patientsLoading } = useQuery({
+    queryKey: ["ward-stock-patients", ward.wardId],
+    queryFn: () => get<{ patients: Array<{ admissionId: string; name: string; uhid: string | null; bed: string | null }> }>(
+      `/pharmacy/ward-stock/wards/${ward.wardId}/patients`),
+  });
+
+  // Only what the ward actually has. Offering something it holds none of would
+  // produce a shortfall warning the picker could have prevented.
+  const available = stock.filter((s) => s.quantityOnHand > 0 && !basket.some((b) => b.stockItemId === s.stockItemId));
+  const chosen = stock.find((s) => s.stockItemId === stockItemId);
+  const qty = Number(quantity);
+  const tooMany = !!chosen && qty > chosen.quantityOnHand;
+
+  const add = () => {
+    if (!chosen || !(qty > 0) || tooMany) return;
+    setBasket((b) => [...b, { stockItemId: chosen.stockItemId, name: chosen.name, quantity: qty, billsToPatient: chosen.billsToPatient }]);
+    setStockItemId("");
+    setQuantity("1");
+  };
+
+  const save = useMutation({
+    mutationFn: () => axiosInstance.post("/pharmacy/ward-stock/consume", {
+      admissionId, notes: notes.trim() || undefined,
+      lines: basket.map((b) => ({ stockItemId: b.stockItemId, quantity: b.quantity })),
+    }),
+    onSuccess: (res) => {
+      const used = res.data?.data?.used ?? [];
+      toast.success(`Recorded against ${patients?.patients.find((p) => p.admissionId === admissionId)?.name ?? "the patient"}`);
+      // A cupboard that has run out does not block the record, so the screen
+      // has to say which lines did not actually come off the shelf.
+      for (const u of used as Array<{ itemName: string; stockNote: string | null }>) {
+        if (u.stockNote) toast.warning(`${u.itemName}: ${u.stockNote}`);
+      }
+      onDone();
+      onClose();
+    },
+    onError: (e) => toast.error(getApiErrorMessage(e)),
+  });
+
+  const billable = basket.filter((b) => b.billsToPatient).length;
+
+  return (
+    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ fontWeight: 700 }}>Record use in {ward.wardName}</DialogTitle>
+      <DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2.5 }}>
+        <TextField
+          select fullWidth size="small" label="Used on" value={admissionId}
+          onChange={(e) => setAdmissionId(e.target.value)}
+        >
+          {patientsLoading && <MenuItem disabled value="">Loading…</MenuItem>}
+          {!patientsLoading && !(patients?.patients ?? []).length && (
+            <MenuItem disabled value="">Nobody is admitted in this ward</MenuItem>
+          )}
+          {(patients?.patients ?? []).map((p) => (
+            <MenuItem key={p.admissionId} value={p.admissionId}>
+              {p.name}
+              <Typography component="span" variant="caption" sx={{ color: "text.secondary", ml: 1 }}>
+                {p.uhid}{p.bed ? ` · bed ${p.bed}` : ""}
+              </Typography>
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <Divider />
+
+        <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start", flexWrap: "wrap" }}>
+          <TextField
+            select size="small" label="Item" value={stockItemId} onChange={(e) => setStockItemId(e.target.value)}
+            sx={{ flex: 1, minWidth: 180 }}
+          >
+            {!available.length && <MenuItem disabled value="">This ward holds nothing else</MenuItem>}
+            {available.map((s) => (
+              <MenuItem key={s.stockItemId} value={s.stockItemId}>
+                {s.name}
+                <Typography component="span" variant="caption" sx={{ color: "text.secondary", ml: 1 }}>
+                  {s.quantityOnHand} on hand
+                </Typography>
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            size="small" label="Qty" type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)}
+            sx={{ width: 96 }} error={tooMany}
+            helperText={tooMany ? `only ${chosen?.quantityOnHand}` : " "}
+            InputProps={{ inputProps: { min: 1 } }}
+          />
+          <Button onClick={add} disabled={!chosen || !(qty > 0) || tooMany} sx={{ textTransform: "none", mt: 0.4 }}>
+            Add
+          </Button>
+        </Box>
+
+        {basket.length > 0 && (
+          <Box>
+            {basket.map((b, i) => (
+              <Box key={b.stockItemId}
+                sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.75, borderBottom: "1px solid", borderColor: "divider" }}>
+                <Typography variant="body2" sx={{ flex: 1, fontWeight: 600 }} noWrap>{b.name}</Typography>
+                {/* Said before it is recorded, not discovered on the bill. */}
+                {!b.billsToPatient && (
+                  <Chip size="small" label="not billed" sx={{ height: 18, fontSize: 11, bgcolor: `${NEUTRAL.muted}1f`, color: NEUTRAL.muted }} />
+                )}
+                <Typography variant="body2" sx={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{b.quantity}</Typography>
+                <IconButton size="small" onClick={() => setBasket((prev) => prev.filter((_, ix) => ix !== i))}>
+                  <DeleteOutlineRounded fontSize="small" />
+                </IconButton>
+              </Box>
+            ))}
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
+              {billable === 0
+                ? "None of this bills the patient — it is all floor stock."
+                : `${billable} of ${basket.length} will be added to the patient's bill.`}
+            </Typography>
+          </Box>
+        )}
+
+        <TextField fullWidth size="small" label="Note (optional)" placeholder="dressing change"
+          value={notes} onChange={(e) => setNotes(e.target.value)} />
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={onClose} color="inherit" sx={{ textTransform: "none" }}>Cancel</Button>
+        <Button
+          variant="contained" disabled={!admissionId || !basket.length || save.isPending}
+          onClick={() => save.mutate()} sx={{ textTransform: "none" }}
+        >
+          {save.isPending ? "Recording…" : "Record"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+/** What this ward has used, and on whom. */
+function WardUsage({ wardId }: { wardId: string }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["ward-stock-used", wardId],
+    queryFn: () => get<{
+      usage: Array<{
+        stockIssueId: string; patientName: string; uhid: string | null; notes: string | null;
+        recordedByName: string | null; createdAt: string; units: number;
+        items: Array<{ stockIssueItemId: string; itemName: string | null; quantity: number; batchNumber: string | null; billed: boolean }>;
+      }>;
+    }>(`/pharmacy/ward-stock/wards/${wardId}/used?limit=20`),
+  });
+
+  if (isLoading) return <ListSkeleton rows={3} />;
+  if (!data?.usage.length) {
+    return <Empty>Nothing has been used out of this cupboard yet.</Empty>;
+  }
+
+  return (
+    <Box>
+      {data.usage.map((r) => (
+        <Paper key={r.stockIssueId} variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+            <Typography variant="body2" sx={{ fontWeight: 700, flex: 1, minWidth: 0 }} noWrap>
+              {r.patientName}
+              {r.uhid && <Typography component="span" variant="caption" sx={{ color: "text.secondary", ml: 1 }}>{r.uhid}</Typography>}
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              {formatDateTime(r.createdAt)}{r.recordedByName ? ` · ${r.recordedByName}` : ""}
+            </Typography>
+          </Box>
+          <Box sx={{ mt: 0.6 }}>
+            {r.items.map((i) => (
+              <Typography key={i.stockIssueItemId} variant="caption" sx={{ display: "block", color: "text.secondary" }}>
+                · {i.quantity} × {i.itemName ?? "item"}
+                {i.batchNumber ? ` (batch ${i.batchNumber})` : ""}
+                {i.billed ? "" : " — floor stock, not billed"}
+              </Typography>
+            ))}
+            {r.notes && (
+              <Typography variant="caption" sx={{ display: "block", mt: 0.3, fontStyle: "italic", color: "text.secondary" }}>
+                {r.notes}
+              </Typography>
+            )}
+          </Box>
+        </Paper>
+      ))}
+    </Box>
+  );
+}
+
 /* ── tabs ───────────────────────────────────────────────────────────────── */
 
 /** One ward opened up: every line it holds, and what can be done to each. */
@@ -427,6 +629,8 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
   const qc = useQueryClient();
   const [issuing, setIssuing] = useState(false);
   const [returning, setReturning] = useState<WardStockRow | null>(null);
+  const [consuming, setConsuming] = useState(false);
+  const [view, setView] = useState<"holding" | "used">("holding");
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["ward-stock-ward", ward.wardId],
@@ -439,6 +643,7 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
     qc.invalidateQueries({ queryKey: ["ward-stock-wards"] });
     qc.invalidateQueries({ queryKey: ["ward-stock-items"] });
     qc.invalidateQueries({ queryKey: ["ward-stock-issues"] });
+    qc.invalidateQueries({ queryKey: ["ward-stock-used", ward.wardId] });
   };
 
   return (
@@ -446,14 +651,29 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
         <IconButton onClick={onBack} size="small"><ArrowBackRounded /></IconButton>
         <Typography variant="h6" sx={{ fontWeight: 700, flex: 1, minWidth: 0 }}>{ward.wardName}</Typography>
+        {/* The nursing action, and the one this whole module exists to make
+            possible: it bills the patient and empties the cupboard at once. */}
+        <Button variant="contained" startIcon={<HealingRounded />} onClick={() => setConsuming(true)} sx={{ textTransform: "none" }}>
+          Record use
+        </Button>
         {canIssue && (
-          <Button variant="contained" startIcon={<LocalShippingRounded />} onClick={() => setIssuing(true)} sx={{ textTransform: "none" }}>
+          <Button variant="outlined" startIcon={<LocalShippingRounded />} onClick={() => setIssuing(true)} sx={{ textTransform: "none" }}>
             Issue to this ward
           </Button>
         )}
       </Box>
 
-      {isError ? (
+      <Tabs
+        value={view} onChange={(_, v) => setView(v)}
+        sx={{ mb: 2, minHeight: 36, "& .MuiTab-root": { minHeight: 36, py: 0 } }}
+      >
+        <Tab value="holding" label="Holding" sx={{ textTransform: "none", fontWeight: 700 }} />
+        <Tab value="used" label="Used on patients" sx={{ textTransform: "none", fontWeight: 700 }} />
+      </Tabs>
+
+      {view === "used" && <WardUsage wardId={ward.wardId} />}
+
+      {view === "holding" && (isError ? (
         <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : isLoading || !data ? (
         <ListSkeleton rows={5} />
@@ -534,10 +754,13 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
             </TableContainer>
           )}
         </>
-      )}
+      ))}
 
       {issuing && <IssueDialog ward={ward} onClose={() => setIssuing(false)} onDone={refresh} />}
       {returning && <ReturnDialog ward={ward} row={returning} onClose={() => setReturning(null)} onDone={refresh} />}
+      {consuming && (
+        <ConsumeDialog ward={ward} stock={data?.stock ?? []} onClose={() => setConsuming(false)} onDone={refresh} />
+      )}
     </Box>
   );
 }
