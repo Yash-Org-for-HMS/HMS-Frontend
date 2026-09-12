@@ -3,6 +3,8 @@ import { DETAIL_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEnabledModules } from "@/hooks/useEnabledModules";
+import { formatINR } from "@/utils/format";
 import {
   Box, Typography, Paper, Avatar, Chip, Divider, Button, Stack, Tooltip, alpha,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, IconButton, CircularProgress,
@@ -14,7 +16,7 @@ import {
   TodayRounded, BadgeRounded, WcRounded, BloodtypeRounded, LocalPhoneRounded,
   EmailRounded, LocationOnRounded, TimelineRounded,
   FolderSharedRounded, UploadFileRounded, DescriptionRounded, OpenInNewRounded, DeleteOutlineRounded,
-  HotelRounded, Inventory2Rounded,
+  HotelRounded, Inventory2Rounded, ReceiptLongRounded,
 } from "@mui/icons-material";
 import { getInitials } from "@/utils/format";
 import { axiosInstance } from "@/api/axios";
@@ -66,6 +68,7 @@ function Section({ title, icon, action, children }: { title: string; icon: React
 export default function DoctorPatientProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isModuleEnabled } = useEnabledModules();
 
   const patientQ = useQuery({
     queryKey: ["doctor-patient", id],
@@ -90,6 +93,22 @@ export default function DoctorPatientProfile() {
     queryFn: async () => (await axiosInstance.get(`/ipd/patients/${id}/surgeries`)).data.data,
     enabled: !!id,
   });
+
+  /**
+   * What this patient still owes.
+   *
+   * Deliberately the only billing a doctor sees: not the hospital's revenue,
+   * not a bill they could edit - just whether the person they are about to
+   * order another test for is already behind. Read-only, and best-effort: a
+   * hospital without the Billing module simply shows nothing here.
+   */
+  const duesQ = useQuery({
+    queryKey: ["doctor-patient-dues", id],
+    queryFn: async () => (await axiosInstance.get(`/doctor/patients/${id}/billing-summary`)).data.data,
+    enabled: !!id && isModuleEnabled("Billing"),
+    retry: 0,
+  });
+  const totalDues = Number(duesQ.data?.totals?.totalDues ?? 0);
 
   // Is this patient on a ward right now? The doctor panel had no way to tell,
   // so a clinician on rounds could not see they were looking at an inpatient.
@@ -211,7 +230,7 @@ export default function DoctorPatientProfile() {
       )}
 
       {/* Stat tiles */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: totalDues > 0.005 ? "repeat(5, 1fr)" : "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
         <StatCard layout="horizontal" icon={<HistoryRounded />} label="Consultations" value={history.length} color={DOCTOR_BLUE} />
         <StatCard layout="horizontal" icon={<TodayRounded />} label="Last visit" color="#8b5cf6"
           value={lastConsult ? new Date(lastConsult.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}
@@ -219,6 +238,14 @@ export default function DoctorPatientProfile() {
         <StatCard layout="horizontal" icon={<VaccinesRounded />} label="Doses due" value={dueRows.length} color={doseColor}
           sub={hasOverdueDose ? "overdue" : dueRows.length ? "due soon" : "up to date"} />
         <StatCard layout="horizontal" icon={<MedicalServicesRounded />} label="Surgeries" value={surgeries.length} color="#0891b2" />
+        {/* Shown only when there IS something owed. A permanent "Outstanding ₹0"
+            would be one more tile between the doctor and the clinical ones; a
+            figure that appears when it matters is the thing worth knowing
+            before adding another test to the bill. */}
+        {totalDues > 0.005 && (
+          <StatCard layout="horizontal" icon={<ReceiptLongRounded />} label="Outstanding"
+            value={formatINR(totalDues, 0)} color={SEMANTIC.danger} sub="unpaid on earlier bills" />
+        )}
       </Box>
 
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "320px 1fr" }, gap: 2, alignItems: "start" }}>
