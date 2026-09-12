@@ -1013,7 +1013,7 @@ export default function WardStock() {
         <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: "-0.5px" }}>Ward Stock</Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
           {isNurse
-            ? "What this ward is holding, and sending back what it does not need."
+            ? "What this ward is holding, what it used, and sending back what it does not need."
             : "Gloves, syringes and floor-stock drugs: what the store has, and what each ward is holding."}
         </Typography>
       </Box>
