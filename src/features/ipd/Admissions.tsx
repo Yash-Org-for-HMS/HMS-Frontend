@@ -24,6 +24,7 @@ import TransferDialog from "@/components/ipd/TransferDialog";
 import DischargeDialog from "@/components/ipd/DischargeDialog";
 import DepositDialog from "@/components/ipd/DepositDialog";
 import PageHeader from "@/components/layout/PageHeader";
+import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 
@@ -273,6 +274,11 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                     </TableCell>
                     <TableCell><Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700 }} /></TableCell>
                     <TableCell align="right">
+                      {/* Not gated on readOnly: reading a history is not an
+                          action on the patient, and an oversight panel needs it
+                          as much as the ward does. */}
+                      <PatientHistoryButton variant="icon" patientId={a.patientId}
+                        patientName={a.patientName} uhid={a.uhid} />
                       {!readOnly && a.status === "ADMITTED" && (
                         <>
                           <Tooltip title="Transfer bed"><IconButton size="small" onClick={() => setTransferFor(a)} sx={{ color: "text.secondary", "&:hover": { color: BRAND.action } }}><SwapHorizRounded fontSize="small" /></IconButton></Tooltip>

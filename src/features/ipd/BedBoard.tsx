@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import {
   EventSeatRounded, BuildRounded, CheckCircleRounded,
-  PersonRounded, ApartmentRounded, MedicalServicesRounded, MeetingRoomRounded,
+  PersonRounded, ApartmentRounded, MedicalServicesRounded, MeetingRoomRounded, HistoryRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -17,6 +17,7 @@ import Mascot from "@/components/Mascot";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
+import PatientHistoryButton, { PatientHistoryDialog } from "@/components/clinical/PatientHistoryButton";
 
 const STATUS_COLOR: Record<string, string> = {
   AVAILABLE: SEMANTIC.success, OCCUPIED: SEMANTIC.danger, RESERVED: SEMANTIC.warning, MAINTENANCE: NEUTRAL.muted,
@@ -26,6 +27,7 @@ const STATUS_COLOR: Record<string, string> = {
 // a held bed keeps its occupant while they are away in theatre.
 type BoardOccupant = {
   admissionId: string;
+  patientId?: string | null;
   patientName: string;
   uhid: string;
   location?: string | null;
@@ -43,6 +45,7 @@ type PickBed = { bedId: string; bedNumber: string; label?: string };
 type BedlessPatient = {
   admissionId: string;
   admissionNumber: string;
+  patientId?: string | null;
   patientName: string;
   uhid: string;
   location: string;
@@ -74,6 +77,9 @@ const Tile = ({ label, value, color }: { label: string; value: number; color: st
 export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = {}) {
   const toast = useToast();
   const [bedMenu, setBedMenu] = useState<{ anchor: HTMLElement | null; bed: BoardBed | null }>({ anchor: null, bed: null });
+  // Held by the board, not by the menu: closing a Menu unmounts its children,
+  // and a dialog rendered inside it would go with it before it painted.
+  const [historyFor, setHistoryFor] = useState<BoardOccupant | BedlessPatient | null>(null);
   const [moveDialog, setMoveDialog] = useState<{ mode: "send" | "return"; bed: BoardBed | null } | null>(null);
   const [placing, setPlacing] = useState<BedlessPatient | null>(null);
 
@@ -143,6 +149,11 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
                     {" · "}{a.admissionNumber}
                   </Typography>
                 </Box>
+                {/* Not gated on readOnly: reading a history is not an action on
+                    the patient, and an oversight panel that cannot open the bed
+                    menu would otherwise have no way in at all. */}
+                <PatientHistoryButton variant="icon" patientId={a.patientId}
+                  patientName={a.patientName} uhid={a.uhid} />
                 {!readOnly && a.location !== "OT" && (
                   <Button size="small" variant="contained" sx={{ textTransform: "none", fontWeight: 700 }}
                     onClick={() => setPlacing(a)}>
@@ -216,6 +227,13 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
 
       {/* Bed status menu */}
       <Menu anchorEl={bedMenu.anchor} open={Boolean(bedMenu.anchor)} onClose={() => setBedMenu({ anchor: null, bed: null })}>
+        {/* First, because it is the only item here that answers a question
+            rather than moving somebody: what is this patient in for. */}
+        {bedMenu.bed?.occupant?.patientId && (
+          <MenuItem onClick={() => { setHistoryFor(bedMenu.bed!.occupant!); setBedMenu({ anchor: null, bed: null }); }}>
+            <HistoryRounded fontSize="small" sx={{ mr: 1 }} /> Patient history
+          </MenuItem>
+        )}
         {bedMenu.bed?.status === "OCCUPIED"
           ? (awayText(bedMenu.bed?.occupant)
             ? [
@@ -235,6 +253,10 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
             <MenuItem key="m" disabled={bedMenu.bed?.status === "MAINTENANCE"} onClick={() => bedMenu.bed && setBedStatus(bedMenu.bed.bedId, "MAINTENANCE")}><BuildRounded fontSize="small" sx={{ mr: 1, color: STATUS_COLOR.MAINTENANCE }} /> Maintenance</MenuItem>,
           ]}
       </Menu>
+
+      <PatientHistoryDialog
+        open={!!historyFor} onClose={() => setHistoryFor(null)}
+        patientId={historyFor?.patientId} patientName={historyFor?.patientName} uhid={historyFor?.uhid} />
 
       {moveDialog && (
         <TheatreMoveDialog

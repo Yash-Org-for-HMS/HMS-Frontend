@@ -10,6 +10,7 @@ import {
   TextField, Checkbox, FormControlLabel, IconButton, Alert, Dialog, DialogTitle,
   DialogContent, DialogActions,
 } from "@mui/material";
+import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
 import {
   ArrowBackRounded, CheckCircleRounded, RadioButtonUncheckedRounded, DeleteOutlineRounded,
   AddRounded, WarningAmberRounded, ScheduleRounded, PersonRounded,
@@ -153,11 +154,18 @@ export default function OtCaseRecord() {
     <Box>
       <PageHeader
         title={surgery?.procedureName || "Case"}
-        subtitle="The record for this case — save each section as you go"
+        subtitle={surgery?.patientName
+          ? `${surgery.patientName}${surgery.uhid ? ` · ${surgery.uhid}` : ""} — save each section as you go`
+          : "The record for this case — save each section as you go"}
         actions={
-          <Button startIcon={<ArrowBackRounded />} sx={{ textTransform: "none" }} onClick={() => navigate(-1)}>
-            Back to the list
-          </Button>
+          <Stack direction="row" spacing={1} alignItems="center">
+            {/* What has happened to this patient before, without leaving the
+                record that is being written about them now. */}
+            <PatientHistoryButton patientId={surgery?.patientId} patientName={surgery?.patientName} uhid={surgery?.uhid} />
+            <Button startIcon={<ArrowBackRounded />} sx={{ textTransform: "none" }} onClick={() => navigate(-1)}>
+              Back to the list
+            </Button>
+          </Stack>
         }
       />
 

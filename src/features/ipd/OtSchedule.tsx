@@ -19,6 +19,7 @@ import Mascot from "@/components/Mascot";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
+import { PatientHistoryDialog } from "@/components/clinical/PatientHistoryButton";
 
 /**
  * Tomorrow's operating list.
@@ -34,6 +35,7 @@ import PageHeader from "@/components/layout/PageHeader";
 
 type OtCase = {
   surgeryId: string;
+  patientId: string | null;
   patientName: string;
   uhid: string;
   admissionId: string | null;
@@ -241,6 +243,7 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
   const [booking, setBooking] = useState<{ theatreId: string | null } | null>(null);
   const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: OtCase | null }>({ anchor: null, row: null });
   const [cancelling, setCancelling] = useState<OtCase | null>(null);
+  const [historyFor, setHistoryFor] = useState<OtCase | null>(null);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["ot-day-list", date],
@@ -387,6 +390,17 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
         <MenuItem onClick={() => { navigate(`${basePath}/ipd/ot-cases/${menu.row!.surgeryId}`); }}>
           {menu.row?.status === "SCHEDULED" ? "Open the case — wheel in, record, sign out" : "Open the record"}
         </MenuItem>
+        {/* Before the case, not after it: what this patient has been treated
+            for, admitted with and reacted to is a pre-op question.
+
+            The dialog is held by the screen, not by this item - closing the
+            Menu unmounts its children, and a dialog rendered in here would go
+            with it before it ever painted. */}
+        {menu.row?.patientId && (
+          <MenuItem onClick={() => { setHistoryFor(menu.row); setMenu({ anchor: null, row: null }); }}>
+            Patient history
+          </MenuItem>
+        )}
         {menu.row?.status === "IN_PROGRESS" && (
           <MenuItem onClick={() => { setStatus.mutate({ id: menu.row!.surgeryId, status: "COMPLETED" }); setMenu({ anchor: null, row: null }); }}>
             Mark the case finished
@@ -396,6 +410,10 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
           Cancel this case
         </MenuItem>
       </Menu>
+
+      <PatientHistoryDialog
+        open={!!historyFor} onClose={() => setHistoryFor(null)}
+        patientId={historyFor?.patientId} patientName={historyFor?.patientName} uhid={historyFor?.uhid} />
 
       {booking && (
         <BookCaseDialog

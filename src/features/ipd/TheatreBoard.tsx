@@ -17,6 +17,7 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import PageHeader from "@/components/layout/PageHeader";
+import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
 
 type Theatre = {
   operatingTheatreId: string;
@@ -31,6 +32,7 @@ type Theatre = {
   occupant: {
     admissionId: string;
     admissionNumber: string;
+    patientId: string | null;
     patientName: string;
     uhid: string;
     heldBed: string | null;
@@ -176,6 +178,10 @@ export default function TheatreBoard({ manage = false }: { manage?: boolean } = 
                       <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }} noWrap>
                         {t.occupant.heldBed ? `Bed ${t.occupant.heldBed} is being held` : "No bed held"}
                       </Typography>
+                      {/* Whoever is watching the board is often the person
+                          asked what this patient came in with. */}
+                      <PatientHistoryButton variant="icon" patientId={t.occupant.patientId}
+                        patientName={t.occupant.patientName} uhid={t.occupant.uhid} />
                     </Box>
                   )}
                   <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>

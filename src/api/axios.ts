@@ -44,8 +44,16 @@ const REALMS: Record<Realm, { access: string; refresh: string; refreshUrl: strin
 // bounced the super-admin to the hospital-staff login page instead of their
 // own. \b forces a real path-segment boundary, so "/hospital/..." still
 // matches (boundary before "/") but "/hospitals" no longer does.
+//
+// ADD NEW HOSPITAL-PORTAL PREFIXES HERE. The fallback is the super-admin realm,
+// and it fails silently in the worst way: a hospital user has no super-admin
+// token, so no Authorization header is sent at all and the call 401s with
+// "Missing or malformed Authorization header" — which reads like a broken route
+// or an expired session rather than a missing word in this regex. A new mount
+// can pass every API check (those set the header themselves) and still be dead
+// in the browser. "clinical" was exactly that.
 function realmForUrl(url?: string): Realm {
-  if (url && /^\/(hospital|reception|doctor|nurse|lab|pharmacy|billing|ipd|vaccination|claims)\b/.test(url)) {
+  if (url && /^\/(hospital|reception|doctor|nurse|lab|pharmacy|billing|ipd|clinical|vaccination|claims)\b/.test(url)) {
     return "hospital";
   }
   return "admin";

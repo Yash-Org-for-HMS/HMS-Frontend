@@ -16,6 +16,7 @@ import {
   WarningAmberRounded, CheckCircleRounded, RadioButtonUncheckedRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
+import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
 import { SEMANTIC, NEUTRAL } from "@/styles/accents";
 import ErrorState from "@/components/ErrorState";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
@@ -223,7 +224,13 @@ export default function TreatmentChart() {
       }`}</style>
 
       <Box className="no-print" sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, mb: 2, flexWrap: "wrap" }}>
-        <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ textTransform: "none" }}>Back to ward</Button>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ textTransform: "none" }}>Back to ward</Button>
+          {/* The drug about to be given is the reason this matters: what they
+              have already had, reacted to, and been admitted for. */}
+          <PatientHistoryButton patientId={header?.patientId}
+            patientName={header?.patientName} uhid={header?.uhid} />
+        </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <IconButton size="small" aria-label="Previous chart day" onClick={() => setDayOffset((d) => d - 1)}><ChevronLeftRounded /></IconButton>
           <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 150, textAlign: "center" }}>
