@@ -16,7 +16,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import StatusChip from "@/components/StatusChip";
-import InvoiceViewDialog from "@/components/reception/InvoiceViewDialog";
+import InvoiceViewDialog from "@/components/billing/InvoiceViewDialog";
 import { formatINR, formatDate } from "@/utils/format";
 import { SEMANTIC } from "@/styles/accents";
 

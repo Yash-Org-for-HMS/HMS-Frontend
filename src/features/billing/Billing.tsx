@@ -16,8 +16,8 @@ import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
 import StatusChip from "@/components/StatusChip";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
-import GenerateInvoice from "../billing/GenerateInvoice";
-import InvoiceViewDialog from "@/components/reception/InvoiceViewDialog";
+import GenerateInvoice from "./GenerateInvoice";
+import InvoiceViewDialog from "@/components/billing/InvoiceViewDialog";
 import PageHeader from "@/components/layout/PageHeader";
 import { useSearchParams } from "react-router-dom";
 import { apiErrorText } from "@/utils/apiError";
@@ -55,7 +55,19 @@ function balanceColor(r: { balance: number | string; invoiceStatus?: string }): 
 // Collect Payment form), so the admin can browse bills without creating charges
 // or taking money. Defaults keep the reception panel fully interactive.
 /**
- * One billing screen, mounted by several panels.
+ * One billing screen, mounted by several panels. It lives in features/billing
+ * rather than under any one panel because four routes render it:
+ *
+ *   /reception/billing      full - list, collect, void, new invoice
+ *   /hospital/billing       read-only oversight across the hospital
+ *   /pharmacy/billing       read-only history, pharmacy's share
+ *   /lab/billing-history    read-only history, lab's share
+ *
+ * So a change here is a change to all four. The panel-specific billing work -
+ * a lab tech collecting on an order, a pharmacist ringing up a sale - is NOT
+ * here and should not move here: see features/lab/LabBilling and
+ * features/pharmacy/DispensaryPOS, which are their own pages because they are
+ * their own jobs.
  *
  * `basePath` decides which mount it talks to. Reception and hospital admin read
  * `/reception/billing` and see every bill; pharmacy and lab read their own

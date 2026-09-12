@@ -31,7 +31,7 @@ import ClinicalRecordsSection from "@/components/reception/ClinicalRecordsSectio
 import ConsentFormsSection from "@/components/reception/ConsentFormsSection";
 import VaccinationsSection from "@/components/reception/VaccinationsSection";
 import SurgeriesSection from "@/components/reception/SurgeriesSection";
-import InvoiceViewDialog from "@/components/reception/InvoiceViewDialog";
+import InvoiceViewDialog from "@/components/billing/InvoiceViewDialog";
 import { useToast } from "@/providers/ToastContext";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 

@@ -99,7 +99,7 @@ const OtSchedule = lazy(() => import("@/features/ipd/OtSchedule"));
 const OtCaseRecord = lazy(() => import("@/features/ipd/OtCaseRecord"));
 const OtReports = lazy(() => import("@/features/ipd/OtReports"));
 const QueueDashboard = lazy(() => import("@/features/reception/QueueDashboard"));
-const Billing = lazy(() => import("@/features/reception/Billing"));
+const Billing = lazy(() => import("@/features/billing/Billing"));
 const NotificationsLog = lazy(() => import("@/features/reception/NotificationsLog"));
 const ClaimsList = lazy(() => import("@/features/claims/ClaimsList"));
 const ClaimForm = lazy(() => import("@/features/claims/ClaimForm"));
