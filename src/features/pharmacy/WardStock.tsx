@@ -684,6 +684,9 @@ function ParCell({ wardId, row, editable, onSaved }: {
   );
 }
 
+/** Keeps a full-screen count sheet readable on a wide monitor. */
+const SHEET = { width: "100%", maxWidth: 720 } as const;
+
 /**
  * Count the cupboard.
  *
@@ -779,9 +782,18 @@ function CountDialog({ ward, stock, onClose, onDone }: {
   }
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ fontWeight: 700 }}>Count {ward.wardName}</DialogTitle>
-      <DialogContent dividers sx={{ pt: 2.5 }}>
+    /**
+     * Full screen, and that is the whole point rather than a style choice.
+     *
+     * A normal dialog floats over the ward table with a dim backdrop, and the
+     * quantities are perfectly readable through it — the "Units" tile and the
+     * on-hand column sit right behind the sheet. Hiding the figure inside the
+     * dialog while leaving it legible two inches away is not a blind count, it
+     * just looks like one. Covering the page is the only version that holds.
+     */
+    <Dialog open onClose={onClose} fullScreen PaperProps={{ sx: { alignItems: "center" } }}>
+      <DialogTitle sx={{ fontWeight: 700, ...SHEET }}>Count {ward.wardName}</DialogTitle>
+      <DialogContent dividers sx={{ pt: 2.5, ...SHEET }}>
         <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
           Write down what is actually on the shelf. What the system thinks is there is deliberately
           hidden until you are done — a sheet that shows you the answer is a sheet that gets ticked.
@@ -815,7 +827,7 @@ function CountDialog({ ward, stock, onClose, onDone }: {
           value={notes} onChange={(e) => setNotes(e.target.value)} sx={{ mt: 2 }}
         />
       </DialogContent>
-      <DialogActions sx={{ p: 2 }}>
+      <DialogActions sx={{ p: 2, ...SHEET }}>
         <Button onClick={onClose} color="inherit" sx={{ textTransform: "none" }}>Cancel</Button>
         <Button
           variant="contained" disabled={!entered.length || save.isPending}
