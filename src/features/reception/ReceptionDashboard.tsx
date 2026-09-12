@@ -15,9 +15,11 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
+import { apiGetList } from "@/api/client";
 import Mascot from "@/components/Mascot";
 import ErrorState from "@/components/ErrorState";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import type { QueueTokenRow } from "./queue.types";
 import { useSocket } from "@/hooks/useSocket";
 import PageHeader from "@/components/layout/PageHeader";
 import { apiErrorText } from "@/utils/apiError";
@@ -97,13 +99,38 @@ export default function ReceptionDashboard() {
 
   // Live updates: refresh the dashboard whenever the queue changes elsewhere.
   useSocket({
-    QUEUE_UPDATED: () => queryClient.invalidateQueries({ queryKey: ["reception-dashboard-stats"] }),
+    QUEUE_UPDATED: () => {
+      queryClient.invalidateQueries({ queryKey: ["reception-dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["queue"] });
+    },
   });
 
   const { data: stats, isLoading: loading, isError, error, refetch } = useQuery<DashboardStats>({
     queryKey: ["reception-dashboard-stats"],
     queryFn: async () => (await axiosInstance.get("/reception/dashboard/stats")).data.data,
   });
+
+  /**
+   * The live queue, from the SAME endpoint the queue page reads.
+   *
+   * This panel used to list today's appointments while calling itself "Live
+   * Queue", so it showed three scheduled patients as though they were waiting
+   * while the queue page - correctly - showed nobody, because a queue token
+   * only exists once somebody checks in. Two screens answering "who is in the
+   * queue" from two different sources will always eventually disagree, so now
+   * there is one source and they cannot. Sharing the ["queue"] key also means
+   * a check-in on either screen refreshes both.
+   */
+  const { data: queue = [] } = useQuery<QueueTokenRow[]>({
+    queryKey: ["queue"],
+    // The same call the queue page makes, through the same helper - the
+    // envelope is unwrapped in one place, so this cannot drift from it.
+    queryFn: async () => (await apiGetList<QueueTokenRow>("/reception/queue")).rows,
+    refetchInterval: 30000,
+  });
+  const liveQueue = queue.filter(
+    (t) => t.statusCode !== "COMPLETED" && t.statusCode !== "SKIPPED" && t.statusCode !== "CANCELLED",
+  );
 
   // Today's bills — to surface anything still owed (best-effort; ignore errors).
   const { data: billsToday } = useQuery({
@@ -193,28 +220,63 @@ export default function ReceptionDashboard() {
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "2fr 1fr" }, gap: 2.5, alignItems: "start" }}>
         <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider" }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }}>Live Queue</Typography>
+            {/* Named for what is actually in the table. Calling a list of
+                scheduled appointments "Live Queue" is what made this panel and
+                the queue page look like they disagreed. */}
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }}>
+              {liveQueue.length ? "Live queue" : "Next appointments today"}
+            </Typography>
             <Button size="small" endIcon={<ArrowForwardRounded />} onClick={() => navigate("/reception/queue")} sx={{ textTransform: "none", color: ACCENT }}>Open queue</Button>
           </Box>
+
+          {/* Nobody has checked in yet, so there is no queue - but the day's
+              appointments are still worth seeing, under their own name. */}
+          {!loading && !liveQueue.length && !!stats?.upcomingAppointments?.length && (
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
+              Nobody is waiting. These are booked for today and join the queue when they check in.
+            </Typography>
+          )}
+
           <TableContainer>
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  {["Token", "Time", "Patient", "Status"].map((h) => (
-                    <TableCell key={h} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider" }}>{h}</TableCell>
+                  {["Token", liveQueue.length ? "Waiting since" : "Time", "Patient", "Doctor", "Status"].map((hd) => (
+                    <TableCell key={hd} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider" }}>{hd}</TableCell>
                   ))}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loading ? (
                   Array.from(new Array(4)).map((_, i) => (
-                    <TableRow key={i}>{Array.from(new Array(4)).map((_, j) => <TableCell key={j} sx={{ borderColor: "divider" }}><Skeleton width={70} /></TableCell>)}</TableRow>
+                    <TableRow key={i}>{Array.from(new Array(5)).map((_, j) => <TableCell key={j} sx={{ borderColor: "divider" }}><Skeleton width={70} /></TableCell>)}</TableRow>
                   ))
-                ) : stats?.upcomingAppointments?.length === 0 ? (
-                  <TableRow><TableCell colSpan={4} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="All caught up!" subtitle="No one in the queue right now." /></TableCell></TableRow>
+                ) : liveQueue.length > 0 ? (
+                  liveQueue.map((t) => (
+                    <TableRow key={t.queueTokenId} hover>
+                      <TableCell sx={{ fontWeight: 700, color: "text.primary", borderColor: "divider" }}>#{t.displayNumber}</TableCell>
+                      <TableCell sx={{ color: "text.primary", borderColor: "divider" }}>
+                        {new Date(t.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider" }}>
+                        <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{t.patientName}</Typography>
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider" }}>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>{t.doctorName}</Typography>
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider" }}>
+                        <Chip label={t.statusLabel} size="small" sx={{ bgcolor: `${t.statusColor}15`, color: t.statusColor, fontWeight: 600, borderRadius: 1.5 }} />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : !stats?.upcomingAppointments?.length ? (
+                  <TableRow><TableCell colSpan={5} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="All caught up!" subtitle="Nobody waiting, and nothing else booked today." /></TableCell></TableRow>
                 ) : (
-                  stats?.upcomingAppointments?.map((appt) => (
+                  stats.upcomingAppointments.map((appt) => (
                     <TableRow key={appt.appointmentId} hover>
+                      {/* A token number counts that DOCTOR's patients for the
+                          day, so three doctors each have a #1. Without the
+                          doctor beside it the column reads as duplicates. */}
                       <TableCell sx={{ fontWeight: 700, color: "text.primary", borderColor: "divider" }}>#{appt.tokenNumber}</TableCell>
                       <TableCell sx={{ color: "text.primary", borderColor: "divider" }}>{new Date(appt.appointmentTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</TableCell>
                       {/* Name and UHID, not an ID fragment. This column used to
@@ -229,6 +291,9 @@ export default function ReceptionDashboard() {
                         ) : (
                           <Typography variant="caption" sx={{ color: "text.disabled" }}>Unregistered</Typography>
                         )}
+                      </TableCell>
+                      <TableCell sx={{ borderColor: "divider" }}>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>{appt.doctorName ?? "—"}</Typography>
                       </TableCell>
                       <TableCell sx={{ borderColor: "divider" }}><Chip label={appt.status.label} size="small" sx={{ bgcolor: `${appt.status.color}15`, color: appt.status.color, fontWeight: 600, borderRadius: 1.5 }} /></TableCell>
                     </TableRow>
