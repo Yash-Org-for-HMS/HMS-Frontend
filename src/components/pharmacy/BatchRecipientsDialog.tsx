@@ -41,6 +41,8 @@ interface WardHolding {
   returned: number;
   /** Used on patients out of this cupboard — those people are in the list below. */
   consumed: number;
+  /** What a stocktake corrected, signed. A shortfall also shows under untraced. */
+  adjusted: number;
   lastIssuedAt: string;
 }
 
@@ -156,6 +158,11 @@ export default function BatchRecipientsDialog({
                         {w.issued} issued
                         {w.consumed > 0 ? `, ${w.consumed} used on patients` : ""}
                         {w.returned > 0 ? `, ${w.returned} sent back` : ""}
+                        {/* A stocktake shortfall is not a rounding error — it is
+                            stock that left with nobody recorded against it, and
+                            it is counted again under "cannot be traced". */}
+                        {w.adjusted < 0 ? `, ${Math.abs(w.adjusted)} missing at a count` : ""}
+                        {w.adjusted > 0 ? `, ${w.adjusted} found at a count` : ""}
                         {` · last ${formatDate(w.lastIssuedAt)}`}
                       </Typography>
                     </Box>

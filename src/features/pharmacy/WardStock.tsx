@@ -9,7 +9,7 @@ import {
 import {
   AddRounded, SearchRounded, ArrowBackRounded, LocalShippingRounded,
   AssignmentReturnRounded, InventoryRounded, DeleteOutlineRounded,
-  WarningAmberRounded, ChevronRightRounded, HealingRounded,
+  WarningAmberRounded, ChevronRightRounded, HealingRounded, FactCheckRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { formatDate, formatDateTime } from "@/utils/format";
@@ -55,6 +55,12 @@ interface IssueNote {
   stockIssueId: string; wardId: string; wardName: string; direction: string;
   notes: string | null; processedByName: string | null; createdAt: string; units: number;
   items: Array<{ stockIssueItemId: string; itemName: string | null; quantity: number; batchNumber: string | null }>;
+}
+
+interface CountResult {
+  stockIssueId: string;
+  items: Array<{ stockItemId: string; name: string; unit: string | null; expected: number; counted: number; variance: number }>;
+  summary: { counted: number; agreed: number; variances: number; short: number; over: number };
 }
 
 const get = async <T,>(url: string): Promise<T> => (await axiosInstance.get(url)).data.data;
@@ -622,6 +628,293 @@ function WardUsage({ wardId }: { wardId: string }) {
   );
 }
 
+/**
+ * What this ward should carry, edited where it is read.
+ *
+ * Blank and zero mean different things and both are kept: blank is "nobody has
+ * said", zero is "this ward carries none of these on purpose". Only the first
+ * keeps the line off the reorder list for the right reason.
+ */
+function ParCell({ wardId, row, editable, onSaved }: {
+  wardId: string;
+  row: WardStockRow;
+  editable: boolean;
+  onSaved: () => void;
+}) {
+  const toast = useToast();
+  const [value, setValue] = useState(row.parLevel == null ? "" : String(row.parLevel));
+  const [saving, setSaving] = useState(false);
+
+  if (!editable) {
+    return <Typography variant="caption" sx={{ color: "text.secondary" }}>{row.parLevel ?? "—"}</Typography>;
+  }
+
+  const commit = async () => {
+    const next = value.trim() === "" ? null : Number(value);
+    if (next === (row.parLevel ?? null)) return;
+    if (next !== null && (!Number.isInteger(next) || next < 0)) {
+      toast.error("A par level must be a whole number, or blank");
+      setValue(row.parLevel == null ? "" : String(row.parLevel));
+      return;
+    }
+    setSaving(true);
+    try {
+      await axiosInstance.put(`/pharmacy/ward-stock/wards/${wardId}/par`, {
+        lines: [{ stockItemId: row.stockItemId, parLevel: next }],
+      });
+      onSaved();
+    } catch (e) {
+      toast.error(getApiErrorMessage(e));
+      setValue(row.parLevel == null ? "" : String(row.parLevel));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <TextField
+      size="small" type="number" variant="standard" placeholder="—"
+      value={value} disabled={saving}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLElement).blur(); }}
+      sx={{ width: 64, "& input": { textAlign: "right", fontSize: 13 } }}
+      InputProps={{ inputProps: { min: 0, "aria-label": `Par level for ${row.name}` } }}
+    />
+  );
+}
+
+/**
+ * Count the cupboard.
+ *
+ * A BLIND count: the figure the books hold is deliberately not shown while you
+ * are typing. A count sheet that prints the expected number beside every line
+ * is a sheet that gets ticked down the page, and a stocktake nobody actually
+ * performed is worse than none - it converts a guess into a fact with a
+ * signature on it. The variances are shown the moment it is submitted, which is
+ * when they are useful and no longer able to steer the count.
+ */
+function CountDialog({ ward, stock, onClose, onDone }: {
+  ward: WardSummary;
+  stock: WardStockRow[];
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const toast = useToast();
+  const [counts, setCounts] = useState<Record<string, string>>({});
+  const [notes, setNotes] = useState("");
+  const [result, setResult] = useState<CountResult | null>(null);
+
+  const entered = stock.filter((s) => counts[s.stockItemId] !== undefined && counts[s.stockItemId] !== "");
+
+  const save = useMutation({
+    mutationFn: async () => (await axiosInstance.post(`/pharmacy/ward-stock/wards/${ward.wardId}/count`, {
+      notes: notes.trim() || undefined,
+      lines: entered.map((s) => ({ stockItemId: s.stockItemId, countedQuantity: Number(counts[s.stockItemId]) })),
+    })).data.data as CountResult,
+    onSuccess: (data) => {
+      setResult(data);
+      onDone();
+      const off = data.summary.variances;
+      if (off === 0) toast.success(`All ${data.summary.counted} lines agreed`);
+      else toast.warning(`${off} line${off === 1 ? "" : "s"} did not match the books`);
+    },
+    onError: (e) => toast.error(getApiErrorMessage(e)),
+  });
+
+  // Once counted, the dialog becomes the result sheet: what was expected, what
+  // was found, and by how much. This is the only place those sit side by side.
+  if (result) {
+    const off = result.items.filter((i) => i.variance !== 0);
+    return (
+      <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Counted {ward.wardName}</DialogTitle>
+        <DialogContent dividers sx={{ pt: 2.5 }}>
+          <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
+            <Stat label="Lines counted" value={result.summary.counted} color={SEMANTIC.info} />
+            <Stat label="Agreed" value={result.summary.agreed} color={SEMANTIC.success} />
+            {result.summary.short > 0 && <Stat label="Units short" value={result.summary.short} color={SEMANTIC.danger} />}
+            {result.summary.over > 0 && <Stat label="Units over" value={result.summary.over} color={SEMANTIC.warning} />}
+          </Box>
+
+          {off.length === 0 ? (
+            <Typography variant="body2" sx={{ color: "text.secondary", py: 2, textAlign: "center" }}>
+              Every line matched the books. Worth recording: it is what makes the next shortfall
+              traceable to a known window rather than to all of history.
+            </Typography>
+          ) : (
+            <>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 1 }}>
+                WHAT DID NOT MATCH · {off.length}
+              </Typography>
+              {off.map((i) => (
+                <Box key={i.stockItemId}
+                  sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 1, borderBottom: "1px solid", borderColor: "divider" }}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }} noWrap>{i.name}</Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      books said {i.expected}, counted {i.counted}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" sx={{
+                    fontWeight: 800, fontVariantNumeric: "tabular-nums",
+                    color: i.variance < 0 ? SEMANTIC.danger : SEMANTIC.warning,
+                  }}>
+                    {i.variance > 0 ? "+" : ""}{i.variance}
+                  </Typography>
+                </Box>
+              ))}
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1.5 }}>
+                The cupboard now says what was counted. Units found missing are reported against this
+                batch as unaccounted for, rather than quietly written off.
+              </Typography>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button variant="contained" onClick={onClose} sx={{ textTransform: "none" }}>Done</Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ fontWeight: 700 }}>Count {ward.wardName}</DialogTitle>
+      <DialogContent dividers sx={{ pt: 2.5 }}>
+        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
+          Write down what is actually on the shelf. What the system thinks is there is deliberately
+          hidden until you are done — a sheet that shows you the answer is a sheet that gets ticked.
+        </Typography>
+
+        {stock.length === 0 ? (
+          <Empty>This ward has nothing on its list to count.</Empty>
+        ) : stock.map((s) => (
+          <Box key={s.stockItemId}
+            sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 0.9, borderBottom: "1px solid", borderColor: "divider" }}>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>{s.name}</Typography>
+              {s.batchNumber && (
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>batch {s.batchNumber}</Typography>
+              )}
+            </Box>
+            <TextField
+              size="small" type="number" placeholder="—" sx={{ width: 100 }}
+              value={counts[s.stockItemId] ?? ""}
+              onChange={(e) => setCounts((c) => ({ ...c, [s.stockItemId]: e.target.value }))}
+              InputProps={{ inputProps: { min: 0, "aria-label": `Count of ${s.name}` } }}
+            />
+            {s.unit && (
+              <Typography variant="caption" sx={{ color: "text.secondary", width: 44 }}>{s.unit}s</Typography>
+            )}
+          </Box>
+        ))}
+
+        <TextField
+          fullWidth size="small" label="Note (optional)" placeholder="monthly count"
+          value={notes} onChange={(e) => setNotes(e.target.value)} sx={{ mt: 2 }}
+        />
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={onClose} color="inherit" sx={{ textTransform: "none" }}>Cancel</Button>
+        <Button
+          variant="contained" disabled={!entered.length || save.isPending}
+          onClick={() => save.mutate()} sx={{ textTransform: "none" }}
+        >
+          {save.isPending ? "Recording…" : `Record count of ${entered.length}`}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+/**
+ * What the store owes the wards, in the order it would be walked.
+ *
+ * The reason par levels are worth setting at all: without this the number sits
+ * in a column and somebody still has to go and look.
+ */
+function ReorderTab() {
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["ward-stock-reorder"],
+    queryFn: () => get<{
+      lines: Array<{
+        wardId: string; wardName: string; stockItemId: string; name: string; unit: string | null;
+        onHand: number; parLevel: number; shortBy: number; inStore: number; canCover: boolean;
+      }>;
+      summary: { lines: number; wards: number; unitsShort: number; cannotCover: number };
+    }>("/pharmacy/ward-stock/reorder"),
+  });
+
+  if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
+  if (isLoading || !data) return <ListSkeleton rows={4} />;
+  if (!data.lines.length) {
+    return <Empty>Every ward with a par level is at or above it.</Empty>;
+  }
+
+  return (
+    <Box>
+      <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
+        <Stat label="Lines to fill" value={data.summary.lines} color={SEMANTIC.warning} />
+        <Stat label="Wards waiting" value={data.summary.wards} color={SEMANTIC.info} />
+        <Stat label="Units short" value={data.summary.unitsShort} color={SEMANTIC.warning} />
+        {data.summary.cannotCover > 0 && (
+          <Stat label="Store cannot cover" value={data.summary.cannotCover} color={SEMANTIC.danger} />
+        )}
+      </Box>
+
+      <TableContainer component={Paper} variant="outlined" sx={{ overflowX: "auto" }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 700 }}>Ward</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Item</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">On hand</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Par</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Send</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">In store</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {data.lines.map((l) => (
+              <TableRow key={`${l.wardId}-${l.stockItemId}`} hover>
+                <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>{l.wardName}</Typography></TableCell>
+                <TableCell>{l.name}</TableCell>
+                <TableCell align="right">
+                  <Typography variant="body2" sx={{
+                    fontVariantNumeric: "tabular-nums",
+                    color: l.onHand === 0 ? SEMANTIC.danger : "text.primary",
+                    fontWeight: l.onHand === 0 ? 800 : 400,
+                  }}>
+                    {l.onHand}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right"><Typography variant="body2" sx={{ color: "text.secondary" }}>{l.parLevel}</Typography></TableCell>
+                <TableCell align="right">
+                  <Typography variant="body2" sx={{ fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>
+                    {l.shortBy}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  {/* Said on the same line, so nobody builds a picking list the
+                      shelf cannot actually fill. */}
+                  <Typography variant="body2" sx={{
+                    fontVariantNumeric: "tabular-nums",
+                    color: l.canCover ? "text.secondary" : SEMANTIC.danger,
+                    fontWeight: l.canCover ? 400 : 700,
+                  }}>
+                    {l.inStore}{l.canCover ? "" : " — short"}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+}
+
 /* ── tabs ───────────────────────────────────────────────────────────────── */
 
 /** One ward opened up: every line it holds, and what can be done to each. */
@@ -630,6 +923,7 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
   const [issuing, setIssuing] = useState(false);
   const [returning, setReturning] = useState<WardStockRow | null>(null);
   const [consuming, setConsuming] = useState(false);
+  const [counting, setCounting] = useState(false);
   const [view, setView] = useState<"holding" | "used">("holding");
 
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -644,6 +938,7 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
     qc.invalidateQueries({ queryKey: ["ward-stock-items"] });
     qc.invalidateQueries({ queryKey: ["ward-stock-issues"] });
     qc.invalidateQueries({ queryKey: ["ward-stock-used", ward.wardId] });
+    qc.invalidateQueries({ queryKey: ["ward-stock-reorder"] });
   };
 
   return (
@@ -655,6 +950,11 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
             possible: it bills the patient and empties the cupboard at once. */}
         <Button variant="contained" startIcon={<HealingRounded />} onClick={() => setConsuming(true)} sx={{ textTransform: "none" }}>
           Record use
+        </Button>
+        {/* Counting is the ward's own work: the people who can see the shelf are
+            the ones who know what is on it. */}
+        <Button variant="outlined" startIcon={<FactCheckRounded />} onClick={() => setCounting(true)} sx={{ textTransform: "none" }}>
+          Count stock
         </Button>
         {canIssue && (
           <Button variant="outlined" startIcon={<LocalShippingRounded />} onClick={() => setIssuing(true)} sx={{ textTransform: "none" }}>
@@ -733,7 +1033,12 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
-                        <Typography variant="caption" sx={{ color: "text.secondary" }}>{r.parLevel ?? "—"}</Typography>
+                        {/* Keyed on the saved value so a refetch resyncs the
+                            field instead of leaving stale local state in it. */}
+                        <ParCell
+                          key={`${r.wardStockId}:${r.parLevel ?? "none"}`}
+                          wardId={ward.wardId} row={r} editable={canIssue} onSaved={refresh}
+                        />
                       </TableCell>
                       <TableCell align="right">
                         <Typography variant="caption" sx={{ color: "text.secondary" }}>{formatDate(r.updatedAt)}</Typography>
@@ -760,6 +1065,9 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
       {returning && <ReturnDialog ward={ward} row={returning} onClose={() => setReturning(null)} onDone={refresh} />}
       {consuming && (
         <ConsumeDialog ward={ward} stock={data?.stock ?? []} onClose={() => setConsuming(false)} onDone={refresh} />
+      )}
+      {counting && (
+        <CountDialog ward={ward} stock={data?.stock ?? []} onClose={() => setCounting(false)} onDone={refresh} />
       )}
     </Box>
   );
@@ -1003,6 +1311,7 @@ export default function WardStock() {
     ? [{ label: "Ward cupboards", node: <WardsTab canIssue={false} /> }, { label: "Movement log", node: <LogTab /> }]
     : [
       { label: "Ward cupboards", node: <WardsTab canIssue /> },
+      { label: "To reorder", node: <ReorderTab /> },
       { label: "Central store", node: <StoreTab /> },
       { label: "Movement log", node: <LogTab /> },
     ];
