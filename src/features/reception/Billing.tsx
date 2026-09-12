@@ -54,13 +54,42 @@ function balanceColor(r: { balance: number | string; invoiceStatus?: string }): 
 // "New Invoice" tab is dropped and the invoice viewer opens read-only (no
 // Collect Payment form), so the admin can browse bills without creating charges
 // or taking money. Defaults keep the reception panel fully interactive.
-export default function Billing({ readOnly = false }: { readOnly?: boolean } = {}) {
+/**
+ * One billing screen, mounted by several panels.
+ *
+ * `basePath` decides which mount it talks to. Reception and hospital admin read
+ * `/reception/billing` and see every bill; pharmacy and lab read their own
+ * mount, which the server restricts to invoices carrying their department's
+ * lines. The restriction is NOT a parameter this screen sends - it belongs to
+ * the route - so a panel cannot widen its own view by asking differently.
+ *
+ * `department` is only a label. When it is set the list shows that department's
+ * SHARE of each bill as the prominent figure, because an invoice belongs to
+ * more than one department and a pharmacist totalling the invoice column would
+ * be totalling the hospital's revenue, not their own.
+ */
+export default function Billing({
+  readOnly = false,
+  basePath = "/reception/billing",
+  department,
+}: {
+  readOnly?: boolean;
+  basePath?: string;
+  department?: string;
+} = {}) {
   const [params] = useSearchParams();
   const billPatientId = params.get("patientId") || undefined;
   const [tab, setTab] = useState(billPatientId && !readOnly ? 2 : 0);
   return (
     <Box>
-      <PageHeader title="Billing" subtitle={readOnly ? "Browse bills across the hospital" : "Browse bills, collect payments, and generate new invoices"} />
+      <PageHeader
+        title={department ? `${department} billing history` : "Billing"}
+        subtitle={
+          department
+            ? `Bills carrying ${department.toLowerCase()} charges. Amounts shown are this department's share of each bill.`
+            : readOnly ? "Browse bills across the hospital" : "Browse bills, collect payments, and generate new invoices"
+        }
+      />
 
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2.5 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)}
@@ -71,12 +100,16 @@ export default function Billing({ readOnly = false }: { readOnly?: boolean } = {
         </Tabs>
       </Paper>
 
-      {tab === 0 ? <BillsList type="OPD" readOnly={readOnly} /> : tab === 1 ? <BillsList type="IPD" readOnly={readOnly} /> : <GenerateInvoice patientId={billPatientId} />}
+      {tab === 0 ? <BillsList type="OPD" readOnly={readOnly} basePath={basePath} department={department} />
+        : tab === 1 ? <BillsList type="IPD" readOnly={readOnly} basePath={basePath} department={department} />
+          : <GenerateInvoice patientId={billPatientId} />}
     </Box>
   );
 }
 
-function BillsList({ type, readOnly = false }: { type: "OPD" | "IPD"; readOnly?: boolean }) {
+function BillsList({ type, readOnly = false, basePath = "/reception/billing", department }: {
+  type: "OPD" | "IPD"; readOnly?: boolean; basePath?: string; department?: string;
+}) {
   const openPrint = usePrintWindow();
   const isIpd = type === "IPD";
   const [search, setSearch] = useState("");
@@ -94,8 +127,11 @@ function BillsList({ type, readOnly = false }: { type: "OPD" | "IPD"; readOnly?:
   useEffect(() => { setPage(1); }, [status, from, to]);
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["reception-invoices", type, debounced, status, from, to, page],
-    queryFn: async () => (await axiosInstance.get("/reception/billing/invoices", {
+    // basePath is part of the key: the same filters against a different mount
+    // are a different list, and sharing a cache entry would show one panel
+    // another's bills for a moment after navigating.
+    queryKey: ["invoices", basePath, type, debounced, status, from, to, page],
+    queryFn: async () => (await axiosInstance.get(`${basePath}/invoices`, {
       params: { type, ...(debounced ? { search: debounced } : {}), ...(status ? { status } : {}), ...(from ? { from } : {}), ...(to ? { to } : {}), page, limit: 20 },
     })).data,
     placeholderData: keepPreviousData,
@@ -103,7 +139,9 @@ function BillsList({ type, readOnly = false }: { type: "OPD" | "IPD"; readOnly?:
 
   const rows: InvoiceListRow[] = data?.data || [];
   const meta = data?.meta;
-  const columnCount = isIpd ? 9 : 8;
+  // The department view trades the printable-IP-bill action for a share column;
+  // reception keeps both.
+  const columnCount = (isIpd ? 9 : 8) + (department ? 1 : 0);
 
   return (
     <Box>
@@ -123,8 +161,13 @@ function BillsList({ type, readOnly = false }: { type: "OPD" | "IPD"; readOnly?:
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {(isIpd ? ["Invoice #", "Patient", "IPD #", "Date", "Net", "Paid", "Balance Due", "Status", ""] : ["Invoice #", "Patient", "Date", "Net", "Paid", "Balance Due", "Status", ""]).map((h, i, arr) => (
-                  <TableCell key={h || i} align={["Net", "Paid", "Balance Due"].includes(h) ? "right" : i === arr.length - 1 ? "right" : "left"}
+                {[
+                  "Invoice #", "Patient", ...(isIpd ? ["IPD #"] : []), "Date",
+                  // Named for the department, so nobody reads it as the bill.
+                  ...(department ? [`${department} share`] : []),
+                  department ? "Bill total" : "Net", "Paid", "Balance Due", "Status", "",
+                ].map((h, i, arr) => (
+                  <TableCell key={h || i} align={["Net", "Bill total", "Paid", "Balance Due"].includes(h) || h.endsWith("share") ? "right" : i === arr.length - 1 ? "right" : "left"}
                     sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", py: 2, bgcolor: "background.default" }}>{h}</TableCell>
                 ))}
               </TableRow>
@@ -147,7 +190,20 @@ function BillsList({ type, readOnly = false }: { type: "OPD" | "IPD"; readOnly?:
                   </TableCell>
                   {isIpd && <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{r.admissionNumber || "—"}</TableCell>}
                   <TableCell sx={{ color: "text.secondary" }}>{formatDate(r.invoiceDate)}</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(r.netAmount)}</TableCell>
+                  {department && (
+                    <TableCell align="right" sx={{ fontWeight: 800, color: "text.primary" }}>
+                      {formatINR(r.categoryAmount ?? 0)}
+                      {/* An invoice-level discount belongs to no department, so
+                          the share and the bill deliberately do not reconcile.
+                          Saying so beats letting somebody find it themselves. */}
+                      {Number(r.invoiceDiscount ?? 0) > 0.005 && (
+                        <Tooltip title={`This bill carries a ${formatINR(r.invoiceDiscount)} discount applied to the whole invoice rather than to any one department, so the shares add up to the bill's gross, not its total.`}>
+                          <Typography component="span" variant="caption" sx={{ color: SEMANTIC.warning, ml: 0.5, fontWeight: 700 }}>*</Typography>
+                        </Tooltip>
+                      )}
+                    </TableCell>
+                  )}
+                  <TableCell align="right" sx={{ fontWeight: department ? 400 : 600, color: department ? "text.secondary" : "text.primary" }}>{formatINR(r.netAmount)}</TableCell>
                   <TableCell align="right" sx={{ color: "text.secondary" }}>{formatINR(r.paidAmount)}</TableCell>
                   {/* Green here means "settled by payment". A cancelled or draft
                       invoice also carries a zero balance, but because it was
@@ -178,7 +234,11 @@ function BillsList({ type, readOnly = false }: { type: "OPD" | "IPD"; readOnly?:
                     </Box>
                   </TableCell>
                   <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                    {isIpd && (
+                    {/* Printing the IP bill lives on a reception route and reads
+                        reception's endpoints, so it is offered only where the
+                        caller can actually reach both. A department panel gets
+                        the viewer instead, which works from its own mount. */}
+                    {isIpd && !department && (
                       <Tooltip title="Print IP Bill">
                         <IconButton size="small" onClick={() => openPrint(`/reception/billing/invoices/${r.invoiceId}/ip-bill/print`)} sx={{ color: "text.secondary" }}>
                           <PrintRounded fontSize="small" />
@@ -203,7 +263,7 @@ function BillsList({ type, readOnly = false }: { type: "OPD" | "IPD"; readOnly?:
         )}
       </Paper>
 
-      {viewId && <InvoiceViewDialog open invoiceId={viewId} onClose={() => setViewId(null)} onChanged={() => refetch()} readOnly={readOnly} />}
+      {viewId && <InvoiceViewDialog open invoiceId={viewId} onClose={() => setViewId(null)} onChanged={() => refetch()} readOnly={readOnly} basePath={basePath} />}
     </Box>
   );
 }

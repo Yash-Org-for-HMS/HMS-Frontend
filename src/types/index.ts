@@ -208,6 +208,19 @@ export interface InvoiceListRow {
   statusColor: string;
   /** Refund raised but not yet released — no money has moved. */
   refundPending: Money;
+  /**
+   * This department's share of the bill, when the list was asked by department
+   * (the pharmacy and lab billing-history mounts). Null on an unfiltered list,
+   * where there is no such thing as "the share" — reading `netAmount` under that
+   * name is how a department totals the hospital's revenue instead of its own.
+   */
+  categoryAmount?: Money | null;
+  /**
+   * Discount applied to the whole bill rather than to any one department.
+   * Usually zero. When it is not, the department shares sum to the bill's gross
+   * and not to its total, and the screen says so.
+   */
+  invoiceDiscount?: Money;
 }
 
 /**

@@ -27,6 +27,15 @@ interface Props {
   onChanged?: () => void;
   /** Hide the "Collect Payment" form — used by the read-only admin oversight view. */
   readOnly?: boolean;
+  /**
+   * Which billing mount to read through.
+   *
+   * Reception and hospital admin use their own; the pharmacy and lab panels
+   * pass theirs, which is guarded for their role and scoped to their
+   * department. Hardcoding reception's here is what would make this dialog
+   * 403 the moment it opened from anywhere else.
+   */
+  basePath?: string;
 }
 
 /** Batch and expiry per medicine on a bill, derived from the stock ledger. */
@@ -36,7 +45,7 @@ interface DispensedMedicine {
   batches: { batchNumber: string; expiryDate: string; quantity: number }[];
 }
 
-export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged, readOnly = false }: Props) {
+export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged, readOnly = false, basePath = "/reception/billing" }: Props) {
   const openPrint = usePrintWindow();
   const toast = useToast();
   const receiptRef = useRef<HTMLDivElement>(null);
@@ -46,8 +55,8 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
   // happens at payment), so there is nothing to store on the line at the time,
   // and one medicine can come off several batches.
   const { data: dispensedBatches = [] } = useQuery<DispensedMedicine[]>({
-    queryKey: ["dispensed-batches", invoiceId],
-    queryFn: async () => (await axiosInstance.get(`/reception/billing/invoices/${invoiceId}/dispensed-batches`)).data.data,
+    queryKey: ["dispensed-batches", basePath, invoiceId],
+    queryFn: async () => (await axiosInstance.get(`${basePath}/invoices/${invoiceId}/dispensed-batches`)).data.data,
     enabled: !!invoiceId && open,
   });
   const [amount, setAmount] = useState("");
@@ -61,13 +70,13 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
   const [voidReason, setVoidReason] = useState("");
 
   const { data: lookups } = useQuery<BillingLookups>({
-    queryKey: ["billing-lookups"],
-    queryFn: async () => (await axiosInstance.get("/reception/billing/lookups")).data.data,
+    queryKey: ["billing-lookups", basePath],
+    queryFn: async () => (await axiosInstance.get(`${basePath}/lookups`)).data.data,
     enabled: open,
   });
   const { data: invoice, isLoading, isError, error, refetch } = useQuery<InvoiceDetail>({
     queryKey: ["invoice-detail", invoiceId],
-    queryFn: async () => (await axiosInstance.get(`/reception/billing/invoices/${invoiceId}/detail`)).data.data,
+    queryFn: async () => (await axiosInstance.get(`${basePath}/invoices/${invoiceId}/detail`)).data.data,
     enabled: open && !!invoiceId,
   });
 
@@ -87,7 +96,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
     if (!amt || amt <= 0 || !methodId) return;
     setPaying(true);
     try {
-      await axiosInstance.post(`/reception/billing/invoices/${invoiceId}/payment`, { amount: amt, paymentMethodId: methodId });
+      await axiosInstance.post(`${basePath}/invoices/${invoiceId}/payment`, { amount: amt, paymentMethodId: methodId });
       toast.success("Payment recorded");
       setAmount("");
       await refetch();
@@ -109,7 +118,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
     if (reason.length < 3) return;
     setVoiding(true);
     try {
-      await axiosInstance.post(`/reception/billing/invoices/${invoiceId}/cancel`, { reason });
+      await axiosInstance.post(`${basePath}/invoices/${invoiceId}/cancel`, { reason });
       toast.success("Invoice voided");
       setVoidOpen(false);
       setVoidReason("");
@@ -304,7 +313,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
         )}
         {invoice?.admissionId && (
           <Button variant="outlined" startIcon={<PrintRounded />} disabled={!invoice}
-            onClick={() => openPrint(`/reception/billing/invoices/${invoiceId}/ip-bill/print`)}
+            onClick={() => openPrint(`${basePath}/invoices/${invoiceId}/ip-bill/print`)}
             sx={{ borderColor: BRAND.action, color: BRAND.actionDark }}>Print IP Bill</Button>
         )}
         <Button variant="contained" startIcon={<PrintRounded />} disabled={!invoice} onClick={print}>{invoice?.admissionId ? "Receipt" : "Print"}</Button>

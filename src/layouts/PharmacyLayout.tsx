@@ -12,7 +12,7 @@ import {
 import {
   Menu as MenuIcon, DashboardRounded, MedicationRounded,
   LocalShippingRounded, InventoryRounded, PointOfSaleRounded,
-  AssessmentRounded, LocalPharmacyRounded, WarehouseRounded,
+  AssessmentRounded, LocalPharmacyRounded, WarehouseRounded, ReceiptLongRounded,
 } from "@mui/icons-material";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
@@ -44,6 +44,7 @@ export default function PharmacyLayout() {
     { text: "Suppliers", icon: <LocalShippingRounded />, path: "/pharmacy/suppliers", section: "Inventory" },
     { text: "Inventory & POs", icon: <InventoryRounded />, path: "/pharmacy/inventory", section: "Inventory" },
     { text: "Ward Stock", icon: <WarehouseRounded />, path: "/pharmacy/ward-stock", section: "Inventory", module: "IPD" },
+    { text: "Billing History", icon: <ReceiptLongRounded />, path: "/pharmacy/billing", section: "Reports", module: "Billing" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/pharmacy/reports", section: "Reports" },
   ];
 

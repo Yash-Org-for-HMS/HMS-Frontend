@@ -423,6 +423,9 @@ function App() {
             <Route path="/lab/catalog" element={el(LabTestCatalog)} />
             <Route path="/lab/radiology-catalog" element={el(RadiologyCatalog)} />
             <Route path="/lab/billing" element={elGated(LabBilling, "Billing", "Lab Billing")} />
+            {/* Distinct from the queue above: that is what still needs billing,
+                this is what already was. */}
+            <Route path="/lab/billing-history" element={elp(Billing, { readOnly: true, basePath: "/lab/billing", department: "Lab" })} />
             <Route path="/lab/reports" element={el(LabReports)} />
           </Route>
         </Route>
@@ -435,6 +438,10 @@ function App() {
             <Route path="/pharmacy/suppliers" element={el(SupplierDirectory)} />
             <Route path="/pharmacy/inventory" element={el(InventoryManagement)} />
             <Route path="/pharmacy/ward-stock" element={elGated(WardStock, "IPD", "Ward Stock")} />
+            {/* The same billing screen reception uses, pointed at the pharmacy's
+                own read-only mount: its guard admits a pharmacist, and the server
+                restricts it to bills carrying pharmacy lines. */}
+            <Route path="/pharmacy/billing" element={elp(Billing, { readOnly: true, basePath: "/pharmacy/billing", department: "Pharmacy" })} />
             <Route path="/pharmacy/ipd-requests" element={elGated(IpdMedicationRequests, "IPD", "IPD Medication Requests")} />
             <Route path="/pharmacy/pos" element={el(DispensaryPOS)} />
             <Route path="/pharmacy/reports" element={el(PharmacyReports)} />
