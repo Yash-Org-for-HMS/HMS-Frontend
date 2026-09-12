@@ -50,6 +50,8 @@ interface StockItem {
 }
 interface Batch {
   batchId: string; batchNumber: string | null; expiryDate: string | null; quantityOnHand: number;
+  /** Past its date. Listed so it can be written off, but refused at issue. */
+  expired: boolean;
 }
 interface IssueNote {
   stockIssueId: string; wardId: string; wardName: string; direction: string;
@@ -119,6 +121,9 @@ function IssueDialog({ ward, onClose, onDone }: { ward: WardSummary; onClose: ()
     enabled: !!stockItemId,
   });
   const batches = batchData?.batches ?? [];
+  // What can actually be sent to a ward. The default pick and the over-issue
+  // guard both reason about these, not about every row on the shelf.
+  const usable = batches.filter((x) => !x.expired);
 
   const save = useMutation({
     mutationFn: () => axiosInstance.post("/pharmacy/ward-stock/issue", {
@@ -133,7 +138,7 @@ function IssueDialog({ ward, onClose, onDone }: { ward: WardSummary; onClose: ()
   const qty = Number(quantity);
   const available = sourceBatchId
     ? batches.find((b) => b.batchId === sourceBatchId)?.quantityOnHand ?? 0
-    : batches[0]?.quantityOnHand ?? 0;
+    : usable[0]?.quantityOnHand ?? 0;
   const tooMany = qty > 0 && qty > available;
 
   return (
@@ -162,8 +167,13 @@ function IssueDialog({ ward, onClose, onDone }: { ward: WardSummary; onClose: ()
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <CircularProgress size={16} /><Typography variant="caption" color="text.secondary">Reading the shelf…</Typography>
             </Box>
-          ) : batches.length === 0 ? (
-            <Alert severity="warning">The store has none of this left.</Alert>
+          ) : usable.length === 0 ? (
+            // "None left" and "all of it has expired" need different actions.
+            <Alert severity="warning">
+              {batches.length
+                ? "Every batch of this in the store has expired. Write them off and receive new stock."
+                : "The store has none of this left."}
+            </Alert>
           ) : (
             <TextField
               select fullWidth size="small" label="Batch"
@@ -175,13 +185,17 @@ function IssueDialog({ ward, onClose, onDone }: { ward: WardSummary; onClose: ()
               SelectProps={{ displayEmpty: true }}
               InputLabelProps={{ shrink: true }}
             >
+              {/* The default skips expired stock, so the label has to name the
+                  batch that would actually be taken rather than the first row. */}
               <MenuItem value="">
-                Soonest to expire ({batches[0].batchNumber ?? "unbatched"}, {batches[0].quantityOnHand} left)
+                Soonest to expire ({usable[0]?.batchNumber ?? "unbatched"}, {usable[0]?.quantityOnHand ?? 0} left)
               </MenuItem>
               {batches.map((b) => (
-                <MenuItem key={b.batchId} value={b.batchId}>
+                // Expired batches are listed so the store can see them and
+                // write them off, and disabled so nobody sends one to a ward.
+                <MenuItem key={b.batchId} value={b.batchId} disabled={b.expired}>
                   {b.batchNumber ?? "Unbatched"}
-                  {b.expiryDate ? ` · expires ${formatDate(b.expiryDate)}` : ""}
+                  {b.expiryDate ? ` · ${b.expired ? "EXPIRED" : "expires"} ${formatDate(b.expiryDate)}` : ""}
                   {` · ${b.quantityOnHand} left`}
                 </MenuItem>
               ))}
@@ -576,6 +590,21 @@ function ConsumeDialog({ ward, stock, onClose, onDone }: {
     </Dialog>
   );
 }
+
+/**
+ * How each kind of movement reads on the log.
+ *
+ * A consumption leaves the ward for a patient and a stocktake leaves it for
+ * nobody, so neither is an issue and neither points the same way. Saying which
+ * is which is the entire job of this line in the log, and it was saying
+ * "Issued · Store → Ward" for all four.
+ */
+const MOVEMENT: Record<string, { label: string; tone: string; where: (ward: string) => string }> = {
+  ISSUE: { label: "Issued", tone: SEMANTIC.info, where: (w) => `Store → ${w}` },
+  RETURN: { label: "Returned", tone: SEMANTIC.warning, where: (w) => `${w} → store` },
+  CONSUME: { label: "Used", tone: SEMANTIC.success, where: (w) => `${w} → patient` },
+  COUNT: { label: "Counted", tone: NEUTRAL.muted, where: (w) => `Stocktake in ${w}` },
+};
 
 /** What this ward has used, and on whom. */
 function WardUsage({ wardId }: { wardId: string }) {
@@ -1286,17 +1315,26 @@ function LogTab() {
   return (
     <Box>
       {data.issues.map((n) => {
-        const back = n.direction === "RETURN";
-        const tone = back ? SEMANTIC.warning : SEMANTIC.info;
+        /**
+         * Four directions, not two.
+         *
+         * This knew only ISSUE and RETURN, so every consumption and every
+         * stocktake rendered as "Issued · Store → Ward" - a movement log
+         * describing movements that never happened, which is worse than one
+         * that omitted them. Phases 3 and 4 added the directions and this was
+         * not updated with them.
+         */
+        const kind = MOVEMENT[n.direction] ?? MOVEMENT.ISSUE;
+        const tone = kind.tone;
         return (
           <Paper key={n.stockIssueId} variant="outlined" sx={{ p: 1.75, mb: 1, borderRadius: 2 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
               <Chip
-                size="small" label={back ? "Returned" : "Issued"}
+                size="small" label={kind.label}
                 sx={{ height: 22, fontWeight: 700, bgcolor: `${tone}18`, color: tone }}
               />
               <Typography variant="body2" sx={{ fontWeight: 700, flex: 1, minWidth: 0 }} noWrap>
-                {back ? `${n.wardName} → store` : `Store → ${n.wardName}`}
+                {kind.where(n.wardName)}
               </Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
                 {formatDateTime(n.createdAt)}{n.processedByName ? ` · ${n.processedByName}` : ""}
