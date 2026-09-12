@@ -791,7 +791,17 @@ function CountDialog({ ward, stock, onClose, onDone }: {
      * dialog while leaving it legible two inches away is not a blind count, it
      * just looks like one. Covering the page is the only version that holds.
      */
-    <Dialog open onClose={onClose} fullScreen PaperProps={{ sx: { alignItems: "center" } }}>
+    <Dialog
+      open onClose={onClose} fullScreen
+      PaperProps={{ sx: { alignItems: "center" } }}
+      /**
+       * No fade. The sheet covers the page, but a fade covers it GRADUALLY, and
+       * for a couple of hundred milliseconds the on-hand column is legible
+       * straight through the half-drawn dialog. On any other screen that is a
+       * pleasant flourish; on this one it hands the counter the answer.
+       */
+      transitionDuration={0}
+    >
       <DialogTitle sx={{ fontWeight: 700, ...SHEET }}>Count {ward.wardName}</DialogTitle>
       <DialogContent dividers sx={{ pt: 2.5, ...SHEET }}>
         <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
