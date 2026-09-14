@@ -171,7 +171,7 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
       setProcessing(true);
       setSuccessMsg(null);
       const res = await axiosInstance.post(`/reception/notifications/appointments/${apptId}/${type}`);
-      setSuccessMsg(res.data.message || "Notification sent");
+      setSuccessMsg(res.data.message || "Notification queued");
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to send notification"));
     } finally {

@@ -193,7 +193,7 @@ export default function PatientProfile(
       setNotifProcessing(true);
       setSuccessMsg(null);
       const res = await axiosInstance.post(`/reception/notifications/patients/${id}/registration`);
-      setSuccessMsg(res.data.message || "Welcome notification sent");
+      setSuccessMsg(res.data.message || "Welcome message queued");
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to send notification"));
     } finally {

@@ -18,7 +18,7 @@ import {
   Alert,
   Tooltip,
 } from "@mui/material";
-import { EmailRounded, SmsRounded, CheckCircleRounded, SearchRounded, ScienceRounded } from "@mui/icons-material";
+import { EmailRounded, SmsRounded, CheckCircleRounded, SearchRounded, ScienceRounded, ScheduleRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -68,12 +68,12 @@ export default function NotificationsLog() {
     <Box>
       <PageHeader
         title="Notifications Log"
-        subtitle="History of SMS and Email notifications sent to patients."
+        subtitle="Messages composed for patients."
         actions={
-          <Tooltip title="These notifications are logged for the record but are not yet delivered as real SMS/email.">
+          <Tooltip title="Composed and logged, but not delivered - no SMS or email provider is connected.">
             <Chip
               icon={<ScienceRounded sx={{ fontSize: "16px !important" }} />}
-              label="Simulated"
+              label="Not connected"
               size="small"
               sx={{ bgcolor: "rgba(245,158,11,0.12)", color: SEMANTIC.warning, fontWeight: 700, border: "1px solid rgba(245,158,11,0.3)" }}
             />
@@ -82,7 +82,7 @@ export default function NotificationsLog() {
       />
 
       <Alert severity="info" icon={<ScienceRounded />} sx={{ mb: 3 }}>
-        Notifications are <strong>simulated</strong> — they're recorded here but not actually delivered yet. Wire up an SMS/email provider to send for real.
+        No SMS or email channel is connected, so these messages are composed and queued, and <strong>nobody receives them</strong>. Wire up a provider to start delivering.
       </Alert>
 
       <TextField
@@ -111,7 +111,7 @@ export default function NotificationsLog() {
                 <SortableHeadCell label="Title" sortKey="title" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
                 <SortableHeadCell label="Message" sortKey="message" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
                 <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={headSx} />
-                <SortableHeadCell label="Sent At" sortKey="sentAt" orderBy={orderBy} order={order} onSort={onSort} align="right" sx={headSx} />
+                <SortableHeadCell label="Delivered" sortKey="sentAt" orderBy={orderBy} order={order} onSort={onSort} align="right" sx={headSx} />
               </TableRow>
             </TableHead>
             <TableBody>
@@ -126,7 +126,7 @@ export default function NotificationsLog() {
               ) : notifications.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} sx={{ py: 4, borderBottom: "none" }}>
-                    <Mascot pose="nothing-here-yet" subtitle={search ? "No notifications match your search." : "No notifications sent yet."} size={130} />
+                    <Mascot pose="nothing-here-yet" subtitle={search ? "No notifications match your search." : "Nothing queued yet."} size={130} />
                   </TableCell>
                 </TableRow>
               ) : (
@@ -155,21 +155,24 @@ export default function NotificationsLog() {
                     <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
                         <Chip
-                          icon={<CheckCircleRounded fontSize="small" />}
+                          /* A green tick on a queued message says "done" about
+                             something that has not happened. Amber and a clock
+                             until a transport actually reports delivery. */
+                          icon={notif.status === "QUEUED"
+                            ? <ScheduleRounded fontSize="small" />
+                            : <CheckCircleRounded fontSize="small" />}
                           label={notif.status}
                           size="small"
-                          sx={{ bgcolor: "rgba(16, 185, 129, 0.15)", color: SEMANTIC.success, fontWeight: 600 }}
-                        />
-                        <Chip
-                          label="Simulated"
-                          size="small"
-                          variant="outlined"
-                          sx={{ color: SEMANTIC.warning, borderColor: "rgba(245,158,11,0.4)", fontWeight: 600, fontSize: "0.75rem", height: 20 }}
+                          sx={notif.status === "QUEUED"
+                            ? { bgcolor: "rgba(245,158,11,0.15)", color: SEMANTIC.warning, fontWeight: 600 }
+                            : { bgcolor: "rgba(16, 185, 129, 0.15)", color: SEMANTIC.success, fontWeight: 600 }}
                         />
                       </Box>
                     </TableCell>
                     <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>
-                      {notif.sentAt ? formatDateTime(notif.sentAt) : "N/A"}
+                      {/* "N/A" reads as missing data. Nothing was delivered,
+                          and saying so is the point of this column. */}
+                      {notif.sentAt ? formatDateTime(notif.sentAt) : "Not delivered"}
                     </TableCell>
                   </TableRow>
                 ))
