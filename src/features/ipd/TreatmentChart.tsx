@@ -17,6 +17,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
+import { usePanelBase } from "./panelBase";
 import { SEMANTIC, NEUTRAL } from "@/styles/accents";
 import ErrorState from "@/components/ErrorState";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
@@ -73,6 +74,7 @@ export default function TreatmentChart() {
   const navigate = useNavigate();
   const [tab, setTab] = useState(0);
   const [dayOffset, setDayOffset] = useState(0);
+  const basePath = usePanelBase();
 
   const { data: profile } = useQuery({
     queryKey: ["ward-chart-profile"],
@@ -229,7 +231,8 @@ export default function TreatmentChart() {
           {/* The drug about to be given is the reason this matters: what they
               have already had, reacted to, and been admitted for. */}
           <PatientHistoryButton patientId={header?.patientId}
-            patientName={header?.patientName} uhid={header?.uhid} />
+            patientName={header?.patientName} uhid={header?.uhid}
+            profilePath={header?.patientId ? `${basePath}/patients/${header.patientId}` : undefined} />
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <IconButton size="small" aria-label="Previous chart day" onClick={() => setDayOffset((d) => d - 1)}><ChevronLeftRounded /></IconButton>

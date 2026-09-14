@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useIsNursePanel } from "./panelBase";
+import { useIsNursePanel, usePanelBase } from "./panelBase";
 import CaseJourney from "./CaseJourney";
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
@@ -90,6 +90,7 @@ export default function OtCaseRecord() {
   const qc = useQueryClient();
   const toast = useToast();
   const isNurse = useIsNursePanel();
+  const basePath = usePanelBase();
   const [tab, setTab] = useState(0);
   const [placing, setPlacing] = useState(false);
 
@@ -161,7 +162,8 @@ export default function OtCaseRecord() {
           <Stack direction="row" spacing={1} alignItems="center">
             {/* What has happened to this patient before, without leaving the
                 record that is being written about them now. */}
-            <PatientHistoryButton patientId={surgery?.patientId} patientName={surgery?.patientName} uhid={surgery?.uhid} />
+            <PatientHistoryButton patientId={surgery?.patientId} patientName={surgery?.patientName} uhid={surgery?.uhid}
+              profilePath={surgery?.patientId ? `${basePath}/patients/${surgery.patientId}` : undefined} />
             <Button startIcon={<ArrowBackRounded />} sx={{ textTransform: "none" }} onClick={() => navigate(-1)}>
               Back to the list
             </Button>

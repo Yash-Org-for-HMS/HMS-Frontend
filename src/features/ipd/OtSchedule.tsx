@@ -413,7 +413,8 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
 
       <PatientHistoryDialog
         open={!!historyFor} onClose={() => setHistoryFor(null)}
-        patientId={historyFor?.patientId} patientName={historyFor?.patientName} uhid={historyFor?.uhid} />
+        patientId={historyFor?.patientId} patientName={historyFor?.patientName} uhid={historyFor?.uhid}
+        profilePath={historyFor?.patientId ? `${basePath}/patients/${historyFor.patientId}` : undefined} />
 
       {booking && (
         <BookCaseDialog

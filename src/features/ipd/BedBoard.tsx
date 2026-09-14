@@ -18,6 +18,7 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import PatientHistoryButton, { PatientHistoryDialog } from "@/components/clinical/PatientHistoryButton";
+import { usePanelBase } from "./panelBase";
 
 const STATUS_COLOR: Record<string, string> = {
   AVAILABLE: SEMANTIC.success, OCCUPIED: SEMANTIC.danger, RESERVED: SEMANTIC.warning, MAINTENANCE: NEUTRAL.muted,
@@ -80,6 +81,7 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
   // Held by the board, not by the menu: closing a Menu unmounts its children,
   // and a dialog rendered inside it would go with it before it painted.
   const [historyFor, setHistoryFor] = useState<BoardOccupant | BedlessPatient | null>(null);
+  const basePath = usePanelBase();
   const [moveDialog, setMoveDialog] = useState<{ mode: "send" | "return"; bed: BoardBed | null } | null>(null);
   const [placing, setPlacing] = useState<BedlessPatient | null>(null);
 
@@ -153,7 +155,8 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
                     the patient, and an oversight panel that cannot open the bed
                     menu would otherwise have no way in at all. */}
                 <PatientHistoryButton variant="icon" patientId={a.patientId}
-                  patientName={a.patientName} uhid={a.uhid} />
+                  patientName={a.patientName} uhid={a.uhid}
+                  profilePath={`${basePath}/patients/${a.patientId}`} />
                 {!readOnly && a.location !== "OT" && (
                   <Button size="small" variant="contained" sx={{ textTransform: "none", fontWeight: 700 }}
                     onClick={() => setPlacing(a)}>
@@ -256,7 +259,8 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
 
       <PatientHistoryDialog
         open={!!historyFor} onClose={() => setHistoryFor(null)}
-        patientId={historyFor?.patientId} patientName={historyFor?.patientName} uhid={historyFor?.uhid} />
+        patientId={historyFor?.patientId} patientName={historyFor?.patientName} uhid={historyFor?.uhid}
+        profilePath={historyFor?.patientId ? `${basePath}/patients/${historyFor.patientId}` : undefined} />
 
       {moveDialog && (
         <TheatreMoveDialog

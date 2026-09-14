@@ -16,7 +16,7 @@ import {
   WarningAmberRounded, CalendarTodayRounded, PersonRounded, NotificationsActiveRounded,
   EventAvailableRounded, EventRepeatRounded, CallSplitRounded, LoginRounded,
   QrCode2Rounded, ReceiptLongRounded, MoreVertRounded, EventRounded,
-  PaymentsRounded, AccountBalanceWalletRounded, VaccinesRounded, MedicalServicesRounded,
+  PaymentsRounded, AccountBalanceWalletRounded, VaccinesRounded, MedicalServicesRounded, HistoryRounded,
 } from "@mui/icons-material";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
@@ -32,6 +32,7 @@ import ConsentFormsSection from "@/components/reception/ConsentFormsSection";
 import VaccinationsSection from "@/components/reception/VaccinationsSection";
 import SurgeriesSection from "@/components/reception/SurgeriesSection";
 import InvoiceViewDialog from "@/components/billing/InvoiceViewDialog";
+import ClinicalTimeline from "@/components/clinical/ClinicalTimeline";
 import { useToast } from "@/providers/ToastContext";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 
@@ -131,7 +132,7 @@ export default function PatientProfile(
   // below are literal JSX in order, so re-ordering them still means updating
   // this map — one line, rather than hunting every navigate() in the app.
   const location = useLocation();
-  const TAB_BY_NAME: Record<string, number> = { vaccinations: 5 };
+  const TAB_BY_NAME: Record<string, number> = { vaccinations: 6 };
   const requestedTab = (location.state as { tab?: string } | null)?.tab;
   const [tab, setTab] = useState(requestedTab ? TAB_BY_NAME[requestedTab] ?? 0 : 0);
   const { isModuleEnabled } = useEnabledModules();
@@ -353,6 +354,7 @@ export default function PatientProfile(
             "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 52 },
             "& .Mui-selected": { color: `${ACCENT} !important` }, "& .MuiTabs-indicator": { bgcolor: ACCENT, height: 3, borderRadius: "3px 3px 0 0" } }}>
           <Tab icon={<PersonRounded fontSize="small" />} iconPosition="start" label="Overview" />
+          <Tab icon={<HistoryRounded fontSize="small" />} iconPosition="start" label="History" />
           <Tab icon={<CalendarTodayRounded fontSize="small" />} iconPosition="start" label={`Appointments${stats.total ? ` (${stats.total})` : ""}`} />
           <Tab icon={<ReceiptLongRounded fontSize="small" />} iconPosition="start" label={`Billing${invoices.length ? ` (${invoices.length})` : ""}`} disabled={!billingEnabled} />
           <Tab icon={<EventRepeatRounded fontSize="small" />} iconPosition="start" label="Records" />
@@ -421,8 +423,22 @@ export default function PatientProfile(
         </Box>
       )}
 
-      {/* ── Tab: Appointments ── */}
+      {/* ── Tab: History ──────────────────────────────────────────────────
+          The whole clinical story in one dated feed. The tabs around it each
+          answer a slice - appointments, surgeries, vaccinations, uploaded
+          records - and none of them answered "what has happened to this
+          person". Only the doctor's own profile did, so reception and the
+          ward had to assemble it by opening four tabs and reading dates.
+          Same component and same mount the ward screens use, so there is one
+          version of a patient's history rather than a second one here. */}
       {tab === 1 && (
+        <SectionCard title="Clinical history" icon={<HistoryRounded fontSize="small" />}>
+          <ClinicalTimeline patientId={patient.patientId} basePath="/clinical/patients" />
+        </SectionCard>
+      )}
+
+      {/* ── Tab: Appointments ── */}
+      {tab === 2 && (
         <SectionCard title="Appointment History" icon={<CalendarTodayRounded fontSize="small" />}
           action={canEdit ? <Button size="small" startIcon={<EventAvailableRounded />} onClick={() => navigate(`/reception/appointments/new?patientId=${id}`)} sx={{ textTransform: "none", color: ACCENT }}>Book</Button> : undefined}>
           {appointments.length === 0 ? (
@@ -482,7 +498,7 @@ export default function PatientProfile(
       )}
 
       {/* ── Tab: Billing ── */}
-      {tab === 2 && billingEnabled && (
+      {tab === 3 && billingEnabled && (
         <SectionCard title="Billing & Invoices" icon={<ReceiptLongRounded fontSize="small" />}>
           <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap", gap: 1, mb: 2 }}>
             <Chip label={`Billed: ${formatINR(billing?.totals?.totalBilled)}`} sx={{ bgcolor: "action.hover", color: "text.primary", fontWeight: 700 }} />
@@ -540,13 +556,13 @@ export default function PatientProfile(
       )}
 
       {/* ── Tab: Records ── */}
-      {tab === 3 && <ClinicalRecordsSection patientId={patient.patientId} />}
+      {tab === 4 && <ClinicalRecordsSection patientId={patient.patientId} />}
 
       {/* ── Tab: Consent ── */}
-      {tab === 4 && <ConsentFormsSection patientId={patient.patientId} patientName={`${patient.firstName || ""} ${patient.lastName || ""}`.trim()} readOnly={readOnly} />}
+      {tab === 5 && <ConsentFormsSection patientId={patient.patientId} patientName={`${patient.firstName || ""} ${patient.lastName || ""}`.trim()} readOnly={readOnly} />}
 
       {/* ── Tab: Vaccinations ── */}
-      {tab === 5 && (
+      {tab === 6 && (
         <VaccinationsSection
           patientId={patient.patientId}
           patientName={`${patient.firstName || ""} ${patient.lastName || ""}`.trim()}
@@ -557,10 +573,10 @@ export default function PatientProfile(
       )}
 
       {/* ── Tab: Surgeries ── */}
-      {tab === 6 && <SurgeriesSection patientId={patient.patientId} />}
+      {tab === 7 && <SurgeriesSection patientId={patient.patientId} />}
 
       {/* ── Tab: Documents ── */}
-      {tab === 7 && <PatientDocumentsSection patientId={patient.patientId} readOnly={readOnly} />}
+      {tab === 8 && <PatientDocumentsSection patientId={patient.patientId} readOnly={readOnly} />}
 
       <IdCardModal open={idCardOpen} onClose={() => setIdCardOpen(false)} patient={patient} />
 

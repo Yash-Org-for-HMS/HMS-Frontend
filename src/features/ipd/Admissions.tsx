@@ -25,6 +25,7 @@ import DischargeDialog from "@/components/ipd/DischargeDialog";
 import DepositDialog from "@/components/ipd/DepositDialog";
 import PageHeader from "@/components/layout/PageHeader";
 import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
+import { usePanelBase } from "@/features/ipd/panelBase";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 
@@ -97,6 +98,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
   const [dischargeFor, setDischargeFor] = useState<AdmissionRow | null>(null);
   const [depositFor, setDepositFor] = useState<{ row: AdmissionRow; mode: "collect" | "refund" } | null>(null);
   const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: AdmissionRow | null }>({ anchor: null, row: null });
+  const basePath = usePanelBase();
 
   const tabParams = TABS[tab].params;
   const tabKey = TABS[tab].label;
@@ -278,7 +280,8 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                           action on the patient, and an oversight panel needs it
                           as much as the ward does. */}
                       <PatientHistoryButton variant="icon" patientId={a.patientId}
-                        patientName={a.patientName} uhid={a.uhid} />
+                        patientName={a.patientName} uhid={a.uhid}
+                        profilePath={`${basePath}/patients/${a.patientId}`} />
                       {!readOnly && a.status === "ADMITTED" && (
                         <>
                           <Tooltip title="Transfer bed"><IconButton size="small" onClick={() => setTransferFor(a)} sx={{ color: "text.secondary", "&:hover": { color: BRAND.action } }}><SwapHorizRounded fontSize="small" /></IconButton></Tooltip>

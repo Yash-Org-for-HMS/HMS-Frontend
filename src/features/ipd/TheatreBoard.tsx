@@ -18,6 +18,7 @@ import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import PageHeader from "@/components/layout/PageHeader";
 import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
+import { usePanelBase } from "./panelBase";
 
 type Theatre = {
   operatingTheatreId: string;
@@ -69,6 +70,7 @@ const Tile = ({ label, value, color }: { label: string; value: number; color: st
  * cleaning or back in service once a case has finished.
  */
 export default function TheatreBoard({ manage = false }: { manage?: boolean } = {}) {
+  const basePath = usePanelBase();
   const toast = useToast();
   const confirm = useConfirm();
   const qc = useQueryClient();
@@ -181,7 +183,8 @@ export default function TheatreBoard({ manage = false }: { manage?: boolean } = 
                       {/* Whoever is watching the board is often the person
                           asked what this patient came in with. */}
                       <PatientHistoryButton variant="icon" patientId={t.occupant.patientId}
-                        patientName={t.occupant.patientName} uhid={t.occupant.uhid} />
+                        patientName={t.occupant.patientName} uhid={t.occupant.uhid}
+                        profilePath={`${basePath}/patients/${t.occupant.patientId}`} />
                     </Box>
                   )}
                   <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>

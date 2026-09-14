@@ -3,7 +3,8 @@ import {
   Button, Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
   Typography, Box, Tooltip,
 } from "@mui/material";
-import { HistoryRounded, CloseRounded } from "@mui/icons-material";
+import { HistoryRounded, CloseRounded, OpenInNewRounded } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import ClinicalTimeline from "./ClinicalTimeline";
 
 /**
@@ -38,7 +39,9 @@ export function PatientHistoryDialog({
   patientName,
   uhid,
   basePath = "/clinical/patients",
-}: PatientRef & { open: boolean; onClose: () => void; basePath?: string }) {
+  profilePath,
+}: PatientRef & { open: boolean; onClose: () => void; basePath?: string; profilePath?: string }) {
+  const navigate = useNavigate();
   return (
     <Dialog open={open && !!patientId} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle sx={{ pr: 6 }}>
@@ -62,7 +65,18 @@ export function PatientHistoryDialog({
           {open && patientId && <ClinicalTimeline patientId={patientId} basePath={basePath} />}
         </Box>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ justifyContent: profilePath ? "space-between" : "flex-end" }}>
+        {/* The glance can become the sit-down. The timeline answers what has
+            happened; the profile answers who this is - allergies, contacts,
+            consents, documents. profilePath is passed by the screen because it
+            knows which panel it is in: a nurse following this must land in her
+            own panel's copy, not reception's. */}
+        {profilePath && (
+          <Button startIcon={<OpenInNewRounded />} onClick={() => { onClose(); navigate(profilePath); }}
+            sx={{ textTransform: "none", fontWeight: 700 }}>
+            Open full profile
+          </Button>
+        )}
         <Button onClick={onClose} sx={{ textTransform: "none" }}>Close</Button>
       </DialogActions>
     </Dialog>
@@ -82,7 +96,8 @@ export default function PatientHistoryButton({
   uhid,
   variant = "button",
   basePath = "/clinical/patients",
-}: PatientRef & { variant?: "button" | "icon"; basePath?: string }) {
+  profilePath,
+}: PatientRef & { variant?: "button" | "icon"; basePath?: string; profilePath?: string }) {
   const [open, setOpen] = useState(false);
   if (!patientId) return null;
 
@@ -104,7 +119,7 @@ export default function PatientHistoryButton({
         </Button>
       )}
       <PatientHistoryDialog open={open} onClose={() => setOpen(false)}
-        patientId={patientId} patientName={patientName} uhid={uhid} basePath={basePath} />
+        patientId={patientId} patientName={patientName} uhid={uhid} basePath={basePath} profilePath={profilePath} />
     </>
   );
 }
