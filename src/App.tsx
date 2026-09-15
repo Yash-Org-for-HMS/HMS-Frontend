@@ -394,7 +394,7 @@ function App() {
             {/* Read-only view under the Nurse shell — a nurse opening a patient (e.g. via
                 command-palette search) must not land inside the full Reception sidebar,
                 which would expose front desk/billing/admissions navigation they don't own. */}
-            <Route path="/nurse/patients/:id" element={elp(PatientProfile, { readOnly: true, canRecordVaccinations: true })} />
+            <Route path="/nurse/patients/:id" element={elp(PatientProfile, { readOnly: true, canRecordVaccinations: true, canRecordConsent: true })} />
             {/* Vitals Station merged into the Patient Queue page (view toggle). */}
             <Route path="/nurse/vitals" element={<Navigate to="/nurse/queue" replace />} />
           </Route>

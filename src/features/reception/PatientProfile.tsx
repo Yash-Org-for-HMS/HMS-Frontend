@@ -102,13 +102,21 @@ function SectionCard({ title, icon, action, children }: { title: string; icon: R
  * the page stays read-only. A nurse is the person who actually gives the dose,
  * and the API has always let her (vaccinationAccess admits NURSE for
  * administer/skip/undo) — only this page said otherwise, so the record was
- * signed by whoever happened to be at the desk. Deliberately narrow: the same
- * readOnly flag also governs demographics, billing and consent, and a nurse
- * should not be editing an invoice.
+ * signed by whoever happened to be at the desk.
+ *
+ * `canRecordConsent` does the same for the Forms tab, for the same reason: the
+ * nurse is who stands with the patient when a consent form is signed, before a
+ * procedure or a transfusion. Making her fetch a receptionist either stops the
+ * form being taken at the bedside or records it under somebody who was not
+ * there — and a consent record exists precisely to say who was.
+ *
+ * Both are deliberately narrow. The one `readOnly` flag also governs
+ * demographics and billing, and a nurse should not be editing an invoice; each
+ * capability opens one tab and nothing else.
  */
 export default function PatientProfile(
-  { readOnly = false, canRecordVaccinations = false }:
-  { readOnly?: boolean; canRecordVaccinations?: boolean } = {},
+  { readOnly = false, canRecordVaccinations = false, canRecordConsent = false }:
+  { readOnly?: boolean; canRecordVaccinations?: boolean; canRecordConsent?: boolean } = {},
 ) {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -242,11 +250,20 @@ export default function PatientProfile(
       {/* Top nav */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, gap: 1, flexWrap: "wrap" }}>
         <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ color: "text.secondary", textTransform: "none", fontWeight: 600 }}>Back to patients</Button>
+        {/* Name what IS editable rather than just saying read-only — a chip that
+            lists nothing sends a nurse looking for the reception desk when the
+            thing she needs is on the page in front of her. */}
         {readOnly && (
-          <Tooltip title={canRecordVaccinations
-            ? "You can record immunisations here; booking, editing and billing happen in the reception panel."
-            : "You're viewing this record; booking, editing and billing happen in the reception/clinical panels."}>
-            <Chip label={canRecordVaccinations ? "Oversight view · immunisations editable" : "Read-only oversight view"} size="small" sx={{ bgcolor: alpha(ACCENT, 0.1), color: ACCENT, fontWeight: 600 }} />
+          <Tooltip title={(() => {
+            const can = [canRecordVaccinations && "immunisations", canRecordConsent && "consent forms"].filter(Boolean);
+            return can.length
+              ? `You can record ${can.join(" and ")} here; booking, editing and billing happen in the reception panel.`
+              : "You're viewing this record; booking, editing and billing happen in the reception/clinical panels.";
+          })()}>
+            <Chip label={(() => {
+              const can = [canRecordVaccinations && "immunisations", canRecordConsent && "consent"].filter(Boolean);
+              return can.length ? `Oversight view · ${can.join(" and ")} editable` : "Read-only oversight view";
+            })()} size="small" sx={{ bgcolor: alpha(ACCENT, 0.1), color: ACCENT, fontWeight: 600 }} />
           </Tooltip>
         )}
       </Box>
@@ -559,7 +576,7 @@ export default function PatientProfile(
       {tab === 4 && <ClinicalRecordsSection patientId={patient.patientId} />}
 
       {/* ── Tab: Consent ── */}
-      {tab === 5 && <ConsentFormsSection patientId={patient.patientId} patientName={`${patient.firstName || ""} ${patient.lastName || ""}`.trim()} readOnly={readOnly} />}
+      {tab === 5 && <ConsentFormsSection patientId={patient.patientId} patientName={`${patient.firstName || ""} ${patient.lastName || ""}`.trim()} readOnly={readOnly && !canRecordConsent} />}
 
       {/* ── Tab: Vaccinations ── */}
       {tab === 6 && (
