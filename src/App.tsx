@@ -276,18 +276,24 @@ function App() {
             <Route path="/hospital/gst-report" element={elGated(GstReport, "Billing", "GST Report")} />
             <Route path="/hospital/refund-approvals" element={elGated(RefundApprovals, "Billing", "Refund Approvals")} />
             <Route path="/hospital/reports" element={el(Reports)} />
-            {/* Insurance and nursing reports existed only at /reception/claims/reports
-                and /nurse/reports, so a hospital admin had no way to them from their
-                own panel — the Reports hub does not carry them because each is a
-                self-contained page with its own navigation. Same components,
-                reachable from where an admin actually looks. */}
-            {/* Ungated, matching the routes these components already have under
-                /reception and /nurse. There is no "Claims" module — the module
-                list is OPD, Doctor, IPD, Laboratory, Pharmacy, Billing — so
-                gating on one locked the page permanently. And nursing reports
-                are mostly vitals, which a hospital without IPD still records;
-                the page already hides its own Ward & Beds group when IPD is
-                off, which is the right granularity. */}
+            {/* The Reports hub NOW carries both of these, as a "Nursing" and an
+                "Insurance" group — the arrangement lab and pharmacy already had,
+                where the panel keeps its own screen and the hub re-presents the
+                same definitions. They were kept out of it originally because each
+                is a self-contained page with its own navigation; the hub folds
+                their items in rather than nesting their nav, which was the part
+                that did not fit.
+
+                These routes stay so existing links keep working, and because the
+                nurse panel has no hub and reaches /nurse/reports directly. They
+                are no longer in the admin sidebar.
+
+                Still ungated, for the reasons that have not changed: there is no
+                "Claims" module — the list is OPD, Doctor, IPD, Laboratory,
+                Pharmacy, Billing — so gating on one would lock the page for good.
+                And nursing reports are mostly vitals, which a hospital without
+                IPD still records; the Ward & Beds group hides itself when IPD is
+                off, which is the right granularity and is what the hub reuses. */}
             <Route path="/hospital/claims/reports" element={el(ClaimReports)} />
             <Route path="/hospital/nurse-reports" element={el(NurseReports)} />
             <Route path="/hospital/module-access" element={el(ModuleAccess)} />

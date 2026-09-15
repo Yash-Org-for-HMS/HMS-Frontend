@@ -131,7 +131,11 @@ function RegisterReport({ data }: { data: ClaimReportsResponse }) {
 }
 
 type ReportItem = { key: string; label: string; Comp: React.ComponentType<{ data: ClaimReportsResponse }> };
-const GROUPS: { heading: string; items: ReportItem[] }[] = [
+/**
+ * Exported so the hospital-admin report hub can carry these as one "Insurance"
+ * group rather than a separate sidebar entry. This stays the single definition.
+ */
+export const CLAIM_REPORT_GROUPS: { heading: string; items: ReportItem[] }[] = [
   { heading: "Overview", items: [{ key: "overview", label: "Summary & Status", Comp: OverviewReport }] },
   { heading: "Volume", items: [
     { key: "payer", label: "Payer-wise", Comp: PayerReport },
@@ -189,7 +193,7 @@ export default function ClaimReports() {
     <ReportNavLayout
       title="Claim Reports"
       subtitle="Insurance & scheme analytics — turnaround, outstanding reimbursements, rejections. Every table is downloadable."
-      groups={GROUPS}
+      groups={CLAIM_REPORT_GROUPS}
       accent={ACCENT}
       actions={isFetching ? <HeartbeatLoader size={22} /> : undefined}
       toolbar={toolbar}

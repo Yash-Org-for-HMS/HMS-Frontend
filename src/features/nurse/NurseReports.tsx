@@ -188,7 +188,13 @@ function AdmissionsReport({ from, to }: { from: string; to: string }) {
 type ReportItem = { key: string; label: string; Comp: React.ComponentType<ReportProps> };
 type ReportGroup = { heading: string; module?: string; items: ReportItem[] };
 
-const GROUPS: ReportGroup[] = [
+/**
+ * Exported so the hospital-admin report hub can carry these as one "Nursing"
+ * group rather than a separate screen - the same way it already carries the lab
+ * and pharmacy reports. This stays the single definition; the hub re-presents
+ * it, and the nurse panel still renders it here, because nurses have no hub.
+ */
+export const NURSE_REPORT_GROUPS: ReportGroup[] = [
   { heading: "Overview", items: [{ key: "summary", label: "Summary & Trend", Comp: SummaryReport }] },
   {
     heading: "Vitals",
@@ -211,7 +217,7 @@ const GROUPS: ReportGroup[] = [
 
 export default function NurseReports() {
   const { isModuleEnabled } = useEnabledModules();
-  const visibleGroups = useMemo(() => GROUPS.filter((g) => !g.module || isModuleEnabled(g.module)), [isModuleEnabled]);
+  const visibleGroups = useMemo(() => NURSE_REPORT_GROUPS.filter((g) => !g.module || isModuleEnabled(g.module)), [isModuleEnabled]);
 
   const [preset, setPreset] = useState("30d");
   const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));

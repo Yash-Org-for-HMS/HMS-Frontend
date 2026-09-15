@@ -13,6 +13,8 @@ import { PharmacyOverview } from "../pharmacy/PharmacyReports";
 import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList, SupplierLedger, Movers, OpdIpdSplit } from "../pharmacy/InventoryReports";
 import { BRAND } from "@/styles/accents";
 import { ReportNavLayout, type ReportItem } from "@/features/reports/kit";
+import { NURSE_REPORT_GROUPS } from "../nurse/NurseReports";
+import { CLAIM_REPORT_GROUPS } from "../claims/ClaimReports";
 
 const ACCENT = BRAND.action;
 
@@ -100,16 +102,38 @@ export default function ReportsHub() {
   const { user } = useHospitalAuth();
   const isAdmin = isAdminRole(user?.role);
 
-  // Hide a group whose module is off, and the finance groups for non-admins.
-  const groups = useMemo(
-    () => GROUPS.filter((g) => (!g.module || isModuleEnabled(g.module)) && (!g.adminOnly || isAdmin)),
-    [isModuleEnabled, isAdmin],
-  );
+  /**
+   * Nursing and Insurance join the catalogue here rather than living as their
+   * own sidebar entries - the same arrangement lab and pharmacy already have,
+   * where the panel keeps its screen and the hub carries a group built from the
+   * same definitions.
+   *
+   * Their items are composed rather than pasted, because their own gating is
+   * not uniform: a nurse's vitals and staff reports apply to any hospital,
+   * while Ward & Beds needs IPD. Folding them into one flat IPD-gated group
+   * would have hidden the vitals register from a hospital without in-patients.
+   * Admin-only, which is exactly who could reach them before.
+   */
+  const groups = useMemo(() => {
+    const base = GROUPS.filter((g) => (!g.module || isModuleEnabled(g.module)) && (!g.adminOnly || isAdmin));
+    if (!isAdmin) return base;
+
+    const fold = (heading: string, src: { module?: string; items: ReportItem[] }[]): ReportGroup[] => {
+      const items = src.filter((g) => !g.module || isModuleEnabled(g.module)).flatMap((g) => g.items);
+      return items.length ? [{ heading, items }] : [];
+    };
+
+    return [
+      ...base,
+      ...fold("Nursing", NURSE_REPORT_GROUPS),
+      ...fold("Insurance", CLAIM_REPORT_GROUPS),
+    ];
+  }, [isModuleEnabled, isAdmin]);
 
   return (
     <ReportNavLayout
       title="Reports"
-      subtitle="All OPD, in-patient, and billing reports in one place"
+      subtitle="Every report in one place - OPD, in-patient, billing, laboratory, pharmacy, nursing and insurance"
       groups={groups}
       accent={ACCENT}
     />
