@@ -43,6 +43,7 @@ import {
   HealthAndSafetyRounded,
   LockRounded,
   EventNoteRounded,
+  CampaignRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { assetUrl } from "@/utils/assetUrl";
@@ -50,6 +51,8 @@ import BranchSwitcher from "@/components/BranchSwitcher";
 import SidebarHeader from "@/components/layout/SidebarHeader";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
+import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
+import { useSocket } from "@/hooks/useSocket";
 
 const drawerWidth = 260;
 
@@ -67,6 +70,8 @@ export default function ReceptionLayout() {
 
   // Grouped into sections that follow the front-desk workflow:
   // overview → patient flow → clinical lookups → in-patient → finance → system.
+  const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
+  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onAnnouncement });
   const navSections = [
     {
       heading: "Overview",
@@ -112,6 +117,7 @@ export default function ReceptionLayout() {
     {
       heading: "System",
       items: [
+        { text: "Announcements", icon: <CampaignRounded />, path: "/reception/announcements", badge: announcementsUnread },
         { text: "Notifications", icon: <NotificationsRounded />, path: "/reception/notifications" },
       ],
     },

@@ -13,6 +13,7 @@ import {
   Menu as MenuIcon, DashboardRounded, MedicationRounded,
   LocalShippingRounded, InventoryRounded, PointOfSaleRounded,
   AssessmentRounded, LocalPharmacyRounded, WarehouseRounded, ReceiptLongRounded,
+  CampaignRounded,
 } from "@mui/icons-material";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
@@ -21,6 +22,8 @@ import SidebarHeader from "@/components/layout/SidebarHeader";
 import SidebarSearch from "@/components/layout/SidebarSearch";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
+import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
+import { useSocket } from "@/hooks/useSocket";
 
 const drawerWidth = 260;
 
@@ -36,6 +39,8 @@ export default function PharmacyLayout() {
   const location = useLocation();
   const { isModuleEnabled } = useEnabledModules();
 
+  const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
+  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onAnnouncement });
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/pharmacy/dashboard", section: "Overview" },
     { text: "Dispensary (POS)", icon: <PointOfSaleRounded />, path: "/pharmacy/pos", section: "Dispensary" },
@@ -46,6 +51,7 @@ export default function PharmacyLayout() {
     { text: "Ward Stock", icon: <WarehouseRounded />, path: "/pharmacy/ward-stock", section: "Inventory", module: "IPD" },
     { text: "Billing History", icon: <ReceiptLongRounded />, path: "/pharmacy/billing", section: "Reports", module: "Billing" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/pharmacy/reports", section: "Reports" },
+    { text: "Announcements", icon: <CampaignRounded />, path: "/pharmacy/announcements", badge: announcementsUnread, section: "Updates" },
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);

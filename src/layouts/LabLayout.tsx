@@ -13,6 +13,7 @@ import {
   Menu as MenuIcon, DashboardRounded, ScienceRounded,
   SettingsAccessibilityRounded, MenuBookRounded, AssessmentRounded,
   ReceiptLongRounded,
+  CampaignRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
@@ -21,6 +22,8 @@ import SidebarHeader from "@/components/layout/SidebarHeader";
 import SidebarSearch from "@/components/layout/SidebarSearch";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
+import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
+import { useSocket } from "@/hooks/useSocket";
 
 const drawerWidth = 260;
 
@@ -36,6 +39,8 @@ export default function LabLayout() {
   const location = useLocation();
   const { isModuleEnabled } = useEnabledModules();
 
+  const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
+  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onAnnouncement });
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/lab/dashboard", section: "Overview" },
     { text: "Lab Orders", icon: <ScienceRounded />, path: "/lab/orders", section: "Orders" },
@@ -45,6 +50,7 @@ export default function LabLayout() {
     { text: "Lab Catalog", icon: <MenuBookRounded />, path: "/lab/catalog", section: "Catalogs" },
     { text: "Radiology Catalog", icon: <MenuBookRounded />, path: "/lab/radiology-catalog", section: "Catalogs" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/lab/reports", section: "Reports" },
+    { text: "Announcements", icon: <CampaignRounded />, path: "/lab/announcements", badge: announcementsUnread, section: "Updates" },
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);

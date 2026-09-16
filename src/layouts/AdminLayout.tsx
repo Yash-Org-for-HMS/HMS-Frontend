@@ -31,6 +31,7 @@ import {
   HistoryRounded,
   NotificationsActiveRounded,
   AssessmentRounded,
+  CampaignRounded,
 } from "@mui/icons-material";
 import { useAuth } from "@/providers/AuthContext";
 import SidebarHeader from "@/components/layout/SidebarHeader";
@@ -77,6 +78,10 @@ export default function AdminLayout() {
     {
       heading: t("nav.group.tenants", "Tenants"),
       items: [{ text: t("nav.hospitals"), icon: <LocalHospitalRounded />, path: "/hospitals" }],
+    },
+    {
+      heading: t("nav.group.communication", "Communication"),
+      items: [{ text: "Announcements", icon: <CampaignRounded />, path: "/announcements" }],
     },
     {
       heading: t("nav.group.accessControl", "Access Control"),

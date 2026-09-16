@@ -13,6 +13,7 @@ import {
   Menu as MenuIcon, DashboardRounded, PeopleAltRounded, AssessmentRounded,
   MedicationRounded, VaccinesRounded, HotelRounded, MedicalServicesRounded, EventNoteRounded,
   WarehouseRounded,
+  CampaignRounded,
 } from "@mui/icons-material";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
@@ -21,6 +22,8 @@ import SidebarHeader from "@/components/layout/SidebarHeader";
 import SidebarSearch from "@/components/layout/SidebarSearch";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
+import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
+import { useSocket } from "@/hooks/useSocket";
 
 const drawerWidth = 260;
 
@@ -37,6 +40,8 @@ export default function NurseLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isModuleEnabled } = useEnabledModules();
 
+  const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
+  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onAnnouncement });
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/nurse/dashboard", section: "Overview" },
     { text: "Patient Queue", icon: <PeopleAltRounded />, path: "/nurse/queue", section: "Patient Care" },
@@ -50,6 +55,7 @@ export default function NurseLayout() {
     { text: "Theatre Board", icon: <MedicalServicesRounded />, path: "/nurse/ipd/theatres", section: "Theatre & Beds", module: "IPD" },
     { text: "Operating List", icon: <EventNoteRounded />, path: "/nurse/ipd/ot-schedule", section: "Theatre & Beds", module: "IPD" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/nurse/reports", section: "Reports" },
+    { text: "Announcements", icon: <CampaignRounded />, path: "/nurse/announcements", badge: announcementsUnread, section: "Updates" },
   ];
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);

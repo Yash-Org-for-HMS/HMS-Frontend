@@ -101,6 +101,8 @@ const OtReports = lazy(() => import("@/features/ipd/OtReports"));
 const QueueDashboard = lazy(() => import("@/features/reception/QueueDashboard"));
 const Billing = lazy(() => import("@/features/billing/Billing"));
 const NotificationsLog = lazy(() => import("@/features/reception/NotificationsLog"));
+const Announcements = lazy(() => import("@/features/announcements/Announcements"));
+const AnnouncementsAdmin = lazy(() => import("@/features/announcements/AnnouncementsAdmin"));
 const ClaimsList = lazy(() => import("@/features/claims/ClaimsList"));
 const ClaimForm = lazy(() => import("@/features/claims/ClaimForm"));
 const ClaimDetail = lazy(() => import("@/features/claims/ClaimDetail"));
@@ -188,7 +190,7 @@ const elGated = (C: ComponentType<any>, module: string, feature?: string, props:
  */
 const ADMIN_SEGMENTS = new Set([
   "login", "plans", "subscription-billing", "leads", "trials", "hospitals",
-  "onboarding", "super-admins", "rbac", "reports", "audit-logs",
+  "onboarding", "super-admins", "rbac", "reports", "audit-logs", "announcements",
 ]);
 
 function AdminOwnedFallback() {
@@ -208,6 +210,7 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route element={el(AdminLayout)}>
+            <Route path="/announcements" element={el(AnnouncementsAdmin)} />
             <Route path="/" element={el(Dashboard)} />
             <Route path="/plans" element={el(PlansList)} />
             <Route path="/plans/new" element={el(PlanForm)} />
@@ -256,6 +259,7 @@ function App() {
 
         <Route element={<HospitalProtectedRoute panel="hospital" />}>
           <Route element={el(HospitalLayout)}>
+            <Route path="/hospital/announcements" element={el(Announcements)} />
             <Route path="/hospital/dashboard" element={el(HospitalDashboard)} />
             <Route path="/hospital/profile" element={el(HospitalProfile)} />
             <Route path="/hospital/settings" element={el(HospitalSettings)} />
@@ -335,6 +339,7 @@ function App() {
         {/* ── Reception Panel Routes ─────────────────────── */}
         <Route element={<HospitalProtectedRoute panel="reception" />}>
           <Route element={el(ReceptionLayout)}>
+            <Route path="/reception/announcements" element={el(Announcements)} />
             <Route path="/reception/dashboard" element={el(ReceptionDashboard)} />
             <Route path="/reception/console" element={el(FrontDeskConsole)} />
             {/* ── Module 2: Patient Registration ── */}
@@ -374,6 +379,7 @@ function App() {
         {/* ── Nurse Panel Routes ────────────────────────────────────── */}
         <Route element={<HospitalProtectedRoute panel="nurse" />}>
           <Route element={el(NurseLayout)}>
+            <Route path="/nurse/announcements" element={el(Announcements)} />
             <Route path="/nurse/dashboard" element={el(NurseDashboard)} />
             <Route path="/nurse/queue" element={el(NurseQueue)} />
             <Route path="/nurse/ward" element={elGated(NurseWard, "IPD", "Ward")} />
@@ -403,6 +409,7 @@ function App() {
         {/* ── Doctor Panel Routes ───────────────────────────────────── */}
         <Route element={<HospitalProtectedRoute panel="doctor" />}>
           <Route element={el(DoctorLayout)}>
+            <Route path="/doctor/announcements" element={el(Announcements)} />
             <Route path="/doctor/dashboard" element={el(DoctorDashboard)} />
             <Route path="/doctor/queue" element={el(DoctorQueue)} />
             <Route path="/doctor/consultation/:appointmentId" element={el(ConsultationWorkspace)} />
@@ -419,6 +426,7 @@ function App() {
         <Route element={<HospitalProtectedRoute panel="lab" />}>
           <Route path="/lab/orders/:id/print" element={el(PrintLabReport)} />
           <Route element={el(LabLayout)}>
+            <Route path="/lab/announcements" element={el(Announcements)} />
             <Route path="/lab/dashboard" element={el(LabDashboard)} />
             <Route path="/lab/orders" element={el(LabOrdersQueue)} />
             <Route path="/lab/orders/:id" element={el(UpdateLabOrder)} />
@@ -439,6 +447,7 @@ function App() {
         {/* ── Pharmacy Panel Routes ─────────────────────────────────── */}
         <Route element={<HospitalProtectedRoute panel="pharmacy" />}>
           <Route element={el(PharmacyLayout)}>
+            <Route path="/pharmacy/announcements" element={el(Announcements)} />
             <Route path="/pharmacy/dashboard" element={el(PharmacyDashboard)} />
             <Route path="/pharmacy/medicines" element={el(MedicineCatalog)} />
             <Route path="/pharmacy/suppliers" element={el(SupplierDirectory)} />

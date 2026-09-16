@@ -14,6 +14,7 @@ import {
 import {
   Menu as MenuIcon, DashboardRounded, PeopleAltRounded, GroupsRounded,
   QueueRounded, EventBusyRounded, ScienceRounded, AssessmentRounded,
+  CampaignRounded,
 } from "@mui/icons-material";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
@@ -25,6 +26,7 @@ import TrialBanner from "@/components/layout/TrialBanner";
 import { axiosInstance } from "@/api/axios";
 import { useSocket } from "@/hooks/useSocket";
 import { DASHBOARD_POLL_MS } from "@/constants/intervals";
+import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
 
 const drawerWidth = 260;
 
@@ -49,7 +51,12 @@ export default function DoctorLayout() {
     refetchInterval: DASHBOARD_POLL_MS,
     refetchOnWindowFocus: true,
   });
-  useSocket({ QUEUE_UPDATED: () => queryClient.invalidateQueries({ queryKey: ["doctor-badges"] }) });
+  const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
+  useSocket({
+    QUEUE_UPDATED: () => queryClient.invalidateQueries({ queryKey: ["doctor-badges"] }),
+    ANNOUNCEMENT_PUBLISHED: onAnnouncement,
+    connect: onAnnouncement,
+  });
 
   const { isModuleEnabled } = useEnabledModules();
   const menuItems = [
@@ -63,6 +70,7 @@ export default function DoctorLayout() {
     // its own group prints that group's heading a second time.
     { text: "My Leave", icon: <EventBusyRounded />, path: "/doctor/leaves", badge: 0, section: "My Work" },
     { text: "My Reports", icon: <AssessmentRounded />, path: "/doctor/reports", badge: 0, section: "Insights" },
+    { text: "Announcements", icon: <CampaignRounded />, path: "/doctor/announcements", badge: announcementsUnread, section: "Updates" },
   ];
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);

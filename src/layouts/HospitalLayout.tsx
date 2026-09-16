@@ -18,6 +18,7 @@ import {
   AssessmentRounded, HotelRounded, MonitorHeartRounded, VaccinesRounded,
   MedicationRounded, LocalHotelRounded, ReceiptLongRounded,
   FormatListNumberedRounded,
+  CampaignRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { isAdmin as isAdminRole } from "@/constants/roles";
@@ -28,6 +29,8 @@ import SidebarSearch from "@/components/layout/SidebarSearch";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
 import { axiosInstance } from "@/api/axios";
+import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
+import { useSocket } from "@/hooks/useSocket";
 
 const drawerWidth = 260;
 
@@ -43,6 +46,8 @@ export default function HospitalLayout() {
   const location = useLocation();
 
   // Sidebar items; `adminOnly` tabs are hidden from non-admin roles.
+  const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
+  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onAnnouncement });
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/hospital/dashboard", section: "Overview" },
     { text: "Hospital Profile", icon: <LocalHospitalRounded />, path: "/hospital/profile", adminOnly: true, section: "Overview" },
@@ -86,6 +91,7 @@ export default function HospitalLayout() {
     { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", adminOnly: true, section: "Configuration" },
     { text: "Audit Logs", icon: <SecurityRounded />, path: "/hospital/audit-logs", adminOnly: true, section: "System" },
     { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", adminOnly: true, section: "System" },
+    { text: "Announcements", icon: <CampaignRounded />, path: "/hospital/announcements", badge: announcementsUnread, section: "System" },
   ];
 
   // Org AND branch admins see everything (mirrors the backend ADMIN_ROLE_CODES
