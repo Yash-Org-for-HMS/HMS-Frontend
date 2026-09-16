@@ -288,7 +288,17 @@ export default function DiagnosisPanel({
             getOptionLabel={(o) => (typeof o === "string" ? o : `[${o.code}] ${o.title}`)}
             isOptionEqualToValue={(a, b) => a.diagnosisCodeId === b.diagnosisCodeId}
             loading={searching}
-            onInputChange={(_e, v) => setTerm(v)}
+            // Controlled, so clearing `term` after a successful add actually
+            // empties the box. Left uncontrolled, the chosen label stayed in the
+            // input while `picked` reset to null, and the button flipped back to
+            // "Add as free text" - one more click would have filed the literal
+            // string "[U09] Post COVID-19 condition" as an uncoded diagnosis.
+            inputValue={term}
+            onInputChange={(_e, v, reason) => {
+              setTerm(v);
+              // Typing over a chosen code deselects it; only a pick re-sets it.
+              if (reason === "input") setPicked(null);
+            }}
             onChange={(_e, v) => setPicked(typeof v === "string" ? null : v)}
             noOptionsText={
               debounced.trim().length < 2
