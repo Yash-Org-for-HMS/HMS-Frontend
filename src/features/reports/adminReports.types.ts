@@ -196,10 +196,10 @@ export interface TenantSubscriptionsResponse {
 // ── AI usage (platform spend on the Dr. Dex assistant) ───────────────────────
 
 /**
- * Costs here are in MICROS OF USD (millionths of a dollar), because that is the
- * currency the AI provider bills the platform in. Everything else on the admin
- * reports is INR, which is what the platform bills tenants in - so these two
- * must never be run through the same formatter.
+ * Costs here are in MICROS OF A RUPEE (millionths), matching every other money
+ * figure on the admin reports. The AI provider bills in US dollars; the rupee
+ * conversion is applied once when the call is recorded, using a rate set in
+ * backend config, so a past month never moves when the exchange rate does.
  */
 export interface AiUsageTotals {
   calls: number;

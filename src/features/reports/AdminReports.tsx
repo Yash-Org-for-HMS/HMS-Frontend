@@ -879,19 +879,20 @@ function OnboardingReport() {
 // ── AI usage (platform spend on the Dr. Dex assistant) ───────────────────────
 
 /**
- * Provider cost, in US dollars.
+ * Provider cost, in rupees, from a value stored as millionths of a rupee.
  *
- * Deliberately NOT formatINRAuto: everything else on this page is INR, because
- * that is what the platform bills tenants in, while the AI provider bills the
- * platform in USD. Rendering one with the other's symbol would misstate the
- * figure by ~85x, so the two formatters stay separate and both are labelled.
+ * Not formatINRAuto, which is built for invoice amounts and drops to whole
+ * rupees. AI spend starts out as fractions of a rupee per call.
+ *
+ * Two decimals, so a column of figures lines up - EXCEPT where that would round
+ * to Rs 0.00, which reads as "nobody uses this" when the true answer is "it is
+ * very cheap". Only those tiny values widen, so mixed precision appears in a
+ * column only when the alternative is a column of zeroes.
  */
-const usd = (microsUsd: number) => {
-  const dollars = (microsUsd || 0) / 1e6;
-  // Sub-cent months are normal early on; rounding them to $0.00 would read as
-  // "the feature is unused" when it is merely cheap.
-  const digits = dollars > 0 && dollars < 1 ? 4 : 2;
-  return `$${dollars.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
+const inrCost = (microsInr: number) => {
+  const rupees = (microsInr || 0) / 1e6;
+  const digits = rupees > 0 && rupees < 0.005 ? 4 : 2;
+  return `₹${rupees.toLocaleString("en-IN", { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
 };
 
 const compactNum = (n: number) => Number(n || 0).toLocaleString("en-US");
@@ -918,7 +919,7 @@ function AiUsageReport() {
     h.hospitalName + (h.isDeleted ? "  (removed)" : ""),
     compactNum(h.calls),
     compactNum(h.totalTokens),
-    usd(h.costMicros),
+    inrCost(h.costMicros),
     h.lastUsedAt ? formatDate(h.lastUsedAt) : "—",
   ]);
 
@@ -926,7 +927,7 @@ function AiUsageReport() {
     f.feature === "SUMMARY" ? "Pre-consultation summary" : "Follow-up chat",
     compactNum(f.calls),
     compactNum(f.totalTokens),
-    usd(f.costMicros),
+    inrCost(f.costMicros),
   ]);
 
   const trend = daily.map((d) => ({ date: d.date, cost: d.costMicros / 1e6, calls: d.calls }));
@@ -938,7 +939,7 @@ function AiUsageReport() {
           <KpiCard icon={<AutoAwesomeRounded />} label="AI calls" value={compactNum(totals.calls)} accent={BRAND.action} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <KpiCard icon={<AccountBalanceWalletRounded />} label="Provider cost (USD)" value={usd(totals.costMicros)} accent={SEMANTIC.warning} />
+          <KpiCard icon={<AccountBalanceWalletRounded />} label="Provider cost" value={inrCost(totals.costMicros)} accent={SEMANTIC.warning} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <KpiCard icon={<ShowChartRounded />} label="Tokens" value={compactNum(totals.totalTokens)} accent={NEUTRAL.muted} />
@@ -957,16 +958,20 @@ function AiUsageReport() {
       {hasPlottableData(trend, ["cost"]) && (
         <Box>
           <TrendChart
-            title="AI spend over time" subtitle="Provider cost per day, in USD"
-            data={trend} xKey="date" valueFormatter={(n) => `$${n.toFixed(4)}`}
-            series={[{ key: "cost", label: "Cost (USD)", type: "area" }]}
+            title="AI spend over time" subtitle="Provider cost per day"
+            // Two decimals, not four: this one formatter drives both the axis
+            // ticks and the tooltip, and a 7-character tick overflows the axis
+            // width and gets clipped to a leading-digit-less ".0000". Exact
+            // figures live in the tables below; the chart carries the shape.
+            data={trend} xKey="date" valueFormatter={(n) => `₹${n.toFixed(2)}`}
+            series={[{ key: "cost", label: "Cost", type: "area" }]}
           />
         </Box>
       )}
 
       <SimpleTable
         title="By tenant"
-        head={["Hospital", "Calls", "Tokens", "Cost (USD)", "Last used"]}
+        head={["Hospital", "Calls", "Tokens", "Cost", "Last used"]}
         rows={hospitalRows}
         note={
           byHospital.length
@@ -977,7 +982,7 @@ function AiUsageReport() {
 
       <SimpleTable
         title="By feature"
-        head={["Feature", "Calls", "Tokens", "Cost (USD)"]}
+        head={["Feature", "Calls", "Tokens", "Cost"]}
         rows={featureRows}
         note={
           abandoned
@@ -987,10 +992,11 @@ function AiUsageReport() {
       />
 
       <Typography variant="caption" sx={{ color: NEUTRAL.muted }}>
-        Priced at ${(rates.inputPerMillionMicros / 1e6).toFixed(2)} per million input tokens and $
-        {(rates.outputPerMillionMicros / 1e6).toFixed(2)} per million output tokens. Each call stores the cost it
-        incurred at the time, so correcting these rates does not restate past months — but check them against current
-        provider pricing before treating any figure here as a bill.
+        Priced at ₹{(rates.inputPerMillionMicros / 1e6).toFixed(2)} per million input tokens and ₹
+        {(rates.outputPerMillionMicros / 1e6).toFixed(2)} per million output tokens. Google bills this in US dollars,
+        so these are a rupee conversion at a rate set in configuration, not a live FX rate. Each call stores the cost
+        it incurred at the time, so neither a price change nor a currency move restates a past month — but set the
+        rates to your actual landed cost before treating any figure here as a bill.
       </Typography>
     </Box>
   );
@@ -1025,9 +1031,9 @@ const GROUPS: ReportGroup[] = [
   },
   {
     // Its own heading rather than under Revenue: this is money the platform
-    // SPENDS with a provider, in USD, not revenue it collects from tenants in
-    // INR. Filing it beside the subscription reports would invite reading the
-    // two totals as one ledger.
+    // SPENDS with a provider, not revenue it collects from tenants. Both are in
+    // rupees, which is exactly why they need separating - filing them together
+    // invites adding two figures that point in opposite directions.
     heading: "Platform costs",
     items: [{ key: "ai-usage", label: "AI Usage", Comp: AiUsageReport }],
   },
