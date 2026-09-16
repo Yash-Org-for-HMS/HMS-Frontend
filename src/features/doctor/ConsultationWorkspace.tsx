@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Box, Grid, Typography, Paper,
-  Button, TextField, Divider, Avatar, IconButton, Tab, Tabs, Autocomplete
+  Button, TextField, Divider, Avatar, IconButton, Tab, Tabs
 } from "@mui/material";
 import {
   ArrowBackRounded, CheckCircleRounded, SaveRounded, MonitorHeartRounded,
@@ -13,7 +13,6 @@ import {
 } from "@mui/icons-material";
 import AiSummaryPanel, { DexGlyph } from "./AiSummaryPanel";
 import { axiosInstance } from "@/api/axios";
-import Mascot from "@/components/Mascot";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import ErrorState from "@/components/ErrorState";
 import PrescriptionWriter from "./PrescriptionWriter";
@@ -23,6 +22,7 @@ import { useEnabledModules } from "@/hooks/useEnabledModules";
 import ConsultationHistory from "@/components/doctor/ConsultationHistory";
 import RadiologyOrderForm from "./RadiologyOrderForm";
 import RichTextEditor from "@/components/RichTextEditor";
+import DiagnosisPanel from "@/components/clinical/DiagnosisPanel";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { useToast } from "@/providers/ToastContext";
 
@@ -71,10 +71,6 @@ export default function ConsultationWorkspace() {
   // when the hospital's plan doesn't include it (the API also rejects the order).
   const { isModuleEnabled } = useEnabledModules();
   const labEnabled = isModuleEnabled("Laboratory");
-
-  const [icd10Options, setIcd10Options] = useState<any[]>([]);
-  const [icd10Loading, setIcd10Loading] = useState(false);
-  const [icd10Query, setIcd10Query] = useState("");
 
   const [form, setForm] = useState({
     soapSubjective: "",
@@ -134,25 +130,24 @@ export default function ConsultationWorkspace() {
     }
   };
 
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      if (icd10Query.length >= 2) {
-        try {
-          setIcd10Loading(true);
-          const res = await axiosInstance.get(`/doctor/consultation/icd10?q=${icd10Query}`);
-          setIcd10Options(res.data.data);
-        } catch (err) {
-          console.error("Failed to fetch ICD-10 codes", err);
-        } finally {
-          setIcd10Loading(false);
-        }
-      } else {
-        setIcd10Options([]);
-      }
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [icd10Query]);
+  /**
+   * Re-reads the consultation's diagnosis text after DiagnosisPanel changes it.
+   *
+   * That column is now derived by the server from the structured diagnosis rows.
+   * The form still carries it - PrescriptionWriter reads it for context, and a
+   * SOAP template can still prefill it - so without this the next auto-save
+   * would write a stale copy straight back over the server's own value. Only
+   * this one field is replaced; the rest of the form may have unsaved edits.
+   */
+  const refreshDiagnosisMirror = async () => {
+    try {
+      const res = await axiosInstance.get(`/doctor/consultation/appointments/${appointmentId}`);
+      const mirrored = res.data.data?.consultation?.diagnosis ?? "";
+      setForm((prev) => ({ ...prev, diagnosis: mirrored }));
+    } catch {
+      // DiagnosisPanel has already told the user if the write itself failed.
+    }
+  };
 
   // Debounced auto-save: persist SOAP edits ~2s after the doctor stops typing so
   // closing the tab mid-note no longer loses work. Skips while loading and when
@@ -448,35 +443,18 @@ export default function ConsultationWorkspace() {
                       minHeight={100}
                     />
                     <Box sx={{ mt: 2 }} />
-                    <Autocomplete
-                      options={icd10Options}
-                      getOptionLabel={(option) => `[${option.icd10Code}] ${option.shortDescription}`}
-                      loading={icd10Loading}
-                      noOptionsText={<Mascot pose="no-matches" subtitle="No matching ICD-10 codes" size={72} sx={{ py: 1 }} />}
-                      onInputChange={(e, newInputValue) => setIcd10Query(newInputValue)}
-                      onChange={(e, newValue) => {
-                        if (newValue) {
-                          setForm({ ...form, diagnosis: `[${newValue.icd10Code}] ${newValue.shortDescription}` });
-                        }
+                    <DiagnosisPanel
+                      encounter={{
+                        encounterType: "OPD",
+                        consultationId: context?.consultation?.consultationId ?? null,
                       }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Primary Diagnosis (ICD-10)"
-                          placeholder="Search ICD-10 (e.g. Fever, Hypertension...)"
-                          fullWidth
-                          sx={{ "& fieldset": { borderColor: "divider" } }}
-                          InputProps={{
-                            ...params.InputProps,
-                            endAdornment: (
-                              <>
-                                {icd10Loading ? <HeartbeatLoader size={22} /> : null}
-                                {params.InputProps.endAdornment}
-                              </>
-                            ),
-                          }}
-                        />
-                      )}
+                      ensureEncounter={async () => {
+                        // The consultation row is created by the first save, so
+                        // a diagnosis added before then has nothing to hang off.
+                        const saved = await handleSave(true);
+                        return typeof saved === "string" ? saved : (context?.consultation?.consultationId ?? null);
+                      }}
+                      onChanged={refreshDiagnosisMirror}
                     />
                   </Grid>
 

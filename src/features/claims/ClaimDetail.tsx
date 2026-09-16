@@ -17,6 +17,7 @@ import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import ErrorState from "@/components/ErrorState";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import ClaimDocumentsSection from "./ClaimDocumentsSection";
+import DiagnosisPanel from "@/components/clinical/DiagnosisPanel";
 import { statusMeta } from "./claimMeta";
 
 const ACCENT = BRAND.action;
@@ -36,6 +37,19 @@ export default function ClaimDetail() {
   const [advOpen, setAdvOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
   const [settleOpen, setSettleOpen] = useState(false);
+
+  /**
+   * The claims screen admits nurses as well as the desk, but the API only lets
+   * the desk (and admins) code a claim - a diagnosis is otherwise a clinician's
+   * entry. Reading the role here keeps a nurse from being shown an Add button
+   * that would come back 403.
+   */
+  let userRole = "";
+  try {
+    const hospitalUserStr = sessionStorage.getItem("hospitalUser");
+    if (hospitalUserStr) userRole = JSON.parse(hospitalUserStr).role?.toLowerCase() || "";
+  } catch { /* ignore */ }
+  const canCode = userRole.includes("reception") || userRole.includes("admin") || userRole.includes("doctor");
 
   const { data: claim, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["claim", id],
@@ -81,6 +95,21 @@ export default function ClaimDetail() {
               <Grid size={{ xs: 12, sm: 6 }} ><Field label="Registered" value={claim.registeredAt ? dayjs(claim.registeredAt).format("DD MMM YYYY, hh:mm A") : "—"} /></Grid>
               {claim.remarks && <Grid size={12} ><Field label="Remarks" value={claim.remarks} /></Grid>}
             </Grid>
+          </Paper>
+
+          {/*
+            The condition the claim is raised for. A claim without a diagnosis
+            is not a claim any payer will process, and until now there was
+            nowhere to put one - the field simply did not exist on the record.
+            Placed above Financials deliberately: what was treated comes before
+            what it cost.
+          */}
+          <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2 }}>
+            <DiagnosisPanel
+              encounter={{ encounterType: "CLAIM", claimId: id! }}
+              readOnly={!canCode}
+              label="Diagnosis on this claim"
+            />
           </Paper>
 
           <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
