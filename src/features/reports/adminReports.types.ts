@@ -192,3 +192,40 @@ export interface TenantSubscriptionsResponse {
     mrr: Money;
   };
 }
+
+// ── AI usage (platform spend on the Dr. Dex assistant) ───────────────────────
+
+/**
+ * Costs here are in MICROS OF USD (millionths of a dollar), because that is the
+ * currency the AI provider bills the platform in. Everything else on the admin
+ * reports is INR, which is what the platform bills tenants in - so these two
+ * must never be run through the same formatter.
+ */
+export interface AiUsageTotals {
+  calls: number;
+  billableCalls: number;
+  promptTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  costMicros: number;
+}
+
+export interface AiUsageHospitalRow {
+  hospitalId: string;
+  hospitalName: string;
+  isDeleted: boolean;
+  calls: number;
+  totalTokens: number;
+  costMicros: number;
+  lastUsedAt: string | null;
+}
+
+export interface AiUsageReportData {
+  range: { from: string; to: string; period: string | null };
+  rates: { inputPerMillionMicros: number; outputPerMillionMicros: number; note: string };
+  totals: AiUsageTotals;
+  byStatus: { status: string; calls: number }[];
+  byFeature: { feature: string; calls: number; totalTokens: number; costMicros: number }[];
+  byHospital: AiUsageHospitalRow[];
+  daily: { date: string; calls: number; costMicros: number }[];
+}

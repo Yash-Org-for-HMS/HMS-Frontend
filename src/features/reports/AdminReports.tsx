@@ -9,6 +9,7 @@ import type {
   HospitalRegisterRow, LeadRegisterRow, TrialRegisterRow, PlanRegisterRow, PlanWithMrr,
   OnboardingRegisterRow, OnboardingGateKey,
   TenantSubscriptionsResponse, TenantSubscriptionRow, TenantSubscriptionState,
+  AiUsageReportData,
 } from "./adminReports.types";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
@@ -21,6 +22,7 @@ import {
   PersonSearchRounded, GroupsRounded, MedicalInformationRounded, ShowChartRounded,
   TimerRounded, CardMembershipRounded, RocketLaunchRounded, AccountBalanceWalletRounded,
   CheckCircleRounded, HighlightOffRounded, WarningAmberRounded, InfoOutlined, ArrowForwardRounded,
+  AutoAwesomeRounded,
 } from "@mui/icons-material";
 import { exportTableToExcel } from "@/utils/exportExcel";
 
@@ -39,9 +41,12 @@ import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import ErrorState from "@/components/ErrorState";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto, formatDate } from "@/utils/format";
-import { ReportNavLayout, type ReportGroup } from "@/features/reports/kit";
+import { ReportNavLayout, type ReportGroup, TrendChart, hasPlottableData } from "@/features/reports/kit";
 
 const ACCENT = BRAND.action; // indigo #6366f1
+
+/** "YYYY-MM" for a date, matching the ledger's billingPeriod. */
+const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
 const inr = formatINRAuto;
 const cap = (s: unknown) => {
@@ -871,6 +876,126 @@ function OnboardingReport() {
   );
 }
 
+// ── AI usage (platform spend on the Dr. Dex assistant) ───────────────────────
+
+/**
+ * Provider cost, in US dollars.
+ *
+ * Deliberately NOT formatINRAuto: everything else on this page is INR, because
+ * that is what the platform bills tenants in, while the AI provider bills the
+ * platform in USD. Rendering one with the other's symbol would misstate the
+ * figure by ~85x, so the two formatters stay separate and both are labelled.
+ */
+const usd = (microsUsd: number) => {
+  const dollars = (microsUsd || 0) / 1e6;
+  // Sub-cent months are normal early on; rounding them to $0.00 would read as
+  // "the feature is unused" when it is merely cheap.
+  const digits = dollars > 0 && dollars < 1 ? 4 : 2;
+  return `$${dollars.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
+};
+
+const compactNum = (n: number) => Number(n || 0).toLocaleString("en-US");
+
+function AiUsageReport() {
+  const [period] = useReportParam("aiPeriod", monthKey(new Date()));
+
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["admin-report-ai-usage", period],
+    queryFn: () => apiGet<AiUsageReportData>("/ai-usage/report", { params: { period, limit: 50 } }),
+  });
+
+  if (isLoading) return <ReportSkeleton />;
+  if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
+  if (!data) return null;
+
+  const { totals, byFeature, byHospital, byStatus, daily, rates } = data;
+
+  const failed = byStatus.filter((s) => s.status === "ERROR").reduce((a, b) => a + b.calls, 0);
+  const abandoned = byStatus.filter((s) => s.status === "ABORTED").reduce((a, b) => a + b.calls, 0);
+  const failureRate = totals.calls ? Math.round((failed / totals.calls) * 100) : 0;
+
+  const hospitalRows = byHospital.map((h) => [
+    h.hospitalName + (h.isDeleted ? "  (removed)" : ""),
+    compactNum(h.calls),
+    compactNum(h.totalTokens),
+    usd(h.costMicros),
+    h.lastUsedAt ? formatDate(h.lastUsedAt) : "—",
+  ]);
+
+  const featureRows = byFeature.map((f) => [
+    f.feature === "SUMMARY" ? "Pre-consultation summary" : "Follow-up chat",
+    compactNum(f.calls),
+    compactNum(f.totalTokens),
+    usd(f.costMicros),
+  ]);
+
+  const trend = daily.map((d) => ({ date: d.date, cost: d.costMicros / 1e6, calls: d.calls }));
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <KpiCard icon={<AutoAwesomeRounded />} label="AI calls" value={compactNum(totals.calls)} accent={BRAND.action} />
+        </Grid>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <KpiCard icon={<AccountBalanceWalletRounded />} label="Provider cost (USD)" value={usd(totals.costMicros)} accent={SEMANTIC.warning} />
+        </Grid>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <KpiCard icon={<ShowChartRounded />} label="Tokens" value={compactNum(totals.totalTokens)} accent={NEUTRAL.muted} />
+        </Grid>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <KpiCard
+            icon={<WarningAmberRounded />}
+            label="Failed calls"
+            value={`${failed} (${failureRate}%)`}
+            accent={failed ? SEMANTIC.danger : SEMANTIC.success}
+            higherIsBetter={false}
+          />
+        </Grid>
+      </Grid>
+
+      {hasPlottableData(trend, ["cost"]) && (
+        <Box>
+          <TrendChart
+            title="AI spend over time" subtitle="Provider cost per day, in USD"
+            data={trend} xKey="date" valueFormatter={(n) => `$${n.toFixed(4)}`}
+            series={[{ key: "cost", label: "Cost (USD)", type: "area" }]}
+          />
+        </Box>
+      )}
+
+      <SimpleTable
+        title="By tenant"
+        head={["Hospital", "Calls", "Tokens", "Cost (USD)", "Last used"]}
+        rows={hospitalRows}
+        note={
+          byHospital.length
+            ? "Ranked by cost. A removed tenant still appears: the provider was paid for its calls."
+            : "No AI calls in this period."
+        }
+      />
+
+      <SimpleTable
+        title="By feature"
+        head={["Feature", "Calls", "Tokens", "Cost (USD)"]}
+        rows={featureRows}
+        note={
+          abandoned
+            ? `${abandoned} call(s) were abandoned mid-answer. Those tokens were still spent and are counted here.`
+            : undefined
+        }
+      />
+
+      <Typography variant="caption" sx={{ color: NEUTRAL.muted }}>
+        Priced at ${(rates.inputPerMillionMicros / 1e6).toFixed(2)} per million input tokens and $
+        {(rates.outputPerMillionMicros / 1e6).toFixed(2)} per million output tokens. Each call stores the cost it
+        incurred at the time, so correcting these rates does not restate past months — but check them against current
+        provider pricing before treating any figure here as a bill.
+      </Typography>
+    </Box>
+  );
+}
+
 // ── Page shell ───────────────────────────────────────────────────────────────
 
 const GROUPS: ReportGroup[] = [
@@ -897,6 +1022,14 @@ const GROUPS: ReportGroup[] = [
       { key: "tenant-subscriptions", label: "Tenant Subscriptions", Comp: TenantSubscriptionsReport },
       { key: "subscriptions", label: "Plans & Pricing", Comp: SubscriptionsReport },
     ],
+  },
+  {
+    // Its own heading rather than under Revenue: this is money the platform
+    // SPENDS with a provider, in USD, not revenue it collects from tenants in
+    // INR. Filing it beside the subscription reports would invite reading the
+    // two totals as one ledger.
+    heading: "Platform costs",
+    items: [{ key: "ai-usage", label: "AI Usage", Comp: AiUsageReport }],
   },
 ];
 
