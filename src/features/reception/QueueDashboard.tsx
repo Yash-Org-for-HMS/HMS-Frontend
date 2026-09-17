@@ -267,7 +267,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
                     <TableRow key={token.queueTokenId} sx={{ "&:hover": { bgcolor: "background.default" } }}>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                         <Chip 
-                          label={`${getDoctorInitials(token.doctorName)}-${token.displayNumber}`}
+                          label={`${getDoctorInitials(token.doctorName)}-${token.tokenNumber}`}
                           sx={{ 
                             bgcolor: token.statusColor || SEMANTIC.warning, 
                             color: "#fff", 
@@ -366,7 +366,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
                   {skippedTokens.map((token) => (
                     <TableRow key={token.queueTokenId} sx={{ opacity: 0.85, "&:hover": { opacity: 1, bgcolor: "rgba(249,115,22,0.05)" }, transition: 'all 0.2s' }}>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '10%' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#f97316' }}>{getDoctorInitials(token.doctorName)}-{token.displayNumber}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#f97316' }}>{getDoctorInitials(token.doctorName)}-{token.tokenNumber}</Typography>
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '30%' }}>
                         <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{token.patientName}</Typography>
@@ -428,7 +428,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
                   {completedTokens.map((token) => (
                     <TableRow key={token.queueTokenId} sx={{ "&:hover": { bgcolor: alpha(SEMANTIC.success, 0.05) }, transition: 'all 0.2s' }}>
                       <TableCell sx={COMPLETED_CELL_SX}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: SEMANTIC.success }}>{getDoctorInitials(token.doctorName)}-{token.displayNumber}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: SEMANTIC.success }}>{getDoctorInitials(token.doctorName)}-{token.tokenNumber}</Typography>
                       </TableCell>
                       <TableCell sx={COMPLETED_CELL_SX}>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>

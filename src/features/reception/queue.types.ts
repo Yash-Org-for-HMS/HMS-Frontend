@@ -14,7 +14,10 @@ export interface QueueTokenRow {
   appointmentId: string | null;
   doctorId: string | null;
   /** The token number shown to the patient. */
+  /** Arrival order. Kept for tie-breaking; not shown to anyone. */
   displayNumber: number;
+  /** The number the patient is told - the appointment token. Always present. */
+  tokenNumber: number;
   queueStatusId?: number | null;
   vitalsTakenAt?: string | null;
   consultationStartedAt?: string | null;

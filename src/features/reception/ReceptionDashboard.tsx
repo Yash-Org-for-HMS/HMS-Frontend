@@ -254,7 +254,7 @@ export default function ReceptionDashboard() {
                 ) : liveQueue.length > 0 ? (
                   liveQueue.map((t) => (
                     <TableRow key={t.queueTokenId} hover>
-                      <TableCell sx={{ fontWeight: 700, color: "text.primary", borderColor: "divider" }}>#{t.displayNumber}</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: "text.primary", borderColor: "divider" }}>#{t.tokenNumber}</TableCell>
                       <TableCell sx={{ color: "text.primary", borderColor: "divider" }}>
                         {new Date(t.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </TableCell>

@@ -189,7 +189,7 @@ export default function NurseQueue() {
                         {/* Token Number */}
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                           <Chip
-                            label={`${getDoctorInitials(token.doctorName)}-${token.displayNumber}`}
+                            label={`${getDoctorInitials(token.doctorName)}-${token.tokenNumber}`}
                             sx={{
                               bgcolor: hasVitals ? "rgba(16,185,129,0.15)" : `rgba(167,139,250,0.15)`,
                               color: hasVitals ? SEMANTIC.success : NURSE_PURPLE,
@@ -351,7 +351,7 @@ export default function NurseQueue() {
                             color: index === 0 ? "#fff" : "text.secondary",
                           }}
                         >
-                          {token.displayNumber}
+                          {token.tokenNumber}
                         </Avatar>
                         {index === 0 && (
                           <Box
@@ -440,7 +440,7 @@ export default function NurseQueue() {
                       onClick={() => setVitalsDialog({ open: true, token })}
                     >
                       <Avatar sx={{ width: 34, height: 34, bgcolor: "rgba(16,185,129,0.15)", color: SEMANTIC.success, fontSize: "0.875rem", fontWeight: 800 }}>
-                        {token.displayNumber}
+                        {token.tokenNumber}
                       </Avatar>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }} noWrap>{token.patientName}</Typography>

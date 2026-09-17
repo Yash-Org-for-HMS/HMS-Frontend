@@ -193,7 +193,7 @@ export default function NurseDashboard() {
                       <TableRow key={token.queueTokenId} sx={{ "&:hover": { bgcolor: "background.default" } }}>
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                           <Avatar sx={{ bgcolor: `${NURSE_PURPLE_DARK}cc`, width: 36, height: 36, fontSize: "0.875rem", fontWeight: 800 }}>
-                            {token.displayNumber}
+                            {token.tokenNumber}
                           </Avatar>
                         </TableCell>
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
