@@ -25,12 +25,14 @@ import {
   MedicalServicesRounded,
   PersonRounded,
   LocalHospitalRounded,
+  SmsRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
+import MessagingSettings from "./MessagingSettings";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -206,6 +208,7 @@ export default function HospitalSettings() {
             <Tab icon={<SettingsSuggestRounded sx={{ mr: 1 }} />} iconPosition="start" label="System Settings" {...a11yProps(1)} />
             <Tab icon={<ReceiptRounded sx={{ mr: 1 }} />} iconPosition="start" label="Billing Defaults" {...a11yProps(2)} />
             <Tab icon={<MedicalServicesRounded sx={{ mr: 1 }} />} iconPosition="start" label="Clinical Workflow" {...a11yProps(3)} />
+            <Tab icon={<SmsRounded sx={{ mr: 1 }} />} iconPosition="start" label="Messaging" {...a11yProps(4)} />
           </Tabs>
         </Box>
 
@@ -485,8 +488,17 @@ export default function HospitalSettings() {
               </Box>
             </Box>
           </CustomTabPanel>
+
+          {/* Messaging — gateway credentials and the DLT-approved message text. */}
+          <CustomTabPanel value={tabValue} index={4}>
+            <MessagingSettings />
+          </CustomTabPanel>
         </Box>
 
+        {/* Hidden on Messaging: that tab saves each gateway and template on its
+            own, so a single global Save here would look like it applied to the
+            auth key someone had just typed and would quietly discard it. */}
+        {tabValue !== 4 && (
         <Box sx={{ p: 3, borderTop: "1px solid", borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
           <Button
             type="submit"
@@ -502,6 +514,7 @@ export default function HospitalSettings() {
             {saving ? "Saving..." : "Save Settings"}
           </Button>
         </Box>
+        )}
       </Paper>
     </Box>
   );

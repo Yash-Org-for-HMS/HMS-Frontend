@@ -1,3 +1,4 @@
+import SmsRounded from "@mui/icons-material/SmsRounded";
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import SimpleTable from "@/features/reports/kit/SimpleTable";
 import KpiCard from "@/features/reports/kit/KpiCard";
@@ -1004,6 +1005,126 @@ function AiUsageReport() {
 
 // ── Page shell ───────────────────────────────────────────────────────────────
 
+interface SmsUsageData {
+  totals: { messages: number; billableMessages: number; segments: number; costMicros: number };
+  byStatus: { status: string; messages: number }[];
+  byChannel: { channel: string; messages: number; segments: number; costMicros: number }[];
+  byHospital: {
+    hospitalId: string; hospitalName: string; isDeleted: boolean;
+    messages: number; segments: number; costMicros: number; lastUsedAt: string | null;
+  }[];
+  daily: { date: string; messages: number; costMicros: number }[];
+  rates: { currency: string; perSegmentMicros: number; note: string };
+}
+
+/**
+ * What the platform spends on messaging, alongside what it spends on AI.
+ *
+ * Deliberately the same layout as the AI usage report: it answers the same
+ * question about a different supplier, and an operator should not have to learn
+ * two.
+ *
+ * Counts SEGMENTS as well as messages because that is the billed unit - a long
+ * reminder, or one containing a single character outside GSM-7, costs several
+ * times a short one, and a month where spend rose without message volume rising
+ * is explained by that column and by nothing else on the page.
+ */
+function SmsUsageReport() {
+  const [period] = useReportParam("smsPeriod", monthKey(new Date()));
+
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["admin-report-sms-usage", period],
+    queryFn: () => apiGet<SmsUsageData>("/message-usage/report", { params: { period, limit: 50 } }),
+  });
+
+  if (isLoading) return <ReportSkeleton />;
+  if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
+  if (!data) return null;
+
+  const { totals, byStatus, byHospital, daily, rates } = data;
+
+  const count = (s: string) => byStatus.filter((x) => x.status === s).reduce((a, b) => a + b.messages, 0);
+  const failed = count("FAILED");
+  const skipped = count("SKIPPED");
+  const failureRate = totals.messages ? Math.round((failed / totals.messages) * 100) : 0;
+
+  const hospitalRows = byHospital.map((h) => [
+    h.hospitalName + (h.isDeleted ? "  (removed)" : ""),
+    compactNum(h.messages),
+    compactNum(h.segments),
+    inrCost(h.costMicros),
+    h.lastUsedAt ? formatDate(h.lastUsedAt) : "—",
+  ]);
+
+  const statusRows = byStatus.map((s) => [
+    s.status === "SENT" ? "Sent" : s.status === "FAILED" ? "Failed at the gateway" : "Not sent",
+    compactNum(s.messages),
+  ]);
+
+  const trend = daily.map((d) => ({ date: d.date, cost: d.costMicros / 1e6, messages: d.messages }));
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <KpiCard icon={<SmsRounded />} label="Messages sent" value={compactNum(totals.billableMessages)} accent={BRAND.action} />
+        </Grid>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <KpiCard icon={<AccountBalanceWalletRounded />} label="Gateway cost" value={inrCost(totals.costMicros)} accent={SEMANTIC.warning} />
+        </Grid>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <KpiCard icon={<ShowChartRounded />} label="Segments" value={compactNum(totals.segments)} accent={NEUTRAL.muted} />
+        </Grid>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <KpiCard
+            icon={<WarningAmberRounded />}
+            label="Failed at gateway"
+            value={`${failed} (${failureRate}%)`}
+            accent={failed ? SEMANTIC.danger : SEMANTIC.success}
+            higherIsBetter={false}
+          />
+        </Grid>
+      </Grid>
+
+      {hasPlottableData(trend, ["cost"]) && (
+        <Box>
+          <TrendChart
+            title="Messaging spend over time"
+            subtitle="Gateway cost per day"
+            data={trend} xKey="date" valueFormatter={(n) => `₹${n.toFixed(2)}`}
+            series={[{ key: "cost", label: "Cost", type: "area" }]}
+          />
+        </Box>
+      )}
+
+      <SimpleTable
+        title="By tenant"
+        note="Ranked by cost. A removed tenant still appears: the gateway was paid for its messages."
+        head={["Hospital", "Messages", "Segments", "Cost", "Last used"]}
+        rows={hospitalRows}
+      />
+
+      <SimpleTable
+        title="By outcome"
+        note={
+          skipped
+            ? `${skipped} message(s) were not sent — no gateway configured, the patient opted out, or no usable number. None of those are billed.`
+            : "Every message reached the gateway."
+        }
+        head={["Outcome", "Messages"]}
+        rows={statusRows}
+      />
+
+      <Typography variant="caption" sx={{ color: NEUTRAL.muted }}>
+        Priced at ₹{(rates.perSegmentMicros / 1e6).toFixed(2)} per segment. Gateways bill per 160-character
+        segment — 70 if a message contains any character outside the GSM alphabet — so segments, not
+        messages, are what cost money. Each message stores the cost it incurred at the time, so correcting
+        the rate does not restate past months.
+      </Typography>
+    </Box>
+  );
+}
+
 const GROUPS: ReportGroup[] = [
   { heading: "Overview", items: [{ key: "overview", label: "Platform Overview", Comp: OverviewReport }] },
   {
@@ -1035,7 +1156,10 @@ const GROUPS: ReportGroup[] = [
     // rupees, which is exactly why they need separating - filing them together
     // invites adding two figures that point in opposite directions.
     heading: "Platform costs",
-    items: [{ key: "ai-usage", label: "AI Usage", Comp: AiUsageReport }],
+    items: [
+      { key: "ai-usage", label: "AI Usage", Comp: AiUsageReport },
+      { key: "sms-usage", label: "Messaging", Comp: SmsUsageReport },
+    ],
   },
 ];
 
