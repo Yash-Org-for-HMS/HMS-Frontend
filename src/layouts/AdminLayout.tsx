@@ -32,6 +32,7 @@ import {
   NotificationsActiveRounded,
   AssessmentRounded,
   CampaignRounded,
+  SmsRounded,
 } from "@mui/icons-material";
 import { useAuth } from "@/providers/AuthContext";
 import SidebarHeader from "@/components/layout/SidebarHeader";
@@ -81,7 +82,10 @@ export default function AdminLayout() {
     },
     {
       heading: t("nav.group.communication", "Communication"),
-      items: [{ text: "Announcements", icon: <CampaignRounded />, path: "/announcements" }],
+      items: [
+        { text: "Announcements", icon: <CampaignRounded />, path: "/announcements" },
+        { text: "Messaging", icon: <SmsRounded />, path: "/platform-messaging" },
+      ],
     },
     {
       heading: t("nav.group.accessControl", "Access Control"),

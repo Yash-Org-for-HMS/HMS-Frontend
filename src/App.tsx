@@ -103,6 +103,7 @@ const Billing = lazy(() => import("@/features/billing/Billing"));
 const NotificationsLog = lazy(() => import("@/features/reception/NotificationsLog"));
 const Announcements = lazy(() => import("@/features/announcements/Announcements"));
 const AnnouncementsAdmin = lazy(() => import("@/features/announcements/AnnouncementsAdmin"));
+const PlatformMessaging = lazy(() => import("@/features/messaging/PlatformMessaging"));
 const ClaimsList = lazy(() => import("@/features/claims/ClaimsList"));
 const ClaimForm = lazy(() => import("@/features/claims/ClaimForm"));
 const ClaimDetail = lazy(() => import("@/features/claims/ClaimDetail"));
@@ -191,6 +192,7 @@ const elGated = (C: ComponentType<any>, module: string, feature?: string, props:
 const ADMIN_SEGMENTS = new Set([
   "login", "plans", "subscription-billing", "leads", "trials", "hospitals",
   "onboarding", "super-admins", "rbac", "reports", "audit-logs", "announcements",
+  "platform-messaging",
 ]);
 
 function AdminOwnedFallback() {
@@ -211,6 +213,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={el(AdminLayout)}>
             <Route path="/announcements" element={el(AnnouncementsAdmin)} />
+            <Route path="/platform-messaging" element={el(PlatformMessaging)} />
             <Route path="/" element={el(Dashboard)} />
             <Route path="/plans" element={el(PlansList)} />
             <Route path="/plans/new" element={el(PlanForm)} />

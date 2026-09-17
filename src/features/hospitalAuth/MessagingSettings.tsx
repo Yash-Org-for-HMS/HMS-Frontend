@@ -4,7 +4,7 @@ import {
   Box, Paper, Stack, Typography, TextField, Button, Switch, FormControlLabel,
   Divider, Alert, MenuItem, CircularProgress,
 } from "@mui/material";
-import { CheckCircleRounded, SendRounded, WarningAmberRounded } from "@mui/icons-material";
+import { CheckCircleRounded, SendRounded, WarningAmberRounded, LockOutlined } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
@@ -12,12 +12,16 @@ import SoftChip from "@/components/SoftChip";
 import { SEMANTIC, NEUTRAL } from "@/styles/accents";
 
 /**
- * Where a hospital connects its SMS gateway and writes the text of each message.
+ * Messaging setup, for one hospital or for the platform.
  *
- * Both halves are needed before anything can be delivered, and under TRAI DLT
- * both depend on registrations this screen cannot perform - so it is written to
- * show plainly which piece is still missing rather than to imply that filling
- * the form is sufficient.
+ * The same screen serves both because they are the same decisions - a gateway,
+ * a sender ID, and the approved text of each message. Only the scope differs,
+ * and with it who is allowed to change the wording.
+ *
+ * Under TRAI DLT a template is approved against whoever owns the header. So a
+ * hospital sending through the platform's gateway sees the text but cannot edit
+ * it: an edit would save happily here and then be refused by the gateway on
+ * every single send, silently, long after whoever typed it had moved on.
  */
 
 interface TemplateView {
@@ -39,8 +43,10 @@ interface Kind {
 }
 
 interface Status {
+  scope: "PLATFORM" | "TENANT";
   credentialStorageAvailable: boolean;
-  settings: { smsEnabled: boolean; emailEnabled: boolean; whatsappEnabled: boolean };
+  canEditTemplates: boolean;
+  settings: { smsEnabled: boolean; emailEnabled: boolean; whatsappEnabled: boolean } | null;
   sms:
     | { configured: false }
     | {
@@ -53,11 +59,11 @@ interface Status {
 /**
  * A rough segment count, for live feedback as someone types.
  *
- * Deliberately a simplified copy of the server's counter rather than a call per
- * keystroke. The server counts authoritatively when the message is sent, so the
- * worst case here is a preview that is slightly off - never a wrong charge. What
- * it must get right is the expensive surprise: one character outside GSM-7 drops
- * the segment size from 160 to 70.
+ * Deliberately a simplified copy of the server's counter rather than a request
+ * per keystroke. The server counts authoritatively when the message is sent, so
+ * the worst case here is a preview that is slightly off - never a wrong charge.
+ * What it must get right is the expensive surprise: one character outside GSM-7
+ * drops the segment size from 160 to 70.
  */
 const GSM = new Set(
   "@£$¥èéùìòÇ\nØø\rÅå_ÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà^{}\\[~]|€",
@@ -66,19 +72,20 @@ function previewSegments(text: string): { segments: number; unicode: boolean; of
   let offender: string | null = null;
   for (const ch of text) if (!GSM.has(ch)) { offender = ch; break; }
   const unicode = offender !== null;
-  const len = unicode ? text.length : text.length;
   const single = unicode ? 70 : 160;
   const concat = unicode ? 67 : 153;
-  const segments = len === 0 ? 0 : len <= single ? 1 : Math.ceil(len / concat);
+  const segments = text.length === 0 ? 0 : text.length <= single ? 1 : Math.ceil(text.length / concat);
   return { segments, unicode, offender };
 }
 
-export default function MessagingSettings() {
+export default function MessagingSettings({ base = "/hospital/messaging" }: { base?: string }) {
   const queryClient = useQueryClient();
+  const key = ["messaging-status", base];
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: key });
 
   const { data, isLoading, error, refetch } = useQuery<Status>({
-    queryKey: ["messaging-status"],
-    queryFn: async () => (await axiosInstance.get("/hospital/messaging")).data.data,
+    queryKey: key,
+    queryFn: async () => (await axiosInstance.get(base)).data.data,
   });
 
   if (isLoading) return <Box sx={{ p: 4, textAlign: "center" }}><CircularProgress size={28} /></Box>;
@@ -89,7 +96,10 @@ export default function MessagingSettings() {
   }
   if (!data) return null;
 
-  const live = data.sms.configured && data.sms.isActive && data.settings.smsEnabled;
+  const isPlatform = data.scope === "PLATFORM";
+  // A tenant also needs SMS switched on in its own settings; the platform has no
+  // such switch, since it is the supplier rather than a sender.
+  const live = data.sms.configured && data.sms.isActive && (isPlatform || data.settings?.smsEnabled === true);
 
   return (
     <Stack spacing={3}>
@@ -100,31 +110,36 @@ export default function MessagingSettings() {
         </Alert>
       )}
 
-      <Alert
-        severity={live ? "success" : "info"}
-        icon={live ? <CheckCircleRounded /> : <WarningAmberRounded />}
-      >
-        {live
-          ? "SMS is live. Messages sent from reception will reach patients."
-          : "SMS is not live yet. Messages are recorded but not delivered — the screens say so when that happens."}
+      <Alert severity={live ? "success" : "info"} icon={live ? <CheckCircleRounded /> : <WarningAmberRounded />}>
+        {isPlatform
+          ? live
+            ? "This gateway is live. Every hospital that has not connected its own sends through it."
+            : "No platform gateway yet. Until one is set up, hospitals can only send if they connect their own."
+          : live
+            ? "SMS is live. Messages sent from reception will reach patients."
+            : "SMS is not live yet. Messages are recorded but not delivered — the screens say so when that happens."}
       </Alert>
 
-      <GatewayCard status={data} onSaved={() => queryClient.invalidateQueries({ queryKey: ["messaging-status"] })} />
+      <GatewayCard base={base} status={data} onSaved={invalidate} />
 
       <Box>
         <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>Message text</Typography>
         <Typography variant="body2" sx={{ color: NEUTRAL.muted, mb: 2 }}>
-          Under TRAI rules the delivered message must match a template you have registered on the DLT
-          portal, word for word. Paste the approved text here along with the template ID the portal
-          gave you.
+          {data.canEditTemplates
+            ? "Under TRAI rules the delivered message must match a template you have registered on the DLT portal, word for word. Paste the approved text here along with the template ID the portal gave you."
+            : "These messages go out on the platform's gateway, so their wording is registered with the regulator by the platform. You can see exactly what your patients receive, but it is not editable here."}
         </Typography>
+
+        {!data.canEditTemplates && (
+          <Alert severity="info" icon={<LockOutlined />} sx={{ mb: 2 }}>
+            To write your own wording you need your own SMS gateway and DLT registration. Connect one
+            above and these become editable.
+          </Alert>
+        )}
+
         <Stack spacing={2}>
           {data.kinds.map((k) => (
-            <TemplateCard
-              key={k.key}
-              kind={k}
-              onSaved={() => queryClient.invalidateQueries({ queryKey: ["messaging-status"] })}
-            />
+            <TemplateCard key={k.key} base={base} kind={k} readOnly={!data.canEditTemplates} onSaved={invalidate} />
           ))}
         </Stack>
       </Box>
@@ -132,21 +147,28 @@ export default function MessagingSettings() {
   );
 }
 
-function GatewayCard({ status, onSaved }: { status: Status; onSaved: () => void }) {
+function GatewayCard({ base, status, onSaved }: { base: string; status: Status; onSaved: () => void }) {
   const toast = useToast();
   const sms = status.sms;
   const configured = sms.configured;
+  const isPlatform = status.scope === "PLATFORM";
 
-  const [provider, setProvider] = useState(configured ? sms.provider : "MSG91");
-  const [senderId, setSenderId] = useState(configured ? sms.senderId ?? "" : "");
-  const [dltEntityId, setDltEntityId] = useState(configured ? sms.dltEntityId ?? "" : "");
+  // Only prefill from a gateway this scope actually OWNS. A tenant looking at
+  // the platform gateway is not editing it — saving this form creates their own
+  // — so putting someone else's registered sender ID in an editable field
+  // invites them to adopt a header they have no right to send under.
+  const own = configured && sms.isOwnConfig;
+
+  const [provider, setProvider] = useState(own ? sms.provider : "MSG91");
+  const [senderId, setSenderId] = useState(own ? sms.senderId ?? "" : "");
+  const [dltEntityId, setDltEntityId] = useState(own ? sms.dltEntityId ?? "" : "");
   const [authKey, setAuthKey] = useState("");
-  const [isActive, setIsActive] = useState(configured ? sms.isActive : true);
+  const [isActive, setIsActive] = useState(own ? sms.isActive : true);
   const [testPhone, setTestPhone] = useState("");
 
   const save = useMutation({
     mutationFn: () =>
-      axiosInstance.put("/hospital/messaging/config", {
+      axiosInstance.put(`${base}/config`, {
         channel: "SMS", provider, senderId, dltEntityId,
         // Blank means "keep the key you already have" — it is never sent back to
         // the browser, so there is nothing to round-trip.
@@ -158,24 +180,32 @@ function GatewayCard({ status, onSaved }: { status: Status; onSaved: () => void 
   });
 
   const test = useMutation({
-    mutationFn: () => axiosInstance.post("/hospital/messaging/test", { channel: "SMS", phone: testPhone }),
+    mutationFn: () => axiosInstance.post(`${base}/test`, { channel: "SMS", phone: testPhone }),
     onSuccess: (r) => { toast.success(`Test sent to ${r.data.data.sentTo}`); onSaved(); },
     onError: (e) => toast.error(getApiErrorMessage(e, "The test message could not be sent.")),
   });
 
   return (
     <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700 }}>SMS gateway</Typography>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }} flexWrap="wrap" useFlexGap>
+        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          {isPlatform ? "Platform SMS gateway" : "SMS gateway"}
+        </Typography>
         {configured && sms.verifiedAt ? (
           <SoftChip label="Verified" bg="rgba(16,185,129,0.12)" color={SEMANTIC.success} />
         ) : configured ? (
           <SoftChip label="Not yet tested" bg="rgba(245,158,11,0.14)" color={SEMANTIC.warning} />
         ) : null}
-        {configured && !sms.isOwnConfig && (
-          <SoftChip label="Using the platform default" bg="rgba(59,130,246,0.12)" color={SEMANTIC.info} />
+        {configured && !isPlatform && !sms.isOwnConfig && (
+          <SoftChip label="Using the platform gateway" bg="rgba(59,130,246,0.12)" color={SEMANTIC.info} />
         )}
       </Stack>
+
+      <Typography variant="body2" sx={{ color: NEUTRAL.muted, mb: 2 }}>
+        {isPlatform
+          ? "Used by every hospital that has not connected a gateway of its own. Patients see this sender ID, so it should be recognisable."
+          : "Connect your own gateway only if you have your own DLT registration. Otherwise the platform's is used."}
+      </Typography>
 
       <Stack spacing={2}>
         <TextField select label="Provider" value={provider} onChange={(e) => setProvider(e.target.value)} size="small">
@@ -185,17 +215,16 @@ function GatewayCard({ status, onSaved }: { status: Status; onSaved: () => void 
         <TextField
           label="Sender ID (DLT header)" value={senderId} onChange={(e) => setSenderId(e.target.value)}
           size="small" inputProps={{ maxLength: 11 }}
-          helperText="The 6-character header registered on the DLT portal, e.g. RADHEH. This is the name the patient sees."
+          helperText="The header registered on the DLT portal. This is the name that appears on the patient's phone."
         />
 
         <TextField
           label="DLT entity ID" value={dltEntityId} onChange={(e) => setDltEntityId(e.target.value)}
-          size="small"
-          helperText="Your Principal Entity ID from the DLT portal."
+          size="small" helperText="The Principal Entity ID from the DLT portal."
         />
 
         <TextField
-          label={configured ? "Auth key (leave blank to keep the current one)" : "Auth key"}
+          label={own ? "Auth key (leave blank to keep the current one)" : "Auth key"}
           value={authKey} onChange={(e) => setAuthKey(e.target.value)}
           size="small" type="password" autoComplete="new-password"
           helperText="Stored encrypted and never shown again. Changing it means the gateway has to be tested afresh."
@@ -209,7 +238,7 @@ function GatewayCard({ status, onSaved }: { status: Status; onSaved: () => void 
         <Box>
           <Button variant="contained" disabled={save.isPending || !status.credentialStorageAvailable}
             onClick={() => save.mutate()}>
-            {save.isPending ? "Saving…" : "Save gateway"}
+            {save.isPending ? "Saving…" : own || isPlatform ? "Save gateway" : "Connect our own gateway"}
           </Button>
         </Box>
 
@@ -236,7 +265,9 @@ function GatewayCard({ status, onSaved }: { status: Status; onSaved: () => void 
   );
 }
 
-function TemplateCard({ kind, onSaved }: { kind: Kind; onSaved: () => void }) {
+function TemplateCard({ base, kind, readOnly, onSaved }: {
+  base: string; kind: Kind; readOnly: boolean; onSaved: () => void;
+}) {
   const toast = useToast();
   const [body, setBody] = useState(kind.template?.bodyTemplate ?? kind.sample);
   const [dltTemplateId, setDltTemplateId] = useState(kind.template?.dltTemplateId ?? "");
@@ -245,7 +276,7 @@ function TemplateCard({ kind, onSaved }: { kind: Kind; onSaved: () => void }) {
 
   const save = useMutation({
     mutationFn: () =>
-      axiosInstance.put("/hospital/messaging/templates", {
+      axiosInstance.put(`${base}/templates`, {
         channel: "SMS", templateKey: kind.key, bodyTemplate: body, dltTemplateId, isActive: true,
       }),
     onSuccess: () => { toast.success(`${kind.label} saved`); onSaved(); },
@@ -254,12 +285,16 @@ function TemplateCard({ kind, onSaved }: { kind: Kind; onSaved: () => void }) {
 
   return (
     <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }} flexWrap="wrap" useFlexGap>
         <Typography sx={{ fontWeight: 700 }}>{kind.label}</Typography>
         {kind.template ? (
           <SoftChip label="Saved" bg="rgba(16,185,129,0.12)" color={SEMANTIC.success} />
         ) : (
           <SoftChip label="Not set up" bg="rgba(100,116,139,0.12)" color={NEUTRAL.muted} />
+        )}
+        {readOnly && (
+          <SoftChip label="Set by the platform" icon={<LockOutlined sx={{ fontSize: 14 }} />}
+            bg="rgba(59,130,246,0.12)" color={SEMANTIC.info} />
         )}
       </Stack>
       <Typography variant="body2" sx={{ color: NEUTRAL.muted, mb: 2 }}>{kind.description}</Typography>
@@ -268,6 +303,7 @@ function TemplateCard({ kind, onSaved }: { kind: Kind; onSaved: () => void }) {
         <TextField
           label="Message text" value={body} onChange={(e) => setBody(e.target.value)}
           multiline minRows={3} fullWidth size="small"
+          disabled={readOnly}
         />
 
         <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
@@ -286,17 +322,20 @@ function TemplateCard({ kind, onSaved }: { kind: Kind; onSaved: () => void }) {
           Available: {kind.variables.map((v) => `{{${v}}}`).join("  ")}
         </Typography>
 
-        <TextField
-          label="DLT template ID" value={dltTemplateId} onChange={(e) => setDltTemplateId(e.target.value)}
-          size="small" sx={{ maxWidth: 320 }}
-          helperText="From the DLT portal, once this exact text is approved."
-        />
-
-        <Box>
-          <Button variant="outlined" size="small" disabled={save.isPending} onClick={() => save.mutate()}>
-            {save.isPending ? "Saving…" : "Save"}
-          </Button>
-        </Box>
+        {!readOnly && (
+          <>
+            <TextField
+              label="DLT template ID" value={dltTemplateId} onChange={(e) => setDltTemplateId(e.target.value)}
+              size="small" sx={{ maxWidth: 320 }}
+              helperText="From the DLT portal, once this exact text is approved."
+            />
+            <Box>
+              <Button variant="outlined" size="small" disabled={save.isPending} onClick={() => save.mutate()}>
+                {save.isPending ? "Saving…" : "Save"}
+              </Button>
+            </Box>
+          </>
+        )}
       </Stack>
     </Paper>
   );
