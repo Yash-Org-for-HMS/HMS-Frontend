@@ -1,6 +1,8 @@
 import PageHeader from "@/components/layout/PageHeader";
 import PageContainer from "@/components/layout/PageContainer";
 import MessagingSettings from "@/features/hospitalAuth/MessagingSettings";
+import SpendCaps from "./SpendCaps";
+import { Box, Divider } from "@mui/material";
 
 /**
  * The platform's own SMS gateway.
@@ -17,6 +19,12 @@ export default function PlatformMessaging() {
         subtitle="The gateway and message text every hospital falls back to"
       />
       <MessagingSettings base="/platform-messaging" />
+
+      {/* The gateway is what sends; the cap is what stops it bankrupting you. */}
+      <Box sx={{ mt: 4 }}>
+        <Divider sx={{ mb: 3 }} />
+        <SpendCaps />
+      </Box>
     </PageContainer>
   );
 }

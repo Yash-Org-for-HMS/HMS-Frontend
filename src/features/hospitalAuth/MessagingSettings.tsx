@@ -42,10 +42,28 @@ interface Kind {
   template: TemplateView | null;
 }
 
+export interface QuotaState {
+  capMicros: number | null;
+  spentMicros: number;
+  remainingMicros: number | null;
+  warnAtPercent: number;
+  isWarning: boolean;
+  isExceeded: boolean;
+  billingPeriod: string;
+}
+
+/** Rupees from millionths, with enough precision that a cheap month is not "₹0". */
+export const inrFromMicros = (micros: number | null | undefined) => {
+  const rupees = (micros ?? 0) / 1e6;
+  const digits = rupees > 0 && rupees < 0.005 ? 4 : 2;
+  return `₹${rupees.toLocaleString("en-IN", { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
+};
+
 interface Status {
   scope: "PLATFORM" | "TENANT";
   credentialStorageAvailable: boolean;
   canEditTemplates: boolean;
+  quota: QuotaState | null;
   settings: { smsEnabled: boolean; emailEnabled: boolean; whatsappEnabled: boolean } | null;
   sms:
     | { configured: false }
@@ -119,6 +137,17 @@ export default function MessagingSettings({ base = "/hospital/messaging" }: { ba
             ? "SMS is live. Messages sent from reception will reach patients."
             : "SMS is not live yet. Messages are recorded but not delivered — the screens say so when that happens."}
       </Alert>
+
+      {/* A tenant should know how close it is BEFORE messages start being
+          refused. The number itself is set by the platform, so it is shown
+          rather than offered for editing. */}
+      {data.quota && data.quota.capMicros !== null && (
+        <Alert severity={data.quota.isExceeded ? "error" : data.quota.isWarning ? "warning" : "info"}>
+          {data.quota.isExceeded
+            ? `This month's messaging allowance is used up — ${inrFromMicros(data.quota.spentMicros)} of ${inrFromMicros(data.quota.capMicros)}. Messages are being recorded but not sent until it resets.`
+            : `Messaging this month: ${inrFromMicros(data.quota.spentMicros)} of ${inrFromMicros(data.quota.capMicros)} used, ${inrFromMicros(data.quota.remainingMicros)} left.`}
+        </Alert>
+      )}
 
       <GatewayCard base={base} status={data} onSaved={invalidate} />
 
