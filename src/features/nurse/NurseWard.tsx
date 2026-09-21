@@ -222,7 +222,7 @@ export default function NurseWard() {
         </Button>
         {ACTION_GROUPS.map((g) => (
           <Box key={g.group} sx={{ mb: 1 }}>
-            <Typography variant="caption" sx={{ display: "block", color: "text.disabled", fontWeight: 700, fontSize: "0.62rem", letterSpacing: 0.7, textTransform: "uppercase", mb: 0.5 }}>
+            <Typography variant="caption" sx={{ display: "block", color: "text.disabled", fontWeight: 700, fontSize: "0.625rem", letterSpacing: 0.7, textTransform: "uppercase", mb: 0.5 }}>
               {g.group}
             </Typography>
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
@@ -231,7 +231,7 @@ export default function NurseWard() {
                   key={act.key} size="small" variant="outlined" onClick={() => act.open(a)}
                   sx={{
                     textTransform: "none", px: 0.5, minWidth: 0, borderColor: "divider", color: act.tone,
-                    flexDirection: "column", gap: 0.25, py: 0.75, lineHeight: 1.2, fontSize: "0.72rem",
+                    flexDirection: "column", gap: 0.25, py: 0.75, lineHeight: 1.2, fontSize: "0.75rem",
                     "&:hover": { borderColor: act.tone, bgcolor: alpha(act.tone, 0.06) },
                   }}
                 >

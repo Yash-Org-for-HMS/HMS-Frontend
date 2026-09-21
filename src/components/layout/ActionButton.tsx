@@ -14,7 +14,7 @@ interface ActionButtonProps extends ButtonProps {
  * consistent in layout while preserving each module's color identity.
  */
 export default function ActionButton({
-  accentFrom = "#6366f1",
+  accentFrom = "#0C73B5",
   accentTo = "#8b5cf6",
   sx,
   ...rest

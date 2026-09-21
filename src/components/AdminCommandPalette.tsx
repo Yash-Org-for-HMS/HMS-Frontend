@@ -73,8 +73,8 @@ export default function AdminCommandPalette() {
         <SearchRounded sx={{ color: "text.secondary", mr: 2 }} />
         <InputBase autoFocus fullWidth placeholder="Jump to… (e.g. Hospitals, Plans, Leads)" value={search}
           onChange={(e) => { setSearch(e.target.value); setSelectedIndex(0); }} onKeyDown={onKeyDown}
-          sx={{ fontSize: "1.1rem", color: "text.primary" }} />
-        <Chip label="ESC" size="small" sx={{ ml: 2, borderRadius: 1, fontSize: "0.7rem", color: "text.secondary", bgcolor: "action.hover" }} />
+          sx={{ fontSize: "1rem", color: "text.primary" }} />
+        <Chip label="ESC" size="small" sx={{ ml: 2, borderRadius: 1, fontSize: "0.6875rem", color: "text.secondary", bgcolor: "action.hover" }} />
       </Box>
       <List sx={{ p: 1, maxHeight: "60vh", overflowY: "auto" }}>
         {items.length === 0 && (
@@ -86,7 +86,7 @@ export default function AdminCommandPalette() {
             sx={{ borderRadius: 2, mb: 0.5 }}>
             <ListItemIcon sx={{ minWidth: 40, color: "primary.main" }}>{route.icon}</ListItemIcon>
             <ListItemText primary={route.name} primaryTypographyProps={{ fontWeight: 600, color: "text.primary" }} />
-            <ArrowForwardRounded sx={{ color: "text.secondary", opacity: 0.5, fontSize: "1.2rem" }} />
+            <ArrowForwardRounded sx={{ color: "text.secondary", opacity: 0.5, fontSize: "1.25rem" }} />
           </ListItemButton>
         ))}
       </List>

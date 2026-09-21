@@ -104,7 +104,7 @@ export default function VaccineCatalog() {
               <TableHead>
                 <TableRow>
                   {["Vaccine", "Code", "Price", "Doses", "Source", "Status", ""].map((h) => (
-                    <TableCell key={h} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", borderColor: "divider" }}>{h}</TableCell>
+                    <TableCell key={h} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider" }}>{h}</TableCell>
                   ))}
                 </TableRow>
               </TableHead>

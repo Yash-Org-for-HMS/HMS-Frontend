@@ -13,7 +13,7 @@ export default function FormSkeleton({ fields = 6, header = true }: { fields?: n
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3 }}>
           <Box>
             <Skeleton variant="text" width={220} sx={{ fontSize: "1.5rem" }} />
-            <Skeleton variant="text" width={300} sx={{ fontSize: "0.85rem" }} />
+            <Skeleton variant="text" width={300} sx={{ fontSize: "0.875rem" }} />
           </Box>
           <Skeleton variant="rounded" width={120} height={38} />
         </Stack>

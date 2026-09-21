@@ -19,7 +19,7 @@ const BLUE_DARK = BRAND.actionDark;
 // It previously also painted the buttons and chat bubbles in a sky-to-navy ramp
 // belonging to no palette here, which read as a dark cloud beside the indigo
 // BRAND button. Everything else is flat BRAND, and the halo is a ring not a blur.
-const MARK_GRAD = `linear-gradient(140deg, #818cf8 0%, ${BRAND.action} 55%, ${BRAND.actionDark} 100%)`;
+const MARK_GRAD = `linear-gradient(140deg, #4FA3D6 0%, ${BRAND.action} 55%, ${BRAND.actionDark} 100%)`;
 
 const DEX_NAME = "Dr. Dex";
 const DEX_TAGLINE = "AI clinical assistant";
@@ -255,7 +255,7 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography sx={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.15, color: "text.primary" }}>{DEX_NAME}</Typography>
-          <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>{DEX_TAGLINE}</Typography>
+          <Typography sx={{ fontSize: "0.75rem", color: "text.secondary" }}>{DEX_TAGLINE}</Typography>
         </Box>
         {busy && (
           <Tooltip title="Stop">
@@ -288,14 +288,14 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
           <Fade in>
             <Box sx={{ textAlign: "center", px: 1, minHeight: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
               <DexMark size={74} ring />
-              <Typography sx={{ fontWeight: 800, fontSize: "1.2rem", mt: 3, mb: 0.75 }}>Hi, I'm {DEX_NAME}</Typography>
+              <Typography sx={{ fontWeight: 800, fontSize: "1.25rem", mt: 3, mb: 0.75 }}>Hi, I'm {DEX_NAME}</Typography>
               <Typography sx={{ ...typeScale.body, color: "text.secondary", maxWidth: 320, mb: 3 }}>
                 Your clinical co-pilot. I'll review this patient's history, vitals, medications and documents and brief you in seconds — or answer any question you have.
               </Typography>
               <Button
                 variant="contained" size="large" onClick={generate} disabled={!patientId} startIcon={<DexGlyph size={19} />}
                 sx={{
-                  textTransform: "none", fontWeight: 700, fontSize: "0.95rem", px: 3.5, py: 1.15, borderRadius: 99,
+                  textTransform: "none", fontWeight: 700, fontSize: "1rem", px: 3.5, py: 1.15, borderRadius: 99,
                   bgcolor: BLUE, "&:hover": { bgcolor: BLUE_DARK },
                 }}
               >
@@ -441,7 +441,7 @@ function SummaryContent({ text, chat = false }: { text: string; chat?: boolean }
           <Box sx={{ width: 24, height: 24, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: `${color}1f`, color, flexShrink: 0 }}>
             <Icon sx={{ fontSize: 15 }} />
           </Box>
-          <Typography sx={{ fontWeight: 800, fontSize: "0.8rem", letterSpacing: 0.4, textTransform: "uppercase", color }}>{label}</Typography>
+          <Typography sx={{ fontWeight: 800, fontSize: "0.75rem", letterSpacing: 0.4, textTransform: "uppercase", color }}>{label}</Typography>
         </Box>,
       );
       first = false;

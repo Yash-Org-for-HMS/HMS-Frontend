@@ -16,8 +16,8 @@ export default function ReportSkeleton({ kpis = 4, chart = true }: { kpis?: numb
               <Stack direction="row" spacing={1.5} alignItems="center">
                 <Skeleton variant="rounded" width={40} height={40} />
                 <Box sx={{ flex: 1 }}>
-                  <Skeleton variant="text" width="55%" sx={{ fontSize: "1.4rem" }} />
-                  <Skeleton variant="text" width="75%" sx={{ fontSize: "0.72rem" }} />
+                  <Skeleton variant="text" width="55%" sx={{ fontSize: "1.5rem" }} />
+                  <Skeleton variant="text" width="75%" sx={{ fontSize: "0.75rem" }} />
                 </Box>
               </Stack>
             </Paper>

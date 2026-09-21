@@ -75,7 +75,7 @@ export default function ModuleAccess() {
         subtitle="Turn modules your plan includes on or off. Modules outside your plan are locked — contact your provider to upgrade."
       />
 
-      <Paper sx={{ p: 3, mb: 3, bgcolor: "rgba(99, 102, 241, 0.08)", borderRadius: 2, border: "1px solid rgba(99, 102, 241, 0.2)" }}>
+      <Paper sx={{ p: 3, mb: 3, bgcolor: "rgba(12, 115, 181, 0.08)", borderRadius: 2, border: "1px solid rgba(12, 115, 181, 0.2)" }}>
         <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
           <Chip label={`Plan: ${data?.planName || "Basic"}`} sx={{ bgcolor: BRAND.action, color: "#fff", fontWeight: 600 }} />
           <Typography sx={{ color: "text.secondary", fontWeight: 700 }}>+</Typography>

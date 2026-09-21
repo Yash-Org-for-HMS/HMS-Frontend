@@ -107,7 +107,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               textAlign: "left",
               bgcolor: "action.hover",
               borderRadius: 2,
-              fontSize: "0.78rem",
+              fontSize: "0.75rem",
               color: "error.main",
               whiteSpace: "pre-wrap",
             }}

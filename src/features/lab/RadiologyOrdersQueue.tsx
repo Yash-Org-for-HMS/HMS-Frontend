@@ -311,7 +311,7 @@ export default function RadiologyOrdersQueue() {
                         label={priorityMeta(order.priorityId)?.label}
                         size="small"
                         sx={{
-                          ml: 1, height: 20, fontSize: "0.7rem", fontWeight: 800,
+                          ml: 1, height: 20, fontSize: "0.6875rem", fontWeight: 800,
                           bgcolor: priorityMeta(order.priorityId)!.color!,
                           color: "#fff",
                         }}
@@ -321,7 +321,7 @@ export default function RadiologyOrdersQueue() {
                   <TableCell>
                     {order.patient?.firstName} {order.patient?.lastName}
                     {order.admissionNumber && (
-                      <Chip label={`IPD · ${order.admissionNumber}`} size="small" sx={{ ml: 1, height: 20, fontSize: "0.7rem", fontWeight: 700, bgcolor: "rgba(8,145,178,0.12)", color: BRAND.actionDark }} />
+                      <Chip label={`IPD · ${order.admissionNumber}`} size="small" sx={{ ml: 1, height: 20, fontSize: "0.6875rem", fontWeight: 700, bgcolor: "rgba(8,145,178,0.12)", color: BRAND.actionDark }} />
                     )}
                   </TableCell>
                   <TableCell>{order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</TableCell>

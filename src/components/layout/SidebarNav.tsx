@@ -6,6 +6,7 @@ import type { SxProps, Theme } from "@mui/material";
 import { LockRounded } from "@mui/icons-material";
 import { SEMANTIC, NEUTRAL, alpha, BRAND } from "@/styles/accents";
 import { isNavItemActive } from "./navActive";
+import ScrollFade from "./ScrollFade";
 
 export interface SidebarNavItem {
   text: string;
@@ -48,7 +49,9 @@ export default function SidebarNav({
   sx?: SxProps<Theme>;
 }) {
   return (
-    <List sx={{ px: 2, pt: 2, flex: 1, overflowY: "auto", ...sx }}>
+    // ScrollFade owns the scrolling and the flex sizing; the List just draws.
+    <ScrollFade>
+      <List sx={{ px: 2, pt: 2, ...sx }}>
       {items.map((item, idx, arr) => {
         const isActive = isNavItemActive(currentPath, item.path);
         const locked = isLocked?.(item) ?? false;
@@ -103,6 +106,7 @@ export default function SidebarNav({
           </Box>
         );
       })}
-    </List>
+      </List>
+    </ScrollFade>
   );
 }

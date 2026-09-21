@@ -223,11 +223,11 @@ export default function SubscriptionBilling() {
                   >
                     <TableCell sx={{ fontFamily: "monospace", fontWeight: 600 }}>{inv.invoiceNumber}</TableCell>
                     <TableCell sx={{ fontWeight: 500 }}>{inv.hospitalName}</TableCell>
-                    <TableCell>{inv.planName} <Chip label={inv.billingCycle === "ANNUAL" ? "Yr" : "Mo"} size="small" sx={{ ml: 0.5, height: 18, fontSize: "0.65rem" }} /></TableCell>
-                    <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem" }}>{formatDate(inv.periodStart)} – {formatDate(inv.periodEnd)}</TableCell>
+                    <TableCell>{inv.planName} <Chip label={inv.billingCycle === "ANNUAL" ? "Yr" : "Mo"} size="small" sx={{ ml: 0.5, height: 18, fontSize: "0.625rem" }} /></TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: "0.75rem" }}>{formatDate(inv.periodStart)} – {formatDate(inv.periodEnd)}</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(inv.amount)}</TableCell>
                     <TableCell><Chip label={PHASE_LABEL[inv.phase] || inv.status} color={PHASE_COLOR[inv.phase] || "default"} size="small" /></TableCell>
-                    <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem" }}>
+                    <TableCell sx={{ color: "text.secondary", fontSize: "0.75rem" }}>
                       {formatDate(inv.dueDate)}
                       {inv.graceDaysLeft != null && (
                         <Box component="span" sx={{ display: "block", fontWeight: 700, color: inv.graceDaysLeft <= 2 ? SEMANTIC.danger : SEMANTIC.warning }}>
@@ -280,10 +280,10 @@ export default function SubscriptionBilling() {
         <DialogContent dividers>
           {payTarget && (
             <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem" }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem" }}>
                 <span>{payTarget.hospitalName}</span><strong>{formatINR(payTarget.amount)}</strong>
               </Box>
-              <Box sx={{ color: "text.secondary", fontSize: "0.8rem", fontFamily: "monospace" }}>{payTarget.invoiceNumber}</Box>
+              <Box sx={{ color: "text.secondary", fontSize: "0.75rem", fontFamily: "monospace" }}>{payTarget.invoiceNumber}</Box>
             </Box>
           )}
           <TextField select fullWidth size="small" label="Method" value={payMethod} onChange={(e) => setPayMethod(e.target.value)} sx={{ mb: 2 }}>

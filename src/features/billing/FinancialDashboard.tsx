@@ -167,7 +167,7 @@ export default function FinancialDashboard() {
                       boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
                       padding: "16px"
                     }}
-                    itemStyle={{ color: SEMANTIC.success, fontWeight: 800, fontSize: "1.1rem" }}
+                    itemStyle={{ color: SEMANTIC.success, fontWeight: 800, fontSize: "1rem" }}
                     labelStyle={{ color: theme.palette.text.secondary, marginBottom: 8, fontWeight: 600 }}
                   />
                   <Area 

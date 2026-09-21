@@ -25,7 +25,7 @@ export type PickedCharge = { chargeItemId: string; itemName: string; price: numb
 // When `roomClassId` is given, the displayed/returned price reflects that room
 // class's matrix price (falling back to base); the server re-prices authoritatively.
 // `roomClassName` (optional) is shown so the operator knows which class the prices reflect.
-export default function SocChargePicker({ open, onClose, onPick, accent = "#6366f1", roomClassId, roomClassName, preferCategories }: {
+export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73B5", roomClassId, roomClassName, preferCategories }: {
   open: boolean; onClose: () => void; onPick: (c: PickedCharge) => void; accent?: string; roomClassId?: string | null; roomClassName?: string | null;
   /** Category names to open on, best match first; falls back to the first category. */
   preferCategories?: string[];
@@ -118,7 +118,7 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#6366
                 <ListItemText
                   primary={it.itemName}
                   secondary={[it.itemCode, it.unit].filter(Boolean).join(" · ") || undefined}
-                  primaryTypographyProps={{ fontSize: "0.9rem", fontWeight: 600 }}
+                  primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: 600 }}
                 />
                 <Typography sx={{ fontWeight: 700, color: accent, ml: 2 }}>{inr(effPrice(it))}</Typography>
               </ListItemButton>

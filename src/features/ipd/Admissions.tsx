@@ -182,7 +182,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                 t.params.pendingDeposit && owedRows.length ? (
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                     {t.label}
-                    <Chip label={owedRows.length} size="small" sx={{ height: 18, fontSize: "0.7rem", fontWeight: 700, bgcolor: alpha(SEMANTIC.warning, 0.16), color: SEMANTIC.warning }} />
+                    <Chip label={owedRows.length} size="small" sx={{ height: 18, fontSize: "0.6875rem", fontWeight: 700, bgcolor: alpha(SEMANTIC.warning, 0.16), color: SEMANTIC.warning }} />
                   </Box>
                 ) : t.label
               }

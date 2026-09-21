@@ -68,7 +68,7 @@ export default function HospitalLogin() {
   };
 
   return (
-    <LoginShell title="Hospital Staff Portal" subtitle="Welcome back" footnote="session-bound access">
+    <LoginShell title="Hospital Staff Portal">
       <form onSubmit={handleLogin} noValidate>
         <TextField
           fullWidth variant="outlined" type="email" margin="dense"
@@ -110,21 +110,24 @@ export default function HospitalLogin() {
           }}
         />
 
-        {/* Staff have an administrator who can reset them; the platform console
-            has no one above it, which is why only this page carries the link. */}
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 0.25, mb: 2.5 }}>
-          <Link
-            component="button" type="button" underline="hover"
-            onClick={() => toast.info("Please contact your hospital administrator to reset your password.")}
-            sx={{ fontSize: "0.85rem", color: LOGIN_ACCENT, fontWeight: 600 }}
-          >
-            Forgot password?
-          </Link>
-        </Box>
 
         <Button fullWidth type="submit" disableElevation disabled={!canSubmit} sx={loginSubmitSx}>
           {isLoading ? <HeartbeatLoader size={22} /> : "Login"}
         </Button>
+
+        {/* Below the button, not above it. This does not reset anything — it
+            tells you to ask your administrator — so it is help text, and
+            sitting it between the password field and the primary action put
+            advice in the action zone and broke the page's centred axis. */}
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2.5 }}>
+          <Link
+            component="button" type="button" underline="hover"
+            onClick={() => toast.info("Please contact your hospital administrator to reset your password.")}
+            sx={{ fontSize: "0.75rem", color: LOGIN_ACCENT, fontWeight: 600 }}
+          >
+            Forgot password?
+          </Link>
+        </Box>
       </form>
     </LoginShell>
   );

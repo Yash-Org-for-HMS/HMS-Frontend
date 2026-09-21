@@ -173,7 +173,7 @@ export default function IpdDoctorVisitsDialog({ open, onClose, admission }: Prop
               <li {...props} key={o.doctorId}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
                   <span>{o.name}</span>
-                  <span style={{ color: o.ipdVisitCharge > 0 ? NEUTRAL.muted : SEMANTIC.danger, fontSize: "0.8rem" }}>
+                  <span style={{ color: o.ipdVisitCharge > 0 ? NEUTRAL.muted : SEMANTIC.danger, fontSize: "0.75rem" }}>
                     {o.ipdVisitCharge > 0 ? `${formatINR(o.ipdVisitCharge)} / visit` : "no visit charge set"}
                   </span>
                 </Box>

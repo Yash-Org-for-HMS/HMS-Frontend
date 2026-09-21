@@ -311,7 +311,7 @@ export default function HospitalOverview() {
                 <InfoRow label="Phone" value={data.lead.phone} />
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>Lead Status</Typography>
-                  <Box><Chip size="small" label={data.lead.leadStatus} sx={{ textTransform: "capitalize", bgcolor: "rgba(99,102,241,0.1)", color: "#818cf8", fontWeight: 600 }} /></Box>
+                  <Box><Chip size="small" label={data.lead.leadStatus} sx={{ textTransform: "capitalize", bgcolor: "rgba(12, 115, 181, 0.1)", color: "#0C73B5", fontWeight: 600 }} /></Box>
                 </Grid>
               </Grid>
             </>

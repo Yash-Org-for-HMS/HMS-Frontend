@@ -43,13 +43,14 @@ import {
   HealthAndSafetyRounded,
   LockRounded,
   EventNoteRounded,
-  CampaignRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { assetUrl } from "@/utils/assetUrl";
 import BranchSwitcher from "@/components/BranchSwitcher";
-import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarProductHeader from "@/components/layout/SidebarProductHeader";
+import SidebarHospitalStrip from "@/components/layout/SidebarHospitalStrip";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
+import ScrollFade from "@/components/layout/ScrollFade";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
 import { useSocket } from "@/hooks/useSocket";
@@ -117,7 +118,6 @@ export default function ReceptionLayout() {
     {
       heading: "System",
       items: [
-        { text: "Announcements", icon: <CampaignRounded />, path: "/reception/announcements", badge: announcementsUnread },
         { text: "Notifications", icon: <NotificationsRounded />, path: "/reception/notifications" },
       ],
     },
@@ -137,12 +137,8 @@ export default function ReceptionLayout() {
         color: "text.primary",
       }}
     >
-      {/* Logo / Hospital Name */}
-      <SidebarHeader
-        logoUrl={hospital?.logoUrl}
-        title={hospital?.name || "Reception"}
-        subtitle="Reception Portal"
-      />
+      {/* Product mark up top; the hospital identifies itself at the foot. */}
+      <SidebarProductHeader />
 
       {/* Quick search — opens the command palette (also ⌘K / Ctrl+K) */}
       <Box sx={{ px: 1.5, pt: 1.5 }}>
@@ -162,7 +158,10 @@ export default function ReceptionLayout() {
 
       {/* Navigation — module-gated items (e.g. IPD) aren't hidden; they show with
           a lock so staff can see the feature exists, and the page shows an upsell. */}
-      <List sx={{ px: 1.5, pt: 1, flex: 1, overflowY: "auto" }}>
+      {/* ScrollFade owns the scrolling, so the list can admit with a soft edge
+          that there is more below it. */}
+      <ScrollFade>
+        <List sx={{ px: 1.5, pt: 1 }}>
         {navSections
           .map((section, si) => (
           <Box key={section.heading} sx={{ mb: 0.5 }}>
@@ -224,6 +223,7 @@ export default function ReceptionLayout() {
           </Box>
         ))}
       </List>
+      </ScrollFade>
 
       <Divider sx={{ borderColor: alpha(BRAND.action, 0.1) }} />
 
@@ -232,13 +232,19 @@ export default function ReceptionLayout() {
         <BranchSwitcher />
       </Box>
 
-      {/* User card at bottom */}
+      {/* Who you are, then where you are. */}
       <SidebarUserCard
         name={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Receptionist"}
         role={user?.roleName || "Receptionist"}
         avatarText={user?.firstName?.charAt(0) || "R"}
         onLogout={logout}
+        variant="compact"
+        roleCode={user?.role}
+        // Announcements was the last nav row, and therefore below the fold
+        // on a 768px laptop in every panel. Pinned here instead.
+        announcements={{ count: announcementsUnread, onOpen: () => navigate("/reception/announcements") }}
       />
+      <SidebarHospitalStrip logoUrl={hospital?.logoUrl} name={hospital?.name || "Reception"} roleCode={user?.role} role={user?.roleName || ""} />
     </Box>
   );
 

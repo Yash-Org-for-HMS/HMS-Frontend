@@ -65,7 +65,7 @@ function VisitTypeChip({ visitType }: { visitType?: string }) {
       label={meta.label}
       size="small"
       sx={{
-        height: 20, fontSize: "0.68rem", fontWeight: 700,
+        height: 20, fontSize: "0.6875rem", fontWeight: 700,
         bgcolor: alpha(meta.color, 0.12), color: meta.color,
         border: `1px solid ${alpha(meta.color, 0.3)}`,
       }}

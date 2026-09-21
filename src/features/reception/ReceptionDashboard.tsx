@@ -217,7 +217,13 @@ export default function ReceptionDashboard() {
       </Box>
 
       {/* Queue + quick actions */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "2fr 1fr" }, gap: 2.5, alignItems: "start" }}>
+      {/* minmax(0, …) rather than a bare 1fr. A bare fr track is
+          minmax(auto, 1fr), and that auto floor is the widest child's
+          min-content — here the appointments table, 521px of it. So the track
+          refused to shrink below the table and pushed the whole page sideways
+          on a phone, even though the table already sits in its own
+          overflow-x container and was perfectly willing to scroll by itself. */}
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "minmax(0, 2fr) minmax(0, 1fr)" }, gap: 2.5, alignItems: "start" }}>
         <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider" }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
             {/* Named for what is actually in the table. Calling a list of
@@ -241,7 +247,12 @@ export default function ReceptionDashboard() {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  {["Token", liveQueue.length ? "Waiting since" : "Time", "Patient", "Doctor", "Status"].map((hd) => (
+                  {/* No separate Doctor column: the doctor now sits under the
+                      token it belongs to. A token counts one DOCTOR's patients
+                      for the day, so several doctors each have a #1 — and with
+                      the owner two columns away the number read as a duplicate
+                      and made the table look broken. */}
+                  {["Token", liveQueue.length ? "Waiting since" : "Time", "Patient", "Status"].map((hd) => (
                     <TableCell key={hd} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider" }}>{hd}</TableCell>
                   ))}
                 </TableRow>
@@ -249,12 +260,15 @@ export default function ReceptionDashboard() {
               <TableBody>
                 {loading ? (
                   Array.from(new Array(4)).map((_, i) => (
-                    <TableRow key={i}>{Array.from(new Array(5)).map((_, j) => <TableCell key={j} sx={{ borderColor: "divider" }}><Skeleton width={70} /></TableCell>)}</TableRow>
+                    <TableRow key={i}>{Array.from(new Array(4)).map((_, j) => <TableCell key={j} sx={{ borderColor: "divider" }}><Skeleton width={70} /></TableCell>)}</TableRow>
                   ))
                 ) : liveQueue.length > 0 ? (
                   liveQueue.map((t) => (
                     <TableRow key={t.queueTokenId} hover>
-                      <TableCell sx={{ fontWeight: 700, color: "text.primary", borderColor: "divider" }}>#{t.tokenNumber}</TableCell>
+                      <TableCell sx={{ borderColor: "divider" }}>
+                        <Typography sx={{ fontWeight: 700, color: "text.primary", lineHeight: 1.3 }}>#{t.tokenNumber}</Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{t.doctorName}</Typography>
+                      </TableCell>
                       <TableCell sx={{ color: "text.primary", borderColor: "divider" }}>
                         {new Date(t.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </TableCell>
@@ -262,22 +276,19 @@ export default function ReceptionDashboard() {
                         <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{t.patientName}</Typography>
                       </TableCell>
                       <TableCell sx={{ borderColor: "divider" }}>
-                        <Typography variant="caption" sx={{ color: "text.secondary" }}>{t.doctorName}</Typography>
-                      </TableCell>
-                      <TableCell sx={{ borderColor: "divider" }}>
                         <Chip label={t.statusLabel} size="small" sx={{ bgcolor: `${t.statusColor}15`, color: t.statusColor, fontWeight: 600, borderRadius: 1.5 }} />
                       </TableCell>
                     </TableRow>
                   ))
                 ) : !stats?.upcomingAppointments?.length ? (
-                  <TableRow><TableCell colSpan={5} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="All caught up!" subtitle="Nobody waiting, and nothing else booked today." /></TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="All caught up!" subtitle="Nobody waiting, and nothing else booked today." /></TableCell></TableRow>
                 ) : (
                   stats.upcomingAppointments.map((appt) => (
                     <TableRow key={appt.appointmentId} hover>
-                      {/* A token number counts that DOCTOR's patients for the
-                          day, so three doctors each have a #1. Without the
-                          doctor beside it the column reads as duplicates. */}
-                      <TableCell sx={{ fontWeight: 700, color: "text.primary", borderColor: "divider" }}>#{appt.tokenNumber}</TableCell>
+                      <TableCell sx={{ borderColor: "divider" }}>
+                        <Typography sx={{ fontWeight: 700, color: "text.primary", lineHeight: 1.3 }}>#{appt.tokenNumber}</Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{appt.doctorName ?? "—"}</Typography>
+                      </TableCell>
                       <TableCell sx={{ color: "text.primary", borderColor: "divider" }}>{new Date(appt.appointmentTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</TableCell>
                       {/* Name and UHID, not an ID fragment. This column used to
                           print patientId.slice(0, 8) in monospace, because the
@@ -291,9 +302,6 @@ export default function ReceptionDashboard() {
                         ) : (
                           <Typography variant="caption" sx={{ color: "text.disabled" }}>Unregistered</Typography>
                         )}
-                      </TableCell>
-                      <TableCell sx={{ borderColor: "divider" }}>
-                        <Typography variant="caption" sx={{ color: "text.secondary" }}>{appt.doctorName ?? "—"}</Typography>
                       </TableCell>
                       <TableCell sx={{ borderColor: "divider" }}><Chip label={appt.status.label} size="small" sx={{ bgcolor: `${appt.status.color}15`, color: appt.status.color, fontWeight: 600, borderRadius: 1.5 }} /></TableCell>
                     </TableRow>

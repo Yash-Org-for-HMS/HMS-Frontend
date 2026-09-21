@@ -45,14 +45,24 @@ export const ACCENTS = {
  * action shouldn't change colour just because of which screen you're on.
  *
  * Panel accents above still brand each area (sidebar, icons, headings), so you
- * can tell where you are; only the ACTIONS are unified. Indigo is deliberate:
- * it sits mid-way along the cool range the panel accents span (teal → cyan →
- * blue → indigo → violet), so it sits harmoniously against every one of them
- * rather than clashing with the teal and violet ends.
+ * can tell where you are; only the ACTIONS are unified.
+ *
+ * The value is the product logo's own blue, sampled from the mark rather than
+ * picked by eye: 92.5% of the logo's coloured pixels average to #0C73B5, and
+ * the remaining 7.5% are the sage highlight (#8ECE9E), which is too light to
+ * carry a control and is left as a graphic accent. It still sits mid-way along
+ * the cool range the panel accents span (teal → cyan → blue → indigo →
+ * violet), so it works against all of them.
+ *
+ * #0C73B5 reaches 5.1:1 on white and actionDark 7.2:1, so both carry white
+ * button text and both read as body-sized text on a white page.
  */
 export const BRAND = {
-  action: "#6366f1",
-  actionDark: "#4f46e5",
+  action: "#0C73B5",
+  actionDark: "#095B90",
+  /** Light step for tints, gradient starts and icon washes — decorative only;
+   *  at 2.5:1 on white it must never carry text. */
+  actionLight: "#4FA3D6",
 } as const;
 
 // ── Layer 2: semantic colours (mirror the MUI theme palette) ────────────────

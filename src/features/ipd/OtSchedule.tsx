@@ -189,11 +189,11 @@ function CaseRow({ c, showTheatre = false, readOnly, onOpen, onMenu }: {
           </Typography>
           <Chip
             size="small" label={STATUS_LABEL[c.status] ?? c.status}
-            sx={{ height: 18, fontSize: "0.65rem", fontWeight: 700, bgcolor: `${STATUS_COLOR[c.status]}1a`, color: STATUS_COLOR[c.status] }}
+            sx={{ height: 18, fontSize: "0.625rem", fontWeight: 700, bgcolor: `${STATUS_COLOR[c.status]}1a`, color: STATUS_COLOR[c.status] }}
           />
           {c.isEmergency && (
             <Chip size="small" icon={<WarningAmberRounded sx={{ fontSize: 12 }} />} label="Emergency"
-              sx={{ height: 18, fontSize: "0.65rem", fontWeight: 700, bgcolor: `${SEMANTIC.danger}1a`, color: SEMANTIC.danger }} />
+              sx={{ height: 18, fontSize: "0.625rem", fontWeight: 700, bgcolor: `${SEMANTIC.danger}1a`, color: SEMANTIC.danger }} />
           )}
         </Box>
         <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.25 }} noWrap>{c.procedureName}</Typography>
@@ -337,7 +337,7 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
                   <MedicalServicesRounded sx={{ color: BRAND.action, fontSize: 20 }} />
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, flex: 1, minWidth: 0 }} noWrap>{l.theatreName}</Typography>
                   <Chip size="small" label={`${live} case${live === 1 ? "" : "s"}${called ? ` · ${called} off` : ""}`}
-                    sx={{ height: 20, fontSize: "0.65rem", fontWeight: 700 }} />
+                    sx={{ height: 20, fontSize: "0.625rem", fontWeight: 700 }} />
                 </Box>
                 <Stack spacing={1}>
                   {l.cases.length === 0 ? (

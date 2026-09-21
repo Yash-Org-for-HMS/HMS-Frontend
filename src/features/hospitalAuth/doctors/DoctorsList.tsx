@@ -208,7 +208,7 @@ export default function DoctorsList() {
                         <IconButton
                           size="small"
                           onClick={() => navigate(`/hospital/doctors/${doctor.doctorId}/edit`)}
-                          sx={{ color: BRAND.action, "&:hover": { bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                          sx={{ color: BRAND.action, "&:hover": { bgcolor: "rgba(12, 115, 181, 0.1)" } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>

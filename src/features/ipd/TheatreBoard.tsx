@@ -161,7 +161,7 @@ export default function TheatreBoard({ manage = false }: { manage?: boolean } = 
                     <Typography variant="subtitle1" sx={{ fontWeight: 700, flex: 1, minWidth: 0 }} noWrap>
                       {t.theatreName}
                     </Typography>
-                    {!t.isActive && <Chip size="small" label="Inactive" sx={{ height: 20, fontSize: "0.65rem" }} />}
+                    {!t.isActive && <Chip size="small" label="Inactive" sx={{ height: 20, fontSize: "0.625rem" }} />}
                   </Box>
                   <Chip
                     size="small" label={STATUS_LABEL[t.status] ?? t.status}

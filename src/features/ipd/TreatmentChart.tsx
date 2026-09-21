@@ -313,7 +313,7 @@ export default function TreatmentChart() {
                     ].map((h, i) => (
                       <TableCell key={h}
                         sx={{
-                          fontWeight: 700, fontSize: "0.68rem", textTransform: "uppercase",
+                          fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase",
                           color: "text.secondary", whiteSpace: "nowrap",
                           // Time stays put while a wide chart scrolls — see the
                           // observation dialog for why. Released for print, where
@@ -344,7 +344,7 @@ export default function TreatmentChart() {
                           </TableCell>
                         );
                       })}
-                      <TableCell sx={{ fontSize: "0.8rem" }}>{o.remark || ""}</TableCell>
+                      <TableCell sx={{ fontSize: "0.75rem" }}>{o.remark || ""}</TableCell>
                       <TableCell sx={{ fontSize: "0.75rem", color: "text.secondary", whiteSpace: "nowrap" }}>{o.recordedBy}</TableCell>
                     </TableRow>
                   ))}
@@ -377,7 +377,7 @@ export default function TreatmentChart() {
                     {["Medicine", "Dose", "Route", "Frequency", "Doses this chart day", "Ordered by"].map((h, i) => (
                       <TableCell key={h}
                         sx={{
-                          fontWeight: 700, fontSize: "0.68rem", textTransform: "uppercase",
+                          fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase",
                           color: "text.secondary", whiteSpace: "nowrap",
                           ...(i === 0 ? STICKY_TIME : null),
                         }}>{h}</TableCell>
@@ -458,7 +458,7 @@ export default function TreatmentChart() {
                 <TableHead>
                   <TableRow>
                     {["Time", "In / Out", "Type", "What", "Volume", "Times", "By"].map((h) => (
-                      <TableCell key={h} sx={{ fontWeight: 700, fontSize: "0.68rem", textTransform: "uppercase", color: "text.secondary", whiteSpace: "nowrap" }}>{h}</TableCell>
+                      <TableCell key={h} sx={{ fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase", color: "text.secondary", whiteSpace: "nowrap" }}>{h}</TableCell>
                     ))}
                   </TableRow>
                 </TableHead>

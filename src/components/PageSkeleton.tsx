@@ -12,8 +12,8 @@ export default function PageSkeleton() {
       {/* Header: title + primary action */}
       <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3 }}>
         <Box>
-          <Skeleton variant="text" width={240} sx={{ fontSize: "1.75rem" }} />
-          <Skeleton variant="text" width={320} sx={{ fontSize: "0.9rem" }} />
+          <Skeleton variant="text" width={240} sx={{ fontSize: "1.5rem" }} />
+          <Skeleton variant="text" width={320} sx={{ fontSize: "0.875rem" }} />
         </Box>
         <Skeleton variant="rounded" width={140} height={40} />
       </Stack>

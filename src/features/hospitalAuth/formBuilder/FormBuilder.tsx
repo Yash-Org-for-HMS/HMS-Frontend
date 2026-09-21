@@ -245,7 +245,7 @@ export default function FormBuilder() {
                       {/* Card header: index + remove */}
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
                         <DragIndicatorRounded sx={{ color: "text.disabled", fontSize: 20, cursor: "grab" }} />
-                        <Typography sx={{ fontWeight: 700, fontSize: "0.72rem", letterSpacing: 0.5, textTransform: "uppercase", color: "text.secondary" }}>Field {idx + 1}</Typography>
+                        <Typography sx={{ fontWeight: 700, fontSize: "0.75rem", letterSpacing: 0.5, textTransform: "uppercase", color: "text.secondary" }}>Field {idx + 1}</Typography>
                         <Box sx={{ flex: 1 }} />
                         <Tooltip title="Remove field">
                           <IconButton size="small" onClick={() => handleRemoveField(idx)} sx={{ color: SEMANTIC.danger }}>

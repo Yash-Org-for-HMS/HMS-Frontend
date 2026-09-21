@@ -8,14 +8,14 @@ import { Box, Paper, Skeleton, Stack } from "@mui/material";
 export default function DetailSkeleton({ cards = 2 }: { cards?: number }) {
   return (
     <Box sx={{ p: { xs: 0, md: 1 }, width: "100%" }}>
-      <Skeleton variant="text" width={120} sx={{ fontSize: "0.9rem", mb: 2 }} />
+      <Skeleton variant="text" width={120} sx={{ fontSize: "0.875rem", mb: 2 }} />
 
       {/* Header card */}
       <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2 }}>
         <Stack direction="row" spacing={2} alignItems="center">
           <Skeleton variant="circular" width={64} height={64} />
           <Box sx={{ flex: 1 }}>
-            <Skeleton variant="text" width={220} sx={{ fontSize: "1.4rem" }} />
+            <Skeleton variant="text" width={220} sx={{ fontSize: "1.5rem" }} />
             <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
               <Skeleton variant="rounded" width={70} height={22} />
               <Skeleton variant="rounded" width={70} height={22} />

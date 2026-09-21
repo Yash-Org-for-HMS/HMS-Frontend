@@ -26,6 +26,7 @@ import {
   TimerRounded,
   CardMembershipRounded,
   ReceiptLongRounded,
+  CreditCardRounded,
   AdminPanelSettingsRounded,
   SecurityRounded,
   HistoryRounded,
@@ -35,9 +36,10 @@ import {
   SmsRounded,
 } from "@mui/icons-material";
 import { useAuth } from "@/providers/AuthContext";
-import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarProductHeader from "@/components/layout/SidebarProductHeader";
 import SidebarSearch from "@/components/layout/SidebarSearch";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
+import ScrollFade from "@/components/layout/ScrollFade";
 import { NEUTRAL, alpha, BRAND } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
@@ -100,6 +102,7 @@ export default function AdminLayout() {
       items: [
         { text: t("nav.plans"), icon: <CardMembershipRounded />, path: "/plans" },
         { text: t("nav.subscriptionBilling", "Billing"), icon: <ReceiptLongRounded />, path: "/subscription-billing" },
+        { text: "Payment Gateway", icon: <CreditCardRounded />, path: "/payment-gateway" },
         // Feature Flags page hidden: its only functional keys (MODULE_*) are managed
         // better by the per-hospital Module Access screen (immediate, cache-aware),
         // and its Global scope / arbitrary keys are not consumed by any code. The
@@ -132,14 +135,13 @@ export default function AdminLayout() {
     >
       {/* Not a hospital: without its own glyph the platform console would wear
           the default hospital mark, which belongs to the tenants it administers. */}
-      <SidebarHeader
-        title="HMS Admin"
-        subtitle="Platform Console"
-        fallbackIcon={<AdminPanelSettingsRounded fontSize="medium" />}
-      />
+      <SidebarProductHeader />
       
       <SidebarSearch />
-      <List sx={{ px: 2, pt: 1.5, flex: 1, overflowY: "auto" }}>
+      {/* ScrollFade owns the scrolling, so the list can admit with a soft edge
+          that there is more below it. */}
+      <ScrollFade>
+        <List sx={{ px: 2, pt: 1.5 }}>
         {navGroups.map((group, gi) => (
           <Box key={group.heading ?? gi} sx={{ mb: 1 }}>
             {group.heading && (
@@ -200,15 +202,22 @@ export default function AdminLayout() {
           </Box>
         ))}
       </List>
+      </ScrollFade>
       
       <Divider sx={{ borderColor: "divider" }} />
 
       {/* User card at bottom */}
+      {/* No hospital caption beneath this row, unlike the tenant panels: the
+          platform console has no second entity to name, and the mark on top
+          already says whose console it is. */}
       <SidebarUserCard
         name={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Super Admin"}
         role="Super Admin"
         avatarText={user?.firstName?.charAt(0) || "A"}
         onLogout={logout}
+        variant="compact"
+        roleCode="SUPER_ADMIN"
+        standalone
       />
     </Box>
   );

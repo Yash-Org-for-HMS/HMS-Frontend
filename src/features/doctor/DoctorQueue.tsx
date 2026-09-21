@@ -1,5 +1,4 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
-import { getDoctorInitials } from "@/utils/format";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -138,10 +137,16 @@ export default function DoctorQueue() {
 
                   return (
                     <TableRow key={token.queueTokenId} sx={{ "&:hover": { bgcolor: "background.default" } }}>
-                      {/* Token Number */}
+                      {/* The number reception told the patient, with nothing
+                          added to it. Every row here is this doctor's own
+                          queue, so prefixing the doctor's initials identified
+                          nothing and printed "PP-1" for a patient holding a
+                          slip that says 1 — a milder version of the two-numbers
+                          problem the queue work removed. The nurse queue keeps
+                          the prefix because its rows span several doctors. */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                         <Chip 
-                          label={`${getDoctorInitials(token.doctorName)}-${token.tokenNumber}`}
+                          label={token.tokenNumber}
                           sx={{
                             bgcolor: isInProgress ? "rgba(59,130,246,0.15)" : `rgba(148,163,184,0.15)`,
                             color: isInProgress ? DOCTOR_BLUE : "text.secondary",
@@ -228,7 +233,7 @@ export default function DoctorQueue() {
                   {skippedTokens.map((token: any) => (
                     <TableRow key={token.queueTokenId} sx={{ opacity: 0.85, "&:hover": { opacity: 1, bgcolor: "rgba(249,115,22,0.05)" }, transition: 'all 0.2s' }}>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '15%' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#f97316' }}>{getDoctorInitials(token.doctorName)}-{token.tokenNumber}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#f97316' }}>{token.tokenNumber}</Typography>
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "rgba(249,115,22,0.1)", width: '35%' }}>
                         <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{token.patientName}</Typography>

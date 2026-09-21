@@ -267,8 +267,8 @@ export default function UsersList() {
                         label={user.role?.roleName}
                         size="small"
                         sx={{
-                          bgcolor: "rgba(99, 102, 241, 0.1)",
-                          color: "#818cf8",
+                          bgcolor: "rgba(12, 115, 181, 0.1)",
+                          color: "#0C73B5",
                           borderRadius: 1,
                           fontWeight: 600,
                         }}
@@ -303,7 +303,7 @@ export default function UsersList() {
                       <Tooltip title="Edit">
                         <IconButton
                           onClick={() => navigate(`/rbac/users/edit/${user.userId}`)}
-                          sx={{ color: "text.secondary", "&:hover": { color: BRAND.action, bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                          sx={{ color: "text.secondary", "&:hover": { color: BRAND.action, bgcolor: "rgba(12, 115, 181, 0.1)" } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>

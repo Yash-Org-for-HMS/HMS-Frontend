@@ -195,7 +195,7 @@ function refundStatusChip(s: string) {
     : s === "Partially refunded" ? { bg: "rgba(245,158,11,0.16)", fg: "#b45309" }
     : s === "Held" ? { bg: "rgba(100,116,139,0.16)", fg: "#475569" }
     : { bg: "rgba(239,68,68,0.12)", fg: "#dc2626" };
-  return <Chip label={s} size="small" sx={{ height: 20, fontSize: "0.68rem", fontWeight: 700, bgcolor: c.bg, color: c.fg }} />;
+  return <Chip label={s} size="small" sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 700, bgcolor: c.bg, color: c.fg }} />;
 }
 
 // Advance deposits owed BACK to patients: closed (discharged/cancelled) admissions

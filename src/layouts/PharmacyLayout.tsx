@@ -12,13 +12,13 @@ import {
 import {
   Menu as MenuIcon, DashboardRounded, MedicationRounded,
   LocalShippingRounded, InventoryRounded, PointOfSaleRounded,
-  AssessmentRounded, LocalPharmacyRounded, WarehouseRounded, ReceiptLongRounded,
-  CampaignRounded,
+  AssessmentRounded, LocalPharmacyRounded, WarehouseRounded, ReceiptLongRounded,
 } from "@mui/icons-material";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BranchSwitcher from "@/components/BranchSwitcher";
-import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarProductHeader from "@/components/layout/SidebarProductHeader";
+import SidebarHospitalStrip from "@/components/layout/SidebarHospitalStrip";
 import SidebarSearch from "@/components/layout/SidebarSearch";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
@@ -51,7 +51,6 @@ export default function PharmacyLayout() {
     { text: "Ward Stock", icon: <WarehouseRounded />, path: "/pharmacy/ward-stock", section: "Inventory", module: "IPD" },
     { text: "Billing History", icon: <ReceiptLongRounded />, path: "/pharmacy/billing", section: "Reports", module: "Billing" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/pharmacy/reports", section: "Reports" },
-    { text: "Announcements", icon: <CampaignRounded />, path: "/pharmacy/announcements", badge: announcementsUnread, section: "Updates" },
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -61,11 +60,7 @@ export default function PharmacyLayout() {
 
   const drawerContent = (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "background.paper", color: "text.primary" }}>
-      <SidebarHeader
-        logoUrl={hospital?.logoUrl}
-        title={hospital?.name || "Pharmacy"}
-        subtitle="Pharmacy Portal"
-      />
+      <SidebarProductHeader />
       
       <SidebarSearch />
       <SidebarNav
@@ -84,7 +79,13 @@ export default function PharmacyLayout() {
         role={user?.roleName || "Pharmacist"}
         avatarText={user?.firstName?.charAt(0) || "P"}
         onLogout={logout}
+        variant="compact"
+        roleCode={user?.role}
+        // Announcements was the last nav row, and therefore below the fold
+        // on a 768px laptop in every panel. Pinned here instead.
+        announcements={{ count: announcementsUnread, onOpen: () => navigate("/pharmacy/announcements") }}
       />
+      <SidebarHospitalStrip logoUrl={hospital?.logoUrl} name={hospital?.name || ""} roleCode={user?.role} role={user?.roleName || ""} />
     </Box>
   );
 

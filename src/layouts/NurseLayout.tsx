@@ -13,12 +13,12 @@ import {
   Menu as MenuIcon, DashboardRounded, PeopleAltRounded, AssessmentRounded,
   MedicationRounded, VaccinesRounded, HotelRounded, MedicalServicesRounded, EventNoteRounded,
   WarehouseRounded,
-  CampaignRounded,
 } from "@mui/icons-material";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BranchSwitcher from "@/components/BranchSwitcher";
-import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarProductHeader from "@/components/layout/SidebarProductHeader";
+import SidebarHospitalStrip from "@/components/layout/SidebarHospitalStrip";
 import SidebarSearch from "@/components/layout/SidebarSearch";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
@@ -55,7 +55,6 @@ export default function NurseLayout() {
     { text: "Theatre Board", icon: <MedicalServicesRounded />, path: "/nurse/ipd/theatres", section: "Theatre & Beds", module: "IPD" },
     { text: "Operating List", icon: <EventNoteRounded />, path: "/nurse/ipd/ot-schedule", section: "Theatre & Beds", module: "IPD" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/nurse/reports", section: "Reports" },
-    { text: "Announcements", icon: <CampaignRounded />, path: "/nurse/announcements", badge: announcementsUnread, section: "Updates" },
   ];
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
@@ -71,11 +70,7 @@ export default function NurseLayout() {
       }}
     >
       {/* Logo / Header */}
-      <SidebarHeader
-        logoUrl={hospital?.logoUrl}
-        title={hospital?.name || "Nurse"}
-        subtitle="Nursing Station"
-      />
+      <SidebarProductHeader />
 
       {/* Navigation */}
       <SidebarSearch />
@@ -100,7 +95,13 @@ export default function NurseLayout() {
         role={user?.roleName || "Nurse"}
         avatarText={user?.firstName?.charAt(0) || "N"}
         onLogout={logout}
+        variant="compact"
+        roleCode={user?.role}
+        // Announcements was the last nav row, and therefore below the fold
+        // on a 768px laptop in every panel. Pinned here instead.
+        announcements={{ count: announcementsUnread, onOpen: () => navigate("/nurse/announcements") }}
       />
+      <SidebarHospitalStrip logoUrl={hospital?.logoUrl} name={hospital?.name || ""} roleCode={user?.role} role={user?.roleName || ""} />
     </Box>
   );
 

@@ -329,7 +329,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
               <TableHead>
                 <TableRow>
                   {["Vaccine", "Dose", "Age", "Due date", "Status", "Details", ""].map((h) => (
-                    <TableCell key={h} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", borderColor: "divider" }}>{h}</TableCell>
+                    <TableCell key={h} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider" }}>{h}</TableCell>
                   ))}
                 </TableRow>
               </TableHead>
@@ -345,13 +345,13 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
                       <TableCell sx={{ borderColor: "divider" }}>
                         <Chip size="small" label={meta.label} sx={{ bgcolor: `${meta.color}1f`, color: meta.color, fontWeight: 700 }} />
                       </TableCell>
-                      <TableCell sx={{ borderColor: "divider", color: "text.secondary", fontSize: "0.8rem" }}>
+                      <TableCell sx={{ borderColor: "divider", color: "text.secondary", fontSize: "0.75rem" }}>
                         {r.state === "DONE" && (
                           <Box>
                             <Box>Batch: {r.batchNumber || "—"} · {dayjs(r.administeredDate).format("DD MMM YYYY")}</Box>
                             {r.invoiceNumber && (
                               <Chip size="small" icon={<ReceiptLongRounded sx={{ fontSize: "13px !important" }} />} label={`Billed: ${r.invoiceNumber}`}
-                                sx={{ mt: 0.5, height: 20, bgcolor: `${ACCENT}1a`, color: ACCENT, fontWeight: 600, "& .MuiChip-label": { px: 1, fontSize: "0.7rem" } }} />
+                                sx={{ mt: 0.5, height: 20, bgcolor: `${ACCENT}1a`, color: ACCENT, fontWeight: 600, "& .MuiChip-label": { px: 1, fontSize: "0.6875rem" } }} />
                             )}
                           </Box>
                         )}

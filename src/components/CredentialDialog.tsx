@@ -110,7 +110,7 @@ export default function CredentialDialog({
           </Button>
           <Button
             fullWidth variant="contained" onClick={onClose}
-            sx={{ textTransform: "none", fontWeight: 600, bgcolor: INDIGO, "&:hover": { bgcolor: "#4f46e5" } }}
+            sx={{ textTransform: "none", fontWeight: 600, bgcolor: INDIGO, "&:hover": { bgcolor: "#095B90" } }}
           >
             Done
           </Button>

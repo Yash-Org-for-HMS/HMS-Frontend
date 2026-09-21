@@ -77,7 +77,7 @@ export default function LabTestPicker({ open, onClose, onToggle, selectedIds, ac
                   <ListItemText
                     primary={t.testName}
                     secondary={[t.category, t.testCode].filter(Boolean).join(" · ") || undefined}
-                    primaryTypographyProps={{ fontSize: "0.9rem", fontWeight: 600 }}
+                    primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: 600 }}
                   />
                   <Typography sx={{ fontWeight: 700, color: accent, ml: 2 }}>{inr(Number(t.price))}</Typography>
                 </ListItemButton>

@@ -180,7 +180,7 @@ export default function RefundApprovals() {
                             size="small"
                             label="Also voids the bill"
                             sx={{
-                              mt: 0.5, height: 20, fontSize: "0.66rem", fontWeight: 700,
+                              mt: 0.5, height: 20, fontSize: "0.6875rem", fontWeight: 700,
                               bgcolor: `${SEMANTIC.danger}1a`, color: SEMANTIC.danger,
                               border: `1px solid ${SEMANTIC.danger}44`,
                             }}

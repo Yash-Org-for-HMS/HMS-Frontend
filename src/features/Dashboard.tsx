@@ -203,7 +203,7 @@ export default function Dashboard() {
   // beneath it (e.g. Total Hospitals + Active / On Trial / Expired together).
 
   // ── Derived chart data ───────────────────────────────────────────────────
-  const INDIGO = "#6366f1";  // single-hue for the lead funnel (magnitude)
+  const INDIGO = "#0C73B5";  // single-hue for the lead funnel (magnitude)
   const TEAL = "#14b8a6";    // single-hue for plan mix (distinct from the funnel)
   const BLUE = "#3b82f6";    // single-hue for tenant growth; matches the TENANTS tile
   const tooltipStyle = { backgroundColor: "#FFFFFF", border: "1px solid rgba(15,23,42,0.1)", borderRadius: 8, color: "#0F172A", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", fontSize: 13 } as const;
@@ -350,7 +350,7 @@ export default function Dashboard() {
               <BarChart data={funnelData} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
                 <XAxis type="number" hide />
                 <YAxis type="category" dataKey="stage" width={92} tick={{ fill: "#475569", fontSize: 13 }} axisLine={false} tickLine={false} />
-                <Tooltip cursor={{ fill: "rgba(99,102,241,0.06)" }} contentStyle={tooltipStyle} formatter={(v) => [v, "Leads"]} />
+                <Tooltip cursor={{ fill: "rgba(12, 115, 181, 0.06)" }} contentStyle={tooltipStyle} formatter={(v) => [v, "Leads"]} />
                 {/* minPointSize gives a zero-count stage a 2px stub, so the label
                     anchors and the row reads as "nobody here" rather than as a
                     missing row. Without it four empty stages render as bare
@@ -509,13 +509,20 @@ export default function Dashboard() {
                 </Typography>
                 {/* Which tenant, because "created an invoice" across a whole
                     platform means nothing without knowing whose. */}
+                {/* These two may shrink; only the dot and the timestamp are
+                    rigid. With all three pinned at flexShrink: 0 the row had a
+                    minimum width wider than a phone, so it dragged the whole
+                    page sideways — and the timestamp growing by a single pixel
+                    was enough to tip it. Truncating the tenant or the module is
+                    the right thing to give up: the description is the message,
+                    and the time is the anchor everything aligns to. */}
                 {a.hospitalName && (
-                  <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600, flexShrink: 0, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600, flexShrink: 1, minWidth: 0, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {a.hospitalName}
                   </Typography>
                 )}
                 {a.moduleName && (
-                  <Typography variant="caption" sx={{ color: "text.secondary", flexShrink: 0 }}>{a.moduleName}</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary", flexShrink: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.moduleName}</Typography>
                 )}
                 <Typography variant="caption" sx={{ color: "text.secondary", flexShrink: 0, width: 132, textAlign: "right" }}>
                   {formatDateTime(a.createdAt)}

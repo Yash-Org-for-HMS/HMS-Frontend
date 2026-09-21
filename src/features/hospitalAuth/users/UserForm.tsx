@@ -403,12 +403,12 @@ export default function UserForm() {
                     gap: 1.5,
                     p: 2.5,
                     borderRadius: 2,
-                    bgcolor: "rgba(99, 102, 241, 0.06)",
-                    border: "1px solid rgba(99, 102, 241, 0.2)",
+                    bgcolor: "rgba(12, 115, 181, 0.06)",
+                    border: "1px solid rgba(12, 115, 181, 0.2)",
                     mb: 4,
                   }}
                 >
-                  <LockRounded sx={{ color: "#818cf8", mt: 0.2, flexShrink: 0 }} />
+                  <LockRounded sx={{ color: "#0C73B5", mt: 0.2, flexShrink: 0 }} />
                   <Box>
                     <Typography variant="subtitle2" sx={{ color: "#a5b4fc", fontWeight: 700, mb: 0.5 }}>
                       Setting Login Password

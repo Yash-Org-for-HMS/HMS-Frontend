@@ -96,7 +96,7 @@ export default function IpdMedicationRequests() {
                   <TableCell sx={{ fontWeight: 600, color: BRAND.action }}>{r.medicineName || "—"}</TableCell>
                   <TableCell>
                     {[r.dosage, r.frequency].filter(Boolean).join(" · ") || "—"}
-                    {r.route ? <Chip label={r.route} size="small" sx={{ ml: 1, height: 18, fontSize: "0.7rem" }} /> : null}
+                    {r.route ? <Chip label={r.route} size="small" sx={{ ml: 1, height: 18, fontSize: "0.6875rem" }} /> : null}
                   </TableCell>
                   <TableCell align="center">{r.quantity}</TableCell>
                   <TableCell align="right">{formatINR(r.totalPrice)}</TableCell>

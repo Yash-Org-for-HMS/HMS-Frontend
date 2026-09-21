@@ -12,7 +12,7 @@ import type { SortOrder } from "./useTableSort";
 const headSx = {
   color: "text.secondary",
   fontWeight: 700,
-  fontSize: "0.72rem",
+  fontSize: "0.75rem",
   textTransform: "uppercase",
   letterSpacing: 0.5,
   py: 2,

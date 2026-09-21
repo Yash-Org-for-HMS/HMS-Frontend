@@ -12,19 +12,19 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon, DashboardRounded, LocalHospitalRounded, PeopleRounded,
-  CalendarTodayRounded, SettingsRounded, DomainRounded, BadgeRounded,
+  CalendarTodayRounded, SettingsRounded, DomainRounded, BadgeRounded, CardMembershipRounded,
   WidgetsRounded, MedicalServicesRounded, DatasetRounded, EventNoteRounded,
   DynamicFormRounded, SecurityRounded, AccountBalanceRounded,
   AssessmentRounded, HotelRounded, MonitorHeartRounded, VaccinesRounded,
   MedicationRounded, LocalHotelRounded, ReceiptLongRounded,
   FormatListNumberedRounded,
-  CampaignRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { isAdmin as isAdminRole } from "@/constants/roles";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import BranchSwitcher from "@/components/BranchSwitcher";
-import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarProductHeader from "@/components/layout/SidebarProductHeader";
+import SidebarHospitalStrip from "@/components/layout/SidebarHospitalStrip";
 import SidebarSearch from "@/components/layout/SidebarSearch";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
@@ -91,7 +91,6 @@ export default function HospitalLayout() {
     { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", adminOnly: true, section: "Configuration" },
     { text: "Audit Logs", icon: <SecurityRounded />, path: "/hospital/audit-logs", adminOnly: true, section: "System" },
     { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", adminOnly: true, section: "System" },
-    { text: "Announcements", icon: <CampaignRounded />, path: "/hospital/announcements", badge: announcementsUnread, section: "System" },
   ];
 
   // Org AND branch admins see everything (mirrors the backend ADMIN_ROLE_CODES
@@ -140,11 +139,7 @@ export default function HospitalLayout() {
         color: "text.primary",
       }}
     >
-      <SidebarHeader
-        logoUrl={hospital?.logoUrl}
-        title={hospital?.name || "Hospital Admin"}
-        subtitle="Admin Portal"
-      />
+      <SidebarProductHeader />
       
       <SidebarSearch />
       <SidebarNav
@@ -168,7 +163,13 @@ export default function HospitalLayout() {
         avatarText={user?.firstName?.charAt(0) || "A"}
         onLogout={logout}
         onProfile={() => navigate("/hospital/profile")}
+        variant="compact"
+        roleCode={user?.role}
+        // Announcements was the last nav row, and therefore below the fold
+        // on a 768px laptop in every panel. Pinned here instead.
+        announcements={{ count: announcementsUnread, onOpen: () => navigate("/hospital/announcements") }}
       />
+      <SidebarHospitalStrip logoUrl={hospital?.logoUrl} name={hospital?.name || ""} roleCode={user?.role} role={user?.roleName || ""} />
     </Box>
   );
 

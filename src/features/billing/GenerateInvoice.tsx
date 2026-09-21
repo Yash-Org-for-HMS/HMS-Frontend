@@ -258,7 +258,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                           <Typography variant="caption" sx={{ 
                             px: 1, py: 0.5, borderRadius: 1, fontWeight: 700,
                             bgcolor: item.type === "CONSULTATION" ? "#E0E7FF" : item.type === "PHARMACY" ? "#D1FAE5" : "#FEF3C7",
-                            color: item.type === "CONSULTATION" ? "#3730A3" : item.type === "PHARMACY" ? "#065F46" : "#92400E"
+                            color: item.type === "CONSULTATION" ? "#07456E" : item.type === "PHARMACY" ? "#065F46" : "#92400E"
                           }}>
                             {item.type}
                           </Typography>

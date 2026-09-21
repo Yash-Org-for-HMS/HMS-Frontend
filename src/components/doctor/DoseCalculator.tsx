@@ -107,7 +107,7 @@ export default function DoseCalculator({ ageYears, weightKg, onApply }: Props) {
           />
         </RadioGroup>
 
-        <Alert severity="info" sx={{ mt: 1, py: 0, "& .MuiAlert-message": { fontSize: "0.72rem" } }}>
+        <Alert severity="info" sx={{ mt: 1, py: 0, "& .MuiAlert-message": { fontSize: "0.75rem" } }}>
           Estimate from standard formulas. Verify against the drug's pediatric guidance.
         </Alert>
 

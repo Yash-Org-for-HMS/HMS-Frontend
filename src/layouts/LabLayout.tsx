@@ -12,13 +12,13 @@ import {
 import {
   Menu as MenuIcon, DashboardRounded, ScienceRounded,
   SettingsAccessibilityRounded, MenuBookRounded, AssessmentRounded,
-  ReceiptLongRounded,
-  CampaignRounded,
+  ReceiptLongRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import BranchSwitcher from "@/components/BranchSwitcher";
-import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarProductHeader from "@/components/layout/SidebarProductHeader";
+import SidebarHospitalStrip from "@/components/layout/SidebarHospitalStrip";
 import SidebarSearch from "@/components/layout/SidebarSearch";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
@@ -50,7 +50,6 @@ export default function LabLayout() {
     { text: "Lab Catalog", icon: <MenuBookRounded />, path: "/lab/catalog", section: "Catalogs" },
     { text: "Radiology Catalog", icon: <MenuBookRounded />, path: "/lab/radiology-catalog", section: "Catalogs" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/lab/reports", section: "Reports" },
-    { text: "Announcements", icon: <CampaignRounded />, path: "/lab/announcements", badge: announcementsUnread, section: "Updates" },
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -60,11 +59,7 @@ export default function LabLayout() {
 
   const drawerContent = (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "background.paper", color: "text.primary" }}>
-      <SidebarHeader
-        logoUrl={hospital?.logoUrl}
-        title={hospital?.name || "Lab"}
-        subtitle="Lab & Radiology"
-      />
+      <SidebarProductHeader />
       
       <SidebarSearch />
       <SidebarNav
@@ -83,7 +78,13 @@ export default function LabLayout() {
         role={user?.roleName || "Lab Technician"}
         avatarText={user?.firstName?.charAt(0) || "L"}
         onLogout={logout}
+        variant="compact"
+        roleCode={user?.role}
+        // Announcements was the last nav row, and therefore below the fold
+        // on a 768px laptop in every panel. Pinned here instead.
+        announcements={{ count: announcementsUnread, onOpen: () => navigate("/lab/announcements") }}
       />
+      <SidebarHospitalStrip logoUrl={hospital?.logoUrl} name={hospital?.name || ""} roleCode={user?.role} role={user?.roleName || ""} />
     </Box>
   );
 

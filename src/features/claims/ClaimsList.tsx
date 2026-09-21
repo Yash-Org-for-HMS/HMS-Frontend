@@ -94,7 +94,7 @@ export default function ClaimsList() {
                   return (
                     <TableRow key={c.claimId} hover sx={{ cursor: "pointer", opacity: isFetching ? 0.7 : 1 }} onClick={() => navigate(`/reception/claims/${c.claimId}`)}>
                       <TableCell sx={{ fontWeight: 600 }}>{c.claimNumber}</TableCell>
-                      <TableCell>{c.patientName}<Box component="span" sx={{ color: "text.secondary", fontSize: "0.8rem", display: "block" }}>{c.uhid}</Box></TableCell>
+                      <TableCell>{c.patientName}<Box component="span" sx={{ color: "text.secondary", fontSize: "0.75rem", display: "block" }}>{c.uhid}</Box></TableCell>
                       <TableCell>{c.payerName || "—"}</TableCell>
                       <TableCell>{c.schemeType || "—"}</TableCell>
                       <TableCell><Chip size="small" label={m.label} sx={{ bgcolor: `${m.color}22`, color: m.color, fontWeight: 700 }} /></TableCell>

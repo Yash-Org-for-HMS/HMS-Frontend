@@ -119,7 +119,7 @@ export default function LabStructureDialog({ chargeItemId, itemName, onClose }: 
                   <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: 0.5 }}>Result entry preview</Typography>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 0.5, flexWrap: "wrap" }}>
                     <Typography sx={{ fontWeight: 700 }} noWrap>{itemName}</Typography>
-                    <Box sx={{ px: 1.25, py: 0.5, borderRadius: 1, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", color: "text.disabled", fontSize: "0.85rem" }}>value</Box>
+                    <Box sx={{ px: 1.25, py: 0.5, borderRadius: 1, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", color: "text.disabled", fontSize: "0.875rem" }}>value</Box>
                     {unit.trim() && <Typography variant="body2" sx={{ color: "text.secondary" }}>{unit.trim()}</Typography>}
                     <Box sx={{ flex: 1 }} />
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>

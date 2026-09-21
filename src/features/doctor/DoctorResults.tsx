@@ -293,7 +293,7 @@ function AckButton({ report }: { report: any }) {
   const toast = useToast();
   const [saving, setSaving] = useState(false);
   if (report.acknowledgedAt) {
-    return <Chip label="Acknowledged" size="small" sx={{ height: 18, fontSize: "0.6rem", fontWeight: 700, bgcolor: "rgba(16,185,129,0.14)", color: "#0f9d78", ml: 0.5 }} />;
+    return <Chip label="Acknowledged" size="small" sx={{ height: 18, fontSize: "0.625rem", fontWeight: 700, bgcolor: "rgba(16,185,129,0.14)", color: "#0f9d78", ml: 0.5 }} />;
   }
   const ack = async () => {
     setSaving(true);
@@ -306,7 +306,7 @@ function AckButton({ report }: { report: any }) {
   };
   return (
     <Button size="small" variant="outlined" color="error" disabled={saving} onClick={ack}
-      sx={{ textTransform: "none", py: 0, px: 1, minWidth: 0, fontSize: "0.65rem", ml: 0.5 }}>
+      sx={{ textTransform: "none", py: 0, px: 1, minWidth: 0, fontSize: "0.625rem", ml: 0.5 }}>
       {saving ? "…" : "Acknowledge"}
     </Button>
   );

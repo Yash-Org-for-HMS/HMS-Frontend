@@ -135,6 +135,14 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
   });
   const [processing, setProcessing] = useState(false);
   const [billingDialog, setBillingDialog] = useState<{ open: boolean, appt: any }>({ open: false, appt: null });
+  // Keyed by `${appointmentId}:${type}` so one row's send in flight doesn't
+  // disable another row's button, and a reminder in flight doesn't block a
+  // visit confirmation on the same appointment. Without this a double-click,
+  // or clicking again because the request felt slow, queued and sent the SAME
+  // message twice — each click hits the backend with nothing to say "one for
+  // this appointment is already on its way", so two real, separately-charged
+  // SMS went out for one click's worth of intent.
+  const [sendingNotification, setSendingNotification] = useState<string | null>(null);
 
   // The backend caps this at 500 rows per call (it used to return a hospital's
   // entire history unbounded). This page still filters/sorts client-side, so we
@@ -167,15 +175,17 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
   };
 
   const handleSendNotification = async (apptId: string, type: 'reminder' | 'visit-confirmation') => {
+    const key = `${apptId}:${type}`;
+    if (sendingNotification === key) return; // already in flight — the disabled button should prevent this, but a queued click can still land
     try {
-      setProcessing(true);
+      setSendingNotification(key);
       setSuccessMsg(null);
       const res = await axiosInstance.post(`/reception/notifications/appointments/${apptId}/${type}`);
       setSuccessMsg(res.data.message || "Notification queued");
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to send notification"));
     } finally {
-      setProcessing(false);
+      setSendingNotification(null);
     }
   };
 
@@ -431,9 +441,18 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Send Reminder">
-                              <IconButton size="small" onClick={() => handleSendNotification(appt.appointmentId, 'reminder')} sx={{ color: "text.secondary", "&:hover": { color: "#8b5cf6", bgcolor: "rgba(139,92,246,0.08)" } }}>
-                                <NotificationsActiveRounded fontSize="small" />
-                              </IconButton>
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  disabled={sendingNotification === `${appt.appointmentId}:reminder`}
+                                  onClick={() => handleSendNotification(appt.appointmentId, 'reminder')}
+                                  sx={{ color: "text.secondary", "&:hover": { color: "#8b5cf6", bgcolor: "rgba(139,92,246,0.08)" } }}
+                                >
+                                  {sendingNotification === `${appt.appointmentId}:reminder`
+                                    ? <HeartbeatLoader size={16} />
+                                    : <NotificationsActiveRounded fontSize="small" />}
+                                </IconButton>
+                              </span>
                             </Tooltip>
                           </>
                         )}
@@ -468,9 +487,18 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Send Visit Confirmation">
-                              <IconButton size="small" onClick={() => handleSendNotification(appt.appointmentId, 'visit-confirmation')} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.success, bgcolor: "rgba(16,185,129,0.08)" } }}>
-                                <ChecklistRounded fontSize="small" />
-                              </IconButton>
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  disabled={sendingNotification === `${appt.appointmentId}:visit-confirmation`}
+                                  onClick={() => handleSendNotification(appt.appointmentId, 'visit-confirmation')}
+                                  sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.success, bgcolor: "rgba(16,185,129,0.08)" } }}
+                                >
+                                  {sendingNotification === `${appt.appointmentId}:visit-confirmation`
+                                    ? <HeartbeatLoader size={16} />
+                                    : <ChecklistRounded fontSize="small" />}
+                                </IconButton>
+                              </span>
                             </Tooltip>
                           </>
                         )}

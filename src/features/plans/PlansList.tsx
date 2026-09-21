@@ -179,8 +179,8 @@ function LimitStat({ icon, label, value }: { icon: React.ReactNode; label: strin
   return (
     <Box sx={{ flex: 1, textAlign: "center", minWidth: 0 }}>
       <Box sx={{ color: "text.secondary", display: "flex", justifyContent: "center", mb: 0.25 }}>{icon}</Box>
-      <Typography sx={{ fontWeight: 800, fontSize: "0.95rem", lineHeight: 1.1 }}>{value}</Typography>
-      <Typography sx={{ color: "text.secondary", fontSize: "0.66rem", textTransform: "uppercase", letterSpacing: 0.4 }}>{label}</Typography>
+      <Typography sx={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.1 }}>{value}</Typography>
+      <Typography sx={{ color: "text.secondary", fontSize: "0.6875rem", textTransform: "uppercase", letterSpacing: 0.4 }}>{label}</Typography>
     </Box>
   );
 }
@@ -212,12 +212,12 @@ function PlanCard({ plan, modules, onMenu }: { plan: any; modules: Module[]; onM
       <Box sx={{ p: 2.5, pb: 2 }}>
         <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
           <Box sx={{ minWidth: 0 }}>
-            <Typography noWrap sx={{ fontWeight: 800, fontSize: "1.15rem" }}>{plan.planName}</Typography>
+            <Typography noWrap sx={{ fontWeight: 800, fontSize: "1.25rem" }}>{plan.planName}</Typography>
             <Chip
               size="small"
               icon={<ApartmentRounded sx={{ fontSize: "0.9rem !important" }} />}
               label={`${activeHospitals} hospital${activeHospitals === 1 ? "" : "s"}`}
-              sx={{ mt: 0.5, height: 22, fontSize: "0.68rem", fontWeight: 600, bgcolor: "action.hover", color: "text.secondary", "& .MuiChip-icon": { color: "inherit" } }}
+              sx={{ mt: 0.5, height: 22, fontSize: "0.6875rem", fontWeight: 600, bgcolor: "action.hover", color: "text.secondary", "& .MuiChip-icon": { color: "inherit" } }}
             />
           </Box>
           <IconButton size="small" onClick={onMenu} sx={{ color: "text.secondary", flex: "none", mt: -0.5, mr: -0.5 }}>
@@ -227,13 +227,13 @@ function PlanCard({ plan, modules, onMenu }: { plan: any; modules: Module[]; onM
 
         {/* Price */}
         <Box sx={{ mt: 1.5, display: "flex", alignItems: "baseline", gap: 0.5 }}>
-          <Typography sx={{ fontWeight: 800, fontSize: "1.9rem", lineHeight: 1, color: BRAND.action }}>{money(monthly)}</Typography>
-          <Typography sx={{ color: "text.secondary", fontSize: "0.85rem" }}>/ month</Typography>
+          <Typography sx={{ fontWeight: 800, fontSize: "2rem", lineHeight: 1, color: BRAND.action }}>{money(monthly)}</Typography>
+          <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>/ month</Typography>
         </Box>
         <Box sx={{ mt: 0.5, display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>{money(annual)} billed yearly</Typography>
           {savingsPct > 0 && (
-            <Chip size="small" label={`Save ${savingsPct}%`} sx={{ height: 18, fontSize: "0.62rem", fontWeight: 700, bgcolor: alpha(SEMANTIC.success, 0.14), color: SEMANTIC.success }} />
+            <Chip size="small" label={`Save ${savingsPct}%`} sx={{ height: 18, fontSize: "0.625rem", fontWeight: 700, bgcolor: alpha(SEMANTIC.success, 0.14), color: SEMANTIC.success }} />
           )}
         </Box>
       </Box>
@@ -249,7 +249,7 @@ function PlanCard({ plan, modules, onMenu }: { plan: any; modules: Module[]; onM
 
       {/* Feature checklist */}
       <Box sx={{ px: 2.5, pt: 1.5, pb: 1, flex: 1 }}>
-        <Typography sx={{ fontSize: "0.66rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, color: "text.secondary", mb: 0.75 }}>
+        <Typography sx={{ fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, color: "text.secondary", mb: 0.75 }}>
           Modules
           {modules.length > 0 && (
             <Box component="span" sx={{ ml: 0.75, color: "text.disabled", fontWeight: 600 }}>{includedCount}/{modules.length}</Box>

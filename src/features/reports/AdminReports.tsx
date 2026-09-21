@@ -44,7 +44,7 @@ import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto, formatDate } from "@/utils/format";
 import { ReportNavLayout, type ReportGroup, TrendChart, hasPlottableData } from "@/features/reports/kit";
 
-const ACCENT = BRAND.action; // indigo #6366f1
+const ACCENT = BRAND.action; // the logo blue, #0C73B5
 
 /** "YYYY-MM" for a date, matching the ledger's billingPeriod. */
 const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -832,7 +832,7 @@ function OnboardingReport() {
                       <TableCell sx={{ borderColor: "divider" }}>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                           <Chip label={o.paymentVerified ? "Verified" : "Not verified"} size="small"
-                            sx={{ height: 20, fontWeight: 700, fontSize: "0.68rem", bgcolor: o.paymentVerified ? "rgba(16,185,129,0.14)" : "rgba(148,163,184,0.18)", color: o.paymentVerified ? SEMANTIC.successDark : "text.secondary" }} />
+                            sx={{ height: 20, fontWeight: 700, fontSize: "0.6875rem", bgcolor: o.paymentVerified ? "rgba(16,185,129,0.14)" : "rgba(148,163,184,0.18)", color: o.paymentVerified ? SEMANTIC.successDark : "text.secondary" }} />
                           {o.paymentMismatch && (
                             <Tooltip title="No payment on file for this hospital"><WarningAmberRounded sx={{ fontSize: 16, color: SEMANTIC.danger }} /></Tooltip>
                           )}
@@ -848,13 +848,13 @@ function OnboardingReport() {
                       <TableCell sx={{ borderColor: "divider", whiteSpace: "nowrap" }}>
                         {o.billing?.latestInvoiceStatus ? (
                           <Chip label={o.billing.latestInvoiceOverdue ? "Overdue" : cap(o.billing.latestInvoiceStatus)} size="small"
-                            sx={{ height: 20, fontWeight: 700, fontSize: "0.68rem",
+                            sx={{ height: 20, fontWeight: 700, fontSize: "0.6875rem",
                               bgcolor: o.billing.latestInvoiceStatus === "PAID" ? "rgba(16,185,129,0.14)" : o.billing.latestInvoiceOverdue ? "rgba(239,68,68,0.14)" : "rgba(245,158,11,0.14)",
                               color: o.billing.latestInvoiceStatus === "PAID" ? SEMANTIC.successDark : o.billing.latestInvoiceOverdue ? SEMANTIC.dangerDark : SEMANTIC.warningDark }} />
                         ) : <Typography variant="caption" sx={{ color: "text.disabled" }}>None</Typography>}
                       </TableCell>
                       <TableCell sx={{ borderColor: "divider" }}>
-                        <Chip label={cap(o.onboardingStatus)} size="small" sx={{ height: 20, fontWeight: 700, fontSize: "0.68rem",
+                        <Chip label={cap(o.onboardingStatus)} size="small" sx={{ height: 20, fontWeight: 700, fontSize: "0.6875rem",
                           bgcolor: o.onboardingStatus === "completed" ? "rgba(16,185,129,0.14)" : o.onboardingStatus === "stalled" ? "rgba(239,68,68,0.14)" : "rgba(148,163,184,0.18)",
                           color: o.onboardingStatus === "completed" ? SEMANTIC.successDark : o.onboardingStatus === "stalled" ? SEMANTIC.dangerDark : "text.secondary" }} />
                       </TableCell>

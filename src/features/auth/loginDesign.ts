@@ -1,3 +1,5 @@
+import { BRAND } from "@/styles/accents";
+
 /**
  * The one login design, shared by the hospital staff portal and the platform
  * admin console.
@@ -13,14 +15,17 @@
  * to. Anything that should look the same on both belongs in this file.
  */
 
-/** The single accent: focus rings, field icons, links. */
-export const LOGIN_ACCENT = "#0891b2";
 /**
- * The submit button is solid ink rather than the accent — the strongest
- * contrast available for the primary action, per the reference login card.
+ * The single accent: focus rings, field icons, links, and the submit button.
+ *
+ * Taken from the product token rather than held privately here. This page used
+ * to carry its own cyan (#0891b2) and a near-black submit button — the
+ * strongest contrast available, but it meant the first screen anyone sees
+ * shared no colour with the logo sitting above it.
  */
-const INK = "#111827";
-const INK_DARK = "#000000";
+export const LOGIN_ACCENT = BRAND.action;
+const SUBMIT = BRAND.action;
+const SUBMIT_HOVER = BRAND.actionDark;
 
 /**
  * Pill-shaped, near-borderless fields: soft neutral fill, fully rounded, colour
@@ -53,12 +58,14 @@ export const loginFieldSx = {
 export const loginSubmitSx = {
   py: 1.5,
   fontWeight: 700,
-  fontSize: "0.98rem",
+  fontSize: "1rem",
   textTransform: "none",
   borderRadius: 999,
   color: "#fff",
-  bgcolor: INK,
-  "&:hover": { bgcolor: INK_DARK },
+  // The brand blue carries white text at 5.1:1, so moving off near-black for
+  // the logo's colour stays above AA.
+  bgcolor: SUBMIT,
+  "&:hover": { bgcolor: SUBMIT_HOVER },
   "&.Mui-disabled": { bgcolor: "rgba(15,23,42,0.12)", color: "rgba(15,23,42,0.4)" },
   transition: "background-color 0.2s ease",
 } as const;

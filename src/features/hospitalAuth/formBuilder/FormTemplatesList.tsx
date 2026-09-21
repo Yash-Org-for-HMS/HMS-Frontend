@@ -130,7 +130,7 @@ export default function FormTemplatesList() {
                   <TableRow key={t.formTemplateId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                     <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary", fontWeight: 500 }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <DynamicFormRounded sx={{ color: "#818cf8", fontSize: 20 }} />
+                        <DynamicFormRounded sx={{ color: "#0C73B5", fontSize: 20 }} />
                         {t.formName}
                       </Box>
                       <Typography variant="caption" display="block" sx={{ color: "text.secondary", mt: 0.5, ml: 3.5 }}>
@@ -152,7 +152,7 @@ export default function FormTemplatesList() {
                         <IconButton
                           size="small"
                           onClick={() => navigate(`/hospital/form-builder/${t.formTemplateId}/edit`)}
-                          sx={{ color: BRAND.action, mr: 1, "&:hover": { bgcolor: "rgba(99, 102, 241, 0.1)" } }}
+                          sx={{ color: BRAND.action, mr: 1, "&:hover": { bgcolor: "rgba(12, 115, 181, 0.1)" } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>

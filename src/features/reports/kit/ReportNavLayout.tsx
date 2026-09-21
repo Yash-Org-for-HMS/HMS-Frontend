@@ -122,7 +122,7 @@ export default function ReportNavLayout({
                     <ListItemText
                       primary={g.heading}
                       primaryTypographyProps={{
-                        fontWeight: 800, fontSize: "0.7rem", letterSpacing: 0.5,
+                        fontWeight: 800, fontSize: "0.6875rem", letterSpacing: 0.5,
                         textTransform: "uppercase",
                         color: hasActive && !isOpen ? accent : "text.secondary",
                       }}
@@ -150,7 +150,7 @@ export default function ReportNavLayout({
                         <ListItemText
                           primary={it.label}
                           primaryTypographyProps={{
-                            fontSize: "0.86rem",
+                            fontSize: "0.875rem",
                             fontWeight: active === it.key ? 700 : 500,
                             color: active === it.key ? accent : "text.primary",
                           }}

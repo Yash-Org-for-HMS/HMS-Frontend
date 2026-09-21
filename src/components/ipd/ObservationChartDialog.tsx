@@ -285,7 +285,7 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
                     {columns.map((c, i) => (
                       <TableCell key={c.key}
                         sx={{
-                          fontWeight: 700, fontSize: "0.7rem", textTransform: "uppercase",
+                          fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase",
                           color: "text.secondary", whiteSpace: "nowrap",
                           // Time is the chart's anchor. Once a hospital adds its own
                           // columns the grid is wider than the dialog, and without
@@ -296,7 +296,7 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
                         {c.label}
                       </TableCell>
                     ))}
-                    <TableCell sx={{ fontWeight: 700, fontSize: "0.7rem", textTransform: "uppercase", color: "text.secondary" }}>By</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase", color: "text.secondary" }}>By</TableCell>
                     <TableCell align="right" />
                   </TableRow>
                 </TableHead>
@@ -337,10 +337,10 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
                           <Typography variant="caption" sx={{ color: "text.secondary" }}>{o.remark || ""}</Typography>
                           {o.correctsId && (
                             <Chip size="small" label={`Correction: ${o.correctionReason}`}
-                              sx={{ ml: 0.5, height: 18, fontSize: "0.65rem", bgcolor: alpha(SEMANTIC.warning, 0.15), color: SEMANTIC.warning }} />
+                              sx={{ ml: 0.5, height: 18, fontSize: "0.625rem", bgcolor: alpha(SEMANTIC.warning, 0.15), color: SEMANTIC.warning }} />
                           )}
                         </TableCell>
-                        <TableCell sx={{ color: "text.secondary", whiteSpace: "nowrap", fontSize: "0.78rem" }}>{o.recordedBy}</TableCell>
+                        <TableCell sx={{ color: "text.secondary", whiteSpace: "nowrap", fontSize: "0.75rem" }}>{o.recordedBy}</TableCell>
                         <TableCell align="right">
                           {!readOnly && !dead && (
                             <Tooltip title="Correct this reading">

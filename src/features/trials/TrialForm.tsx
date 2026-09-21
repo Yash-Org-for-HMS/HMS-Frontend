@@ -186,10 +186,10 @@ export default function TrialForm() {
                           px: 2,
                           "&:hover": { bgcolor: "action.hover" },
                           "&.Mui-selected": {
-                            bgcolor: "rgba(99, 102, 241, 0.2)",
-                            color: "#818cf8",
+                            bgcolor: "rgba(12, 115, 181, 0.2)",
+                            color: "#0C73B5",
                             "&:hover": {
-                              bgcolor: "rgba(99, 102, 241, 0.25)"
+                              bgcolor: "rgba(12, 115, 181, 0.25)"
                             }
                           }
                         }
@@ -298,7 +298,7 @@ export default function TrialForm() {
                           py: 1.5,
                           px: 2,
                           "&:hover": { bgcolor: "action.hover" },
-                          "&.Mui-selected": { bgcolor: "rgba(99, 102, 241, 0.2)", color: "#818cf8" }
+                          "&.Mui-selected": { bgcolor: "rgba(12, 115, 181, 0.2)", color: "#0C73B5" }
                         }
                       }
                     }
@@ -336,7 +336,7 @@ export default function TrialForm() {
               <Box sx={{ height: "100%", display: "flex", alignItems: "center", p: 2, bgcolor: "background.paper", borderRadius: "12px", border: "1px solid", borderColor: "divider" }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
                   <Typography sx={{ color: "text.secondary" }}>Days Remaining:</Typography>
-                  <Typography sx={{ color: BRAND.action, fontWeight: 800, fontSize: "1.2rem" }}>
+                  <Typography sx={{ color: BRAND.action, fontWeight: 800, fontSize: "1.25rem" }}>
                     {calculateDaysRemaining()} Days
                   </Typography>
                 </Box>

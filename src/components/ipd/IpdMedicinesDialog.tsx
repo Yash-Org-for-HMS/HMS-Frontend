@@ -236,7 +236,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
               <li {...props} key={o.medicineId}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
                   <span>{o.medicineName}{o.genericName ? ` · ${o.genericName}` : ""}</span>
-                  <span style={{ color: o.availableStock > 0 ? NEUTRAL.muted : SEMANTIC.danger, fontSize: "0.8rem" }}>
+                  <span style={{ color: o.availableStock > 0 ? NEUTRAL.muted : SEMANTIC.danger, fontSize: "0.75rem" }}>
                     {formatINR(o.sellingPrice)} · stock {o.availableStock}
                   </span>
                 </Box>

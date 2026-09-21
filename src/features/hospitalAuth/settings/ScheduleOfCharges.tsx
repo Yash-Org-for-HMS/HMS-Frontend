@@ -76,7 +76,7 @@ export default function ScheduleOfCharges() {
   const activeRoomClasses = useMemo(() => roomClasses.filter((r) => r.isActive), [roomClasses]);
   // Charges table columns: Charge + Base + one per active room class + Status + actions.
   const colCount = 4 + activeRoomClasses.length;
-  const headCellSx = { fontWeight: 700, color: "text.secondary", fontSize: "0.72rem", textTransform: "uppercase", bgcolor: "background.paper", whiteSpace: "nowrap" } as const;
+  const headCellSx = { fontWeight: 700, color: "text.secondary", fontSize: "0.75rem", textTransform: "uppercase", bgcolor: "background.paper", whiteSpace: "nowrap" } as const;
 
   // Default-select the first category once loaded.
   const selected = categories.find((c) => c.chargeCategoryId === selectedId) ?? categories[0];
@@ -178,8 +178,8 @@ export default function ScheduleOfCharges() {
           ) : <Box sx={{ width: 24, flexShrink: 0 }} />}
           <ListItemText
             primary={cat.categoryName} secondary={secondary}
-            primaryTypographyProps={{ fontSize: "0.86rem", fontWeight: isSel ? 700 : hasKids ? 600 : 500, color: isSel ? ACCENT : "text.primary", noWrap: true }}
-            secondaryTypographyProps={{ fontSize: "0.72rem", color: !cat.isActive ? "warning.main" : "text.secondary" }}
+            primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: isSel ? 700 : hasKids ? 600 : 500, color: isSel ? ACCENT : "text.primary", noWrap: true }}
+            secondaryTypographyProps={{ fontSize: "0.75rem", color: !cat.isActive ? "warning.main" : "text.secondary" }}
           />
         </ListItemButton>
         {hasKids && isOpen && kids.map((k) => renderNode(k, depth + 1))}
@@ -230,13 +230,13 @@ export default function ScheduleOfCharges() {
                 <>
                   {searchRes.items.length > 0 && (
                     <>
-                      <Typography sx={{ px: 1.5, pt: 1.25, pb: 0.5, fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.disabled" }}>Charges</Typography>
+                      <Typography sx={{ px: 1.5, pt: 1.25, pb: 0.5, fontSize: "0.6875rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.disabled" }}>Charges</Typography>
                       {searchRes.items.map((it) => (
                         <ListItemButton key={it.chargeItemId} onClick={() => openCharge(it.category.chargeCategoryId, it)} sx={{ py: 0.6 }}>
                           <ListItemText
                             primary={it.itemName} secondary={`${it.category.categoryName} · ${inr(Number(it.price))}`}
-                            primaryTypographyProps={{ fontSize: "0.86rem", fontWeight: 600, noWrap: true }}
-                            secondaryTypographyProps={{ fontSize: "0.72rem", color: "text.secondary", noWrap: true }}
+                            primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: 600, noWrap: true }}
+                            secondaryTypographyProps={{ fontSize: "0.75rem", color: "text.secondary", noWrap: true }}
                           />
                         </ListItemButton>
                       ))}
@@ -244,14 +244,14 @@ export default function ScheduleOfCharges() {
                   )}
                   {searchRes.categories.length > 0 && (
                     <>
-                      <Typography sx={{ px: 1.5, pt: 1.25, pb: 0.5, fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.disabled" }}>Categories</Typography>
+                      <Typography sx={{ px: 1.5, pt: 1.25, pb: 0.5, fontSize: "0.6875rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.disabled" }}>Categories</Typography>
                       {searchRes.categories.map((c) => (
                         <ListItemButton key={c.chargeCategoryId} selected={c.chargeCategoryId === activeCategoryId} onClick={() => { setSelectedId(c.chargeCategoryId); setSearch(""); }}
                           sx={{ py: 0.6, "&.Mui-selected": { bgcolor: `${ACCENT}14`, borderRight: `3px solid ${ACCENT}` } }}>
                           <ListItemText
                             primary={c.categoryName} secondary={!c.isActive ? "Inactive" : `${c._count?.items ?? 0} charge${(c._count?.items ?? 0) === 1 ? "" : "s"}`}
-                            primaryTypographyProps={{ fontSize: "0.86rem", fontWeight: 500 }}
-                            secondaryTypographyProps={{ fontSize: "0.72rem", color: !c.isActive ? "warning.main" : "text.secondary" }}
+                            primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: 500 }}
+                            secondaryTypographyProps={{ fontSize: "0.75rem", color: !c.isActive ? "warning.main" : "text.secondary" }}
                           />
                         </ListItemButton>
                       ))}
@@ -268,7 +268,7 @@ export default function ScheduleOfCharges() {
                     {effShowEmpty ? <UnfoldLessRounded fontSize="small" sx={{ mr: 1 }} /> : <UnfoldMoreRounded fontSize="small" sx={{ mr: 1 }} />}
                     <ListItemText
                       primary={effShowEmpty ? "Show only categories in use" : `Show all ${categories.length} categories`}
-                      primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 600 }}
+                      primaryTypographyProps={{ fontSize: "0.75rem", fontWeight: 600 }}
                     />
                   </ListItemButton>
                 )}
@@ -287,7 +287,7 @@ export default function ScheduleOfCharges() {
                   {parentName && <Typography component="span" sx={{ fontWeight: 500, color: "text.disabled" }}>{parentName} › </Typography>}
                   {selected?.categoryName ?? "—"}
                 </Typography>
-                {selected && !selected.isActive && <Chip label="Inactive category" size="small" sx={{ height: 18, fontSize: "0.65rem", bgcolor: "rgba(245,158,11,0.12)", color: "warning.main" }} />}
+                {selected && !selected.isActive && <Chip label="Inactive category" size="small" sx={{ height: 18, fontSize: "0.625rem", bgcolor: "rgba(245,158,11,0.12)", color: "warning.main" }} />}
               </Box>
               <Box sx={{ flex: 1 }} />
               {selected && (
@@ -351,12 +351,12 @@ export default function ScheduleOfCharges() {
                       return (
                         <TableRow key={it.chargeItemId} hover>
                           <TableCell>
-                            <Typography sx={{ fontWeight: 600, fontSize: "0.87rem" }}>
+                            <Typography sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
                               {it.itemName}
-                              {it.itemType === "RADIOLOGY" && <Chip label="Radiology" size="small" sx={{ ml: 0.75, height: 17, fontSize: "0.6rem", fontWeight: 700, bgcolor: `${ACCENT}14`, color: ACCENT }} />}
-                              {it.itemType === "LAB" && <Chip label="Lab" size="small" sx={{ ml: 0.75, height: 17, fontSize: "0.6rem", fontWeight: 700, bgcolor: "rgba(16,185,129,0.14)", color: "success.main" }} />}
+                              {it.itemType === "RADIOLOGY" && <Chip label="Radiology" size="small" sx={{ ml: 0.75, height: 17, fontSize: "0.625rem", fontWeight: 700, bgcolor: `${ACCENT}14`, color: ACCENT }} />}
+                              {it.itemType === "LAB" && <Chip label="Lab" size="small" sx={{ ml: 0.75, height: 17, fontSize: "0.625rem", fontWeight: 700, bgcolor: "rgba(16,185,129,0.14)", color: "success.main" }} />}
                             </Typography>
-                            {meta && <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>{meta}</Typography>}
+                            {meta && <Typography sx={{ fontSize: "0.75rem", color: "text.secondary" }}>{meta}</Typography>}
                           </TableCell>
                           <TableCell align="right" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>{inr(Number(it.price))}</TableCell>
                           {activeRoomClasses.map((rc, i) => {
@@ -369,7 +369,7 @@ export default function ScheduleOfCharges() {
                           })}
                           <TableCell align="center">
                             <Chip label={it.isActive ? "Active" : "Inactive"} size="small"
-                              sx={{ height: 20, fontSize: "0.7rem", fontWeight: 600, bgcolor: it.isActive ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", color: it.isActive ? "success.main" : "error.main" }} />
+                              sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 600, bgcolor: it.isActive ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", color: it.isActive ? "success.main" : "error.main" }} />
                           </TableCell>
                           <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                             {it.itemType === "LAB" && <Tooltip title="Lab structure (single / profile parameters)"><IconButton size="small" onClick={() => setStructureItem(it)}><ScienceRounded fontSize="small" sx={{ color: "success.main" }} /></IconButton></Tooltip>}
@@ -451,7 +451,7 @@ const CHANGE_META = {
 // The change delta as a compact pill: New / Removed, or ±amount·% with a direction
 // arrow (a rise reads amber, a cut reads green — cheaper).
 function DeltaPill({ r }: { r: PriceHistoryRow }) {
-  const base = { height: 20, fontSize: "0.66rem", fontWeight: 700, "& .MuiChip-icon": { color: "inherit", ml: 0.5 } };
+  const base = { height: 20, fontSize: "0.6875rem", fontWeight: 700, "& .MuiChip-icon": { color: "inherit", ml: 0.5 } };
   if (r.changeType === "CREATE") return <Chip label="New" size="small" sx={{ ...base, bgcolor: "rgba(16,185,129,0.14)", color: "#0f9d78" }} />;
   if (r.changeType === "REMOVE") return <Chip label="Removed" size="small" sx={{ ...base, bgcolor: "rgba(239,68,68,0.12)", color: "#ef4444" }} />;
   const oldP = Number(r.oldPrice), newP = Number(r.newPrice);
@@ -490,7 +490,7 @@ function PriceHistoryDialog({ item, onClose }: { item: Item; onClose: () => void
             <HistoryRounded />
           </Box>
           <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", lineHeight: 1.2 }}>Price history</Typography>
+            <Typography sx={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.2 }}>Price history</Typography>
             <Typography variant="body2" noWrap sx={{ color: "text.secondary" }}>{item.itemName}</Typography>
           </Box>
           <IconButton onClick={onClose} size="small" sx={{ color: "text.secondary", flex: "none" }} aria-label="Close">
@@ -515,7 +515,7 @@ function PriceHistoryDialog({ item, onClose }: { item: Item; onClose: () => void
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, px: 2.5, py: 2,
               bgcolor: (t) => (t.palette.mode === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)") }}>
               <Box>
-                <Typography sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 700, fontSize: "0.62rem" }}>Current OPD (base) price</Typography>
+                <Typography sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 700, fontSize: "0.625rem" }}>Current OPD (base) price</Typography>
                 <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.15 }}>{inr(Number(item.price))}</Typography>
               </Box>
               <Box sx={{ textAlign: "right" }}>
@@ -529,7 +529,7 @@ function PriceHistoryDialog({ item, onClose }: { item: Item; onClose: () => void
               <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", px: 2.5, py: 1.5, borderBottom: 1, borderColor: "divider" }}>
                 {["All", ...scopes].map((s) => (
                   <Chip key={s} label={s} size="small" onClick={() => setScope(s)} variant={scope === s ? "filled" : "outlined"}
-                    sx={{ height: 24, fontSize: "0.7rem", fontWeight: 600, ...(scope === s ? { color: "#fff" } : {}) }} />
+                    sx={{ height: 24, fontSize: "0.6875rem", fontWeight: 600, ...(scope === s ? { color: "#fff" } : {}) }} />
                 ))}
               </Box>
             )}
@@ -665,7 +665,7 @@ const CatalogRow = memo(function CatalogRow({ entry, checked, price, onToggle, o
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1, py: 0.4, borderBottom: "1px solid", borderColor: "divider", "&:last-of-type": { borderBottom: "none" }, bgcolor: checked ? alpha(ACCENT, 0.06) : "transparent" }}>
       <Checkbox size="small" checked={checked} onChange={() => onToggle(entry)} sx={{ p: 0.5, color: ACCENT, "&.Mui-checked": { color: ACCENT } }} />
-      <Typography sx={{ flex: 1, minWidth: 0, fontSize: "0.85rem" }} noWrap title={entry.name}>{entry.name}</Typography>
+      <Typography sx={{ flex: 1, minWidth: 0, fontSize: "0.875rem" }} noWrap title={entry.name}>{entry.name}</Typography>
       <TextField size="small" type="number" placeholder="Price" value={price}
         onFocus={() => { if (!checked) onToggle(entry); }}
         onChange={(e) => onPrice(entry.name, entry.itemType, e.target.value)}
@@ -928,7 +928,7 @@ function RoomClassesDialog({ roomClasses, onClose, onChanged }: { roomClasses: R
           {roomClasses.map((rc) => (
             <Box key={rc.roomClassId} sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.5, borderBottom: "1px solid", borderColor: "divider" }}>
               <Typography sx={{ flex: 1, fontWeight: 600, color: rc.isActive ? "text.primary" : "text.disabled" }}>{rc.name}</Typography>
-              {!rc.isActive && <Chip label="Inactive" size="small" sx={{ height: 18, fontSize: "0.65rem" }} />}
+              {!rc.isActive && <Chip label="Inactive" size="small" sx={{ height: 18, fontSize: "0.625rem" }} />}
               <Tooltip title="Rename"><IconButton size="small" onClick={() => rename(rc)}><EditRounded fontSize="small" /></IconButton></Tooltip>
               <Switch size="small" checked={rc.isActive} onChange={() => toggle(rc)} />
               <Tooltip title="Delete"><IconButton size="small" onClick={() => remove(rc)}><DeleteRounded fontSize="small" sx={{ color: "error.main" }} /></IconButton></Tooltip>

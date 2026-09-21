@@ -152,7 +152,7 @@ export default function PaymentsRegister() {
                         {/* A payment against a voided invoice still happened — flag the
                             pair rather than let it look like an ordinary receipt. */}
                         {r.invoiceStatus === "VOID" && (
-                          <Chip size="small" label="Invoice voided" color="warning" sx={{ height: 18, fontSize: "0.65rem", fontWeight: 700 }} />
+                          <Chip size="small" label="Invoice voided" color="warning" sx={{ height: 18, fontSize: "0.625rem", fontWeight: 700 }} />
                         )}
                       </TableCell>
                       <TableCell align="right">

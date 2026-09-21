@@ -302,7 +302,7 @@ export default function AuditLogs() {
                             sx={{ bgcolor: alpha(tone, 0.12), color: tone, fontWeight: 700, borderRadius: 1.5 }}
                           />
                         </TableCell>
-                        <TableCell sx={{ borderColor: "divider", color: "text.secondary", fontFamily: "monospace", fontSize: "0.8rem" }}>
+                        <TableCell sx={{ borderColor: "divider", color: "text.secondary", fontFamily: "monospace", fontSize: "0.75rem" }}>
                           {log.ipAddress || "—"}
                         </TableCell>
                         <TableCell align="right" sx={{ borderColor: "divider" }}>
@@ -366,9 +366,9 @@ export default function AuditLogs() {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", color: "text.secondary" }}>Field</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", color: "text.secondary" }}>Before</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", color: "text.secondary" }}>After</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", color: "text.secondary" }}>Field</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", color: "text.secondary" }}>Before</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", color: "text.secondary" }}>After</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>

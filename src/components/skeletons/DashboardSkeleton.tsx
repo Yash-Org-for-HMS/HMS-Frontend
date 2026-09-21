@@ -11,8 +11,8 @@ export default function DashboardSkeleton({ stats = 4, panels = 2 }: { stats?: n
     <Box sx={{ p: { xs: 0, md: 1 }, width: "100%" }}>
       <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3 }}>
         <Box>
-          <Skeleton variant="text" width={220} sx={{ fontSize: "1.75rem" }} />
-          <Skeleton variant="text" width={300} sx={{ fontSize: "0.9rem" }} />
+          <Skeleton variant="text" width={220} sx={{ fontSize: "1.5rem" }} />
+          <Skeleton variant="text" width={300} sx={{ fontSize: "0.875rem" }} />
         </Box>
       </Stack>
 
@@ -22,7 +22,7 @@ export default function DashboardSkeleton({ stats = 4, panels = 2 }: { stats?: n
             <Stack direction="row" spacing={1.5} alignItems="center">
               <Skeleton variant="rounded" width={40} height={40} />
               <Box sx={{ flex: 1 }}>
-                <Skeleton variant="text" width="60%" sx={{ fontSize: "1.4rem" }} />
+                <Skeleton variant="text" width="60%" sx={{ fontSize: "1.5rem" }} />
                 <Skeleton variant="text" width="80%" sx={{ fontSize: "0.75rem" }} />
               </Box>
             </Stack>

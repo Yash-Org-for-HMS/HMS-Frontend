@@ -13,13 +13,14 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon, DashboardRounded, PeopleAltRounded, GroupsRounded,
-  QueueRounded, EventBusyRounded, ScienceRounded, AssessmentRounded,
-  CampaignRounded,
+  QueueRounded,
+  EventNoteRounded, EventBusyRounded, ScienceRounded, AssessmentRounded,
 } from "@mui/icons-material";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BranchSwitcher from "@/components/BranchSwitcher";
-import SidebarHeader from "@/components/layout/SidebarHeader";
+import SidebarProductHeader from "@/components/layout/SidebarProductHeader";
+import SidebarHospitalStrip from "@/components/layout/SidebarHospitalStrip";
 import SidebarSearch from "@/components/layout/SidebarSearch";
 import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
@@ -70,7 +71,6 @@ export default function DoctorLayout() {
     // its own group prints that group's heading a second time.
     { text: "My Leave", icon: <EventBusyRounded />, path: "/doctor/leaves", badge: 0, section: "My Work" },
     { text: "My Reports", icon: <AssessmentRounded />, path: "/doctor/reports", badge: 0, section: "Insights" },
-    { text: "Announcements", icon: <CampaignRounded />, path: "/doctor/announcements", badge: announcementsUnread, section: "Updates" },
   ];
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
@@ -86,11 +86,7 @@ export default function DoctorLayout() {
       }}
     >
       {/* Logo / Header */}
-      <SidebarHeader
-        logoUrl={hospital?.logoUrl}
-        title={hospital?.name || "Doctor"}
-        subtitle="Doctor Workspace"
-      />
+      <SidebarProductHeader />
 
       {/* Navigation */}
       <SidebarSearch />
@@ -115,7 +111,13 @@ export default function DoctorLayout() {
         role={user?.roleName || "Doctor"}
         avatarText={user?.firstName?.charAt(0) || "D"}
         onLogout={logout}
+        variant="compact"
+        roleCode={user?.role}
+        // Announcements was the last nav row, and therefore below the fold
+        // on a 768px laptop in every panel. Pinned here instead.
+        announcements={{ count: announcementsUnread, onOpen: () => navigate("/doctor/announcements") }}
       />
+      <SidebarHospitalStrip logoUrl={hospital?.logoUrl} name={hospital?.name || ""} roleCode={user?.role} role={user?.roleName || ""} />
     </Box>
   );
 

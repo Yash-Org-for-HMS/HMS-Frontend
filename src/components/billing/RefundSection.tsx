@@ -182,8 +182,8 @@ export default function RefundSection({
                   {r.refundReason ? ` — ${r.refundReason}` : ""}
                   {paymentLabel(r.paymentId)}
                 </Typography>
-                {pending && <Chip size="small" label="Awaiting approval" sx={{ height: 20, fontSize: "0.66rem", fontWeight: 700 }} />}
-                {rejected && <Chip size="small" label="Rejected" sx={{ height: 20, fontSize: "0.66rem", fontWeight: 700 }} />}
+                {pending && <Chip size="small" label="Awaiting approval" sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 700 }} />}
+                {rejected && <Chip size="small" label="Rejected" sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 700 }} />}
                 {!pending && !rejected && (
                   <Button size="small" onClick={() => setReceiptFor(r.refundId)} sx={{ textTransform: "none", fontWeight: 600, minWidth: 0 }}>
                     Receipt

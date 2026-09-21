@@ -216,7 +216,7 @@ export default function LabBilling() {
                           icon={o.kind === "LAB" ? <ScienceRounded /> : <BiotechRounded />}
                           label={o.kind === "LAB" ? "Lab" : "Radiology"}
                           size="small"
-                          sx={{ mr: 1, height: 22, fontSize: "0.7rem", fontWeight: 700, bgcolor: o.kind === "LAB" ? "rgba(59,130,246,0.12)" : "rgba(245,158,11,0.12)", color: o.kind === "LAB" ? SEMANTIC.infoDark : "#b45309", "& .MuiChip-icon": { fontSize: 15 } }}
+                          sx={{ mr: 1, height: 22, fontSize: "0.6875rem", fontWeight: 700, bgcolor: o.kind === "LAB" ? "rgba(59,130,246,0.12)" : "rgba(245,158,11,0.12)", color: o.kind === "LAB" ? SEMANTIC.infoDark : "#b45309", "& .MuiChip-icon": { fontSize: 15 } }}
                         />
                         {o.description}
                       </TableCell>
@@ -232,7 +232,7 @@ export default function LabBilling() {
                             Receipt
                           </Button>
                         ) : (
-                          <Box sx={{ color: "text.disabled", fontSize: "0.8rem" }}>—</Box>
+                          <Box sx={{ color: "text.disabled", fontSize: "0.75rem" }}>—</Box>
                         )}
                       </TableCell>
                     </TableRow>

@@ -121,7 +121,7 @@ export default function RadiologyMacroBar({
                 primary={m.title}
                 secondary={m.content}
                 primaryTypographyProps={{ fontWeight: 600 }}
-                secondaryTypographyProps={{ noWrap: true, fontSize: "0.72rem" }}
+                secondaryTypographyProps={{ noWrap: true, fontSize: "0.75rem" }}
               />
               <Tooltip title="Delete">
                 <IconButton size="small" onClick={(e) => remove(e, m)} sx={{ ml: 1 }}>
@@ -142,7 +142,7 @@ export default function RadiologyMacroBar({
             primary="Save current report as template"
             secondary={content.trim() ? undefined : "Write the report first"}
             primaryTypographyProps={{ fontWeight: 600 }}
-            secondaryTypographyProps={{ fontSize: "0.72rem" }}
+            secondaryTypographyProps={{ fontSize: "0.75rem" }}
           />
         </MenuItem>
       </Menu>

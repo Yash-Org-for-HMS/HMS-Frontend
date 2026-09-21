@@ -525,7 +525,7 @@ export default function UsersList() {
                         <IconButton
                           size="small"
                           onClick={() => navigate(`/hospital/users/${user.userId}/edit`)}
-                          sx={{ color: "text.secondary", "&:hover": { color: BRAND.action, bgcolor: "rgba(99,102,241,0.1)" } }}
+                          sx={{ color: "text.secondary", "&:hover": { color: BRAND.action, bgcolor: "rgba(12, 115, 181, 0.1)" } }}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>

@@ -65,16 +65,16 @@ export default function TrialBanner() {
       }}
     >
       {ending ? <WarningAmberRounded sx={{ fontSize: 20 }} /> : <AccessTimeRounded sx={{ fontSize: 20 }} />}
-      <Typography sx={{ fontWeight: 700, fontSize: "0.85rem" }}>{label}</Typography>
+      <Typography sx={{ fontWeight: 700, fontSize: "0.875rem" }}>{label}</Typography>
       {data.planName && (
-        <Typography sx={{ fontSize: "0.8rem", opacity: 0.85 }}>· {data.planName} plan</Typography>
+        <Typography sx={{ fontSize: "0.75rem", opacity: 0.85 }}>· {data.planName} plan</Typography>
       )}
       {endText && (
         <Tooltip title="Trial end date">
-          <Typography sx={{ fontSize: "0.8rem", opacity: 0.7 }}>· ends {endText}</Typography>
+          <Typography sx={{ fontSize: "0.75rem", opacity: 0.7 }}>· ends {endText}</Typography>
         </Tooltip>
       )}
-      <Typography sx={{ fontSize: "0.8rem", opacity: 0.85, ml: "auto", display: { xs: "none", sm: "block" } }}>
+      <Typography sx={{ fontSize: "0.75rem", opacity: 0.85, ml: "auto", display: { xs: "none", sm: "block" } }}>
         Contact your provider to upgrade and keep your data.
       </Typography>
     </Box>

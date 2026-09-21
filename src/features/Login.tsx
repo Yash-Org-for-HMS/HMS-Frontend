@@ -54,7 +54,7 @@ export default function Login() {
   };
 
   return (
-    <LoginShell title="Platform Admin" subtitle="Welcome back" footnote="platform access">
+    <LoginShell title="Platform Admin">
       <form onSubmit={handleLogin} noValidate>
         <TextField
           fullWidth variant="outlined" type="email" margin="dense"
@@ -96,12 +96,11 @@ export default function Login() {
           }}
         />
 
-        {/* No "Forgot password?" here: staff have an administrator who can reset
-            them, the platform console has no one above it, and a link whose only
-            advice is "ask yourself" is worse than none. The spacing the link
-            occupies on the staff page is kept so the two pages still line up. */}
-        <Box sx={{ mt: 0.25, mb: 2.5, height: 21 }} />
-
+        {/* No "Forgot password?" here: staff have an administrator who can
+            reset them, the platform console has no one above it, and a link
+            whose only advice is "ask yourself" is worse than none. The staff
+            page now carries its link BELOW the button, so this page no longer
+            needs a spacer above one to stay aligned with it. */}
         <Button fullWidth type="submit" disableElevation disabled={!canSubmit} sx={loginSubmitSx}>
           {isLoading ? <HeartbeatLoader size={22} /> : "Login"}
         </Button>

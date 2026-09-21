@@ -4,10 +4,14 @@ import { BRAND, DISABLED_CONTAINED } from "./styles/accents";
 const themeOptions: ThemeOptions = {
   palette: {
     mode: "light",
+    // The logo blue. Panels override primary via createPanelTheme, so this is
+    // what the screens OUTSIDE a panel shell use — login, error pages, the
+    // command palette — and it has to be the same family or those pages look
+    // like a different product.
     primary: {
-      main: "#4F46E5",       // Indigo
-      light: "#818CF8",
-      dark: "#3730A3",
+      main: BRAND.action,
+      light: BRAND.actionLight,
+      dark: "#07456E",
       contrastText: "#FFFFFF",
     },
     secondary: {
@@ -126,7 +130,12 @@ const themeOptions: ThemeOptions = {
         root: {
           borderRadius: 8,
           padding: "10px 24px",
-          fontSize: "0.95rem",
+          // Body size, not a rung up. The old 0.95rem was between rungs and the
+          // nearest was 1rem, but 16px button text against 14px body reads as
+          // oversized in a dense clinical screen — and growing every button in
+          // the product is the one change here that could push a tight row of
+          // them off the edge. Matching body is both safer and more usual.
+          fontSize: "0.875rem",
           boxShadow: "none",
         },
         // ONE action colour for every panel. Buttons deliberately do NOT follow
@@ -252,7 +261,7 @@ const themeOptions: ThemeOptions = {
         root: {
           padding: "16px 24px",
           borderBottom: "1px solid rgba(15, 23, 42, 0.04)",
-          fontSize: "0.9rem",
+          fontSize: "0.875rem",
           color: "#0F172A",
         }
       }
@@ -272,7 +281,7 @@ const themeOptions: ThemeOptions = {
     }
   },
 };
-
+0
 export const theme = createTheme(themeOptions);
 
 /**

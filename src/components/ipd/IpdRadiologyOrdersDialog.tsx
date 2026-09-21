@@ -209,7 +209,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
                             </Box>
                           )}
                           {(o.reportUrl || report?.reportUrl) && (
-                            <Link href={o.reportUrl || report?.reportUrl} target="_blank" rel="noopener" sx={{ fontSize: "0.85rem", color: BRAND.action }}>View report file</Link>
+                            <Link href={o.reportUrl || report?.reportUrl} target="_blank" rel="noopener" sx={{ fontSize: "0.875rem", color: BRAND.action }}>View report file</Link>
                           )}
                         </Stack>
                       ) : (

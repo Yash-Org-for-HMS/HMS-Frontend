@@ -96,13 +96,13 @@ export default function HospitalChangePassword() {
       {/* Minimalist: the form sits directly on the background image — no card. */}
       <Box sx={{ width: "100%", maxWidth: 400 }}>
 
-        <Typography sx={{ color: TEXT, fontWeight: 700, fontSize: "0.7rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 0.75, textAlign: "center" }}>
+        <Typography sx={{ color: TEXT, fontWeight: 700, fontSize: "0.6875rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 0.75, textAlign: "center" }}>
           Hospital Staff Portal
         </Typography>
-        <Typography sx={{ fontWeight: 800, fontSize: "1.45rem", letterSpacing: "-0.5px", lineHeight: 1.15, color: TEXT, textAlign: "center" }}>
+        <Typography sx={{ fontWeight: 800, fontSize: "1.5rem", letterSpacing: "-0.5px", lineHeight: 1.15, color: TEXT, textAlign: "center" }}>
           Set a new password
         </Typography>
-        <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", lineHeight: 1.55, mt: 0.5, mb: 3.5, textAlign: "center" }}>
+        <Typography sx={{ color: "text.secondary", fontSize: "1rem", lineHeight: 1.55, mt: 0.5, mb: 3.5, textAlign: "center" }}>
           Choose a new password to finish signing in.
         </Typography>
 
@@ -149,7 +149,7 @@ export default function HospitalChangePassword() {
           <Button
             fullWidth type="submit" disableElevation disabled={!canSubmit}
             sx={{
-              py: 1.4, mt: 2, fontWeight: 700, fontSize: "0.98rem", textTransform: "none", borderRadius: 2.5, color: "#fff",
+              py: 1.4, mt: 2, fontWeight: 700, fontSize: "1rem", textTransform: "none", borderRadius: 2.5, color: "#fff",
               "&.Mui-disabled": { bgcolor: "rgba(15,23,42,0.10)", color: "rgba(15,23,42,0.4)" },
               transition: "background-color 0.2s ease",
             }}

@@ -236,7 +236,7 @@ function BillsList({ type, readOnly = false, basePath = "/reception/billing", de
                             size="small"
                             label="Refund pending"
                             sx={{
-                              height: 20, fontSize: "0.66rem", fontWeight: 700,
+                              height: 20, fontSize: "0.6875rem", fontWeight: 700,
                               bgcolor: `${SEMANTIC.warning}22`, color: SEMANTIC.warning,
                               border: `1px solid ${SEMANTIC.warning}55`,
                             }}

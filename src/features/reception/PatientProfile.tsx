@@ -64,7 +64,7 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.75, py: 1.15 }}>
       <Box sx={{ width: 34, height: 34, borderRadius: 1.5, flexShrink: 0, display: "grid", placeItems: "center", bgcolor: alpha(ACCENT, 0.1), color: ACCENT }}>{icon}</Box>
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", fontSize: "0.64rem" }}>
+        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", fontSize: "0.625rem" }}>
           {label}
         </Typography>
         <Typography variant="body2" sx={{ color: value ? "text.primary" : "text.disabled", mt: 0.1, fontWeight: value ? 600 : 400, wordBreak: "break-word" }}>

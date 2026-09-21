@@ -74,7 +74,7 @@ export default function ClinicalTimeline({
   }
   const events = type ? all.filter((e) => e.type === type) : all;
   const chipSx = (active: boolean, color: string) => ({
-    height: 24, fontWeight: 700, fontSize: "0.68rem", cursor: "pointer",
+    height: 24, fontWeight: 700, fontSize: "0.6875rem", cursor: "pointer",
     ...(active ? { bgcolor: color, color: "#fff" } : {}),
   });
 
@@ -98,7 +98,7 @@ export default function ClinicalTimeline({
                 <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary" }}>
                   {new Date(e.at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                 </Typography>
-                <Chip label={m.label} size="small" sx={{ height: 18, fontSize: "0.6rem", fontWeight: 700, bgcolor: `${m.color}1f`, color: m.color }} />
+                <Chip label={m.label} size="small" sx={{ height: 18, fontSize: "0.625rem", fontWeight: 700, bgcolor: `${m.color}1f`, color: m.color }} />
                 {e.doctor && <Typography variant="caption" sx={{ color: "text.disabled" }}>· Dr. {e.doctor}</Typography>}
               </Box>
               <Typography variant="body2" sx={{ fontWeight: 600 }}>{e.title}</Typography>

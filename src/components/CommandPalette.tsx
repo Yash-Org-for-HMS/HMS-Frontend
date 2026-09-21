@@ -394,10 +394,10 @@ export default function CommandPalette() {
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          sx={{ fontSize: "1.1rem", color: "text.primary" }}
+          sx={{ fontSize: "1rem", color: "text.primary" }}
         />
         {loading && <HeartbeatLoader size={22} />}
-        <Chip label="ESC" size="small" sx={{ ml: 2, borderRadius: 1, fontSize: "0.7rem", color: "text.secondary", bgcolor: "action.hover" }} />
+        <Chip label="ESC" size="small" sx={{ ml: 2, borderRadius: 1, fontSize: "0.6875rem", color: "text.secondary", bgcolor: "action.hover" }} />
       </Box>
 
       <List sx={{ p: 1, maxHeight: "60vh", overflowY: "auto" }}>
@@ -426,7 +426,7 @@ export default function CommandPalette() {
                 >
                   <ListItemIcon sx={{ minWidth: 40, color: "text.secondary" }}>{item.icon}</ListItemIcon>
                   <ListItemText primary={item.name} secondary={item.section} primaryTypographyProps={{ fontWeight: 600, color: "text.primary" }} secondaryTypographyProps={{ fontSize: "0.75rem" }} />
-                  <HistoryRounded sx={{ color: "text.secondary", opacity: 0.45, fontSize: "1.1rem" }} />
+                  <HistoryRounded sx={{ color: "text.secondary", opacity: 0.45, fontSize: "1rem" }} />
                 </ListItemButton>
               );
             })}
@@ -452,7 +452,7 @@ export default function CommandPalette() {
                 >
                   <ListItemIcon sx={{ minWidth: 40, color: "#f59e0b" }}>{action.icon}</ListItemIcon>
                   <ListItemText primary={action.name} primaryTypographyProps={{ fontWeight: 600, color: "text.primary" }} />
-                  <BoltRounded sx={{ color: "#f59e0b", opacity: 0.6, fontSize: "1.1rem" }} />
+                  <BoltRounded sx={{ color: "#f59e0b", opacity: 0.6, fontSize: "1rem" }} />
                 </ListItemButton>
               );
             })}
@@ -483,7 +483,7 @@ export default function CommandPalette() {
                     primaryTypographyProps={{ fontWeight: 600, color: "text.primary" }}
                     secondaryTypographyProps={{ fontSize: "0.75rem" }}
                   />
-                  <ArrowForwardRounded sx={{ color: "text.secondary", opacity: 0.5, fontSize: "1.2rem" }} />
+                  <ArrowForwardRounded sx={{ color: "text.secondary", opacity: 0.5, fontSize: "1.25rem" }} />
                 </ListItemButton>
               );
             })}

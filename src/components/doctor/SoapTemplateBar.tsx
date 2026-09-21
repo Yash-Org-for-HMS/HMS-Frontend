@@ -146,7 +146,7 @@ export default function SoapTemplateBar({ current, onApply }: Props) {
                 primary={t.name}
                 secondary={t.diagnosis || undefined}
                 primaryTypographyProps={{ fontWeight: 600 }}
-                secondaryTypographyProps={{ noWrap: true, fontSize: "0.72rem" }}
+                secondaryTypographyProps={{ noWrap: true, fontSize: "0.75rem" }}
               />
               <Tooltip title="Delete">
                 <IconButton size="small" edge="end" onClick={(e) => handleDelete(e, t)} sx={{ ml: 1, color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}>

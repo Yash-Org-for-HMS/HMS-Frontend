@@ -17,7 +17,7 @@ export function TableRowsSkeleton({ rows = 6, columns }: { rows?: number; column
         <TableRow key={i}>
           {Array.from({ length: columns }).map((_, j) => (
             <TableCell key={j}>
-              <Skeleton variant="text" width={j === 0 ? "75%" : "55%"} sx={{ fontSize: "0.9rem" }} />
+              <Skeleton variant="text" width={j === 0 ? "75%" : "55%"} sx={{ fontSize: "0.875rem" }} />
             </TableCell>
           ))}
         </TableRow>

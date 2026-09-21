@@ -208,7 +208,7 @@ export default function FluidBalanceDialog({ open, admission, onClose, readOnly 
                     <TableHead>
                       <TableRow>
                         {["Time", "", "Type", "What", "Volume", "Times", "By"].map((h, i) => (
-                          <TableCell key={i} sx={{ fontWeight: 700, fontSize: "0.7rem", textTransform: "uppercase", color: "text.secondary", whiteSpace: "nowrap" }}>{h}</TableCell>
+                          <TableCell key={i} sx={{ fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase", color: "text.secondary", whiteSpace: "nowrap" }}>{h}</TableCell>
                         ))}
                         <TableCell align="right" />
                       </TableRow>
@@ -227,7 +227,7 @@ export default function FluidBalanceDialog({ open, admission, onClose, readOnly 
                             <TableCell sx={{ whiteSpace: "nowrap", fontWeight: 600 }}>{dayjs(e.occurredAt).format("HH:mm")}</TableCell>
                             <TableCell>
                               <Chip size="small" label={isIn ? "In" : "Out"}
-                                sx={{ height: 20, fontSize: "0.68rem", fontWeight: 700, bgcolor: alpha(isIn ? SEMANTIC.info : SEMANTIC.warning, 0.14), color: isIn ? SEMANTIC.info : SEMANTIC.warning }} />
+                                sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 700, bgcolor: alpha(isIn ? SEMANTIC.info : SEMANTIC.warning, 0.14), color: isIn ? SEMANTIC.info : SEMANTIC.warning }} />
                             </TableCell>
                             <TableCell>{label(e.fluidType)}</TableCell>
                             <TableCell sx={{ maxWidth: 200 }}>
@@ -238,7 +238,7 @@ export default function FluidBalanceDialog({ open, admission, onClose, readOnly 
                             </TableCell>
                             <TableCell sx={{ fontVariantNumeric: "tabular-nums" }}>{e.volumeMl != null ? `${e.volumeMl} ml` : ""}</TableCell>
                             <TableCell sx={{ fontVariantNumeric: "tabular-nums" }}>{e.occurrences != null ? `×${e.occurrences}` : ""}</TableCell>
-                            <TableCell sx={{ color: "text.secondary", fontSize: "0.78rem", whiteSpace: "nowrap" }}>{e.recordedBy}</TableCell>
+                            <TableCell sx={{ color: "text.secondary", fontSize: "0.75rem", whiteSpace: "nowrap" }}>{e.recordedBy}</TableCell>
                             <TableCell align="right">
                               {!readOnly && !dead && (
                                 <Tooltip title="Correct this entry">

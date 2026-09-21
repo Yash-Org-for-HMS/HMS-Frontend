@@ -169,7 +169,7 @@ export default function AdjustStockDialog({
               <Box key={m.inventoryTransactionId}
                 sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 0.85, borderBottom: "1px solid", borderColor: "divider" }}>
                 <Chip label={m.transactionType} size="small"
-                  sx={{ height: 20, fontSize: "0.65rem", fontWeight: 700, minWidth: 96,
+                  sx={{ height: 20, fontSize: "0.625rem", fontWeight: 700, minWidth: 96,
                     bgcolor: `${TYPE_COLOR[m.transactionType] ?? NEUTRAL.muted}22`,
                     color: TYPE_COLOR[m.transactionType] ?? NEUTRAL.muted }} />
                 <Typography variant="body2" sx={{ width: 52, textAlign: "right", fontWeight: 700, fontVariantNumeric: "tabular-nums",
