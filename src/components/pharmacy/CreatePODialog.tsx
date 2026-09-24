@@ -3,6 +3,7 @@ import { Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Typo
 import { axiosInstance } from "@/api/axios";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
+import SearchableSelect from "@/components/form/SearchableSelect";
 
 interface Props {
   open: boolean;
@@ -83,13 +84,26 @@ export default function CreatePODialog({ open, onClose, suppliers, medicines, on
         <Typography variant="subtitle2">Order Items</Typography>
         {items.map((item, idx) => (
           <Box key={idx} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <TextField select label="Medicine" value={item.medicineId} onChange={e => {
-              const newItems = [...items];
-              newItems[idx].medicineId = e.target.value;
-              setItems(newItems);
-            }} sx={{ flex: 2 }}>
-              {medicines.map(med => <MenuItem key={med.medicineId} value={med.medicineId}>{med.medicineName} ({med.genericName})</MenuItem>)}
-            </TextField>
+            <SearchableSelect
+              // The whole catalogue in one menu, with no way to type at it —
+              // the worst case on this screen, since a PO names several.
+              label="Medicine" name={`medicine-${idx}`}
+              value={item.medicineId}
+              onChange={e => {
+                const newItems = [...items];
+                newItems[idx].medicineId = e.target.value;
+                setItems(newItems);
+              }}
+              placeholder="Pick a medicine"
+              searchPlaceholder="Search by brand or generic…"
+              options={medicines.map(med => ({
+                value: med.medicineId,
+                label: med.medicineName,
+                secondary: med.genericName || undefined,
+                keywords: med.genericName || "",
+              }))}
+              sx={{ flex: 2 }}
+            />
             <TextField type="number" label="Qty" value={item.orderedQuantity} onChange={e => {
               const newItems = [...items];
               newItems[idx].orderedQuantity = parseInt(e.target.value) || 0;

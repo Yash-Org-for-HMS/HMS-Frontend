@@ -13,6 +13,7 @@ import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import PatientForm from "@/features/reception/PatientForm";
 import { SCHEME_OPTIONS } from "@/features/claims/claimMeta";
+import SearchableSelect from "@/components/form/SearchableSelect";
 
 interface Props {
   open: boolean;
@@ -166,21 +167,38 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
               </Box>
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField select fullWidth label="Admitting doctor" value={form.doctorId} onChange={(e) => set("doctorId", e.target.value)}>
-                <MenuItem value="">—</MenuItem>
-                {(dropdowns?.doctors || []).map((d: any) => (
-                  <MenuItem key={d.doctorId} value={d.doctorId}>Dr. {d.user?.firstName || ""} {d.user?.lastName || ""}</MenuItem>
-                ))}
-              </TextField>
+              <SearchableSelect
+                label="Admitting doctor" name="doctorId"
+                value={form.doctorId} onChange={(e) => set("doctorId", e.target.value)}
+                placeholder="—"
+                emptyOption={{ value: "", label: "—" }}
+                searchPlaceholder="Search doctors…"
+                options={(dropdowns?.doctors || []).map((d: any) => ({
+                  value: d.doctorId,
+                  label: `Dr. ${d.user?.firstName || ""} ${d.user?.lastName || ""}`.trim(),
+                  secondary: d.specialization || undefined,
+                }))}
+              />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField select fullWidth required label="Bed" value={form.bedId} onChange={(e) => set("bedId", e.target.value)}
-                helperText={beds.length === 0 ? "No beds available — free or add one" : undefined}>
-                <MenuItem value="" disabled>Select a bed</MenuItem>
-                {beds.map((b) => (
-                  <MenuItem key={b.bedId} value={b.bedId}>{b.label}{b.dailyCharge ? ` — ₹${Number(b.dailyCharge).toFixed(0)}/day` : ""}{b.status === "RESERVED" ? " (reserved)" : ""}</MenuItem>
-                ))}
-              </TextField>
+              <SearchableSelect
+                label="Bed" name="bedId" required
+                value={form.bedId} onChange={(e) => set("bedId", e.target.value)}
+                placeholder="Select a bed"
+                searchPlaceholder="Search by ward, room or bed…"
+                options={beds.map((b) => ({
+                  value: b.bedId,
+                  label: b.label,
+                  // The daily rate belongs beside the bed: it is half of what
+                  // "which bed" means, and it was previously buried in one line
+                  // of a menu too long to read.
+                  secondary: [
+                    b.dailyCharge ? `₹${Number(b.dailyCharge).toFixed(0)}/day` : null,
+                    b.status === "RESERVED" ? "reserved" : null,
+                  ].filter(Boolean).join(" · ") || undefined,
+                }))}
+                helperText={beds.length === 0 ? "No beds available — free or add one" : undefined}
+              />
             </Grid>
             <Grid size={{ xs: 12 }}>
               <TextField fullWidth label="Admitting diagnosis" value={form.admittingDiagnosis} onChange={(e) => set("admittingDiagnosis", e.target.value)} multiline rows={2} placeholder="Provisional diagnosis on admission" />
@@ -208,10 +226,14 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
                   </TextField>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField select fullWidth label="Payer / TPA" value={ins.payerId} onChange={(e) => setI("payerId", e.target.value)}>
-                    <MenuItem value="">— None —</MenuItem>
-                    {payers.map((p: any) => <MenuItem key={p.payerId} value={p.payerId}>{p.payerName}</MenuItem>)}
-                  </TextField>
+                  <SearchableSelect
+                    label="Payer / TPA" name="payerId"
+                    value={ins.payerId} onChange={(e) => setI("payerId", e.target.value)}
+                    placeholder="— None —"
+                    emptyOption={{ value: "", label: "— None —" }}
+                    searchPlaceholder="Search payers…"
+                    options={payers.map((p: any) => ({ value: p.payerId, label: p.payerName }))}
+                  />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField fullWidth label="Policy / MAA card number" value={ins.policyOrCardNumber} onChange={(e) => setI("policyOrCardNumber", e.target.value)} />

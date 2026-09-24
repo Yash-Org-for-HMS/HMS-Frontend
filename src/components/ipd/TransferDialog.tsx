@@ -3,13 +3,14 @@ import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
   Stack, Typography,
 } from "@mui/material";
 import { SwapHorizRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
+import SearchableSelect from "@/components/form/SearchableSelect";
 
 interface Props {
   open: boolean;
@@ -54,11 +55,18 @@ export default function TransferDialog({ open, onClose, onDone, admission }: Pro
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             Currently in: <strong>{admission?.bed?.label || "—"}</strong>
           </Typography>
-          <TextField select fullWidth required label="Move to bed" value={toBedId} onChange={(e) => setToBedId(e.target.value)}
-            helperText={beds.length === 0 ? "No other beds available" : undefined}>
-            <MenuItem value="" disabled>Select a bed</MenuItem>
-            {beds.map((b) => <MenuItem key={b.bedId} value={b.bedId}>{b.label}{b.status === "RESERVED" ? " (reserved)" : ""}</MenuItem>)}
-          </TextField>
+          <SearchableSelect
+            label="Move to bed" name="toBedId" required
+            value={toBedId} onChange={(e) => setToBedId(e.target.value)}
+            placeholder="Select a bed"
+            searchPlaceholder="Search by ward, room or bed…"
+            options={beds.map((b) => ({
+              value: b.bedId,
+              label: b.label,
+              secondary: b.status === "RESERVED" ? "reserved" : undefined,
+            }))}
+            helperText={beds.length === 0 ? "No other beds available" : undefined}
+          />
           <TextField fullWidth label="Reason (optional)" value={reason} onChange={(e) => setReason(e.target.value)} multiline rows={2} />
         </Stack>
       </DialogContent>

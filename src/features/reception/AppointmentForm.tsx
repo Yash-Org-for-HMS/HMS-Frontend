@@ -18,6 +18,7 @@ import BillingModal from "./BillingModal";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import { SEMANTIC } from "@/styles/accents";
+import SearchableSelect from "@/components/form/SearchableSelect";
 
 export interface AppointmentFormProps {
   isEmbedded?: boolean;
@@ -331,6 +332,17 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
 
   const filteredDoctors = (dropdowns?.doctors || []).filter((d: any) => !formData.departmentId || d.departmentId === formData.departmentId);
 
+  // Specialization on the second line, and searchable by it as well as by name
+  // — "who takes orthopaedics?" is as common a question at the desk as a name.
+  const doctorOptions = filteredDoctors.map((d: any) => ({
+    value: d.doctorId,
+    // Exactly the string the old MenuItem rendered — this change is about how
+    // the list is navigated, not about what a doctor is called.
+    label: `Dr. ${d.user?.firstName || "Unknown"} ${d.user?.lastName || ""}`.trim(),
+    secondary: d.specialization || d.department?.departmentName || undefined,
+    keywords: d.department?.departmentName || "",
+  }));
+
   // Local (not UTC) "today" as YYYY-MM-DD for the date picker's min. Blocks
   // selecting past dates on a new booking; when editing an already-past
   // appointment, keep its own date selectable so unrelated edits still work.
@@ -403,19 +415,17 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
             </TextField>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              select fullWidth required
-              label="Doctor" name="doctorId"
+            {/* Searchable: a hospital with sixty doctors gave one unscrollable
+                menu covering the form, with no way to type at it. Same field,
+                same handleChange. */}
+            <SearchableSelect
+              label="Doctor" name="doctorId" required
               value={formData.doctorId || ""} onChange={handleChange}
+              placeholder="Select a Doctor"
+              searchPlaceholder="Search doctors…"
+              options={doctorOptions}
               sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
-            >
-              <MenuItem value="" disabled>Select a Doctor</MenuItem>
-              {filteredDoctors.map((d: any) => (
-                <MenuItem key={d.doctorId} value={d.doctorId}>
-                  Dr. {d.user?.firstName || "Unknown"} {d.user?.lastName || ""}
-                </MenuItem>
-              ))}
-            </TextField>
+            />
           </Grid>
           {availability?.onLeave && (
             <Grid size={{ xs: 12 }}>

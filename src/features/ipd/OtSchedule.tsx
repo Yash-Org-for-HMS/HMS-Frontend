@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Grid, Chip, Menu, MenuItem, Button, Stack, Divider,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, FormControlLabel, Switch,
-  Autocomplete, CircularProgress,
+  Autocomplete, CircularProgress, ToggleButton, ToggleButtonGroup,
 } from "@mui/material";
 import {
   MedicalServicesRounded, AddRounded, EventRounded, WarningAmberRounded,
@@ -18,6 +18,7 @@ import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
+import SearchableSelect from "@/components/form/SearchableSelect";
 import PageHeader from "@/components/layout/PageHeader";
 import { PatientHistoryDialog } from "@/components/clinical/PatientHistoryButton";
 
@@ -527,10 +528,40 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
       <DialogTitle sx={{ fontWeight: 700 }}>Book a case</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 0.5 }}>
-          <FormControlLabel
-            control={<Switch checked={dayCase} onChange={(e) => { setDayCase(e.target.checked); setAdmissionId(""); setPatientId(""); }} />}
-            label={dayCase ? "Day case — no admission" : "In-patient — pick the admission"}
-          />
+          {/*
+            Two named choices, not a switch.
+
+            This was one Switch whose LABEL changed with its own state: off read
+            "In-patient — pick the admission", on read "Day case — no
+            admission". So the label described the current state while a switch
+            label conventionally describes what turning it on does, and there
+            was no way to tell which — with the field underneath swapping at the
+            same moment. Both options are now always on screen and neither
+            caption moves.
+          */}
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, mb: 1 }}>Who is this case for?</Typography>
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={dayCase ? "day" : "inpatient"}
+              onChange={(_, v) => {
+                if (!v) return; // ignore a click that would deselect both
+                setDayCase(v === "day");
+                setAdmissionId("");
+                setPatientId("");
+              }}
+              sx={{ "& .MuiToggleButton-root": { textTransform: "none", fontWeight: 600, px: 2 } }}
+            >
+              <ToggleButton value="inpatient">An admitted patient</ToggleButton>
+              <ToggleButton value="day">A day case</ToggleButton>
+            </ToggleButtonGroup>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.75 }}>
+              {dayCase
+                ? "A day case has no admission — they come in and go home the same day, so pick the patient."
+                : "Pick the admission this case belongs to."}
+            </Typography>
+          </Box>
 
           {dayCase ? (
             <Autocomplete
@@ -547,16 +578,24 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
               )}
             />
           ) : (
-            <TextField select label="Admission" required fullWidth value={admissionId} onChange={(e) => setAdmissionId(e.target.value)}
+            <SearchableSelect
+              // Searchable: every admitted patient in the hospital arrived as
+              // one unscrollable menu. Name on the line, UHID and admission
+              // number beneath it, and all three searchable.
+              label="Admission" name="admissionId" required
+              value={admissionId} onChange={(e) => setAdmissionId(e.target.value)}
+              placeholder={loadingAdmissions ? "Loading…" : "Pick the admitted patient"}
+              searchPlaceholder="Search by name, UHID or admission no…"
+              options={admissionRows.map((a) => ({
+                value: String(a.admissionId),
+                label: String(a.patientName ?? "Patient"),
+                secondary: [a.uhid, a.admissionNumber].filter(Boolean).join(" · ") || undefined,
+                keywords: `${a.uhid ?? ""} ${a.admissionNumber ?? ""}`,
+              }))}
               helperText={loadingAdmissions ? "Loading…"
                 : admissionRows.length ? "Currently admitted patients"
-                : "No admitted patients"}>
-              {admissionRows.map((a) => (
-                <MenuItem key={String(a.admissionId)} value={String(a.admissionId)}>
-                  {String(a.patientName ?? "Patient")} · {String(a.uhid ?? "")} · {String(a.admissionNumber ?? "")}
-                </MenuItem>
-              ))}
-            </TextField>
+                : "No admitted patients"}
+            />
           )}
 
           <TextField label="Procedure" required fullWidth value={form.procedureName}
@@ -573,17 +612,21 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
             </TextField>
           </Stack>
 
-          <TextField select label="Surgeon" fullWidth value={form.surgeonId} onChange={(e) => setForm({ ...form, surgeonId: e.target.value })}
-            helperText="Checked against their other cases, their OPD list and their leave">
-            <MenuItem value=""><em>Not decided</em></MenuItem>
-            {/* The name lives on the nested user, not on the doctor row —
-                reading d.name gives every surgeon the label "Doctor". */}
-            {doctors.map((d) => (
-              <MenuItem key={d.doctorId} value={d.doctorId}>
-                Dr. {d.user?.firstName || "Unknown"} {d.user?.lastName || ""}
-              </MenuItem>
-            ))}
-          </TextField>
+          <SearchableSelect
+            label="Surgeon" name="surgeonId"
+            value={form.surgeonId} onChange={(e) => setForm({ ...form, surgeonId: e.target.value })}
+            placeholder="Not decided"
+            emptyOption={{ value: "", label: "Not decided" }}
+            searchPlaceholder="Search surgeons…"
+            // The name lives on the nested user, not on the doctor row —
+            // reading d.name gives every surgeon the label "Doctor".
+            options={doctors.map((d) => ({
+              value: d.doctorId,
+              label: `Dr. ${d.user?.firstName || "Unknown"} ${d.user?.lastName || ""}`.trim(),
+
+            }))}
+            helperText="Checked against their other cases, their OPD list and their leave"
+          />
 
           {/* The rest of the team. Pick from the list or just type a name — a
               visiting anaesthetist has no login here and still has to be on the
