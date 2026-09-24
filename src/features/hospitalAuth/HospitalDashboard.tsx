@@ -4,6 +4,7 @@ import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
 import { alpha } from "@mui/material/styles";
 import {
   Box,
+  Skeleton,
   Typography,
   Paper,
   Grid,
@@ -287,7 +288,19 @@ export default function HospitalDashboard() {
             <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
               Kept over the last 30 days, net of refunds — the same rule as the tile above and the Day Book
             </Typography>
-            {ops?.money.trend?.length ? (
+            {/* Loading is not the same answer as none.
+                `ops` is undefined until the request lands, and the ternary below
+                treated that as "no collections" — so the panel stated, as a
+                fact, that the hospital had taken no money in thirty days while
+                it was still asking. Against this database a single query has
+                measured 1-5s, so that claim was on screen long enough to be
+                read and believed. The tiles beside it were still skeletons at
+                the time, which is exactly what this should have been. */}
+            {opsLoading ? (
+              <Box sx={{ flex: 1, minHeight: 190, display: "flex", alignItems: "stretch" }}>
+                <Skeleton variant="rounded" width="100%" height={190} />
+              </Box>
+            ) : ops?.money.trend?.length ? (
               <Box sx={{ flex: 1, minHeight: 190 }}>
                 <ResponsiveContainer width="100%" height="100%">
                 {/* left: 0, not -12. The negative margin pulled the plot over
