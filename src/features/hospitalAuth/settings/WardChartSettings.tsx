@@ -4,14 +4,13 @@ import {
   Box, Paper, Typography, Grid, TextField, MenuItem, Button, IconButton,
   Alert, Chip, Divider, Tooltip,
 } from "@mui/material";
-import { AddRounded, DeleteOutlineRounded, MonitorHeartRounded, ScheduleRounded, SaveRounded } from "@mui/icons-material";
+import { AddRounded, DeleteOutlineRounded, ScheduleRounded, SaveRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import PageHeader from "@/components/layout/PageHeader";
 import ErrorState from "@/components/ErrorState";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
-import { SEMANTIC } from "@/styles/accents";
 import ObservationFieldsPanel from "./ObservationFieldsPanel";
 
 /**
@@ -20,25 +19,19 @@ import ObservationFieldsPanel from "./ObservationFieldsPanel";
  * Nothing here is required. A hospital that never opens this screen still gets a
  * correct chart from the defaults — this exists so the ones whose shifts or
  * units differ are not forced into somebody else's pattern.
+ *
+ * Two panels used to sit here and do nothing. "How often observations are
+ * taken" and "Chart columns" both saved happily and were read by no chart:
+ * observationIntervalsJson and visibleColumnsJson had zero consumers anywhere
+ * in the codebase, while the caption under the first promised it "decides which
+ * rows the chart pre-draws". A setting that states an effect it does not have
+ * is worse than an absent one, because the ward believes it.
+ *
+ * What is left is wired. Shifts and the chart day drive the chart; the
+ * temperature unit is read by it; and the sign-off roles reach the handover —
+ * verified end to end: saving ["ZZ Charge Nurse", …] made those exact roles the
+ * ones a shift asks for, replacing the Staff Nurse / Duty Doctor defaults.
  */
-
-const COLUMN_LABELS: Record<string, string> = {
-  temperature: "Temperature",
-  pulseRate: "Pulse",
-  respiratoryRate: "Respiration",
-  bloodPressure: "Blood pressure",
-  spo2: "SpO₂",
-  bloodSugar: "Blood sugar (RBS)",
-  painScore: "Pain score",
-};
-
-const WARD_TYPE_LABELS: Record<string, string> = {
-  ICU: "ICU",
-  general: "General ward",
-  surgical: "Surgical",
-  maternity: "Maternity",
-  pediatric: "Paediatric",
-};
 
 interface Shift { chartShiftId: string | null; name: string; startTime: string; endTime: string; sortOrder: number }
 
@@ -53,8 +46,6 @@ export default function WardChartSettings() {
 
   const [unit, setUnit] = useState("F");
   const [shifts, setShifts] = useState<Shift[]>([]);
-  const [intervals, setIntervals] = useState<Record<string, number>>({});
-  const [columns, setColumns] = useState<string[]>([]);
   const [roles, setRoles] = useState<string[]>([]);
   const [newRole, setNewRole] = useState("");
 
@@ -62,8 +53,6 @@ export default function WardChartSettings() {
     if (!data) return;
     setUnit(data.temperatureUnit);
     setShifts(data.shifts);
-    setIntervals(data.observationIntervals);
-    setColumns(data.visibleColumns);
     setRoles(data.signOffRoles);
   }, [data]);
 
@@ -78,8 +67,6 @@ export default function WardChartSettings() {
       (await axiosInstance.put("/ipd/chart-profile", {
         temperatureUnit: unit,
         shifts: shifts.map((s, i) => ({ name: s.name, startTime: s.startTime, endTime: s.endTime, sortOrder: i })),
-        observationIntervals: intervals,
-        visibleColumns: columns,
         signOffRoles: roles,
       })).data,
     onSuccess: () => {
@@ -99,7 +86,7 @@ export default function WardChartSettings() {
     <Box sx={{ pb: 6 }}>
       <PageHeader
         title="Ward Chart Settings"
-        subtitle="How this hospital charts its in-patients — shifts, observation frequency and units."
+        subtitle="How this hospital charts its in-patients — shifts, who signs them off, and units."
         actions={
           <Button variant="contained" startIcon={<SaveRounded />} onClick={() => save.mutate()} disabled={save.isPending} sx={{ textTransform: "none" }}>
             {save.isPending ? "Saving…" : "Save settings"}
@@ -191,61 +178,6 @@ export default function WardChartSettings() {
                 Add
               </Button>
             </Box>
-          </Paper>
-        </Grid>
-
-        {/* ── Observation frequency ──────────────────────────────────────── */}
-        <Grid size={{ xs: 12, lg: 7 }}>
-          <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
-              <MonitorHeartRounded sx={{ color: "text.secondary" }} />
-              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>How often observations are taken</Typography>
-            </Box>
-            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
-              Minutes between routine rounds, per ward type. This only decides which rows the chart
-              pre-draws — an off-schedule reading is always accepted.
-            </Typography>
-            <Grid container spacing={2}>
-              {Object.entries(intervals).map(([ward, mins]) => (
-                <Grid size={{ xs: 6, sm: 4 }} key={ward}>
-                  <TextField
-                    size="small" type="number" fullWidth
-                    label={WARD_TYPE_LABELS[ward] ?? ward}
-                    value={mins}
-                    onChange={(e) => setIntervals({ ...intervals, [ward]: Number(e.target.value) })}
-                    inputProps={{ min: 5, max: 1440 }}
-                    helperText={`${mins >= 60 ? `${(mins / 60).toFixed(mins % 60 ? 1 : 0)} hourly` : `${mins} min`}`}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          </Paper>
-        </Grid>
-
-        {/* ── Columns ────────────────────────────────────────────────────── */}
-        <Grid size={{ xs: 12, lg: 5 }}>
-          <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>Chart columns</Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
-              Which observations appear on your chart. Hiding one never deletes readings already taken.
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {(data?.availableColumns ?? []).map((c: string) => {
-                const on = columns.includes(c);
-                return (
-                  <Chip
-                    key={c} label={COLUMN_LABELS[c] ?? c}
-                    color={on ? "primary" : "default"} variant={on ? "filled" : "outlined"}
-                    onClick={() => setColumns(on ? columns.filter((x) => x !== c) : [...columns, c])}
-                  />
-                );
-              })}
-            </Box>
-            {columns.length === 0 && (
-              <Typography variant="caption" sx={{ color: SEMANTIC.danger, display: "block", mt: 1.5 }}>
-                The chart needs at least one column.
-              </Typography>
-            )}
           </Paper>
         </Grid>
 
