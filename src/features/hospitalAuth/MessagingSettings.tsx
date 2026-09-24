@@ -29,6 +29,7 @@ interface TemplateView {
   isOwnTemplate: boolean;
   bodyTemplate: string;
   dltTemplateId: string | null;
+  providerFlowId: string | null;
   isActive: boolean;
   segments: number;
 }
@@ -210,7 +211,29 @@ function GatewayCard({ base, status, onSaved }: { base: string; status: Status; 
 
   const test = useMutation({
     mutationFn: () => axiosInstance.post(`${base}/test`, { channel: "SMS", phone: testPhone }),
-    onSuccess: (r) => { toast.success(`Test sent to ${r.data.data.sentTo}`); onSaved(); },
+    onSuccess: (r) => {
+      // Two distinct outcomes, and they must not look alike. A server running
+      // MESSAGING_PROVIDER=FAKE answers "sent" without anything leaving it —
+      // reported as success, that sends an operator hunting through the
+      // provider's empty logs for a message that was never submitted.
+      //
+      // The request id is shown rather than discarded for the real case: the
+      // gateway accepting a message is not the gateway delivering it, and this
+      // id is the only handle their delivery logs can be searched by.
+      const { sentTo, providerMessageId, delivered } = r.data.data;
+      if (delivered === false) {
+        toast.warning(
+          `Nothing was sent. This server runs the stub gateway (MESSAGING_PROVIDER=FAKE), so no message reached the provider and the gateway is still unverified. Set MESSAGING_PROVIDER=MSG91 to send for real.`,
+        );
+      } else {
+        toast.success(
+          providerMessageId
+            ? `Accepted by the gateway for ${sentTo}. Ref ${providerMessageId} — if it does not arrive, look this up in MSG91 → Logs.`
+            : `Test sent to ${sentTo}`,
+        );
+      }
+      onSaved();
+    },
     onError: (e) => toast.error(getApiErrorMessage(e, "The test message could not be sent.")),
   });
 
@@ -244,7 +267,12 @@ function GatewayCard({ base, status, onSaved }: { base: string; status: Status; 
         <TextField
           label="Sender ID (DLT header)" value={senderId} onChange={(e) => setSenderId(e.target.value)}
           size="small" inputProps={{ maxLength: 11 }}
-          helperText="The header registered on the DLT portal. This is the name that appears on the patient's phone."
+          error={!!senderId && /^\d+$/.test(senderId)}
+          helperText={
+            senderId && /^\d+$/.test(senderId)
+              ? "That looks like an ID, not a header. Use the short text header itself (e.g. DOLPHN) from MSG91 → Sender ID, not the numeric id beside it. MSG91 accepts a wrong header and then silently fails to deliver."
+              : "The 6-character header registered with DLT, e.g. DOLPHN. This is the name that appears on the patient's phone."
+          }
         />
 
         <TextField
@@ -294,19 +322,31 @@ function GatewayCard({ base, status, onSaved }: { base: string; status: Status; 
   );
 }
 
+/**
+ * The same sentence, in MSG91's notation.
+ *
+ * Mirrors normalizeTemplateSyntax / toProviderSyntax on the server so the box
+ * below updates as you type. The server converts on save regardless, so this
+ * copy being wrong could never store the wrong thing — it would only mislead.
+ */
+const toMsg91 = (v: string) => v.replace(/{{s*([a-zA-Z0-9_]+)s*}}/g, (_m, n) => "##" + n + "##");
+
 function TemplateCard({ base, kind, readOnly, onSaved }: {
   base: string; kind: Kind; readOnly: boolean; onSaved: () => void;
 }) {
   const toast = useToast();
   const [body, setBody] = useState(kind.template?.bodyTemplate ?? kind.sample);
   const [dltTemplateId, setDltTemplateId] = useState(kind.template?.dltTemplateId ?? "");
+  const [providerFlowId, setProviderFlowId] = useState(kind.template?.providerFlowId ?? "");
 
   const preview = useMemo(() => previewSegments(body), [body]);
+  const msg91Body = useMemo(() => toMsg91(body), [body]);
+  const [copied, setCopied] = useState(false);
 
   const save = useMutation({
     mutationFn: () =>
       axiosInstance.put(`${base}/templates`, {
-        channel: "SMS", templateKey: kind.key, bodyTemplate: body, dltTemplateId, isActive: true,
+        channel: "SMS", templateKey: kind.key, bodyTemplate: body, dltTemplateId, providerFlowId, isActive: true,
       }),
     onSuccess: () => { toast.success(`${kind.label} saved`); onSaved(); },
     onError: (e) => toast.error(getApiErrorMessage(e, "Could not save the template.")),
@@ -333,7 +373,45 @@ function TemplateCard({ base, kind, readOnly, onSaved }: {
           label="Message text" value={body} onChange={(e) => setBody(e.target.value)}
           multiline minRows={3} fullWidth size="small"
           disabled={readOnly}
+          helperText={
+            readOnly
+              ? undefined
+              : "Paste MSG91's ##name## version straight in if you have it — it converts on save."
+          }
         />
+
+        {/* The same sentence MSG91 needs. Shown rather than asked for, because
+            retyping it there is how the two copies drift apart — and a drifted
+            template is rejected by the operator after we have been billed. */}
+        {!readOnly && body.trim() !== "" && (
+          <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1.5, p: 1.5, bgcolor: "background.default" }}>
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.75 }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: NEUTRAL.muted, letterSpacing: "0.04em" }}>
+                PASTE THIS INTO THE MSG91 FLOW
+              </Typography>
+              <Box sx={{ flex: 1 }} />
+              <Button
+                size="small"
+                onClick={() => {
+                  navigator.clipboard?.writeText(msg91Body).then(
+                    () => { setCopied(true); window.setTimeout(() => setCopied(false), 1600); },
+                    () => toast.error("Could not copy — select the text and copy it manually."),
+                  );
+                }}
+              >
+                {copied ? "Copied" : "Copy"}
+              </Button>
+            </Stack>
+            <Typography
+              sx={{ fontFamily: "monospace", fontSize: "0.75rem", lineHeight: 1.6, color: "text.primary", wordBreak: "break-word" }}
+            >
+              {msg91Body}
+            </Typography>
+            <Typography variant="caption" sx={{ color: NEUTRAL.muted, display: "block", mt: 0.75 }}>
+              Variables: {kind.variables.join(", ")} — add each by that exact name in MSG91.
+            </Typography>
+          </Box>
+        )}
 
         <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
           <Typography variant="caption" sx={{ color: NEUTRAL.muted }}>
@@ -353,10 +431,23 @@ function TemplateCard({ base, kind, readOnly, onSaved }: {
 
         {!readOnly && (
           <>
+            {/* Only the lower field is load-bearing. The earlier copy here sent
+                operators hunting for a separate "Flow" record and a DLT-portal
+                id, and both sent the wrong way: MSG91 renamed Flows to
+                Templates (one record, two field names in their API — see
+                lib/messaging/msg91.ts), and MSG91 submits the text to DLT on
+                the account's behalf, so most operators never see a DLT id at
+                all. Only providerFlowId is read on send; dltTemplateId is
+                stored and never used. */}
             <TextField
-              label="DLT template ID" value={dltTemplateId} onChange={(e) => setDltTemplateId(e.target.value)}
+              label="DLT template ID (optional)" value={dltTemplateId} onChange={(e) => setDltTemplateId(e.target.value)}
               size="small" sx={{ maxWidth: 320 }}
-              helperText="From the DLT portal, once this exact text is approved."
+              helperText="Record-keeping only — never used to send. Leave blank if MSG91 submitted the text to DLT for you, which is the usual case."
+            />
+            <TextField
+              label="MSG91 template ID (flow ID)" value={providerFlowId} onChange={(e) => setProviderFlowId(e.target.value)}
+              size="small" sx={{ maxWidth: 320 }}
+              helperText="Required — nothing sends without it. The id beside this template in MSG91 → Templates. Their API calls the same record a “flow”, hence the two names."
             />
             <Box>
               <Button variant="outlined" size="small" disabled={save.isPending} onClick={() => save.mutate()}>

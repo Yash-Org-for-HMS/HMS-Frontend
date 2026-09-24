@@ -4,7 +4,7 @@ import {
   Box, Typography, Paper, Tabs, Tab, Button, IconButton, Chip, Divider, Alert,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
-  Tooltip, FormControlLabel, Switch, InputAdornment, CircularProgress,
+  Tooltip, FormControlLabel, Switch, InputAdornment, CircularProgress, ButtonBase, Stack,
 } from "@mui/material";
 import {
   AddRounded, SearchRounded, ArrowBackRounded, LocalShippingRounded,
@@ -13,13 +13,15 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { formatDate, formatDateTime, formatINRAuto } from "@/utils/format";
-import { SEMANTIC, NEUTRAL } from "@/styles/accents";
+import { SEMANTIC, NEUTRAL, alpha } from "@/styles/accents";
+import PageHeader from "@/components/layout/PageHeader";
 import { useToast } from "@/providers/ToastContext";
 import { useIsNursePanel } from "@/features/ipd/panelBase";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
 import ErrorState from "@/components/ErrorState";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import SearchableSelect from "@/components/form/SearchableSelect";
 
 /**
  * Ward stock: what each ward holds, and how it got there.
@@ -75,10 +77,35 @@ function units(n: number, unit: string | null): string {
 
 /* ── small pieces ───────────────────────────────────────────────────────── */
 
-function Stat({ label, value, color }: { label: string; value: number | string; color: string }) {
+/**
+ * One figure in a summary row.
+ *
+ * `color` is now optional, and that is the point. Every stat used to be a
+ * tinted box with a coloured border — "Lines held" in blue and "Units" in
+ * green beside "Expired" in red — so four tiles shouted equally and the one
+ * that meant something did not stand out. Blue and green were carrying no
+ * information: a count of lines is not a state.
+ *
+ * So a plain count is drawn plainly, and colour is spent only where it says
+ * "this needs attention". A stat whose value is zero is not a state either,
+ * and callers drop it rather than render a reassuring red 0.
+ */
+function Stat({ label, value, color }: { label: string; value: number | string; color?: string }) {
   return (
-    <Box sx={{ flex: 1, minWidth: 110, p: 1.5, borderRadius: 2, bgcolor: `${color}14`, border: "1px solid", borderColor: `${color}44` }}>
-      <Typography variant="h5" sx={{ fontWeight: 800, color, lineHeight: 1.1 }}>{value}</Typography>
+    <Box
+      sx={{
+        flex: 1, minWidth: 110, px: 1.75, py: 1.25, borderRadius: 2,
+        border: "1px solid",
+        borderColor: color ? alpha(color, 0.35) : "divider",
+        bgcolor: color ? alpha(color, 0.06) : "transparent",
+      }}
+    >
+      <Typography
+        variant="h5"
+        sx={{ fontWeight: 800, color: color ?? "text.primary", lineHeight: 1.15, fontVariantNumeric: "tabular-nums" }}
+      >
+        {value}
+      </Typography>
       <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>{label}</Typography>
     </Box>
   );
@@ -505,23 +532,19 @@ function ConsumeDialog({ ward, stock, onClose, onDone }: {
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ fontWeight: 700 }}>Record use in {ward.wardName}</DialogTitle>
       <DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2.5 }}>
-        <TextField
-          select fullWidth size="small" label="Used on" value={admissionId}
-          onChange={(e) => setAdmissionId(e.target.value)}
-        >
-          {patientsLoading && <MenuItem disabled value="">Loading…</MenuItem>}
-          {!patientsLoading && !(patients?.patients ?? []).length && (
-            <MenuItem disabled value="">Nobody is admitted in this ward</MenuItem>
-          )}
-          {(patients?.patients ?? []).map((p) => (
-            <MenuItem key={p.admissionId} value={p.admissionId}>
-              {p.name}
-              <Typography component="span" variant="caption" sx={{ color: "text.secondary", ml: 1 }}>
-                {p.uhid}{p.bed ? ` · bed ${p.bed}` : ""}
-              </Typography>
-            </MenuItem>
-          ))}
-        </TextField>
+        <SearchableSelect
+          label="Used on" name="admissionId" size="small"
+          value={admissionId} onChange={(e) => setAdmissionId(e.target.value)}
+          placeholder={patientsLoading ? "Loading…" : "Pick the patient"}
+          searchPlaceholder="Search by name, UHID or bed…"
+          options={(patients?.patients ?? []).map((p) => ({
+            value: p.admissionId,
+            label: p.name,
+            secondary: [p.uhid, p.bed ? `bed ${p.bed}` : null].filter(Boolean).join(" · ") || undefined,
+            keywords: `${p.uhid ?? ""} ${p.bed ?? ""}`,
+          }))}
+          helperText={!patientsLoading && !(patients?.patients ?? []).length ? "Nobody is admitted in this ward" : undefined}
+        />
 
         <Divider />
 
@@ -546,10 +569,30 @@ function ConsumeDialog({ ward, stock, onClose, onDone }: {
             helperText={tooMany ? `only ${chosen?.quantityOnHand}` : " "}
             InputProps={{ inputProps: { min: 1 } }}
           />
-          <Button onClick={add} disabled={!chosen || !(qty > 0) || tooMany} sx={{ textTransform: "none", mt: 0.4 }}>
+          {/* Outlined, not a bare text button. Adding to the basket is a
+              REQUIRED step — Record stays disabled until something is in it —
+              and as a low-emphasis link beside a number field it read as
+              optional. Choosing an item and pressing Record did nothing, with
+              no reason given. */}
+          <Button
+            onClick={add} variant="outlined" startIcon={<AddRounded />}
+            disabled={!chosen || !(qty > 0) || tooMany}
+            sx={{ textTransform: "none", mt: 0.4, flexShrink: 0 }}
+          >
             Add
           </Button>
         </Box>
+
+        {/* Says what is missing instead of leaving Record greyed out in
+            silence. Only once an item is picked, so it reads as the next step
+            rather than a complaint about an untouched form. */}
+        {!basket.length && (
+          <Alert severity="info" sx={{ py: 0.5 }}>
+            {chosen
+              ? "Press Add to put this on the list — nothing is recorded until it is on the list."
+              : "Pick an item and press Add. You can record several in one go."}
+          </Alert>
+        )}
 
         {basket.length > 0 && (
           <Box>
@@ -763,7 +806,7 @@ function CountDialog({ ward, stock, onClose, onDone }: {
         <DialogTitle sx={{ fontWeight: 700 }}>Counted {ward.wardName}</DialogTitle>
         <DialogContent dividers sx={{ pt: 2.5 }}>
           <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
-            <Stat label="Lines counted" value={result.summary.counted} color={SEMANTIC.info} />
+            <Stat label="Lines counted" value={result.summary.counted} />
             <Stat label="Agreed" value={result.summary.agreed} color={SEMANTIC.success} />
             {result.summary.short > 0 && <Stat label="Units short" value={result.summary.short} color={SEMANTIC.danger} />}
             {result.summary.over > 0 && <Stat label="Units over" value={result.summary.over} color={SEMANTIC.warning} />}
@@ -906,8 +949,8 @@ function ReorderTab() {
   return (
     <Box>
       <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
-        <Stat label="Lines to fill" value={data.summary.lines} color={SEMANTIC.warning} />
-        <Stat label="Wards waiting" value={data.summary.wards} color={SEMANTIC.info} />
+        <Stat label="Lines to fill" value={data.summary.lines} />
+        <Stat label="Wards waiting" value={data.summary.wards} />
         <Stat label="Units short" value={data.summary.unitsShort} color={SEMANTIC.warning} />
         {data.summary.cannotCover > 0 && (
           <Stat label="Store cannot cover" value={data.summary.cannotCover} color={SEMANTIC.danger} />
@@ -994,24 +1037,33 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
 
   return (
     <Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
-        <IconButton onClick={onBack} size="small"><ArrowBackRounded /></IconButton>
-        <Typography variant="h6" sx={{ fontWeight: 700, flex: 1, minWidth: 0 }}>{ward.wardName}</Typography>
-        {/* The nursing action, and the one this whole module exists to make
-            possible: it bills the patient and empties the cupboard at once. */}
-        <Button variant="contained" startIcon={<HealingRounded />} onClick={() => setConsuming(true)} sx={{ textTransform: "none" }}>
-          Record use
-        </Button>
-        {/* Counting is the ward's own work: the people who can see the shelf are
-            the ones who know what is on it. */}
-        <Button variant="outlined" startIcon={<FactCheckRounded />} onClick={() => setCounting(true)} sx={{ textTransform: "none" }}>
-          Count stock
-        </Button>
-        {canIssue && (
-          <Button variant="outlined" startIcon={<LocalShippingRounded />} onClick={() => setIssuing(true)} sx={{ textTransform: "none" }}>
-            Issue to this ward
+      {/* Title and actions on separate rows rather than one wrapping flex line.
+          Four controls sharing a row with a heading meant that at tablet width
+          the buttons wrapped one at a time and the back arrow ended up orphaned
+          above a stack of three — so the way back moved depending on how wide
+          the window was. */}
+      <Box sx={{ mb: 2.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+          <IconButton onClick={onBack} size="small" aria-label="Back to all wards"><ArrowBackRounded /></IconButton>
+          <Typography variant="h6" sx={{ fontWeight: 700, minWidth: 0 }} noWrap>{ward.wardName}</Typography>
+        </Box>
+        <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap", rowGap: 1.5, pl: { xs: 0, sm: 5 } }}>
+          {/* The nursing action, and the one this whole module exists to make
+              possible: it bills the patient and empties the cupboard at once. */}
+          <Button variant="contained" startIcon={<HealingRounded />} onClick={() => setConsuming(true)} sx={{ textTransform: "none" }}>
+            Record use
           </Button>
-        )}
+          {/* Counting is the ward's own work: the people who can see the shelf are
+              the ones who know what is on it. */}
+          <Button variant="outlined" startIcon={<FactCheckRounded />} onClick={() => setCounting(true)} sx={{ textTransform: "none" }}>
+            Count stock
+          </Button>
+          {canIssue && (
+            <Button variant="outlined" startIcon={<LocalShippingRounded />} onClick={() => setIssuing(true)} sx={{ textTransform: "none" }}>
+              Issue to this ward
+            </Button>
+          )}
+        </Stack>
       </Box>
 
       <Tabs
@@ -1030,10 +1082,13 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
         <ListSkeleton rows={5} />
       ) : (
         <>
+          {/* Counts plain, states coloured, and a state at zero left out —
+              a red "0 expired" is a warning about nothing. */}
           <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
-            <Stat label="Lines held" value={data.summary.items} color={SEMANTIC.info} />
-            <Stat label="Units" value={data.summary.units} color={SEMANTIC.success} />
-            <Stat label="Out of stock" value={data.summary.outOfStock} color={NEUTRAL.muted} />
+            <Stat label="Lines held" value={data.summary.items} />
+            <Stat label="Units" value={data.summary.units} />
+            {data.summary.belowPar > 0 && <Stat label="Below par" value={data.summary.belowPar} color={SEMANTIC.warning} />}
+            {data.summary.outOfStock > 0 && <Stat label="Out of stock" value={data.summary.outOfStock} color={NEUTRAL.muted} />}
             {data.summary.expired > 0 && <Stat label="Expired" value={data.summary.expired} color={SEMANTIC.danger} />}
           </Box>
 
@@ -1137,40 +1192,79 @@ function WardsTab({ canIssue }: { canIssue: boolean }) {
   if (isLoading || !data) return <ListSkeleton rows={4} />;
   if (!data.wards.length) return <Empty>No wards are set up yet.</Empty>;
 
+  // The position across every ward, so the store keeper can see whether
+  // anything needs doing without opening six cupboards one at a time.
+  const across = data.wards.reduce(
+    (a, w) => ({
+      expired: a.expired + w.expired,
+      belowPar: a.belowPar + w.belowPar,
+      outOfStock: a.outOfStock + w.outOfStock,
+    }),
+    { expired: 0, belowPar: 0, outOfStock: 0 },
+  );
+  const needsAttention = across.expired + across.belowPar + across.outOfStock > 0;
+
   return (
-    <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "1fr 1fr 1fr" } }}>
-      {data.wards.map((w) => (
-        <Paper
-          key={w.wardId} variant="outlined" onClick={() => setOpen(w)}
-          sx={{
-            p: 2, borderRadius: 2, cursor: "pointer", display: "flex", alignItems: "center", gap: 1.5,
-            "&:hover": { borderColor: SEMANTIC.info, bgcolor: `${SEMANTIC.info}08` },
-          }}
-        >
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="body1" sx={{ fontWeight: 700 }} noWrap>{w.wardName}</Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              {w.items === 0 ? "nothing issued yet" : `${w.items} line${w.items === 1 ? "" : "s"} · ${w.units} units`}
-            </Typography>
-            <Box sx={{ display: "flex", gap: 0.5, mt: 0.8, flexWrap: "wrap" }}>
-              {w.expired > 0 && (
-                <Chip size="small" icon={<WarningAmberRounded sx={{ fontSize: 14 }} />} label={`${w.expired} expired`}
-                  sx={{ height: 20, fontSize: 11, fontWeight: 700, bgcolor: `${SEMANTIC.danger}18`, color: SEMANTIC.danger }} />
-              )}
-              {w.belowPar > 0 && (
-                <Chip size="small" label={`${w.belowPar} below par`}
-                  sx={{ height: 20, fontSize: 11, fontWeight: 700, bgcolor: `${SEMANTIC.warning}18`, color: SEMANTIC.warning }} />
-              )}
-              {w.outOfStock > 0 && (
-                <Chip size="small" label={`${w.outOfStock} out`}
-                  sx={{ height: 20, fontSize: 11, fontWeight: 700, bgcolor: `${NEUTRAL.muted}1f`, color: NEUTRAL.muted }} />
-              )}
-            </Box>
-          </Box>
-          <ChevronRightRounded sx={{ color: "text.disabled" }} />
-        </Paper>
-      ))}
-    </Box>
+    <>
+      {needsAttention && (
+        <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
+          {across.expired > 0 && <Stat label="Expired, all wards" value={across.expired} color={SEMANTIC.danger} />}
+          {across.belowPar > 0 && <Stat label="Below par, all wards" value={across.belowPar} color={SEMANTIC.warning} />}
+          {across.outOfStock > 0 && <Stat label="Out of stock, all wards" value={across.outOfStock} color={NEUTRAL.muted} />}
+        </Box>
+      )}
+
+      <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "1fr 1fr 1fr" } }}>
+        {data.wards.map((w) => {
+          // Expired stock on a ward outranks everything else on that card;
+          // below-par is a nudge. Carried on the card's own edge, because a
+          // 20px chip is not visible when you are scanning a grid of twelve.
+          const tone = w.expired > 0 ? SEMANTIC.danger : w.belowPar > 0 ? SEMANTIC.warning : null;
+          return (
+            <ButtonBase
+              key={w.wardId}
+              onClick={() => setOpen(w)}
+              aria-label={`Open ${w.wardName}`}
+              sx={{ display: "block", width: "100%", textAlign: "left", borderRadius: 2 }}
+            >
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2, borderRadius: 2, display: "flex", alignItems: "center", gap: 1.5, width: "100%",
+                  borderColor: tone ? alpha(tone, 0.45) : "divider",
+                  borderLeft: "4px solid",
+                  borderLeftColor: tone ?? "transparent",
+                  transition: "border-color .15s, background-color .15s",
+                  "&:hover": { borderColor: tone ?? SEMANTIC.info, bgcolor: alpha(tone ?? SEMANTIC.info, 0.05) },
+                }}
+              >
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 700 }} noWrap>{w.wardName}</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    {w.items === 0 ? "nothing issued yet" : `${w.items} line${w.items === 1 ? "" : "s"} · ${w.units} units`}
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 0.5, mt: 0.8, flexWrap: "wrap" }}>
+                    {w.expired > 0 && (
+                      <Chip size="small" icon={<WarningAmberRounded sx={{ fontSize: 14 }} />} label={`${w.expired} expired`}
+                        sx={{ height: 20, fontSize: 11, fontWeight: 700, bgcolor: alpha(SEMANTIC.danger, 0.1), color: SEMANTIC.danger }} />
+                    )}
+                    {w.belowPar > 0 && (
+                      <Chip size="small" label={`${w.belowPar} below par`}
+                        sx={{ height: 20, fontSize: 11, fontWeight: 700, bgcolor: alpha(SEMANTIC.warning, 0.1), color: SEMANTIC.warning }} />
+                    )}
+                    {w.outOfStock > 0 && (
+                      <Chip size="small" label={`${w.outOfStock} out`}
+                        sx={{ height: 20, fontSize: 11, fontWeight: 700, bgcolor: alpha(NEUTRAL.muted, 0.12), color: NEUTRAL.muted }} />
+                    )}
+                  </Box>
+                </Box>
+                <ChevronRightRounded sx={{ color: "text.disabled" }} />
+              </Paper>
+            </ButtonBase>
+          );
+        })}
+      </Box>
+    </>
   );
 }
 
@@ -1467,8 +1561,8 @@ function PositionView({ data }: { data: PositionReport }) {
   return (
     <Box>
       <Box sx={{ display: "flex", gap: 1.5, mb: 2, flexWrap: "wrap" }}>
-        <Stat label="Units in cupboards" value={data.totals.units} color={SEMANTIC.info} />
-        <Stat label="List value" value={formatINRAuto(data.totals.listValue)} color={SEMANTIC.success} />
+        <Stat label="Units in cupboards" value={data.totals.units} />
+        <Stat label="List value" value={formatINRAuto(data.totals.listValue)} />
         {data.totals.expiredUnits > 0 && <Stat label="Expired units" value={data.totals.expiredUnits} color={SEMANTIC.danger} />}
         {data.totals.expiringUnits > 0 && <Stat label="Expiring in 30 days" value={data.totals.expiringUnits} color={SEMANTIC.warning} />}
         {data.totals.belowPar > 0 && <Stat label="Lines below par" value={data.totals.belowPar} color={SEMANTIC.warning} />}
@@ -1532,8 +1626,8 @@ function ConsumptionView({ data }: { data: ConsumptionReport }) {
   return (
     <Box>
       <Box sx={{ display: "flex", gap: 1.5, mb: 2, flexWrap: "wrap" }}>
-        <Stat label="Units used" value={data.totals.units} color={SEMANTIC.info} />
-        <Stat label="Billed to patients" value={formatINRAuto(data.totals.billedValue)} color={SEMANTIC.success} />
+        <Stat label="Units used" value={data.totals.units} />
+        <Stat label="Billed to patients" value={formatINRAuto(data.totals.billedValue)} />
         <Stat label="Absorbed as floor stock" value={formatINRAuto(data.totals.absorbedValue)} color={SEMANTIC.warning} />
       </Box>
       {/* Two numbers of different kinds, and reading the second as revenue lost
@@ -1605,7 +1699,7 @@ function VarianceView({ data }: { data: VarianceReport }) {
   return (
     <Box>
       <Box sx={{ display: "flex", gap: 1.5, mb: 2, flexWrap: "wrap" }}>
-        <Stat label="Counts done" value={data.totals.counts} color={SEMANTIC.info} />
+        <Stat label="Counts done" value={data.totals.counts} />
         <Stat label="Units short" value={data.totals.unitsShort} color={SEMANTIC.danger} />
         {data.totals.unitsOver > 0 && <Stat label="Units over" value={data.totals.unitsOver} color={SEMANTIC.warning} />}
         <Stat label="Value short" value={formatINRAuto(data.totals.shortValue)} color={SEMANTIC.danger} />
@@ -1689,14 +1783,16 @@ export default function WardStock() {
 
   return (
     <Box sx={{ width: "100%" }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: "-0.5px" }}>Ward Stock</Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
-          {isNurse
-            ? "What this ward is holding, what it used, and sending back what it does not need."
-            : "Gloves, syringes and floor-stock drugs: what the store has, and what each ward is holding."}
-        </Typography>
-      </Box>
+      {/* The shared header, not a hand-rolled h4. This page was setting its own
+          title and subtitle with its own margins, so it sat a few pixels off
+          every other page in the panel — which is the whole reason PageHeader
+          exists. */}
+      <PageHeader
+        title="Ward Stock"
+        subtitle={isNurse
+          ? "What this ward is holding, what it used, and sending back what it does not need."
+          : "Gloves, syringes and floor-stock drugs: what the store has, and what each ward is holding."}
+      />
 
       <Tabs
         value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"

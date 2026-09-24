@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Paper, TextField, InputAdornment, Typography, Chip, Alert,
+  Box, Paper, TextField, InputAdornment, Typography, Chip,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
   ToggleButton, ToggleButtonGroup, TablePagination,
 } from "@mui/material";
@@ -60,7 +60,6 @@ export default function NurseImmunisations() {
   const rows: DueRow[] = data?.data ?? [];
   const total: number = data?.meta?.total ?? 0;
   const counts = data?.meta?.counts ?? {};
-  const unscheduled: number = data?.meta?.unscheduledChildren ?? 0;
 
   if (isError) {
     return <ErrorState title="Couldn't load the immunisation list" message={(error as Error)?.message} onRetry={() => refetch()} />;
@@ -75,12 +74,6 @@ export default function NurseImmunisations() {
 
       {/* A child whose schedule has never been opened has no doses yet, so it
           cannot appear below. Saying so beats letting them go quietly missing. */}
-      {unscheduled > 0 && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          {unscheduled} child{unscheduled === 1 ? "" : "ren"} {unscheduled === 1 ? "has" : "have"} no immunisation schedule started yet, so
-          {unscheduled === 1 ? " it is" : " they are"} not listed here. Opening the patient's Vaccinations tab creates the schedule.
-        </Alert>
-      )}
 
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
         <Box sx={{ p: 2, display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "center" }}>

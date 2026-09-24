@@ -148,12 +148,18 @@ export default function HospitalDashboard() {
 
   /**
    * Each row goes to the register that explains it, not to the panel it vaguely
-   * belongs to. Stock and purchase-order rows used to land on the reports hub
-   * with no report chosen, and an unacknowledged critical result — the most
-   * severe row on the list, shown first — had no link at all.
+   * belongs to — stock and purchase-order rows used to land on the reports hub
+   * with no report chosen.
+   *
+   * And each row lands somewhere an administrator can ACT. Unacknowledged
+   * critical lab results used to lead this list and pointed at a read-only
+   * report: the one thing here nobody on this panel could clear. They belong to
+   * the doctor and lab dashboards, and now live only there.
    */
   const ATTENTION_ROUTES: [string, string][] = [
-    ["critical:", "/hospital/reports?view=lab-critical"],
+    ["claim:", "/hospital/claims"],
+    ["refund:", "/hospital/refund-approvals"],
+    ["expired:", "/hospital/reports?view=expiry"],
     ["stock:", "/hospital/reports?view=reorder-list"],
     ["invoice:", "/hospital/reports?view=outstanding"],
     ["po:", "/hospital/reports?view=supplier-ledger"],
@@ -247,10 +253,16 @@ export default function HospitalDashboard() {
         <Grid size={{ xs: 12, lg: 7 }}>
           <AttentionList
             title="Needs attention"
-            subtitle="Unacknowledged critical results first, then stock, unpaid bills and open orders"
+            // Describes severity order, not a fixed running order of kinds —
+            // the list is sorted by how urgent a row is, so naming the kinds in
+            // sequence would go stale the moment the mix changes. Which is what
+            // happened to the line this replaces: it still promised
+            // "unacknowledged critical results first" after those moved to the
+            // doctor and lab dashboards.
+            subtitle="Most urgent first — stock, unpaid bills, claims waiting on us, and refunds needing a second approval"
             items={attentionItems}
             loading={opsLoading}
-            emptyText="Nothing outstanding — no unacknowledged criticals, stock is healthy and bills are settled."
+            emptyText="Nothing outstanding — stock is healthy, bills are settled and no claim is waiting on us."
             maxRows={6}
             actionLabel="All reports"
             onAction={() => navigate("/hospital/reports")}

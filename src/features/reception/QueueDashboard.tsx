@@ -6,12 +6,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Tooltip,
-  Alert, Menu, MenuItem, alpha,
+  Alert, Menu, MenuItem, alpha, TextField, InputAdornment,
 } from "@mui/material";
 import {
   MoreVertRounded, PlayArrowRounded, CheckCircleRounded,
   SkipNextRounded, CancelRounded, SyncRounded, ReceiptRounded,
-  MonitorHeartRounded, LogoutRounded,
+  MonitorHeartRounded, LogoutRounded, FilterAltRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
@@ -104,32 +104,73 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
 
   const error = queryError ? "Failed to load queue" : null;
 
-  // Filters/derived stats are memoized on `tokens` — this page re-renders on
-  // every unrelated local-state change (menu open/close, dialog toggles), and
+  /**
+   * Narrow the whole board to one doctor.
+   *
+   * A shared desk runs several doctors' queues at once, and "who is next for
+   * Dr Rao" meant reading past everyone else's patients. Applied HERE, to the
+   * raw list, so every derived view below narrows with it — waiting, skipped,
+   * completed, the counts and the wait-time monitor. Filtering each list
+   * separately is how a filter ends up honoured in three places out of six.
+   */
+  const [doctorFilter, setDoctorFilter] = useState<string>("");
+
+  // Built from the queue itself, so it only ever offers doctors who actually
+  // have someone in today — a list of every doctor in the hospital would be
+  // mostly dead options at a desk.
+  const doctorsInQueue = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const t of tokens) {
+      if (t.doctorId && !seen.has(t.doctorId)) seen.set(t.doctorId, t.doctorName || "Unknown");
+    }
+    return [...seen.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [tokens]);
+
+  /**
+   * A doctor who drops out of the queue must not leave the board stuck showing
+   * nothing.
+   *
+   * Derived rather than corrected in an effect. Resetting the state from a
+   * useEffect would render one frame of an empty board and then re-render —
+   * a cascading render for a value that is a pure function of what is already
+   * here. If the selected doctor is no longer in the queue, the filter simply
+   * does not apply this render.
+   */
+  const effectiveFilter = doctorsInQueue.some((d) => d.id === doctorFilter) ? doctorFilter : "";
+
+  const visibleTokens = useMemo(
+    () => (effectiveFilter ? tokens.filter((t) => t.doctorId === effectiveFilter) : tokens),
+    [tokens, effectiveFilter],
+  );
+
+  // Filters/derived stats are memoized on `visibleTokens` — this page re-renders
+  // on every unrelated local-state change (menu open/close, dialog toggles), and
   // without memoization each of those re-runs 4+ full-array passes for no reason.
   const activeTokens = useMemo(
-    () => tokens.filter((t) => t.statusCode !== "SKIPPED" && t.statusCode !== "COMPLETED" && t.statusCode !== "CANCELLED"),
-    [tokens]
+    () => visibleTokens.filter((t) => t.statusCode !== "SKIPPED" && t.statusCode !== "COMPLETED" && t.statusCode !== "CANCELLED"),
+    [visibleTokens]
   );
-  const skippedTokens = useMemo(() => tokens.filter((t) => t.statusCode === "SKIPPED"), [tokens]);
+  const skippedTokens = useMemo(() => visibleTokens.filter((t) => t.statusCode === "SKIPPED"), [visibleTokens]);
   // Finished OPD patients. The backend already returns today's COMPLETED tokens,
   // but nothing rendered them — they were filtered out of `activeTokens` and had
   // no section of their own, so a patient simply vanished from the screen once
   // seen, leaving no record of who was actually done today. Newest first, since
   // "who just finished" is the question being asked.
   const completedTokens = useMemo(
-    () => tokens
+    () => visibleTokens
       .filter((t) => t.statusCode === "COMPLETED")
       .sort((a, b) => new Date(b.consultationEndedAt || b.updatedAt || 0).getTime() - new Date(a.consultationEndedAt || a.updatedAt || 0).getTime()),
-    [tokens]
+    [visibleTokens]
   );
 
   // Today's first-vs-repeat mix across every token (not just the active ones —
   // a patient already seen still counts toward the day's mix).
-  const firstVisitCount = useMemo(() => tokens.filter((t) => t.visitType === "First visit").length, [tokens]);
+  const firstVisitCount = useMemo(() => visibleTokens.filter((t) => t.visitType === "First visit").length, [visibleTokens]);
   const repeatCount = useMemo(
-    () => tokens.filter((t) => t.visitType === "Repeat" || t.visitType === "Follow-up").length,
-    [tokens],
+    () => visibleTokens.filter((t) => t.visitType === "Repeat" || t.visitType === "Follow-up").length,
+    [visibleTokens],
   );
 
   // ── Waiting-time monitor ──────────────────────────────────────────────
@@ -207,6 +248,32 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
         title="Live Queue Management"
         subtitle="Monitor and manage today's patient queue"
         actions={
+          <>
+          {/* Only worth showing when there is more than one doctor to choose
+              between — a single-doctor clinic gets a control that can only ever
+              say what the screen already shows. */}
+          {doctorsInQueue.length > 1 && (
+            <TextField
+              select size="small" value={effectiveFilter}
+              onChange={(e) => setDoctorFilter(e.target.value)}
+              sx={{ minWidth: 210, mr: 1.5 }}
+              slotProps={{ input: { startAdornment: (
+                <InputAdornment position="start">
+                  <FilterAltRounded fontSize="small" sx={{ color: effectiveFilter ? BRAND.action : "text.secondary" }} />
+                </InputAdornment>
+              ) } }}
+            >
+              <MenuItem value="">All doctors ({tokens.length})</MenuItem>
+              {doctorsInQueue.map((d) => (
+                <MenuItem key={d.id} value={d.id}>
+                  {d.name}
+                  <Typography component="span" variant="caption" sx={{ color: "text.secondary", ml: 1 }}>
+                    {tokens.filter((t) => t.doctorId === d.id).length}
+                  </Typography>
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
           <Button
             variant="outlined"
             startIcon={<SyncRounded />}
@@ -218,6 +285,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
           >
             Refresh
           </Button>
+          </>
         }
       />
 

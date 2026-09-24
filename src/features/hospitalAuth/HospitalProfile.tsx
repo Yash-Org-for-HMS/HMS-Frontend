@@ -18,7 +18,10 @@ import {
   Alert,
   Divider,
 } from "@mui/material";
-import { SaveRounded, BusinessRounded, PaletteRounded, GavelRounded, CloudUploadRounded } from "@mui/icons-material";
+import {
+  SaveRounded, BusinessRounded, PaletteRounded, GavelRounded, CloudUploadRounded,
+  ArrowBackRounded, ArrowForwardRounded,
+} from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useToast } from "@/providers/ToastContext";
@@ -62,6 +65,28 @@ function a11yProps(index: number) {
     id: `profile-tab-${index}`,
     "aria-controls": `profile-tabpanel-${index}`,
   };
+}
+
+/**
+ * A tab label that can carry a "something's missing here" dot.
+ *
+ * Small and unlabelled on purpose: it marks where to look, and the message on
+ * Save says what is actually wrong. A count here would be a second thing to
+ * read on a control whose job is to be a signpost.
+ */
+function TabLabel({ text, flag }: { text: string; flag?: boolean }) {
+  return (
+    <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
+      {text}
+      {flag && (
+        <Box
+          component="span"
+          aria-label="has a required field still empty"
+          sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: SEMANTIC.danger, flexShrink: 0 }}
+        />
+      )}
+    </Box>
+  );
 }
 
 export default function HospitalProfile() {
@@ -127,6 +152,61 @@ export default function HospitalProfile() {
     setTabValue(newValue);
   };
 
+  /**
+   * Which tab each required field lives on, and what to call it.
+   *
+   * Every panel stays mounted (hidden with `visibility`, so the card does not
+   * resize between tabs), which meant the browser's own `required` check found
+   * an empty control it could not focus — "An invalid form control is not
+   * focusable" — and blocked the save with nothing visible to act on. You
+   * filled in General, pressed Save, and either nothing happened or a "fill out
+   * this field" bubble pointed at a field on a tab you were not looking at.
+   *
+   * So the form no longer validates natively. This list drives our own check,
+   * which can do the thing the browser cannot: SWITCH TO THE TAB the problem is
+   * on before complaining about it.
+   */
+  const REQUIRED_FIELDS: { name: keyof typeof formData; label: string; tab: number }[] = [
+    { name: "hospitalName", label: "Hospital name", tab: 0 },
+    { name: "officialPhone", label: "Official phone", tab: 0 },
+    { name: "addressLine1", label: "Address line 1", tab: 0 },
+    { name: "registrationNumber", label: "Registration number", tab: 2 },
+  ];
+  const TAB_LABELS = ["General Information", "Branding", "Compliance"];
+
+  const missingFields = REQUIRED_FIELDS.filter((f) => !String(formData[f.name] ?? "").trim());
+  /** Tabs carrying a problem, so a tab can show it before anyone presses Save. */
+  const tabsWithMissing = new Set(missingFields.map((f) => f.tab));
+
+  const LAST_TAB = TAB_LABELS.length - 1;
+  const isLastTab = tabValue === LAST_TAB;
+
+  /**
+   * Step forward, but only once THIS tab is complete.
+   *
+   * Checking one tab at a time is the point of stepping through: whatever is
+   * wrong is on the screen you are already looking at. The old single Save
+   * checked all three at once and pointed at fields two tabs away.
+   *
+   * The tab strip stays clickable on purpose — an existing hospital changing
+   * one GST number should not have to walk the whole path — so this is a guided
+   * route, not a cage.
+   */
+  const goNext = () => {
+    const missingHere = REQUIRED_FIELDS.filter(
+      (f) => f.tab === tabValue && !String(formData[f.name] ?? "").trim(),
+    );
+    if (missingHere.length) {
+      toast.error(
+        missingHere.length === 1
+          ? `${missingHere[0].label} is required.`
+          : `Still needed here: ${missingHere.map((f) => f.label).join(", ")}.`,
+      );
+      return;
+    }
+    setTabValue((t) => Math.min(t + 1, LAST_TAB));
+  };
+
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -156,8 +236,39 @@ export default function HospitalProfile() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  /**
+   * Save, called directly — never as a form submission from a button click.
+   *
+   * The Next and Save buttons occupy the same slot in the footer, so React
+   * reuses the SAME <button> node between steps and simply changes its
+   * attributes. When Next was `type="button"` and Save `type="submit"`,
+   * clicking Next on Branding did this:
+   *
+   *   1. onClick runs goNext(), which sets the tab to Compliance
+   *   2. React flushes that update synchronously, still inside the click
+   *   3. the button element's `type` is now "submit"
+   *   4. the browser reaches the click's DEFAULT ACTION, reads the type it
+   *      finds NOW, and submits the form
+   *
+   * So pressing Next silently saved the profile. The isLastTab guard could not
+   * catch it either: by step 4 the tab really was the last one. Both buttons
+   * are now `type="button"` and call what they mean, which leaves the form's
+   * onSubmit for the Enter key alone.
+   */
+  const saveProfile = async () => {
+    // Take them to the problem before naming it. Reporting a missing field on
+    // a tab the user cannot see is the whole complaint this replaces.
+    if (missingFields.length) {
+      const first = missingFields[0];
+      setTabValue(first.tab);
+      toast.error(
+        missingFields.length === 1
+          ? `${first.label} is required — it's on the ${TAB_LABELS[first.tab]} tab.`
+          : `${missingFields.length} required fields are still empty. Starting with ${first.label}, on the ${TAB_LABELS[first.tab]} tab.`,
+      );
+      return;
+    }
+
     try {
       setSaving(true);
       await axiosInstance.put("/hospital/profile", formData);
@@ -169,6 +280,21 @@ export default function HospitalProfile() {
     } finally {
       setSaving(false);
     }
+  };
+
+  /**
+   * Reached only by the Enter key now — no button submits this form.
+   *
+   * Enter still means "move on" until the last step, so it never runs a save
+   * from a step where Save is not even on screen.
+   */
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isLastTab) {
+      goNext();
+      return;
+    }
+    void saveProfile();
   };
 
   if (loading) {
@@ -207,6 +333,10 @@ export default function HospitalProfile() {
 <Paper
         component="form"
         onSubmit={handleSubmit}
+        // The browser cannot report on a control it cannot focus, and every
+        // inactive panel here is `visibility: hidden`. Our own check in
+        // handleSubmit does the job and can switch tabs first.
+        noValidate
         sx={{
           bgcolor: "background.paper",
           border: "1px solid", borderColor: "divider",
@@ -239,9 +369,14 @@ export default function HospitalProfile() {
               },
             }}
           >
-            <Tab icon={<BusinessRounded sx={{ mr: 1 }} />} iconPosition="start" label="General Information" {...a11yProps(0)} />
-            <Tab icon={<PaletteRounded sx={{ mr: 1 }} />} iconPosition="start" label="Branding" {...a11yProps(1)} />
-            <Tab icon={<GavelRounded sx={{ mr: 1 }} />} iconPosition="start" label="Compliance" {...a11yProps(2)} />
+            {/* A dot on any tab still missing something required, so the gap is
+                visible from here rather than discovered on Save. */}
+            <Tab icon={<BusinessRounded sx={{ mr: 1 }} />} iconPosition="start"
+              label={<TabLabel text="General Information" flag={canEdit && tabsWithMissing.has(0)} />} {...a11yProps(0)} />
+            <Tab icon={<PaletteRounded sx={{ mr: 1 }} />} iconPosition="start"
+              label={<TabLabel text="Branding" flag={canEdit && tabsWithMissing.has(1)} />} {...a11yProps(1)} />
+            <Tab icon={<GavelRounded sx={{ mr: 1 }} />} iconPosition="start"
+              label={<TabLabel text="Compliance" flag={canEdit && tabsWithMissing.has(2)} />} {...a11yProps(2)} />
           </Tabs>
         </Box>
 
@@ -462,20 +597,61 @@ export default function HospitalProfile() {
         </Box>
 
         {canEdit && (
-          <Box sx={{ p: 3, borderTop: "1px solid", borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={saving}
-              startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
-              sx={{
-                bgcolor: SEMANTIC.success,
-                "&:hover": { bgcolor: SEMANTIC.successDark },
-                px: 4,
-              }}
-            >
-              {saving ? "Saving..." : "Save Profile"}
-            </Button>
+          <Box sx={{
+            p: 3, borderTop: "1px solid", borderColor: "divider",
+            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap",
+          }}>
+            {/* Where you are, and what is left. Says "Step 1 of 3" rather than
+                repeating the tab's own name back at you. */}
+            <Typography variant="caption" sx={{ color: missingFields.length ? SEMANTIC.danger : "text.secondary" }}>
+              {missingFields.length
+                ? `Step ${tabValue + 1} of ${TAB_LABELS.length} · ${missingFields.length} required field${missingFields.length === 1 ? "" : "s"} still empty`
+                : `Step ${tabValue + 1} of ${TAB_LABELS.length}${isLastTab ? " · saving stores every tab at once" : ""}`}
+            </Typography>
+
+            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+              {tabValue > 0 && (
+                <Button
+                  type="button"
+                  onClick={() => setTabValue((t) => Math.max(t - 1, 0))}
+                  disabled={saving}
+                  startIcon={<ArrowBackRounded />}
+                  sx={{ textTransform: "none", color: "text.secondary" }}
+                >
+                  Back
+                </Button>
+              )}
+
+              {/* Both `type="button"`, and given distinct keys so React builds a
+                  NEW element for each rather than reusing one node and swapping
+                  its type mid-click — which is what made Next save the profile.
+                  Neither ever triggers a form submission; each calls what it
+                  says. */}
+              {isLastTab ? (
+                <Button
+                  key="save"
+                  type="button"
+                  variant="contained"
+                  disabled={saving}
+                  onClick={() => void saveProfile()}
+                  startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
+                  sx={{ bgcolor: SEMANTIC.success, "&:hover": { bgcolor: SEMANTIC.successDark }, px: 4 }}
+                >
+                  {saving ? "Saving..." : "Save profile"}
+                </Button>
+              ) : (
+                <Button
+                  key="next"
+                  type="button"
+                  variant="contained"
+                  onClick={goNext}
+                  endIcon={<ArrowForwardRounded />}
+                  sx={{ bgcolor: SEMANTIC.success, "&:hover": { bgcolor: SEMANTIC.successDark }, px: 4 }}
+                >
+                  Next: {TAB_LABELS[tabValue + 1]}
+                </Button>
+              )}
+            </Box>
           </Box>
         )}
       </Paper>

@@ -16,6 +16,18 @@ import { ReportNavLayout, type ReportItem } from "@/features/reports/kit";
 import { NURSE_REPORT_GROUPS } from "../nurse/NurseReports";
 import { CLAIM_REPORT_GROUPS } from "../claims/ClaimReports";
 
+import OtReports, { type OtReportKey } from "@/features/ipd/OtReports";
+
+/**
+ * The theatre reports, one hub entry each.
+ *
+ * They lived on a page of their own at /ipd/ot-reports, so six reports were
+ * invisible from the place people go to look for reports. Each mounts the same
+ * component pinned to one report, which keeps its filters and drops its own
+ * header and tab strip.
+ */
+const otReport = (key: OtReportKey) => () => <OtReports report={key} />;
+
 const ACCENT = BRAND.action;
 
 // Gating is this panel's own concern; the shared layout renders what it is given.
@@ -46,6 +58,18 @@ const GROUPS: ReportGroup[] = [
       { key: "discharges", label: "Discharges", Comp: Discharges },
       { key: "ip-registrations", label: "IP Registrations", Comp: IpRegistrations },
       { key: "ip-advances", label: "IP Advances", Comp: IpAdvances },
+    ],
+  },
+  {
+    heading: "Operating Theatre",
+    module: "IPD",
+    items: [
+      { key: "ot-utilisation", label: "Theatre Utilisation", Comp: otReport("utilisation") },
+      { key: "ot-turnaround", label: "Turnaround Between Cases", Comp: otReport("turnaround") },
+      { key: "ot-case-mix", label: "Case Mix", Comp: otReport("cases") },
+      { key: "ot-cancellations", label: "Cancellations", Comp: otReport("cancellations") },
+      { key: "ot-complications", label: "Complications", Comp: otReport("complications") },
+      { key: "ot-revenue", label: "Theatre Revenue", Comp: otReport("revenue") },
     ],
   },
   {

@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { formatDate } from "@/utils/format";
-import { SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Button, useTheme, alpha, Tabs, Tab, MenuItem, Select, IconButton, Tooltip, TextField, InputAdornment, FormControlLabel, Switch
+  Button, useTheme, alpha, Tabs, Tab, MenuItem, Select, IconButton, Tooltip, TextField,
+  InputAdornment, FormControlLabel, Switch, Chip
 } from "@mui/material";
 import { AddRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded, SearchRounded, TuneRounded, PersonSearchRounded, AssignmentReturnRounded } from "@mui/icons-material";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -50,6 +51,37 @@ function batchQtyColor(inv: { expiryDate: string | Date; availableQuantity: numb
   if (Number(inv.availableQuantity) <= 0) return "text.disabled";
   return "success.main";
 }
+
+/**
+ * How each purchase-order status reads.
+ *
+ * A map, not a chain of ternaries, because the chain only tested `pending` and
+ * `partial` and painted EVERYTHING ELSE green — so a CANCELLED order rendered
+ * as a success pill, reading "done" when it means "abandoned". There are five
+ * statuses (pending, partial, received, completed, cancelled) and the two the
+ * chain forgot are the two that matter most on a list somebody scans for what
+ * still needs receiving.
+ */
+const PO_STATUS: Record<string, { label: string; tone: string }> = {
+  pending: { label: "Pending", tone: SEMANTIC.warning },
+  partial: { label: "Part received", tone: SEMANTIC.info },
+  received: { label: "Received", tone: SEMANTIC.success },
+  completed: { label: "Completed", tone: SEMANTIC.success },
+  cancelled: { label: "Cancelled", tone: NEUTRAL.muted },
+};
+
+/** One radius for every surface on this page, from the theme's own step. */
+const CARD_RADIUS = 3;
+
+/**
+ * How tall a table may grow before it scrolls inside its own container.
+ *
+ * Was `calc(100vh - 300px)` written out three times. The 300 was nobody's
+ * measurement — at browser zoom, or on a 768px-tall laptop, it left the table a
+ * couple of rows tall. Named once so the three tabs cannot drift apart, and
+ * floored so it degrades to "short but usable" instead of "two rows".
+ */
+const TABLE_MAX_H = "max(320px, calc(100vh - 320px))";
 
 export default function InventoryManagement() {
   const theme = useTheme();
@@ -259,20 +291,14 @@ export default function InventoryManagement() {
           variant="contained"
           startIcon={<AddRounded />}
           onClick={() => setOpenPoDialog(true)}
-          sx={{
-            borderRadius: '12px',
-            textTransform: 'none',
-            fontWeight: 600,
-            px: 3,
-            py: 1.2,
-          }}
+          sx={{ textTransform: "none", fontWeight: 600 }}
         >
           Create PO
         </Button>
       }
     >
-      <Paper sx={{ borderRadius: 4, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-        <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: alpha(theme.palette.background.paper, 0.5) }}>
+      <Paper sx={{ borderRadius: CARD_RADIUS, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+        <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tab label="Current Stock" sx={{ fontWeight: 600 }} />
           <Tab label="Purchase Orders" sx={{ fontWeight: 600 }} />
           <Tab label="Supplier Returns" sx={{ fontWeight: 600 }} />
@@ -280,9 +306,14 @@ export default function InventoryManagement() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               Low Stock Alerts
               {lowStockAlerts.length > 0 && (
-                <Box sx={{ bgcolor: 'error.main', color: 'white', px: 1, borderRadius: 10, fontSize: '0.75rem', fontWeight: 700 }}>
-                  {lowStockAlerts.length}
-                </Box>
+                <Chip
+                  size="small" label={lowStockAlerts.length}
+                  sx={{
+                    height: 20, minWidth: 20, fontWeight: 700, fontSize: "0.6875rem",
+                    bgcolor: alpha(SEMANTIC.danger, 0.12), color: SEMANTIC.danger,
+                    "& .MuiChip-label": { px: 0.75 },
+                  }}
+                />
               )}
             </Box>
           } sx={{ fontWeight: 600 }} />
@@ -293,7 +324,6 @@ export default function InventoryManagement() {
           px: 2, py: 1.5,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           borderBottom: '1px solid', borderColor: 'divider',
-          bgcolor: alpha(theme.palette.background.paper, 0.5),
           minHeight: 56
         }}>
           {tabValue === 0 ? (
@@ -344,7 +374,7 @@ export default function InventoryManagement() {
           <Box sx={{ minHeight: 400 }}>
             {/* Tab 0: Current Stock */}
             <Box role="tabpanel" hidden={tabValue !== 0}>
-              <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+              <TableContainer sx={{ maxHeight: TABLE_MAX_H }}>
               <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
@@ -437,7 +467,7 @@ export default function InventoryManagement() {
 
             {/* Tab 1: Purchase Orders */}
             <Box role="tabpanel" hidden={tabValue !== 1}>
-              <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+              <TableContainer sx={{ maxHeight: TABLE_MAX_H }}>
               <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
@@ -467,13 +497,18 @@ export default function InventoryManagement() {
                         {totalReceived} / {totalOrdered}
                       </TableCell>
                       <TableCell>
-                        <Box sx={{
-                          display: 'inline-block', px: 1.5, py: 0.5, borderRadius: 2, fontSize: '0.875rem', fontWeight: 600,
-                          bgcolor: po.status === 'pending' ? alpha(SEMANTIC.warning, 0.1) : po.status === 'partial' ? alpha(SEMANTIC.info, 0.1) : alpha(SEMANTIC.success, 0.1),
-                          color: po.status === 'pending' ? SEMANTIC.warning : po.status === 'partial' ? SEMANTIC.info : SEMANTIC.success
-                        }}>
-                          {po.status.toUpperCase()}
-                        </Box>
+                        {(() => {
+                          // An unknown status reads as unknown rather than
+                          // inheriting the last branch of a ternary.
+                          const s = PO_STATUS[String(po.status).toLowerCase()]
+                            ?? { label: String(po.status), tone: NEUTRAL.muted };
+                          return (
+                            <Chip
+                              size="small" label={s.label}
+                              sx={{ fontWeight: 700, bgcolor: alpha(s.tone, 0.12), color: s.tone }}
+                            />
+                          );
+                        })()}
                       </TableCell>
                       <TableCell align="right">
                         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
@@ -511,7 +546,7 @@ export default function InventoryManagement() {
 
             {/* Tab 3: Low Stock Alerts */}
             <Box role="tabpanel" hidden={tabValue !== 3}>
-              <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
+              <TableContainer sx={{ maxHeight: TABLE_MAX_H }}>
               <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>

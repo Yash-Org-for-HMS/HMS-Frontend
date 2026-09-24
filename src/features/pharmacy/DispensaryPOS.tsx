@@ -39,12 +39,25 @@ export default function DispensaryPOS() {
   const { data, isLoading: loading, refetch: fetchData } = useQuery({
     queryKey: ["dispensary-pos-data"],
     queryFn: async () => {
-      const ts = Date.now();
+      /**
+       * Today only, asked for as today.
+       *
+       * This used to fetch every pharmacy order ever taken — 2,233 of them with
+       * all 4,181 line items nested, 2.2 MB — and filter to the day in the
+       * browser, keeping two. On a thirty-second poll, plus every queue event,
+       * plus every socket reconnect, and with a cache-busting `t` so none of it
+       * could ever be reused. That is what made this screen crawl.
+       *
+       * The other three are small (23 KB, 6 KB, and the pending list) and are
+       * genuinely all needed: the medicine picker searches the whole catalogue.
+       */
+      const since = new Date();
+      since.setHours(0, 0, 0, 0);
       const [medRes, invRes, presRes, salesRes] = await Promise.all([
-        axiosInstance.get(`/pharmacy/medicines?t=${ts}`),
-        axiosInstance.get(`/pharmacy/inventory?t=${ts}`),
-        axiosInstance.get(`/pharmacy/prescriptions/pending?t=${ts}`),
-        axiosInstance.get(`/pharmacy/orders?t=${ts}`)
+        axiosInstance.get(`/pharmacy/medicines`),
+        axiosInstance.get(`/pharmacy/inventory`),
+        axiosInstance.get(`/pharmacy/prescriptions/pending`),
+        axiosInstance.get(`/pharmacy/orders?from=${encodeURIComponent(since.toISOString())}`)
       ]);
       return {
         medicines: medRes.data.data || [],
@@ -73,6 +86,10 @@ export default function DispensaryPOS() {
   const [page, setPage] = useState(1);
   const itemsPerPage = ROWS_PER_PAGE;
 
+  // Kept as a belt-and-braces filter now that the server is asked for today
+  // only: it costs nothing over a handful of rows, and it keeps the screen
+  // correct if the tab is left open across midnight, when the server's floor is
+  // yesterday's but the heading still says "today".
   const todaysOrders = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
