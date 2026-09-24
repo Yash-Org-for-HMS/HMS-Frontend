@@ -60,7 +60,36 @@ createRoot(document.getElementById("root")!).render(
         <CssBaseline />
         {/* Always reserve the vertical scrollbar's space so switching between
             short and tall pages/tabs doesn't shift centered layouts sideways. */}
-        <GlobalStyles styles={{ html: { scrollbarGutter: "stable" } }} />
+        <GlobalStyles
+          styles={{
+            html: { scrollbarGutter: "stable" },
+            /**
+             * Give Windows 10 a real weight-800 face.
+             *
+             * Page titles are set at 800. Windows 11 has Segoe UI Variable
+             * Text, which covers that weight, so a title renders properly
+             * heavy. Windows 10 does not have it and falls through to static
+             * Segoe UI, whose heaviest face is Bold (700) — the same heading
+             * came out visibly thinner, on the same build and browser.
+             *
+             * Windows 10 does ship Segoe UI Black as its own family, so the
+             * weight exists on the machine; nothing in the stack was reaching
+             * it. This maps it in under a name of its own, used only for
+             * 800-900.
+             *
+             * `local()` only — no font is downloaded or redistributed, which
+             * matters because the Segoe faces are Microsoft's and cannot be
+             * served as web fonts. On a machine without them this rule matches
+             * nothing and the stack behaves exactly as before.
+             */
+            "@font-face": {
+              fontFamily: "Segoe UI Heavy",
+              src: 'local("Segoe UI Variable Display Bold"), local("Segoe UI Black")',
+              fontWeight: "800 900",
+              fontStyle: "normal",
+            },
+          }}
+        />
         <BrowserRouter>
           <ToastProvider>
             <ConfirmProvider>

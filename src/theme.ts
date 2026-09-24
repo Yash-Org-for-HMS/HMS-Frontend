@@ -1,6 +1,23 @@
 import { createTheme, alpha, type ThemeOptions } from "@mui/material/styles";
 import { BRAND, DISABLED_CONTAINED } from "./styles/accents";
 
+/**
+ * The font stack for text set at weight 800.
+ *
+ * "Segoe UI Heavy" is declared in main.tsx from LOCAL Segoe faces only —
+ * nothing is downloaded, and the Segoe fonts are Microsoft's and cannot be
+ * served as web fonts. It carries 800-900 and nothing else, which is exactly
+ * why it must not go in the global stack: a family that matches is chosen
+ * before weight is considered, so it would supply its nearest face (800) to
+ * placeholders and table cells too.
+ *
+ * Windows 11 never reaches it — Segoe UI Variable Text comes first and already
+ * covers 800. Windows 10 has no such face, falls to Segoe UI Black through
+ * this rule, and a page title finally renders as heavy as it does on 11.
+ */
+export const HEADING_FONT =
+  '"Segoe UI Variable Display", "Segoe UI Heavy", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif';
+
 const themeOptions: ThemeOptions = {
   palette: {
     mode: "light",
@@ -57,27 +74,34 @@ const themeOptions: ThemeOptions = {
      * hands that choice to the OS, which picks the right optical size per
      * element. Windows falls through to Segoe UI Variable Text (11) or Segoe
      * UI (10), which is what actually rendered here all along.
-     */
-    /**
-     * Inter first — the font the app already downloads.
      *
-     * Five weights of Inter were being fetched on every load and then never
-     * used, because this stack did not name it. The UI rendered in whatever
-     * the machine happened to have, and the first entry Windows matched was
-     * "Segoe UI Variable Text" — which ships with Windows 11 and does not
-     * exist on Windows 10.
-     *
-     * That is why a title looked heavier on one machine than another: on
-     * Windows 11 a variable face supplied a true weight 800, and on Windows 10
-     * the stack fell through to static Segoe UI, whose heaviest face is 700,
-     * so the same heading came out thinner. The system stack stays behind
-     * Inter as a fallback for the moment before the font loads.
+     * Inter is deliberately NOT here. It ships for the printed documents,
+     * which name it explicitly. Putting it in this stack changed the face on
+     * every machine in order to fix a difference on one — replacing what was
+     * right rather than repairing what was not. The weight-800 gap on Windows
+     * 10 is closed by HEADING_FONT below instead.
      */
     fontFamily:
-      '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif',
+      '-apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif',
+
+    /**
+     * The stack for text set at 800, and ONLY for that text.
+     *
+     * "Segoe UI Heavy" (declared in main.tsx from local Segoe faces) carries
+     * faces at 800-900 and nothing else. Putting it in the stack above put it
+     * in front of every word on the page: a family that matches is chosen
+     * before weight is considered, so the browser then picked its nearest
+     * face — 800 — for placeholders, table cells and body copy alike. The
+     * login page rendered in black.
+     *
+     * So it is applied only where 800 is actually wanted. Windows 11 never
+     * reaches it: Segoe UI Variable Text comes first and already covers 800.
+     */
 
     /**
      * Body weights, which the theme never set.
+     *
+     * (see HEADING_FONT, exported below, for the 800-only stack)
      *
      * Only h1–h6 and button were declared, so body1/body2/subtitle/caption fell
      * through to MUI's default 400 — while styles/typography.ts declares the
@@ -94,10 +118,12 @@ const themeOptions: ThemeOptions = {
     overline: { fontWeight: 700 },
 
     h1: {
+      fontFamily: HEADING_FONT,
       fontWeight: 800,
       letterSpacing: "-0.03em",
     },
     h2: {
+      fontFamily: HEADING_FONT,
       fontWeight: 800,
       letterSpacing: "-0.02em",
     },

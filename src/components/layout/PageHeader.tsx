@@ -1,5 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import type { ReactNode } from "react";
+import { HEADING_FONT } from "@/theme";
 
 interface PageHeaderProps {
   title: string;
@@ -35,7 +36,10 @@ export default function PageHeader({ title, subtitle, actions }: PageHeaderProps
       <Box sx={{ minWidth: 0 }}>
         <Typography
           variant="h4"
-          sx={{ fontWeight: 800, letterSpacing: "-0.5px", color: "text.primary" }}
+          /* HEADING_FONT because this is set at 800 and the h4 variant is not.
+             Windows 10 has no Segoe face above Bold, so without it every page
+             title in the product rendered a step lighter there than on 11. */
+          sx={{ fontFamily: HEADING_FONT, fontWeight: 800, letterSpacing: "-0.5px", color: "text.primary" }}
         >
           {title}
         </Typography>
