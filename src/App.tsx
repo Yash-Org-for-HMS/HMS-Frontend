@@ -58,6 +58,7 @@ const HospitalChangePassword = lazy(() => import("@/features/hospitalAuth/Hospit
 const HospitalDashboard = lazy(() => import("@/features/hospitalAuth/HospitalDashboard"));
 const HospitalProfile = lazy(() => import("@/features/hospitalAuth/HospitalProfile"));
 const HospitalSettings = lazy(() => import("@/features/hospitalAuth/HospitalSettings"));
+const MySubscription = lazy(() => import("@/features/hospitalAuth/MySubscription"));
 const DepartmentsList = lazy(() => import("@/features/hospitalAuth/departments/DepartmentsList"));
 const DepartmentForm = lazy(() => import("@/features/hospitalAuth/departments/DepartmentForm"));
 const HospitalUsersList = lazy(() => import("@/features/hospitalAuth/users/UsersList"));
@@ -104,6 +105,7 @@ const NotificationsLog = lazy(() => import("@/features/reception/NotificationsLo
 const Announcements = lazy(() => import("@/features/announcements/Announcements"));
 const AnnouncementsAdmin = lazy(() => import("@/features/announcements/AnnouncementsAdmin"));
 const PlatformMessaging = lazy(() => import("@/features/messaging/PlatformMessaging"));
+const PaymentGatewaySettings = lazy(() => import("@/features/paymentGateway/PaymentGatewaySettings"));
 const ClaimsList = lazy(() => import("@/features/claims/ClaimsList"));
 const ClaimForm = lazy(() => import("@/features/claims/ClaimForm"));
 const ClaimDetail = lazy(() => import("@/features/claims/ClaimDetail"));
@@ -120,6 +122,7 @@ const NurseImmunisations = lazy(() => import("@/features/nurse/NurseImmunisation
 // Doctor
 const DoctorDashboard = lazy(() => import("@/features/doctor/DoctorDashboard"));
 const DoctorQueue = lazy(() => import("@/features/doctor/DoctorQueue"));
+const DoctorMySchedule = lazy(() => import("@/features/doctor/MySchedule"));
 const ConsultationWorkspace = lazy(() => import("@/features/doctor/ConsultationWorkspace"));
 const DoctorPatients = lazy(() => import("@/features/doctor/DoctorPatients"));
 const DoctorPatientProfile = lazy(() => import("@/features/doctor/DoctorPatientProfile"));
@@ -192,7 +195,7 @@ const elGated = (C: ComponentType<any>, module: string, feature?: string, props:
 const ADMIN_SEGMENTS = new Set([
   "login", "plans", "subscription-billing", "leads", "trials", "hospitals",
   "onboarding", "super-admins", "rbac", "reports", "audit-logs", "announcements",
-  "platform-messaging",
+  "platform-messaging", "payment-gateway",
 ]);
 
 function AdminOwnedFallback() {
@@ -214,6 +217,7 @@ function App() {
           <Route element={el(AdminLayout)}>
             <Route path="/announcements" element={el(AnnouncementsAdmin)} />
             <Route path="/platform-messaging" element={el(PlatformMessaging)} />
+            <Route path="/payment-gateway" element={el(PaymentGatewaySettings)} />
             <Route path="/" element={el(Dashboard)} />
             <Route path="/plans" element={el(PlansList)} />
             <Route path="/plans/new" element={el(PlanForm)} />
@@ -266,6 +270,7 @@ function App() {
             <Route path="/hospital/dashboard" element={el(HospitalDashboard)} />
             <Route path="/hospital/profile" element={el(HospitalProfile)} />
             <Route path="/hospital/settings" element={el(HospitalSettings)} />
+            <Route path="/hospital/subscription" element={el(MySubscription)} />
             <Route path="/hospital/departments" element={el(DepartmentsList)} />
             <Route path="/hospital/departments/new" element={el(DepartmentForm)} />
             <Route path="/hospital/departments/:id/edit" element={el(DepartmentForm)} />
@@ -301,7 +306,17 @@ function App() {
                 And nursing reports are mostly vitals, which a hospital without
                 IPD still records; the Ward & Beds group hides itself when IPD is
                 off, which is the right granularity and is what the hub reuses. */}
+            {/* The list, not just its reports. The admin dashboard's attention
+                list points at queried and ageing claims — chasing a payer is an
+                administrator's job — and until now the only claims page on this
+                side was the report, so there was nowhere for those rows to go.
+                Ungated for the same reason the report is. */}
+            <Route path="/hospital/claims" element={el(ClaimsList)} />
+            {/* `reports` before `:id`, matching the reception routes. Router
+                ranking would pick the static segment either way; the order is
+                for whoever reads it next. */}
             <Route path="/hospital/claims/reports" element={el(ClaimReports)} />
+            <Route path="/hospital/claims/:id" element={el(ClaimDetail)} />
             <Route path="/hospital/nurse-reports" element={el(NurseReports)} />
             <Route path="/hospital/module-access" element={el(ModuleAccess)} />
             <Route path="/hospital/doctors" element={el(DoctorsList)} />
@@ -415,6 +430,7 @@ function App() {
             <Route path="/doctor/announcements" element={el(Announcements)} />
             <Route path="/doctor/dashboard" element={el(DoctorDashboard)} />
             <Route path="/doctor/queue" element={el(DoctorQueue)} />
+            <Route path="/doctor/schedule" element={el(DoctorMySchedule)} />
             <Route path="/doctor/consultation/:appointmentId" element={el(ConsultationWorkspace)} />
             <Route path="/doctor/patients" element={el(DoctorPatients)} />
             <Route path="/doctor/all-patients" element={elp(DoctorPatients, { scope: "all" })} />

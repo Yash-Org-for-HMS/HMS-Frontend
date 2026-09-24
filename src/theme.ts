@@ -47,7 +47,37 @@ const themeOptions: ThemeOptions = {
     divider: "rgba(15, 23, 42, 0.08)",
   },
   typography: {
-    fontFamily: '"SF Pro Display", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif',
+    /**
+     * `-apple-system` first, not "SF Pro Display".
+     *
+     * SF Pro Display is Apple's DISPLAY cut — drawn for large text, and
+     * optically lighter and tighter at body sizes than the Text cut. Apple's
+     * own guidance is to use Text below ~20pt, and naming Display explicitly
+     * asked for the headline face to set 14px table cells. `-apple-system`
+     * hands that choice to the OS, which picks the right optical size per
+     * element. Windows falls through to Segoe UI Variable Text (11) or Segoe
+     * UI (10), which is what actually rendered here all along.
+     */
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif',
+
+    /**
+     * Body weights, which the theme never set.
+     *
+     * Only h1–h6 and button were declared, so body1/body2/subtitle/caption fell
+     * through to MUI's default 400 — while styles/typography.ts declares the
+     * same text at 500. The result was two weights for one job: a component
+     * spreading `typeScale.body` rendered at 500, and the far more common
+     * `<Typography variant="body2">` rendered at 400. Most of the product was
+     * on the lighter of the two, against its own ladder.
+     */
+    body1: { fontWeight: 500 },
+    body2: { fontWeight: 500 },
+    subtitle1: { fontWeight: 600 },
+    subtitle2: { fontWeight: 600 },
+    caption: { fontWeight: 500 },
+    overline: { fontWeight: 700 },
+
     h1: {
       fontWeight: 800,
       letterSpacing: "-0.03em",
