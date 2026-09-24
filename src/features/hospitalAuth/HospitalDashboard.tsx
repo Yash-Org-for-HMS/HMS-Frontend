@@ -101,6 +101,19 @@ const ACTIVITY_ICON: Record<string, { icon: typeof AddCircleRounded; color: stri
 // Whole rupees on this page: paise on a headline figure is noise, and the
 // tiles sit beside each other so a stray ".1" breaks the column of numbers.
 const inr = (v: number | null | undefined) => formatINR(v, 0);
+
+/**
+ * Rupees short enough for a chart tick, in the units an Indian reader expects:
+ * thousands as k, lakh as L, crore as Cr. A full "₹1,00,000" needs more room
+ * than an axis gutter has, and the tooltip carries the exact figure anyway.
+ */
+function axisRupees(v: number): string {
+  const n = Math.abs(v);
+  if (n >= 1_00_00_000) return `₹${(v / 1_00_00_000).toFixed(n % 1_00_00_000 ? 1 : 0)}Cr`;
+  if (n >= 1_00_000) return `₹${(v / 1_00_000).toFixed(n % 1_00_000 ? 1 : 0)}L`;
+  if (n >= 1_000) return `₹${Math.round(v / 1_000)}k`;
+  return `₹${Math.round(v)}`;
+}
 const dayLabel = (iso: string) => {
   const [, m, d] = iso.split("-");
   return `${d}/${m}`;
@@ -277,7 +290,12 @@ export default function HospitalDashboard() {
             {ops?.money.trend?.length ? (
               <Box sx={{ flex: 1, minHeight: 190 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={ops.money.trend} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
+                {/* left: 0, not -12. The negative margin pulled the plot over
+                    the y-axis gutter, and a full rupee label ("₹1,00,000") no
+                    longer fitted the 52px left to it — every tick rendered
+                    clipped, as "00,000". An axis nobody can read is not an
+                    axis; the ticks are compact now and the gutter is honest. */}
+                <AreaChart data={ops.money.trend} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="collectionsFill" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor={BRAND.action} stopOpacity={0.28} />
@@ -288,7 +306,7 @@ export default function HospitalDashboard() {
                   <XAxis dataKey="date" tickFormatter={dayLabel} interval="preserveStartEnd" minTickGap={28}
                     tick={{ fill: NEUTRAL.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: NEUTRAL.muted, fontSize: 11 }} axisLine={false} tickLine={false} width={52}
-                    tickFormatter={(v) => inr(v)} />
+                    tickFormatter={axisRupees} />
                   <RechartsTooltip
                     cursor={{ stroke: alpha(BRAND.action, 0.4) }}
                     contentStyle={{ fontSize: 12, borderRadius: 8 }}
