@@ -302,11 +302,22 @@ export interface UnbilledItem {
   metadata?: { admissionId?: string | null; consultationId?: string | null } | null;
 }
 
-/** The hospital's own billing identity, as the profile endpoint returns it. */
+/**
+ * The hospital's own billing identity, as the profile endpoint returns it.
+ *
+ * Kept field-for-field with HOSPITAL_DOCUMENT_IDENTITY on the server and with
+ * BillHospital in the shared bill template, so a profile can be handed to a
+ * document whole rather than copied key by key — which is how the logo and the
+ * city went missing from printed receipts in the first place.
+ */
 export interface HospitalBillingProfile {
   hospitalName?: string | null;
+  legalBusinessName?: string | null;
+  registrationNumber?: string | null;
   addressLine1?: string | null;
   addressLine2?: string | null;
+  landmark?: string | null;
+  city?: string | null;
   postalCode?: string | null;
   officialPhone?: string | null;
   officialEmail?: string | null;

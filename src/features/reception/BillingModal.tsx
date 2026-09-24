@@ -1,6 +1,6 @@
 import { printHtml } from "@/utils/printHtml";
 import type { InvoiceDetail, UnbilledItem, PaymentMethodRef, HospitalBillingProfile } from "@/types";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { paidTotal, refundedTotal } from "@/utils/invoiceMoney";
 import RefundSection from "@/components/billing/RefundSection";
 import { useNavigate } from "react-router-dom";
@@ -8,10 +8,11 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Box, Typography, Divider, Alert,
-  Grid, TextField, MenuItem, Paper, Chip
+  Grid, TextField, MenuItem, Paper, Chip, Collapse, ButtonBase
 } from "@mui/material";
 import {
-  ReceiptRounded, CheckCircleRounded, PrintRounded, PaymentRounded, CloseRounded
+  ReceiptRounded, CheckCircleRounded, PrintRounded, PaymentRounded, CloseRounded,
+  ExpandMoreRounded, LocalOfferRounded, AddCircleOutlineRounded, BlockRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -21,7 +22,7 @@ import { useToast } from "@/providers/ToastContext";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BillReceipt from "@/components/reception/BillReceipt";
 import SocChargePicker from "@/components/billing/SocChargePicker";
-import { SEMANTIC, BRAND } from "@/styles/accents";
+import { SEMANTIC, BRAND, alpha } from "@/styles/accents";
 
 interface BillingModalProps {
   open: boolean;
@@ -29,6 +30,62 @@ interface BillingModalProps {
   appointmentId: string;
   patientName: string;
   appointmentDate: string;
+}
+
+/** Which of the occasional actions is open. Only ever one. */
+type SectionKey = "discount" | "charge" | "void";
+
+/**
+ * One collapsible action in the right-hand column.
+ *
+ * These three used to sit open at once, each in a dashed box of its own colour
+ * — green, blue, red — stacked down a 370px column. That put five headings and
+ * nine inputs on screen permanently for actions a receptionist takes rarely,
+ * and left the fields sharing a half-column each with nowhere to breathe. One
+ * open at a time gives whichever is in use the full width, and collapses the
+ * rest to a single row.
+ *
+ * Collapse rather than MUI's Accordion because Collapse is what the rest of
+ * this codebase already uses; Accordion appears nowhere.
+ */
+function ActionSection({ icon, label, accent, open, onToggle, children }: {
+  icon: ReactNode;
+  label: string;
+  accent: string;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Box
+      sx={{
+        borderRadius: 2,
+        border: "1px solid",
+        borderColor: open ? alpha(accent, 0.4) : "divider",
+        bgcolor: open ? alpha(accent, 0.04) : "transparent",
+        overflow: "hidden",
+        transition: "border-color .15s, background-color .15s",
+      }}
+    >
+      <ButtonBase
+        onClick={onToggle}
+        aria-expanded={open}
+        sx={{ width: "100%", justifyContent: "flex-start", gap: 1.5, px: 2, py: 1.5, textAlign: "left" }}
+      >
+        <Box sx={{ display: "flex", color: accent }}>{icon}</Box>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.primary", flexGrow: 1 }}>
+          {label}
+        </Typography>
+        <ExpandMoreRounded
+          fontSize="small"
+          sx={{ color: "text.secondary", transform: open ? "rotate(180deg)" : "none", transition: "transform .2s" }}
+        />
+      </ButtonBase>
+      <Collapse in={open} unmountOnExit>
+        <Box sx={{ px: 2, pb: 2, pt: 0.5 }}>{children}</Box>
+      </Collapse>
+    </Box>
+  );
 }
 
 export default function BillingModal({ open, onClose, appointmentId, patientName, appointmentDate }: BillingModalProps) {
@@ -75,6 +132,11 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const [voidReason, setVoidReason] = useState("");
   const [voiding, setVoiding] = useState(false);
 
+  // Which occasional action is expanded. Closed by default: the common visit is
+  // "take the money and print", and nothing else should compete with that.
+  const [openSection, setOpenSection] = useState<SectionKey | null>(null);
+  const toggleSection = (k: SectionKey) => setOpenSection((cur) => (cur === k ? null : k));
+
   // Refund
 
   // For printing
@@ -90,6 +152,9 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       setPaymentAmount("");
       setPaymentMethodId("");
       setTransactionRef("");
+      setOpenSection(null);
+      setShowVoid(false);
+      setVoidReason("");
     }
   }, [open, appointmentId]);
 
@@ -287,26 +352,18 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     if (!receiptRef.current) return;
     const printContents = receiptRef.current.innerHTML;
 
-    // Basic print styling
+    /* Page setup only. This used to carry a full receipt stylesheet —
+       .hospital-name, .receipt-title, .totals-box, .watermark and the rest —
+       written when the receipt was local markup. The receipt has been a
+       <BillReceipt>/<BillDocument> composition for a while now, and those use
+       inline styles because printing copies innerHTML into a bare iframe where
+       class rules would not survive. So every one of those selectors matched
+       nothing; they were a description of a receipt that no longer exists. */
     const printCss = `
           @media print {
             @page { margin: 0.5cm; }
             body { font-family: 'Inter', Arial, sans-serif; padding: 20px; color: #1f2937; background: #fff; }
             .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-            th { font-weight: 700; color: #4b5563; text-transform: uppercase; font-size: 12px; }
-            .text-right { text-align: right; }
-            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; }
-            .hospital-name { font-size: 28px; font-weight: 900; color: #1e3a8a; margin: 0; letter-spacing: 1px; }
-            .hospital-info { font-size: 14px; color: #6b7280; margin: 5px 0 0 0; }
-            .receipt-title { margin-top: 20px; font-size: 16px; font-weight: 800; letter-spacing: 3px; color: #3b82f6; text-transform: uppercase; }
-            .grid-info { display: flex; justify-content: space-between; margin-bottom: 30px; font-size: 14px; }
-            .totals-box { margin-top: 30px; border-top: 2px solid #1f2937; padding-top: 15px; }
-            .total-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
-            .total-row.bold { font-weight: 800; font-size: 16px; }
-            .watermark { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 120px; font-weight: 900; color: rgba(16, 185, 129, 0.1); pointer-events: none; }
           }
       `;
 
@@ -333,7 +390,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     <Dialog
       open={open}
       onClose={onClose} 
-      maxWidth="md" 
+      maxWidth="lg"
       fullWidth
       PaperProps={{
         sx: { bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3 }
@@ -416,98 +473,144 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
 
             {/* RIGHT: Payment Entry Form */}
             <Grid size={{ xs: 12, md: 5 }}>
-              <Box sx={{ p: 3, bgcolor: "rgba(255,255,255,0.03)", borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
-                <Typography variant="subtitle1" sx={{ color: "text.primary", fontWeight: 600, mb: 3 }}>
-                  Payment Entry
-                </Typography>
-
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>Invoice Status:</Typography>
-                  <Chip 
-                    label={invoice.paymentStatus?.statusLabel || "UNKNOWN"} 
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+              <Box sx={{ p: 3, bgcolor: "rgba(255,255,255,0.03)", borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: 2 }}>
+                  <Typography variant="subtitle1" sx={{ color: "text.primary", fontWeight: 700 }}>
+                    Payment
+                  </Typography>
+                  <Chip
+                    label={invoice.paymentStatus?.statusLabel || "UNKNOWN"}
                     size="small"
-                    sx={{ 
-                      bgcolor: `${invoice.paymentStatus?.colorHex}20`, 
+                    sx={{
+                      bgcolor: `${invoice.paymentStatus?.colorHex}20`,
                       color: invoice.paymentStatus?.colorHex,
-                      fontWeight: 700 
-                    }} 
+                      fontWeight: 700
+                    }}
                   />
                 </Box>
-                
-                <Divider sx={{ borderColor: "divider", my: 2 }} />
+
+                {/* The three numbers a receptionist is asked for at the desk.
+                    They were only ever in the receipt on the left, so answering
+                    "how much is left?" meant reading a monospace column. */}
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75, mb: 2.5 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="body2" color="text.secondary">Invoice total</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+                      ₹{netAmount.toFixed(2)}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="body2" color="text.secondary">Paid so far</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+                      ₹{netPaid.toFixed(2)}
+                    </Typography>
+                  </Box>
+                  <Divider sx={{ my: 0.75 }} />
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>Balance due</Typography>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 800,
+                        fontVariantNumeric: "tabular-nums",
+                        color: balance > 0 ? SEMANTIC.danger : SEMANTIC.success,
+                      }}
+                    >
+                      ₹{Math.max(balance, 0).toFixed(2)}
+                    </Typography>
+                  </Box>
+                </Box>
 
                 {!isFullyPaid ? (
                   <>
-                    <TextField
-                      fullWidth
-                      label="Amount (INR)"
-                      type="number"
-                      value={paymentAmount}
-                      onChange={(e) => setPaymentAmount(e.target.value)}
-                      sx={{ mb: 3, "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
-                    />
-                    <TextField
-                      select
-                      fullWidth
-                      label="Payment Method"
-                      value={paymentMethodId}
-                      onChange={(e) => setPaymentMethodId(e.target.value)}
-                      sx={{ mb: 3, "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
-                    >
-                      {paymentMethods.map(m => (
-                        <MenuItem key={m.paymentMethodId} value={m.paymentMethodId}>{m.methodName}</MenuItem>
-                      ))}
-                    </TextField>
-                    <TextField
-                      fullWidth
-                      label="Transaction Ref (Optional)"
-                      value={transactionRef}
-                      onChange={(e) => setTransactionRef(e.target.value)}
-                      sx={{ mb: 4, "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
-                    />
+                    <Grid container spacing={2} sx={{ mb: 2 }}>
+                      <Grid size={{ xs: 12, lg: 6 }}>
+                        <TextField
+                          fullWidth
+                          label="Amount (INR)"
+                          type="number"
+                          value={paymentAmount}
+                          onChange={(e) => setPaymentAmount(e.target.value)}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, lg: 6 }}>
+                        <TextField
+                          select
+                          fullWidth
+                          label="Payment Method"
+                          value={paymentMethodId}
+                          onChange={(e) => setPaymentMethodId(e.target.value)}
+                        >
+                          {paymentMethods.map(m => (
+                            <MenuItem key={m.paymentMethodId} value={m.paymentMethodId}>{m.methodName}</MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <TextField
+                          fullWidth
+                          label="Transaction reference (optional)"
+                          value={transactionRef}
+                          onChange={(e) => setTransactionRef(e.target.value)}
+                        />
+                      </Grid>
+                    </Grid>
                     <Button
                       fullWidth
                       variant="contained"
                       onClick={handlePayment}
                       disabled={paying || !paymentAmount || !paymentMethodId || Number(paymentAmount) <= 0}
                       startIcon={paying ? <HeartbeatLoader size={22} /> : <PaymentRounded />}
-                      sx={{ 
-                        py: 1.5, 
-                        bgcolor: SEMANTIC.success, 
-                        "&:hover": { bgcolor: SEMANTIC.successDark }, 
+                      sx={{
+                        py: 1.5,
+                        bgcolor: SEMANTIC.success,
+                        "&:hover": { bgcolor: SEMANTIC.successDark },
                         fontWeight: 700,
                         fontSize: "1rem"
                       }}
                     >
-                      {paying ? "Processing..." : `Collect ${paymentAmount || 0} INR`}
+                      {paying ? "Processing..." : `Collect ₹${Number(paymentAmount || 0).toFixed(2)}`}
                     </Button>
                   </>
                 ) : (
-                  <Box sx={{ textAlign: "center", py: 5 }}>
-                    <CheckCircleRounded sx={{ fontSize: 60, color: SEMANTIC.success, mb: 2 }} />
+                  <Box sx={{ textAlign: "center", py: 3 }}>
+                    <CheckCircleRounded sx={{ fontSize: 56, color: SEMANTIC.success, mb: 1.5 }} />
                     <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>Fully Paid</Typography>
-                    <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
                       No further payments required for this invoice.
                     </Typography>
                   </Box>
                 )}
+              </Box>
 
-                {/* Refunding is the same act wherever an invoice is opened, so
-                    both this screen and the Billing panel's invoice view mount
-                    the one component rather than each keeping its own copy. */}
-                <RefundSection
-                  invoice={invoice}
-                  paymentMethods={paymentMethods}
-                  onChanged={fetchBillingData}
-                />
+              {/* Refunding is the same act wherever an invoice is opened, so
+                  both this screen and the Billing panel's invoice view mount
+                  the one component rather than each keeping its own copy. */}
+              <RefundSection
+                invoice={invoice}
+                paymentMethods={paymentMethods}
+                onChanged={fetchBillingData}
+              />
 
-                {!isFullyPaid && (
-                  <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(16,185,129,0.05)", borderRadius: 2, border: "1px dashed rgba(16,185,129,0.3)" }}>
-                    <Typography variant="subtitle2" sx={{ color: SEMANTIC.success, fontWeight: 700, mb: 2 }}>
-                      Discount & Tax
-                    </Typography>
+              {!isFullyPaid && (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                  <Typography
+                    variant="overline"
+                    sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 1, lineHeight: 1 }}
+                  >
+                    Adjust this invoice
+                  </Typography>
+
+                  <ActionSection
+                    icon={<LocalOfferRounded fontSize="small" />}
+                    label="Discount & tax"
+                    accent={SEMANTIC.success}
+                    open={openSection === "discount"}
+                    onToggle={() => toggleSection("discount")}
+                  >
                     <Grid container spacing={2}>
-                      <Grid size={{ xs: 6 }}>
+                      <Grid size={{ xs: 12, lg: 6 }}>
                         <TextField
                           fullWidth size="small"
                           label="Discount (INR)"
@@ -517,7 +620,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                           inputProps={{ min: 0 }}
                         />
                       </Grid>
-                      <Grid size={{ xs: 6 }}>
+                      <Grid size={{ xs: 12, lg: 6 }}>
                         <TextField
                           fullWidth size="small"
                           label="Tax (%)"
@@ -542,74 +645,35 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                       fullWidth variant="outlined"
                       onClick={handleAdjust}
                       disabled={adjusting}
-                      sx={{ mt: 2, color: SEMANTIC.success, borderColor: "rgba(16,185,129,0.5)", fontWeight: 600 }}
+                      sx={{ mt: 2, color: SEMANTIC.success, borderColor: alpha(SEMANTIC.success, 0.5), fontWeight: 600 }}
                     >
-                      {adjusting ? "Applying..." : "Apply Discount & Tax"}
+                      {adjusting ? "Applying..." : "Apply discount & tax"}
                     </Button>
-                  </Box>
-                )}
+                  </ActionSection>
 
-                {!isFullyPaid && !invoice?.admissionId && invoice?.invoiceStatus !== "CANCELLED" && (
-                  <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(239,68,68,0.05)", borderRadius: 2, border: "1px dashed rgba(239,68,68,0.3)" }}>
-                    <Typography variant="subtitle2" sx={{ color: SEMANTIC.danger, fontWeight: 700, mb: showVoid ? 2 : 1 }}>
-                      Void invoice
-                    </Typography>
-                    {!showVoid ? (
-                      <>
-                        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
-                          Cancels this invoice and frees its charges to be re-billed. Not available once any payment is collected (refund first).
-                        </Typography>
-                        <Button fullWidth variant="outlined" onClick={() => setShowVoid(true)}
-                          sx={{ color: SEMANTIC.danger, borderColor: "rgba(239,68,68,0.5)", fontWeight: 600 }}>
-                          Void invoice
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <TextField
-                          fullWidth size="small"
-                          label="Reason (required)"
-                          placeholder="e.g. Billed in error, duplicate invoice"
-                          value={voidReason}
-                          onChange={(e) => setVoidReason(e.target.value)}
-                          multiline rows={2}
-                          sx={{ mb: 2 }}
-                        />
-                        <Box sx={{ display: "flex", gap: 1 }}>
-                          <Button fullWidth variant="outlined" onClick={() => { setShowVoid(false); setVoidReason(""); }} disabled={voiding}
-                            sx={{ color: "text.secondary", borderColor: "divider", fontWeight: 600 }}>
-                            Cancel
-                          </Button>
-                          <Button fullWidth variant="contained" onClick={handleVoid}
-                            disabled={voiding || voidReason.trim().length < 3}
-                            sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: "#dc2626" }, fontWeight: 700 }}>
-                            {voiding ? "Voiding..." : "Confirm Void"}
-                          </Button>
-                        </Box>
-                      </>
-                    )}
-                  </Box>
-                )}
-
-                {!isFullyPaid && (
-                  <Box sx={{ mt: 4, p: 2, bgcolor: "rgba(59,130,246,0.05)", borderRadius: 2, border: "1px dashed rgba(59,130,246,0.3)" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, gap: 1, flexWrap: "wrap" }}>
-                      <Typography variant="subtitle2" sx={{ color: SEMANTIC.info, fontWeight: 700 }}>
-                        + Add Charge
-                      </Typography>
-                      <Button size="small" variant="outlined" onClick={() => setSocPickerOpen(true)} disabled={addingItem}
-                        sx={{ textTransform: "none", color: BRAND.action, borderColor: "rgba(8,145,178,0.4)" }}>
-                        Pick from Schedule of Charges
-                      </Button>
-                    </Box>
+                  <ActionSection
+                    icon={<AddCircleOutlineRounded fontSize="small" />}
+                    label="Add a charge"
+                    accent={SEMANTIC.info}
+                    open={openSection === "charge"}
+                    onToggle={() => toggleSection("charge")}
+                  >
                     <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
                       Pick a rate-card charge (priced automatically), or type a custom line below.
                     </Typography>
+                    <Button
+                      fullWidth size="small" variant="outlined"
+                      onClick={() => setSocPickerOpen(true)} disabled={addingItem}
+                      sx={{ mb: 2, textTransform: "none", color: BRAND.action, borderColor: alpha(BRAND.action, 0.4), fontWeight: 600 }}
+                    >
+                      Pick from Schedule of Charges
+                    </Button>
+                    <Divider sx={{ mb: 2 }}><Typography variant="caption" color="text.secondary">or</Typography></Divider>
                     <Grid container spacing={2}>
                       <Grid size={{ xs: 12 }}>
                         <TextField
                           fullWidth size="small"
-                          label="Item Description"
+                          label="Item description"
                           placeholder="e.g. Consumables, Reg Fee"
                           value={newItemDesc}
                           onChange={(e) => setNewItemDesc(e.target.value)}
@@ -622,30 +686,75 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                           type="number"
                           value={newItemQty}
                           onChange={(e) => setNewItemQty(e.target.value)}
-                inputProps={{ min: 1, max: 100000 }}
-              />
+                          inputProps={{ min: 1, max: 100000 }}
+                        />
                       </Grid>
                       <Grid size={{ xs: 8 }}>
                         <TextField
                           fullWidth size="small"
-                          label="Unit Price (INR)"
+                          label="Unit price (INR)"
                           type="number"
                           value={newItemPrice}
                           onChange={(e) => setNewItemPrice(e.target.value)}
-                inputProps={{ min: 0, max: 10000000 }}
-              />
+                          inputProps={{ min: 0, max: 10000000 }}
+                        />
                       </Grid>
                     </Grid>
-                    <Button 
-                      fullWidth variant="outlined" 
+                    <Button
+                      fullWidth variant="outlined"
                       onClick={handleAddLineItem}
                       disabled={addingItem || !newItemDesc || !newItemPrice || Number(newItemPrice) < 0}
-                      sx={{ mt: 2, color: SEMANTIC.info, borderColor: "rgba(59,130,246,0.5)", fontWeight: 600 }}
+                      sx={{ mt: 2, color: SEMANTIC.info, borderColor: alpha(SEMANTIC.info, 0.5), fontWeight: 600 }}
                     >
-                      {addingItem ? "Adding..." : "Add Item"}
+                      {addingItem ? "Adding..." : "Add item"}
                     </Button>
-                  </Box>
-                )}
+                  </ActionSection>
+
+                  {/* Last, and the only destructive one here. */}
+                  {!invoice?.admissionId && invoice?.invoiceStatus !== "CANCELLED" && (
+                    <ActionSection
+                      icon={<BlockRounded fontSize="small" />}
+                      label="Void invoice"
+                      accent={SEMANTIC.danger}
+                      open={openSection === "void"}
+                      onToggle={() => toggleSection("void")}
+                    >
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
+                        Cancels this invoice and frees its charges to be re-billed. Not available once any payment is collected (refund first).
+                      </Typography>
+                      {!showVoid ? (
+                        <Button fullWidth variant="outlined" onClick={() => setShowVoid(true)}
+                          sx={{ color: SEMANTIC.danger, borderColor: alpha(SEMANTIC.danger, 0.5), fontWeight: 600 }}>
+                          Void invoice
+                        </Button>
+                      ) : (
+                        <>
+                          <TextField
+                            fullWidth size="small"
+                            label="Reason (required)"
+                            placeholder="e.g. Billed in error, duplicate invoice"
+                            value={voidReason}
+                            onChange={(e) => setVoidReason(e.target.value)}
+                            multiline rows={2}
+                            sx={{ mb: 2 }}
+                          />
+                          <Box sx={{ display: "flex", gap: 1 }}>
+                            <Button fullWidth variant="outlined" onClick={() => { setShowVoid(false); setVoidReason(""); }} disabled={voiding}
+                              sx={{ color: "text.secondary", borderColor: "divider", fontWeight: 600 }}>
+                              Cancel
+                            </Button>
+                            <Button fullWidth variant="contained" onClick={handleVoid}
+                              disabled={voiding || voidReason.trim().length < 3}
+                              sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: SEMANTIC.dangerDark }, fontWeight: 700 }}>
+                              {voiding ? "Voiding..." : "Confirm void"}
+                            </Button>
+                          </Box>
+                        </>
+                      )}
+                    </ActionSection>
+                  )}
+                </Box>
+              )}
               </Box>
             </Grid>
           </Grid>

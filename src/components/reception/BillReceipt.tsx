@@ -59,12 +59,9 @@ export default function BillReceipt({ invoice, hospitalProfile, hospital, patien
 
   return (
     <BillDocument
-      hospital={{
-        hospitalName: hospitalProfile?.hospitalName || hospital?.name,
-        addressLine1: hospitalProfile?.addressLine1, addressLine2: hospitalProfile?.addressLine2,
-        postalCode: hospitalProfile?.postalCode, officialPhone: hospitalProfile?.officialPhone,
-        officialEmail: hospitalProfile?.officialEmail, gstNumber: hospitalProfile?.gstNumber,
-      }}
+      /* Spread, not a field-by-field copy: the old copy listed seven keys and
+         silently dropped the logo, the legal name and the city. */
+      hospital={{ ...hospitalProfile, hospitalName: hospitalProfile?.hospitalName || hospital?.name }}
       title="Payment Receipt"
       metaLeft={[
         { label: "Receipt No", value: invoice.invoiceNumber },

@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { formatINR } from "@/utils/format";
-import BillDocument from "@/components/billing/BillDocument";
+import BillDocument, { type BillHospital } from "@/components/billing/BillDocument";
 
 /**
  * The document a patient is handed when money is returned to them.
@@ -27,10 +27,7 @@ export interface RefundReceiptData {
   invoice?: { invoiceNumber?: string | null; invoiceDate?: string | null; netAmount?: string | number | null } | null;
   originalPayment?: { paidAmount?: string | number | null; method?: string | null; reference?: string | null; paidAt?: string | null } | null;
   patient?: { name?: string | null; uhid?: string | null; phone?: string | null } | null;
-  hospital?: {
-    hospitalName?: string | null; addressLine1?: string | null; city?: string | null;
-    officialPhone?: string | null; officialEmail?: string | null; gstNumber?: string | null;
-  } | null;
+  hospital?: BillHospital | null;
 }
 
 const th: CSSProperties = { padding: "10px 8px", borderBottom: "2px solid #e5e7eb", color: "#4b5563", textTransform: "uppercase", fontSize: 12, fontWeight: 700, textAlign: "left" };
@@ -47,14 +44,9 @@ export default function RefundReceipt({ data }: { data: RefundReceiptData }) {
   return (
     <BillDocument
       variant="receipt"
-      hospital={{
-        hospitalName: data.hospital?.hospitalName,
-        addressLine1: data.hospital?.addressLine1,
-        addressLine2: data.hospital?.city,
-        officialPhone: data.hospital?.officialPhone,
-        officialEmail: data.hospital?.officialEmail,
-        gstNumber: data.hospital?.gstNumber,
-      }}
+      /* Was copied key by key, with `city` smuggled into addressLine2 because
+         the template had no city field. It has one now. */
+      hospital={data.hospital}
       title="Refund Receipt"
       metaLeft={[
         { label: "Refund No.", value: data.refundNumber || "—" },

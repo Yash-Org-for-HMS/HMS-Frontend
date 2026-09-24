@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
-import { formatINR } from "@/utils/format";
+import { formatINR, formatDateTime } from "@/utils/format";
+import { assetUrl } from "@/utils/assetUrl";
 import { SEMANTIC } from "@/styles/accents";
 
 /**
@@ -13,14 +14,26 @@ import { SEMANTIC } from "@/styles/accents";
  * the header, totals, footer and currency stay identical everywhere.
  */
 
+/**
+ * Mirrors HOSPITAL_DOCUMENT_IDENTITY on the server — the one select every
+ * document endpoint now uses. Previously this type stopped at six fields, so
+ * the logo the lab receipt endpoint had always sent was dropped on the floor,
+ * and `landmark`/`city` never reached the address line: printed receipts named
+ * a street and a PIN code but not the town.
+ */
 export interface BillHospital {
   hospitalName?: string | null;
+  legalBusinessName?: string | null;
+  registrationNumber?: string | null;
   addressLine1?: string | null;
   addressLine2?: string | null;
+  landmark?: string | null;
+  city?: string | null;
   postalCode?: string | null;
   officialPhone?: string | null;
   officialEmail?: string | null;
   gstNumber?: string | null;
+  logoUrl?: string | null;
 }
 
 export interface BillMetaItem {
@@ -56,6 +69,9 @@ interface Props {
   variant?: "receipt" | "letterhead";
   hospital?: BillHospital | null;
   title: string;
+  /** The document's own reference, shown on the right of the title bar
+   *  (e.g. "INV-0042 · 23 Sep 2026 · PAID"). */
+  titleRight?: ReactNode;
   metaLeft?: BillMetaItem[];
   metaRight?: BillMetaItem[];
   /** The line-item table (and any per-bill blocks above it, e.g. "Bill To"). */
@@ -76,34 +92,13 @@ const REFUND = "#8b5cf6";
 const money = (v: number | undefined) => formatINR(v ?? 0);
 
 export default function BillDocument({
-  variant = "receipt", hospital, title, metaLeft = [], metaRight = [],
+  variant = "receipt", hospital, title, titleRight, metaLeft = [], metaRight = [],
   children, totals, afterTotals, footer, paidWatermark,
 }: Props) {
-  const addressLine = [hospital?.addressLine1, hospital?.addressLine2, hospital?.postalCode].filter(Boolean).join(", ");
-  const contactLine = [
-    hospital?.officialPhone ? `Phone: ${hospital.officialPhone}` : null,
-    hospital?.officialEmail || null,
-  ].filter(Boolean).join("   |   ");
-
   return (
     <div style={{ fontFamily: "'Inter', Arial, sans-serif", color: INK, position: "relative" }}>
-      {variant === "letterhead" ? (
-        <>
-          <div style={{ height: "40mm" }} aria-hidden />
-          {hospital?.gstNumber && <div style={{ textAlign: "right", fontSize: 11.5, color: SUB, marginBottom: 6 }}>GSTIN: {hospital.gstNumber}</div>}
-        </>
-      ) : (
-        <div style={{ textAlign: "center", borderBottom: `2px solid ${INK}`, paddingBottom: 12, marginBottom: 14 }}>
-          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 0.5 }}>{hospital?.hospitalName || "Hospital"}</div>
-          {addressLine && <div style={{ fontSize: 12, color: SUB, marginTop: 2 }}>{addressLine}</div>}
-          {contactLine && <div style={{ fontSize: 12, color: SUB }}>{contactLine}</div>}
-          {hospital?.gstNumber && <div style={{ fontSize: 12, color: SUB, marginTop: 2 }}>GSTIN: {hospital.gstNumber}</div>}
-        </div>
-      )}
-
-      <div style={{ textAlign: "center", fontSize: 14, fontWeight: 800, letterSpacing: 3, marginBottom: 16 }}>
-        {title.toUpperCase()}
-      </div>
+      <BillLetterhead hospital={hospital} variant={variant} />
+      <BillTitleBar title={title} right={titleRight} />
 
       {(metaLeft.length > 0 || metaRight.length > 0) && (
         <div style={{ display: "flex", justifyContent: "space-between", gap: 24, marginBottom: 16, fontSize: 12.5 }}>
@@ -152,9 +147,133 @@ export default function BillDocument({
         }} aria-hidden>PAID</div>
       )}
 
-      <div style={{ marginTop: 40, textAlign: "center", fontSize: 11, color: "#9ca3af", fontStyle: "italic" }}>
-        {footer ?? "Thank you. This is a computer-generated document."}
+      {/* The printed-on stamp is not decoration: these documents get reprinted,
+          and a desk holding two copies of the same invoice needs to know which
+          one it is looking at. It sits opposite the note so neither wraps. */}
+      <BillFooter>{footer}</BillFooter>
+    </div>
+  );
+}
+
+/**
+ * The hospital's identity block — the top of every printed document.
+ *
+ * Exported because not every document is a <BillDocument>: the in-patient bill
+ * groups its lines by category and has a totals panel of its own (deposits,
+ * IGST, refundable balance), so it composes the shared header and footer around
+ * its own body rather than being forced through this component's middle.
+ */
+export function BillLetterhead({ hospital, variant = "receipt" }: { hospital?: BillHospital | null; variant?: "receipt" | "letterhead" }) {
+  /**
+   * One address line, without saying anything twice.
+   *
+   * Hospitals routinely type the whole address into line 1 — the live tenant's
+   * reads "…Kudasan, Gandhinagar, Gujarat 382419" — and then fill `city` and
+   * `postalCode` as well. Joining the fields blindly printed
+   * "…Gujarat 382419, Ahmedabad, 382419" on every invoice: the PIN twice, and
+   * a city that contradicted the one already in the line. Later parts already
+   * present are dropped; the first mention wins. Parts under three characters
+   * are kept regardless, since a short one matches almost anything.
+   */
+  const addressLine = [
+    hospital?.addressLine1, hospital?.addressLine2, hospital?.landmark,
+    hospital?.city, hospital?.postalCode,
+  ]
+    .map((v) => String(v ?? "").trim())
+    .filter(Boolean)
+    .reduce<string[]>((parts, part) => {
+      const already = parts.join(", ").toLowerCase();
+      if (part.length >= 3 && already.includes(part.toLowerCase())) return parts;
+      return [...parts, part];
+    }, [])
+    .join(", ");
+  const contactLine = [
+    hospital?.officialPhone ? `Ph: ${hospital.officialPhone}` : null,
+    hospital?.officialEmail || null,
+  ].filter(Boolean).join("  ·  ");
+
+  // Pre-printed stationery already carries the identity; printing it again would
+  // overlap it. Only the GSTIN is repeated, because the paper rarely has it.
+  if (variant === "letterhead") {
+    return (
+      <>
+        <div style={{ height: "40mm" }} aria-hidden />
+        {hospital?.gstNumber && (
+          <div style={{ textAlign: "right", fontSize: 11.5, color: SUB, marginBottom: 6 }}>GSTIN: {hospital.gstNumber}</div>
+        )}
+      </>
+    );
+  }
+
+  /* Identity left, statutory IDs right. The IDs sit apart from the address
+     because that is what a reader scans for on a tax invoice — and keeping them
+     out of the address block lets a long address wrap without pushing the GSTIN
+     somewhere unpredictable. */
+  return (
+    <div style={{
+      display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16,
+      borderBottom: `2px solid ${INK}`, paddingBottom: 10,
+    }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start", minWidth: 0 }}>
+        {hospital?.logoUrl && (
+          <img
+            src={assetUrl(hospital.logoUrl)}
+            alt=""
+            /* A broken logo must not leave a torn-image icon on a bill the
+               patient keeps. Uploads live on ephemeral storage, so a missing
+               file is an expected state here, not a defensive flourish. */
+            onError={(e) => { e.currentTarget.style.display = "none"; }}
+            style={{ height: 46, width: "auto", objectFit: "contain" }}
+          />
+        )}
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: 0.2 }}>{hospital?.hospitalName || "Hospital"}</div>
+          {hospital?.legalBusinessName && <div style={{ fontSize: 11, color: SUB }}>{hospital.legalBusinessName}</div>}
+          {addressLine && <div style={{ fontSize: 11, color: SUB, marginTop: 2 }}>{addressLine}</div>}
+          {contactLine && <div style={{ fontSize: 11, color: SUB }}>{contactLine}</div>}
+        </div>
       </div>
+      <div style={{ textAlign: "right", flexShrink: 0 }}>
+        {hospital?.gstNumber && <div style={{ fontSize: 11.5, fontWeight: 700 }}>GSTIN: {hospital.gstNumber}</div>}
+        {hospital?.registrationNumber && <div style={{ fontSize: 10.5, color: SUB }}>Reg: {hospital.registrationNumber}</div>}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The document's own name and reference. `right` carries the invoice number,
+ * date and status so they read on the title's line rather than competing with
+ * the hospital's identity above it.
+ */
+export function BillTitleBar({ title, right }: { title: string; right?: ReactNode }) {
+  return (
+    <div style={{
+      display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12,
+      background: "#f1f5f9", borderRadius: 4, padding: "6px 12px", margin: "12px 0 16px",
+    }}>
+      <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 2 }}>{title.toUpperCase()}</span>
+      {right && <span style={{ fontSize: 11.5, color: SUB, textAlign: "right" }}>{right}</span>}
+    </div>
+  );
+}
+
+/**
+ * The closing line of every printed document.
+ *
+ * The printed-on stamp is not decoration: these get reprinted, and a desk
+ * holding two copies of one invoice needs to know which is which. It sits
+ * opposite the note so neither wraps into the other.
+ */
+export function BillFooter({ children }: { children?: ReactNode }) {
+  return (
+    <div style={{
+      marginTop: 32, borderTop: "1px solid #e5e7eb", paddingTop: 8,
+      display: "flex", justifyContent: "space-between", gap: 16,
+      fontSize: 10, color: "#9ca3af",
+    }}>
+      <span>{children ?? "Computer-generated document — no signature required."}</span>
+      <span style={{ flexShrink: 0 }}>Printed {formatDateTime(new Date())}</span>
     </div>
   );
 }

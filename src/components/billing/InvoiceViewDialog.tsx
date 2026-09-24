@@ -218,23 +218,61 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                 >
                   {(() => {
                     const showHsn = invoice.InvoiceItem?.some((it: InvoiceItem) => it.hsnCode);
+                    /**
+                     * Does any line actually carry GST?
+                     *
+                     * The HSN column was added here without the tax columns that
+                     * give it meaning, so a taxed invoice printed a code and no
+                     * rate, no taxable value and no CGST/SGST — which is not a
+                     * tax invoice, and is exactly what Rule 46 requires. The IPD
+                     * bill has had these columns all along; this one had not.
+                     *
+                     * Only shown when something IS taxed: a hospital's ordinary
+                     * invoice is entirely exempt healthcare, and four empty
+                     * columns of zeroes on every consultation bill would be
+                     * worse than the omission.
+                     */
+                    const showTax = invoice.InvoiceItem?.some((it: InvoiceItem) => Number(it.taxPercent ?? 0) > 0);
+                    // Halved the same way the server does: CGST rounded, SGST
+                    // the remainder, so the two always re-add to the tax.
+                    const halves = (tax: number) => {
+                      const c = Math.round((tax / 2) * 100) / 100;
+                      return { cgst: c, sgst: Math.round((tax - c) * 100) / 100 };
+                    };
                     return (
                   <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
                     <thead><tr>
                       <th style={{ ...cell, textAlign: "left", fontWeight: 700 }}>Description</th>
                       {showHsn && <th style={{ ...cell, textAlign: "left", fontWeight: 700 }}>HSN/SAC</th>}
                       <th style={{ ...cell, textAlign: "center", fontWeight: 700 }}>Qty</th>
+                      {showTax && <th style={{ ...cell, textAlign: "right", fontWeight: 700 }}>Rate</th>}
+                      {showTax && <th style={{ ...cell, textAlign: "right", fontWeight: 700 }}>Taxable</th>}
+                      {showTax && <th style={{ ...cell, textAlign: "right", fontWeight: 700 }}>CGST</th>}
+                      {showTax && <th style={{ ...cell, textAlign: "right", fontWeight: 700 }}>SGST</th>}
                       <th style={{ ...cell, textAlign: "right", fontWeight: 700 }}>Amount</th>
                     </tr></thead>
                     <tbody>
-                      {invoice.InvoiceItem?.map((it: InvoiceItem, i: number) => (
+                      {invoice.InvoiceItem?.map((it: InvoiceItem, i: number) => {
+                        const rate = Number(it.taxPercent ?? 0);
+                        const tax = Number(it.taxAmount ?? 0);
+                        // Net of any discount apportioned to the line — the same
+                        // basis the GST report files on, so the bill and the
+                        // return cannot disagree.
+                        const taxable = Number(it.totalPrice ?? 0) - Number(it.discountAmount ?? 0);
+                        const { cgst, sgst } = halves(tax);
+                        return (
                         <tr key={i}>
                           <td style={cell}>{it.description}</td>
                           {showHsn && <td style={cell}>{it.hsnCode || "—"}</td>}
                           <td style={{ ...cell, textAlign: "center" }}>{it.quantity}</td>
-                          <td style={{ ...cell, textAlign: "right" }}>{formatINR(it.totalPrice)}</td>
+                          {showTax && <td style={{ ...cell, textAlign: "right" }}>{rate > 0 ? `${rate}%` : "Exempt"}</td>}
+                          {showTax && <td style={{ ...cell, textAlign: "right" }}>{formatINR(taxable)}</td>}
+                          {showTax && <td style={{ ...cell, textAlign: "right" }}>{rate > 0 ? formatINR(cgst) : "—"}</td>}
+                          {showTax && <td style={{ ...cell, textAlign: "right" }}>{rate > 0 ? formatINR(sgst) : "—"}</td>}
+                          <td style={{ ...cell, textAlign: "right" }}>{formatINR(Number(it.totalPrice ?? 0) + tax)}</td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                     );
@@ -296,12 +334,17 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                   created it — this dialog is the only way most invoices are ever
                   opened (IPD bills and hand-generated OPD invoices have no
                   appointment at all). */}
-              <RefundSection
-                invoice={invoice}
-                readOnly={readOnly}
-                paymentMethods={lookups?.methods ?? []}
-                onChanged={async () => { await refetch(); onChanged?.(); }}
-              />
+              {/* The gap lives here, not inside RefundSection. Its other mount
+                  point is a flex column that supplies its own gap, so a margin
+                  baked into the shared component doubled up there. */}
+              <Box sx={{ mt: 3 }}>
+                <RefundSection
+                  invoice={invoice}
+                  readOnly={readOnly}
+                  paymentMethods={lookups?.methods ?? []}
+                  onChanged={async () => { await refetch(); onChanged?.(); }}
+                />
+              </Box>
             </>
           ) : null}
       </DialogContent>

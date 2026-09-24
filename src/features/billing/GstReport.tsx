@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Alert, AlertTitle, Box, Button, Chip, Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, TextField, Typography, useTheme, alpha,
+  TableHead, TableRow, TextField, Typography, useTheme, alpha, Tabs, Tab,
 } from "@mui/material";
 import { DownloadRounded, ReceiptLongRounded } from "@mui/icons-material";
 import { Link as RouterLink } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
+import GstSetup from "./GstSetup";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import PageHeader from "@/components/layout/PageHeader";
 import { apiErrorText } from "@/utils/apiError";
@@ -75,6 +76,8 @@ function SectionCard({ title, subtitle, children, action }: { title: string; sub
 export default function GstReport() {
   const theme = useTheme();
   const [{ from, to }, setRange] = useState(monthBounds);
+  /** 0 = the return, 1 = the catalogue it is computed from. */
+  const [view, setView] = useState(0);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["gst-report", from, to],
@@ -137,6 +140,18 @@ export default function GstReport() {
         }
       />
 
+      {/* The return, and the catalogue it is computed from. Separate views
+          rather than one long page: reading a return and configuring rates
+          are different jobs, done at different times, by the same person. */}
+      <Tabs
+        value={view} onChange={(_, v) => setView(v)}
+        sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}
+      >
+        <Tab sx={{ textTransform: "none", fontWeight: 700 }} label="Return" />
+        <Tab sx={{ textTransform: "none", fontWeight: 700 }} label="Rates & HSN codes" />
+      </Tabs>
+
+      {view === 1 ? <GstSetup /> : <>
       <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap", alignItems: "center" }}>
         <TextField type="date" label="From" size="small" value={from}
           onChange={(e) => setRange((x) => ({ ...x, from: e.target.value }))} InputLabelProps={{ shrink: true }} />
@@ -318,6 +333,7 @@ export default function GstReport() {
           </SectionCard>
         </>
       )}
+      </>}
     </Box>
   );
 }

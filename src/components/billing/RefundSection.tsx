@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, Button, Chip, TextField, MenuItem, Typography, Radio, RadioGroup, FormControlLabel } from "@mui/material";
+import { Box, Button, Chip, TextField, MenuItem, Typography, Radio, RadioGroup, FormControlLabel, Divider, Grid } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
@@ -9,8 +9,41 @@ import {
 } from "@/utils/invoiceMoney";
 import { formatINR } from "@/utils/format";
 import RefundReceiptDialog from "@/components/billing/RefundReceiptDialog";
-import { SEMANTIC } from "@/styles/accents";
+import { SEMANTIC, alpha } from "@/styles/accents";
 import type { Invoice, Refund } from "@/types";
+
+/**
+ * One figure in the money strip.
+ *
+ * The four numbers that decide whether this invoice can be refunded at all used
+ * to be a single run-on caption — "₹500 of ₹2,000 collected returned · ₹100
+ * awaiting approval · ₹1,400 still refundable" — wrapping across two lines of
+ * 12px text. They are the whole basis of the decision, so they get to be
+ * figures.
+ */
+const Figure = ({ label, value, tone, strong }: {
+  label: string; value: string; tone?: string; strong?: boolean;
+}) => (
+  <Grid size={{ xs: 6 }}>
+    <Typography
+      variant="caption"
+      sx={{ display: "block", color: "text.secondary", fontWeight: 600, letterSpacing: 0.3 }}
+    >
+      {label}
+    </Typography>
+    <Typography
+      sx={{
+        fontWeight: strong ? 800 : 700,
+        fontSize: strong ? "1.05rem" : "0.95rem",
+        fontVariantNumeric: "tabular-nums",
+        color: tone ?? "text.primary",
+        lineHeight: 1.35,
+      }}
+    >
+      {value}
+    </Typography>
+  </Grid>
+);
 
 /** A medicine from this bill that can still go back on the shelf. */
 interface ReturnableMedicine {
@@ -148,42 +181,105 @@ export default function RefundSection({
   };
 
   return (
-    <Box sx={{ mt: 3, p: 2, borderRadius: 2, bgcolor: "rgba(139,92,246,0.06)", border: "1px dashed rgba(139,92,246,0.3)" }}>
-      <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 1, mb: 1, flexWrap: "wrap" }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#7c3aed" }}>Refunds</Typography>
+    <Box
+      sx={{
+        borderRadius: 2, border: "1px solid", borderColor: "divider",
+        overflow: "hidden", bgcolor: "background.paper",
+      }}
+    >
+      {/* Money leaving the building is the most consequential thing on a bill.
+          It was drawn as a dashed purple box — and the purple was the NURSE
+          panel's accent, hardcoded, so the Reception billing screen wore
+          another panel's colour. Ordinary card chrome instead, with colour
+          spent only where it means something: red on what can still go out,
+          green on nothing-left. */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 2, py: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, flex: 1 }}>Refunds</Typography>
         {collected > 0 && (
-          <Typography variant="caption" sx={{ color: "text.secondary", fontVariantNumeric: "tabular-nums" }}>
-            {formatINR(returned)} of {formatINR(collected)} collected returned
-            {awaiting > 0 ? ` · ${formatINR(awaiting)} awaiting approval` : ""}
-            {" · "}
-            <Box component="span" sx={{ fontWeight: 700, color: remaining > 0.005 ? "text.primary" : SEMANTIC.success }}>
-              {remaining > 0.005 ? `${formatINR(remaining)} still refundable` : "nothing left to refund"}
-            </Box>
-          </Typography>
+          <Chip
+            size="small"
+            label={remaining > 0.005 ? `${formatINR(remaining)} refundable` : "Nothing left"}
+            sx={{
+              fontWeight: 700,
+              bgcolor: alpha(remaining > 0.005 ? SEMANTIC.danger : SEMANTIC.success, 0.12),
+              color: remaining > 0.005 ? SEMANTIC.danger : SEMANTIC.success,
+            }}
+          />
         )}
       </Box>
+      <Divider />
+
+      {collected > 0 && (
+        <>
+          <Grid container spacing={1.5} sx={{ px: 2, py: 1.75 }}>
+            <Figure label="Collected" value={formatINR(collected)} />
+            <Figure label="Returned" value={formatINR(returned)} />
+            {awaiting > 0.005 && (
+              <Figure label="Awaiting approval" value={formatINR(awaiting)} tone={SEMANTIC.warning} />
+            )}
+            <Figure
+              label="Still refundable"
+              value={remaining > 0.005 ? formatINR(remaining) : "—"}
+              tone={remaining > 0.005 ? SEMANTIC.danger : "text.disabled"}
+              strong
+            />
+          </Grid>
+          <Divider />
+        </>
+      )}
+
+      <Box sx={{ px: 2, py: 1.75 }}>
 
       {/* What has already been returned. A refund awaiting approval is listed
           too and marked as such: it explains why less is refundable than the
           payments suggest, and it has no receipt because no money has moved. */}
       {refunds.length > 0 && (
-        <Box sx={{ mb: 1.5 }}>
+        <Box sx={{ mb: 2 }}>
           {refunds.map((r) => {
             const pending = isPendingRefund(r);
             const rejected = String(r.refundStatus).toUpperCase() === "REJECTED";
+            // Pending and rejected were both plain grey chips, though one means
+            // "this money may yet go out" and the other means "it never will".
+            const tone = pending ? SEMANTIC.warning : rejected ? SEMANTIC.danger : null;
             return (
-              <Box key={r.refundId} sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.5 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ flex: 1, color: "text.secondary", textDecoration: rejected ? "line-through" : "none" }}
-                >
-                  {r.refundNumber ? `${r.refundNumber} · ` : ""}
-                  {formatINR(r.refundAmount)}
-                  {r.refundReason ? ` — ${r.refundReason}` : ""}
-                  {paymentLabel(r.paymentId)}
-                </Typography>
-                {pending && <Chip size="small" label="Awaiting approval" sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 700 }} />}
-                {rejected && <Chip size="small" label="Rejected" sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 700 }} />}
+              <Box
+                key={r.refundId}
+                sx={{
+                  display: "flex", alignItems: "center", gap: 1.5,
+                  px: 1.5, py: 1.25, mb: 1,
+                  borderRadius: 1.5, border: "1px solid",
+                  borderColor: tone ? alpha(tone, 0.35) : "divider",
+                  bgcolor: tone ? alpha(tone, 0.04) : "transparent",
+                  opacity: rejected ? 0.8 : 1,
+                }}
+              >
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 700, fontVariantNumeric: "tabular-nums",
+                      textDecoration: rejected ? "line-through" : "none",
+                    }}
+                  >
+                    {formatINR(r.refundAmount)}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                    {r.refundNumber ? `${r.refundNumber}` : ""}
+                    {r.refundNumber && r.refundReason ? " · " : ""}
+                    {r.refundReason || ""}
+                    {paymentLabel(r.paymentId)}
+                  </Typography>
+                </Box>
+                {(pending || rejected) && (
+                  <Chip
+                    size="small"
+                    label={pending ? "Awaiting approval" : "Rejected"}
+                    sx={{
+                      fontWeight: 700, fontSize: "0.6875rem", height: 22,
+                      bgcolor: alpha(tone!, 0.12), color: tone!,
+                    }}
+                  />
+                )}
                 {!pending && !rejected && (
                   <Button size="small" onClick={() => setReceiptFor(r.refundId)} sx={{ textTransform: "none", fontWeight: 600, minWidth: 0 }}>
                     Receipt
@@ -197,20 +293,27 @@ export default function RefundSection({
 
       {readOnly ? (
         refundable.length > 0 && (
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
             Refund from the Billing panel.
           </Typography>
         )
       ) : refundable.length === 0 ? (
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
           Nothing left to refund on this invoice.
         </Typography>
       ) : !open ? (
-        <Button size="small" onClick={begin} sx={{ color: "#8b5cf6", textTransform: "none", fontWeight: 600 }}>
+        <Button
+          variant="outlined" onClick={begin}
+          sx={{ textTransform: "none", fontWeight: 700, color: SEMANTIC.danger, borderColor: alpha(SEMANTIC.danger, 0.5) }}
+        >
           Process a refund
         </Button>
       ) : (
-        <Box sx={{ mt: 1 }}>
+        <Box>
+          <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 1, lineHeight: 1, display: "block", mb: 1.5 }}>
+            What is going back
+          </Typography>
+
           <TextField
             select fullWidth size="small" label="Refund against payment" value={paymentId}
             onChange={(e) => {
@@ -237,11 +340,11 @@ export default function RefundSection({
           />
 
           {canReturn.length > 0 && (
-            <Box sx={{ mb: 2, p: 1.5, borderRadius: 1.5, bgcolor: "action.hover" }}>
-              <Typography variant="caption" sx={{ display: "block", fontWeight: 700, color: "text.primary", mb: 0.25 }}>
+            <Box sx={{ mb: 2, p: 1.75, borderRadius: 1.5, border: "1px solid", borderColor: "divider" }}>
+              <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.25 }}>
                 Medicines handed back
               </Typography>
-              <Typography variant="caption" sx={{ display: "block", color: "text.secondary", mb: 1 }}>
+              <Typography variant="caption" sx={{ display: "block", color: "text.secondary", mb: 1.5 }}>
                 Only what physically returns to the shelf. Leave at zero if the money is
                 going back but the medicine is not — a broken seal cannot be resold.
               </Typography>
@@ -271,10 +374,22 @@ export default function RefundSection({
             </Box>
           )}
 
+          {/* The one genuine decision in this flow, and it was set in 12px grey
+              inside a grey box. It decides whether the services on this bill go
+              back to be re-billed — so it is drawn as a decision. */}
           {canVoid && (
-            <Box sx={{ mb: 2, p: 1.5, borderRadius: 1.5, bgcolor: "action.hover" }}>
-              <Typography variant="caption" sx={{ display: "block", fontWeight: 700, color: "text.primary", mb: 0.5 }}>
-                This returns everything collected on this bill. What happened?
+            <Box
+              sx={{
+                mb: 2, p: 1.75, borderRadius: 1.5,
+                border: "1px solid", borderColor: alpha(SEMANTIC.warning, 0.4),
+                bgcolor: alpha(SEMANTIC.warning, 0.05),
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.25 }}>
+                This returns everything collected on this bill
+              </Typography>
+              <Typography variant="caption" sx={{ display: "block", color: "text.secondary", mb: 1 }}>
+                Which of these happened?
               </Typography>
               <RadioGroup
                 value={voidInvoice ? "void" : "owed"}
@@ -282,25 +397,37 @@ export default function RefundSection({
               >
                 <FormControlLabel
                   value="owed"
-                  control={<Radio size="small" />}
+                  sx={{ alignItems: "flex-start", mb: 0.5, mr: 0 }}
+                  control={<Radio size="small" sx={{ pt: 0.25 }} />}
                   label={
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                      <b>The charge stands</b> — the patient still owes this (overpayment returned, or paying again by another method)
-                    </Typography>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>The charge stands</Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        The patient still owes this — an overpayment returned, or they are paying again by another method.
+                      </Typography>
+                    </Box>
                   }
                 />
                 <FormControlLabel
                   value="void"
-                  control={<Radio size="small" />}
+                  sx={{ alignItems: "flex-start", mr: 0 }}
+                  control={<Radio size="small" sx={{ pt: 0.25 }} />}
                   label={
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                      <b>Cancel the charge</b> — nothing is owed. The bill is voided and its services go back to be re-billed
-                    </Typography>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>Cancel the charge</Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        Nothing is owed. The bill is voided and its services go back to be re-billed.
+                      </Typography>
+                    </Box>
                   }
                 />
               </RadioGroup>
             </Box>
           )}
+
+          <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 1, lineHeight: 1, display: "block", mb: 1.5 }}>
+            How it goes back
+          </Typography>
 
           {/* How the money physically goes back. Recorded rather than inferred:
               the cash book otherwise assumes a refund left by the method the
@@ -332,21 +459,30 @@ export default function RefundSection({
             multiline rows={2} sx={{ mb: 2 }}
           />
 
+          <Divider sx={{ mb: 2 }} />
+
           <Box sx={{ display: "flex", gap: 1 }}>
-            <Button fullWidth variant="outlined" onClick={reset} disabled={busy}
-              sx={{ color: "text.secondary", borderColor: "divider", fontWeight: 600 }}>
+            <Button variant="outlined" onClick={reset} disabled={busy}
+              sx={{ color: "text.secondary", borderColor: "divider", fontWeight: 600, flexShrink: 0 }}>
               Cancel
             </Button>
+            {/* The amount is on the button. A refund is irreversible once
+                approved, and "Confirm refund" says nothing about how much. */}
             <Button
               fullWidth variant="contained" onClick={submit}
               disabled={busy || !paymentId || !(Number(amount) > 0) || Number(amount) > selectedMax + 0.005 || reason.trim().length < 3}
               sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: SEMANTIC.dangerDark }, fontWeight: 700 }}
             >
-              {busy ? "Refunding…" : canVoid && voidInvoice ? "Refund and void the bill" : "Confirm refund"}
+              {busy
+                ? "Refunding…"
+                : canVoid && voidInvoice
+                  ? `Refund ${formatINR(Number(amount) || 0)} and void the bill`
+                  : `Refund ${formatINR(Number(amount) || 0)}`}
             </Button>
           </Box>
         </Box>
       )}
+      </Box>
 
       <RefundReceiptDialog refundId={receiptFor} open={!!receiptFor} onClose={() => setReceiptFor(null)} />
     </Box>

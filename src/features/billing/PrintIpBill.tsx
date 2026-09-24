@@ -1,6 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { formatDate, formatDateTime } from "@/utils/format";
-import { assetUrl } from "@/utils/assetUrl";
 import { paidTotal, refundedTotal } from "@/utils/invoiceMoney";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useParams } from "react-router-dom";
@@ -8,6 +7,7 @@ import { Box, Typography, ToggleButton, ToggleButtonGroup, Button } from "@mui/m
 import { PrintRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
+import { BillLetterhead, BillTitleBar, BillFooter } from "@/components/billing/BillDocument";
 
 /**
  * Printable A4 in-patient tax invoice. A self-contained GST document: printed
@@ -110,7 +110,6 @@ export default function PrintIpBill() {
   const totalRefunded = refundedTotal(inv);
   const balance = n(inv.netAmount) - (totalPaid - totalRefunded);
   const patientAddress = p ? [p.addressLine1, p.addressLine2, p.city, p.district, p.state, p.postalCode].filter(Boolean).join(", ") : "";
-  const hospAddress = [hosp.addressLine1, hosp.addressLine2, hosp.landmark, hosp.city, hosp.postalCode].filter(Boolean).join(", ");
   const bedLabel = bed ? [bed.wardName, bed.roomNumber ? `Room ${bed.roomNumber}` : null, bed.bedNumber ? `Bed ${bed.bedNumber}` : null, bed.roomClass].filter(Boolean).join(" · ") : "—";
 
   const th: React.CSSProperties = { padding: "6px 7px", fontSize: 10.5, fontWeight: 700, background: HEAD, color: "#334155", textTransform: "uppercase", letterSpacing: 0.3, borderBottom: `1.5px solid #cbd5e1` };
@@ -135,40 +134,14 @@ export default function PrintIpBill() {
         "@media screen": { boxShadow: "0 4px 16px rgba(0,0,0,0.12)" },
         "@media print": { boxShadow: "none", width: "100%", px: "12mm", py: "8mm" },
       }}>
-        {/* ── Hospital header ── */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, borderBottom: `2px solid ${ACCENT}`, paddingBottom: 10 }}>
-          <div style={{ display: "flex", gap: 12, alignItems: "flex-start", minWidth: 0 }}>
-            {hosp.logoUrl && (
-              <img
-                src={assetUrl(hosp.logoUrl)}
-                alt=""
-                onError={(e) => { e.currentTarget.style.display = "none"; }}
-                style={{ height: 46, width: "auto", objectFit: "contain" }}
-              />
-            )}
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: 0.2, color: INK }}>{hosp.hospitalName || "Hospital"}</div>
-              {hosp.legalBusinessName && <div style={{ fontSize: 11, color: SUB }}>{hosp.legalBusinessName}</div>}
-              {hospAddress && <div style={{ fontSize: 11, color: SUB, marginTop: 2 }}>{hospAddress}</div>}
-              <div style={{ fontSize: 11, color: SUB }}>
-                {hosp.officialPhone ? `Ph: ${hosp.officialPhone}` : ""}{hosp.officialPhone && hosp.officialEmail ? "  ·  " : ""}{hosp.officialEmail || ""}
-              </div>
-            </div>
-          </div>
-          <div style={{ textAlign: "right", flexShrink: 0 }}>
-            {hosp.gstNumber && <div style={{ fontSize: 11.5, fontWeight: 700 }}>GSTIN: {hosp.gstNumber}</div>}
-            {hosp.registrationNumber && <div style={{ fontSize: 10.5, color: SUB }}>Reg: {hosp.registrationNumber}</div>}
-          </div>
-        </div>
-
-        {/* Title bar */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: HEAD, borderRadius: 4, padding: "6px 12px", margin: "12px 0" }}>
-          <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 2 }}>TAX INVOICE — IN-PATIENT BILL</span>
-          <span style={{ fontSize: 11.5, color: SUB }}>
-            <b style={{ color: INK }}>{inv.invoiceNumber}</b> · {formatDateTime(inv.invoiceDate)}
-            {inv.invoiceStatus ? ` · ${inv.invoiceStatus}` : ""}
-          </span>
-        </div>
+        {/* Header, title bar and footer come from the shared bill template, so
+            this document and every OPD/lab/refund receipt carry one identity
+            block. Everything between them is specific to an in-patient bill. */}
+        <BillLetterhead hospital={hosp} />
+        <BillTitleBar
+          title="Tax Invoice — In-Patient Bill"
+          right={<><b style={{ color: INK }}>{inv.invoiceNumber}</b> · {formatDateTime(inv.invoiceDate)}{inv.invoiceStatus ? ` · ${inv.invoiceStatus}` : ""}</>}
+        />
 
         {/* ── Meta: patient + admission ── */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 14 }}>
@@ -293,11 +266,7 @@ export default function PrintIpBill() {
           </div>
         </div>
 
-        {/* Footer */}
-        <div style={{ marginTop: 24, borderTop: `1px solid ${LINE}`, paddingTop: 8, display: "flex", justifyContent: "space-between", fontSize: 10, color: "#9ca3af" }}>
-          <span>Computer-generated tax invoice — no signature required. CGST/SGST as applicable.</span>
-          <span>Printed {formatDateTime(new Date().toISOString())}</span>
-        </div>
+        <BillFooter>Computer-generated tax invoice — no signature required. CGST/SGST as applicable.</BillFooter>
       </Box>
     </Box>
   );
