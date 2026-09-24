@@ -58,8 +58,23 @@ const themeOptions: ThemeOptions = {
      * element. Windows falls through to Segoe UI Variable Text (11) or Segoe
      * UI (10), which is what actually rendered here all along.
      */
+    /**
+     * Inter first — the font the app already downloads.
+     *
+     * Five weights of Inter were being fetched on every load and then never
+     * used, because this stack did not name it. The UI rendered in whatever
+     * the machine happened to have, and the first entry Windows matched was
+     * "Segoe UI Variable Text" — which ships with Windows 11 and does not
+     * exist on Windows 10.
+     *
+     * That is why a title looked heavier on one machine than another: on
+     * Windows 11 a variable face supplied a true weight 800, and on Windows 10
+     * the stack fell through to static Segoe UI, whose heaviest face is 700,
+     * so the same heading came out thinner. The system stack stays behind
+     * Inter as a fallback for the moment before the font loads.
+     */
     fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif',
+      '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif',
 
     /**
      * Body weights, which the theme never set.

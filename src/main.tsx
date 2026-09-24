@@ -15,11 +15,18 @@ const queryClient = new QueryClient({
   },
 });
 
+/**
+ * Every weight the UI actually asks for.
+ *
+ * 800 was missing while the theme sets h1 and h2 to 800 and 131 places ask for
+ * 800 or 900 by hand — so no file existed for the weight every page title uses.
+ */
 import "@fontsource/inter/300.css";
 import "@fontsource/inter/400.css";
 import "@fontsource/inter/500.css";
 import "@fontsource/inter/600.css";
 import "@fontsource/inter/700.css";
+import "@fontsource/inter/800.css";
 
 import { theme } from "./theme";
 import "./i18n";
