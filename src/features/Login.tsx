@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
-  Box, Button, TextField, InputAdornment, IconButton,
+  TextField, InputAdornment, IconButton,
 } from "@mui/material";
 import {
   Visibility, VisibilityOff, KeyboardCapslockRounded,
@@ -10,9 +10,8 @@ import {
 import { useAuth } from "@/providers/AuthContext";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
-import HeartbeatLoader from "@/components/HeartbeatLoader";
-import { LoginShell } from "@/features/auth/LoginShell";
-import { loginFieldSx, loginSubmitSx, isValidEmail } from "@/features/auth/loginDesign";
+import { LoginShell, LoginSubmitButton } from "@/features/auth/LoginShell";
+import { loginFieldSx, isValidEmail } from "@/features/auth/loginDesign";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -33,9 +32,7 @@ export default function Login() {
   // Deliberately NOT gated on the fields being valid. Gating it made the
   // button flip grey→solid mid-word as the email became parseable, which
   // reads as a fault; and a disabled button never explains itself. The
-  // submit handler already refuses bad input, and now says why.
-  const canSubmit = !isLoading;
-
+  // submit handler already refuses bad input, and now says why.
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
@@ -101,9 +98,7 @@ export default function Login() {
             whose only advice is "ask yourself" is worse than none. The staff
             page now carries its link BELOW the button, so this page no longer
             needs a spacer above one to stay aligned with it. */}
-        <Button fullWidth type="submit" disableElevation disabled={!canSubmit} sx={loginSubmitSx}>
-          {isLoading ? <HeartbeatLoader size={22} /> : "Login"}
-        </Button>
+        <LoginSubmitButton busy={isLoading} />
       </form>
     </LoginShell>
   );

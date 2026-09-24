@@ -1,6 +1,7 @@
-import { Box } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import type { ReactNode } from "react";
 import { BRAND, alpha } from "@/styles/accents";
+import { loginSubmitSx, loginSubmitBusySx } from "./loginDesign";
 
 /**
  * Page frame for both login screens. Split from loginDesign.ts because a file
@@ -11,6 +12,68 @@ interface LoginShellProps {
   /** The portal's name — the one thing that says which door you are at. */
   title: string;
   children: ReactNode;
+}
+
+/**
+ * Three dots that breathe, in the button's own white.
+ *
+ * Not the app's HeartbeatLoader, which is the right indicator nearly
+ * everywhere else: it is a fixed-colour .lottie asset drawn for a light
+ * surface, so on a saturated blue button it cannot be tinted and does not
+ * read. Motion that has to be seen against the brand fill has to be made of
+ * the brand fill's foreground.
+ */
+function BusyDots() {
+  return (
+    <Box component="span" aria-hidden sx={{ display: "inline-flex", gap: "4px", ml: 1 }}>
+      {[0, 1, 2].map((i) => (
+        <Box
+          key={i}
+          component="span"
+          sx={{
+            width: 5, height: 5, borderRadius: "50%", bgcolor: "#fff",
+            animation: "loginDots 1.1s ease-in-out infinite",
+            animationDelay: `${i * 0.16}s`,
+            "@keyframes loginDots": {
+              "0%, 80%, 100%": { opacity: 0.3, transform: "translateY(0)" },
+              "40%": { opacity: 1, transform: "translateY(-3px)" },
+            },
+            // A login can be the slowest thing on the screen; nobody should
+            // have to watch it bounce to know it is working.
+            "@media (prefers-reduced-motion: reduce)": { animation: "none", opacity: 0.75 },
+          }}
+        />
+      ))}
+    </Box>
+  );
+}
+
+/**
+ * The submit button for both login screens, including what it looks like while
+ * it is working. Shared rather than copied: these two pages were built as hand
+ * copies of one design and drifted until one of them lost its background
+ * entirely, which is the whole reason this file exists.
+ */
+export function LoginSubmitButton({ busy, label = "Login" }: { busy: boolean; label?: string }) {
+  return (
+    <Button
+      fullWidth
+      type="submit"
+      disableElevation
+      disabled={busy}
+      aria-busy={busy}
+      sx={[loginSubmitSx, busy && loginSubmitBusySx]}
+    >
+      {busy ? (
+        <>
+          Dolphin in action
+          <BusyDots />
+        </>
+      ) : (
+        label
+      )}
+    </Button>
+  );
 }
 
 /**

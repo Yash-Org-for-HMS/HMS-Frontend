@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
-  Box, Button, TextField, InputAdornment, IconButton, Link,
+  Box, TextField, InputAdornment, IconButton, Link,
 } from "@mui/material";
 import {
   Visibility, VisibilityOff, KeyboardCapslockRounded,
@@ -11,9 +11,8 @@ import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { axiosInstance } from "@/api/axios";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/providers/ToastContext";
-import HeartbeatLoader from "@/components/HeartbeatLoader";
-import { LoginShell } from "@/features/auth/LoginShell";
-import { loginFieldSx, loginSubmitSx, LOGIN_ACCENT, isValidEmail } from "@/features/auth/loginDesign";
+import { LoginShell, LoginSubmitButton } from "@/features/auth/LoginShell";
+import { loginFieldSx, LOGIN_ACCENT, isValidEmail } from "@/features/auth/loginDesign";
 
 export default function HospitalLogin() {
   const [email, setEmail] = useState("");
@@ -35,9 +34,7 @@ export default function HospitalLogin() {
   // Deliberately NOT gated on the fields being valid. Gating it made the
   // button flip grey→solid mid-word as the email became parseable, which
   // reads as a fault; and a disabled button never explains itself. The
-  // submit handler already refuses bad input, and now says why.
-  const canSubmit = !isLoading;
-
+  // submit handler already refuses bad input, and now says why.
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
@@ -111,9 +108,7 @@ export default function HospitalLogin() {
         />
 
 
-        <Button fullWidth type="submit" disableElevation disabled={!canSubmit} sx={loginSubmitSx}>
-          {isLoading ? <HeartbeatLoader size={22} /> : "Login"}
-        </Button>
+        <LoginSubmitButton busy={isLoading} />
 
         {/* Below the button, not above it. This does not reset anything — it
             tells you to ask your administrator — so it is help text, and

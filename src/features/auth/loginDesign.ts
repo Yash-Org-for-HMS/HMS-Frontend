@@ -70,4 +70,24 @@ export const loginSubmitSx = {
   transition: "background-color 0.2s ease",
 } as const;
 
+/**
+ * The button while the login is in flight.
+ *
+ * Busy is not the same state as disabled, and styling them the same was the
+ * bug: submitting is the only thing that disables this button, so pressing
+ * Login drained it to the pale grey `Mui-disabled` fill — the primary action
+ * on the first screen anyone sees, greyed out at the moment it is working
+ * hardest. Worse, the loader inside it is tinted `primary.main`, so a blue
+ * indicator sat on a grey ground at partial opacity and read as nothing at all.
+ *
+ * So a busy button keeps its brand fill and white label, and says what it is
+ * doing in words rather than relying on an indicator being noticed. It stays
+ * `disabled` for the real reason — a second submit must not fire — and carries
+ * `aria-busy` so it is announced as working rather than as unavailable.
+ */
+export const loginSubmitBusySx = {
+  "&.Mui-disabled": { bgcolor: SUBMIT, color: "#fff" },
+  cursor: "progress",
+} as const;
+
 export const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
