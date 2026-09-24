@@ -7,7 +7,7 @@ import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Grid, Button, Chip, Menu, MenuItem, IconButton,
+  Alert, Box, Typography, Paper, Grid, Button, Chip, Menu, MenuItem, IconButton,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, Divider, Tooltip, InputAdornment,
 } from "@mui/material";
 import {
@@ -52,6 +52,13 @@ export default function FacilitySetup() {
   const summary = data?.summary;
   const wards: WardNode[] = data?.wards || [];
 
+  // Beds carrying no pricing class. Derived here rather than asked of the API:
+  // the ward tree already has every bed, and a second endpoint for a number the
+  // page is holding would be a round trip for nothing.
+  const unclassedBeds = wards.reduce(
+    (n, w) => n + (w.rooms ?? []).reduce(
+      (m, r) => m + (r.beds ?? []).filter((b) => !b.roomClassName).length, 0), 0);
+
   // Active room classes (Schedule of Charges) — pickable per bed to drive room-wise
   // pricing of charges on the discharge bill.
   const { data: roomClasses = [] } = useQuery<RoomClass[]>({
@@ -89,6 +96,19 @@ export default function FacilitySetup() {
           <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Reserved" value={summary.reserved} color={STATUS_COLOR.RESERVED} /></Grid>
           <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Maintenance" value={summary.maintenance} color={STATUS_COLOR.MAINTENANCE} /></Grid>
         </Grid>
+      )}
+
+      {/* Beds with no room class bill at BASE price. The bed's class is the
+          default the discharge screen starts from, so an unclassed bed quietly
+          charges a Private patient the General rate unless someone remembers to
+          pick a class during discharge. Counted here because it is invisible
+          otherwise — the bed cards looked normal. */}
+      {unclassedBeds > 0 && (
+        <Alert severity="warning" sx={{ mb: 3, borderRadius: 2 }}>
+          <strong>{unclassedBeds}</strong> of {summary?.totalBeds ?? "?"} beds have no room class, so
+          Schedule-of-Charges items bill at base price for them. Set one on each bed, or pick a class
+          at discharge every time.
+        </Alert>
       )}
 
       {isLoading ? <ListSkeleton />
@@ -130,7 +150,16 @@ export default function FacilitySetup() {
                                 <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>Bed {b.bedNumber}</Typography>
                                 <EditRounded sx={{ fontSize: 13, color: "text.disabled" }} />
                               </Box>
-                              <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{b.bedType}{b.roomClassName ? ` · ${b.roomClassName}` : ""}</Typography>
+                              {/* An absent room class used to show as nothing at all, so a bed
+                                  that bills at base price looked identical to one priced by
+                                  class. It is the default the discharge screen starts from, so
+                                  silence here is the expensive kind. */}
+                              <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                                {b.bedType}
+                                {b.roomClassName
+                                  ? ` · ${b.roomClassName}`
+                                  : <Box component="span" sx={{ color: SEMANTIC.warning, fontWeight: 600 }}> · no class</Box>}
+                              </Typography>
                               {b.occupant ? (
                                 <Typography variant="caption" sx={{ color, fontWeight: 600, display: "flex", alignItems: "center", gap: 0.3 }} noWrap><PersonRounded sx={{ fontSize: 12 }} /> {b.occupant.patientName}</Typography>
                               ) : (
