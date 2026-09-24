@@ -11,12 +11,13 @@ import { BRAND, DISABLED_CONTAINED } from "./styles/accents";
  * before weight is considered, so it would supply its nearest face (800) to
  * placeholders and table cells too.
  *
- * Windows 11 never reaches it — Segoe UI Variable Text comes first and already
- * covers 800. Windows 10 has no such face, falls to Segoe UI Black through
- * this rule, and a page title finally renders as heavy as it does on 11.
+ * It maps to Segoe UI Black, which ships on Windows 10 AND 11, so both render
+ * the same heading. Segoe UI Variable Display would be the natural choice on
+ * 11, but it exists only there — naming it is what split the two machines in
+ * the first place, and the point here is that they stop differing.
  */
 export const HEADING_FONT =
-  '"Segoe UI Variable Display", "Segoe UI Heavy", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif';
+  '"Segoe UI Heavy", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif';
 
 const themeOptions: ThemeOptions = {
   palette: {
@@ -72,17 +73,22 @@ const themeOptions: ThemeOptions = {
      * own guidance is to use Text below ~20pt, and naming Display explicitly
      * asked for the headline face to set 14px table cells. `-apple-system`
      * hands that choice to the OS, which picks the right optical size per
-     * element. Windows falls through to Segoe UI Variable Text (11) or Segoe
-     * UI (10), which is what actually rendered here all along.
+     * element. Windows falls through to Segoe UI on every version.
+     *
+     * "Segoe UI Variable Text" is deliberately absent. It was added in the
+     * theme rework and exists only on Windows 11, so the same build rendered
+     * one face on a Windows 11 desktop and another on a Windows 10 laptop —
+     * which is exactly the difference that was reported. Plain Segoe UI is on
+     * both.
      *
      * Inter is deliberately NOT here. It ships for the printed documents,
      * which name it explicitly. Putting it in this stack changed the face on
      * every machine in order to fix a difference on one — replacing what was
      * right rather than repairing what was not. The weight-800 gap on Windows
-     * 10 is closed by HEADING_FONT below instead.
+     * 10 is closed by HEADING_FONT above instead.
      */
     fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif',
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif',
 
     /**
      * The stack for text set at 800, and ONLY for that text.
@@ -94,8 +100,8 @@ const themeOptions: ThemeOptions = {
      * face — 800 — for placeholders, table cells and body copy alike. The
      * login page rendered in black.
      *
-     * So it is applied only where 800 is actually wanted. Windows 11 never
-     * reaches it: Segoe UI Variable Text comes first and already covers 800.
+     * So it is applied only where 800 is actually wanted, and it names a face
+     * that exists on every Windows version rather than only the newest.
      */
 
     /**

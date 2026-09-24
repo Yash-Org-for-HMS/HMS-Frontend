@@ -84,7 +84,7 @@ createRoot(document.getElementById("root")!).render(
              */
             "@font-face": {
               fontFamily: "Segoe UI Heavy",
-              src: 'local("Segoe UI Variable Display Bold"), local("Segoe UI Black")',
+              src: 'local("Segoe UI Black")',
               fontWeight: "800 900",
               fontStyle: "normal",
             },
