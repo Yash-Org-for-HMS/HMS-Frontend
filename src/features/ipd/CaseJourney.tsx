@@ -39,7 +39,7 @@ export default function CaseJourney({ j, onAction, busy = false, canAct = true }
 
   if (stage === "CANCELLED") {
     return (
-      <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "action.hover" }}>
+      <Paper elevation={0} sx={{ p: 2.5, mb: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "action.hover" }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, color: NEUTRAL.muted }}>
           This case was cancelled — there is nothing to record.
         </Typography>
@@ -60,7 +60,7 @@ export default function CaseJourney({ j, onAction, busy = false, canAct = true }
         : null;
 
   return (
-    <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+    <Paper elevation={0} sx={{ p: 2.5, mb: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
       <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ alignItems: { md: "center" } }}>
         {/* The journey. Reads left to right, like the journey does. */}
         <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0.5, flex: 1, minWidth: 0 }}>

@@ -135,15 +135,21 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   const [medicineQuery, setMedicineQuery] = useState("");
   const [medicineOptions, setMedicineOptions] = useState<PrescribableMedicine[]>([]);
   const [medicineLoading, setMedicineLoading] = useState(false);
-  // A doctor at a new hospital types a drug name and, with an empty catalogue,
-  // sees NOTHING happen — freeSolo suppresses the no-options popper, so the
-  // empty state written above never rendered. Silence reads as "the search is
-  // broken", when in fact a custom name is prescribable; this says so.
-  const noMedicineMatches = medicineQuery.trim().length >= 2 && !medicineLoading && medicineOptions.length === 0;
   // freeSolo: the Autocomplete hands back a raw string when the doctor types a
   // medicine that is not in the catalog. handleAddItem already branches on that
   // (isCustom), so the state genuinely holds either — say so rather than widen to any.
   const [selectedMedicine, setSelectedMedicine] = useState<PrescribableMedicine | string | null>(null);
+
+  // A medicine picked off the list came FROM the catalogue, so the catalogue
+  // plainly has it. A raw string did not, and still counts as no match.
+  const pickedFromCatalogue = !!selectedMedicine && typeof selectedMedicine !== "string";
+
+  // A doctor at a new hospital types a drug name and, with an empty catalogue,
+  // sees NOTHING happen — freeSolo suppresses the no-options popper, so the
+  // empty state written above never rendered. Silence reads as "the search is
+  // broken", when in fact a custom name is prescribable; this says so.
+  const noMedicineMatches = !pickedFromCatalogue
+    && medicineQuery.trim().length >= 2 && !medicineLoading && medicineOptions.length === 0;
 
   // New item state — dosage is entered as a numeric value + a unit picked from a
   // dropdown (no more typing "mg" by hand), then combined into "500 mg" on save.
@@ -541,7 +547,27 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
                at all when freeSolo is set, so one was written and never seen.
                The guidance is helper text under the field instead. */
             value={selectedMedicine}
-            onInputChange={(e, newInputValue) => setMedicineQuery(newInputValue)}
+            /* Only what the doctor TYPED may drive the search. On reason
+               "reset" MUI writes the chosen option's own label back into the
+               input — "Telma 40 (Telmisartan 40 mg Tablet)" — and that
+               composite string matches neither medicineName nor genericName,
+               which are searched separately with `contains`. So picking a
+               medicine re-ran the search against a string nothing could match,
+               got zero rows back, and the field announced that the catalogue
+               had nothing — about a medicine just picked out of it. */
+            onInputChange={(e, newInputValue, reason) => {
+              if (reason === "input") {
+                setMedicineQuery(newInputValue);
+                /* Typing over a chosen medicine abandons it. MUI keeps `value`
+                   as you type, so the field could read one drug while state
+                   still held the object for another — and handleAddItem takes
+                   selectedMedicine first, prescribing the one no longer on
+                   screen. On a prescription that is not a cosmetic bug. */
+                if (selectedMedicine) setSelectedMedicine(null);
+              } else if (reason === "clear") {
+                setMedicineQuery("");
+              }
+            }}
             onChange={(e, newValue) => setSelectedMedicine(newValue)}
             renderOption={(props, option) => (
               <Box component="li" {...props} sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>

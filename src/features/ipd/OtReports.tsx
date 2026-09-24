@@ -29,6 +29,9 @@ const REPORTS = [
   { key: "revenue", label: "Revenue" },
 ] as const;
 
+/** The six theatre reports, named so the hub can mount them one at a time. */
+export type OtReportKey = typeof REPORTS[number]["key"];
+
 const isoDay = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const inr = (n: string | number | null | undefined) =>
@@ -48,14 +51,27 @@ const Bar = ({ pct, color }: { pct: number; color: string }) => (
     sx={{ height: 8, borderRadius: 4, bgcolor: `${color}22`, "& .MuiLinearProgress-bar": { bgcolor: color, borderRadius: 4 } }} />
 );
 
-export default function OtReports() {
+/**
+ * The theatre reports.
+ *
+ * Two ways in, one implementation. As its own page it keeps its title and its
+ * strip of six tabs. Given a `report`, it renders just that one without either
+ * — which is how the reports hub mounts them, one entry per report alongside
+ * every other report in the hospital, rather than sending people to a separate
+ * page to find six of them.
+ *
+ * The filters stay in both: a date range, a theatre and the open-hours
+ * denominator are what make these numbers mean anything.
+ */
+export default function OtReports({ report: fixedReport }: { report?: OtReportKey } = {}) {
+  const embedded = !!fixedReport;
   const [tab, setTab] = useState(0);
   const [from, setFrom] = useState(() => isoDay(new Date(Date.now() - 29 * 86400000)));
   const [to, setTo] = useState(() => isoDay(new Date()));
   const [theatreId, setTheatreId] = useState("");
   const [openHours, setOpenHours] = useState("8");
 
-  const report = REPORTS[tab].key;
+  const report = fixedReport ?? REPORTS[tab].key;
   const { data: theatres } = useQuery({
     queryKey: ["ot-theatres-pick"],
     queryFn: async () => (await axiosInstance.get("/ipd/theatres")).data.data,
@@ -74,7 +90,9 @@ export default function OtReports() {
 
   return (
     <Box>
-      <PageHeader title="Theatre reports" subtitle="Utilisation, turnaround, case mix, cancellations, complications and revenue" />
+      {!embedded && (
+        <PageHeader title="Theatre reports" subtitle="Utilisation, turnaround, case mix, cancellations, complications and revenue" />
+      )}
 
       <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
         <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ alignItems: { md: "center" } }}>
@@ -92,12 +110,16 @@ export default function OtReports() {
         </Stack>
       </Paper>
 
-      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
-          sx={{ px: 1, "& .MuiTab-root": { textTransform: "none", fontWeight: 700 } }}>
-          {REPORTS.map((r) => <Tab key={r.key} label={r.label} />)}
-        </Tabs>
-      </Paper>
+      {/* The hub's own sidebar already names the report, so a second strip of
+          six tabs inside it would be the same choice offered twice. */}
+      {!embedded && (
+        <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2 }}>
+          <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
+            sx={{ px: 1, "& .MuiTab-root": { textTransform: "none", fontWeight: 700 } }}>
+            {REPORTS.map((r) => <Tab key={r.key} label={r.label} />)}
+          </Tabs>
+        </Paper>
+      )}
 
       {isLoading ? <ListSkeleton />
         : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
