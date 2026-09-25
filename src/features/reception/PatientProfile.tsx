@@ -140,7 +140,7 @@ export default function PatientProfile(
   // below are literal JSX in order, so re-ordering them still means updating
   // this map — one line, rather than hunting every navigate() in the app.
   const location = useLocation();
-  const TAB_BY_NAME: Record<string, number> = { vaccinations: 6 };
+  const TAB_BY_NAME: Record<string, number> = { forms: 5, vaccinations: 6 };
   const requestedTab = (location.state as { tab?: string } | null)?.tab;
   const [tab, setTab] = useState(requestedTab ? TAB_BY_NAME[requestedTab] ?? 0 : 0);
   const { isModuleEnabled } = useEnabledModules();

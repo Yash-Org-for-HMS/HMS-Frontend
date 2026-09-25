@@ -13,7 +13,7 @@ import {
 import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
 import {
   ArrowBackRounded, CheckCircleRounded, RadioButtonUncheckedRounded, DeleteOutlineRounded,
-  AddRounded, WarningAmberRounded, ScheduleRounded, PersonRounded,
+  AddRounded, WarningAmberRounded, ScheduleRounded, PersonRounded, DescriptionRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -367,7 +367,8 @@ export default function OtCaseRecord() {
 
       {tab === 0 && (
         <>
-          <ConsentTab id={id} consents={consentsQ.data ?? []} onSaved={refreshAll} />
+          <ConsentTab id={id} consents={consentsQ.data ?? []} onSaved={refreshAll}
+            formsPath={surgery?.patientId ? `${basePath}/patients/${surgery.patientId}` : undefined} />
           <TeamTab id={id} team={recordQ.data?.team ?? []} onSaved={refreshAll} />
           <ChecklistTab id={id} data={checklistQ.data} onSaved={refreshAll} stages={["SIGN_IN"]} showCounts={false} />
         </>
@@ -1383,8 +1384,17 @@ function ImplantsTab({ id, implants, onSaved }: { id: string; implants: Record<s
 
 // ── Consent ──────────────────────────────────────────────────────────────────
 
-function ConsentTab({ id, consents, onSaved }: { id: string; consents: Record<string, string | boolean>[]; onSaved: () => void }) {
+function ConsentTab({ id, consents, onSaved, formsPath }: {
+  id: string; consents: Record<string, string | boolean>[]; onSaved: () => void;
+  /**
+   * The patient's profile in this panel. The printable consent forms (the
+   * paper the patient actually signs) live on its Forms tab; this screen only
+   * records that consent was taken. The button opens that tab directly.
+   */
+  formsPath?: string;
+}) {
   const toast = useToast();
+  const navigate = useNavigate();
   const [f, setF] = useState({ consentType: "SURGICAL", givenBy: "PATIENT", giverName: "", relationship: "", witnessName: "" });
   const [withdrawing, setWithdrawing] = useState<Record<string, string | boolean> | null>(null);
 
@@ -1403,7 +1413,15 @@ function ConsentTab({ id, consents, onSaved }: { id: string; consents: Record<st
 
   return (
     <>
-      <Section title="Consent on file">
+      <Section
+        title="Consent on file"
+        action={formsPath && (
+          <Button variant="outlined" size="small" startIcon={<DescriptionRounded />} sx={{ textTransform: "none" }}
+            onClick={() => navigate(formsPath, { state: { tab: "forms" } })}>
+            Consent forms
+          </Button>
+        )}
+      >
         {consents.length === 0 ? (
           <Empty>Nothing recorded yet.</Empty>
         ) : (
