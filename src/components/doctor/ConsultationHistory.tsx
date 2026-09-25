@@ -1,6 +1,6 @@
 import { Box, Typography, Button, Paper, Chip } from "@mui/material";
 import { BRAND } from "@/styles/accents";
-import { stripHtml } from "@/utils/format";
+import SoapNotes from "./SoapNotes";
 
 const DOCTOR_BLUE = BRAND.action;
 
@@ -46,9 +46,7 @@ export default function ConsultationHistory({ history, error, onRetry }: Props) 
             <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5, color: "text.primary" }}>
               {h.diagnosis || "No Diagnosis Recorded"}
             </Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.5 }}>
-              {stripHtml(h.soapAssessment) || "No notes available for this consultation."}
-            </Typography>
+            <SoapNotes note={h} compact emptyText="No notes available for this consultation." />
             {h.prescribedMedicines && h.prescribedMedicines.length > 0 && (
               <Box sx={{ mt: 1.5, pt: 1.5, borderTop: "1px dashed", borderColor: "divider" }}>
                 <Typography variant="caption" sx={{ fontWeight: 700, color: "text.primary", mb: 0.5, display: "block" }}>

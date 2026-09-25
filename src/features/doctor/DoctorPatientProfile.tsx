@@ -33,7 +33,7 @@ import ClinicalTimeline from "@/components/clinical/ClinicalTimeline";
 import AdmissionChargesDialog from "@/components/ipd/AdmissionChargesDialog";
 import type { AdmissionRow } from "@/features/ipd/ipd.types";
 import { typeScale } from "@/styles/typography";
-import { sanitizeRichText } from "@/utils/sanitizeHtml";
+import SoapNotes from "@/components/doctor/SoapNotes";
 import { apiErrorText } from "@/utils/apiError";
 
 const DOCTOR_BLUE = BRAND.action;
@@ -367,12 +367,7 @@ function ConsultationHistoryBody({ history, loading }: { history: any[]; loading
               <LocalHospitalRounded sx={{ fontSize: 16, color: DOCTOR_BLUE }} />
               {h.diagnosis || "No diagnosis recorded"}
             </Typography>
-            {h.soapAssessment && (
-              <Box
-                sx={{ color: "text.secondary", ...typeScale.body, lineHeight: 1.5, "& p": { m: 0 } }}
-                dangerouslySetInnerHTML={{ __html: sanitizeRichText(h.soapAssessment) }}
-              />
-            )}
+            <SoapNotes note={h} />
             {h.prescribedMedicines && h.prescribedMedicines.length > 0 && (
               <Box sx={{ mt: 1.5, pt: 1.5, borderTop: "1px dashed", borderColor: "divider" }}>
                 <Typography variant="caption" sx={{ fontWeight: 700, display: "block", mb: 0.5 }}>Prescribed:</Typography>
