@@ -273,8 +273,16 @@ export default function HospitalDashboard() {
         <Grid size={{ xs: 12, lg: 5 }}>
           <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", height: "100%", display: "flex", flexDirection: "column" }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }}>Collections</Typography>
+            {/* Simplified from a longer caption that also asserted this figure
+                agrees with the Collected Today tile and the Day Book. That
+                reassurance existed because this codebase has shipped real bugs
+                where two money screens computed "revenue" differently and
+                disagreed with each other — but it is implementation detail, not
+                something a reader needs parsed to understand the chart. The
+                computation itself (net of refunds, same as those two) is
+                unchanged; only the caption is shorter. */}
             <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
-              Kept over the last 30 days, net of refunds — the same rule as the tile above and the Day Book
+              Last 30 days, after refunds
             </Typography>
             {/* Loading is not the same answer as none.
                 `ops` is undefined until the request lands, and the ternary below
