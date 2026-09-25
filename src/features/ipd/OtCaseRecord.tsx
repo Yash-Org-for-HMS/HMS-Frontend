@@ -417,7 +417,7 @@ export default function OtCaseRecord() {
  * It adds only what is missing, so pressing it twice is safe, and it says so
  * rather than silently doing nothing.
  */
-function BillingTab({ id }: { id: string }) {
+export function BillingTab({ id }: { id: string }) {
   const toast = useToast();
   const qc = useQueryClient();
   const [f, setF] = useState({ chargeType: "OTHER", description: "", unitPrice: "", quantity: "1", taxPercent: "0" });

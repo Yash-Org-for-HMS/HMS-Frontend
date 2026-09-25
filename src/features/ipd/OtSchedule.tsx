@@ -389,7 +389,9 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
             implementation, and it lives on the case record where the rest of
             the journey is. This menu opens that. */}
         <MenuItem onClick={() => { navigate(`${basePath}/ipd/ot-cases/${menu.row!.surgeryId}`); }}>
-          {menu.row?.status === "SCHEDULED" ? "Open the case — wheel in, record, sign out" : "Open the record"}
+          {basePath === "/reception"
+            ? "Open the bill for this case"
+            : menu.row?.status === "SCHEDULED" ? "Open the case — wheel in, record, sign out" : "Open the record"}
         </MenuItem>
         {/* Before the case, not after it: what this patient has been treated
             for, admitted with and reacted to is a pre-op question.
