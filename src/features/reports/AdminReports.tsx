@@ -960,10 +960,12 @@ function AiUsageReport() {
         <Box>
           <TrendChart
             title="AI spend over time" subtitle="Provider cost per day"
-            // Two decimals, not four: this one formatter drives both the axis
-            // ticks and the tooltip, and a 7-character tick overflows the axis
-            // width and gets clipped to a leading-digit-less ".0000". Exact
-            // figures live in the tables below; the chart carries the shape.
+            // Two decimals because a tooltip should read like money. It no
+            // longer has to fit an axis tick as well: the axis takes the short
+            // form by default now, so this string is only ever the tooltip.
+            // The note that stood here described trimming decimals so a tick
+            // would not be clipped to a leading-digit-less ".0000" — a
+            // workaround for a bug now fixed where it belonged, at the axis.
             data={trend} xKey="date" valueFormatter={(n) => `₹${n.toFixed(2)}`}
             series={[{ key: "cost", label: "Cost", type: "area" }]}
           />

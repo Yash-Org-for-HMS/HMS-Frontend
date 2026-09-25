@@ -424,7 +424,7 @@ export default function Dashboard() {
               </Box>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={trendData} margin={{ top: 8, right: 12, left: -16, bottom: 4 }}>
+                <BarChart data={trendData} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,23,42,0.06)" vertical={false} />
                   <XAxis dataKey="month" tick={{ fill: "#475569", fontSize: 12 }} axisLine={false} tickLine={false} />
                   <YAxis allowDecimals={false} tick={{ fill: "#475569", fontSize: 12 }} axisLine={false} tickLine={false} />

@@ -17,7 +17,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import StatCard from "@/components/StatCard";
 import { apiErrorText } from "@/utils/apiError";
 import { SEMANTIC, NEUTRAL } from "@/styles/accents";
-import { formatINR } from "@/utils/format";
+import { formatINR, axisINR } from "@/utils/format";
 
 // Each bar chart gets its own single hue (magnitude, not identity) — the two
 // charts are told apart by their titles, not by cycling colours within either.
@@ -131,7 +131,7 @@ export default function FinancialDashboard() {
             </Typography>
             <Box sx={{ flexGrow: 1, minHeight: 0 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={analytics.revenueTrend} margin={{ top: 10, right: 10, left: -20, bottom: 10 }}>
+                <AreaChart data={analytics.revenueTrend} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={SEMANTIC.success} stopOpacity={0.4}/>
@@ -156,7 +156,8 @@ export default function FinancialDashboard() {
                     tick={{ fill: NEUTRAL.muted, fontSize: 13, fontWeight: 500 }} 
                     axisLine={false} 
                     tickLine={false}
-                    tickFormatter={(val) => `₹${val}`}
+                    width={56}
+                    tickFormatter={axisINR}
                   />
                   <RechartsTooltip
                     contentStyle={{ 

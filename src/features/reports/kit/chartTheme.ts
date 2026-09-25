@@ -47,6 +47,8 @@ export const yAxisProps = {
   tick: { fill: CHART_INK.axis, fontSize: 12 },
   axisLine: false,
   tickLine: false,
-  width: 44,
+  // 44 was too narrow for a rupee tick, and Recharts clips rather than
+  // overflows — the label lost its leading digits instead of its gutter.
+  width: 64,
 } as const;
 

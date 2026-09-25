@@ -5,6 +5,15 @@ import {
   PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend,
 } from "recharts";
 import { CHART_INK, seriesColor, xAxisProps, yAxisProps } from "./chartTheme";
+import { axisINR } from "@/utils/format";
+
+/**
+ * What a tick says when the caller has not chosen.
+ *
+ * Rupee charts get the short form; a count chart keeps its bare number, which
+ * already fits. Callers that want something else pass `axisFormatter`.
+ */
+const defaultAxisTick = (n: number) => (Math.abs(n) >= 1000 ? axisINR(n) : String(n));
 
 /** Framed chart surface with a title (and optional right-aligned action). */
 export function ChartCard({ title, subtitle, action, height = 280, children }: {
@@ -36,8 +45,16 @@ export interface Series { key: string; label: string; type?: "area" | "line" | "
  * Time-trend chart (single x-axis only — never dual-axis). Renders each series
  * as area/line/bar in fixed categorical order. Legend shown for >= 2 series.
  */
-export function TrendChart({ data, xKey, series, valueFormatter, height = 280, title, subtitle, action }: {
+export function TrendChart({ data, xKey, series, valueFormatter, axisFormatter, height = 280, title, subtitle, action }: {
   data: any[]; xKey: string; series: Series[]; valueFormatter?: (n: number) => string;
+  /**
+   * Ticks only. The axis and the tooltip were sharing one formatter, and they
+   * want opposite things: callers pass `₹${n.toFixed(2)}` because a tooltip
+   * should read "₹1,23,456.78", and that string cannot fit an axis gutter — so
+   * Recharts clipped it and the reader saw its right-hand end. Default the axis
+   * to the short form and leave the tooltip exact.
+   */
+  axisFormatter?: (n: number) => string;
   height?: number; title: string; subtitle?: string; action?: ReactNode;
 }) {
   // A count series must not get fractional ticks — "0.25 admissions" is not a
@@ -53,7 +70,7 @@ export function TrendChart({ data, xKey, series, valueFormatter, height = 280, t
 
   return (
     <ChartCard title={title} subtitle={subtitle} action={action} height={height}>
-      <ComposedChart data={data} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
+      <ComposedChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
         <defs>
           {series.map((s, i) => (
             <linearGradient key={s.key} id={`grad-${s.key}`} x1="0" y1="0" x2="0" y2="1">
@@ -64,7 +81,7 @@ export function TrendChart({ data, xKey, series, valueFormatter, height = 280, t
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke={CHART_INK.grid} vertical={false} />
         <XAxis dataKey={xKey} {...xAxisProps} />
-        <YAxis {...yAxisProps} tickFormatter={valueFormatter as any} allowDecimals={allowDecimals} />
+        <YAxis {...yAxisProps} tickFormatter={(axisFormatter ?? defaultAxisTick) as any} allowDecimals={allowDecimals} />
         <RTooltip contentStyle={tooltipStyle} formatter={valueFormatter as any} />
         {series.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}
         {series.map((s, i) => s.type === "bar" ? (

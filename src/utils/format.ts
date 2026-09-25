@@ -24,6 +24,35 @@ export function formatINRAuto(amount: number | string | null | undefined): strin
 }
 
 /**
+ * ₹ short enough for a chart axis, in the units an Indian reader expects:
+ * thousands as k, lakh as L, crore as Cr.
+ *
+ * An axis gutter is 44–60px wide. A full "₹1,00,000" does not fit, and what
+ * the reader gets instead is the RIGHT-hand end of it: the Revenue Trend axis
+ * read "₹8000 · ₹8500 · ₹9000 · ₹9500 · ₹0", which is not even ascending —
+ * those were ₹38,000, ₹28,500, ₹19,000 and ₹9,500 with their leading digits
+ * cut off. A clipped number is worse than a rounded one, because it looks like
+ * a number.
+ *
+ * Axes only. The tooltip and every table still show the exact figure —
+ * shortening is for the label that has no room, not for the value.
+ */
+export function axisINR(value: number | string | null | undefined): string {
+  const v = Number(value || 0);
+  const n = Math.abs(v);
+  if (n >= 1_00_00_000) return `₹${trim(v / 1_00_00_000)}Cr`;
+  if (n >= 1_00_000) return `₹${trim(v / 1_00_000)}L`;
+  if (n >= 1_000) return `₹${trim(v / 1_000)}k`;
+  return `₹${Math.round(v)}`;
+}
+
+/** One decimal, but only when it says something: 1.5k stays, 2.0k becomes 2k. */
+function trim(n: number): string {
+  const r = Math.round(n * 10) / 10;
+  return Number.isInteger(r) ? String(r) : r.toFixed(1);
+}
+
+/**
  * Age in whole years from a date of birth. Returns null for a missing/invalid
  * value. Uses 365.25 days/year (the formula previously inlined at the patient
  * headers). Accepts a Date, timestamp, or date string.

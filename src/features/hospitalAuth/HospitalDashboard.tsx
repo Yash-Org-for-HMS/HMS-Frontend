@@ -24,7 +24,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import StatCard from "@/components/StatCard";
 import AttentionList from "@/components/dashboard/AttentionList";
-import { formatINR, formatDateTime } from "@/utils/format";
+import { formatINR, formatDateTime, axisINR } from "@/utils/format";
 import { useNavigate } from "react-router-dom";
 import {
   PeopleAltRounded,
@@ -103,18 +103,6 @@ const ACTIVITY_ICON: Record<string, { icon: typeof AddCircleRounded; color: stri
 // tiles sit beside each other so a stray ".1" breaks the column of numbers.
 const inr = (v: number | null | undefined) => formatINR(v, 0);
 
-/**
- * Rupees short enough for a chart tick, in the units an Indian reader expects:
- * thousands as k, lakh as L, crore as Cr. A full "₹1,00,000" needs more room
- * than an axis gutter has, and the tooltip carries the exact figure anyway.
- */
-function axisRupees(v: number): string {
-  const n = Math.abs(v);
-  if (n >= 1_00_00_000) return `₹${(v / 1_00_00_000).toFixed(n % 1_00_00_000 ? 1 : 0)}Cr`;
-  if (n >= 1_00_000) return `₹${(v / 1_00_000).toFixed(n % 1_00_000 ? 1 : 0)}L`;
-  if (n >= 1_000) return `₹${Math.round(v / 1_000)}k`;
-  return `₹${Math.round(v)}`;
-}
 const dayLabel = (iso: string) => {
   const [, m, d] = iso.split("-");
   return `${d}/${m}`;
@@ -319,7 +307,7 @@ export default function HospitalDashboard() {
                   <XAxis dataKey="date" tickFormatter={dayLabel} interval="preserveStartEnd" minTickGap={28}
                     tick={{ fill: NEUTRAL.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: NEUTRAL.muted, fontSize: 11 }} axisLine={false} tickLine={false} width={52}
-                    tickFormatter={axisRupees} />
+                    tickFormatter={axisINR} />
                   <RechartsTooltip
                     cursor={{ stroke: alpha(BRAND.action, 0.4) }}
                     contentStyle={{ fontSize: 12, borderRadius: 8 }}
