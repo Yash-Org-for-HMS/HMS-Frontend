@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
+import SearchableSelect from "@/components/form/SearchableSelect";
 import { getDoctorInitials } from "@/utils/format";
 import { apiGetList } from "@/api/client";
 import type { QueueTokenRow, QueueAppointmentRef } from "./queue.types";
@@ -6,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Tooltip,
-  Alert, Menu, MenuItem, alpha, TextField, InputAdornment,
+  Alert, Menu, MenuItem, alpha, InputAdornment,
 } from "@mui/material";
 import {
   MoreVertRounded, PlayArrowRounded, CheckCircleRounded,
@@ -253,26 +254,33 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
               between — a single-doctor clinic gets a control that can only ever
               say what the screen already shows. */}
           {doctorsInQueue.length > 1 && (
-            <TextField
-              select size="small" value={effectiveFilter}
+            /* Searchable, because a busy morning can have more doctors in the
+               queue than fit a menu — and the desk knows the name, not the
+               position in the list. The waiting count moves to the option's
+               second line: it used to sit inline after the name, which the
+               field then had to redraw as its own value. */
+            <SearchableSelect
+              label="" name="doctorFilter" size="small"
+              value={effectiveFilter}
               onChange={(e) => setDoctorFilter(e.target.value)}
+              fullWidth={false}
               sx={{ minWidth: 210, mr: 1.5 }}
-              slotProps={{ input: { startAdornment: (
+              emptyOption={{ value: "", label: `All doctors (${tokens.length})` }}
+              searchPlaceholder="Search a doctor…"
+              startAdornment={
                 <InputAdornment position="start">
                   <FilterAltRounded fontSize="small" sx={{ color: effectiveFilter ? BRAND.action : "text.secondary" }} />
                 </InputAdornment>
-              ) } }}
-            >
-              <MenuItem value="">All doctors ({tokens.length})</MenuItem>
-              {doctorsInQueue.map((d) => (
-                <MenuItem key={d.id} value={d.id}>
-                  {d.name}
-                  <Typography component="span" variant="caption" sx={{ color: "text.secondary", ml: 1 }}>
-                    {tokens.filter((t) => t.doctorId === d.id).length}
-                  </Typography>
-                </MenuItem>
-              ))}
-            </TextField>
+              }
+              options={doctorsInQueue.map((d) => {
+                const waiting = tokens.filter((t) => t.doctorId === d.id).length;
+                return {
+                  value: d.id,
+                  label: d.name,
+                  secondary: `${waiting} in queue`,
+                };
+              })}
+            />
           )}
           <Button
             variant="outlined"

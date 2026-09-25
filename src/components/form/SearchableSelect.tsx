@@ -42,6 +42,15 @@ interface Props {
   helperText?: ReactNode;
   size?: "small" | "medium";
   sx?: SxProps<Theme>;
+  /**
+   * An icon at the head of the FIELD (not the search box).
+   *
+   * The queue's doctor filter carries a funnel that turns the accent colour
+   * while a filter is on — the only thing on that toolbar saying the list is
+   * narrowed. Swapping the plain select for this one would have dropped it,
+   * so the affordance is passed through rather than lost.
+   */
+  startAdornment?: ReactNode;
 }
 
 /**
@@ -74,7 +83,7 @@ export default function SearchableSelect({
   emptyOption,
   searchPlaceholder = "Search…",
   searchThreshold = 8,
-  required, fullWidth = true, disabled, error, helperText, size, sx,
+  required, fullWidth = true, disabled, error, helperText, size, sx, startAdornment,
 }: Props) {
   const [query, setQuery] = useState("");
 
@@ -113,7 +122,10 @@ export default function SearchableSelect({
        * of the placeholder and the two rendered over each other — "Doctor *"
        * and "Select a Doctor" in the same pixels.
        */
-      slotProps={{ inputLabel: { shrink: true } }}
+      slotProps={{
+        inputLabel: { shrink: true },
+        ...(startAdornment ? { input: { startAdornment } } : {}),
+      }}
       SelectProps={{
         displayEmpty: true,
         // Drawn from `options`, so the field keeps its text while the list is
