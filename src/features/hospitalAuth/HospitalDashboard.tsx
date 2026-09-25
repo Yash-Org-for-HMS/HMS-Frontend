@@ -122,6 +122,14 @@ export default function HospitalDashboard() {
   const { data: ops, isLoading: opsLoading } = useQuery<Operations>({
     queryKey: ["hospital-dashboard-operations"],
     queryFn: async () => (await axiosInstance.get("/hospital/dashboard/operations")).data.data,
+    // The attention rows are derived live from current state, so a resolved
+    // problem is already gone server-side — but a dashboard left open never
+    // asked again (window-focus refetch is off app-wide) and a bill paid or a
+    // refund approved elsewhere stayed listed until a reload. Re-ask when the
+    // tab comes back and once a minute while it is open. A background refetch
+    // keeps the current rows on screen, so nothing flashes.
+    refetchOnWindowFocus: true,
+    refetchInterval: 60_000,
   });
 
   if (loading) {
@@ -265,7 +273,7 @@ export default function HospitalDashboard() {
             items={attentionItems}
             loading={opsLoading}
             emptyText="Nothing outstanding — stock is healthy, bills are settled and no claim is waiting on us."
-            maxRows={6}
+            scrollHeight={384}
             actionLabel="All reports"
             onAction={() => navigate("/hospital/reports")}
           />

@@ -53,6 +53,13 @@ export interface AttentionListProps {
    * endpoint returning its top 8 would otherwise make a backlog of 40 read as 8.
    */
   totalCount?: number;
+  /**
+   * Show EVERY row inside a scrolling area of this height instead of cutting
+   * off at maxRows. For a panel whose rows are each a separate problem to
+   * resolve, "and 9 more" hid the older ones with no way to reach them from
+   * the dashboard. Opt-in, so the other dashboards keep their short lists.
+   */
+  scrollHeight?: number;
 }
 
 /**
@@ -66,9 +73,9 @@ export interface AttentionListProps {
  */
 export default function AttentionList({
   title, subtitle, items, loading = false, emptyText = "Nothing needs attention right now.",
-  actionLabel, onAction, maxRows = 5, totalCount,
+  actionLabel, onAction, maxRows = 5, totalCount, scrollHeight,
 }: AttentionListProps) {
-  const shown = items.slice(0, maxRows);
+  const shown = scrollHeight ? items : items.slice(0, maxRows);
   // Anything the server already dropped counts as hidden too.
   const total = Math.max(totalCount ?? items.length, items.length);
   const hidden = total - shown.length;
@@ -92,7 +99,7 @@ export default function AttentionList({
         )}
       </Box>
 
-      <Box sx={{ flex: 1 }}>
+      <Box sx={scrollHeight ? { flex: 1, maxHeight: scrollHeight, overflowY: "auto" } : { flex: 1 }}>
         {loading ? (
           <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 1.5 }}>
             {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} height={34} />)}
