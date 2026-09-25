@@ -13,8 +13,8 @@ import { PharmacyOverview } from "../pharmacy/PharmacyReports";
 import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList, SupplierLedger, Movers, OpdIpdSplit } from "../pharmacy/InventoryReports";
 import { BRAND } from "@/styles/accents";
 import { ReportNavLayout, type ReportItem } from "@/features/reports/kit";
-import { NURSE_REPORT_GROUPS } from "../nurse/NurseReports";
-import { CLAIM_REPORT_GROUPS } from "../claims/ClaimReports";
+import { NURSE_HUB_GROUPS } from "../nurse/NurseReports";
+import { CLAIM_HUB_GROUPS } from "../claims/ClaimReports";
 
 import OtReports, { type OtReportKey } from "@/features/ipd/OtReports";
 
@@ -149,8 +149,12 @@ export default function ReportsHub() {
 
     return [
       ...base,
-      ...fold("Nursing", NURSE_REPORT_GROUPS),
-      ...fold("Insurance", CLAIM_REPORT_GROUPS),
+      // The *_HUB_ variants, not the raw groups: those items render props
+      // they expect their own page to supply, and folded in bare they crashed
+      // (Nursing) or rendered empty (Insurance). The hub variants carry their
+      // own date range and data, and prefix their keys so none collides.
+      ...fold("Nursing", NURSE_HUB_GROUPS),
+      ...fold("Insurance", CLAIM_HUB_GROUPS),
     ];
   }, [isModuleEnabled, isAdmin]);
 

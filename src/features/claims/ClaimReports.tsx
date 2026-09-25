@@ -149,7 +149,19 @@ export const CLAIM_REPORT_GROUPS: { heading: string; items: ReportItem[] }[] = [
   { heading: "Register", items: [{ key: "register", label: "Claims Register", Comp: RegisterReport }] },
 ];
 
-export default function ClaimReports() {
+/**
+ * The date range and the one fetch every claim report renders from.
+ *
+ * The report components render props and do not fetch, so they only work
+ * inside something that supplies this. The hospital report hub folded them in
+ * without it: nothing crashed — every one of them reads data?.x || {} — so
+ * the Insurance reports there rendered as empty tables while claims existed.
+ * Pulled out so the hub can supply the same shell.
+ *
+ * `withBack` because the "Back to claims" link belongs to the claims desk; in
+ * the admin hub it would send an administrator to the reception screen.
+ */
+function useClaimReportShell({ withBack }: { withBack: boolean }) {
   const navigate = useNavigate();
   const [preset, setPreset] = useState("90d");
   const [from, setFrom] = useState(dayjs().subtract(89, "day").format("YYYY-MM-DD"));
@@ -165,7 +177,7 @@ export default function ClaimReports() {
 
   const toolbar = (
     <>
-      <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/reception/claims")} sx={{ color: "text.secondary", textTransform: "none", mb: 1 }}>Back to claims</Button>
+      {withBack && <Button startIcon={<ArrowBackRounded />} onClick={() => navigate("/reception/claims")} sx={{ color: "text.secondary", textTransform: "none", mb: 1 }}>Back to claims</Button>}
       <Paper elevation={0} sx={{ p: 1.5, borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2, display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
         <ButtonGroup size="small" variant="outlined">
           {PRESETS.map((p) => (
@@ -189,16 +201,48 @@ export default function ClaimReports() {
         ? <Box sx={{ py: 6 }}><Mascot pose="nothing-here-yet" title="No claims in this range" subtitle="Register some claims, then come back for analytics." size={130} /></Box>
         : undefined;
 
+  return { toolbar, componentProps: { data }, contentState, isFetching };
+}
+
+export default function ClaimReports() {
+  const shell = useClaimReportShell({ withBack: true });
   return (
     <ReportNavLayout
       title="Claim Reports"
       subtitle="Insurance & scheme analytics — turnaround, outstanding reimbursements, rejections. Every table is downloadable."
       groups={CLAIM_REPORT_GROUPS}
       accent={ACCENT}
-      actions={isFetching ? <HeartbeatLoader size={22} /> : undefined}
-      toolbar={toolbar}
-      componentProps={{ data }}
-      contentState={contentState}
+      actions={shell.isFetching ? <HeartbeatLoader size={22} /> : undefined}
+      toolbar={shell.toolbar}
+      componentProps={shell.componentProps}
+      contentState={shell.contentState}
     />
   );
 }
+
+/** One claim report with its own date range and data, for the report hub. */
+export function ClaimReportPanel({ report }: { report: string }) {
+  const shell = useClaimReportShell({ withBack: false });
+  const Comp = CLAIM_REPORT_GROUPS.flatMap((g) => g.items).find((i) => i.key === report)?.Comp;
+  if (!Comp) return null;
+  return (
+    <>
+      {shell.toolbar}
+      {shell.contentState ?? (shell.componentProps.data ? <Comp data={shell.componentProps.data} /> : null)}
+    </>
+  );
+}
+
+/**
+ * The claim groups as the hub carries them — self-supplying, keys prefixed.
+ * "register" collided with the nursing Vitals Register in the hub, which
+ * resolves ?view= by the first match, so Claims Register was unreachable.
+ */
+export const CLAIM_HUB_GROUPS = CLAIM_REPORT_GROUPS.map((g) => ({
+  ...g,
+  items: g.items.map((i) => {
+    const Pinned = () => <ClaimReportPanel report={i.key} />;
+    return { key: `claims-${i.key}`, label: i.label, Comp: Pinned };
+  }),
+}));
+

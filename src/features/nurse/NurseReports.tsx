@@ -215,9 +215,17 @@ export const NURSE_REPORT_GROUPS: ReportGroup[] = [
   },
 ];
 
-export default function NurseReports() {
-  const { isModuleEnabled } = useEnabledModules();
-  const visibleGroups = useMemo(() => NURSE_REPORT_GROUPS.filter((g) => !g.module || isModuleEnabled(g.module)), [isModuleEnabled]);
+/**
+ * What every nursing report needs from the screen around it: the date range,
+ * the two registers' paging, and the one fetch that feeds them.
+ *
+ * The report components are deliberately dumb — they render props, they do
+ * not fetch — so they only work inside something that supplies this. The
+ * hospital report hub folded them in WITHOUT it, and got nothing: Abnormal
+ * Vitals called abnormalPaging.bind on undefined and crashed the page, and
+ * the rest rendered empty. Pulled out so the hub can supply the same shell.
+ */
+function useNurseReportShell() {
 
   const [preset, setPreset] = useState("30d");
   const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
@@ -272,20 +280,63 @@ export default function NurseReports() {
     </Paper>
   );
 
+  return {
+    toolbar,
+    componentProps: { data, from, to, vitalsPaging, abnormalPaging, busy: isFetching },
+    contentState: isLoading ? <ReportSkeleton />
+      : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
+      : undefined,
+    isFetching,
+  };
+}
+
+export default function NurseReports() {
+  const { isModuleEnabled } = useEnabledModules();
+  const visibleGroups = useMemo(() => NURSE_REPORT_GROUPS.filter((g) => !g.module || isModuleEnabled(g.module)), [isModuleEnabled]);
+  const shell = useNurseReportShell();
+
   return (
     <ReportNavLayout
       title="Reports"
       subtitle="Nursing analytics — pick a report on the left. Every table is downloadable."
       groups={visibleGroups}
       accent={NURSE_PURPLE}
-      actions={isFetching ? <HeartbeatLoader size={22} /> : undefined}
-      toolbar={toolbar}
-      componentProps={{ data, from, to, vitalsPaging, abnormalPaging, busy: isFetching }}
-      contentState={
-        isLoading ? <ReportSkeleton />
-          : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
-          : undefined
-      }
+      actions={shell.isFetching ? <HeartbeatLoader size={22} /> : undefined}
+      toolbar={shell.toolbar}
+      componentProps={shell.componentProps}
+      contentState={shell.contentState}
     />
   );
 }
+
+/**
+ * One nursing report with its own date range and data — for a screen that
+ * lists it among others, as the hospital report hub does. The same shape the
+ * hub already uses for theatre reports: mount the real thing, pinned.
+ */
+export function NurseReportPanel({ report }: { report: string }) {
+  const shell = useNurseReportShell();
+  const Comp = NURSE_REPORT_GROUPS.flatMap((g) => g.items).find((i) => i.key === report)?.Comp;
+  if (!Comp) return null;
+  return (
+    <>
+      {shell.toolbar}
+      {shell.contentState ?? <Comp {...shell.componentProps} />}
+    </>
+  );
+}
+
+/**
+ * The nursing groups as the hub carries them: every item self-supplying, and
+ * every key prefixed. The prefix is not decoration — the hub resolves ?view=
+ * by the FIRST item with that key, and "register" (Vitals Register) and
+ * "discharges" collided with Insurance's Claims Register and the hub's own
+ * IPD Discharges, making whichever came second unreachable.
+ */
+export const NURSE_HUB_GROUPS = NURSE_REPORT_GROUPS.map((g) => ({
+  ...g,
+  items: g.items.map((i) => {
+    const Pinned = () => <NurseReportPanel report={i.key} />;
+    return { key: `nursing-${i.key}`, label: i.label, Comp: Pinned };
+  }),
+}));
