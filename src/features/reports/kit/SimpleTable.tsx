@@ -105,11 +105,16 @@ export default function SimpleTable({
 
   return (
     <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{title}</Typography>
-        <Box sx={{ flex: 1 }} />
+      {/* The title and the two export buttons shared a row that could not wrap,
+          and the buttons do not shrink — so in a third-width card the title was
+          squeezed to its minimum and broke across three lines ("Leads / by /
+          stage"). The row wraps now: when the title and the buttons cannot sit
+          side by side, the buttons drop to their own line instead of crushing
+          the heading. */}
+      <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, flex: "1 1 auto", minWidth: 0 }}>{title}</Typography>
         {rows.length > 0 && (
-          <Box sx={{ display: "flex", gap: 0.5 }}>
+          <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0, ml: "auto" }}>
             <Button size="small" disabled={!!exporting} startIcon={<FileDownloadRounded fontSize="small" />} onClick={() => void run("excel")}
               sx={{ textTransform: "none", color: accent }}>{exporting === "excel" ? "Preparing…" : "Excel"}</Button>
             <Button size="small" disabled={!!exporting} startIcon={<PictureAsPdfRounded fontSize="small" />} onClick={() => void run("pdf")}
