@@ -95,7 +95,11 @@ export default function SidebarNav({
                   primary={item.text}
                   primaryTypographyProps={{
                     fontSize: "0.875rem",
-                    fontWeight: isActive ? 600 : 500,
+                    // 600/700, not 500/600: Segoe UI on Windows 10 has no 500 face, so
+                    // "medium" fell back to Regular there while Windows 11 drew it
+                    // heavier, and the same sidebar looked thin on one machine and
+                    // bold on the other. Semibold and Bold exist on both.
+                    fontWeight: isActive ? 700 : 600,
                     color: isActive ? BRAND.action : NEUTRAL.muted,
                     sx: { opacity: locked ? 0.6 : 1 },
                   }}
