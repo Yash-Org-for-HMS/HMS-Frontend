@@ -49,7 +49,7 @@ const drawerWidth = 260;
 
 export default function AdminLayout() {
   useEffect(() => {
-    document.title = "HMS | Super Admin";
+    document.title = "Dolphin | Super Admin";
   }, []);
 
   const { user, logout } = useAuth();

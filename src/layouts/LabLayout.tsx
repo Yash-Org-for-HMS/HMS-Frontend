@@ -12,7 +12,7 @@ import {
 import {
   Menu as MenuIcon, DashboardRounded, ScienceRounded,
   SettingsAccessibilityRounded, MenuBookRounded, AssessmentRounded,
-  ReceiptLongRounded,
+  ReceiptLongRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
@@ -29,7 +29,7 @@ const drawerWidth = 260;
 
 export default function LabLayout() {
   useEffect(() => {
-    document.title = "HMS | Lab & Radiology";
+    document.title = "Dolphin | Lab & Radiology";
   }, []);
 
   const { user, hospital, logout } = useHospitalAuth();

@@ -12,7 +12,7 @@ import {
 import {
   Menu as MenuIcon, DashboardRounded, MedicationRounded,
   LocalShippingRounded, InventoryRounded, PointOfSaleRounded,
-  AssessmentRounded, LocalPharmacyRounded, WarehouseRounded, ReceiptLongRounded,
+  AssessmentRounded, LocalPharmacyRounded, WarehouseRounded, ReceiptLongRounded,
 } from "@mui/icons-material";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
@@ -29,7 +29,7 @@ const drawerWidth = 260;
 
 export default function PharmacyLayout() {
   useEffect(() => {
-    document.title = "HMS | Pharmacy Portal";
+    document.title = "Dolphin | Pharmacy Portal";
   }, []);
 
   const { user, hospital, logout } = useHospitalAuth();

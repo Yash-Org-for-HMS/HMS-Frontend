@@ -59,7 +59,7 @@ const drawerWidth = 260;
 
 export default function ReceptionLayout() {
   useEffect(() => {
-    document.title = "HMS | Reception";
+    document.title = "Dolphin | Reception";
   }, []);
 
   const { user, hospital, logout } = useHospitalAuth();

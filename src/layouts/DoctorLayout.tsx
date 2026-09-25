@@ -33,7 +33,7 @@ const drawerWidth = 260;
 
 export default function DoctorLayout() {
   useEffect(() => {
-    document.title = "HMS | Doctor";
+    document.title = "Dolphin | Doctor";
   }, []);
 
   const { user, hospital, logout } = useHospitalAuth();
