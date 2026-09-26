@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
@@ -14,8 +15,13 @@ import {
   Chip,
   IconButton,
   Tooltip,
+  Tabs,
+  Tab,
+  TextField,
+  InputAdornment,
+  Typography,
 } from "@mui/material";
-import { AddRounded, EditRounded, BlockRounded, CheckCircleRounded } from "@mui/icons-material";
+import { AddRounded, EditRounded, BlockRounded, CheckCircleRounded, SearchRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
@@ -35,21 +41,37 @@ interface Department extends DepartmentBase {
   status: string;
   departmentType?: { typeName: string };
   headOfDepartment?: { firstName: string; lastName: string };
+  /** Set when this department was copied from the platform's standard list. */
+  sysDepartmentCode?: string | null;
+  sysDepartment?: { name: string; canAdmitPatients: boolean; hasOpd: boolean; ownsWard: boolean; category?: { name: string } } | null;
 }
 
 export default function DepartmentsList() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const { data: departments = [], isLoading, isError, error, refetch } = useQuery<Department[]>({
+  // Every hospital holds the whole standard list (126 departments) as copies it
+  // switches on as it needs them, so the page asks for all of them — the
+  // default page of 50 would silently cut the list — and splits it in two.
+  const { data: allDepartments = [], isLoading, isError, error, refetch } = useQuery<Department[]>({
     queryKey: ["hospital-departments"],
-    queryFn: async () => (await axiosInstance.get("/hospital/departments")).data.data,
+    queryFn: async () => (await axiosInstance.get("/hospital/departments", { params: { limit: 1000 } })).data.data,
   });
+  const [view, setView] = useState<"active" | "inactive">("active");
+  const [q, setQ] = useState("");
+  const inUse = useMemo(() => allDepartments.filter((d) => d.status === "active"), [allDepartments]);
+  const off = useMemo(() => allDepartments.filter((d) => d.status !== "active"), [allDepartments]);
+  const departments = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    const list = view === "active" ? inUse : off;
+    if (!term) return list;
+    return list.filter((d) => `${d.departmentName} ${d.departmentCode} ${d.sysDepartment?.category?.name ?? ""}`.toLowerCase().includes(term));
+  }, [view, inUse, off, q]);
 
   const { sorted, orderBy, order, onSort } = useTableSort(departments, {
     name: (d) => d.departmentName,
     code: (d) => d.departmentCode,
-    type: (d) => d.departmentType?.typeName ?? null,
+    type: (d) => d.sysDepartment?.category?.name ?? d.departmentType?.typeName ?? null,
     head: (d) => d.headOfDepartment ? `${d.headOfDepartment.firstName} ${d.headOfDepartment.lastName}` : null,
     status: (d) => d.status,
   });
@@ -60,6 +82,7 @@ export default function DepartmentsList() {
       await axiosInstance.put(`/hospital/departments/${department.departmentId}`, {
         status: newStatus,
       });
+      toast.success(newStatus === "active" ? `${department.departmentName} is now in use` : `${department.departmentName} switched off`);
       refetch();
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Failed to update department status"));
@@ -70,7 +93,7 @@ export default function DepartmentsList() {
     <Box>
       <PageHeader
         title="Departments"
-        subtitle="Manage your hospital's departments and clinical units."
+        subtitle="The departments your hospital runs. The standard list holds every department a hospital might have — switch on the ones you use."
         actions={
           <Button
             variant="contained"
@@ -87,13 +110,25 @@ export default function DepartmentsList() {
         }
       />
 
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap", mb: 2 }}>
+        <Tabs value={view} onChange={(_, v) => setView(v)} sx={{ minHeight: 40, "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 40 } }}>
+          <Tab value="active" label={`In use (${inUse.length})`} />
+          <Tab value="inactive" label={`Switched off (${off.length})`} />
+        </Tabs>
+        <TextField
+          size="small" placeholder={view === "active" ? "Search departments" : "Search the standard list"}
+          value={q} onChange={(e) => setQ(e.target.value)} sx={{ ml: "auto", minWidth: 260 }}
+          slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> } }}
+        />
+      </Box>
+
       <TableContainer component={Paper} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, maxHeight: "calc(100vh - 300px)" }}>
         <Table stickyHeader>
           <TableHead>
             <TableRow>
               <SortableHeadCell label="Name" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
               <SortableHeadCell label="Code" sortKey="code" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
-              <SortableHeadCell label="Type" sortKey="type" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
+              <SortableHeadCell label="Group" sortKey="type" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
               <SortableHeadCell label="Head of Department" sortKey="head" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
               <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
               <TableCell align="right" sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.default" }}>Actions</TableCell>
@@ -111,7 +146,12 @@ export default function DepartmentsList() {
             ) : sorted.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
-                  <Mascot pose="nothing-here-yet" title="No departments yet" subtitle="Create one to get started." size={120} />
+                  <Mascot
+                    pose="nothing-here-yet"
+                    title={q ? "Nothing matches" : view === "active" ? "No departments in use yet" : "Nothing switched off"}
+                    subtitle={q ? "Try another word." : view === "active" ? "Switch one on from the standard list, or add your own." : "Every department is in use."}
+                    size={120}
+                  />
                 </TableCell>
               </TableRow>
             ) : (
@@ -119,12 +159,18 @@ export default function DepartmentsList() {
                 <TableRow key={dept.departmentId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                   <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                     {dept.departmentName}
+                    {dept.sysDepartment && (
+                      <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
+                        Standard
+                        {[dept.sysDepartment.canAdmitPatients && "admits", dept.sysDepartment.hasOpd && "OPD", dept.sysDepartment.ownsWard && "owns a ward"].filter(Boolean).map((t) => ` · ${t}`).join("")}
+                      </Typography>
+                    )}
                   </TableCell>
                   <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                     {dept.departmentCode}
                   </TableCell>
                   <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
-                    {dept.departmentType?.typeName || "-"}
+                    {dept.sysDepartment?.category?.name || dept.departmentType?.typeName || "-"}
                   </TableCell>
                   <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                     {dept.headOfDepartment ? `${dept.headOfDepartment.firstName} ${dept.headOfDepartment.lastName}` : "-"}
@@ -140,7 +186,13 @@ export default function DepartmentsList() {
                       }}
                     />
                   </TableCell>
-                  <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
+                  <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", whiteSpace: "nowrap" }}>
+                    {view === "inactive" && (
+                      <Button size="small" variant="outlined" startIcon={<CheckCircleRounded />} onClick={() => handleToggleStatus(dept)}
+                        sx={{ textTransform: "none", fontWeight: 600, mr: 1 }}>
+                        Switch on
+                      </Button>
+                    )}
                     <Tooltip title="Edit Department">
                       <IconButton
                         size="small"
@@ -150,7 +202,7 @@ export default function DepartmentsList() {
                         <EditRounded fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title={dept.status === "active" ? "Disable Department" : "Enable Department"}>
+                    {view === "active" && <Tooltip title="Switch off">
                       <IconButton
                         size="small"
                         onClick={() => handleToggleStatus(dept)}
@@ -164,7 +216,7 @@ export default function DepartmentsList() {
                       >
                         {dept.status === "active" ? <BlockRounded fontSize="small" /> : <CheckCircleRounded fontSize="small" />}
                       </IconButton>
-                    </Tooltip>
+                    </Tooltip>}
                   </TableCell>
                 </TableRow>
               ))

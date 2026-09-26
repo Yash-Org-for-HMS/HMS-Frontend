@@ -25,6 +25,7 @@ import {
   PeopleAltRounded,
   TimerRounded,
   CardMembershipRounded,
+  CategoryRounded,
   ReceiptLongRounded,
   CreditCardRounded,
   AdminPanelSettingsRounded,
@@ -100,6 +101,7 @@ export default function AdminLayout() {
     {
       heading: t("nav.group.configuration", "Configuration"),
       items: [
+        { text: "Master Data", icon: <CategoryRounded />, path: "/master-data" },
         { text: t("nav.plans"), icon: <CardMembershipRounded />, path: "/plans" },
         { text: t("nav.subscriptionBilling", "Billing"), icon: <ReceiptLongRounded />, path: "/subscription-billing" },
         { text: "Payment Gateway", icon: <CreditCardRounded />, path: "/payment-gateway" },
