@@ -38,6 +38,9 @@ type BoardBed = {
   bedId: string;
   bedNumber: string;
   bedType: string;
+  /** The hospital's name for the bed type, and the bed's code. */
+  bedTypeName?: string | null;
+  bedCode?: string | null;
   status: string;
   occupant?: BoardOccupant | null;
 };
@@ -179,12 +182,12 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
                   <ApartmentRounded sx={{ color: BRAND.action }} fontSize="small" />
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{w.wardName}</Typography>
-                  <Chip label={w.wardType} size="small" sx={{ bgcolor: "action.hover", fontWeight: 600 }} />
-                  <Typography variant="caption" sx={{ color: "text.secondary" }}>Floor {w.floorNumber}</Typography>
+                  <Chip label={w.wardTypeName ?? w.wardType} size="small" sx={{ bgcolor: "action.hover", fontWeight: 600 }} />
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>{w.floorLabel ?? `Floor ${w.floorNumber}`}</Typography>
                 </Box>
                 {w.rooms.length === 0 ? <Typography variant="body2" sx={{ color: "text.secondary", py: 1 }}>No rooms</Typography> : w.rooms.map((r: any) => (
                   <Box key={r.roomId} sx={{ mb: 1.5 }}>
-                    <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>Room {r.roomNumber} · {r.roomType}</Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>Room {r.roomNumber} · {r.roomTypeName ?? r.roomType}</Typography>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.5 }}>
                       {r.beds.length === 0 ? <Typography variant="caption" sx={{ color: "text.disabled" }}>No beds</Typography> : r.beds.map((b: BoardBed) => {
                         const color = STATUS_COLOR[b.status] || NEUTRAL.muted;
@@ -199,7 +202,7 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
                                 <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>Bed {b.bedNumber}</Typography>
                                 <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: color }} />
                               </Box>
-                              <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{b.bedType}</Typography>
+                              <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }} noWrap>{b.bedTypeName ?? b.bedType}</Typography>
                               {b.occupant ? (
                                 <>
                                   <Typography variant="caption" sx={{ color, fontWeight: 600, display: "flex", alignItems: "center", gap: 0.3 }} noWrap><PersonRounded sx={{ fontSize: 12 }} /> {b.occupant.patientName}</Typography>

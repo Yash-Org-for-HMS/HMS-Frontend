@@ -99,6 +99,9 @@ export default function ObservationFieldsPanel() {
 
   const fields: ObservationFieldDef[] = data?.fields ?? [];
   const wardTypes: string[] = data?.wardTypes ?? [];
+  // The hospital's own names for its ward types ("Medical ICU"); the fixed
+  // labels below only cover fields saved before ward types became configurable.
+  const typeLabel = (w: string) => data?.wardTypeLabels?.[w] ?? WARD_TYPE_LABELS[w] ?? w;
   const activeCount = fields.filter((f) => f.isActive).length;
 
   const done = (msg: string) => {
@@ -228,7 +231,7 @@ export default function ObservationFieldsPanel() {
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>{f.label}</Typography>
                   <Chip size="small" label={TYPE_LABELS[f.dataType]} variant="outlined" sx={{ height: 20, fontSize: 11 }} />
                   {(f.wardTypes ?? []).map((w) => (
-                    <Chip key={w} size="small" label={WARD_TYPE_LABELS[w] ?? w} sx={{ height: 20, fontSize: 11 }} />
+                    <Chip key={w} size="small" label={typeLabel(w)} sx={{ height: 20, fontSize: 11 }} />
                   ))}
                   {!!f.valueCount && (
                     <Tooltip title="Recorded readings. What kind of observation this is can no longer change, and it can no longer be deleted — only switched off.">
@@ -366,7 +369,7 @@ export default function ObservationFieldsPanel() {
                 {wardTypes.map((w) => {
                   const on = form.wardTypes.includes(w);
                   return (
-                    <Chip key={w} label={WARD_TYPE_LABELS[w] ?? w}
+                    <Chip key={w} label={typeLabel(w)}
                       color={on ? "primary" : "default"} variant={on ? "filled" : "outlined"}
                       onClick={() => set({ wardTypes: on ? form.wardTypes.filter((x: string) => x !== w) : [...form.wardTypes, w] })}
                     />
@@ -376,7 +379,7 @@ export default function ObservationFieldsPanel() {
               <Typography variant="caption" sx={{ color: NEUTRAL.muted, display: "block", mt: 0.75 }}>
                 {form.wardTypes.length === 0 || form.wardTypes.length === wardTypes.length
                   ? "Every ward. Narrow it if only some wards chart this — a column nobody fills is a column people stop reading."
-                  : `Only ${form.wardTypes.map((w: string) => WARD_TYPE_LABELS[w] ?? w).join(", ")}.`}
+                  : `Only ${form.wardTypes.map((w: string) => typeLabel(w)).join(", ")}.`}
               </Typography>
             </Box>
 

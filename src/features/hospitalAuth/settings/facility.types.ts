@@ -24,6 +24,14 @@ export interface BedNode {
   roomClassId?: string | null;
   roomClassName?: string | null;
   occupant?: BedOccupant | null;
+  /** {WARD}-{ROOM}-{BED}, e.g. MICU-305-01. */
+  bedCode?: string | null;
+  hospitalBedTypeId?: string | null;
+  bedTypeName?: string | null;
+  /** False for an attendant bed — never allocated, never counted. */
+  isPatientBed?: boolean;
+  isTemporary?: boolean;
+  isActive?: boolean;
 }
 
 export interface RoomNode {
@@ -32,6 +40,10 @@ export interface RoomNode {
   roomType?: string | null;
   status?: string | null;
   beds: BedNode[];
+  hospitalRoomTypeId?: string | null;
+  roomTypeName?: string | null;
+  capacity?: number | null;
+  amenities?: string[];
 }
 
 export interface WardNode {
@@ -41,6 +53,30 @@ export interface WardNode {
   floorNumber?: number | null;
   status?: string | null;
   rooms: RoomNode[];
+  wardCode?: string | null;
+  hospitalWardTypeId?: string | null;
+  wardTypeName?: string | null;
+  wardTypeCode?: string | null;
+  isCriticalCare?: boolean;
+  countsInCensus?: boolean;
+  billingMode?: string;
+  /** The ward type's rule: NO (always mixed) | ALLOWED | FEMALE_ONLY. */
+  genderRule?: string;
+  genderRestriction?: string;
+  departmentId?: string | null;
+  departmentName?: string | null;
+  floorId?: string | null;
+  floorLabel?: string;
+}
+
+/** Licensed capacity and its breakdown (workbook sheet 16 definitions). */
+export interface CensusSummary {
+  physicalBeds: number;
+  censusBeds: number;
+  nonCensusBeds: number;
+  criticalCareBeds: number;
+  premiumBeds: number;
+  generalBeds: number;
 }
 
 export interface StructureSummary {
@@ -50,6 +86,7 @@ export interface StructureSummary {
   reserved: number;
   maintenance: number;
   wards: number;
+  census?: CensusSummary;
 }
 
 export interface IpdStructure {
@@ -88,6 +125,38 @@ export interface RoomClassRentsResponse {
   rents: RoomClassRent[];
 }
 
+// ── What the setup forms pick from (GET /ipd/facility-options) ──────────────
+
+export interface HospitalWardType {
+  id: string; code: string; displayName: string; isActive: boolean;
+  isCriticalCare: boolean; countsInCensus: boolean; defaultBillingMode: string;
+  genderRestriction: string; nursePatientRatio?: string | null; requiresTransferApproval: boolean;
+}
+export interface HospitalRoomType {
+  id: string; code: string; displayName: string; isActive: boolean;
+  typicalCapacity: string; isolationCapable: boolean; pressureType: string; isProcedureRoom: boolean; attendantAllowed: boolean;
+}
+export interface HospitalBedType {
+  id: string; code: string; displayName: string; isActive: boolean; isPatientBed: boolean; countsAsLicensedBed: boolean;
+}
+export interface Building { buildingId: string; code: string; name: string; isActive: boolean }
+export interface Floor { floorId: string; floorNumber: number; name: string; buildingId?: string | null; building?: { name: string } | null; isActive: boolean }
+export interface FacilityOptions {
+  wardTypes: HospitalWardType[];
+  roomTypes: HospitalRoomType[];
+  bedTypes: HospitalBedType[];
+  departments: { departmentId: string; departmentName: string; departmentCode: string }[];
+  buildings: Building[];
+  floors: Floor[];
+  postingTypes: { code: string; meaning: string }[];
+}
+export interface ServiceUnit {
+  serviceUnitId: string; code: string; name: string; postingType: string; isActive: boolean;
+  departmentId?: string | null; floorId?: string | null;
+  department?: { departmentName: string } | null;
+  floor?: { name: string; building?: { name: string } | null } | null;
+}
+
 export type FacilityKind = "ward" | "room" | "bed";
 
 /**
@@ -108,6 +177,18 @@ export interface FacilityEditTarget {
   bedType?: string | null;
   dailyCharge?: Money | null;
   roomClassId?: string | null;
+  wardCode?: string | null;
+  hospitalWardTypeId?: string | null;
+  departmentId?: string | null;
+  genderRestriction?: string;
+  floorId?: string | null;
+  hospitalRoomTypeId?: string | null;
+  capacity?: number | null;
+  amenities?: string[];
+  hospitalBedTypeId?: string | null;
+  bedCode?: string | null;
+  isTemporary?: boolean;
+  isActive?: boolean;
 }
 
 /**
@@ -119,12 +200,21 @@ export interface SetupForm {
   roomId?: string;
   bedId?: string;
   wardName?: string;
-  wardType: string;
   floorNumber: string;
   roomNumber?: string;
-  roomType: string;
   bedNumber?: string;
-  bedType: string;
   dailyCharge?: string;
   roomClassId: string;
+  wardCode: string;
+  hospitalWardTypeId: string;
+  departmentId: string;
+  genderRestriction: string;
+  floorId: string;
+  hospitalRoomTypeId: string;
+  capacity: string;
+  amenities: string;
+  hospitalBedTypeId: string;
+  bedCode: string;
+  isTemporary: boolean;
+  isActive: boolean;
 }
