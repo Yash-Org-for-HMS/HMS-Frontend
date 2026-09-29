@@ -113,7 +113,7 @@ export default function DoctorsList() {
 
       <TextField
         size="small"
-        placeholder="Search by name, email, license, specialization, department…"
+        placeholder="Search by name, email, license, department…"
         value={searchInput}
         onChange={(e) => setSearchInput(e.target.value)}
         sx={{ mb: 2, width: "100%", maxWidth: 560 }}
@@ -134,7 +134,7 @@ export default function DoctorsList() {
               <TableRow>
                 <TableCell sx={HEAD_SX}>Name</TableCell>
                 <TableCell sx={HEAD_SX}>Department</TableCell>
-                <TableCell sx={HEAD_SX}>Specialization</TableCell>
+                <TableCell sx={HEAD_SX}>Also works in</TableCell>
                 <SortableHeadCell label="License No." sortKey="license" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
                 <SortableHeadCell label="Fee" sortKey="fee" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
                 {/* Whether the doctor can still be booked. Deactivating the
@@ -168,7 +168,10 @@ export default function DoctorsList() {
                       ) : "N/A"}
                     </TableCell>
                     <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
-                      {doctor.specialization?.specializationName || "General"}
+                      {/* Additional departments (staff record) — what the old specialization became. */}
+                      {doctor.additionalDepartments?.length
+                        ? doctor.additionalDepartments.map((d: { departmentName: string }) => d.departmentName).join(", ")
+                        : "—"}
                     </TableCell>
                     <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {doctor.licenseNumber || "-"}

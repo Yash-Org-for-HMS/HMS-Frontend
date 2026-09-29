@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import type {
-  IpdStructure, WardNode, RoomNode, BedNode, RoomClass, FacilityKind, FacilityEditTarget, SetupForm,
+  IpdStructure, WardNode, RoomNode, BedNode, RoomClass, FacilityKind, FacilityEditTarget, SetupForm, InChargeOption,
   RoomClassRentsResponse, FacilityOptions, ServiceUnit, Building, Floor,
 } from "./facility.types";
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
@@ -199,7 +199,7 @@ export default function FacilitySetup() {
                   </Tooltip>
                 </Box>
                 <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5, pl: 3.5 }}>
-                  {[w.floorLabel ?? `Floor ${w.floorNumber}`, w.departmentName, w.billingMode && w.billingMode !== "PER_DAY" ? `billed ${w.billingMode.replace("PER_", "per ").toLowerCase()}` : null].filter(Boolean).join(" · ")}
+                  {[w.floorLabel ?? `Floor ${w.floorNumber}`, w.departmentName, w.inChargeName ? `In-charge: ${w.inChargeName}` : null, w.billingMode && w.billingMode !== "PER_DAY" ? `billed ${w.billingMode.replace("PER_", "per ").toLowerCase()}` : null].filter(Boolean).join(" · ")}
                 </Typography>
                 {w.rooms.length === 0 ? <Typography variant="body2" sx={{ color: "text.secondary", py: 1 }}>No rooms</Typography> : w.rooms.map((r: RoomNode) => (
                   <Box key={r.roomId} sx={{ mb: 1.5 }}>
@@ -387,9 +387,17 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
     bedCode: edit?.bedCode ?? "",
     isTemporary: edit?.isTemporary ?? false,
     isActive: edit?.isActive ?? true,
+    inChargeStaffId: edit?.inChargeStaffId ?? "",
   }));
   const [status, setStatus] = useState(String(edit?.status ?? "ACTIVE").toUpperCase());
   const set = <K extends keyof SetupForm>(k: K, v: SetupForm[K]) => setF((prev) => ({ ...prev, [k]: v }));
+
+  // Nurses who can be the ward's in-charge (workbook: wards.in_charge_staff_id).
+  const { data: inChargeOptions = [] } = useQuery<InChargeOption[]>({
+    queryKey: ["ward-in-charge-options"],
+    queryFn: async () => (await axiosInstance.get("/hospital/staff/ward-in-charge-options")).data.data,
+    enabled: kind === "ward",
+  });
 
   // SOC-driven daily rent per room class — used to auto-fill the bed's daily charge.
   const { data: rentInfo } = useQuery<RoomClassRentsResponse>({
@@ -434,6 +442,7 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
         const body = {
           wardName: f.wardName, wardCode: f.wardCode.trim() || undefined, hospitalWardTypeId: f.hospitalWardTypeId,
           departmentId: f.departmentId || null, genderRestriction: f.genderRestriction,
+          inChargeStaffId: f.inChargeStaffId || null,
           ...(f.floorId ? { floorId: f.floorId } : { floorId: null, floorNumber: Number(f.floorNumber) }),
         };
         if (editingWard) await axiosInstance.put(`/ipd/wards/${f.wardId}`, { ...body, wardCode: f.wardCode.trim() || edit?.wardCode, status });
@@ -490,6 +499,10 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
               emptyOption={{ value: "", label: "None" }} searchPlaceholder="Search departments…"
               options={(options?.departments ?? []).map((d) => ({ value: d.departmentId, label: d.departmentName }))}
               helperText="Departments you have switched on. The one whose patients this ward mainly holds." />
+            <SearchableSelect label="In-charge" name="inChargeStaffId" value={f.inChargeStaffId} onChange={onSelect("inChargeStaffId")}
+              emptyOption={{ value: "", label: "None" }} searchPlaceholder="Search nurses…"
+              options={inChargeOptions.map((p) => ({ value: p.staffId, label: p.name, secondary: p.designationName ?? undefined }))}
+              helperText="The sister in charge — nurses posted here report to them day to day. People come from the Staff Directory." />
             <TextField select fullWidth label="Patients" value={f.genderRestriction} disabled={genders.length === 1} onChange={(e) => set("genderRestriction", e.target.value)}
               helperText={genders.length === 1 ? (genders[0] === "FEMALE" ? "This ward type is female-only." : "This ward type is always mixed.") : "Male-only or female-only wards stop the wrong patient being admitted here."}>
               {genders.map((g) => <MenuItem key={g} value={g}>{GENDER_LABEL[g]}</MenuItem>)}

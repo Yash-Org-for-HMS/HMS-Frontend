@@ -35,16 +35,11 @@ import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 
+// Specializations were removed (Sept 2026): a doctor's other departments are
+// now kept on their staff record — "Also works in" on the doctor form, from the
+// hospital's own department list — as HMS_Platform_Master_Data.xlsx models it.
+// The table stays; nothing reads it for new work.
 const LOOKUP_CONFIGS: Record<string, any> = {
-  specialization: {
-    label: "Specializations",
-    idField: "specializationId",
-    columns: [
-      { field: "specializationCode", label: "Code" },
-      { field: "specializationName", label: "Name" },
-      { field: "associatedDepartment", label: "Associated Department" }
-    ],
-  },
   departmentType: {
     label: "Department Types",
     idField: "departmentTypeId",
@@ -74,7 +69,7 @@ const LOOKUP_CONFIGS: Record<string, any> = {
 };
 
 export default function LookupManager() {
-  const [selectedType, setSelectedType] = useState("specialization");
+  const [selectedType, setSelectedType] = useState("departmentType");
   const toast = useToast();
   const confirm = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);

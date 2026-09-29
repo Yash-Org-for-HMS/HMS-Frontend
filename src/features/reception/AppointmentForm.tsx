@@ -35,6 +35,9 @@ export interface AppointmentFormProps {
 // change identity while the dropdowns query is loading — an inline object
 // literal here would make the slot-generation effect below (which depends on
 // `dropdowns`) re-run and re-render every tick until the query resolves.
+/** A department as the booking dropdowns serve it. */
+interface BookingDepartment { departmentId: string; departmentName: string; hasOpd?: boolean }
+
 const EMPTY_DROPDOWNS = { departments: [], doctors: [], statuses: [], doctorSchedules: [] };
 
 // The underlying slot value stays 24h "HH:mm" (used for sorting, comparisons,
@@ -330,17 +333,24 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
 
   if (isError) return <Box sx={{ p: 4 }}><ErrorState message={getApiErrorMessage(error, "Failed to initialize form")} onRetry={refetch} /></Box>;
 
-  const filteredDoctors = (dropdowns?.doctors || []).filter((d: any) => !formData.departmentId || d.departmentId === formData.departmentId);
+  // A doctor is offered in their home department and in any they also work in
+  // (additional departments on their staff record — what specialization became).
+  const filteredDoctors = (dropdowns?.doctors || []).filter((d: any) => !formData.departmentId || d.departmentId === formData.departmentId || (d.additionalDepartmentIds || []).includes(formData.departmentId));
+  // Only departments that run an out-patient clinic are booked into (standard list: hasOpd).
+  // The one already on an appointment being edited stays, so the field never blanks.
+  const bookableDepartments = ((dropdowns?.departments || []) as BookingDepartment[]).filter((d) => d.hasOpd !== false || d.departmentId === formData.departmentId);
 
-  // Specialization on the second line, and searchable by it as well as by name
+  // Department on the second line, and searchable by it as well as by name
   // — "who takes orthopaedics?" is as common a question at the desk as a name.
+  const deptName = (id: string | null | undefined) => ((dropdowns?.departments || []) as BookingDepartment[]).find((x) => x.departmentId === id)?.departmentName || "";
   const doctorOptions = filteredDoctors.map((d: any) => ({
     value: d.doctorId,
     // Exactly the string the old MenuItem rendered — this change is about how
     // the list is navigated, not about what a doctor is called.
     label: `Dr. ${d.user?.firstName || "Unknown"} ${d.user?.lastName || ""}`.trim(),
-    secondary: d.specialization || d.department?.departmentName || undefined,
-    keywords: d.department?.departmentName || "",
+    secondary: deptName(d.departmentId) || undefined,
+    // Searchable by every department they work in, not only the one shown.
+    keywords: [d.departmentId, ...(d.additionalDepartmentIds || [])].map(deptName).filter(Boolean).join(" "),
   }));
 
   // Local (not UTC) "today" as YYYY-MM-DD for the date picker's min. Blocks
@@ -409,7 +419,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
               sx={{ "& .MuiInputBase-root": { color: "text.primary" }, "& .MuiInputLabel-root": { color: "text.secondary" } }}
             >
               <MenuItem value="">All Departments</MenuItem>
-              {(dropdowns?.departments || []).map((d: any) => (
+              {bookableDepartments.map((d: any) => (
                 <MenuItem key={d.departmentId} value={d.departmentId}>{d.departmentName}</MenuItem>
               ))}
             </TextField>

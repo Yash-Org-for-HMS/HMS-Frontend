@@ -181,7 +181,8 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
                 options={(dropdowns?.doctors || []).map((d: any) => ({
                   value: d.doctorId,
                   label: `Dr. ${d.user?.firstName || ""} ${d.user?.lastName || ""}`.trim(),
-                  secondary: d.specialization || undefined,
+                  // The doctor's department (specializations are gone — see the staff record).
+                  secondary: ((dropdowns?.departments || []) as { departmentId: string; departmentName: string }[]).find((x) => x.departmentId === d.departmentId)?.departmentName || undefined,
                 }))}
               />
             </Grid>

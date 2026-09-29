@@ -63,6 +63,7 @@ const DepartmentsList = lazy(() => import("@/features/hospitalAuth/departments/D
 const DepartmentForm = lazy(() => import("@/features/hospitalAuth/departments/DepartmentForm"));
 const HospitalUsersList = lazy(() => import("@/features/hospitalAuth/users/UsersList"));
 const HospitalUserForm = lazy(() => import("@/features/hospitalAuth/users/UserForm"));
+const StaffDirectory = lazy(() => import("@/features/hospitalAuth/staff/StaffDirectory"));
 const ModuleAccess = lazy(() => import("@/features/hospitalAuth/settings/ModuleAccess"));
 const DoctorsList = lazy(() => import("@/features/hospitalAuth/doctors/DoctorsList"));
 const DoctorForm = lazy(() => import("@/features/hospitalAuth/doctors/DoctorForm"));
@@ -278,6 +279,7 @@ function App() {
             <Route path="/hospital/departments/new" element={el(DepartmentForm)} />
             <Route path="/hospital/departments/:id/edit" element={el(DepartmentForm)} />
             <Route path="/hospital/users" element={el(HospitalUsersList)} />
+            <Route path="/hospital/staff" element={el(StaffDirectory)} />
             {/* Role Management and the Permission Matrix are removed. Staff &
                 Users is where a role is actually assigned, so it is the honest
                 destination for anyone who still has these bookmarked. */}

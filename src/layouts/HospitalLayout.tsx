@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon, DashboardRounded, LocalHospitalRounded, PeopleRounded,
-  CalendarTodayRounded, SettingsRounded, DomainRounded, BadgeRounded, CardMembershipRounded,
+  CalendarTodayRounded, SettingsRounded, DomainRounded, BadgeRounded, CardMembershipRounded, AccountTreeRounded,
   WidgetsRounded, MedicalServicesRounded, DatasetRounded, EventNoteRounded,
   DynamicFormRounded, SecurityRounded, AccountBalanceRounded,
   AssessmentRounded, HotelRounded, MonitorHeartRounded, VaccinesRounded,
@@ -70,6 +70,8 @@ export default function HospitalLayout() {
     { text: "Operating List", icon: <EventNoteRounded />, path: "/hospital/ipd/ot-schedule", adminOnly: true, module: "IPD", section: "Operations" },
     { text: "Billing Overview", icon: <ReceiptLongRounded />, path: "/hospital/billing", adminOnly: true, module: "Billing", section: "Operations" },
     { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", adminOnly: true, section: "Organization" },
+    // People (with or without a login) and who they report to; Staff & Users below is the logins.
+    { text: "Staff Directory", icon: <AccountTreeRounded />, path: "/hospital/staff", adminOnly: true, section: "Organization" },
     { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", adminOnly: true, section: "Organization" },
     { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", adminOnly: true, section: "Organization" },
     // Role Management and the Permission Matrix used to live here, commented

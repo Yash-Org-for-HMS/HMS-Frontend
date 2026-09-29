@@ -67,6 +67,9 @@ export interface WardNode {
   departmentName?: string | null;
   floorId?: string | null;
   floorLabel?: string;
+  /** The ward's in-charge (a staff member), when one is set. */
+  inChargeStaffId?: string | null;
+  inChargeName?: string | null;
 }
 
 /** Licensed capacity and its breakdown (workbook sheet 16 definitions). */
@@ -191,6 +194,7 @@ export interface FacilityEditTarget {
   isActive?: boolean;
   /** The ward's or room's status when editing one. */
   status?: string | null;
+  inChargeStaffId?: string | null;
 }
 
 /**
@@ -219,4 +223,15 @@ export interface SetupForm {
   bedCode: string;
   isTemporary: boolean;
   isActive: boolean;
+  inChargeStaffId: string;
+}
+
+/** A nurse the ward form offers as in-charge (GET /hospital/staff/ward-in-charge-options). */
+export interface InChargeOption {
+  staffId: string;
+  name: string;
+  designationName: string | null;
+  grade: number | null;
+  branchId: string | null;
+  isInCharge: boolean;
 }

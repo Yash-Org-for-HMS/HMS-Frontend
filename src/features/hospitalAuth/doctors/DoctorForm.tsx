@@ -12,7 +12,8 @@ import {
   MenuItem,
   Tabs,
   Tab,
-  Chip
+  Chip,
+  Autocomplete
 } from "@mui/material";
 import { SaveRounded, PersonRounded, LocalHospitalRounded, AccountTreeRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
@@ -34,6 +35,9 @@ export default function DoctorForm() {
   const toast = useToast();
   const [tabIndex, setTabIndex] = useState(0);
   const [branchIds, setBranchIds] = useState<string[]>([]);
+  // Other departments the doctor works in — what "specialization" used to say,
+  // kept on the doctor's staff record. They can be booked under these too.
+  const [additionalDepartmentIds, setAdditionalDepartmentIds] = useState<string[]>([]);
   const [createdCreds, setCreatedCreds] = useState<{ email: string; temporaryPassword: string; name: string } | null>(null);
 
   const [formData, setFormData] = useState({
@@ -43,7 +47,6 @@ export default function DoctorForm() {
     phone: "",
     password: "",
     departmentId: "",
-    specializationId: "",
     licenseNumber: "",
     consultationFee: "",
     ipdVisitCharge: "",
@@ -52,24 +55,25 @@ export default function DoctorForm() {
   });
   const [errors, setErrors] = useState<Errors<typeof formData>>({});
 
-  // Reference dropdowns (departments / specializations / branches).
+  // Reference dropdowns (departments / branches).
   const { data: refData, isLoading: refLoading, isError: refIsError, error: refError, refetch: refetchRefs } = useQuery({
     queryKey: ["doctor-form-refs"],
     queryFn: async () => {
-      const [deptRes, specRes, dropdownRes] = await Promise.all([
-        axiosInstance.get("/hospital/departments"),
-        axiosInstance.get("/hospital/doctors/specializations").catch(() => ({ data: { data: [] } })),
+      const [deptRes, dropdownRes] = await Promise.all([
+        // Every department, not the endpoint's first page: since the standard list
+        // was copied in, a hospital has 100+ departments (most switched off), and
+        // the first 50 by date were switched-off copies — the hospital's real
+        // departments never reached this dropdown.
+        axiosInstance.get("/hospital/departments", { params: { limit: 1000 } }),
         axiosInstance.get("/hospital/users/dropdowns").catch(() => ({ data: { data: { branches: [] } } })),
       ]);
       return {
         departments: deptRes.data.data,
-        specializations: specRes.data.data,
         branches: dropdownRes.data?.data?.branches ?? [],
       };
     },
   });
-  const departments: any[] = refData?.departments ?? [];
-  const specializations: any[] = refData?.specializations ?? [];
+  const allDepartments: any[] = refData?.departments ?? [];
   const branches: any[] = refData?.branches ?? [];
 
   const { data: docData, isLoading: docLoading, isError: docIsError, error: docError, refetch: refetchDoc } = useQuery({
@@ -89,7 +93,6 @@ export default function DoctorForm() {
       phone: d.user?.phone || "",
       password: "",
       departmentId: d.departmentId || "",
-      specializationId: d.specializationId || "",
       licenseNumber: d.licenseNumber || "",
       consultationFee: d.consultationFee || "",
       ipdVisitCharge: d.ipdVisitCharge || "",
@@ -97,7 +100,14 @@ export default function DoctorForm() {
       experienceYears: d.experienceYears || "",
     });
     setBranchIds(Array.isArray(d.branchIds) ? d.branchIds : []);
+    setAdditionalDepartmentIds(Array.isArray(d.additionalDepartmentIds) ? d.additionalDepartmentIds : []);
   }, [docData]);
+
+  // Departments in use — plus any this doctor already has, so an existing choice
+  // never shows blank even if that department has since been switched off.
+  const departments = allDepartments
+    .filter((d) => d.status === "active" || d.departmentId === formData.departmentId || additionalDepartmentIds.includes(d.departmentId))
+    .sort((a, b) => String(a.departmentName).localeCompare(String(b.departmentName)));
 
   const initialLoad = refLoading || (!!id && docLoading);
   const isError = refIsError || docIsError;
@@ -140,15 +150,16 @@ export default function DoctorForm() {
     }
 
     setLoading(true);
+    const body = { ...formData, additionalDepartmentIds: additionalDepartmentIds.filter((x) => x !== formData.departmentId) };
     try {
       if (isEditing) {
-        await axiosInstance.put(`/hospital/doctors/${id}`, formData);
+        await axiosInstance.put(`/hospital/doctors/${id}`, body);
         // Persist branch availability (which branches this doctor can be booked at).
         await axiosInstance.put(`/hospital/doctors/${id}/branches`, { branchIds });
         navigate("/hospital/doctors");
       } else {
         // Create the login + clinical profile in one step; show the one-time credentials.
-        const res = await axiosInstance.post(`/hospital/doctors`, formData);
+        const res = await axiosInstance.post(`/hospital/doctors`, body);
         const newDoctorId = res.data?.data?.doctorId;
         if (newDoctorId && branchIds.length) {
           await axiosInstance.put(`/hospital/doctors/${newDoctorId}/branches`, { branchIds });
@@ -297,19 +308,21 @@ export default function DoctorForm() {
                 </TextField>
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  select
-                  label="Specialization"
-                  name="specializationId"
-                  value={formData.specializationId}
-                  onChange={handleChange}
-                  {...textFieldProps}
-                >
-                  <MenuItem value="">None / General</MenuItem>
-                  {specializations.map((s) => (
-                    <MenuItem key={s.specializationId} value={s.specializationId}>{s.specializationName}</MenuItem>
-                  ))}
-                </TextField>
+                <Autocomplete
+                  multiple
+                  options={departments.filter((d) => d.departmentId !== formData.departmentId).map((d) => d.departmentId as string)}
+                  value={additionalDepartmentIds.filter((x) => x !== formData.departmentId)}
+                  onChange={(_e, v) => setAdditionalDepartmentIds(v)}
+                  getOptionLabel={(deptId) => departments.find((d) => d.departmentId === deptId)?.departmentName ?? ""}
+                  renderTags={(value: readonly string[], getTagProps) =>
+                    value.map((deptId, index) => (
+                      <Chip size="small" label={departments.find((d) => d.departmentId === deptId)?.departmentName ?? ""} {...getTagProps({ index })} key={deptId} />
+                    ))}
+                  renderInput={(params) => (
+                    <TextField {...params} {...textFieldProps} label="Also works in" placeholder={additionalDepartmentIds.length ? "" : "None"}
+                      helperText="Other departments they see patients in — they can be booked there too." />
+                  )}
+                />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
