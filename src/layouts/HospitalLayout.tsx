@@ -49,50 +49,67 @@ export default function HospitalLayout() {
   // Sidebar items; `adminOnly` tabs are hidden from non-admin roles.
   const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
   useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onAnnouncement });
+  // In the order a hospital is set up — each step needs the ones above it:
+  // profile, settings and modules first; departments before the wards, doctors
+  // and staff that belong to them; charges before beds (a bed's room class
+  // picks up its rent from the Schedule of Charges); wards and beds before
+  // theatres; doctors and staff once there are departments and wards to put
+  // them in (postings, reporting lines); logins last. Then the catalogs a
+  // hospital fills as it goes, the day-to-day windows, and the reports.
+  // Items keep their own adminOnly / module gates.
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/hospital/dashboard", section: "Overview" },
-    { text: "Hospital Profile", icon: <LocalHospitalRounded />, path: "/hospital/profile", adminOnly: true, section: "Overview" },
-    // Admin-only: its endpoint (/billing/analytics) is admin-gated, so don't show
-    // a tab non-admins can't actually open.
-    { text: "Financial Analytics", icon: <AccountBalanceRounded />, path: "/hospital/financials", adminOnly: true, module: "Billing", section: "Overview" },
-    { text: "GST Report", icon: <AssessmentRounded />, path: "/hospital/gst-report", adminOnly: true, module: "Billing", section: "Overview" },
-    // Admin-only by design: raising a refund and approving it have to be
-    // different people, so this never appears for the desk that raises them.
-    { text: "Refund Approvals", icon: <AccountBalanceRounded />, path: "/hospital/refund-approvals", adminOnly: true, module: "Billing", section: "Overview" },
-    { text: "Reports", icon: <AssessmentRounded />, path: "/hospital/reports", section: "Overview" },
-    // Operations: hospital-wide, read-oriented windows into day-to-day activity.
-    // Admin-only (mirrors the backend org-wide data view for H_ADMIN); these
-    // reuse the existing reception/IPD pages, mounted under the admin shell.
-    { text: "All Patients", icon: <PeopleRounded />, path: "/hospital/patients", adminOnly: true, section: "Operations" },
-    { text: "Appointments", icon: <CalendarTodayRounded />, path: "/hospital/appointments", adminOnly: true, section: "Operations" },
-    { text: "Patient Queue", icon: <FormatListNumberedRounded />, path: "/hospital/queue", adminOnly: true, section: "Operations" },
-    { text: "Admissions", icon: <LocalHotelRounded />, path: "/hospital/ipd/admissions", adminOnly: true, module: "IPD", section: "Operations" },
-    { text: "Bed Board", icon: <HotelRounded />, path: "/hospital/ipd/beds", adminOnly: true, module: "IPD", section: "Operations" },
-    { text: "Operating List", icon: <EventNoteRounded />, path: "/hospital/ipd/ot-schedule", adminOnly: true, module: "IPD", section: "Operations" },
-    { text: "Billing Overview", icon: <ReceiptLongRounded />, path: "/hospital/billing", adminOnly: true, module: "Billing", section: "Operations" },
-    { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", adminOnly: true, section: "Organization" },
+
+    // ── Set up, in this order ──
+    { text: "Hospital Profile", icon: <LocalHospitalRounded />, path: "/hospital/profile", adminOnly: true, section: "Set up — in this order" },
+    { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", adminOnly: true, section: "Set up — in this order" },
+    { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", adminOnly: true, section: "Set up — in this order" },
+    { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", adminOnly: true, section: "Set up — in this order" },
+    { text: "Schedule of Charges", icon: <ReceiptLongRounded />, path: "/hospital/soc", adminOnly: true, section: "Set up — in this order" },
+    // Backend restricts these strictly to H_ADMIN/B_ADMIN (requireRole, no
+    // permission-code bypass) — adminOnly here matches that exactly so a
+    // custom role never sees a link that would just 403.
+    { text: "Ward & Bed Setup", icon: <HotelRounded />, path: "/hospital/facility-setup", adminOnly: true, module: "IPD", section: "Set up — in this order" },
+    { text: "Operating Theatres", icon: <MedicalServicesRounded />, path: "/hospital/theatres", adminOnly: true, module: "IPD", section: "Set up — in this order" },
+    { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", adminOnly: true, section: "Set up — in this order" },
     // People (with or without a login) and who they report to; Staff & Users below is the logins.
-    { text: "Staff Directory", icon: <AccountTreeRounded />, path: "/hospital/staff", adminOnly: true, section: "Organization" },
-    { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", adminOnly: true, section: "Organization" },
-    { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", adminOnly: true, section: "Organization" },
+    { text: "Staff Directory", icon: <AccountTreeRounded />, path: "/hospital/staff", adminOnly: true, section: "Set up — in this order" },
+    { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", adminOnly: true, section: "Set up — in this order" },
+
+    // ── Catalogs and forms, as the hospital needs them ──
+    { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/hospital/medicines", adminOnly: true, module: "Pharmacy", section: "Catalogs & forms" },
+    { text: "Vaccine Catalog", icon: <VaccinesRounded />, path: "/hospital/vaccines", adminOnly: true, section: "Catalogs & forms" },
+    { text: "Ward Chart Settings", icon: <MonitorHeartRounded />, path: "/hospital/ward-chart", adminOnly: true, module: "IPD", section: "Catalogs & forms" },
+    { text: "Form Builder", icon: <DynamicFormRounded />, path: "/hospital/form-builder", adminOnly: true, section: "Catalogs & forms" },
     // Role Management and the Permission Matrix used to live here, commented
     // out. Both are gone now: every hospital uses the fixed standard role set,
     // and role authoring is removed rather than hidden — see the note in
     // rbac.controller.ts for why.
-    { text: "Master Data", icon: <DatasetRounded />, path: "/hospital/lookups", adminOnly: true, section: "Configuration" },
-    // Backend restricts these strictly to H_ADMIN/B_ADMIN (requireRole, no
-    // permission-code bypass) — adminOnly here matches that exactly so a
-    // custom role never sees a link that would just 403.
-    { text: "Ward & Bed Setup", icon: <HotelRounded />, path: "/hospital/facility-setup", adminOnly: true, module: "IPD", section: "Configuration" },
-    { text: "Operating Theatres", icon: <MedicalServicesRounded />, path: "/hospital/theatres", adminOnly: true, module: "IPD", section: "Configuration" },
-    { text: "Ward Chart Settings", icon: <MonitorHeartRounded />, path: "/hospital/ward-chart", adminOnly: true, module: "IPD", section: "Configuration" },
-    { text: "Vaccine Catalog", icon: <VaccinesRounded />, path: "/hospital/vaccines", adminOnly: true, section: "Configuration" },
-    { text: "Schedule of Charges", icon: <ReceiptLongRounded />, path: "/hospital/soc", adminOnly: true, section: "Configuration" },
-    { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/hospital/medicines", adminOnly: true, module: "Pharmacy", section: "Configuration" },
-    { text: "Form Builder", icon: <DynamicFormRounded />, path: "/hospital/form-builder", adminOnly: true, section: "Configuration" },
-    { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", adminOnly: true, section: "Configuration" },
+    { text: "Master Data", icon: <DatasetRounded />, path: "/hospital/lookups", adminOnly: true, section: "Catalogs & forms" },
+
+    // ── Day to day ──
+    // Operations: hospital-wide, read-oriented windows into day-to-day activity.
+    // Admin-only (mirrors the backend org-wide data view for H_ADMIN); these
+    // reuse the existing reception/IPD pages, mounted under the admin shell.
+    { text: "All Patients", icon: <PeopleRounded />, path: "/hospital/patients", adminOnly: true, section: "Daily operations" },
+    { text: "Appointments", icon: <CalendarTodayRounded />, path: "/hospital/appointments", adminOnly: true, section: "Daily operations" },
+    { text: "Patient Queue", icon: <FormatListNumberedRounded />, path: "/hospital/queue", adminOnly: true, section: "Daily operations" },
+    { text: "Admissions", icon: <LocalHotelRounded />, path: "/hospital/ipd/admissions", adminOnly: true, module: "IPD", section: "Daily operations" },
+    { text: "Bed Board", icon: <HotelRounded />, path: "/hospital/ipd/beds", adminOnly: true, module: "IPD", section: "Daily operations" },
+    { text: "Operating List", icon: <EventNoteRounded />, path: "/hospital/ipd/ot-schedule", adminOnly: true, module: "IPD", section: "Daily operations" },
+    { text: "Billing Overview", icon: <ReceiptLongRounded />, path: "/hospital/billing", adminOnly: true, module: "Billing", section: "Daily operations" },
+    // Admin-only by design: raising a refund and approving it have to be
+    // different people, so this never appears for the desk that raises them.
+    { text: "Refund Approvals", icon: <AccountBalanceRounded />, path: "/hospital/refund-approvals", adminOnly: true, module: "Billing", section: "Daily operations" },
+
+    // ── Reports ──
+    { text: "Reports", icon: <AssessmentRounded />, path: "/hospital/reports", section: "Reports & finance" },
+    // Admin-only: its endpoint (/billing/analytics) is admin-gated, so don't show
+    // a tab non-admins can't actually open.
+    { text: "Financial Analytics", icon: <AccountBalanceRounded />, path: "/hospital/financials", adminOnly: true, module: "Billing", section: "Reports & finance" },
+    { text: "GST Report", icon: <AssessmentRounded />, path: "/hospital/gst-report", adminOnly: true, module: "Billing", section: "Reports & finance" },
+
     { text: "Audit Logs", icon: <SecurityRounded />, path: "/hospital/audit-logs", adminOnly: true, section: "System" },
-    { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", adminOnly: true, section: "System" },
   ];
 
   // Org AND branch admins see everything (mirrors the backend ADMIN_ROLE_CODES
