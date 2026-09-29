@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { hasRole } from "@/constants/roles";
 import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
@@ -93,7 +94,7 @@ export default function HospitalProfile() {
   const { user, hospital, updateHospital } = useHospitalAuth();
   // The backend only lets H_ADMIN edit the hospital profile — mirror that here
   // so staff see a read-only view instead of filling out a form that 403s on save.
-  const canEdit = user?.role === "H_ADMIN";
+  const canEdit = hasRole(user, "H_ADMIN");
   const [tabValue, setTabValue] = useState(0);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);

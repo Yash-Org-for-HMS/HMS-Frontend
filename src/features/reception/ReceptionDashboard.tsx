@@ -19,6 +19,7 @@ import { apiGetList } from "@/api/client";
 import Mascot from "@/components/Mascot";
 import ErrorState from "@/components/ErrorState";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { hasRole, menuPathsFor } from "@/constants/roles";
 import type { QueueTokenRow } from "./queue.types";
 import { useSocket } from "@/hooks/useSocket";
 import PageHeader from "@/components/layout/PageHeader";
@@ -92,7 +93,11 @@ function MiniStat({ icon, title, value, loading, prefix, sub }: any) {
 }
 
 export default function ReceptionDashboard() {
-  const { hospital } = useHospitalAuth();
+  const { hospital, user } = useHospitalAuth();
+  // A desk role (Admission Desk, Billing, TPA, Medical Records) is offered its own desk's actions;
+  // everyone who sees the whole panel sees them all.
+  const deskOnly = menuPathsFor(user, "reception");
+  const canDo = (...roles: string[]) => !deskOnly || hasRole(user, ...roles);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
@@ -316,22 +321,30 @@ export default function ReceptionDashboard() {
         <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider" }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary", mb: 2 }}>Quick Actions</Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-            <Button fullWidth variant="contained" startIcon={<PersonAddRounded />} onClick={() => navigate("/reception/patients/new")}
-              sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, py: 1.2 }}>
-              Register new patient
-            </Button>
-            <Button fullWidth variant="outlined" startIcon={<CalendarMonthRounded />} onClick={() => navigate("/reception/appointments/new")}
-              sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, color: ACCENT, borderColor: "divider", py: 1.2 }}>
-              Book appointment
-            </Button>
-            <Button fullWidth variant="outlined" startIcon={<ReceiptLongRounded />} onClick={() => navigate("/reception/billing")}
-              sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, color: ACCENT, borderColor: "divider", py: 1.2 }}>
-              Create / collect a bill
-            </Button>
-            <Button fullWidth variant="outlined" startIcon={<LocalHotelRounded />} onClick={() => navigate("/reception/ipd/admissions")}
-              sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, color: ACCENT, borderColor: "divider", py: 1.2 }}>
-              Admit a patient
-            </Button>
+            {canDo("ADMISSION_DESK") && (
+              <Button fullWidth variant="contained" startIcon={<PersonAddRounded />} onClick={() => navigate("/reception/patients/new")}
+                sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, py: 1.2 }}>
+                Register new patient
+              </Button>
+            )}
+            {canDo() && (
+              <Button fullWidth variant="outlined" startIcon={<CalendarMonthRounded />} onClick={() => navigate("/reception/appointments/new")}
+                sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, color: ACCENT, borderColor: "divider", py: 1.2 }}>
+                Book appointment
+              </Button>
+            )}
+            {canDo("BILLING") && (
+              <Button fullWidth variant="outlined" startIcon={<ReceiptLongRounded />} onClick={() => navigate("/reception/billing")}
+                sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, color: ACCENT, borderColor: "divider", py: 1.2 }}>
+                Create / collect a bill
+              </Button>
+            )}
+            {canDo("ADMISSION_DESK") && (
+              <Button fullWidth variant="outlined" startIcon={<LocalHotelRounded />} onClick={() => navigate("/reception/ipd/admissions")}
+                sx={{ justifyContent: "flex-start", textTransform: "none", fontWeight: 600, color: ACCENT, borderColor: "divider", py: 1.2 }}>
+                Admit a patient
+              </Button>
+            )}
           </Box>
           <Typography variant="caption" sx={{ color: "text.disabled", display: "block", mt: 2, textAlign: "center" }}>
             Tip: press {SEARCH_SHORTCUT} anywhere to search or jump

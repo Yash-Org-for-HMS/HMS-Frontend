@@ -58,6 +58,8 @@ interface User extends StaffUser {
   isActive: boolean;
   mustChangePassword?: boolean;
   role?: { roleName: string };
+  /** Roles beside the main one (15_System_Roles), each at one facility or all. */
+  additionalRoles?: { roleId: string; roleName: string; branchName: string | null }[];
   department?: { departmentName: string };
   branch?: { branchName: string };
 }
@@ -493,6 +495,11 @@ export default function UsersList() {
                     </TableCell>
                     <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {user.role?.roleName || "—"}
+                      {!!user.additionalRoles?.length && (
+                        <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                          also {user.additionalRoles.map((r) => r.branchName ? `${r.roleName} (${r.branchName})` : r.roleName).join(", ")}
+                        </Typography>
+                      )}
                     </TableCell>
                     <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {user.department?.departmentName || "—"}

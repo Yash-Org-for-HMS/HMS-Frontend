@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { menuPathsFor } from "@/constants/roles";
+import PanelSwitcher from "@/components/layout/PanelSwitcher";
 import SidebarNav from "@/components/layout/SidebarNav";
 import { BRAND } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
@@ -41,7 +43,7 @@ export default function LabLayout() {
 
   const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
   useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onAnnouncement });
-  const menuItems = [
+  const allItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/lab/dashboard", section: "Overview" },
     { text: "Lab Orders", icon: <ScienceRounded />, path: "/lab/orders", section: "Orders" },
     { text: "Radiology Orders", icon: <SettingsAccessibilityRounded />, path: "/lab/radiology", section: "Orders" },
@@ -51,6 +53,9 @@ export default function LabLayout() {
     { text: "Radiology Catalog", icon: <MenuBookRounded />, path: "/lab/radiology-catalog", section: "Catalogs" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/lab/reports", section: "Reports" },
   ];
+
+  const onlyPaths = menuPathsFor(user, "lab");
+  const menuItems = onlyPaths ? allItems.filter((i) => onlyPaths.has(i.path)) : allItems;
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -70,6 +75,7 @@ export default function LabLayout() {
       />
 
       <Box sx={{ px: 2, pb: 1 }}>
+        <PanelSwitcher />
         <BranchSwitcher />
       </Box>
 

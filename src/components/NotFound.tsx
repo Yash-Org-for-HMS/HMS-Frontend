@@ -2,7 +2,7 @@ import { Box, Typography, Button, Paper } from "@mui/material";
 import { ExploreOffRounded, ArrowBackRounded, HomeRounded } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
-import { homeForRole } from "@/constants/roles";
+import { homeForUser } from "@/constants/roles";
 import { NEUTRAL } from "@/styles/accents";
 
 /**
@@ -25,7 +25,7 @@ export default function NotFound() {
 
   // Send people to their OWN panel. A hospital nurse and a platform super-admin
   // do not share a home, so a single hardcoded "/" would strand one of them.
-  const home = user ? homeForRole(user.role) : "/";
+  const home = user ? homeForUser(user) : "/";
 
   return (
     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh", p: 3 }}>

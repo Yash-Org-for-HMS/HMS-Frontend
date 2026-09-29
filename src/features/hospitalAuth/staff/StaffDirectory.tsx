@@ -21,6 +21,8 @@ import { SEMANTIC } from "@/styles/accents";
 import StaffDialog from "./StaffDialog";
 import type { StaffRow, StaffListResponse, StaffOptions } from "./staff.types";
 import { STATUS_LABEL } from "./staff.types";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { hasRole } from "@/constants/roles";
 
 /**
  * Everyone who works at the hospital — with a login or without — with their
@@ -85,6 +87,9 @@ function GiveLoginDialog({ row, options, onClose, onDone }: {
 
 export default function StaffDirectory() {
   const toast = useToast();
+  const { user } = useHospitalAuth();
+  // Logins carry roles — only the Hospital Admin hands them out (HR Admin runs the rest).
+  const canGiveLogins = hasRole(user, "H_ADMIN");
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
@@ -256,7 +261,7 @@ export default function StaffDirectory() {
                         )}
                     </TableCell>
                     <TableCell align="right" sx={{ ...CELL_SX, whiteSpace: "nowrap" }}>
-                      {!r.login && !exited && (
+                      {canGiveLogins && !r.login && !exited && (
                         <Tooltip title="Give a login">
                           <span>
                             <IconButton size="small" disabled={!options} onClick={() => setLoginFor(r)} sx={{ color: "text.secondary" }}><KeyRounded fontSize="small" /></IconButton>
@@ -281,6 +286,7 @@ export default function StaffDirectory() {
         <StaffDialog
           row={dialog.row}
           options={options}
+          canGiveLogin={canGiveLogins}
           onClose={() => setDialog(null)}
           onSaved={({ row, warnings, credentials }) => {
             setDialog(null);

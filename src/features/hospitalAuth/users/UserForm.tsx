@@ -35,6 +35,7 @@ import FormSkeleton from "@/components/skeletons/FormSkeleton";
 import { validate, hasErrors, required, isEmail, isPhone, minLen, match, type Errors } from "@/utils/validation";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import type { Role, Department, Branch } from "@/types";
+import ExtraRolesEditor, { type ExtraRoleRow } from "./ExtraRolesEditor";
 
 // Which licensable module a role belongs to (mirrors the backend
 // ROLE_REQUIRED_MODULE). A role is hidden when adding staff if the hospital's
@@ -42,6 +43,10 @@ import type { Role, Department, Branch } from "@/types";
 const ROLE_MODULE: Record<string, string> = {
   LAB_TECH: "Laboratory",
   PHARMACIST: "Pharmacy",
+  // The workbook's roles that live inside one module (backend config/modules.ts).
+  RADIOLOGY: "Laboratory",
+  ADMISSION_DESK: "IPD",
+  HOUSEKEEPING: "IPD",
 };
 
 interface TabPanelProps {
@@ -121,6 +126,8 @@ export default function UserForm() {
     confirmPassword: "",
   });
   const [errors, setErrors] = useState<Errors<typeof formData>>({});
+  // Roles beside the main one, each at one facility or all (15_System_Roles).
+  const [extraRoles, setExtraRoles] = useState<ExtraRoleRow[]>([]);
 
   const { data: userData, isLoading: userLoading, isError: userIsError, error: userError, refetch: refetchUser } = useQuery({
     queryKey: ["hospital-user", id],
@@ -156,6 +163,7 @@ export default function UserForm() {
       emergencyContactPhone: user.emergencyContactPhone || "",
       emergencyContactRelation: user.emergencyContactRelation || "",
     }));
+    setExtraRoles((user.additionalRoles ?? []).map((r: { roleId: string; branchId: string | null }) => ({ roleId: r.roleId, branchId: r.branchId ?? "" })));
   }, [userData]);
 
   const initialLoad = ddLoading || (isEditing && userLoading);
@@ -195,13 +203,15 @@ export default function UserForm() {
 
     setLoading(true);
     try {
+      const additionalRoles = extraRoles.filter((r) => r.roleId).map((r) => ({ roleId: r.roleId, branchId: r.branchId || null }));
       if (isEditing) {
-        await axiosInstance.put(`/hospital/users/${id}`, formData);
+        await axiosInstance.put(`/hospital/users/${id}`, { ...formData, additionalRoles });
         navigate("/hospital/users");
       } else {
         const payload = {
           ...formData,
           initialPassword: formData.initialPassword || undefined,
+          additionalRoles,
         };
         const res = await axiosInstance.post("/hospital/users", payload);
         const { credentials } = res.data;
@@ -335,6 +345,11 @@ export default function UserForm() {
                         </MenuItem>
                       ))}
                   </TextField>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <ExtraRolesEditor rows={extraRoles} onChange={setExtraRoles} roles={roles} branches={branches}
+                    primaryRoleId={formData.roleId}
+                    roleAllowed={(code) => isModuleEnabled(code ? ROLE_MODULE[code] : undefined)} />
                 </Grid>
               </Grid>
             </TabPanel>

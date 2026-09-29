@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { primaryPanelForRole } from "@/constants/roles";
 import { Dialog, Box, InputBase, Typography, List, ListItemButton, ListItemIcon, ListItemText, Chip } from "@mui/material";
 import {
   SearchRounded, DashboardRounded, ScienceRounded, LocalPharmacyRounded, PersonalVideoRounded,
@@ -252,11 +253,12 @@ export default function CommandPalette() {
     }
   } catch { /* no readable session — the palette simply shows nothing */ }
 
-  const isReception = userRole.includes("reception");
-  const isLab = userRole.includes("lab");
-  const isPharmacy = userRole.includes("pharmac");
-  const isDoctor = userRole.includes("doctor");
-  const isNurse = userRole.includes("nurse");
+  const panel = primaryPanelForRole(userRole);
+  const isReception = panel === "reception";
+  const isLab = panel === "lab";
+  const isPharmacy = panel === "pharmacy";
+  const isDoctor = panel === "doctor";
+  const isNurse = panel === "nurse";
   // Role codes are "H_ADMIN" (org admin) / "B_ADMIN" (branch admin) — see
   // middleware/branchContext.ts. Matching literal "admin"/"hospital_admin"
   // never matched a real role, so admins previously saw an empty palette.

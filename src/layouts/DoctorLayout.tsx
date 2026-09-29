@@ -1,4 +1,5 @@
 import { alpha, BRAND } from "@/styles/accents";
+import PanelSwitcher from "@/components/layout/PanelSwitcher";
 import SidebarNav from "@/components/layout/SidebarNav";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
@@ -102,6 +103,7 @@ export default function DoctorLayout() {
 
       {/* Branch switcher (only shown to multi-branch users) */}
       <Box sx={{ px: 2, pt: 2 }}>
+        <PanelSwitcher />
         <BranchSwitcher />
       </Box>
 

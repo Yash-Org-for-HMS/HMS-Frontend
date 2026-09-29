@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { menuPathsFor } from "@/constants/roles";
+import PanelSwitcher from "@/components/layout/PanelSwitcher";
 import { isNavItemActive } from "@/components/layout/navActive";
 import { SEARCH_SHORTCUT } from "@/utils/shortcut";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
@@ -73,7 +75,7 @@ export default function ReceptionLayout() {
   // overview → patient flow → clinical lookups → in-patient → finance → system.
   const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
   useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onAnnouncement });
-  const navSections = [
+  const allSections = [
     {
       heading: "Overview",
       items: [
@@ -121,6 +123,12 @@ export default function ReceptionLayout() {
       ],
     },
   ];
+
+  // The workbook's desk roles (Admission Desk, Billing, TPA, Medical Records) see their desk.
+  const onlyPaths = menuPathsFor(user, "reception");
+  const navSections = onlyPaths
+    ? allSections.map((s) => ({ ...s, items: s.items.filter((i) => onlyPaths.has(i.path)) })).filter((s) => s.items.length)
+    : allSections;
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -228,6 +236,7 @@ export default function ReceptionLayout() {
 
       {/* Branch switcher (only shown to multi-branch users) */}
       <Box sx={{ px: 2, pt: 2 }}>
+        <PanelSwitcher />
         <BranchSwitcher />
       </Box>
 

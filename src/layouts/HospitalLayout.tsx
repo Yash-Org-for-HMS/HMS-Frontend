@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import PanelSwitcher from "@/components/layout/PanelSwitcher";
 import SidebarNav from "@/components/layout/SidebarNav";
 import { Outlet, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -20,7 +21,7 @@ import {
   FormatListNumberedRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
-import { isAdmin as isAdminRole } from "@/constants/roles";
+import { isAdminUser, menuPathsFor } from "@/constants/roles";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import BranchSwitcher from "@/components/BranchSwitcher";
 import SidebarProductHeader from "@/components/layout/SidebarProductHeader";
@@ -97,12 +98,15 @@ export default function HospitalLayout() {
   // Org AND branch admins see everything (mirrors the backend ADMIN_ROLE_CODES
   // bypass). B_ADMIN was previously omitted, which hid every permission-gated
   // tab for branch admins — leaving only the two ungated items (the "2 tabs" bug).
-  const isAdmin = isAdminRole(user?.role);
+  const isAdmin = isAdminUser(user);
+  // An Auditor or HR Admin (15_System_Roles) sees only their part of this panel.
+  const onlyPaths = menuPathsFor(user, "hospital");
   const { isModuleEnabled } = useEnabledModules();
   // Module-gated items are NOT hidden — they render with a lock badge so tenants
   // can discover the feature and upgrade (the page itself shows the upsell).
   // adminOnly / permission still gate visibility as before.
   const visibleMenuItems = menuItems.filter(item => {
+    if (onlyPaths) return onlyPaths.has(item.path);
     if ((item as any).adminOnly) return isAdmin;   // admin-only tab (e.g. Financial, Operations)
     return true;
   });
@@ -154,6 +158,7 @@ export default function HospitalLayout() {
 
       {/* Branch switcher (only shown to multi-branch users) */}
       <Box sx={{ px: 2, pt: 2 }}>
+        <PanelSwitcher />
         <BranchSwitcher />
       </Box>
 

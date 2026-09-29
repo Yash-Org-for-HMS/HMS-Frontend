@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
-import { isAdmin as isAdminRole } from "@/constants/roles";
+import { isAdminUser } from "@/constants/roles";
 import {
   DailyOpd, Analytics, Collection, ReferralsByDoctor, OpRegistration, OpBills, DiagnosisWise, Census, OpdVisitRegister,
 } from "./Reports";
@@ -128,7 +128,7 @@ const GROUPS: ReportGroup[] = [
 export default function ReportsHub() {
   const { isModuleEnabled } = useEnabledModules();
   const { user } = useHospitalAuth();
-  const isAdmin = isAdminRole(user?.role);
+  const isAdmin = isAdminUser(user);
 
   /**
    * Nursing and Insurance join the catalogue here rather than living as their

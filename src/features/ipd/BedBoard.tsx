@@ -99,7 +99,11 @@ const Tile = ({ label, value, color }: { label: string; value: number; color: st
   </Paper>
 );
 
-export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = {}) {
+/** Housekeeping turns beds round: from vacated / being cleaned, to cleaning or cleaned. */
+const HOUSEKEEPING_FROM = ["VACATED", "CLEANING", "TERMINAL_CLEAN"];
+const HOUSEKEEPING_TO = ["CLEANING", "TERMINAL_CLEAN", "AVAILABLE"];
+
+export default function BedBoard({ readOnly = false, housekeeping = false }: { readOnly?: boolean; housekeeping?: boolean } = {}) {
   const toast = useToast();
   const [bedMenu, setBedMenu] = useState<{ anchor: HTMLElement | null; bed: BoardBed | null }>({ anchor: null, bed: null });
   // Held by the board, not by the menu: closing a Menu unmounts its children,
@@ -125,7 +129,9 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
   const movesFrom = (code: string) => {
     const next = (statusOf(code)?.allowedNext ?? []).filter((c) => MANUAL.includes(c));
     // A vacated bed is cleaned and released in one tap (the API records both steps).
-    return code === "VACATED" ? ["AVAILABLE", ...next] : next;
+    const all = code === "VACATED" ? ["AVAILABLE", ...next] : next;
+    // Housekeeping (15_System_Roles) only turns beds round — the API holds it to the same.
+    return housekeeping ? (HOUSEKEEPING_FROM.includes(code) ? all.filter((c) => HOUSEKEEPING_TO.includes(c)) : []) : all;
   };
   /** Admitted with no bed — invisible on this board without their own strip. */
   const awaitingBed = (data?.awaitingBed ?? []) as BedlessPatient[];
@@ -145,8 +151,10 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
   return (
     <Box>
       <PageHeader
-        title="Bed Management"
-        subtitle="Ward occupancy, bed availability, and reservations. To add or edit wards, rooms, or beds, contact your hospital administrator."
+        title={housekeeping ? "Beds to turn round" : "Bed Management"}
+        subtitle={housekeeping
+          ? "Tap a vacated or cleaning bed to mark it as being cleaned or cleaned. Other beds are shown so you can find your way round the ward."
+          : "Ward occupancy, bed availability, and reservations. To add or edit wards, rooms, or beds, contact your hospital administrator."}
       />
 
       {summary && (
@@ -181,7 +189,7 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
           theatre already freed, and a nurse looking for them has nothing to
           look at. They are the first thing on the screen because somebody has
           to find them a bed. */}
-      {awaitingBed.length > 0 && (
+      {!housekeeping && awaitingBed.length > 0 && (
         <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 3, border: "2px solid", borderColor: SEMANTIC.warning, bgcolor: `${SEMANTIC.warning}0a` }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
             <MeetingRoomRounded sx={{ color: SEMANTIC.warning }} />
@@ -241,22 +249,26 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
                       {r.beds.length === 0 ? <Typography variant="caption" sx={{ color: "text.disabled" }}>No beds</Typography> : r.beds.map((b: BoardBed) => {
                         const color = colorOf(b.status);
                         const held = b.reservedUntil ? `held until ${new Date(b.reservedUntil).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` : "";
-                        const tip = b.occupant
+                        const tip = b.occupant && !housekeeping
                           ? `${b.occupant.patientName} (${b.occupant.uhid})${awayText(b.occupant) ? ` — ${awayText(b.occupant)}` : ""}${b.status === "DISCHARGE_INITIATED" ? " — discharge started" : ""}`
                           : [nameOf(b.status), held, b.statusReason].filter(Boolean).join(" — ");
+                        // Housekeeping opens only a bed it can do something with.
+                        const clickable = !readOnly && (!housekeeping || movesFrom(b.status).length > 0);
                         return (
                           // The tile is 130px wide, so a theatre called
                           // "Cardiac Theatre 2" clips. The tooltip is where
                           // the full name has to be readable.
                           <Tooltip key={b.bedId} title={tip}>
-                            <Box onClick={readOnly ? undefined : (e) => setBedMenu({ anchor: e.currentTarget, bed: b })}
-                              sx={{ cursor: readOnly ? "default" : "pointer", width: 130, p: 1.25, borderRadius: 2, border: "1px solid", borderColor: color, bgcolor: `${color}40`, ...(readOnly ? {} : { "&:hover": { bgcolor: `${color}70` } }) }}>
+                            <Box onClick={clickable ? (e) => setBedMenu({ anchor: e.currentTarget, bed: b }) : undefined}
+                              sx={{ cursor: clickable ? "pointer" : "default", width: 130, p: 1.25, borderRadius: 2, border: housekeeping && clickable ? "2px solid" : "1px solid", borderColor: color, bgcolor: `${color}40`, ...(clickable ? { "&:hover": { bgcolor: `${color}70` } } : {}) }}>
                               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                                 <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>Bed {b.bedNumber}</Typography>
                                 <Box sx={{ width: 9, height: 9, borderRadius: "50%", bgcolor: color, border: "1px solid rgba(0,0,0,0.25)" }} />
                               </Box>
                               <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }} noWrap>{b.bedTypeName ?? b.bedType}</Typography>
-                              {b.occupant ? (
+                              {b.occupant && housekeeping ? (
+                                <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 700, display: "block" }} noWrap>{nameOf(b.status)}</Typography>
+                              ) : b.occupant ? (
                                 <>
                                   <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600, display: "flex", alignItems: "center", gap: 0.3 }} noWrap><PersonRounded sx={{ fontSize: 12 }} /> {b.occupant.patientName}</Typography>
                                   {b.status === "DISCHARGE_INITIATED" && (

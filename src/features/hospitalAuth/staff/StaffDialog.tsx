@@ -25,6 +25,8 @@ import { GENDER_OPTIONS, ROLE_IN_DEPT_LABEL, STATUS_LABEL } from "./staff.types"
 interface Props {
   row: StaffRow | null;
   options: StaffOptions;
+  /** Only the Hospital Admin gives out logins (they carry roles). */
+  canGiveLogin?: boolean;
   onClose: () => void;
   onSaved: (result: { row: StaffRow; warnings: StaffIssue[]; credentials?: { email: string; temporaryPassword: string } }) => void;
 }
@@ -81,7 +83,7 @@ function registrationLabel(council: string | null | undefined): string | null {
 /** The login role a category usually gets — a starting point the admin can change. */
 const DEFAULT_ROLE: Record<string, string> = { DOCTOR: "DOCTOR", NURSE: "NURSE", PHARMACIST: "PHARMACIST", TECHNICIAN: "LAB_TECH" };
 
-export default function StaffDialog({ row, options, onClose, onSaved }: Props) {
+export default function StaffDialog({ row, options, onClose, onSaved, canGiveLogin = true }: Props) {
   const toast = useToast();
   const isNew = !row;
   const [f, setF] = useState<Form>(() => initialForm(row, options));
@@ -362,7 +364,7 @@ export default function StaffDialog({ row, options, onClose, onSaved }: Props) {
             ))}
           </Box>
 
-          {isNew && (<>
+          {isNew && canGiveLogin && (<>
             {section("Login")}
             <FormControlLabel control={<Checkbox checked={f.giveLogin} onChange={(e) => set("giveLogin", e.target.checked)} />}
               label="Give them a login now" />

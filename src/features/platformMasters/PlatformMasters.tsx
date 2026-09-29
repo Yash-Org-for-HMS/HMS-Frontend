@@ -45,6 +45,8 @@ interface CopySummary {
   bedTypes: { created: number; synced: number }; designations: { created: number; synced: number };
   departments: { linked: number; created: number; unlinkedOwn: string[] };
   roomClasses: { linked: number; created: number; unlinkedOwn: string[] };
+  /** Standard roles the hospital did not have yet (the workbook's 18). */
+  rolesAdded?: number;
 }
 
 const STAFF_MAP = "__deptStaffMap";
@@ -439,6 +441,7 @@ function SyncResultDialog({ result, onClose }: { result: { results: CopySummary[
               line("Designations added", n(r.designations.created, "")),
               line("Departments", [...n(r.departments.linked, "linked to the standard list"), ...n(r.departments.created, "added, switched off")]),
               line("Bed categories", [...n(r.roomClasses.linked, "room classes linked"), ...n(r.roomClasses.created, "added, switched off")]),
+              line("Roles added", n(r.rolesAdded ?? 0, "")),
               line("Behaviour updated", [...n(r.wardTypes.synced + r.roomTypes.synced + r.bedTypes.synced + r.designations.synced, "rows")]),
             ].filter(Boolean);
             return (

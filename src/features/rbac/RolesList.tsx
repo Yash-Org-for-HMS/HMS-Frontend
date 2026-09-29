@@ -28,6 +28,18 @@ const SYSTEM_ROLES: { code: string; name: string }[] = [
   { code: "RECEPTIONIST", name: "Receptionist" },
   { code: "PHARMACIST", name: "Pharmacist" },
   { code: "LAB_TECH", name: "Lab Technician" },
+  // The workbook's roles (HMS_Platform_Master_Data.xlsx 15_System_Roles).
+  { code: "HR_ADMIN", name: "HR Admin" },
+  { code: "DOCTOR_RESIDENT", name: "Doctor – Resident / RMO" },
+  { code: "NURSE_INCHARGE", name: "Nurse In-charge" },
+  { code: "NURSING_ADMIN", name: "Nursing Administration" },
+  { code: "ADMISSION_DESK", name: "Admission Desk" },
+  { code: "BILLING", name: "Billing" },
+  { code: "TPA_DESK", name: "TPA / Insurance Desk" },
+  { code: "RADIOLOGY", name: "Radiology" },
+  { code: "HOUSEKEEPING", name: "Housekeeping" },
+  { code: "MRD", name: "Medical Records" },
+  { code: "AUDITOR", name: "Auditor / View Only" },
 ];
 
 export default function RolesList() {

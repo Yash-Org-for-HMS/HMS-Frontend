@@ -4,17 +4,13 @@ import SidebarNav from "@/components/layout/SidebarNav";
 import { BRAND } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
-const pharmacyTheme = createPanelTheme(BRAND.action, BRAND.actionDark);
+const housekeepingTheme = createPanelTheme(BRAND.action, BRAND.actionDark);
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import ModuleGate from "@/components/ModuleGate";
 import {
   Box, Drawer, AppBar, Toolbar, IconButton, useTheme, useMediaQuery,
 } from "@mui/material";
-import {
-  Menu as MenuIcon, DashboardRounded, MedicationRounded,
-  LocalShippingRounded, InventoryRounded, PointOfSaleRounded,
-  AssessmentRounded, LocalPharmacyRounded, WarehouseRounded, ReceiptLongRounded,
-} from "@mui/icons-material";
+import { Menu as MenuIcon, HotelRounded } from "@mui/icons-material";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BranchSwitcher from "@/components/BranchSwitcher";
@@ -28,9 +24,15 @@ import { useSocket } from "@/hooks/useSocket";
 
 const drawerWidth = 260;
 
-export default function PharmacyLayout() {
+/**
+ * Housekeeping (HMS_Platform_Master_Data.xlsx 15_System_Roles: "Update CLEANING /
+ * AVAILABLE bed status"): one screen, the bed board, where the beds waiting to
+ * be turned round can be marked as being cleaned or cleaned. The API keeps the
+ * role to exactly that (lib/roleCatalog.ts, beds.controller setBedStatus).
+ */
+export default function HousekeepingLayout() {
   useEffect(() => {
-    document.title = "Dolphin | Pharmacy Portal";
+    document.title = "Dolphin | Housekeeping";
   }, []);
 
   const { user, hospital, logout } = useHospitalAuth();
@@ -43,15 +45,7 @@ export default function PharmacyLayout() {
   const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
   useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onAnnouncement });
   const menuItems = [
-    { text: "Dashboard", icon: <DashboardRounded />, path: "/pharmacy/dashboard", section: "Overview" },
-    { text: "Dispensary (POS)", icon: <PointOfSaleRounded />, path: "/pharmacy/pos", section: "Dispensary" },
-    { text: "IPD Medication Requests", icon: <LocalPharmacyRounded />, path: "/pharmacy/ipd-requests", section: "Dispensary", module: "IPD" },
-    { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/pharmacy/medicines", section: "Inventory" },
-    { text: "Suppliers", icon: <LocalShippingRounded />, path: "/pharmacy/suppliers", section: "Inventory" },
-    { text: "Inventory & POs", icon: <InventoryRounded />, path: "/pharmacy/inventory", section: "Inventory" },
-    { text: "Ward Stock", icon: <WarehouseRounded />, path: "/pharmacy/ward-stock", section: "Inventory", module: "IPD" },
-    { text: "Billing History", icon: <ReceiptLongRounded />, path: "/pharmacy/billing", section: "Reports", module: "Billing" },
-    { text: "Reports", icon: <AssessmentRounded />, path: "/pharmacy/reports", section: "Reports" },
+    { text: "Bed Board", icon: <HotelRounded />, path: "/housekeeping/beds", section: "Beds" },
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -77,22 +71,22 @@ export default function PharmacyLayout() {
       </Box>
 
       <SidebarUserCard
-        name={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Pharmacist"}
-        role={user?.roleName || "Pharmacist"}
-        avatarText={user?.firstName?.charAt(0) || "P"}
+        name={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Housekeeping"}
+        role={user?.roleName || "Housekeeping"}
+        avatarText={user?.firstName?.charAt(0) || "H"}
         onLogout={logout}
         variant="compact"
         roleCode={user?.role}
         // Announcements was the last nav row, and therefore below the fold
         // on a 768px laptop in every panel. Pinned here instead.
-        announcements={{ count: announcementsUnread, onOpen: () => navigate("/pharmacy/announcements") }}
+        announcements={{ count: announcementsUnread, onOpen: () => navigate("/housekeeping/announcements") }}
       />
       <SidebarHospitalStrip logoUrl={hospital?.logoUrl} name={hospital?.name || ""} roleCode={user?.role} role={user?.roleName || ""} />
     </Box>
   );
 
   return (
-    <ThemeProvider theme={pharmacyTheme}>
+    <ThemeProvider theme={housekeepingTheme}>
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       <AppBar position="fixed" elevation={0} sx={{ display: { xs: "block", md: "none" }, width: { md: `calc(100% - ${drawerWidth}px)` }, ml: { md: `${drawerWidth}px` }, bgcolor: "background.paper", borderBottom: "1px solid", borderColor: "divider" }}>
         <Toolbar sx={{ justifyContent: "space-between" }}>
@@ -118,7 +112,7 @@ export default function PharmacyLayout() {
           minWidth: 0, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` }, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <Toolbar sx={{ display: { xs: "block", md: "none" } }} />
         <TrialBanner />
-        <ModuleGate module="Pharmacy"><Outlet /></ModuleGate>
+        <ModuleGate module="IPD"><Outlet /></ModuleGate>
       </Box>
     </Box>
     </ThemeProvider>

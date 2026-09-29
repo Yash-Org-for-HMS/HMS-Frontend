@@ -19,6 +19,7 @@ const NurseLayout = lazy(() => import("@/layouts/NurseLayout"));
 const DoctorLayout = lazy(() => import("@/layouts/DoctorLayout"));
 const LabLayout = lazy(() => import("@/layouts/LabLayout"));
 const PharmacyLayout = lazy(() => import("@/layouts/PharmacyLayout"));
+const HousekeepingLayout = lazy(() => import("@/layouts/HousekeepingLayout"));
 import CommandPalette from "@/components/CommandPalette";
 import AdminCommandPalette from "@/components/AdminCommandPalette";
 import PageSkeleton from "@/components/PageSkeleton";
@@ -466,6 +467,14 @@ function App() {
                 this is what already was. */}
             <Route path="/lab/billing-history" element={elp(Billing, { readOnly: true, basePath: "/lab/billing", department: "Lab" })} />
             <Route path="/lab/reports" element={el(LabReports)} />
+          </Route>
+        </Route>
+
+        {/* ── Housekeeping (the workbook's HOUSEKEEPING role): the bed board only ── */}
+        <Route element={<HospitalProtectedRoute panel="housekeeping" />}>
+          <Route element={el(HousekeepingLayout)}>
+            <Route path="/housekeeping/beds" element={elGated(BedBoard, "IPD", "Bed Board", { housekeeping: true })} />
+            <Route path="/housekeeping/announcements" element={el(Announcements)} />
           </Route>
         </Route>
 

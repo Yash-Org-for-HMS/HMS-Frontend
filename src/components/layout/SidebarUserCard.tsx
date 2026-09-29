@@ -61,6 +61,18 @@ const ROLE_BADGE: Record<string, string> = {
   LAB_TECH: "LAB",
   LAB_ADMIN: "LAB",
   LAB: "LAB",
+  // The workbook's roles (15_System_Roles).
+  HR_ADMIN: "HR",
+  DOCTOR_RESIDENT: "RESIDENT",
+  NURSE_INCHARGE: "IN-CHARGE",
+  NURSING_ADMIN: "NURSING",
+  ADMISSION_DESK: "ADMISSION",
+  BILLING: "BILLING",
+  TPA_DESK: "TPA",
+  RADIOLOGY: "RADIOLOGY",
+  HOUSEKEEPING: "HOUSEKEEP",
+  MRD: "RECORDS",
+  AUDITOR: "AUDITOR",
   // The platform console has no hospital role. "PLATFORM" rather than
   // "SUPER ADMIN": eleven characters left only ~70px for the name, which cut
   // "Rajesh Sharma" in half, and it also separates this person from a

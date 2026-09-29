@@ -3,6 +3,7 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { axiosInstance } from "@/api/axios";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "./ToastContext";
+import { homeForUser, type HeldRole } from "@/constants/roles";
 
 export interface HospitalUser {
   id: string;
@@ -12,6 +13,8 @@ export interface HospitalUser {
   employeeCode: string | null;
   role: string;
   roleName: string;
+  /** Every role held, primary first (several per person, per facility). Absent on older sessions. */
+  roles?: HeldRole[];
 }
 
 export interface HospitalInfo {
@@ -158,26 +161,8 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
     setActiveBranch(branchData?.id ?? null);
     void loadBranches();
 
-    // Role-based redirect
-    const receptionRoles = ["RECEPTIONIST", "RECEPTION", "receptionist", "reception"];
-    const nurseRoles = ["NURSE", "nurse"];
-    const doctorRoles = ["DOCTOR", "doctor"];
-    const labRoles = ["LAB_ADMIN", "LAB_TECH", "LAB", "lab admin", "lab tech"];
-    const pharmacyRoles = ["PHARMACIST", "PHARMACY", "pharmacist", "pharmacy"];
-    
-    if (receptionRoles.includes(userData.role)) {
-      navigate("/reception/dashboard");
-    } else if (nurseRoles.includes(userData.role)) {
-      navigate("/nurse/dashboard");
-    } else if (doctorRoles.includes(userData.role)) {
-      navigate("/doctor/dashboard");
-    } else if (labRoles.includes(userData.role)) {
-      navigate("/lab/dashboard");
-    } else if (pharmacyRoles.includes(userData.role)) {
-      navigate("/pharmacy/dashboard");
-    } else {
-      navigate("/hospital/dashboard");
-    }
+    // Role-based redirect: the primary role's panel (constants/roles.ts).
+    navigate(homeForUser(userData));
   }, [navigate, setActiveBranch, loadBranches]);
 
   const updateHospital = useCallback((hospitalData: Partial<HospitalInfo>) => {
