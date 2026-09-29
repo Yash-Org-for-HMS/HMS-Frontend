@@ -42,6 +42,10 @@ export interface AdmissionRow {
   status: string;
   patientName: string;
   uhid: string;
+  /** CASH | INSURANCE | CORPORATE | GOVT_SCHEME — which bed tariff prices the stay. */
+  payerType?: string | null;
+  /** Set once discharge has been started (the bed reads "discharge initiated"). */
+  dischargeInitiatedAt?: string | null;
   doctorName?: string | null;
   bed?: BedRef | null;
   /** Whole days of stay so far, or null before admission. */
@@ -59,6 +63,10 @@ export interface BedSegment {
   to: string;
   days: number;
   amount: Money;
+  /** Nursing charge for this bed's days, from the bed tariff (0 without one). */
+  nursingAmount?: Money;
+  /** Runs of days at one rate — more than one when a tariff changed mid-stay. */
+  runs?: { rent: Money; nursing: Money; days: number; from: string }[];
 }
 
 /** A clinical charge accrued during the stay, waiting to roll onto the bill. */
@@ -80,6 +88,8 @@ export interface AdmissionDetail extends AdmissionRow {
   bedSegments: BedSegment[];
   /** Bed charge for the whole stay, summed across segments. */
   estimatedBedCharge: Money;
+  /** Nursing charges from the bed tariffs for the stay so far (0 without tariffs). */
+  estimatedNursingCharge?: Money;
   pendingCharges: PendingCharge[];
   pendingChargesTotal: Money;
   /**

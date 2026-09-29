@@ -8,7 +8,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import {
   Box, Typography, Button, Paper, Table, TableHead, TableBody, TableRow, TableCell,
   TableContainer, Chip, TextField, InputAdornment, Tabs, Tab, Tooltip, IconButton,
-  Menu, MenuItem, Pagination,
+  Menu, MenuItem, Pagination, Dialog, DialogTitle, DialogContent, DialogActions,
 } from "@mui/material";
 import {
   LocalHotelRounded, SearchRounded, SwapHorizRounded, LogoutRounded, MoreVertRounded,
@@ -144,6 +144,19 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
     status: (a) => (STATUS_META[a.status]?.label ?? a.status),
   });
 
+  const act = async (row: AdmissionRow, path: string, ok: string, body?: Record<string, unknown>) => {
+    setMenu({ anchor: null, row: null });
+    try {
+      if (body) await axiosInstance.put(`/ipd/admissions/${row.admissionId}/${path}`, body);
+      else await axiosInstance.post(`/ipd/admissions/${row.admissionId}/${path}`);
+      toast.success(ok);
+      refetch();
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Couldn't update the admission"));
+    }
+  };
+  const [payerFor, setPayerFor] = useState<AdmissionRow | null>(null);
+
   const cancel = async (row: AdmissionRow) => {
     setMenu({ anchor: null, row: null });
     try {
@@ -274,7 +287,17 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                         ? <DepositChip admission={a} />
                         : <Typography variant="caption" sx={{ color: "text.disabled" }}>—</Typography>}
                     </TableCell>
-                    <TableCell><Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700 }} /></TableCell>
+                    <TableCell>
+                      <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+                        <Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700 }} />
+                        {a.status === "ADMITTED" && a.dischargeInitiatedAt && (
+                          <Chip label="Discharge started" size="small" sx={{ bgcolor: `${SEMANTIC.warning}22`, color: SEMANTIC.warning, fontWeight: 700 }} />
+                        )}
+                        {a.payerType && a.payerType !== "CASH" && (
+                          <Chip label={PAYER_LABEL[a.payerType] ?? a.payerType} size="small" variant="outlined" sx={{ fontWeight: 600 }} />
+                        )}
+                      </Box>
+                    </TableCell>
                     <TableCell align="right">
                       {/* Not gated on readOnly: reading a history is not an
                           action on the patient, and an oversight panel needs it
@@ -317,15 +340,62 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
             <SavingsRounded fontSize="small" sx={{ mr: 1, color: BRAND.action }} /> Collect deposit
           </MenuItem>
         )}
+        {/* The first step of leaving (workbook bed lifecycle): the bed reads
+            "discharge initiated" so the desk can plan the next patient, while
+            billing and paperwork are finished. */}
+        {menu.row?.status === "ADMITTED" && !menu.row.dischargeInitiatedAt && (
+          <MenuItem onClick={() => { if (menu.row) act(menu.row, "initiate-discharge", "Discharge started — the bed shows as freeing up"); }}>
+            <LogoutRounded fontSize="small" sx={{ mr: 1, color: SEMANTIC.warning }} /> Start discharge
+          </MenuItem>
+        )}
+        {menu.row?.status === "ADMITTED" && menu.row.dischargeInitiatedAt && (
+          <MenuItem onClick={() => { if (menu.row) act(menu.row, "undo-discharge", "Discharge postponed"); }}>
+            <UndoRounded fontSize="small" sx={{ mr: 1 }} /> Undo discharge start
+          </MenuItem>
+        )}
+        {menu.row?.status === "ADMITTED" && (
+          <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setPayerFor(r); }}>
+            <SavingsRounded fontSize="small" sx={{ mr: 1 }} /> Payer: {PAYER_LABEL[menu.row.payerType ?? "CASH"] ?? "Cash"}…
+          </MenuItem>
+        )}
         {menu.row?.status === "ADMITTED" && (
           <MenuItem onClick={() => { if (menu.row) cancel(menu.row); }} sx={{ color: SEMANTIC.danger }}><CancelRounded fontSize="small" sx={{ mr: 1 }} /> Cancel admission</MenuItem>
         )}
       </Menu>
 
+      {payerFor && (
+        <PayerDialog current={payerFor.payerType ?? "CASH"} onClose={() => setPayerFor(null)}
+          onSave={(payerType) => { const r = payerFor; setPayerFor(null); act(r, "payer-type", "Payer type changed", { payerType }); }} />
+      )}
       {admitOpen && <AdmitDialog open={admitOpen} onClose={() => setAdmitOpen(false)} onAdmitted={() => { setAdmitOpen(false); refetch(); }} />}
       {transferFor && <TransferDialog open admission={transferFor} onClose={() => setTransferFor(null)} onDone={() => { setTransferFor(null); refetch(); }} />}
       {dischargeFor && <DischargeDialog open admissionId={dischargeFor.admissionId} onClose={() => setDischargeFor(null)} onDone={() => { setDischargeFor(null); refetch(); }} />}
       {depositFor && <DepositDialog open mode={depositFor.mode} admission={depositFor.row} onClose={() => setDepositFor(null)} onDone={() => { setDepositFor(null); refetch(); }} />}
     </Box>
+  );
+}
+
+const PAYER_LABEL: Record<string, string> = { CASH: "Cash", INSURANCE: "Insurance", CORPORATE: "Corporate", GOVT_SCHEME: "Govt scheme" };
+
+/** Which bed tariff prices the stay. Every day of it is priced with this at discharge. */
+function PayerDialog({ current, onClose, onSave }: { current: string; onClose: () => void; onSave: (payerType: string) => void }) {
+  const [v, setV] = useState(current);
+  return (
+    <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>Who pays for this stay?</DialogTitle>
+      <DialogContent dividers>
+        <TextField select fullWidth label="Payer type" value={v} onChange={(e) => setV(e.target.value)}
+          helperText="Picks the bed tariff. The discharge bill prices every day of the stay with it; with no tariff for this payer, the cash tariff applies.">
+          <MenuItem value="CASH">Cash / self-pay</MenuItem>
+          <MenuItem value="INSURANCE">Insurance (TPA / insurer)</MenuItem>
+          <MenuItem value="CORPORATE">Corporate</MenuItem>
+          <MenuItem value="GOVT_SCHEME">Government scheme</MenuItem>
+        </TextField>
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={onClose} color="inherit">Cancel</Button>
+        <Button variant="contained" disabled={v === current} onClick={() => onSave(v)}>Save</Button>
+      </DialogActions>
+    </Dialog>
   );
 }

@@ -31,6 +31,8 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
   const [form, setForm] = useState({
     patientId: prefilledPatientId || "", doctorId: "", bedId: "",
     admittingDiagnosis: "", reason: "", notes: "",
+    /** Who pays when it is not an insurance / scheme case — picks the bed tariff. */
+    paidBy: "CASH",
   });
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -103,6 +105,9 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
         admittingDiagnosis: form.admittingDiagnosis || undefined,
         reason: form.reason || undefined,
         notes: form.notes || undefined,
+        // The bed tariff the stay is priced on: an insurance / scheme case is
+        // billed on that payer's tariff, otherwise cash or corporate.
+        payerType: insuranceOn ? (ins.schemeType === "MAA" || ins.schemeType === "PMJAY" ? "GOVT_SCHEME" : "INSURANCE") : form.paidBy,
       });
       const admissionId = res.data?.data?.admissionId;
 
@@ -209,6 +214,16 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField fullWidth label="Notes" value={form.notes} onChange={(e) => set("notes", e.target.value)} />
             </Grid>
+
+            {!insuranceOn && (
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField select fullWidth label="Paid by" value={form.paidBy} onChange={(e) => set("paidBy", e.target.value)}
+                  helperText="Picks the bed tariff the stay is billed at.">
+                  <MenuItem value="CASH">Cash / self-pay</MenuItem>
+                  <MenuItem value="CORPORATE">Corporate</MenuItem>
+                </TextField>
+              </Grid>
+            )}
 
             {/* Insurance / scheme — optional, starts a claim on admit */}
             <Grid size={{ xs: 12 }}>

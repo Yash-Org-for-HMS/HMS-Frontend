@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import type {
   IpdStructure, WardNode, RoomNode, BedNode, RoomClass, FacilityKind, FacilityEditTarget, SetupForm,
-  RoomClassRent, RoomClassRentsResponse, FacilityOptions, ServiceUnit, Building, Floor,
+  RoomClassRentsResponse, FacilityOptions, ServiceUnit, Building, Floor,
 } from "./facility.types";
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
@@ -22,6 +22,7 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import SearchableSelect from "@/components/form/SearchableSelect";
+import BedTariffsDialog from "./BedTariffsDialog";
 
 const ACCENT = BRAND.action;
 
@@ -30,6 +31,12 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 const GENDER_LABEL: Record<string, string> = { MIXED: "Mixed", MALE: "Male only", FEMALE: "Female only" };
+/** Room status (workbook 07) — each one sets every bed in the room. */
+const ROOM_STATUS_LABEL: Record<string, string> = {
+  ACTIVE: "In use", UNDER_MAINTENANCE: "Under maintenance (beds → maintenance)", FUMIGATION: "Fumigation (beds → terminal clean)",
+  CLOSED: "Temporarily closed (beds → blocked)", DECOMMISSIONED: "Decommissioned (beds → inactive)",
+};
+const WARD_STATUS_LABEL: Record<string, string> = { ACTIVE: "Open", TEMP_CLOSED: "Temporarily closed — no admissions", INACTIVE: "Decommissioned" };
 /** Which ward genders a ward type allows — mirrors facility.rules.ts allowedGenders. */
 const gendersFor = (rule?: string | null) => (rule === "FEMALE_ONLY" ? ["FEMALE"] : rule === "ALLOWED" ? ["MIXED", "MALE", "FEMALE"] : ["MIXED"]);
 const UNIT_KIND_LABEL: Record<string, string> = { OT: "Operation theatre", LAB: "Laboratory / imaging", OPD: "Outpatient clinic", COUNTER: "Desk / counter", UNIT: "Other service unit" };
@@ -102,7 +109,7 @@ export default function FacilitySetup() {
           <>
             <Button variant="outlined" startIcon={<PaymentsRounded />} onClick={() => setRentOpen(true)}
               sx={{ textTransform: "none", mr: 1, borderColor: ACCENT, color: ACCENT }}>
-              Room rent
+              Bed tariffs
             </Button>
             <Button variant="contained" startIcon={<AddRounded />} onClick={(e) => setSetupAnchor(e.currentTarget)}
               sx={{ textTransform: "none"}}>Add</Button>
@@ -182,6 +189,9 @@ export default function FacilitySetup() {
                     </Tooltip>
                   )}
                   {w.genderRestriction && w.genderRestriction !== "MIXED" && <Chip label={GENDER_LABEL[w.genderRestriction]} size="small" sx={{ height: 22, fontWeight: 600 }} />}
+                  {w.status && w.status.toUpperCase() !== "ACTIVE" && (
+                    <Chip label={w.status.toUpperCase() === "TEMP_CLOSED" ? "Closed to admissions" : "Decommissioned"} size="small" sx={{ height: 22, fontWeight: 700, bgcolor: `${SEMANTIC.warning}22`, color: SEMANTIC.warning }} />
+                  )}
                   <Tooltip title="Edit ward">
                     <IconButton size="small" sx={{ ml: "auto", color: "text.secondary" }} onClick={() => setDialog({ kind: "ward", edit: w })}>
                       <EditRounded fontSize="small" />
@@ -197,6 +207,7 @@ export default function FacilitySetup() {
                       <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>
                         Room {r.roomNumber} · {r.roomTypeName ?? r.roomType}
                         {r.capacity ? ` · built for ${r.capacity}` : ""}
+                        {r.status && r.status !== "ACTIVE" ? ` · ${ROOM_STATUS_LABEL[r.status] ?? r.status}` : ""}
                       </Typography>
                       {r.amenities && r.amenities.length > 0 && (
                         <Typography variant="caption" sx={{ color: "text.disabled" }}>· {r.amenities.join(", ")}</Typography>
@@ -265,7 +276,7 @@ export default function FacilitySetup() {
       {dialog?.kind === "building" && <BuildingDialog edit={dialog.edit} onClose={() => setDialog(null)} onDone={done} />}
       {dialog?.kind === "floor" && <FloorDialog edit={dialog.edit} options={options} onClose={() => setDialog(null)} onDone={done} />}
       {dialog?.kind === "unit" && <ServiceUnitDialog edit={dialog.edit} options={options} onClose={() => setDialog(null)} onDone={done} />}
-      {rentOpen && <RoomRentDialog onClose={() => setRentOpen(false)} onDone={() => { setRentOpen(false); refetch(); }} />}
+      {rentOpen && <BedTariffsDialog onClose={() => setRentOpen(false)} onDone={() => { setRentOpen(false); refetch(); }} />}
     </Box>
   );
 }
@@ -349,178 +360,6 @@ function ServiceUnitsPanel({ units, onEdit }: { units: ServiceUnit[]; onEdit: (u
   );
 }
 
-// The tiers most hospitals start from — offered as one-click adds so first-time
-// setup doesn't begin with a blank box and a trip to another screen.
-const COMMON_TIERS = ["General", "Semi-Private", "Private", "Deluxe", "ICU"];
-
-// Simple room-rent editor: a daily rate per room class, in one place. Saving
-// writes the SOC "Room rent" item + its per-class prices AND applies them to every
-// bed — so nobody has to build a charge item or matrix by hand.
-//
-// Tiers can also be CREATED here. Keeping this dialog "purely about rent" meant
-// that with no tiers it was a dead end (Save disabled, pointing you to Schedule
-// of Charges), so the common job — "Private rooms are ₹3000/day" — cost eight
-// steps across two screens. Schedule of Charges → Room classes is still the full
-// manager (rename, reorder, deactivate, delete); this just removes the detour
-// for the one action people actually start with.
-function RoomRentDialog({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
-  const toast = useToast();
-  const [saving, setSaving] = useState(false);
-  const [rents, setRents] = useState<Record<string, string>>({});
-  const [newName, setNewName] = useState("");
-  const [newRent, setNewRent] = useState("");
-  const [adding, setAdding] = useState(false);
-
-  const { data, isLoading, refetch } = useQuery<RoomClassRentsResponse>({
-    queryKey: ["room-class-rents"],
-    queryFn: async () => (await axiosInstance.get("/ipd/room-class-rents")).data.data,
-  });
-  const classes: RoomClassRent[] = data?.rents || [];
-  const missingTiers = COMMON_TIERS.filter(
-    (t) => !classes.some((c) => String(c.name).toLowerCase() === t.toLowerCase()),
-  );
-
-  useEffect(() => {
-    if (!data) return;
-    // Merge rather than replace: adding a tier refetches, and a wholesale reset
-    // would wipe rents the user has already typed but not yet saved.
-    setRents((prev) => {
-      const m: Record<string, string> = {};
-      for (const c of data.rents || []) {
-        m[c.roomClassId] = prev[c.roomClassId] !== undefined
-          ? prev[c.roomClassId]
-          : (c.rent != null ? String(c.rent) : "");
-      }
-      return m;
-    });
-  }, [data]);
-
-  // Create a tier, then park the typed rent against it so the row lands ready
-  // to save. The tier itself is a structural record so it's written immediately;
-  // rents still commit together under "Save rents".
-  const addTier = async (name: string, rent?: string) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    if (classes.some((c) => String(c.name).toLowerCase() === trimmed.toLowerCase())) {
-      toast.error(`"${trimmed}" already exists`);
-      return;
-    }
-    setAdding(true);
-    try {
-      const created = (await axiosInstance.post("/hospital/soc/room-classes", { name: trimmed })).data?.data;
-      await refetch();
-      if (created?.roomClassId && rent?.trim()) {
-        setRents((m) => ({ ...m, [created.roomClassId]: rent.trim() }));
-      }
-      setNewName("");
-      setNewRent("");
-    } catch (e) {
-      toast.error(getApiErrorMessage(e, "Couldn't add that tier"));
-    } finally {
-      setAdding(false);
-    }
-  };
-
-  const save = async () => {
-    const payload = classes
-      .map((c) => ({ roomClassId: c.roomClassId, rent: Number(rents[c.roomClassId]) }))
-      .filter((r) => Number.isFinite(r.rent) && r.rent >= 0);
-    if (!payload.length) { toast.error("Enter a rent for at least one class"); return; }
-    setSaving(true);
-    try {
-      await axiosInstance.put("/ipd/room-class-rents", { rents: payload });
-      await axiosInstance.post("/ipd/beds/resync-rents");
-      toast.success("Room rents saved and applied to beds");
-      onDone();
-    } catch (e) {
-      toast.error(getApiErrorMessage(e, "Couldn't save rents"));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Dialog open onClose={saving ? undefined : onClose} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <PaymentsRounded sx={{ color: ACCENT }} /> Room rent — daily charge per class
-      </DialogTitle>
-      <DialogContent dividers>
-        {isLoading ? (
-          <ListSkeleton rows={3} />
-        ) : (
-          <>
-            {classes.length === 0 ? (
-              <Typography variant="body2" sx={{ color: "text.secondary", pb: 0.5 }}>
-                Room classes are your pricing tiers. Add one below with its daily rate — that's the whole setup.
-              </Typography>
-            ) : (
-              <Stack spacing={2} sx={{ pt: 0.5 }}>
-                {classes.map((c) => (
-                  <Box key={c.roomClassId} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Typography sx={{ flex: 1, fontWeight: 600, minWidth: 0 }}>{c.name}</Typography>
-                    <TextField size="small" type="number" value={rents[c.roomClassId] ?? ""} onChange={(e) => setRents({ ...rents, [c.roomClassId]: e.target.value })}
-                      sx={{ width: 140 }} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment>, endAdornment: <InputAdornment position="end">/day</InputAdornment> }} />
-                  </Box>
-                ))}
-              </Stack>
-            )}
-
-            {/* Add a tier without leaving the dialog. */}
-            <Box sx={{ mt: classes.length ? 2.5 : 1.5, pt: classes.length ? 2 : 0, borderTop: classes.length ? "1px solid" : "none", borderColor: "divider" }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <TextField
-                  size="small" placeholder="Add a tier (e.g. Deluxe)" value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTier(newName, newRent); } }}
-                  sx={{ flex: 1, minWidth: 0 }} disabled={adding}
-                />
-                <TextField
-                  size="small" type="number" placeholder="Rate" value={newRent}
-                  onChange={(e) => setNewRent(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTier(newName, newRent); } }}
-                  sx={{ width: 140 }} disabled={adding}
-                  InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment>, endAdornment: <InputAdornment position="end">/day</InputAdornment> }}
-                />
-                <Button onClick={() => addTier(newName, newRent)} disabled={adding || !newName.trim()} sx={{ flexShrink: 0 }}>
-                  Add
-                </Button>
-              </Box>
-
-              {missingTiers.length > 0 && (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap", mt: 1.5 }}>
-                  <Typography variant="caption" sx={{ color: "text.secondary" }}>Quick add:</Typography>
-                  {missingTiers.map((t) => (
-                    <Chip key={t} label={t} size="small" variant="outlined" onClick={() => addTier(t)} disabled={adding} sx={{ cursor: "pointer" }} />
-                  ))}
-                </Box>
-              )}
-            </Box>
-
-            <Box sx={{ display: "flex", gap: 1.25, mt: 2.5, p: 1.5, borderRadius: 2, bgcolor: "action.hover" }}>
-              <InfoOutlined sx={{ fontSize: 18, color: "text.secondary", mt: 0.15, flexShrink: 0 }} />
-              <Box>
-                <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
-                  Saving sets every bed's daily charge to match its room class.
-                </Typography>
-                <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
-                  To rename, reorder or remove a tier, use{" "}
-                  <Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>Schedule of Charges → Room classes</Box>.
-                </Typography>
-              </Box>
-            </Box>
-          </>
-        )}
-      </DialogContent>
-      <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
-        <Button variant="contained" onClick={save} disabled={saving || classes.length === 0}>
-          {saving ? "Saving…" : "Save rents"}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
 /** Choices for the type pickers, active types only (plus the current one when editing). */
 function typeOptions<T extends { id: string; displayName: string; isActive: boolean }>(list: T[] | undefined, current: string, secondary: (t: T) => string) {
   return (list ?? []).filter((t) => t.isActive || t.id === current).map((t) => ({ value: t.id, label: t.displayName, secondary: secondary(t) }));
@@ -549,6 +388,7 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
     isTemporary: edit?.isTemporary ?? false,
     isActive: edit?.isActive ?? true,
   }));
+  const [status, setStatus] = useState(String(edit?.status ?? "ACTIVE").toUpperCase());
   const set = <K extends keyof SetupForm>(k: K, v: SetupForm[K]) => setF((prev) => ({ ...prev, [k]: v }));
 
   // SOC-driven daily rent per room class — used to auto-fill the bed's daily charge.
@@ -596,11 +436,15 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
           departmentId: f.departmentId || null, genderRestriction: f.genderRestriction,
           ...(f.floorId ? { floorId: f.floorId } : { floorId: null, floorNumber: Number(f.floorNumber) }),
         };
-        if (editingWard) await axiosInstance.put(`/ipd/wards/${f.wardId}`, { ...body, wardCode: f.wardCode.trim() || edit?.wardCode });
+        if (editingWard) await axiosInstance.put(`/ipd/wards/${f.wardId}`, { ...body, wardCode: f.wardCode.trim() || edit?.wardCode, status });
         else await axiosInstance.post("/ipd/wards", body);
       } else if (kind === "room") {
         const body = { roomNumber: f.roomNumber, hospitalRoomTypeId: f.hospitalRoomTypeId, capacity: f.capacity ? Number(f.capacity) : null, amenities: f.amenities };
-        if (editingRoom) await axiosInstance.put(`/ipd/rooms/${f.roomId}`, body);
+        if (editingRoom) {
+          await axiosInstance.put(`/ipd/rooms/${f.roomId}`, body);
+          // Its own call: a room status sets every bed in the room, and is refused while a patient is in it.
+          if (status !== String(edit?.status ?? "ACTIVE").toUpperCase()) await axiosInstance.put(`/ipd/rooms/${f.roomId}/status`, { status });
+        }
         else await axiosInstance.post("/ipd/rooms", { wardId: f.wardId, ...body });
       } else {
         const charge = f.dailyCharge === "" ? null : Number(f.dailyCharge);
@@ -659,6 +503,12 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
             {!f.floorId && (
               <TextField fullWidth required type="number" label="Floor number" value={f.floorNumber} onChange={(e) => set("floorNumber", e.target.value)} helperText="0 = ground, -1 = basement." />
             )}
+            {editingWard && (
+              <TextField select fullWidth label="Ward status" value={status} onChange={(e) => setStatus(e.target.value)}
+                helperText="A closed ward keeps its patients but takes no new admission or transfer.">
+                {Object.entries(WARD_STATUS_LABEL).map(([v, l]) => <MenuItem key={v} value={v}>{l}</MenuItem>)}
+              </TextField>
+            )}
           </>)}
           {kind === "room" && (<>
             <TextField select fullWidth required label="Ward" value={f.wardId || ""} disabled={editingRoom} onChange={(e) => set("wardId", e.target.value)}>{wards.map((w) => <MenuItem key={w.wardId} value={w.wardId}>{w.wardName}</MenuItem>)}</TextField>
@@ -675,6 +525,12 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
               options={typeOptions(options?.roomTypes, f.hospitalRoomTypeId, (t) => [`${t.typicalCapacity} bed${t.typicalCapacity === "1" ? "" : "s"}`, t.isolationCapable && "isolation", t.pressureType !== "NONE" && `${t.pressureType.toLowerCase()} pressure`, t.isProcedureRoom && "procedure room"].filter(Boolean).join(" · "))} />
             <TextField fullWidth type="number" label="Capacity (beds)" value={f.capacity} onChange={(e) => set("capacity", e.target.value)} />
             <TextField fullWidth label="Amenities" value={f.amenities} onChange={(e) => set("amenities", e.target.value)} helperText="Comma-separated — AC, TV, attendant sofa, oxygen point." />
+            {editingRoom && (
+              <TextField select fullWidth label="Room status" value={status} onChange={(e) => setStatus(e.target.value)}
+                helperText="Changes every bed in the room. Not possible while a patient is in it.">
+                {Object.entries(ROOM_STATUS_LABEL).map(([v, l]) => <MenuItem key={v} value={v}>{l}</MenuItem>)}
+              </TextField>
+            )}
           </>)}
           {kind === "bed" && (<>
             <TextField select fullWidth required label="Ward" value={f.wardId || ""} disabled={editingBed} onChange={(e) => { set("wardId", e.target.value); set("roomId", ""); }}>{wards.map((w) => <MenuItem key={w.wardId} value={w.wardId}>{w.wardName}</MenuItem>)}</TextField>

@@ -189,6 +189,8 @@ export interface FacilityEditTarget {
   bedCode?: string | null;
   isTemporary?: boolean;
   isActive?: boolean;
+  /** The ward's or room's status when editing one. */
+  status?: string | null;
 }
 
 /**

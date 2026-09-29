@@ -80,6 +80,8 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   };
 
   const bedCharge = Number(detail?.estimatedBedCharge || 0);
+  // The nursing charge a bed tariff carries, billed per day beside the rent.
+  const nursingCharge = Number(detail?.estimatedNursingCharge || 0);
   const bedSegments: BedSegment[] = detail?.bedSegments || [];
   // Clinical charges (doctor visits / lab / radiology) accrued during the stay
   // that will roll onto the final bill — previewed so the total is honest.
@@ -97,7 +99,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // authoritatively from the rate card.
   const pendingTax = pendingCharges.reduce((s, c) => s + (Number(c.taxAmount) || 0), 0);
   const taxTotal = pendingTax + extras.reduce((s, e) => s + lineAmount(e) * ((e.taxPercent || 0) / 100), 0);
-  const total = bedCharge + pendingTotal + extrasTotal + taxTotal;
+  const total = bedCharge + nursingCharge + pendingTotal + extrasTotal + taxTotal;
   const deposit = Number(detail?.depositBalance || 0);
   const depositApplied = Math.min(deposit, total);
   const payable = Math.max(0, total - depositApplied);
@@ -161,7 +163,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
                 {bedSegments.map((seg, i) => (
                   <Box key={i} sx={{ display: "flex", justifyContent: "space-between" }}>
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      {seg.label} — {seg.days} day{seg.days === 1 ? "" : "s"} @ {formatINR(Number(seg.dailyCharge))}
+                      {seg.label} — {seg.days} day{seg.days === 1 ? "" : "s"}{(seg.runs?.length ?? 1) > 1 ? ` at ${seg.runs!.length} rates` : ` @ ${formatINR(Number(seg.dailyCharge))}`}
                     </Typography>
                     <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(Number(seg.amount))}</Typography>
                   </Box>
@@ -174,8 +176,16 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
               </Stack>
             ) : (
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>Bed charges ({detail?.days ?? "—"} day{detail?.days === 1 ? "" : "s"})</Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  Bed charges ({detail?.days ?? "—"} day{detail?.days === 1 ? "" : "s"}{(bedSegments[0]?.runs?.length ?? 1) > 1 ? `, ${bedSegments[0].runs!.length} rates` : ""})
+                </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(bedCharge)}</Typography>
+              </Box>
+            )}
+            {nursingCharge > 0 && (
+              <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.75 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>Nursing charges (from the bed tariff)</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(nursingCharge)}</Typography>
               </Box>
             )}
           </Box>

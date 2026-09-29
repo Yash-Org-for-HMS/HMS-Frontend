@@ -3,12 +3,12 @@ import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Grid, Chip, Menu, MenuItem, Tooltip,
+  Box, Typography, Paper, Chip, Menu, MenuItem, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Stack,
   FormControlLabel, Switch,
 } from "@mui/material";
 import {
-  EventSeatRounded, BuildRounded, CheckCircleRounded,
+  EventSeatRounded, BuildRounded, CheckCircleRounded, BlockRounded, CleaningServicesRounded, CoronavirusRounded, PowerSettingsNewRounded,
   PersonRounded, ApartmentRounded, MedicalServicesRounded, MeetingRoomRounded, HistoryRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -20,9 +20,28 @@ import PageHeader from "@/components/layout/PageHeader";
 import PatientHistoryButton, { PatientHistoryDialog } from "@/components/clinical/PatientHistoryButton";
 import { usePanelBase } from "./panelBase";
 
-const STATUS_COLOR: Record<string, string> = {
-  AVAILABLE: SEMANTIC.success, OCCUPIED: SEMANTIC.danger, RESERVED: SEMANTIC.warning, MAINTENANCE: NEUTRAL.muted,
+/**
+ * Fallback colours for before the status list has loaded. The real ones come
+ * from the platform's bed-status master (workbook 06 bed_board_colour), sent
+ * with the board, so every hospital's board reads the same.
+ */
+const FALLBACK_COLOR: Record<string, string> = {
+  AVAILABLE: "#C8E6C9", RESERVED: "#FFF59D", OCCUPIED: "#EF9A9A", DISCHARGE_INITIATED: "#FFCC80",
+  VACATED: "#B0BEC5", CLEANING: "#90CAF9", TERMINAL_CLEAN: "#CE93D8", MAINTENANCE: "#BCAAA4", BLOCKED: "#9E9E9E", INACTIVE: "#616161",
 };
+type StatusDef = { code: string; name: string; colorHex: string; allowedNext: string[]; isOccupied: boolean; meaning: string };
+const OCCUPIED = ["OCCUPIED", "DISCHARGE_INITIATED"];
+const TO_CLEAN = ["VACATED", "CLEANING", "TERMINAL_CLEAN"];
+/** The hands-on moves, worded for the state a bed is leaving. */
+const MOVE_LABEL = (from: string, to: string): string => {
+  if (to === "AVAILABLE") return TO_CLEAN.includes(from) ? "Cleaned — make available" : from === "RESERVED" ? "Release reservation" : from === "BLOCKED" ? "Unblock" : "Back in use";
+  return ({ RESERVED: "Reserve…", BLOCKED: "Block…", MAINTENANCE: "Under maintenance", INACTIVE: "Decommission", CLEANING: "Start cleaning", TERMINAL_CLEAN: "Terminal clean (after an infectious patient)" } as Record<string, string>)[to] ?? to;
+};
+const MOVE_ICON: Record<string, typeof CheckCircleRounded> = {
+  AVAILABLE: CheckCircleRounded, RESERVED: EventSeatRounded, BLOCKED: BlockRounded, MAINTENANCE: BuildRounded,
+  INACTIVE: PowerSettingsNewRounded, CLEANING: CleaningServicesRounded, TERMINAL_CLEAN: CoronavirusRounded,
+};
+const MANUAL = ["AVAILABLE", "RESERVED", "BLOCKED", "MAINTENANCE", "INACTIVE", "CLEANING", "TERMINAL_CLEAN"];
 
 // A bed as the board sees it. `location` is where the patient actually is —
 // a held bed keeps its occupant while they are away in theatre.
@@ -43,6 +62,8 @@ type BoardBed = {
   bedCode?: string | null;
   status: string;
   occupant?: BoardOccupant | null;
+  reservedUntil?: string | null;
+  statusReason?: string | null;
 };
 type PickTheatre = { operatingTheatreId: string; theatreName: string; status: string };
 type PickBed = { bedId: string; bedNumber: string; label?: string };
@@ -87,6 +108,8 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
   const basePath = usePanelBase();
   const [moveDialog, setMoveDialog] = useState<{ mode: "send" | "return"; bed: BoardBed | null } | null>(null);
   const [placing, setPlacing] = useState<BedlessPatient | null>(null);
+  /** Reserve and block ask one more thing first — for how long, and why. */
+  const [asking, setAsking] = useState<{ bed: BoardBed; status: "RESERVED" | "BLOCKED" } | null>(null);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["ipd-structure"],
@@ -94,14 +117,24 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
   });
   const summary = data?.summary;
   const wards: any[] = data?.wards || [];
+  const statuses: StatusDef[] = data?.statuses ?? [];
+  const statusOf = (code: string) => statuses.find((x) => x.code === code);
+  const colorOf = (code: string) => statusOf(code)?.colorHex ?? FALLBACK_COLOR[code] ?? "#9E9E9E";
+  const nameOf = (code: string) => statusOf(code)?.name ?? code.toLowerCase();
+  /** The moves the status master allows from here, that are made by hand. */
+  const movesFrom = (code: string) => {
+    const next = (statusOf(code)?.allowedNext ?? []).filter((c) => MANUAL.includes(c));
+    // A vacated bed is cleaned and released in one tap (the API records both steps).
+    return code === "VACATED" ? ["AVAILABLE", ...next] : next;
+  };
   /** Admitted with no bed — invisible on this board without their own strip. */
   const awaitingBed = (data?.awaitingBed ?? []) as BedlessPatient[];
 
-  const setBedStatus = async (bedId: string, status: string) => {
+  const setBedStatus = async (bedId: string, status: string, extra: Record<string, unknown> = {}) => {
     setBedMenu({ anchor: null, bed: null });
     try {
-      await axiosInstance.put(`/ipd/beds/${bedId}/status`, { status });
-      toast.success(`Bed marked ${status.toLowerCase()}`);
+      await axiosInstance.put(`/ipd/beds/${bedId}/status`, { status, ...extra });
+      toast.success(`Bed ${nameOf(status).toLowerCase()}`);
       refetch();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update bed"));
@@ -117,13 +150,29 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
       />
 
       {summary && (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Total beds" value={summary.totalBeds} color={BRAND.action} /></Grid>
-          <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Available" value={summary.available} color={STATUS_COLOR.AVAILABLE} /></Grid>
-          <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Occupied" value={summary.occupied} color={STATUS_COLOR.OCCUPIED} /></Grid>
-          <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Reserved" value={summary.reserved} color={STATUS_COLOR.RESERVED} /></Grid>
-          <Grid size={{ xs: 6, md: 2.4 }}><Tile label="Maintenance" value={summary.maintenance} color={STATUS_COLOR.MAINTENANCE} /></Grid>
-        </Grid>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(4, 1fr)", lg: "repeat(7, 1fr)" }, gap: 2, mb: 2 }}>
+          <Tile label="Total beds" value={summary.totalBeds} color={BRAND.action} />
+          <Tile label="Available" value={summary.available} color={SEMANTIC.success} />
+          <Tile label="Occupied" value={summary.occupied} color={SEMANTIC.danger} />
+          <Tile label="Discharge started" value={summary.dischargeInitiated ?? 0} color={SEMANTIC.warning} />
+          <Tile label="Awaiting cleaning" value={summary.awaitingCleaning ?? 0} color={BRAND.action} />
+          <Tile label="Reserved" value={summary.reserved} color={SEMANTIC.warning} />
+          <Tile label="Blocked / maintenance" value={(summary.blocked ?? 0) + summary.maintenance} color={NEUTRAL.muted} />
+        </Box>
+      )}
+
+      {/* The key to the colours below — the platform's bed statuses (workbook 06). */}
+      {statuses.length > 0 && (
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 3 }}>
+          {statuses.map((st) => (
+            <Tooltip key={st.code} title={st.meaning}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                <Box sx={{ width: 12, height: 12, borderRadius: 0.75, bgcolor: st.colorHex, border: "1px solid rgba(0,0,0,0.15)" }} />
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>{st.name}</Typography>
+              </Box>
+            </Tooltip>
+          ))}
+        </Box>
       )}
 
       {/* Admitted, but in no bed at all — most often just out of theatre with
@@ -190,22 +239,29 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
                     <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>Room {r.roomNumber} · {r.roomTypeName ?? r.roomType}</Typography>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.5 }}>
                       {r.beds.length === 0 ? <Typography variant="caption" sx={{ color: "text.disabled" }}>No beds</Typography> : r.beds.map((b: BoardBed) => {
-                        const color = STATUS_COLOR[b.status] || NEUTRAL.muted;
+                        const color = colorOf(b.status);
+                        const held = b.reservedUntil ? `held until ${new Date(b.reservedUntil).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` : "";
+                        const tip = b.occupant
+                          ? `${b.occupant.patientName} (${b.occupant.uhid})${awayText(b.occupant) ? ` — ${awayText(b.occupant)}` : ""}${b.status === "DISCHARGE_INITIATED" ? " — discharge started" : ""}`
+                          : [nameOf(b.status), held, b.statusReason].filter(Boolean).join(" — ");
                         return (
                           // The tile is 130px wide, so a theatre called
                           // "Cardiac Theatre 2" clips. The tooltip is where
                           // the full name has to be readable.
-                          <Tooltip key={b.bedId} title={b.occupant ? `${b.occupant.patientName} (${b.occupant.uhid})${awayText(b.occupant) ? ` — ${awayText(b.occupant)}` : ""}` : b.status}>
+                          <Tooltip key={b.bedId} title={tip}>
                             <Box onClick={readOnly ? undefined : (e) => setBedMenu({ anchor: e.currentTarget, bed: b })}
-                              sx={{ cursor: readOnly ? "default" : "pointer", width: 130, p: 1.25, borderRadius: 2, border: "1px solid", borderColor: `${color}55`, bgcolor: `${color}12`, ...(readOnly ? {} : { "&:hover": { borderColor: color } }) }}>
+                              sx={{ cursor: readOnly ? "default" : "pointer", width: 130, p: 1.25, borderRadius: 2, border: "1px solid", borderColor: color, bgcolor: `${color}40`, ...(readOnly ? {} : { "&:hover": { bgcolor: `${color}70` } }) }}>
                               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                                 <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>Bed {b.bedNumber}</Typography>
-                                <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: color }} />
+                                <Box sx={{ width: 9, height: 9, borderRadius: "50%", bgcolor: color, border: "1px solid rgba(0,0,0,0.25)" }} />
                               </Box>
                               <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }} noWrap>{b.bedTypeName ?? b.bedType}</Typography>
                               {b.occupant ? (
                                 <>
-                                  <Typography variant="caption" sx={{ color, fontWeight: 600, display: "flex", alignItems: "center", gap: 0.3 }} noWrap><PersonRounded sx={{ fontSize: 12 }} /> {b.occupant.patientName}</Typography>
+                                  <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600, display: "flex", alignItems: "center", gap: 0.3 }} noWrap><PersonRounded sx={{ fontSize: 12 }} /> {b.occupant.patientName}</Typography>
+                                  {b.status === "DISCHARGE_INITIATED" && (
+                                    <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 700, display: "block" }} noWrap>Discharge started</Typography>
+                                  )}
                                   {/* A patient in theatre is still admitted to this bed, and is not
                                       in it. Saying so is the whole point of the movement work —
                                       a nurse looking for them should not be sent to an empty bed. */}
@@ -217,7 +273,7 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
                                   )}
                                 </>
                               ) : (
-                                <Typography variant="caption" sx={{ color, fontWeight: 700, textTransform: "capitalize" }}>{b.status.toLowerCase()}</Typography>
+                                <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 700, display: "block" }} noWrap>{nameOf(b.status)}</Typography>
                               )}
                             </Box>
                           </Tooltip>
@@ -240,7 +296,7 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
             <HistoryRounded fontSize="small" sx={{ mr: 1 }} /> Patient history
           </MenuItem>
         )}
-        {bedMenu.bed?.status === "OCCUPIED"
+        {bedMenu.bed && OCCUPIED.includes(bedMenu.bed.status)
           ? (awayText(bedMenu.bed?.occupant)
             ? [
                 <MenuItem key="back" onClick={() => setMoveDialog({ mode: "return", bed: bedMenu.bed })}>
@@ -253,12 +309,23 @@ export default function BedBoard({ readOnly = false }: { readOnly?: boolean } = 
                   <MedicalServicesRounded fontSize="small" sx={{ mr: 1, color: SEMANTIC.warning }} /> Send to theatre
                 </MenuItem>,
               ])
-          : [
-            <MenuItem key="a" disabled={bedMenu.bed?.status === "AVAILABLE"} onClick={() => bedMenu.bed && setBedStatus(bedMenu.bed.bedId, "AVAILABLE")}><CheckCircleRounded fontSize="small" sx={{ mr: 1, color: STATUS_COLOR.AVAILABLE }} /> Mark available</MenuItem>,
-            <MenuItem key="r" disabled={bedMenu.bed?.status === "RESERVED"} onClick={() => bedMenu.bed && setBedStatus(bedMenu.bed.bedId, "RESERVED")}><EventSeatRounded fontSize="small" sx={{ mr: 1, color: STATUS_COLOR.RESERVED }} /> Reserve</MenuItem>,
-            <MenuItem key="m" disabled={bedMenu.bed?.status === "MAINTENANCE"} onClick={() => bedMenu.bed && setBedStatus(bedMenu.bed.bedId, "MAINTENANCE")}><BuildRounded fontSize="small" sx={{ mr: 1, color: STATUS_COLOR.MAINTENANCE }} /> Maintenance</MenuItem>,
-          ]}
+          : (bedMenu.bed ? movesFrom(bedMenu.bed.status) : []).map((to) => {
+            const Icon = MOVE_ICON[to] ?? CheckCircleRounded;
+            const bed = bedMenu.bed!;
+            return (
+              <MenuItem key={to} onClick={() => (to === "RESERVED" || to === "BLOCKED")
+                ? (setAsking({ bed, status: to }), setBedMenu({ anchor: null, bed: null }))
+                : setBedStatus(bed.bedId, to)}>
+                <Icon fontSize="small" sx={{ mr: 1, color: colorOf(to), filter: "brightness(0.7)" }} /> {MOVE_LABEL(bed.status, to)}
+              </MenuItem>
+            );
+          })}
       </Menu>
+
+      {asking && (
+        <AskDialog kind={asking.status} bedLabel={`Bed ${asking.bed.bedNumber}`} onClose={() => setAsking(null)}
+          onSave={(extra) => { const b = asking.bed; setAsking(null); setBedStatus(b.bedId, asking.status, extra); }} />
+      )}
 
       <PatientHistoryDialog
         open={!!historyFor} onClose={() => setHistoryFor(null)}
@@ -432,6 +499,38 @@ function PlaceInBedDialog({ patient, onClose, onDone }: {
         <Button onClick={onClose} sx={{ textTransform: "none" }}>Cancel</Button>
         <Button variant="contained" sx={{ textTransform: "none" }} disabled={!toBedId || go.isPending} onClick={() => go.mutate()}>
           {go.isPending ? "Placing…" : "Place them"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+/** Reserve (for how long, and for whom) or block (why) — the two moves that need a word first. */
+function AskDialog({ kind, bedLabel, onClose, onSave }: { kind: "RESERVED" | "BLOCKED"; bedLabel: string; onClose: () => void; onSave: (extra: Record<string, unknown>) => void }) {
+  const [reason, setReason] = useState("");
+  const [hours, setHours] = useState("24");
+  const reserving = kind === "RESERVED";
+  return (
+    <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>{reserving ? "Reserve" : "Block"} {bedLabel}</DialogTitle>
+      <DialogContent dividers>
+        <Stack spacing={2.5} sx={{ pt: 0.5 }}>
+          {reserving && (
+            <TextField select fullWidth label="Hold for" value={hours} onChange={(e) => setHours(e.target.value)}
+              helperText="After this the bed reads as available again — nobody has to remember to release it.">
+              {[["2", "2 hours"], ["4", "4 hours"], ["8", "8 hours"], ["24", "1 day"], ["48", "2 days"], ["72", "3 days"]].map(([v, l]) => <MenuItem key={v} value={v}>{l}</MenuItem>)}
+            </TextField>
+          )}
+          <TextField fullWidth required={!reserving} label={reserving ? "For (optional)" : "Why is it blocked?"} value={reason}
+            onChange={(e) => setReason(e.target.value)} placeholder={reserving ? "Planned admission — Mr Shah, 4 pm" : "Cohorting / gender / staffing"}
+            slotProps={{ htmlInput: { maxLength: 200 } }} />
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={onClose} color="inherit">Cancel</Button>
+        <Button variant="contained" disabled={!reserving && !reason.trim()}
+          onClick={() => onSave({ reason: reason.trim() || undefined, ...(reserving ? { holdHours: Number(hours) } : {}) })}>
+          {reserving ? "Reserve" : "Block"}
         </Button>
       </DialogActions>
     </Dialog>
