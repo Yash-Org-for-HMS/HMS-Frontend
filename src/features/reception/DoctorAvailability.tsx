@@ -44,6 +44,7 @@ const STATUS = {
 /** Where the doctor is in their day, phrased for someone scanning the row. */
 const DAY_STATE: Record<string, { label: string; color: string } | undefined> = {
   IN_CLINIC: { label: "In clinic now", color: SEMANTIC.success },
+  BREAK: { label: "Between sessions", color: NEUTRAL.muted },
   BEFORE: { label: "Not started yet", color: NEUTRAL.muted },
   FINISHED: { label: "Day finished", color: NEUTRAL.muted },
 };
@@ -54,6 +55,18 @@ const fmtTime = (hhmm: string) => {
   return dayjs().hour(h).minute(m || 0).format("h:mm A");
 };
 
+/**
+ * "10:00 AM – 1:00 PM · 30-min", or for a split day "10:00 AM – 1:00 PM, 4:00 PM –
+ * 7:00 PM · 30-min" — each session with its own length when they differ.
+ */
+function hoursLabel(windows: { startTime: string; endTime: string; slotDurationMinutes: number }[]) {
+  const span = (w: (typeof windows)[number]) => `${fmtTime(w.startTime)} – ${fmtTime(w.endTime)}`;
+  const same = windows.every((w) => w.slotDurationMinutes === windows[0].slotDurationMinutes);
+  return same
+    ? `${windows.map(span).join(", ")} · ${windows[0].slotDurationMinutes}-min`
+    : windows.map((w) => `${span(w)} (${w.slotDurationMinutes}-min)`).join(", ");
+}
+
 interface DoctorRow {
   doctorId: string;
   name: string;
@@ -61,6 +74,8 @@ interface DoctorRow {
   qualification: string | null;
   consultationFee: string | number | null;
   schedule: { startTime: string; endTime: string; slotDurationMinutes: number } | null;
+  /** Every window of the day (a split day has two or more); `schedule` is the first. */
+  windows?: { startTime: string; endTime: string; slotDurationMinutes: number }[];
   usingDefaultHours?: boolean;
   onLeave: boolean;
   leaveReason: string | null;
@@ -68,7 +83,7 @@ interface DoctorRow {
   slotsTotal: number;
   slotsBooked: number;
   nextFreeSlot: string | null;
-  dayState: "BEFORE" | "IN_CLINIC" | "FINISHED" | "PAST" | "OTHER_DAY";
+  dayState: "BEFORE" | "IN_CLINIC" | "BREAK" | "FINISHED" | "PAST" | "OTHER_DAY";
   status: "AVAILABLE" | "ON_LEAVE";
 }
 
@@ -358,8 +373,8 @@ function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; 
           <ScheduleRounded sx={{ fontSize: 16, color: "text.secondary" }} />
           <Box sx={{ minWidth: 0, flex: 1 }}>
             {doc.schedule ? (
-              <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>
-                {fmtTime(doc.schedule.startTime)} – {fmtTime(doc.schedule.endTime)} · {doc.schedule.slotDurationMinutes}-min
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                {hoursLabel(doc.windows?.length ? doc.windows : [doc.schedule])}
               </Typography>
             ) : (
               <Typography variant="caption" sx={{ color: "text.secondary" }}>No hours scheduled</Typography>

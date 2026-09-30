@@ -185,13 +185,16 @@ export default function HospitalForm() {
   const handleDeleteBranch = async (branchId: string) => {
     const ok = await confirm({
       title: "Delete branch",
-      message: "Are you sure you want to delete this branch? This cannot be undone.",
+      message: "An empty branch is deleted. A branch that already has staff, patients or bills is closed instead: no one can work in it any more, and its records stay in reports.",
       confirmText: "Delete",
       destructive: true,
     });
     if (!ok) return;
     try {
-      await axiosInstance.delete(`/hospitals/${id}/branches/${branchId}`);
+      const res = await axiosInstance.delete(`/hospitals/${id}/branches/${branchId}`);
+      toast.success(res.data?.data?.outcome === "closed"
+        ? "Branch closed. It had records, so it was kept for reports instead of being deleted."
+        : "Branch deleted");
       setReload(r => r + 1);
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to delete branch"));

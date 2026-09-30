@@ -15,6 +15,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import FormSkeleton from "@/components/skeletons/FormSkeleton";
 import ErrorState from "@/components/ErrorState";
 import BillingModal from "./BillingModal";
+import { windowsFor, slotsOf, isBusy, type Busy } from "./doctorSlots";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import { SEMANTIC } from "@/styles/accents";
@@ -118,8 +119,9 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   }, []);
 
   // Doctor availability for the chosen date: whether they're on leave, and the
-  // times already booked (doctor-wide). Drives slot filtering below.
-  const { data: availability } = useQuery<{ onLeave: boolean; leaveReason: string | null; bookedDateTimes: string[] }>({
+  // times already booked (doctor-wide, at every branch) with how long each
+  // takes. Drives slot filtering below.
+  const { data: availability } = useQuery<{ onLeave: boolean; leaveReason: string | null; bookedDateTimes: string[]; busy?: Busy[] }>({
     queryKey: ["appointment-availability", formData.doctorId, formData.appointmentDate, id],
     queryFn: async () => (await axiosInstance.get("/reception/appointments/availability", {
       params: { doctorId: formData.doctorId, date: formData.appointmentDate, ...(id ? { excludeAppointmentId: id } : {}) },
@@ -193,36 +195,14 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     const dayOfWeek = date.getDay(); // 0 (Sun) - 6 (Sat)
     const schedules = (dropdowns?.doctorSchedules || []).filter((s: any) => s.doctorId === formData.doctorId && s.dayOfWeek === dayOfWeek);
 
-    let rawSlots: string[];
-    if (schedules.length > 0) {
-      // Generate slots from the first matching schedule.
-      const sched = schedules[0];
-      rawSlots = [];
-      const [hour, minute] = (sched.startTime || "09:00").split(':').map(Number);
-      const [endHour, endMinute] = (sched.endTime || "17:00").split(':').map(Number);
-      const endTotal = endHour * 60 + endMinute;
-      let currentTotal = hour * 60 + minute;
-      while (currentTotal < endTotal) {
-        const h = Math.floor(currentTotal / 60).toString().padStart(2, '0');
-        const m = (currentTotal % 60).toString().padStart(2, '0');
-        rawSlots.push(`${h}:${m}`);
-        currentTotal += sched.slotDurationMinutes || 15;
-      }
-    } else {
-      // Fallback slots when the doctor has no schedule for this weekday, so
-      // afternoon/evening bookings still work. The window comes from the server
-      // rather than being written out here: the Doctor Availability page reports
-      // these same hours, and a second copy of them is how the two screens ended
-      // up disagreeing about whether a doctor could be seen at all.
-      const def = dropdowns?.defaultHours ?? { startTime: "09:00", endTime: "19:30", slotDurationMinutes: 30 };
-      const [dh, dm] = String(def.startTime).split(":").map(Number);
-      const [eh, em] = String(def.endTime).split(":").map(Number);
-      const step = Number(def.slotDurationMinutes) || 30;
-      rawSlots = [];
-      for (let t = dh * 60 + (dm || 0); t < eh * 60 + (em || 0); t += step) {
-        rawSlots.push(`${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`);
-      }
-    }
+    // Every window of the day (a doctor in 10–2 and again 4–7 was offered 10–2
+    // only), or — with no hours set for this weekday — the default working day,
+    // which comes from the server so the Doctor Availability page and this form
+    // cannot disagree about whether a doctor can be seen.
+    const def = dropdowns?.defaultHours ?? { startTime: "09:00", endTime: "19:30", slotDurationMinutes: 30 };
+    const daySlots = slotsOf(windowsFor(schedules, dayOfWeek, def));
+    const lengthOf = new Map(daySlots.map((s) => [s.time, s.minutes]));
+    let rawSlots = daySlots.map((s) => s.time);
 
     // How many slots the schedule/fallback yielded, before the "today" cut — used
     // to tell "today's times have passed" apart from "no schedule at all".
@@ -240,15 +220,12 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
       rawSlots = rawSlots.filter((s) => s > nowHM);
     }
 
-    // Remove times already booked for this doctor (formatted the same way the
-    // slots are). The appointment being edited is excluded server-side, so its
-    // own slot stays selectable.
-    const bookedTimes = new Set(
-      (availability?.bookedDateTimes || []).map((iso) =>
-        new Date(iso).toLocaleTimeString("en-US", { hour12: false, hour: '2-digit', minute: '2-digit' })
-      )
-    );
-    const openSlots = rawSlots.filter((s) => !bookedTimes.has(s));
+    // Remove times the doctor is already booked for, at any branch — every slot
+    // a booking overlaps, which is what the server refuses. The appointment
+    // being edited is excluded server-side, so its own slot stays selectable.
+    const busy: Busy[] = availability?.busy
+      ?? (availability?.bookedDateTimes || []).map((at) => ({ at, minutes: 1 }));
+    const openSlots = rawSlots.filter((s) => !isBusy(s, lengthOf.get(s) ?? 30, busy));
     setAvailableSlots(openSlots);
     // "Today ran out" = the day had slots, but none are left after now/booked.
     setAllSlotsPassedToday(isToday && scheduledCount > 0 && openSlots.length === 0);

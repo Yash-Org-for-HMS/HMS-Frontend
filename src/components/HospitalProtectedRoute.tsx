@@ -11,7 +11,7 @@ import HeartbeatLoader from "./HeartbeatLoader";
 // panel, and custom roles pass via the permission fallback — an unauthorized
 // user is bounced to their own home rather than shown a screen that isn't theirs.
 export function HospitalProtectedRoute({ panel }: { panel?: Panel } = {}) {
-  const { isAuthenticated, loading, user } = useHospitalAuth();
+  const { isAuthenticated, loading, user, activeBranchId } = useHospitalAuth();
   const location = useLocation();
 
   if (loading) {
@@ -41,5 +41,7 @@ export function HospitalProtectedRoute({ panel }: { panel?: Panel } = {}) {
     return <Navigate to={homeForUser(user)} replace />;
   }
 
-  return <Outlet />;
+  // Keyed by the branch being worked in: switching branch remounts the panel,
+  // so no page keeps a form, dialog or list from the branch just left.
+  return <Outlet key={activeBranchId ?? "all-branches"} />;
 }

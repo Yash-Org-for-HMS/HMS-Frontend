@@ -1,4 +1,4 @@
-import { TextField, MenuItem, Box } from "@mui/material";
+import { TextField, MenuItem, Box, Typography } from "@mui/material";
 import { AccountTreeRounded } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
@@ -33,11 +33,15 @@ export default function BranchSwitcher() {
           const v = e.target.value;
           // setActiveBranch writes activeBranchId to sessionStorage synchronously,
           // and the axios interceptor reads it per-request — so the new X-Branch-Id
-          // is live immediately. Invalidating the query cache makes every page
-          // re-fetch under the new branch without a full window reload (SPA state,
-          // scroll position, and open dialogs are preserved).
+          // is live immediately.
+          //
+          // The cache is DROPPED, not just invalidated: invalidating kept showing
+          // the old branch's lists until each refetch landed, and a form or dialog
+          // opened at the old branch stayed open and saved into the new one. With
+          // the cache empty, and HospitalProtectedRoute remounting the page for
+          // the new branch, every screen starts clean under the branch chosen.
           setActiveBranch(v === ALL ? null : v);
-          queryClient.invalidateQueries();
+          queryClient.removeQueries();
         }}
         InputProps={{
           startAdornment: <AccountTreeRounded fontSize="small" sx={{ mr: 1, color: "text.secondary" }} />,
@@ -53,6 +57,12 @@ export default function BranchSwitcher() {
           </MenuItem>
         ))}
       </TextField>
+      {/* Records are made AT a branch; the combined view can only read. */}
+      {isOrgAdmin && !activeBranchId && (
+        <Typography variant="caption" sx={{ display: "block", mt: 0.5, px: 0.5, color: "text.secondary", lineHeight: 1.3 }}>
+          Viewing every branch. Pick one to add or change records.
+        </Typography>
+      )}
     </Box>
   );
 }
