@@ -23,8 +23,9 @@ interface Props {
 
 // Suggested order qty / cost mirror the server's auto-generate formulas so the
 // pre-filled numbers match what one-click generation would have produced.
-// Nets out stock already on a pending PO — otherwise this would suggest
-// ordering the full gap again on top of a delivery that's already in motion.
+// Nets out stock already on a pending PO, and stock on its way from another
+// branch — otherwise this would suggest ordering the full gap again on top of
+// a delivery that's already in motion.
 const suggestedQty = (minStock: number, currentStock: number, pendingStock: number) =>
   Math.max((minStock || 0) * 2 - (currentStock || 0) - (pendingStock || 0), 0);
 /**
@@ -46,13 +47,15 @@ const rowFromMedicine = (med: any, currentStock: number | null, pendingStock: nu
   genericName: med.genericName,
   currentStock,
   pendingStock,
+  /** Dispatched to this branch by another one and not yet received. */
+  inTransit: Number(med.inTransit ?? 0),
   minStockLevel: med.minStockLevel ?? 0,
   // A low-stock row can legitimately suggest 0 (a pending PO already covers
   // the gap) — that row gets filtered out before it ever reaches here. A
   // hand-added row has no such "already covered" reading, so it always gets
   // at least 1.
   orderedQuantity: low
-    ? suggestedQty(med.minStockLevel ?? 0, currentStock ?? 0, pendingStock)
+    ? suggestedQty(med.minStockLevel ?? 0, currentStock ?? 0, pendingStock + Number(med.inTransit ?? 0))
     : Math.max(suggestedQty(med.minStockLevel ?? 0, currentStock ?? 0, pendingStock), med.minStockLevel || 1),
   unitPrice: suggestedPrice(med),
   // So the row can say where its price came from rather than implying it is known.
@@ -91,7 +94,7 @@ export default function AutoGeneratePODialog({ open, onClose, lowStockAlerts, me
   // covers them. Without this the dialog opens empty beside a "Low Stock
   // Alerts 3" badge and reads as broken rather than as nothing-to-do.
   const coveredByPending = lowStockAlerts.filter(
-    (a: any) => suggestedQty(a.minStockLevel ?? 0, a.currentStock ?? 0, a.pendingStock ?? 0) <= 0,
+    (a: any) => suggestedQty(a.minStockLevel ?? 0, a.currentStock ?? 0, (a.pendingStock ?? 0) + (a.inTransit ?? 0)) <= 0,
   ).length;
 
   const addMedicine = (med: any) => {
@@ -198,6 +201,11 @@ export default function AutoGeneratePODialog({ open, onClose, lowStockAlerts, me
                       {r.pendingStock > 0 && (
                         <Typography variant="caption" sx={{ display: 'block', color: SEMANTIC.warning }}>
                           +{r.pendingStock} already on order
+                        </Typography>
+                      )}
+                      {r.inTransit > 0 && (
+                        <Typography variant="caption" sx={{ display: 'block', color: SEMANTIC.info }}>
+                          +{r.inTransit} on the way from another branch
                         </Typography>
                       )}
                     </TableCell>

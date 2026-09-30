@@ -20,6 +20,8 @@ import { useConfirm } from "@/providers/ConfirmContext";
 import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import { validate, hasErrors, required, isNonNegativeNumber, min, max } from "@/utils/validation";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import BranchLevelsDialog from "@/components/pharmacy/transfers/BranchLevelsDialog";
 
 // Match the existing plain (non-uppercase) table-head look, overriding
 // SortableHeadCell's default uppercase/secondary styling.
@@ -46,6 +48,9 @@ export default function MedicineCatalog() {
 
   const [openDialog, setOpenDialog] = useState(false);
   const [editMed, setEditMed] = useState<any>(null);
+  // A branch can keep its own reorder level; this field is the group's.
+  const { availableBranches } = useHospitalAuth();
+  const [levelsOpen, setLevelsOpen] = useState(false);
 
   const [medicineCode, setMedicineCode] = useState("");
   const [medicineName, setMedicineName] = useState("");
@@ -524,6 +529,16 @@ export default function MedicineCatalog() {
                 ))}
               </TextField>
             </Box>
+            {editMed && availableBranches.length > 1 && (
+              <Box sx={{ mt: -1 }}>
+                <Button size="small" onClick={() => setLevelsOpen(true)} sx={{ textTransform: 'none', fontWeight: 600 }}>
+                  Reorder level by branch…
+                </Button>
+                <Typography variant="caption" sx={{ color: 'text.secondary', ml: 1 }}>
+                  The level above is the group's; a branch can keep its own.
+                </Typography>
+              </Box>
+            )}
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2.5, gap: 1 }}>
@@ -545,6 +560,14 @@ export default function MedicineCatalog() {
           </Button>
         </DialogActions>
       </Dialog>
+      {levelsOpen && editMed && (
+        <BranchLevelsDialog
+          medicineId={editMed.medicineId}
+          medicineName={editMed.medicineName || editMed.genericName}
+          onClose={() => setLevelsOpen(false)}
+          onSaved={() => setLevelsOpen(false)}
+        />
+      )}
     </PharmacyPage>
   );
 }

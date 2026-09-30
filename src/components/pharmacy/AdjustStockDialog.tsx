@@ -40,6 +40,9 @@ const TYPE_COLOR: Record<string, string> = {
   // Its own colour, not the grey fallback: a claim against a supplier is not
   // an unrecognised movement, and it is not a write-off either.
   SUPPLIER_RETURN: "#8b5cf6",
+  // To or from another branch of the hospital: neither a sale nor a purchase.
+  TRANSFER_OUT: "#0891b2",
+  TRANSFER_IN: "#0891b2",
 };
 
 /**

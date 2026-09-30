@@ -3,7 +3,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography,
   Chip, Divider, Alert, Link, Tooltip,
 } from "@mui/material";
-import { PersonSearchRounded, FileDownloadRounded, WarningAmberRounded, LocalHospitalRounded } from "@mui/icons-material";
+import { PersonSearchRounded, FileDownloadRounded, WarningAmberRounded, LocalHospitalRounded, SwapHorizRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { formatDate, formatDateTime } from "@/utils/format";
 import { SEMANTIC, NEUTRAL } from "@/styles/accents";
@@ -46,11 +46,24 @@ interface WardHolding {
   lastIssuedAt: string;
 }
 
+/** Units that went to, or came from, another branch as this same batch. */
+interface BranchTransfer {
+  stockTransferId: string;
+  transferNumber: string;
+  direction: "OUT" | "IN";
+  otherBranchName: string;
+  status: string;
+  sent: number;
+  received: number | null;
+  at: string | null;
+}
+
 interface TraceResponse {
   batch: { batchNumber: string; expiryDate: string; availableQuantity: number; medicineName: string };
-  totals: { withPatients: number; inWards: number; untraced: number; onShelf: number; patients: number };
+  totals: { withPatients: number; inWards: number; atOtherBranches?: number; untraced: number; onShelf: number; patients: number };
   recipients: Recipient[];
   wards: WardHolding[];
+  transfers?: BranchTransfer[];
   untraced: Untraced[];
 }
 
@@ -133,6 +146,9 @@ export default function BatchRecipientsDialog({
               {(data.totals.inWards > 0 || data.wards?.length > 0) && (
                 <Stat label="In ward cupboards" value={data.totals.inWards} color={SEMANTIC.infoDark} />
               )}
+              {(data.totals.atOtherBranches ?? 0) > 0 && (
+                <Stat label="At other branches" value={data.totals.atOtherBranches ?? 0} color={SEMANTIC.infoDark} />
+              )}
               <Stat label="Held by patients" value={data.totals.withPatients} color={SEMANTIC.danger} />
               <Stat label="Cannot be traced" value={data.totals.untraced} color={SEMANTIC.warning} />
             </Box>
@@ -169,6 +185,35 @@ export default function BatchRecipientsDialog({
                     <Typography variant="body2" sx={{ width: 92, textAlign: "right", fontWeight: 800, fontVariantNumeric: "tabular-nums",
                       color: w.quantity > 0 ? SEMANTIC.infoDark : "text.disabled" }}>
                       {w.quantity} unit{w.quantity === 1 ? "" : "s"}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            )}
+
+            {/* Sent to another branch as this same batch: the recall carries on
+                from that branch's shelf, where it has the same number. */}
+            {(data.transfers?.length ?? 0) > 0 && (
+              <Box sx={{ mb: 2.5 }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 1 }}>
+                  OTHER BRANCHES · TRACE BATCH {data.batch.batchNumber} THERE TOO
+                </Typography>
+                {data.transfers!.map((t) => (
+                  <Box key={`${t.stockTransferId}-${t.direction}`}
+                    sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 1, borderBottom: "1px solid", borderColor: "divider" }}>
+                    <SwapHorizRounded sx={{ fontSize: 18, color: SEMANTIC.infoDark }} />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }} noWrap>
+                        {t.direction === "OUT" ? `Sent to ${t.otherBranchName}` : `Came from ${t.otherBranchName}`}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>
+                        {t.transferNumber}
+                        {t.status === "DISPATCHED" ? " · still on the road" : t.received !== null && t.received < t.sent ? ` · ${t.sent} sent, ${t.received} arrived` : ""}
+                        {t.at ? ` · ${formatDate(t.at)}` : ""}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" sx={{ width: 92, textAlign: "right", fontWeight: 800, fontVariantNumeric: "tabular-nums", color: SEMANTIC.infoDark }}>
+                      {t.received ?? t.sent} unit{(t.received ?? t.sent) === 1 ? "" : "s"}
                     </Typography>
                   </Box>
                 ))}

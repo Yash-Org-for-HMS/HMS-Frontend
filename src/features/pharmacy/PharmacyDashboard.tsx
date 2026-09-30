@@ -57,6 +57,7 @@ export default function PharmacyDashboard() {
   });
   const stats = data?.stats ?? {};
   const lowStockAlerts: LowStockAlert[] = data?.lowStockAlerts ?? [];
+  const lowAcrossBranches = new Set(lowStockAlerts.map((a) => a.branchId ?? "")).size > 1;
 
   const medicineCount: number = stats.medicineCount ?? 0;
   const pendingPOCount: number = stats.pendingPOCount ?? 0;
@@ -146,9 +147,10 @@ export default function PharmacyDashboard() {
                       // further below its reorder level.
                       .sort((a, b) => Number(b.out) - Number(a.out) || b.shortBy - a.shortBy)
                       .map(({ item, shortBy }) => ({
-                        id: item.medicineId,
+                        // One row per branch's shelf when several are in view.
+                        id: `${item.medicineId}|${item.branchId ?? ""}`,
                         primary: item.medicineName,
-                        secondary: `${item.currentStock} in stock · reorder at ${item.minStockLevel}`,
+                        secondary: `${item.currentStock} in stock${lowAcrossBranches && item.branchName ? ` at ${item.branchName}` : ""} · reorder at ${item.minStockLevel}`,
                         meta: Number(item.currentStock ?? 0) <= 0 ? "Out of stock" : `${shortBy} short`,
                         severity: (Number(item.currentStock ?? 0) <= 0 ? "critical" : "warning") as "critical" | "warning",
                         icon: <WarningRounded sx={{ fontSize: 18 }} />,

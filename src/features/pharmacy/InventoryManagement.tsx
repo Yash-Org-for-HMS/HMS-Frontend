@@ -7,7 +7,7 @@ import {
   Button, useTheme, alpha, Tabs, Tab, MenuItem, Select, IconButton, Tooltip, TextField,
   InputAdornment, FormControlLabel, Switch, Chip
 } from "@mui/material";
-import { AddRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded, SearchRounded, TuneRounded, PersonSearchRounded, AssignmentReturnRounded } from "@mui/icons-material";
+import { AddRounded, ShoppingCartRounded, CheckCircleRounded, EditRounded, SearchRounded, TuneRounded, PersonSearchRounded, AssignmentReturnRounded, SwapHorizRounded } from "@mui/icons-material";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
@@ -27,6 +27,10 @@ import BatchRecipientsDialog from "@/components/pharmacy/BatchRecipientsDialog";
 import SupplierReturnDialog from "@/components/pharmacy/SupplierReturnDialog";
 import SupplierReturnsTab from "@/components/pharmacy/SupplierReturnsTab";
 import PurchaseOrderDetailDialog from "@/components/pharmacy/PurchaseOrderDetailDialog";
+import StockTransfersTab from "@/components/pharmacy/transfers/StockTransfersTab";
+import NewTransferDialog from "@/components/pharmacy/transfers/NewTransferDialog";
+import BranchLevelsDialog from "@/components/pharmacy/transfers/BranchLevelsDialog";
+import { useTransferBranches } from "@/components/pharmacy/transfers/transfers.types";
 
 // Match the existing plain (non-uppercase) table-head look, overriding
 // SortableHeadCell's default uppercase/secondary styling.
@@ -83,11 +87,29 @@ const CARD_RADIUS = 3;
  */
 const TABLE_MAX_H = "max(320px, calc(100vh - 320px))";
 
+/** The parts of a low-stock alert row the per-branch helpers read. */
+interface AlertRow {
+  medicineId: string;
+  medicineName: string;
+  branchId?: string | null;
+  minStockLevel?: number;
+  currentStock?: number;
+  pendingStock?: number;
+  inTransit?: number;
+}
+
 export default function InventoryManagement() {
   const theme = useTheme();
   const toast = useToast();
-  const { activeBranchId } = useHospitalAuth();
+  const { activeBranchId, availableBranches } = useHospitalAuth();
   const [tabValue, setTabValue] = useState(0);
+  // Stock between branches: only a hospital with more than one has any.
+  const transferBranches = useTransferBranches();
+  const canTransfer = (transferBranches.data?.branches.length ?? 0) > 1;
+  // A medicine's reorder level at each branch the user runs.
+  const [levelsFor, setLevelsFor] = useState<{ medicineId: string; medicineName: string } | null>(null);
+  // Asking another branch for what is low here, straight from the alert list.
+  const [askFromLow, setAskFromLow] = useState(false);
   // Writing off or recounting a batch - the only path that changes a quantity
   // without a sale or a delivery behind it.
   const [adjustItem, setAdjustItem] = useState<any>(null);
@@ -251,7 +273,20 @@ export default function InventoryManagement() {
   // (but individually fine) batches as warnings while Low Stock Alerts —
   // correctly looking at the real total — showed nothing, which read as the
   // alert being broken.
-  const lowStockMedicineIds = new Set(lowStockAlerts.map((a: any) => a.medicineId));
+  //
+  // Low stock is per branch: an alert row names its branch, and a batch is
+  // low only if ITS branch is short of the medicine. A row with no branch
+  // (a hospital without branches) matches the medicine anywhere.
+  const lowStockKeys = new Set(lowStockAlerts.map((a: AlertRow) => `${a.medicineId}|${a.branchId ?? ""}`));
+  const isLow = (inv: { medicineId: string; branchId?: string | null }) => lowStockKeys.has(`${inv.medicineId}|${inv.branchId ?? ""}`) || lowStockKeys.has(`${inv.medicineId}|`);
+  // Looking at several branches at once, each alert row is one branch's shelf.
+  const alertsSpanBranches = new Set(lowStockAlerts.map((a: AlertRow) => a.branchId ?? "")).size > 1;
+  // What to ask for: the same gap auto-ordering would fill, less what is coming.
+  const askPrefill = lowStockAlerts.map((a: AlertRow) => ({
+    medicineId: a.medicineId,
+    medicineName: a.medicineName,
+    quantity: String(Math.max((a.minStockLevel || 0) * 2 - (a.currentStock || 0) - (a.pendingStock || 0) - (a.inTransit || 0), 1)),
+  }));
 
   const stockPageCount = Math.ceil(stockTotal / ROWS_PER_PAGE);
   const poPageCount = Math.ceil(poTotal / ROWS_PER_PAGE);
@@ -302,7 +337,7 @@ export default function InventoryManagement() {
           <Tab label="Current Stock" sx={{ fontWeight: 600 }} />
           <Tab label="Purchase Orders" sx={{ fontWeight: 600 }} />
           <Tab label="Supplier Returns" sx={{ fontWeight: 600 }} />
-          <Tab label={
+          <Tab value={3} label={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               Low Stock Alerts
               {lowStockAlerts.length > 0 && (
@@ -317,6 +352,7 @@ export default function InventoryManagement() {
               )}
             </Box>
           } sx={{ fontWeight: 600 }} />
+          {canTransfer && <Tab value={4} label="Transfers" sx={{ fontWeight: 600 }} />}
         </Tabs>
 
         {/* Shared action bar — always rendered so height never shifts between tabs */}
@@ -351,16 +387,35 @@ export default function InventoryManagement() {
             />
           )}
           {tabValue === 3 && (
-            <Button
-              variant="contained"
-              color="warning"
-              startIcon={<ShoppingCartRounded />}
-              disabled={lowStockAlerts.length === 0}
-              onClick={() => setOpenAutoDialog(true)}
-              sx={{ fontWeight: 600, borderRadius: 2 }}
-            >
-              Auto-Generate POs
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              {canTransfer && activeBranchId && !alertsSpanBranches && (
+                <Button
+                  variant="outlined"
+                  startIcon={<SwapHorizRounded />}
+                  disabled={lowStockAlerts.length === 0}
+                  onClick={() => setAskFromLow(true)}
+                  sx={{ fontWeight: 600, borderRadius: 2 }}
+                >
+                  Ask a branch
+                </Button>
+              )}
+              {/* A purchase order is raised for one branch's shelf, so with
+                  several branches in view there is no one shelf to order for. */}
+              <Tooltip title={alertsSpanBranches ? "Switch to a branch to order for it" : ""}>
+                <span>
+                  <Button
+                    variant="contained"
+                    color="warning"
+                    startIcon={<ShoppingCartRounded />}
+                    disabled={lowStockAlerts.length === 0 || alertsSpanBranches}
+                    onClick={() => setOpenAutoDialog(true)}
+                    sx={{ fontWeight: 600, borderRadius: 2 }}
+                  >
+                    Auto-Generate POs
+                  </Button>
+                </span>
+              </Tooltip>
+            </Box>
           )}
         </Box>
 
@@ -396,8 +451,8 @@ export default function InventoryManagement() {
                     <TableRow key={inv.inventoryId} hover>
                       <TableCell sx={{ fontWeight: 600, color: BRAND.action }}>
                         {getMedicineName(inv.medicineId)}
-                        {lowStockMedicineIds.has(inv.medicineId) && (
-                          <Tooltip title="This medicine's total stock across all batches is at or below its reorder threshold">
+                        {isLow(inv) && (
+                          <Tooltip title="This medicine's total stock across all batches at this branch is at or below its reorder level">
                             <Box component="span" sx={{
                               ml: 1, px: 0.75, py: 0.1, borderRadius: 1.5, fontSize: '0.7rem', fontWeight: 700,
                               bgcolor: alpha(theme.palette.warning.main, 0.15), color: 'warning.dark',
@@ -429,7 +484,7 @@ export default function InventoryManagement() {
                       <TableCell sx={{ fontWeight: 700, color: batchQtyColor(inv) }}>
                         {inv.availableQuantity}
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: lowStockMedicineIds.has(inv.medicineId) ? 'warning.main' : 'text.primary' }}>
+                      <TableCell sx={{ fontWeight: 700, color: isLow(inv) ? 'warning.main' : 'text.primary' }}>
                         {inv.medicineTotalStock ?? inv.availableQuantity}
                       </TableCell>
                       <TableCell>{getSupplierName(inv.supplierId)}</TableCell>
@@ -551,6 +606,7 @@ export default function InventoryManagement() {
                 <TableHead>
                   <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
                     <SortableHeadCell label="Medicine" sortKey="medicine" orderBy={alertOrderBy} order={alertOrder} onSort={onAlertSort} sx={HEAD_SX} />
+                    {alertsSpanBranches && <TableCell sx={{ fontWeight: 700 }}>Branch</TableCell>}
                     <SortableHeadCell label="Min Stock Level" sortKey="minStock" orderBy={alertOrderBy} order={alertOrder} onSort={onAlertSort} sx={HEAD_SX} />
                     <SortableHeadCell label="Current Stock" sortKey="currentStock" orderBy={alertOrderBy} order={alertOrder} onSort={onAlertSort} sx={HEAD_SX} />
                     <SortableHeadCell label="Pending (On the way)" sortKey="pendingStock" orderBy={alertOrderBy} order={alertOrder} onSort={onAlertSort} sx={HEAD_SX} />
@@ -559,13 +615,31 @@ export default function InventoryManagement() {
                 </TableHead>
                 <TableBody>
                   {lowStockAlerts.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="all-caught-up" subtitle="No low stock alerts — stock is healthy." size={110} /></TableCell></TableRow>
+                    <TableRow><TableCell colSpan={alertsSpanBranches ? 6 : 5} sx={{ py: 3, border: 0 }}><Mascot pose="all-caught-up" subtitle="No low stock alerts — stock is healthy." size={110} /></TableCell></TableRow>
                   ) : paginatedAlerts.map(alert => (
-                    <TableRow key={alert.medicineId} hover>
+                    <TableRow key={`${alert.medicineId}|${alert.branchId ?? ""}`} hover>
                       <TableCell sx={{ fontWeight: 600, color: BRAND.action }}>{alert.medicineName}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{alert.minStockLevel}</TableCell>
+                      {alertsSpanBranches && <TableCell sx={{ whiteSpace: 'nowrap' }}>{alert.branchName ?? "—"}</TableCell>}
+                      <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+                        {alert.minStockLevel}
+                        {alert.ownLevel && (
+                          <Typography component="span" variant="caption" sx={{ ml: 0.75, color: 'text.secondary' }}>this branch's</Typography>
+                        )}
+                        {availableBranches.length > 1 && (
+                          <Tooltip title="Reorder level by branch">
+                            <IconButton size="small" sx={{ ml: 0.5 }} aria-label={`Reorder level by branch for ${alert.medicineName}`} onClick={() => setLevelsFor({ medicineId: alert.medicineId, medicineName: alert.medicineName })}>
+                              <TuneRounded sx={{ fontSize: 16 }} />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </TableCell>
                       <TableCell sx={{ fontWeight: 700, color: 'error.main' }}>{alert.currentStock}</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'warning.main' }}>{alert.pendingStock || 0}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: 'warning.main' }}>
+                        {alert.pendingStock || 0}
+                        {alert.inTransit > 0 && (
+                          <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>+{alert.inTransit} from another branch</Typography>
+                        )}
+                      </TableCell>
                       <TableCell>
                         {alert.defaultSupplierId ? (
                           <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{getSupplierName(alert.defaultSupplierId)}</Typography>
@@ -602,6 +676,19 @@ export default function InventoryManagement() {
               </TableContainer>
               <PaginationBar page={alertPage} pageCount={alertPageCount} total={lowStockAlerts.length} onChange={setAlertPage} />
             </Box>
+
+            {/* Tab 4: Transfers between branches — mounted only when open. */}
+            {tabValue === 4 && canTransfer && transferBranches.data && (
+              <Box role="tabpanel">
+                <StockTransfersTab
+                  branches={transferBranches.data.branches}
+                  shortReasons={transferBranches.data.shortReasons}
+                  here={activeBranchId}
+                  medicines={medicines}
+                  onStockChanged={() => { fetchInventory(stockPage); fetchReference(); }}
+                />
+              </Box>
+            )}
           </Box>
         )}
       </Paper>
@@ -622,6 +709,27 @@ export default function InventoryManagement() {
         suppliers={suppliers}
         onGenerated={afterPoCreated}
       />
+
+      {levelsFor && (
+        <BranchLevelsDialog
+          medicineId={levelsFor.medicineId}
+          medicineName={levelsFor.medicineName}
+          onClose={() => setLevelsFor(null)}
+          onSaved={() => { setLevelsFor(null); fetchReference(); }}
+        />
+      )}
+
+      {askFromLow && canTransfer && transferBranches.data && (
+        <NewTransferDialog
+          open
+          onClose={() => setAskFromLow(false)}
+          branches={transferBranches.data.branches}
+          here={activeBranchId}
+          medicines={medicines}
+          prefill={askPrefill}
+          onCreated={() => { setAskFromLow(false); setTabValue(4); }}
+        />
+      )}
 
       <PurchaseOrderDetailDialog
         purchaseOrderId={detailPoId}

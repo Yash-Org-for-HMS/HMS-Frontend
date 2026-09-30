@@ -184,6 +184,8 @@ export function ReorderList() {
             filename={`reorder_${data.asOf}`}
             columns={[
               { key: "medicine", label: "Medicine" },
+              // Several branches in view: each row is one branch's shelf.
+              ...(rows.some((r: { branch?: string }) => r.branch) ? [{ key: "branch", label: "Branch" }] : []),
               num("available", "Available"),
               num("reorderLevel", "Reorder level"),
               num("shortfall", "Shortfall"),

@@ -65,7 +65,13 @@ export interface LowStockAlert {
   medicineId: string;
   medicineName: string;
   currentStock: number;
+  /** The level at this row's branch: its own, else the medicine's. */
   minStockLevel: number;
+  /** The branch whose shelf is short. Several branches in view = one row each. */
+  branchId?: string | null;
+  branchName?: string | null;
+  /** Dispatched to this branch by another one and not yet received. */
+  inTransit?: number;
 }
 
 export interface PharmacyOrder {
