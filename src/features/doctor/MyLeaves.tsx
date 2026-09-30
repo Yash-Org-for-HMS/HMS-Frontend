@@ -19,6 +19,9 @@ import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import PageSkeleton from "@/components/PageSkeleton";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import LeaveScopeFields from "@/features/hospitalAuth/doctors/LeaveScopeFields";
+import { EMPTY_LEAVE_SCOPE, leaveScopeBody, leaveScopeLabel, type LeaveScope } from "@/features/hospitalAuth/doctors/leaveScope";
 
 const INACTIVE = ["rejected", "cancelled", "declined"];
 const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 600, fontSize: "0.875rem" };
@@ -33,6 +36,10 @@ export default function MyLeaves() {
   const [fromDate, setFromDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [toDate, setToDate] = useState("");
   const [reason, setReason] = useState("");
+  const [scope, setScope] = useState<LeaveScope>(EMPTY_LEAVE_SCOPE);
+  // The branches this doctor signs in to — the ones leave can be for.
+  const { availableBranches } = useHospitalAuth();
+  const branchName = (b: string) => availableBranches.find((x) => x.branchId === b)?.branchName;
   // Leave can only be for today onward (the backend enforces this too).
   const today = dayjs().format("YYYY-MM-DD");
 
@@ -49,11 +56,12 @@ export default function MyLeaves() {
 
   const addLeave = useMutation({
     mutationFn: async () =>
-      (await axiosInstance.post("/doctor/leaves", { fromDate, toDate: toDate || undefined, reason: reason || undefined })).data,
+      (await axiosInstance.post("/doctor/leaves", { fromDate, toDate: toDate || undefined, reason: reason || undefined, ...leaveScopeBody(scope) })).data,
     onSuccess: (res) => {
       toast.success(res?.message || "Leave added");
       setReason("");
       setToDate("");
+      setScope(EMPTY_LEAVE_SCOPE);
       queryClient.invalidateQueries({ queryKey: ["my-leaves"] });
     },
     onError: (err: unknown) => toast.error(getApiErrorMessage(err, "Failed to add leave")),
@@ -89,6 +97,10 @@ export default function MyLeaves() {
             slotProps={{ formHelperText: { sx: { position: "absolute", top: "100%", left: 0, mt: 0.25, whiteSpace: "nowrap" } } }}
           />
           <TextField size="small" label="Reason (optional)" value={reason} onChange={(e) => setReason(e.target.value)} sx={{ minWidth: 220, flex: 1 }} />
+          {/* Clear of the date field's hint, which hangs below it. */}
+          <Box sx={{ flexBasis: "100%", mt: 1.5 }}>
+            <LeaveScopeFields value={scope} onChange={setScope} branches={availableBranches} />
+          </Box>
           <Button
             variant="contained"
             startIcon={addLeave.isPending ? <HeartbeatLoader size={22} /> : <AddRounded />}
@@ -137,6 +149,9 @@ export default function MyLeaves() {
                     <TableRow key={leave.doctorLeaveId} hover sx={{ "&:last-child td": { border: 0 } }}>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary", fontWeight: 600 }}>
                         {dayjs(leave.leaveDate).format("ddd, DD MMM YYYY")}
+                        {leaveScopeLabel(leave, branchName) && (
+                          <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 500 }}>{leaveScopeLabel(leave, branchName)}</Typography>
+                        )}
                       </TableCell>
                       <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>{leave.leaveReason || "—"}</TableCell>
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>

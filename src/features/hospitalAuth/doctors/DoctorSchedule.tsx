@@ -15,6 +15,8 @@ import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import FormSkeleton from "@/components/skeletons/FormSkeleton";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { overlappingWindows } from "@/features/reception/doctorSlots";
 
 const HOSP = BRAND.action;
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -23,9 +25,10 @@ const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 const WEEKDAYS = [1, 2, 3, 4, 5];
 const WEEKEND = [6, 0];
 const SLOT_OPTIONS = [5, 10, 15, 20, 30, 45, 60];
-const DEFAULT_WINDOW = { startTime: "09:00", endTime: "17:00", slotDurationMinutes: 15 };
+const DEFAULT_WINDOW = { startTime: "09:00", endTime: "17:00", slotDurationMinutes: 15, branchId: "" };
 
-type Win = { startTime: string; endTime: string; slotDurationMinutes: number };
+/** branchId "" = at every branch the doctor works at (how every window started). */
+type Win = { startTime: string; endTime: string; slotDurationMinutes: number; branchId: string };
 type DayCfg = { dayOfWeek: number; enabled: boolean; windows: Win[] };
 
 function blankDays(): DayCfg[] {
@@ -48,6 +51,20 @@ export default function DoctorSchedule() {
     enabled: !!id,
   });
 
+  // Which branches a window can name: the doctor's, or every branch when the
+  // doctor has no branch list (they work everywhere). One branch: no choice to make.
+  const { availableBranches } = useHospitalAuth();
+  const { data: doctorBranchIds = [] } = useQuery<string[]>({
+    queryKey: ["doctor-branches", id],
+    queryFn: async () => (await axiosInstance.get(`/hospital/doctors/${id}/branches`)).data.data ?? [],
+    enabled: !!id,
+  });
+  const branchOptions = doctorBranchIds.length
+    ? availableBranches.filter((b) => doctorBranchIds.includes(b.branchId))
+    : availableBranches;
+  const pickBranch = availableBranches.length > 1;
+  const branchLabel = (b: string) => (b ? availableBranches.find((x) => x.branchId === b)?.branchName ?? "Branch" : "Every branch");
+
   // Seed the 7-day grid from the saved schedule rows (grouped by day; a day with
   // more than one row is a split shift and keeps both windows).
   useEffect(() => {
@@ -57,7 +74,7 @@ export default function DoctorSchedule() {
     for (const s of (doctorData.schedules || [])) {
       const dow = Number(s.dayOfWeek);
       if (dow < 0 || dow > 6) continue;
-      const win = { startTime: s.startTime || "09:00", endTime: s.endTime || "17:00", slotDurationMinutes: Number(s.slotDurationMinutes) || 15 };
+      const win = { startTime: s.startTime || "09:00", endTime: s.endTime || "17:00", slotDurationMinutes: Number(s.slotDurationMinutes) || 15, branchId: s.branchId || "" };
       if (!grid[dow].enabled) { grid[dow].enabled = true; grid[dow].windows = [win]; }
       else grid[dow].windows.push(win);
     }
@@ -104,7 +121,14 @@ export default function DoctorSchedule() {
     }
     const schedules = days
       .filter((d) => d.enabled)
-      .flatMap((d) => d.windows.map((w) => ({ dayOfWeek: d.dayOfWeek, startTime: w.startTime, endTime: w.endTime, slotDurationMinutes: Number(w.slotDurationMinutes) })));
+      .flatMap((d) => d.windows.map((w) => ({ dayOfWeek: d.dayOfWeek, startTime: w.startTime, endTime: w.endTime, slotDurationMinutes: Number(w.slotDurationMinutes), branchId: w.branchId || null })));
+    // One person, one place: windows on a day may not overlap, whatever their branches.
+    const clash = overlappingWindows(schedules);
+    if (clash) {
+      const [a, b] = clash;
+      toast.error(`${DAY_NAMES[a.dayOfWeek]}: ${a.startTime}–${a.endTime} and ${b.startTime}–${b.endTime} overlap. A doctor can be at one place at a time.`);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -146,6 +170,12 @@ export default function DoctorSchedule() {
             <TextField select label="Slot" size="small" value={tpl.slotDurationMinutes} onChange={(e) => setTpl({ ...tpl, slotDurationMinutes: Number(e.target.value) })} sx={{ width: 110 }}>
               {SLOT_OPTIONS.map((m) => <MenuItem key={m} value={m}>{m} min</MenuItem>)}
             </TextField>
+            {pickBranch && (
+              <TextField select label="Branch" size="small" value={tpl.branchId} onChange={(e) => setTpl({ ...tpl, branchId: e.target.value })} sx={{ width: 170 }} SelectProps={{ displayEmpty: true }} InputLabelProps={{ shrink: true }}>
+                <MenuItem value="">Every branch</MenuItem>
+                {branchOptions.map((b) => <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>)}
+              </TextField>
+            )}
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
               <Button size="small" variant="contained" onClick={() => applyToDays([0, 1, 2, 3, 4, 5, 6], true)} sx={{ bgcolor: HOSP, textTransform: "none" }}>All days</Button>
               <Button size="small" variant="outlined" onClick={() => applyToDays(WEEKDAYS, true)} sx={{ textTransform: "none", borderColor: HOSP, color: HOSP }}>Mon–Fri</Button>
@@ -194,6 +224,13 @@ export default function DoctorSchedule() {
                           <TextField select label="Slot" size="small" value={w.slotDurationMinutes} onChange={(e) => setWin(dow, wIdx, "slotDurationMinutes", e.target.value)} sx={{ width: 105 }}>
                             {SLOT_OPTIONS.map((m) => <MenuItem key={m} value={m}>{m} min</MenuItem>)}
                           </TextField>
+                          {pickBranch && (
+                            <TextField select label="Branch" size="small" value={w.branchId} onChange={(e) => setWin(dow, wIdx, "branchId", e.target.value)} sx={{ width: 170 }}
+                              SelectProps={{ displayEmpty: true, renderValue: (v) => branchLabel(String(v)) }} InputLabelProps={{ shrink: true }}>
+                              <MenuItem value="">Every branch</MenuItem>
+                              {branchOptions.map((b) => <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>)}
+                            </TextField>
+                          )}
                           {d.windows.length > 1 && (
                             <Tooltip title="Remove this time block">
                               <IconButton size="small" onClick={() => removeWin(dow, wIdx)} sx={{ color: "text.secondary" }}><DeleteOutlineRounded fontSize="small" /></IconButton>

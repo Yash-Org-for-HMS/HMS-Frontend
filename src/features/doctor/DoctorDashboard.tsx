@@ -20,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { apiErrorText } from "@/utils/apiError";
 import AttentionList from "@/components/dashboard/AttentionList";
 import { DASHBOARD_POLL_MS } from "@/constants/intervals";
+import TodayAtBranches from "./TodayAtBranches";
 
 const DOCTOR_BLUE = BRAND.action;
 
@@ -60,6 +61,8 @@ export default function DoctorDashboard() {
         title={greetingFor(user?.lastName ? `Dr. ${user.lastName}` : null)}
         subtitle={`Here is your schedule for today at ${hospital?.name || "the hospital"}.`}
       />
+      {/* Where the doctor is today, when their hours name branches. */}
+      <TodayAtBranches />
 {/* KPI Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>

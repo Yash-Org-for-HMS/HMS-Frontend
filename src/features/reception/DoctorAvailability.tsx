@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import {
   EventAvailableRounded, BeachAccessRounded, SearchRounded,
-  ScheduleRounded, AddRounded, CloseRounded, BoltRounded, EventBusyRounded,
+  ScheduleRounded, AddRounded, CloseRounded, BoltRounded, EventBusyRounded, PlaceRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -39,6 +39,8 @@ import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
 const STATUS = {
   AVAILABLE: { label: "Available", color: SEMANTIC.success, icon: <EventAvailableRounded fontSize="small" /> },
   ON_LEAVE: { label: "On leave", color: SEMANTIC.danger, icon: <BeachAccessRounded fontSize="small" /> },
+  // Working today, but at another branch.
+  NOT_HERE: { label: "Elsewhere", color: NEUTRAL.muted, icon: <PlaceRounded fontSize="small" /> },
 } as const;
 
 /** Where the doctor is in their day, phrased for someone scanning the row. */
@@ -76,6 +78,10 @@ interface DoctorRow {
   schedule: { startTime: string; endTime: string; slotDurationMinutes: number } | null;
   /** Every window of the day (a split day has two or more); `schedule` is the first. */
   windows?: { startTime: string; endTime: string; slotDurationMinutes: number }[];
+  /** Where the doctor is instead, on a day they are not at this branch. */
+  elsewhere?: { branchName: string; startTime: string; endTime: string }[];
+  /** Parts of the day the doctor is away from this branch. */
+  partLeave?: { startTime: string; endTime: string; reason: string | null }[];
   usingDefaultHours?: boolean;
   onLeave: boolean;
   leaveReason: string | null;
@@ -84,7 +90,7 @@ interface DoctorRow {
   slotsBooked: number;
   nextFreeSlot: string | null;
   dayState: "BEFORE" | "IN_CLINIC" | "BREAK" | "FINISHED" | "PAST" | "OTHER_DAY";
-  status: "AVAILABLE" | "ON_LEAVE";
+  status: "AVAILABLE" | "ON_LEAVE" | "NOT_HERE";
 }
 
 export default function DoctorAvailability() {
@@ -127,7 +133,7 @@ export default function DoctorAvailability() {
     );
   }, [doctors, search, dept]);
 
-  const soonest = shown.find((d) => d.nextFreeSlot && !d.onLeave);
+  const soonest = shown.find((d) => d.nextFreeSlot && !d.onLeave && d.status !== "NOT_HERE");
 
   return (
     <Box sx={{ pb: 5 }}>
@@ -288,6 +294,9 @@ export default function DoctorAvailability() {
 function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; onBook: () => void }) {
   const s = STATUS[doc.status] ?? STATUS.AVAILABLE;
   const day = DAY_STATE[doc.dayState];
+  // Not bookable here today: on leave, or working at another branch.
+  const notHere = doc.status === "NOT_HERE" && !!doc.elsewhere?.length;
+  const away = doc.onLeave || notHere;
   const load = doc.slotsTotal > 0 ? Math.round((doc.slotsBooked / doc.slotsTotal) * 100) : 0;
   // Amber once the day is mostly gone, red when there is nothing left — the two
   // moments a receptionist needs to notice before promising a time.
@@ -324,6 +333,13 @@ function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; 
         <Typography variant="body2" sx={{ color: SEMANTIC.danger, fontWeight: 700 }}>
           On leave{doc.leaveReason ? ` — ${doc.leaveReason}` : ""}
         </Typography>
+      ) : notHere ? (
+        <Box>
+          <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 700 }}>Not at this branch on this day</Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            At {doc.elsewhere!.map((w) => `${w.branchName} ${fmtTime(w.startTime)} – ${fmtTime(w.endTime)}`).join(", ")}
+          </Typography>
+        </Box>
       ) : isPast ? (
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           {doc.slotsBooked} of {doc.slotsTotal} slots were booked
@@ -350,7 +366,7 @@ function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; 
 
       {/* How full the day is — the difference between "can fit one more" and
           "you would be overbooking them". */}
-      {!doc.onLeave && doc.slotsTotal > 0 && (
+      {!away && doc.slotsTotal > 0 && (
         <Box>
           <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
             <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
@@ -368,7 +384,7 @@ function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; 
       {/* Hours and fee are what you quote when booking, so they are irrelevant on
           a day the doctor is away — and pushing them to the bottom of an
           otherwise empty leave card left a hole where the load bar would be. */}
-      {!doc.onLeave && (
+      {!away && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: "auto" }}>
           <ScheduleRounded sx={{ fontSize: 16, color: "text.secondary" }} />
           <Box sx={{ minWidth: 0, flex: 1 }}>
@@ -386,6 +402,12 @@ function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; 
                 Default hours — no weekly schedule set
               </Typography>
             )}
+            {/* Part of the day off: those times are not offered. */}
+            {!!doc.partLeave?.length && (
+              <Typography variant="caption" sx={{ color: SEMANTIC.danger, fontWeight: 600, display: "block" }}>
+                Away {doc.partLeave.map((l) => `${fmtTime(l.startTime)} – ${fmtTime(l.endTime)}`).join(", ")}
+              </Typography>
+            )}
           </Box>
           {Number(doc.consultationFee) > 0 && (
             <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, whiteSpace: "nowrap" }}>
@@ -395,7 +417,7 @@ function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; 
         </Box>
       )}
 
-      {!doc.onLeave && !isPast && (
+      {!away && !isPast && (
         <Button
           fullWidth size="small" variant="outlined" startIcon={<AddRounded />} onClick={onBook}
           sx={{ textTransform: "none", fontWeight: 700, color: BRAND.action, borderColor: `${BRAND.action}55` }}

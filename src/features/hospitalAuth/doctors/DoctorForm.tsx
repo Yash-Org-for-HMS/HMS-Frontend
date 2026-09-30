@@ -13,6 +13,7 @@ import {
   Tabs,
   Tab,
   Chip,
+  Stack,
   Autocomplete
 } from "@mui/material";
 import { SaveRounded, PersonRounded, LocalHospitalRounded, AccountTreeRounded } from "@mui/icons-material";
@@ -35,6 +36,8 @@ export default function DoctorForm() {
   const toast = useToast();
   const [tabIndex, setTabIndex] = useState(0);
   const [branchIds, setBranchIds] = useState<string[]>([]);
+  // The doctor's fee at a branch, where it differs from their own. "" = their own.
+  const [branchFees, setBranchFees] = useState<Record<string, { consultationFee: string; ipdVisitCharge: string }>>({});
   // Other departments the doctor works in — what "specialization" used to say,
   // kept on the doctor's staff record. They can be booked under these too.
   const [additionalDepartmentIds, setAdditionalDepartmentIds] = useState<string[]>([]);
@@ -100,6 +103,11 @@ export default function DoctorForm() {
       experienceYears: d.experienceYears || "",
     });
     setBranchIds(Array.isArray(d.branchIds) ? d.branchIds : []);
+    const fees: Record<string, { consultationFee: string; ipdVisitCharge: string }> = {};
+    for (const [b, f] of Object.entries((d.branchFees ?? {}) as Record<string, { consultationFee: number | null; ipdVisitCharge: number | null }>)) {
+      fees[b] = { consultationFee: f.consultationFee == null ? "" : String(f.consultationFee), ipdVisitCharge: f.ipdVisitCharge == null ? "" : String(f.ipdVisitCharge) };
+    }
+    setBranchFees(fees);
     setAdditionalDepartmentIds(Array.isArray(d.additionalDepartmentIds) ? d.additionalDepartmentIds : []);
   }, [docData]);
 
@@ -123,6 +131,11 @@ export default function DoctorForm() {
   // Personal fields live on tab 0, professional on tab 1 — jump to the first
   // tab that has an error so the highlighted field is actually visible.
   const TAB0_FIELDS = ["firstName", "lastName", "email", "phone"] as const;
+
+  const feesBody = () => Object.fromEntries(branchIds.map((b) => {
+    const f = branchFees[b];
+    return [b, { consultationFee: f?.consultationFee ? Number(f.consultationFee) : null, ipdVisitCharge: f?.ipdVisitCharge ? Number(f.ipdVisitCharge) : null }];
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,20 +162,26 @@ export default function DoctorForm() {
       return;
     }
 
+    for (const b of branchIds) {
+      const f = branchFees[b];
+      for (const v of [f?.consultationFee, f?.ipdVisitCharge]) {
+        if (v && !(Number(v) >= 0)) { toast.error("A branch fee must be zero or a positive amount."); setTabIndex(2); return; }
+      }
+    }
     setLoading(true);
     const body = { ...formData, additionalDepartmentIds: additionalDepartmentIds.filter((x) => x !== formData.departmentId) };
     try {
       if (isEditing) {
         await axiosInstance.put(`/hospital/doctors/${id}`, body);
         // Persist branch availability (which branches this doctor can be booked at).
-        await axiosInstance.put(`/hospital/doctors/${id}/branches`, { branchIds });
+        await axiosInstance.put(`/hospital/doctors/${id}/branches`, { branchIds, fees: feesBody() });
         navigate("/hospital/doctors");
       } else {
         // Create the login + clinical profile in one step; show the one-time credentials.
         const res = await axiosInstance.post(`/hospital/doctors`, body);
         const newDoctorId = res.data?.data?.doctorId;
         if (newDoctorId && branchIds.length) {
-          await axiosInstance.put(`/hospital/doctors/${newDoctorId}/branches`, { branchIds });
+          await axiosInstance.put(`/hospital/doctors/${newDoctorId}/branches`, { branchIds, fees: feesBody() });
         }
         setCreatedCreds({
           email: formData.email,
@@ -421,6 +440,34 @@ export default function DoctorForm() {
                   ))}
                 </TextField>
               </Grid>
+              {/* A doctor may charge differently at each branch. Empty = their own fee. */}
+              {branchIds.length > 0 && (
+                <Grid size={{ xs: 12 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>Fees at each branch</Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
+                    Leave empty to charge the doctor's own fee (₹{formData.consultationFee || 0} consultation, ₹{formData.ipdVisitCharge || 0} ward visit).
+                  </Typography>
+                  <Stack spacing={1.5}>
+                    {branchIds.map((b) => {
+                      const name = branches.find((x) => x.branchId === b)?.branchName || "Branch";
+                      const f = branchFees[b] ?? { consultationFee: "", ipdVisitCharge: "" };
+                      const set = (k: "consultationFee" | "ipdVisitCharge", v: string) =>
+                        setBranchFees((prev) => ({ ...prev, [b]: { ...f, [k]: v.replace(/[^\d.]/g, "") } }));
+                      return (
+                        <Box key={b} sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
+                          <Typography sx={{ width: 180, fontWeight: 600 }} noWrap>{name}</Typography>
+                          <TextField id={`fee-consult-${b}`} size="small" label="Consultation ₹" value={f.consultationFee}
+                            placeholder={String(formData.consultationFee || "")} InputLabelProps={{ shrink: true }}
+                            onChange={(e) => set("consultationFee", e.target.value)} sx={{ width: 170 }} />
+                          <TextField id={`fee-visit-${b}`} size="small" label="Ward visit ₹" value={f.ipdVisitCharge}
+                            placeholder={String(formData.ipdVisitCharge || "")} InputLabelProps={{ shrink: true }}
+                            onChange={(e) => set("ipdVisitCharge", e.target.value)} sx={{ width: 170 }} />
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                </Grid>
+              )}
             </Grid>
           )}
 

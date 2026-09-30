@@ -10,10 +10,15 @@ import {
   Button,
   Grid,
   MenuItem,
+  Checkbox,
+  FormControlLabel,
+  Typography,
+  Stack,
   } from "@mui/material";
 import { SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import ErrorState from "@/components/ErrorState";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
@@ -46,6 +51,28 @@ export default function DepartmentForm() {
     opdHours: "",
   });
   const [errors, setErrors] = useState<Errors<typeof formData>>({});
+
+  // Which branches the department runs at. None ticked = every branch (how every
+  // department started). Each ticked branch can give its own location, extension
+  // and OPD hours; empty = the department's own.
+  const { availableBranches } = useHospitalAuth();
+  const multiBranch = availableBranches.length > 1;
+  type AtBranch = { location: string; phoneExtension: string; opdHours: string };
+  // null until the admin changes something: until then the saved list shows.
+  const [edited, setAtBranches] = useState<Record<string, AtBranch> | null>(null);
+  const { data: savedBranches } = useQuery<{ branchId: string; location: string | null; phoneExtension: string | null; opdHours: string | null }[]>({
+    queryKey: ["department-branches", id],
+    queryFn: async () => (await axiosInstance.get(`/hospital/departments/${id}/branches`)).data.data || [],
+    enabled: isEditing && multiBranch,
+  });
+  const atBranches: Record<string, AtBranch> = edited
+    ?? Object.fromEntries((savedBranches ?? []).map((b) => [b.branchId, { location: b.location ?? "", phoneExtension: b.phoneExtension ?? "", opdHours: b.opdHours ?? "" }]));
+  const toggleBranch = (b: string, on: boolean) => setAtBranches(() => {
+    const next = { ...atBranches };
+    if (on) next[b] = next[b] ?? { location: "", phoneExtension: "", opdHours: "" };
+    else delete next[b];
+    return next;
+  });
 
   const { data: departmentTypes = [] } = useQuery<DepartmentType[]>({
     queryKey: ["department-types"],
@@ -99,10 +126,17 @@ export default function DepartmentForm() {
 
     setLoading(true);
     try {
+      let departmentId = id;
       if (isEditing) {
         await axiosInstance.put(`/hospital/departments/${id}`, formData);
       } else {
-        await axiosInstance.post("/hospital/departments", formData);
+        const res = await axiosInstance.post("/hospital/departments", formData);
+        departmentId = res.data?.data?.departmentId;
+      }
+      if (multiBranch && departmentId) {
+        await axiosInstance.put(`/hospital/departments/${departmentId}/branches`, {
+          branches: Object.entries(atBranches).map(([branchId, v]) => ({ branchId, location: v.location || null, phoneExtension: v.phoneExtension || null, opdHours: v.opdHours || null })),
+        });
       }
       navigate("/hospital/departments");
     } catch (err: unknown) {
@@ -296,6 +330,41 @@ export default function DepartmentForm() {
                 }}
               />
             </Grid>
+
+            {multiBranch && (
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Runs at</Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
+                  {Object.keys(atBranches).length
+                    ? "Only the branches ticked offer this department for booking."
+                    : "Every branch — tick branches to run it at some only."}
+                </Typography>
+                <Stack spacing={1}>
+                  {availableBranches.map((b) => {
+                    const v = atBranches[b.branchId];
+                    const set = (k: keyof AtBranch) => (e: React.ChangeEvent<HTMLInputElement>) =>
+                      setAtBranches({ ...atBranches, [b.branchId]: { ...atBranches[b.branchId], [k]: e.target.value } });
+                    return (
+                      <Box key={b.branchId} sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
+                        <FormControlLabel sx={{ width: 200, mr: 0 }}
+                          control={<Checkbox id={`dept-branch-${b.branchId}`} checked={!!v} onChange={(e) => toggleBranch(b.branchId, e.target.checked)} />}
+                          label={b.branchName} />
+                        {v && (
+                          <>
+                            <TextField id={`dept-loc-${b.branchId}`} size="small" label="Location here" value={v.location} onChange={set("location")}
+                              placeholder={formData.location || undefined} InputLabelProps={{ shrink: true }} sx={{ width: 200 }} />
+                            <TextField id={`dept-ext-${b.branchId}`} size="small" label="Extension" value={v.phoneExtension} onChange={set("phoneExtension")}
+                              placeholder={formData.phoneExtension || undefined} InputLabelProps={{ shrink: true }} sx={{ width: 120 }} />
+                            <TextField id={`dept-opd-${b.branchId}`} size="small" label="OPD hours here" value={v.opdHours} onChange={set("opdHours")}
+                              placeholder={formData.opdHours || undefined} InputLabelProps={{ shrink: true }} sx={{ minWidth: 220, flex: 1 }} />
+                          </>
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </Grid>
+            )}
 
             <Grid size={{ xs: 12 }}>
               <TextField

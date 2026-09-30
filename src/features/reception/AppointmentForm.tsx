@@ -15,11 +15,12 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import FormSkeleton from "@/components/skeletons/FormSkeleton";
 import ErrorState from "@/components/ErrorState";
 import BillingModal from "./BillingModal";
-import { windowsFor, slotsOf, isBusy, type Busy } from "./doctorSlots";
+import { windowsFor, slotsOf, isBusy, elsewhereOn, type Busy } from "./doctorSlots";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import { SEMANTIC } from "@/styles/accents";
 import SearchableSelect from "@/components/form/SearchableSelect";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 
 export interface AppointmentFormProps {
   isEmbedded?: boolean;
@@ -108,6 +109,9 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
 
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [allSlotsPassedToday, setAllSlotsPassedToday] = useState(false);
+  // "Main Branch 10:00 AM – 2:00 PM" when the doctor is at another branch that day.
+  const [elsewhereNote, setElsewhereNote] = useState<string | null>(null);
+  const { activeBranchId, availableBranches } = useHospitalAuth();
 
   // Ticks every 30s so today's slot list keeps dropping times as they pass
   // (e.g. a 9:00 AM slot disappears once it's afternoon) without needing a
@@ -188,6 +192,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     // No doctor/date, or the doctor is on leave that day -> no bookable slots.
     if (!formData.doctorId || !formData.appointmentDate || availability?.onLeave) {
       setAvailableSlots([]);
+      setElsewhereNote(null);
       return;
     }
 
@@ -200,7 +205,14 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     // which comes from the server so the Doctor Availability page and this form
     // cannot disagree about whether a doctor can be seen.
     const def = dropdowns?.defaultHours ?? { startTime: "09:00", endTime: "19:30", slotDurationMinutes: 30 };
-    const daySlots = slotsOf(windowsFor(schedules, dayOfWeek, def));
+    // The branch the booking is at: the one being worked at, or — rescheduling —
+    // the appointment's own (it stays at its branch).
+    const bookingBranch = (id ? apptData?.branchId : null) ?? activeBranchId;
+    const hereWindows = windowsFor(schedules, dayOfWeek, def, bookingBranch);
+    const away = hereWindows.length ? [] : elsewhereOn(schedules, dayOfWeek, bookingBranch);
+    const branchName = (b?: string | null) => availableBranches.find((x) => x.branchId === b)?.branchName ?? "another branch";
+    setElsewhereNote(away.length ? away.map((w) => `${branchName(w.branchId)} ${fmt12h(w.startTime)} – ${fmt12h(w.endTime)}`).join(", ") : null);
+    const daySlots = slotsOf(hereWindows);
     const lengthOf = new Map(daySlots.map((s) => [s.time, s.minutes]));
     let rawSlots = daySlots.map((s) => s.time);
 
@@ -229,7 +241,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     setAvailableSlots(openSlots);
     // "Today ran out" = the day had slots, but none are left after now/booked.
     setAllSlotsPassedToday(isToday && scheduledCount > 0 && openSlots.length === 0);
-  }, [formData.doctorId, formData.appointmentDate, dropdowns, availability, nowTick]);
+  }, [formData.doctorId, formData.appointmentDate, dropdowns, availability, nowTick, activeBranchId, availableBranches, apptData, id]);
 
   // Check-in follows the date, and it is not merely a default: the toggle is
   // hidden for any date but today (see the render), so leaving a stale `true`
@@ -444,7 +456,9 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
                 availability?.onLeave
                   ? "Doctor is on leave on this date — pick another date or doctor."
                   : (formData.doctorId && formData.appointmentDate && availableSlots.length === 0
-                      ? (allSlotsPassedToday
+                      ? (elsewhereNote
+                          ? `The doctor is not at this branch on this day — they are at ${elsewhereNote}.`
+                          : allSlotsPassedToday
                           ? "Today's remaining slots are all past or booked — pick a later time today or another date."
                           : "No open slots for this doctor on this date.")
                       : "")
