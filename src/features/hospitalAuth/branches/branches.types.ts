@@ -7,6 +7,8 @@ export interface BranchSettings {
   opdStartTime: string | null;
   opdEndTime: string | null;
   opdSlotMinutes: number | null;
+  /** The branch's own bill-number prefix; null = taken from its code. */
+  documentPrefix: string | null;
 }
 
 export interface BranchRow {
@@ -27,6 +29,10 @@ export interface BranchRow {
   logoUrl: string | null;
   licensedBeds: number | null;
   settings: BranchSettings | null;
+  /** The prefix its bills are numbered with now (its own, or from its code). */
+  documentPrefix: string;
+  /** What its next bill number looks like, e.g. MAIN/2627/0001. */
+  sampleInvoiceNumber: string;
 }
 
 export interface HospitalDefaults {

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Alert, AlertTitle, Box, Button, Chip, Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, TextField, Typography, useTheme, alpha, Tabs, Tab,
+  TableHead, TableRow, TextField, Typography, useTheme, alpha, Tabs, Tab, MenuItem,
 } from "@mui/material";
 import { DownloadRounded, ReceiptLongRounded } from "@mui/icons-material";
 import { Link as RouterLink } from "react-router-dom";
@@ -23,6 +23,8 @@ type RegisterRow = {
 };
 type GstData = {
   from: string; to: string; gstin: string | null; invoiceCount: number; registerTruncated: boolean;
+  /** Each GST registration the period's bills fall under (a branch in another state has its own). */
+  registrations?: { gstin: string | null; branches: string[]; invoiceCount: number; taxAmount: number }[];
   slabs: Slab[];
   totals: { taxableAmount: number; taxAmount: number; cgst: number; sgst: number; igst: number };
   exempt: { amount: number };
@@ -78,11 +80,13 @@ export default function GstReport() {
   const [{ from, to }, setRange] = useState(monthBounds);
   /** 0 = the return, 1 = the catalogue it is computed from. */
   const [view, setView] = useState(0);
+  /** "" = every registration in scope; a GSTIN = that return only. */
+  const [gstin, setGstin] = useState("");
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["gst-report", from, to],
+    queryKey: ["gst-report", from, to, gstin],
     queryFn: async () =>
-      (await axiosInstance.get(`/billing/gst-report?from=${from}&to=${to}`)).data.data as GstData,
+      (await axiosInstance.get("/billing/gst-report", { params: { from, to, ...(gstin ? { gstin } : {}) } })).data.data as GstData,
   });
 
   const r = data?.readiness;
@@ -157,6 +161,16 @@ export default function GstReport() {
           onChange={(e) => setRange((x) => ({ ...x, from: e.target.value }))} InputLabelProps={{ shrink: true }} />
         <TextField type="date" label="To" size="small" value={to}
           onChange={(e) => setRange((x) => ({ ...x, to: e.target.value }))} InputLabelProps={{ shrink: true }} />
+        {/* One return per GSTIN: with more than one registration in scope, pick which to file. */}
+        {(data?.registrations?.length ?? 0) > 1 || gstin ? (
+          <TextField id="gst-registration" select size="small" label="GST registration" value={gstin} onChange={(e) => setGstin(e.target.value)}
+            SelectProps={{ displayEmpty: true }} InputLabelProps={{ shrink: true }} sx={{ minWidth: 260 }}>
+            <MenuItem value="">All registrations (not a single return)</MenuItem>
+            {(data?.registrations ?? []).filter((x) => x.gstin).map((x) => (
+              <MenuItem key={x.gstin!} value={x.gstin!}>{x.gstin} · {x.branches.join(", ")}</MenuItem>
+            ))}
+          </TextField>
+        ) : null}
         {data?.gstin && <Chip size="small" label={`GSTIN ${data.gstin}`} sx={{ fontWeight: 700 }} />}
       </Box>
 

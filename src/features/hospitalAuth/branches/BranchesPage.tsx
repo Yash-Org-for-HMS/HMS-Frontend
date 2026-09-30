@@ -104,6 +104,7 @@ export default function BranchesPage() {
                   {line("GSTIN", b.gstNumber, hospital.gstNumber)}
                   {line("Reg. no.", b.registrationNumber, hospital.registrationNumber)}
                   {b.licensedBeds != null && line("Licensed beds", String(b.licensedBeds), null)}
+                  {line("Bills", `${b.sampleInvoiceNumber} onward`, null)}
                 </Stack>
                 <Stack spacing={0.5}>
                   <Stack direction="row" spacing={0.75} alignItems="center"><TuneRounded fontSize="small" color="action" /><Typography variant="overline" sx={{ lineHeight: 1.5 }}>Runs differently</Typography></Stack>

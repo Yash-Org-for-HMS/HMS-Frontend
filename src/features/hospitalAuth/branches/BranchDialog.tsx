@@ -52,6 +52,8 @@ export default function BranchDialog({ branch, hospital, onClose, onSaved }: Pro
     start: s?.opdStartTime ?? def.startTime, end: s?.opdEndTime ?? def.endTime, slot: String(s?.opdSlotMinutes ?? def.slotDurationMinutes),
   });
   const [logoUrl, setLogoUrl] = useState(branch.logoUrl);
+  // "" = the prefix taken from the branch code (shown as the placeholder).
+  const [prefix, setPrefix] = useState(s?.documentPrefix ?? "");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -80,6 +82,7 @@ export default function BranchDialog({ branch, hospital, onClose, onSaved }: Pro
         vitalsCollector: vitals || null,
         billingStrategy: labBilling || null,
         refundApprovalThreshold: refundLimit.trim() === "" ? null : Number(refundLimit),
+        documentPrefix: prefix.trim() || null,
         ...(ownOpd
           ? { opdStartTime: opd.start, opdEndTime: opd.end, opdSlotMinutes: Number(opd.slot) }
           : { opdStartTime: null, opdEndTime: null, opdSlotMinutes: null }),
@@ -153,6 +156,12 @@ export default function BranchDialog({ branch, hospital, onClose, onSaved }: Pro
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>{field("gstNumber", "GSTIN", hospital.gstNumber, { inputProps: { maxLength: 15, style: { textTransform: "uppercase" } } })}</Grid>
             <Grid size={{ xs: 12, md: 4 }}>{field("registrationNumber", "Registration / licence no.", hospital.registrationNumber)}</Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField id="branch-prefix" label="Bill number prefix" fullWidth size="small" value={prefix}
+                onChange={(e) => setPrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4))}
+                placeholder={branch.documentPrefix} InputLabelProps={{ shrink: true }}
+                helperText={`Bills: ${(prefix || branch.documentPrefix)}${branch.sampleInvoiceNumber.slice(branch.documentPrefix.length)}`} />
+            </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField id="branch-licensedBeds" label="Licensed beds" fullWidth size="small" value={licensedBeds} InputLabelProps={{ shrink: true }}
                 onChange={(e) => setLicensedBeds(e.target.value.replace(/\D/g, ""))} helperText="As on the establishment licence" />
