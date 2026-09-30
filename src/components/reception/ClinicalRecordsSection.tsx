@@ -17,6 +17,7 @@ import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { assetUrl } from "@/utils/assetUrl";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
+import { useLetterhead, letterheadAddress } from "@/hooks/useLetterhead";
 
 type DocKind = "prescription" | "lab" | "radiology";
 
@@ -24,6 +25,7 @@ const ACCENT = BRAND.action;
 
 export default function ClinicalRecordsSection({ patientId }: { patientId: string }) {
   const { hospital } = useHospitalAuth();
+  const letterhead = useLetterhead();
   const [tab, setTab] = useState(0);
   const [preview, setPreview] = useState<{ kind: DocKind; doc: any } | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
@@ -101,7 +103,9 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
         <DialogContent dividers>
           <Box ref={printRef}>
             <Box sx={{ textAlign: "center", borderBottom: "2px solid #0891b2", pb: 1.5, mb: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: BRAND.actionDark }}>{hospital?.name || "Hospital"}</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: BRAND.actionDark }}>{letterhead?.hospitalName || hospital?.name || "Hospital"}</Typography>
+              {letterhead?.branchName && <Typography variant="body2" sx={{ fontWeight: 700 }}>{letterhead.branchName}</Typography>}
+              {letterheadAddress(letterhead) && <Typography variant="caption" sx={{ display: "block", color: "#6b7280" }}>{letterheadAddress(letterhead)}</Typography>}
               <Typography variant="caption" sx={{ color: "#6b7280" }}>
                 {data?.patient?.name} • UHID {data?.patient?.uhid}
               </Typography>

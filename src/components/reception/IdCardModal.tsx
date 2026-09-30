@@ -7,6 +7,7 @@ import { PrintRounded, CloseRounded } from "@mui/icons-material";
 import JsBarcode from "jsbarcode";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { NEUTRAL } from "@/styles/accents";
+import { useLetterhead } from "@/hooks/useLetterhead";
 
 export interface IdCardPatient {
   uhidNumber: string;
@@ -33,6 +34,7 @@ interface IdCardModalProps {
  */
 export default function IdCardModal({ open, onClose, patient }: IdCardModalProps) {
   const { hospital } = useHospitalAuth();
+  const letterhead = useLetterhead();
   const cardRef = useRef<HTMLDivElement>(null);
   const barcodeRef = useRef<SVGSVGElement>(null);
 
@@ -91,7 +93,8 @@ export default function IdCardModal({ open, onClose, patient }: IdCardModalProps
             regardless of the app's CSS. Fixed width for consistent print size. */}
         <Box ref={cardRef} sx={{ width: 340 }} style={{ background: "#fff", color: NEUTRAL.textPrimary, borderRadius: "12px", border: "1px solid #e5e7eb", overflow: "hidden" }}>
           <div style={{ background: "linear-gradient(135deg,#0891b2,#06b6d4)", color: "#fff", padding: "12px 16px" }}>
-            <div style={{ fontWeight: 800, fontSize: "15px", letterSpacing: "0.3px" }}>{hospital?.name || "Hospital"}</div>
+            <div style={{ fontWeight: 800, fontSize: "15px", letterSpacing: "0.3px" }}>{letterhead?.hospitalName || hospital?.name || "Hospital"}</div>
+            {letterhead?.branchName && <div style={{ fontSize: "11px", fontWeight: 700, opacity: 0.95 }}>{letterhead.branchName}</div>}
             <div style={{ fontSize: "10px", opacity: 0.9, letterSpacing: "2px", textTransform: "uppercase" }}>Patient Identification Card</div>
           </div>
           <div style={{ padding: "16px" }}>

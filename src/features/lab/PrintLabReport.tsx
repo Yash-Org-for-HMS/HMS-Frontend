@@ -94,6 +94,9 @@ export default function PrintLabReport() {
             <Typography variant="h4" sx={{ fontWeight: 800, color: "primary.main", m: 0 }}>
               {order.hospital?.hospitalName || "Hospital Name"}
             </Typography>
+            {order.hospital?.branchName && (
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.primary" }}>{order.hospital.branchName}</Typography>
+            )}
             <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
               {order.hospital?.addressLine1} {order.hospital?.addressLine2 ? `, ${order.hospital.addressLine2}` : ""}
             </Typography>

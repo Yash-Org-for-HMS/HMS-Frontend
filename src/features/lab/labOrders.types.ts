@@ -100,6 +100,8 @@ export interface ReportHospitalRef {
   officialPhone?: string | null;
   officialEmail?: string | null;
   logoUrl?: string | null;
+  /** Sent only when the hospital has more than one branch. */
+  branchName?: string | null;
 }
 
 export interface LabOrderDetail extends LabOrderRow {

@@ -34,6 +34,10 @@ export interface BillHospital {
   officialEmail?: string | null;
   gstNumber?: string | null;
   logoUrl?: string | null;
+  /** The branch the document was made at — sent only when the hospital has more
+   *  than one. The address, contacts and GSTIN above are already that branch's
+   *  where it has its own. */
+  branchName?: string | null;
 }
 
 export interface BillMetaItem {
@@ -229,6 +233,7 @@ export function BillLetterhead({ hospital, variant = "receipt" }: { hospital?: B
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: 0.2 }}>{hospital?.hospitalName || "Hospital"}</div>
           {hospital?.legalBusinessName && <div style={{ fontSize: 11, color: SUB }}>{hospital.legalBusinessName}</div>}
+          {hospital?.branchName && <div style={{ fontSize: 12, fontWeight: 700, marginTop: 2 }}>{hospital.branchName}</div>}
           {addressLine && <div style={{ fontSize: 11, color: SUB, marginTop: 2 }}>{addressLine}</div>}
           {contactLine && <div style={{ fontSize: 11, color: SUB }}>{contactLine}</div>}
         </div>

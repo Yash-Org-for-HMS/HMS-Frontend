@@ -59,6 +59,7 @@ const HospitalChangePassword = lazy(() => import("@/features/hospitalAuth/Hospit
 const HospitalDashboard = lazy(() => import("@/features/hospitalAuth/HospitalDashboard"));
 const HospitalProfile = lazy(() => import("@/features/hospitalAuth/HospitalProfile"));
 const HospitalSettings = lazy(() => import("@/features/hospitalAuth/HospitalSettings"));
+const BranchesPage = lazy(() => import("@/features/hospitalAuth/branches/BranchesPage"));
 const MySubscription = lazy(() => import("@/features/hospitalAuth/MySubscription"));
 const DepartmentsList = lazy(() => import("@/features/hospitalAuth/departments/DepartmentsList"));
 const DepartmentForm = lazy(() => import("@/features/hospitalAuth/departments/DepartmentForm"));
@@ -275,6 +276,7 @@ function App() {
             <Route path="/hospital/dashboard" element={el(HospitalDashboard)} />
             <Route path="/hospital/profile" element={el(HospitalProfile)} />
             <Route path="/hospital/settings" element={el(HospitalSettings)} />
+            <Route path="/hospital/branches" element={el(BranchesPage)} />
             <Route path="/hospital/subscription" element={el(MySubscription)} />
             <Route path="/hospital/departments" element={el(DepartmentsList)} />
             <Route path="/hospital/departments/new" element={el(DepartmentForm)} />

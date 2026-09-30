@@ -93,7 +93,10 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
     queryKey: ['hospitalSettings', 'vitalsCollector'],
     queryFn: async () => {
       const res = await axiosInstance.get("/hospital/settings");
-      return res.data?.data?.settings?.vitalsCollector || "RECEPTIONIST";
+      // What is in force at this branch (a branch can have nurses record vitals
+      // while the rest of the hospital leaves it to reception).
+      const d = res.data?.data;
+      return d?.effective?.vitalsCollector || d?.settings?.vitalsCollector || "RECEPTIONIST";
     }
   });
 

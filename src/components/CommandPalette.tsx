@@ -62,6 +62,7 @@ const STATIC_ROUTES = [
   { name: "Departments", path: "/hospital/departments", icon: <ApartmentRounded />, section: "Admin" },
   { name: "Doctors", path: "/hospital/doctors", icon: <MedicalServicesRounded />, section: "Admin" },
   { name: "Hospital Settings", path: "/hospital/settings", icon: <DashboardRounded />, section: "Admin" },
+  { name: "Branches", path: "/hospital/branches", icon: <DashboardRounded />, section: "Admin" },
 ];
 
 // Everyday aliases so common terms find the right destination (keyed by path so

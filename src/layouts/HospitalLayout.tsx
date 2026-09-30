@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon, DashboardRounded, LocalHospitalRounded, PeopleRounded,
-  CalendarTodayRounded, SettingsRounded, DomainRounded, BadgeRounded, CardMembershipRounded, AccountTreeRounded,
+  CalendarTodayRounded, SettingsRounded, ApartmentRounded, DomainRounded, BadgeRounded, CardMembershipRounded, AccountTreeRounded,
   WidgetsRounded, MedicalServicesRounded, DatasetRounded, EventNoteRounded,
   DynamicFormRounded, SecurityRounded, AccountBalanceRounded,
   AssessmentRounded, HotelRounded, MonitorHeartRounded, VaccinesRounded,
@@ -63,6 +63,7 @@ export default function HospitalLayout() {
     // ── Set up, in this order ──
     { text: "Hospital Profile", icon: <LocalHospitalRounded />, path: "/hospital/profile", adminOnly: true, section: "Set up — in this order" },
     { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", adminOnly: true, section: "Set up — in this order" },
+    { text: "Branches", icon: <ApartmentRounded />, path: "/hospital/branches", adminOnly: true, section: "Set up — in this order" },
     { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", adminOnly: true, section: "Set up — in this order" },
     { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", adminOnly: true, section: "Set up — in this order" },
     { text: "Schedule of Charges", icon: <ReceiptLongRounded />, path: "/hospital/soc", adminOnly: true, section: "Set up — in this order" },

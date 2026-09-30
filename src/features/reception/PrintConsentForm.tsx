@@ -32,6 +32,8 @@ interface ConsentPrintData {
   hospital?: {
     hospitalName?: string | null; addressLine1?: string | null; addressLine2?: string | null;
     city?: string | null; officialPhone?: string | null; officialEmail?: string | null; logoUrl?: string | null;
+    /** Sent only when the hospital has more than one branch. */
+    branchName?: string | null;
   } | null;
   responses: ConsentResponse[];
 }
@@ -132,6 +134,7 @@ export default function PrintConsentForm() {
         {h?.logoUrl && <Box component="img" src={assetUrl(h.logoUrl)} alt="" sx={{ height: 52, objectFit: "contain" }} />}
         <Box sx={{ flex: 1 }}>
           <Typography sx={{ fontSize: "16pt", fontWeight: 700 }}>{h?.hospitalName || "Hospital"}</Typography>
+          {h?.branchName && <Typography sx={{ fontSize: "10.5pt", fontWeight: 700 }}>{h.branchName}</Typography>}
           <Typography sx={{ fontSize: "9.5pt", color: "#555" }}>
             {[h?.addressLine1, h?.addressLine2, h?.city].filter(Boolean).join(", ")}
           </Typography>
