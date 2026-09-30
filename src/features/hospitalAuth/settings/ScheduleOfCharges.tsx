@@ -11,7 +11,7 @@ import {
 import {
   AddRounded, EditRounded, DeleteRounded, SearchRounded, ReceiptLongRounded,
   ExpandMoreRounded, ChevronRightRounded, MeetingRoomRounded, TuneRounded,
-  UnfoldMoreRounded, UnfoldLessRounded, HistoryRounded, ScienceRounded,
+  UnfoldMoreRounded, UnfoldLessRounded, HistoryRounded, ScienceRounded, ApartmentRounded,
   ArrowUpwardRounded, ArrowDownwardRounded, CloseRounded, LibraryAddRounded,
 } from "@mui/icons-material";
 import type { CatalogEntry } from "./socCatalog";
@@ -25,6 +25,8 @@ async function loadSocCatalog(): Promise<Record<string, CatalogEntry[]>> {
 }
 import { MenuItem, Menu } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import BranchPricesDialog from "./BranchPricesDialog";
 import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
@@ -41,7 +43,9 @@ const inr = formatINRAuto;
 
 type Category = { chargeCategoryId: string; categoryName: string; categoryCode: string; parentId: string | null; description: string | null; iconName: string | null; sortOrder: number; isActive: boolean; _count?: { items: number } };
 type RoomPrice = { roomClassId: string; price: number | string };
-type Item = { chargeItemId: string; chargeCategoryId: string; itemName: string; itemCode: string | null; price: number | string; taxPercent: number | string; hsnCode?: string | null; unit: string | null; isActive: boolean; itemType?: string; roomPrices?: RoomPrice[] };
+type Item = { chargeItemId: string; chargeCategoryId: string; itemName: string; itemCode: string | null; price: number | string; taxPercent: number | string; hsnCode?: string | null; unit: string | null; isActive: boolean; itemType?: string; roomPrices?: RoomPrice[];
+  /** Prices a branch charges instead of the group's (roomClassId "" = its base). */
+  branchPrices?: { branchId: string; roomClassId: string; price: number | string }[] };
 type RoomClass = { roomClassId: string; name: string; code: string; sortOrder: number; isActive: boolean };
 
 // Hospital's Schedule of Charges (rate card): categories on the left (seeded from
@@ -57,6 +61,10 @@ export default function ScheduleOfCharges() {
   const [catDialog, setCatDialog] = useState<{ mode: "add" | "edit"; cat?: Category; parentId?: string | null } | null>(null);
   const [itemDialog, setItemDialog] = useState<{ mode: "add" | "edit"; item?: Item } | null>(null);
   const [historyItem, setHistoryItem] = useState<Item | null>(null);
+  // Per-branch prices exist only where there is more than one branch to price.
+  const { availableBranches } = useHospitalAuth();
+  const multiBranch = availableBranches.length > 1;
+  const [branchPriceItem, setBranchPriceItem] = useState<Item | null>(null);
   const [structureItem, setStructureItem] = useState<Item | null>(null);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [roomDialogOpen, setRoomDialogOpen] = useState(false);
@@ -351,12 +359,18 @@ export default function ScheduleOfCharges() {
                       return (
                         <TableRow key={it.chargeItemId} hover>
                           <TableCell>
-                            <Typography sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
+                            {/* A div, not a paragraph: the type chips inside it are divs. */}
+                            <Typography component="div" sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
                               {it.itemName}
                               {it.itemType === "RADIOLOGY" && <Chip label="Radiology" size="small" sx={{ ml: 0.75, height: 17, fontSize: "0.625rem", fontWeight: 700, bgcolor: `${ACCENT}14`, color: ACCENT }} />}
                               {it.itemType === "LAB" && <Chip label="Lab" size="small" sx={{ ml: 0.75, height: 17, fontSize: "0.625rem", fontWeight: 700, bgcolor: "rgba(16,185,129,0.14)", color: "success.main" }} />}
                             </Typography>
                             {meta && <Typography sx={{ fontSize: "0.75rem", color: "text.secondary" }}>{meta}</Typography>}
+                            {multiBranch && !!it.branchPrices?.length && (
+                              <Typography sx={{ fontSize: "0.72rem", color: ACCENT, fontWeight: 600 }}>
+                                Own price at {new Set(it.branchPrices.map((b) => b.branchId)).size} branch{new Set(it.branchPrices.map((b) => b.branchId)).size === 1 ? "" : "es"}
+                              </Typography>
+                            )}
                           </TableCell>
                           <TableCell align="right" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>{inr(Number(it.price))}</TableCell>
                           {activeRoomClasses.map((rc, i) => {
@@ -374,6 +388,7 @@ export default function ScheduleOfCharges() {
                           <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                             {it.itemType === "LAB" && <Tooltip title="Lab structure (single / profile parameters)"><IconButton size="small" onClick={() => setStructureItem(it)}><ScienceRounded fontSize="small" sx={{ color: "success.main" }} /></IconButton></Tooltip>}
                             <Tooltip title="Price history"><IconButton size="small" onClick={() => setHistoryItem(it)}><HistoryRounded fontSize="small" /></IconButton></Tooltip>
+                            {multiBranch && <Tooltip title="Prices at each branch"><IconButton size="small" onClick={() => setBranchPriceItem(it)}><ApartmentRounded fontSize="small" /></IconButton></Tooltip>}
                             <Tooltip title="Edit"><IconButton size="small" onClick={() => setItemDialog({ mode: "edit", item: it })}><EditRounded fontSize="small" /></IconButton></Tooltip>
                             <Tooltip title="Delete"><IconButton size="small" onClick={() => deleteItem(it)}><DeleteRounded fontSize="small" sx={{ color: "error.main" }} /></IconButton></Tooltip>
                           </TableCell>
@@ -416,6 +431,10 @@ export default function ScheduleOfCharges() {
       )}
       {historyItem && (
         <PriceHistoryDialog item={historyItem} onClose={() => setHistoryItem(null)} />
+      )}
+      {branchPriceItem && (
+        <BranchPricesDialog chargeItemId={branchPriceItem.chargeItemId} itemName={branchPriceItem.itemName}
+          onClose={() => setBranchPriceItem(null)} onSaved={() => { setBranchPriceItem(null); refetchItems(); }} />
       )}
       {structureItem && (
         <LabStructureDialog chargeItemId={structureItem.chargeItemId} itemName={structureItem.itemName} onClose={() => setStructureItem(null)} />

@@ -3,9 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Table, TableHead,
   TableRow, TableCell, TableBody, TableContainer, InputAdornment, Alert, Collapse, Chip,
+  MenuItem,
 } from "@mui/material";
 import { PaymentsRounded, HistoryRounded, AddRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useToast } from "@/providers/ToastContext";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
@@ -31,6 +33,8 @@ interface TariffsResponse {
   current: Tariff[];
   upcoming: Tariff[];
   history: Tariff[];
+  /** For a branch: the group's tariffs in force, which it follows where it has none. */
+  groupCurrent?: Tariff[];
 }
 type Cell = { rent: string; nursing: string };
 const key = (rc: string, p: string) => `${rc}|${p}`;
@@ -45,11 +49,16 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
   const [edits, setEdits] = useState<Record<string, Cell>>({});
   const [showHistory, setShowHistory] = useState(false);
   const [newClass, setNewClass] = useState("");
+  // "" = the group's tariffs (every branch without its own); else one branch's.
+  const { availableBranches, isOrgAdmin, activeBranchId } = useHospitalAuth();
+  const multiBranch = availableBranches.length > 1;
+  const [branchId, setBranchId] = useState<string>(isOrgAdmin ? "" : activeBranchId ?? "");
 
   const { data, isLoading, refetch } = useQuery<TariffsResponse>({
-    queryKey: ["bed-tariffs"],
-    queryFn: async () => (await axiosInstance.get("/ipd/bed-tariffs")).data.data,
+    queryKey: ["bed-tariffs", branchId],
+    queryFn: async () => (await axiosInstance.get("/ipd/bed-tariffs", { params: branchId ? { branchId } : {} })).data.data,
   });
+  const group = new Map((data?.groupCurrent ?? []).map((t) => [key(t.roomClassId, t.payerType), t]));
   const current = new Map((data?.current ?? []).map((t) => [key(t.roomClassId, t.payerType), t]));
   const upcoming = new Map((data?.upcoming ?? []).map((t) => [key(t.roomClassId, t.payerType), t]));
   const cellOf = (k: string): Cell => {
@@ -75,7 +84,7 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
   const save = async () => {
     setSaving(true);
     try {
-      const r = await axiosInstance.put("/ipd/bed-tariffs", { effectiveFrom: from, rows: changed });
+      const r = await axiosInstance.put("/ipd/bed-tariffs", { effectiveFrom: from, rows: changed, ...(branchId ? { branchId } : {}) });
       toast.success(r.data.message ?? "Tariffs saved");
       onDone();
     } catch (e) {
@@ -107,8 +116,17 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
       <DialogContent dividers>
         {isLoading || !data ? <ListSkeleton rows={4} /> : (
           <>
+            {multiBranch && (
+              <TextField id="tariff-scope" select size="small" label="Tariffs for" value={branchId} sx={{ mb: 2, minWidth: 280 }}
+                onChange={(e) => { setBranchId(e.target.value); setEdits({}); }} SelectProps={{ displayEmpty: true }} InputLabelProps={{ shrink: true }}>
+                {isOrgAdmin && <MenuItem value="">The group (every branch without its own)</MenuItem>}
+                {availableBranches.map((b) => <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>)}
+              </TextField>
+            )}
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-              Each stay is billed at the tariff for its bed's room class and its payer type, day by day. Leave a payer blank to bill it at the cash tariff.
+              {branchId
+                ? "This branch's own tariffs. A blank cell follows the group's tariff, shown in grey."
+                : "Each stay is billed at the tariff for its bed's room class and its payer type, day by day. Leave a payer blank to bill it at the cash tariff."}
             </Typography>
             {data.roomClasses.length === 0 ? (
               <Alert severity="info" sx={{ mb: 2 }}>No room classes switched on yet. Add one below, or switch on a standard bed category in Schedule of Charges → Room classes.</Alert>
@@ -135,7 +153,7 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
                           return (
                             <TableCell key={p.code} sx={{ verticalAlign: "top" }}>
                               <Box sx={{ display: "flex", gap: 1 }}>
-                                <TextField size="small" type="number" placeholder={p.code === "CASH" ? "Rent" : "cash"} value={c.rent} onChange={(e) => set("rent", e.target.value)}
+                                <TextField size="small" type="number" placeholder={group.get(k) ? String(Number(group.get(k)!.roomRent)) : p.code === "CASH" ? "Rent" : "cash"} value={c.rent} onChange={(e) => set("rent", e.target.value)}
                                   slotProps={{ input: { startAdornment: <InputAdornment position="start">₹</InputAdornment> }, htmlInput: { min: 0, "aria-label": `${rc.name} ${p.label} rent` } }} sx={{ width: 120 }} />
                                 <TextField size="small" type="number" placeholder="Nursing" value={c.nursing} onChange={(e) => set("nursing", e.target.value)}
                                   slotProps={{ htmlInput: { min: 0, "aria-label": `${rc.name} ${p.label} nursing` } }} sx={{ width: 110 }} />
