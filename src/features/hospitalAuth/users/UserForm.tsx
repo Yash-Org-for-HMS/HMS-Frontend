@@ -88,6 +88,7 @@ export default function UserForm() {
   const roles: Role[] = dd?.roles ?? [];
   const departments: Department[] = dd?.departments ?? [];
   const branches: Branch[] = dd?.branches ?? [];
+  const multiBranch = branches.length > 1;
   const { isModuleEnabled } = useEnabledModules();
 
   // Credential dialog state
@@ -128,6 +129,10 @@ export default function UserForm() {
   const [errors, setErrors] = useState<Errors<typeof formData>>({});
   // Roles beside the main one, each at one facility or all (15_System_Roles).
   const [extraRoles, setExtraRoles] = useState<ExtraRoleRow[]>([]);
+  // The branches they also work at, beside the home branch (multi-branch plan,
+  // phase 5) — what they may switch between. Only shown, and only sent, when
+  // the hospital has more than one branch.
+  const [alsoWorksAt, setAlsoWorksAt] = useState<string[]>([]);
 
   const { data: userData, isLoading: userLoading, isError: userIsError, error: userError, refetch: refetchUser } = useQuery({
     queryKey: ["hospital-user", id],
@@ -164,6 +169,7 @@ export default function UserForm() {
       emergencyContactRelation: user.emergencyContactRelation || "",
     }));
     setExtraRoles((user.additionalRoles ?? []).map((r: { roleId: string; branchId: string | null }) => ({ roleId: r.roleId, branchId: r.branchId ?? "" })));
+    setAlsoWorksAt(((user.branchIds ?? []) as string[]).filter((b) => b !== user.branchId));
   }, [userData]);
 
   const initialLoad = ddLoading || (isEditing && userLoading);
@@ -204,14 +210,20 @@ export default function UserForm() {
     setLoading(true);
     try {
       const additionalRoles = extraRoles.filter((r) => r.roleId).map((r) => ({ roleId: r.roleId, branchId: r.branchId || null }));
+      // Where they work: the branches picked, plus any branch they hold a role
+      // at (a role there means working there). The server adds the home branch.
+      const worksAt = multiBranch
+        ? { branchIds: [...new Set([...alsoWorksAt, ...additionalRoles.map((r) => r.branchId).filter(Boolean) as string[]])].filter((b) => b !== formData.branchId) }
+        : {};
       if (isEditing) {
-        await axiosInstance.put(`/hospital/users/${id}`, { ...formData, additionalRoles });
+        await axiosInstance.put(`/hospital/users/${id}`, { ...formData, additionalRoles, ...worksAt });
         navigate("/hospital/users");
       } else {
         const payload = {
           ...formData,
           initialPassword: formData.initialPassword || undefined,
           additionalRoles,
+          ...worksAt,
         };
         const res = await axiosInstance.post("/hospital/users", payload);
         const { credentials } = res.data;
@@ -373,11 +385,31 @@ export default function UserForm() {
                   </TextField>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField select label="Assign Branch" name="branchId" value={formData.branchId} onChange={handleChange} {...textFieldProps}>
+                  <TextField select label={multiBranch ? "Home branch" : "Assign Branch"} name="branchId" value={formData.branchId} onChange={handleChange} {...textFieldProps}>
                     <MenuItem value="">None</MenuItem>
                     {branches.map((b) => <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>)}
                   </TextField>
                 </Grid>
+                {multiBranch && (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      select id="user-also-works-at" label="Also works at" value={alsoWorksAt.filter((b) => b !== formData.branchId)}
+                      onChange={(e) => setAlsoWorksAt(typeof e.target.value === "string" ? e.target.value.split(",") : (e.target.value as unknown as string[]))}
+                      helperText="Other branches they can switch to. A branch where they hold an extra role is included automatically."
+                      SelectProps={{
+                        multiple: true,
+                        renderValue: (v) => (v as string[]).map((id) => branches.find((b) => b.branchId === id)?.branchName ?? "Branch").join(", ") || "Only the home branch",
+                        displayEmpty: true,
+                      }}
+                      {...textFieldProps}
+                      InputLabelProps={{ ...textFieldProps.InputLabelProps, shrink: true }}
+                    >
+                      {branches.filter((b) => b.branchId !== formData.branchId).map((b) => (
+                        <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                )}
               </Grid>
             </TabPanel>
 

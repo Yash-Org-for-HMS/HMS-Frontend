@@ -62,6 +62,9 @@ interface User extends StaffUser {
   additionalRoles?: { roleId: string; roleName: string; branchName: string | null }[];
   department?: { departmentName: string };
   branch?: { branchName: string };
+  /** Every branch they work at — the home one and any others they may switch to. */
+  worksAt?: { branchId: string; branchName: string }[];
+  branchId?: string | null;
 }
 
 // ── Reset Password Dialog ───────────────────────────────────────────────────
@@ -506,6 +509,12 @@ export default function UsersList() {
                     </TableCell>
                     <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {user.branch?.branchName || "—"}
+                      {/* Where else they work, beside their home branch. */}
+                      {(user.worksAt ?? []).some((w) => w.branchId !== user.branchId) && (
+                        <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                          also {(user.worksAt ?? []).filter((w) => w.branchId !== user.branchId).map((w) => w.branchName).join(", ")}
+                        </Typography>
+                      )}
                     </TableCell>
                     <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Chip

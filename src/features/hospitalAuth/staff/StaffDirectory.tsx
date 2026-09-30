@@ -115,7 +115,8 @@ export default function StaffDirectory() {
     const q = search.trim().toLowerCase();
     return rows.filter((r) =>
       (!category || r.staffCategoryCode === category) &&
-      (!branch || r.employment?.branchId === branch) &&
+      // Someone who works at the facility, as home or also — or at none in particular.
+      (!branch || !(r.worksAt ?? []).length || (r.worksAt ?? []).some((w) => w.branchId === branch)) &&
       (!attention || r.issues.length > 0) &&
       (!q || [r.name, r.employment?.employeeCode, r.employment?.designationName, r.primaryDepartment?.departmentName, r.login?.email]
         .some((v) => (v ?? "").toLowerCase().includes(q))));
@@ -214,6 +215,11 @@ export default function StaffDirectory() {
                           <Typography variant="caption" sx={{ color: "text.secondary" }}>
                             {[r.staffCategoryName, r.employment?.employeeCode].filter(Boolean).join(" · ")}
                           </Typography>
+                          {(options?.branches.length ?? 0) > 1 && (r.worksAt ?? []).length > 0 && (
+                            <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                              {(r.worksAt ?? []).map((w) => w.branchName).join(" · ")}
+                            </Typography>
+                          )}
                           <Box sx={{ display: "flex", gap: 0.5, mt: 0.25, flexWrap: "wrap" }}>
                             {r.login
                               ? <Chip size="small" label={`Login · ${r.login.roleName}`} sx={{ height: 18, fontSize: "0.7rem", opacity: r.login.isActive ? 1 : 0.6 }} />

@@ -35,6 +35,8 @@ export interface StaffRow {
     joiningDate: string | null;
     exitDate: string | null;
   } | null;
+  /** Every branch they work at now, the home one first. */
+  worksAt?: { branchId: string; branchName: string; isHome: boolean }[];
   primaryDepartment: { departmentId: string; departmentName: string; roleInDept: string } | null;
   additionalDepartments: { departmentId: string; departmentName: string; roleInDept: string }[];
   posting: { postingType: string; wardId: string | null; serviceUnitId: string | null; label: string } | null;

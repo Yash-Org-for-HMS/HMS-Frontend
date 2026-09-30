@@ -34,6 +34,8 @@ interface Props {
 interface Form {
   firstName: string; lastName: string; gender: string; dateOfBirth: string; phone: string; email: string; councilRegNo: string;
   staffCategoryCode: string; hospitalDesignationId: string; employmentTypeCode: string; branchId: string; employeeCode: string;
+  /** The branches they also work at, beside the home facility. */
+  alsoWorksAt: string[];
   joiningDate: string; status: string; exitDate: string;
   primaryDepartmentId: string; primaryRoleInDept: string; additionalDepartmentIds: string[];
   /** "" | "ward:<id>" | "unit:<id>" */
@@ -54,6 +56,7 @@ function initialForm(row: StaffRow | null, options: StaffOptions): Form {
     staffCategoryCode: row?.staffCategoryCode ?? "", hospitalDesignationId: row?.employment?.hospitalDesignationId ?? "",
     employmentTypeCode: row?.employment?.employmentTypeCode ?? "FULL_TIME",
     branchId: row?.employment?.branchId ?? (options.branches.length === 1 ? options.branches[0].branchId : ""),
+    alsoWorksAt: (row?.worksAt ?? []).filter((w) => !w.isHome).map((w) => w.branchId),
     employeeCode: row?.employment?.employeeCode ?? "", joiningDate: day(row?.employment?.joiningDate),
     status: row?.status ?? "ACTIVE", exitDate: day(row?.employment?.exitDate),
     primaryDepartmentId: row?.primaryDepartment?.departmentId ?? "", primaryRoleInDept: row?.primaryDepartment?.roleInDept ?? "MEMBER",
@@ -158,9 +161,9 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
   }, [options.departments, f.staffCategoryCode, category]);
 
   const postingOptions: SelectOption[] = [
-    ...options.wards.filter((w) => !f.branchId || w.branchId === f.branchId)
+    ...options.wards.filter((w) => !f.branchId || w.branchId === f.branchId || f.alsoWorksAt.includes(w.branchId ?? ""))
       .map((w) => ({ value: `ward:${w.wardId}`, label: w.wardName ?? w.wardCode ?? "Ward", secondary: "Ward", keywords: w.wardCode ?? "" })),
-    ...options.serviceUnits.filter((u) => !f.branchId || u.branchId === f.branchId)
+    ...options.serviceUnits.filter((u) => !f.branchId || u.branchId === f.branchId || f.alsoWorksAt.includes(u.branchId ?? ""))
       .map((u) => ({ value: `unit:${u.serviceUnitId}`, label: u.name, secondary: `Unit · ${u.postingType}`, keywords: u.code })),
   ];
 
@@ -175,6 +178,8 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
         councilRegNo: f.councilRegNo.trim() || null,
         staffCategoryCode: f.staffCategoryCode, hospitalDesignationId: f.hospitalDesignationId || null,
         employmentTypeCode: f.employmentTypeCode, branchId: f.branchId || null, employeeCode: f.employeeCode.trim() || null,
+        // Where else they work — sent only where there is somewhere else to work.
+        ...(options.branches.length > 1 ? { alsoWorksAt: f.alsoWorksAt.filter((b) => b !== f.branchId) } : {}),
         joiningDate: f.joiningDate || null, status: f.status, exitDate: f.status === "EXITED" ? f.exitDate || null : null,
         primaryDepartmentId: f.primaryDepartmentId || null, primaryRoleInDept: f.primaryRoleInDept,
         additionalDepartmentIds: f.additionalDepartmentIds.filter((id) => id !== f.primaryDepartmentId),
@@ -285,11 +290,27 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField select fullWidth label="Facility" value={f.branchId} onChange={(e) => set("branchId", e.target.value)}>
+              <TextField select fullWidth label={options.branches.length > 1 ? "Home facility" : "Facility"} value={f.branchId} onChange={(e) => set("branchId", e.target.value)}>
                 {options.branches.length !== 1 && <MenuItem value="">—</MenuItem>}
                 {options.branches.map((b) => <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>)}
               </TextField>
             </Grid>
+            {options.branches.length > 1 && (
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  select fullWidth id="staff-also-works-at" label="Also works at" value={f.alsoWorksAt.filter((b) => b !== f.branchId)}
+                  onChange={(e) => set("alsoWorksAt", typeof e.target.value === "string" ? e.target.value.split(",") : (e.target.value as unknown as string[]))}
+                  helperText={row?.login ? "Their login can switch to these branches too." : "Other branches they work shifts at."}
+                  SelectProps={{
+                    multiple: true, displayEmpty: true,
+                    renderValue: (v) => (v as string[]).map((id) => options.branches.find((b) => b.branchId === id)?.branchName ?? "Branch").join(", ") || "Only the home facility",
+                  }}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                >
+                  {options.branches.filter((b) => b.branchId !== f.branchId).map((b) => <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>)}
+                </TextField>
+              </Grid>
+            )}
             <Grid size={{ xs: 12, sm: 4 }}>
               <TextField fullWidth label="Employee code" value={f.employeeCode} onChange={(e) => set("employeeCode", e.target.value)} slotProps={{ htmlInput: { maxLength: 20 } }} />
             </Grid>
