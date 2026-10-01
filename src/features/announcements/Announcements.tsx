@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Box, Paper, Typography, Stack, Button } from "@mui/material";
+import { Box, Paper, Typography, Stack, Button, Tabs, Tab } from "@mui/material";
 import {
   CampaignRounded, WarningAmberRounded, ErrorOutlineRounded, InfoOutlined,
 } from "@mui/icons-material";
@@ -14,6 +14,9 @@ import { axiosInstance } from "@/api/axios";
 import { apiErrorText } from "@/utils/apiError";
 import { SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { ANNOUNCEMENTS_KEY, ANNOUNCEMENT_BADGE_KEY } from "./useAnnouncementBadge";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { isAdminUser } from "@/constants/roles";
+import { SentAnnouncements, HospitalComposeDialog } from "./HospitalAnnouncements";
 
 interface Announcement {
   announcementId: string;
@@ -23,6 +26,9 @@ interface Announcement {
   publishAt: string;
   expiresAt: string | null;
   readAt: string | null;
+  /** The platform team's, or the hospital's own to its staff — then for which branches (none named: every branch). */
+  from?: "platform" | "hospital";
+  toBranches?: string[];
 }
 
 const TONE = {
@@ -35,13 +41,18 @@ const when = (iso: string) =>
   new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 
 /**
- * Announcements from the platform operator, for whichever panel the signed-in
- * user belongs to. One component serves all six panels - the API decides what
- * this particular user may see, so the page never needs to know which panel it
- * is rendering in.
+ * Announcements from the platform operator and from the hospital itself, for
+ * whichever panel the signed-in user belongs to. One component serves all six
+ * panels - the API decides what this particular user may see, so the page
+ * never needs to know which panel it is rendering in. Admins also write the
+ * hospital's own, to every branch or to some (multi-branch plan, phase 7).
  */
 export default function Announcements() {
   const queryClient = useQueryClient();
+  const { user } = useHospitalAuth();
+  const admin = isAdminUser(user);
+  const [tab, setTab] = useState<"inbox" | "sent">("inbox");
+  const [composing, setComposing] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ANNOUNCEMENTS_KEY,
@@ -68,26 +79,47 @@ export default function Announcements() {
       <PageHeader
         title="Announcements"
         subtitle={
-          items.length === 0
-            ? "Messages from the platform team"
-            : `${unread.length} unread of ${items.length}`
+          admin && tab === "sent"
+            ? "What your hospital has announced to its staff"
+            : items.length === 0
+              ? "Messages from the platform team and your hospital"
+              : `${unread.length} unread of ${items.length}`
         }
         actions={
-          unread.length > 1 ? (
-            <Button
-              size="small"
-              variant="outlined"
-              disabled={markRead.isPending}
-              onClick={() => unread.forEach((a) => markRead.mutate(a.announcementId))}
-            >
-              Mark all as read
-            </Button>
+          unread.length > 1 || admin ? (
+            <Stack direction="row" spacing={1}>
+              {unread.length > 1 && tab === "inbox" && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  disabled={markRead.isPending}
+                  onClick={() => unread.forEach((a) => markRead.mutate(a.announcementId))}
+                >
+                  Mark all as read
+                </Button>
+              )}
+              {admin && (
+                <Button size="small" variant="contained" startIcon={<CampaignRounded />} onClick={() => setComposing(true)}>
+                  New announcement
+                </Button>
+              )}
+            </Stack>
           ) : undefined
         }
       />
 
-      {items.length === 0 ? (
-        <Mascot pose="nothing-here-yet" title="Nothing to read" subtitle="Announcements from the platform team will appear here." />
+      {admin && (
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, minHeight: 40, "& .MuiTab-root": { minHeight: 40, textTransform: "none", fontWeight: 600 } }}>
+          <Tab value="inbox" label="For you" />
+          <Tab value="sent" label="Sent by this hospital" />
+        </Tabs>
+      )}
+      {composing && <HospitalComposeDialog open onClose={() => setComposing(false)} />}
+
+      {admin && tab === "sent" ? (
+        <SentAnnouncements />
+      ) : items.length === 0 ? (
+        <Mascot pose="nothing-here-yet" title="Nothing to read" subtitle="Announcements from the platform team and your hospital will appear here." />
       ) : (
         <Stack spacing={1.5}>
           {items.map((a) => {
@@ -112,6 +144,11 @@ export default function Announcements() {
                 <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" sx={{ mb: 0.75 }}>
                   <SoftChip label={tone.label} icon={tone.icon} bg={tone.bg} color={tone.color} />
                   {isUnread && <SoftChip label="New" bg="rgba(15,23,42,0.08)" color={NEUTRAL.textPrimary} />}
+                  {a.from === "hospital" && (
+                    <Typography variant="caption" sx={{ color: NEUTRAL.muted, fontWeight: 600 }}>
+                      From your hospital{a.toBranches?.length ? ` · for ${a.toBranches.join(", ")}` : ""}
+                    </Typography>
+                  )}
                   <Box sx={{ flex: 1 }} />
                   <Typography variant="caption" sx={{ color: NEUTRAL.muted }}>
                     {when(a.publishAt)}

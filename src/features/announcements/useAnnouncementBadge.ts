@@ -5,6 +5,8 @@ import { DASHBOARD_POLL_MS } from "@/constants/intervals";
 
 export const ANNOUNCEMENTS_KEY = ["announcements"] as const;
 export const ANNOUNCEMENT_BADGE_KEY = ["announcement-unread"] as const;
+/** What the hospital itself has announced (admins' "Sent by this hospital"). */
+export const SENT_ANNOUNCEMENTS_KEY = ["hospital-announcements-sent"] as const;
 
 /**
  * The unread count behind each panel's Announcements badge.
