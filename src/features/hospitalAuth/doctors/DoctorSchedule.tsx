@@ -17,6 +17,8 @@ import PageHeader from "@/components/layout/PageHeader";
 import FormSkeleton from "@/components/skeletons/FormSkeleton";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { overlappingWindows } from "@/features/reception/doctorSlots";
+import ScheduleWeekView from "./ScheduleWeekView";
+import { BRANCH_COLOURS, EVERY_BRANCH_COLOUR } from "./scheduleColours";
 
 const HOSP = BRAND.action;
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -64,6 +66,11 @@ export default function DoctorSchedule() {
     : availableBranches;
   const pickBranch = availableBranches.length > 1;
   const branchLabel = (b: string) => (b ? availableBranches.find((x) => x.branchId === b)?.branchName ?? "Branch" : "Every branch");
+  // A colour per branch, the same on the week view and beside each session.
+  const branchColour = (b: string) => {
+    const i = availableBranches.findIndex((x) => x.branchId === b);
+    return b && i >= 0 ? BRANCH_COLOURS[i % BRANCH_COLOURS.length] : EVERY_BRANCH_COLOUR;
+  };
 
   // Seed the 7-day grid from the saved schedule rows (grouped by day; a day with
   // more than one row is a split shift and keeps both windows).
@@ -106,6 +113,14 @@ export default function DoctorSchedule() {
   const clearAll = () => setDays(blankDays());
 
   const enabledCount = days.filter((d) => d.enabled).length;
+  const weekWindows = days.filter((d) => d.enabled).flatMap((d) => d.windows.map((w) => ({ dayOfWeek: d.dayOfWeek, startTime: w.startTime, endTime: w.endTime, branchId: w.branchId })));
+  // Said on the day as it happens, not only when Save is pressed: a doctor is in one place at a time.
+  const clashOn = (d: DayCfg) => {
+    if (!d.enabled || d.windows.length < 2) return null;
+    const rows = d.windows.map((w) => ({ ...w, dayOfWeek: d.dayOfWeek }));
+    const clash = overlappingWindows(rows);
+    return clash ? `${clash[0].startTime}–${clash[0].endTime} (${branchLabel(clash[0].branchId)}) overlaps ${clash[1].startTime}–${clash[1].endTime} (${branchLabel(clash[1].branchId)}). A doctor can be at one place at a time.` : null;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,8 +180,8 @@ export default function DoctorSchedule() {
             <Typography variant="body2" sx={{ color: "text.secondary" }}>— set the hours once, then apply to many days</Typography>
           </Box>
           <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "center" }}>
-            <TextField type="time" label="Start" size="small" value={tpl.startTime} onChange={(e) => setTpl({ ...tpl, startTime: e.target.value })} InputLabelProps={{ shrink: true }} sx={{ width: 130 }} />
-            <TextField type="time" label="End" size="small" value={tpl.endTime} onChange={(e) => setTpl({ ...tpl, endTime: e.target.value })} InputLabelProps={{ shrink: true }} sx={{ width: 130 }} />
+            <TextField type="time" label="Start" size="small" value={tpl.startTime} onChange={(e) => setTpl({ ...tpl, startTime: e.target.value })} InputLabelProps={{ shrink: true }} sx={{ width: 145 }} />
+            <TextField type="time" label="End" size="small" value={tpl.endTime} onChange={(e) => setTpl({ ...tpl, endTime: e.target.value })} InputLabelProps={{ shrink: true }} sx={{ width: 145 }} />
             <TextField select label="Slot" size="small" value={tpl.slotDurationMinutes} onChange={(e) => setTpl({ ...tpl, slotDurationMinutes: Number(e.target.value) })} sx={{ width: 110 }}>
               {SLOT_OPTIONS.map((m) => <MenuItem key={m} value={m}>{m} min</MenuItem>)}
             </TextField>
@@ -187,6 +202,9 @@ export default function DoctorSchedule() {
           </Box>
         </Paper>
 
+        {/* ── The week, drawn ─────────────────────────────────────────────── */}
+        <ScheduleWeekView windows={weekWindows} colourOf={branchColour} nameOf={branchLabel} />
+
         {/* ── Per-day grid ────────────────────────────────────────────────── */}
         <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2.5, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
@@ -202,6 +220,7 @@ export default function DoctorSchedule() {
 
           {DISPLAY_ORDER.map((dow) => {
             const d = days[dow];
+            const clash = clashOn(d);
             return (
               <Box key={dow} sx={{ px: 2.5, py: 1.75, borderBottom: "1px solid", borderColor: "divider", "&:last-child": { borderBottom: 0 }, bgcolor: d.enabled ? "transparent" : "action.hover" }}>
                 <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, flexWrap: "wrap" }}>
@@ -219,8 +238,13 @@ export default function DoctorSchedule() {
                     <Stack spacing={1} sx={{ flex: 1, minWidth: 0 }}>
                       {d.windows.map((w, wIdx) => (
                         <Box key={wIdx} sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
-                          <TextField type="time" label="Start" size="small" value={w.startTime} onChange={(e) => setWin(dow, wIdx, "startTime", e.target.value)} InputLabelProps={{ shrink: true }} sx={{ width: 130 }} />
-                          <TextField type="time" label="End" size="small" value={w.endTime} onChange={(e) => setWin(dow, wIdx, "endTime", e.target.value)} InputLabelProps={{ shrink: true }} sx={{ width: 130 }} />
+                          {pickBranch && (
+                            <Tooltip title={branchLabel(w.branchId)}>
+                              <Box aria-hidden sx={{ width: 4, alignSelf: "stretch", minHeight: 36, borderRadius: 2, bgcolor: branchColour(w.branchId) }} />
+                            </Tooltip>
+                          )}
+                          <TextField type="time" label="Start" size="small" value={w.startTime} onChange={(e) => setWin(dow, wIdx, "startTime", e.target.value)} InputLabelProps={{ shrink: true }} sx={{ width: 145 }} />
+                          <TextField type="time" label="End" size="small" value={w.endTime} onChange={(e) => setWin(dow, wIdx, "endTime", e.target.value)} InputLabelProps={{ shrink: true }} sx={{ width: 145 }} />
                           <TextField select label="Slot" size="small" value={w.slotDurationMinutes} onChange={(e) => setWin(dow, wIdx, "slotDurationMinutes", e.target.value)} sx={{ width: 105 }}>
                             {SLOT_OPTIONS.map((m) => <MenuItem key={m} value={m}>{m} min</MenuItem>)}
                           </TextField>
@@ -237,12 +261,15 @@ export default function DoctorSchedule() {
                             </Tooltip>
                           )}
                           {wIdx === d.windows.length - 1 && (
-                            <Tooltip title="Add a split shift (e.g. morning + evening)">
-                              <Button size="small" startIcon={<AddRounded />} onClick={() => addWin(dow)} sx={{ textTransform: "none", color: HOSP }}>Split</Button>
+                            <Tooltip title={pickBranch ? "Add another session that day — at this branch or another" : "Add another session that day (e.g. morning + evening)"}>
+                              <Button size="small" startIcon={<AddRounded />} onClick={() => addWin(dow)} sx={{ textTransform: "none", color: HOSP }}>Add time</Button>
                             </Tooltip>
                           )}
                         </Box>
                       ))}
+                      {clash && (
+                        <Typography variant="caption" sx={{ color: SEMANTIC.danger, fontWeight: 600 }}>{clash}</Typography>
+                      )}
                     </Stack>
                   )}
                 </Box>
