@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { screen, within } from "@testing-library/react";
+import { screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test/renderWithProviders";
 import { InputAdornment } from "@mui/material";
@@ -34,6 +34,23 @@ describe("SearchableSelect", () => {
     );
     await open(user);
     expect(await screen.findByPlaceholderText("Search…")).toBeInTheDocument();
+  });
+
+  it("puts the cursor in the search box, and keeps it there while the list narrows", async () => {
+    // MUI focused the first row on open and again whichever row became first
+    // as the list narrowed, so "deepa 1" reached the box as "de".
+    const user = userEvent.setup();
+    const names = ["Asha", "Bina", "Chetan", "Deepa", "Esha"];
+    const options = Array.from({ length: 30 }, (_, i) => ({ value: `d${i}`, label: `Dr ${names[i % 5]} ${i}` }));
+    renderWithProviders(
+      <SearchableSelect label="Doctor" name="doctor" value="" onChange={() => {}} options={options} />,
+    );
+    await open(user);
+    const box = await screen.findByPlaceholderText("Search…");
+    await waitFor(() => expect(box).toHaveFocus());
+    await user.keyboard("deepa 1");
+    expect(box).toHaveValue("deepa 1");
+    expect(box).toHaveFocus();
   });
 
   it("leaves the search box out of a short list", async () => {

@@ -4,6 +4,7 @@ import {
   type SxProps, type Theme, type TextFieldProps,
 } from "@mui/material";
 import { SearchRounded } from "@mui/icons-material";
+import { OwnSearchMenuList } from "./MenuListWithSearch";
 
 export interface SelectOption {
   value: string;
@@ -145,6 +146,9 @@ export default function SearchableSelect({
         // person's filter still applied.
         onClose: () => setQuery(""),
         MenuProps: {
+          // It searches by itself, so not the theme's searching list as well —
+          // but its box keeps the cursor (see OwnSearchMenuList).
+          slots: { list: OwnSearchMenuList },
           // Below the field, not over it.
           anchorOrigin: { vertical: "bottom", horizontal: "left" },
           transformOrigin: { vertical: "top", horizontal: "left" },

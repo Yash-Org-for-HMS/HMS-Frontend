@@ -1,5 +1,7 @@
 import { createTheme, alpha, type ThemeOptions } from "@mui/material/styles";
 import { BRAND, DISABLED_CONTAINED } from "./styles/accents";
+import MenuListWithSearch from "./components/form/MenuListWithSearch";
+import { DROPDOWN_MAX_HEIGHT } from "./components/form/dropdown";
 
 /**
  * The font stack for text set at weight 800.
@@ -302,6 +304,20 @@ const themeOptions: ThemeOptions = {
           textOverflow: "ellipsis",
         },
       }
+    },
+    // Every dropdown and menu — a select's list, an action menu — scrolls past
+    // DROPDOWN_MAX_HEIGHT instead of growing to the window's height, and a
+    // long one can be searched (components/form/MenuListWithSearch). In the
+    // theme, so a select added anywhere behaves the same without being told.
+    MuiMenu: {
+      defaultProps: {
+        slots: { list: MenuListWithSearch },
+      },
+      styleOverrides: {
+        paper: {
+          maxHeight: `min(${DROPDOWN_MAX_HEIGHT}px, calc(100% - 96px))`,
+        },
+      },
     },
     MuiTableContainer: {
       styleOverrides: {

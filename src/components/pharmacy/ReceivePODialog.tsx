@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Typography, Button } from "@mui/material";
+import { Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Typography, Button, MenuItem } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
@@ -103,13 +103,12 @@ export default function ReceivePODialog({ po, onClose, suppliers, getMedicineNam
             value={supplierId}
             onChange={e => setSupplierId(e.target.value)}
             fullWidth
-            SelectProps={{ native: true }}
             helperText="This Auto-Generated PO is missing a supplier. Please assign one."
             error={!supplierId}
           >
-            <option value=""></option>
+            <MenuItem value=""><em>None</em></MenuItem>
             {suppliers.map(sup => (
-              <option key={sup.supplierId} value={sup.supplierId}>{sup.supplierName}</option>
+              <MenuItem key={sup.supplierId} value={sup.supplierId}>{sup.supplierName}</MenuItem>
             ))}
           </TextField>
         )}

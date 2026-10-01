@@ -4,7 +4,7 @@ import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha, InputAdornment, Chip, Alert
+  TextField, IconButton, Tooltip, useTheme, Fade, Zoom, alpha, InputAdornment, Chip, Alert, MenuItem
 } from "@mui/material";
 import { EditRounded, DeleteRounded, AddRounded, SearchRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
@@ -520,12 +520,11 @@ export default function MedicineCatalog() {
                 onChange={(e) => setDefaultSupplierId(e.target.value)}
                 fullWidth
                 variant="outlined"
-                SelectProps={{ native: true }}
                 helperText="Supplier for auto POs"
               >
-                <option value=""></option>
+                <MenuItem value=""><em>None</em></MenuItem>
                 {suppliers.map(sup => (
-                  <option key={sup.supplierId} value={sup.supplierId}>{sup.supplierName}</option>
+                  <MenuItem key={sup.supplierId} value={sup.supplierId}>{sup.supplierName}</MenuItem>
                 ))}
               </TextField>
             </Box>
