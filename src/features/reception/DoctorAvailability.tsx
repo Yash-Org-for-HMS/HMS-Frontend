@@ -214,7 +214,7 @@ export default function DoctorAvailability() {
                 sx={{ fontWeight: 700, bgcolor: `${SEMANTIC.success}1f`, color: SEMANTIC.success }} />
             )}
             {summary.fullyBooked > 0 && (
-              <Chip size="small" icon={<EventBusyRounded fontSize="small" />} label={`${summary.fullyBooked} booked out`}
+              <Chip size="small" icon={<EventBusyRounded fontSize="small" />} label={`${summary.fullyBooked} no free slots`}
                 sx={{ fontWeight: 700, bgcolor: `${SEMANTIC.warning}1f`, color: SEMANTIC.warning }} />
             )}
             {summary.onLeave > 0 && (
@@ -291,16 +291,41 @@ export default function DoctorAvailability() {
   );
 }
 
+const minuteOf = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
+const placeNames = (ws: { branchName: string }[]) => [...new Set(ws.map((w) => w.branchName))].join(" & ");
+
+/**
+ * The badge says what reception can do with this doctor now — the same thing
+ * the card says under it. It used to say "Available" for anyone working at
+ * this branch today, so a doctor whose hours had ended, or who had no slot
+ * left, wore a green "Available" over "Day finished" and "Book anyway"; and
+ * "Elsewhere" did not say where.
+ */
+function badgeFor(doc: DoctorRow, isPast: boolean, notHere: boolean, laterElsewhere: DoctorRow["elsewhere"]) {
+  if (doc.onLeave) return STATUS.ON_LEAVE;
+  if (notHere) return { ...STATUS.NOT_HERE, label: `At ${placeNames(doc.elsewhere!)}` };
+  if (isPast) return null;
+  if (doc.nextFreeSlot) return STATUS.AVAILABLE;
+  if (doc.dayState === "FINISHED") return { label: laterElsewhere?.length ? "Done here" : "Done for today", color: NEUTRAL.muted, icon: <EventBusyRounded fontSize="small" /> };
+  return { label: "Booked out", color: SEMANTIC.warning, icon: <EventBusyRounded fontSize="small" /> };
+}
+
 function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; onBook: () => void }) {
-  const s = STATUS[doc.status] ?? STATUS.AVAILABLE;
   const day = DAY_STATE[doc.dayState];
   // Not bookable here today: on leave, or working at another branch.
   const notHere = doc.status === "NOT_HERE" && !!doc.elsewhere?.length;
   const away = doc.onLeave || notHere;
+  // Working at another branch too: where, and whether that is still to come today.
+  const nowMin = dayjs().hour() * 60 + dayjs().minute();
+  const otherBranches = notHere ? [] : doc.elsewhere ?? [];
+  const laterElsewhere = otherBranches.filter((w) => minuteOf(w.endTime) > nowMin);
+  const badge = badgeFor(doc, isPast, notHere, laterElsewhere);
+  const tone = badge?.color ?? NEUTRAL.muted;
   const load = doc.slotsTotal > 0 ? Math.round((doc.slotsBooked / doc.slotsTotal) * 100) : 0;
   // Amber once the day is mostly gone, red when there is nothing left — the two
   // moments a receptionist needs to notice before promising a time.
-  const loadColor = doc.nextFreeSlot === null ? SEMANTIC.danger : load >= 75 ? SEMANTIC.warning : SEMANTIC.success;
+  // A finished day is nothing to act on, so it is grey rather than an alarm.
+  const loadColor = doc.dayState === "FINISHED" ? NEUTRAL.muted : doc.nextFreeSlot === null ? SEMANTIC.danger : load >= 75 ? SEMANTIC.warning : SEMANTIC.success;
 
   return (
     <Paper
@@ -314,16 +339,16 @@ function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; 
       }}
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-        <Avatar sx={{ bgcolor: s.color, width: 44, height: 44, fontWeight: 700 }}>
+        <Avatar sx={{ bgcolor: tone, width: 44, height: 44, fontWeight: 700 }}>
           {doc.name?.replace("Dr. ", "").charAt(0) || "D"}
         </Avatar>
         <Box sx={{ minWidth: 0, flex: 1 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }} noWrap>{doc.name}</Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>
+          <Typography variant="caption" component="div" sx={{ color: "text.secondary" }} noWrap title={`${doc.department || ""}${doc.qualification ? ` • ${doc.qualification}` : ""}`}>
             {doc.department || "—"}{doc.qualification ? ` • ${doc.qualification}` : ""}
           </Typography>
         </Box>
-        <Chip icon={s.icon} label={s.label} size="small" sx={{ bgcolor: `${s.color}1f`, color: s.color, fontWeight: 700 }} />
+        {badge && <Chip icon={badge.icon} label={badge.label} size="small" sx={{ flexShrink: 0, bgcolor: `${badge.color}1f`, color: badge.color, fontWeight: 700, "& .MuiChip-icon": { color: "inherit" } }} />}
       </Box>
 
       <Divider sx={{ borderColor: "divider" }} />
@@ -355,11 +380,15 @@ function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; 
         </Box>
       ) : (
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: SEMANTIC.warning, lineHeight: 1.2 }}>
-            {doc.dayState === "FINISHED" ? "Day finished" : "Fully booked"}
+          <Typography variant="h6" sx={{ fontWeight: 800, color: doc.dayState === "FINISHED" ? "text.secondary" : SEMANTIC.warning, lineHeight: 1.2 }}>
+            {doc.dayState !== "FINISHED" ? "Fully booked" : laterElsewhere.length ? "Done here for today" : "Day finished"}
           </Typography>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            {doc.dayState === "FINISHED" ? "Hours ended for today" : "No free slots left"}
+            {doc.dayState !== "FINISHED"
+              ? "No free slots left"
+              : laterElsewhere.length
+                ? laterElsewhere.map((w) => (minuteOf(w.startTime) <= nowMin ? `Now at ${w.branchName} until ${fmtTime(w.endTime)}` : `Later at ${w.branchName} ${fmtTime(w.startTime)} – ${fmtTime(w.endTime)}`)).join(" · ")
+                : "Hours ended for today"}
           </Typography>
         </Box>
       )}
@@ -400,6 +429,12 @@ function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; 
             {doc.usingDefaultHours && (
               <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 600, display: "block" }}>
                 Default hours — no weekly schedule set
+              </Typography>
+            )}
+            {/* The rest of the day at another branch — what to tell a patient who asks. */}
+            {otherBranches.length > 0 && doc.dayState !== "FINISHED" && (
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                Also at {otherBranches.map((w) => `${w.branchName} ${fmtTime(w.startTime)} – ${fmtTime(w.endTime)}`).join(", ")}
               </Typography>
             )}
             {/* Part of the day off: those times are not offered. */}
