@@ -4,7 +4,7 @@ import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { API_URL } from "@/api/axios";
 
 export function useSocket(eventMap: Record<string, (...args: any[]) => void>) {
-  const { hospital } = useHospitalAuth();
+  const { hospital, activeBranchId } = useHospitalAuth();
   const socketRef = useRef<Socket | null>(null);
 
   const eventMapRef = useRef(eventMap);
@@ -26,16 +26,25 @@ export function useSocket(eventMap: Record<string, (...args: any[]) => void>) {
     const token = sessionStorage.getItem("hospitalAccessToken");
     if (!token) return;
 
+    // The branch the screen is on, read the way the API client reads it, so
+    // live updates come from the same branch as the data on screen — the
+    // server checks it against the user's own branches, as it does for every
+    // request. None (the hospital admin's "All branches") means every branch.
     socketRef.current = io(baseUrl, {
       withCredentials: true,
       transports: ['websocket', 'polling'],
-      auth: (cb) => cb({ token: sessionStorage.getItem("hospitalAccessToken") ?? "" }),
+      auth: (cb) => cb({
+        token: sessionStorage.getItem("hospitalAccessToken") ?? "",
+        branchId: sessionStorage.getItem("activeBranchId") ?? "",
+      }),
     });
 
     const socket = socketRef.current;
 
     // The hospital room is joined server-side from the verified token — the
-    // client no longer says which tenant it belongs to.
+    // client no longer says which tenant it belongs to. Switching branch
+    // reconnects (see the effect's dependencies), which moves the socket to
+    // the new branch's room.
     socket.on("connect_error", (err) => {
       // An expired token is the ordinary case: the next API call refreshes it
       // and the socket reconnects with the new one. Nothing to surface.
@@ -57,6 +66,6 @@ export function useSocket(eventMap: Record<string, (...args: any[]) => void>) {
       // Cleanup listeners and disconnect
       socket.disconnect();
     };
-  }, [hospital?.id]);
+  }, [hospital?.id, activeBranchId]);
 
 }
