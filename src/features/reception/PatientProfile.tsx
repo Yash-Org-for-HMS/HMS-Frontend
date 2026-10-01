@@ -31,6 +31,8 @@ import ClinicalRecordsSection from "@/components/reception/ClinicalRecordsSectio
 import ConsentFormsSection from "@/components/reception/ConsentFormsSection";
 import VaccinationsSection from "@/components/reception/VaccinationsSection";
 import SurgeriesSection from "@/components/reception/SurgeriesSection";
+import StaysSection from "@/components/reception/StaysSection";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import InvoiceViewDialog from "@/components/billing/InvoiceViewDialog";
 import ClinicalTimeline from "@/components/clinical/ClinicalTimeline";
 import { useToast } from "@/providers/ToastContext";
@@ -121,6 +123,8 @@ export default function PatientProfile(
   const navigate = useNavigate();
   const { id } = useParams();
   const toast = useToast();
+  // The branch being worked at: a bill from another branch opens there.
+  const { activeBranchId } = useHospitalAuth();
 
   let userRole = "";
   try {
@@ -243,6 +247,9 @@ export default function PatientProfile(
 
   const pagedAppointments = appointments.slice(apptPage * apptRpp, apptPage * apptRpp + apptRpp);
   const invoices = billing?.invoices || [];
+  // Branches the bills came from, and the branch being worked at (a bill from
+  // another branch opens at that branch, where its money is).
+  const billBranches = new Set(invoices.map((i: { branchId?: string | null }) => i.branchId ?? "")).size;
   const pagedInvoices = invoices.slice(billPage * billRpp, billPage * billRpp + billRpp);
 
   return (
@@ -425,6 +432,9 @@ export default function PatientProfile(
             )}
           </SectionCard>
 
+          {/* Every stay at any branch, transfers linked — one history across the group. */}
+          <StaysSection patientId={patient.patientId} />
+
           <SectionCard title="Allergies & Medical Notes" icon={<WarningAmberRounded fontSize="small" />}>
             {patient.allergies ? (
               <Box sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
@@ -541,7 +551,13 @@ export default function PatientProfile(
                   <TableBody>
                     {pagedInvoices.map((inv) => (
                       <TableRow key={inv.invoiceId} hover>
-                        <TableCell sx={{ borderColor: "divider", fontFamily: "monospace", fontWeight: 600, color: "text.primary" }}>{inv.invoiceNumber}</TableCell>
+                        <TableCell sx={{ borderColor: "divider", fontFamily: "monospace", fontWeight: 600, color: "text.primary" }}>
+                          {inv.invoiceNumber}
+                          {/* Which branch raised it, when the patient has bills at more than one. */}
+                          {billBranches > 1 && inv.branchName && (
+                            <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontFamily: "inherit" }}>{inv.branchName}</Typography>
+                          )}
+                        </TableCell>
                         <TableCell sx={{ borderColor: "divider", color: "text.secondary" }}>{new Date(inv.invoiceDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</TableCell>
                         <TableCell sx={{ borderColor: "divider", color: "text.primary", fontWeight: 600 }}>{formatINR(inv.netAmount)}</TableCell>
                         <TableCell sx={{ borderColor: "divider" }}>
@@ -551,6 +567,12 @@ export default function PatientProfile(
                           <StatusChip label={inv.statusLabel} color={inv.statusColor} />
                         </TableCell>
                         <TableCell align="right" sx={{ borderColor: "divider" }}>
+                          {/* A bill raised at another branch opens there: its money is that branch's. */}
+                          {activeBranchId && inv.branchId && inv.branchId !== activeBranchId ? (
+                            <Tooltip title={`Billed at ${inv.branchName ?? "another branch"} — switch to it to open this bill`}>
+                              <span><Button size="small" variant="text" disabled sx={{ textTransform: "none" }}>View</Button></span>
+                            </Tooltip>
+                          ) : (
                           <Button size="small" variant={!readOnly && Number(inv.balance) > 0 ? "contained" : "text"}
                             onClick={() => setInvoiceView(inv.invoiceId)}
                             sx={!readOnly && Number(inv.balance) > 0
@@ -558,6 +580,7 @@ export default function PatientProfile(
                               : { textTransform: "none", color: BRAND.action }}>
                             {!readOnly && Number(inv.balance) > 0 ? "Pay" : "View"}
                           </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

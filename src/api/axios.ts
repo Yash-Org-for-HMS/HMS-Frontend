@@ -69,7 +69,9 @@ axiosInstance.interceptors.request.use(
     }
     // For hospital-portal requests, tell the backend which branch this request
     // targets. The backend validates it against the user's allowed branches.
-    if (realm === "hospital" && config.headers) {
+    // A request that names its own branch keeps it — the one case is asking
+    // about another branch the user also works at (a transfer's beds there).
+    if (realm === "hospital" && config.headers && !config.headers["X-Branch-Id"]) {
       const activeBranchId = sessionStorage.getItem("activeBranchId");
       if (activeBranchId) {
         config.headers["X-Branch-Id"] = activeBranchId;

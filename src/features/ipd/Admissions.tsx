@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import {
   LocalHotelRounded, SearchRounded, SwapHorizRounded, LogoutRounded, MoreVertRounded,
-  CancelRounded, SavingsRounded, UndoRounded,
+  CancelRounded, SavingsRounded, UndoRounded, LocalShippingRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -23,6 +23,7 @@ import AdmitDialog from "@/components/ipd/AdmitDialog";
 import TransferDialog from "@/components/ipd/TransferDialog";
 import DischargeDialog from "@/components/ipd/DischargeDialog";
 import DepositDialog from "@/components/ipd/DepositDialog";
+import BranchTransferDialog from "@/components/ipd/BranchTransferDialog";
 import PageHeader from "@/components/layout/PageHeader";
 import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
 import { usePanelBase } from "@/features/ipd/panelBase";
@@ -95,6 +96,14 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
   const [admitOpen, setAdmitOpen] = useState(false);
   // Each dialog is opened for one admission row, so they all hold the same shape.
   const [transferFor, setTransferFor] = useState<AdmissionRow | null>(null);
+  // Moving the patient to another branch (only where there is another branch).
+  const [branchTransferFor, setBranchTransferFor] = useState<AdmissionRow | null>(null);
+  const { data: transferOptions } = useQuery<{ branches: { branchId: string }[] }>({
+    queryKey: ["ipd-transfer-options", ""],
+    queryFn: async () => (await axiosInstance.get("/ipd/transfer-options")).data.data,
+    staleTime: 5 * 60_000,
+  });
+  const canTransferBranch = (transferOptions?.branches.length ?? 0) > 1;
   const [dischargeFor, setDischargeFor] = useState<AdmissionRow | null>(null);
   const [depositFor, setDepositFor] = useState<{ row: AdmissionRow; mode: "collect" | "refund" } | null>(null);
   const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: AdmissionRow | null }>({ anchor: null, row: null });
@@ -289,7 +298,12 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                        <Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700 }} />
+                        {a.dischargeDisposition === "TRANSFERRED"
+                          ? <Chip label="Transferred out" size="small" sx={{ bgcolor: `${BRAND.action}1f`, color: BRAND.action, fontWeight: 700 }} />
+                          : <Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700 }} />}
+                        {a.transferredFromAdmissionId && (
+                          <Chip label="Transferred in" size="small" variant="outlined" sx={{ fontWeight: 600, color: BRAND.action, borderColor: `${BRAND.action}66` }} />
+                        )}
                         {a.status === "ADMITTED" && a.dischargeInitiatedAt && (
                           <Chip label="Discharge started" size="small" sx={{ bgcolor: `${SEMANTIC.warning}22`, color: SEMANTIC.warning, fontWeight: 700 }} />
                         )}
@@ -358,6 +372,11 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
             <SavingsRounded fontSize="small" sx={{ mr: 1 }} /> Payer: {PAYER_LABEL[menu.row.payerType ?? "CASH"] ?? "Cash"}…
           </MenuItem>
         )}
+        {menu.row?.status === "ADMITTED" && canTransferBranch && (
+          <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setBranchTransferFor(r); }}>
+            <LocalShippingRounded fontSize="small" sx={{ mr: 1, color: BRAND.action }} /> Transfer to another branch…
+          </MenuItem>
+        )}
         {menu.row?.status === "ADMITTED" && (
           <MenuItem onClick={() => { if (menu.row) cancel(menu.row); }} sx={{ color: SEMANTIC.danger }}><CancelRounded fontSize="small" sx={{ mr: 1 }} /> Cancel admission</MenuItem>
         )}
@@ -369,6 +388,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
       )}
       {admitOpen && <AdmitDialog open={admitOpen} onClose={() => setAdmitOpen(false)} onAdmitted={() => { setAdmitOpen(false); refetch(); }} />}
       {transferFor && <TransferDialog open admission={transferFor} onClose={() => setTransferFor(null)} onDone={() => { setTransferFor(null); refetch(); }} />}
+      {branchTransferFor && <BranchTransferDialog admission={branchTransferFor} onClose={() => setBranchTransferFor(null)} onDone={() => { setBranchTransferFor(null); refetch(); }} />}
       {dischargeFor && <DischargeDialog open admissionId={dischargeFor.admissionId} onClose={() => setDischargeFor(null)} onDone={() => { setDischargeFor(null); refetch(); }} />}
       {depositFor && <DepositDialog open mode={depositFor.mode} admission={depositFor.row} onClose={() => setDepositFor(null)} onDone={() => { setDepositFor(null); refetch(); }} />}
     </Box>
