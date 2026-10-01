@@ -22,7 +22,7 @@ import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 import { SEMANTIC } from "@/styles/accents";
-import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, TrendChart, hasPlottableData, useReportFilterOptions, useReportPaging, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, TrendChart, BranchBreakdown, hasPlottableData, useReportFilterOptions, useReportPaging, type DateRange, type BranchBreakdownRow } from "@/features/reports/kit";
 
 const inr = formatINRAuto;
 const rangeFrom = (days: number): DateRange => ({ from: dayjs().subtract(days, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
@@ -82,6 +82,14 @@ export function DayBook() {
                   { key: "out", label: "Out", type: "line" },
                 ]}
               />
+            </Box>
+          )}
+
+          {/* Every branch side by side, in the All-branches view. */}
+          {(data as { byBranch?: BranchBreakdownRow[] }).byBranch && (
+            <Box sx={{ mb: 2.5 }}>
+              <BranchBreakdown rows={(data as { byBranch?: BranchBreakdownRow[] }).byBranch}
+                columns={[{ key: "cashIn", label: "Money in", kind: "money" }, { key: "cashOut", label: "Money out", kind: "money" }, { key: "net", label: "Net", kind: "money" }]} />
             </Box>
           )}
 

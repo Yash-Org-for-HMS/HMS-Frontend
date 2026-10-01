@@ -17,7 +17,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import dayjs from "dayjs";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportTable, TrendChart, BreakdownBar, hasPlottableData, useReportPaging, type DateRange } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportTable, TrendChart, BreakdownBar, BranchBreakdown, hasPlottableData, useReportPaging, type DateRange } from "@/features/reports/kit";
 
 const ACCENT = BRAND.action;
 
@@ -354,6 +354,16 @@ export function Census() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="Discharges" value={String(data.movement.discharges)} accent="#8b5cf6" /></Grid>
           </Grid>
 
+          {data.byBranch && (
+            <Box sx={{ mb: 2.5 }}>
+              <BranchBreakdown rows={data.byBranch} columns={[
+                { key: "inpatients", label: "Inpatients", kind: "count" }, { key: "beds", label: "Census beds", kind: "count" }, { key: "occupied", label: "Occupied", kind: "count" },
+                { key: "occupancyRate", label: "Occupancy", kind: "percent", derive: (r) => (r.beds ? (r.occupied / r.beds) * 100 : 0) },
+                { key: "admissions", label: "Admissions", kind: "count" }, { key: "discharges", label: "Discharges", kind: "count" },
+              ]} />
+            </Box>
+          )}
+
           <SimpleTable title="Ward detail" head={["Ward", "Beds", "Occupied", "Available", "Occupancy"]}
             rows={data.byWard.map((w: any) => [w.wardName || "—", String(w.totalBeds), String(w.occupied), String(w.available), `${w.occupancyRate}%`])} />
         </Box>
@@ -401,6 +411,14 @@ export function DailyOpd() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} label="New OPD" value={String(t.newOpd)} accent={ACCENT} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="New patients" value={String(t.newPatients)} accent="#ec4899" /></Grid>
           </Grid>
+
+          {data.byBranch && (
+            <Box sx={{ mb: 2.5 }}>
+              <BranchBreakdown rows={data.byBranch} columns={[
+                { key: "appointments", label: "Appointments", kind: "count" }, { key: "completed", label: "Completed", kind: "count" }, { key: "cancelled", label: "Cancelled", kind: "count" }, { key: "checkedIn", label: "Checked in", kind: "count" },
+              ]} />
+            </Box>
+          )}
 
           {/* By doctor and by status came back with every request and neither
               was rendered — the summary said how many appointments there were
@@ -641,6 +659,14 @@ export function Collection() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={ACCENT} label="Net" value={inr(t.net)} current={t.net} previous={p?.net} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent="#8b5cf6" label="Transactions" value={String(t.transactions)} current={t.transactions} previous={p?.transactions} /></Grid>
           </Grid>
+
+          {data.byBranch && (
+            <Box sx={{ mb: 2.5 }}>
+              <BranchBreakdown rows={data.byBranch} columns={[
+                { key: "transactions", label: "Txns", kind: "count" }, { key: "gross", label: "Gross", kind: "money" }, { key: "refunded", label: "Refunds", kind: "money" }, { key: "net", label: "Net", kind: "money" },
+              ]} />
+            </Box>
+          )}
 
           {/* The endpoint returns four breakdowns and only the collector one
               was rendered. Method is the one a desk actually reconciles

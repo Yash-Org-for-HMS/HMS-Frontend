@@ -12,7 +12,7 @@ import ErrorState from "@/components/ErrorState";
 import ReportSkeleton from "@/components/skeletons/ReportSkeleton";
 import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto, formatDate } from "@/utils/format";
-import { KpiCard, ReportFilters, ReportTable, ReportNavLayout, TrendChart, hasPlottableData, type DateRange, type ReportGroup } from "@/features/reports/kit";
+import { KpiCard, ReportFilters, ReportTable, ReportNavLayout, TrendChart, BranchBreakdown, hasPlottableData, type DateRange, type ReportGroup } from "@/features/reports/kit";
 import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList, SupplierLedger, Movers, OpdIpdSplit } from "./InventoryReports";
 
 const inr = formatINRAuto;
@@ -58,6 +58,14 @@ export function PharmacyOverview() {
             <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.warning} label="Low stock items" value={s?.lowStockCount || 0} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<EventBusyRounded />} accent={SEMANTIC.danger} label="Expiring in 30 days" value={s?.expiringSoonCount || 0} /></Grid>
           </Grid>
+
+          {data?.byBranch && (
+            <Box sx={{ mb: 2.5 }}>
+              <BranchBreakdown rows={data.byBranch} columns={[
+                { key: "orders", label: "Orders", kind: "count" }, { key: "sales", label: "Billed value", kind: "money" }, { key: "ipdIssues", label: "IPD meds issued", kind: "money" }, { key: "lowStock", label: "Low stock items", kind: "count" },
+              ]} />
+            </Box>
+          )}
 
           {hasPlottableData(trend, ["sales"]) && (
             <TrendChart title="Sales per day" subtitle="Billed order value — order count is shown in the KPI above, and would flatline against a rupee axis"

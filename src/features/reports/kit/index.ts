@@ -13,3 +13,5 @@ export { CHART_SERIES, seriesColor, computeDelta, CHART_INK, DELTA_GOOD, DELTA_B
 export { default as ReportNavLayout } from "./ReportNavLayout";
 export type { ReportItem, ReportGroup } from "./ReportNavLayout";
 export { useReportPaging } from "./useReportPaging";
+export { default as BranchBreakdown } from "./BranchBreakdown";
+export type { BranchColumn, BranchBreakdownRow } from "./BranchBreakdown";

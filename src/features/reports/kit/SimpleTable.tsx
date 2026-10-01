@@ -43,6 +43,7 @@ export default function SimpleTable({
   period,
   exportRows,
   pagination,
+  compact,
 }: {
   title: string;
   head: string[];
@@ -86,6 +87,14 @@ export default function SimpleTable({
     onPageSizeChange: (size: number) => void;
     busy?: boolean;
   };
+  /**
+   * For a short table of names (branches) beside many figure columns: each
+   * row's label stays on one line — a squeezed label column broke "Main
+   * Branch" across two — and cells sit a little closer so the columns still
+   * fit a desktop-width card. Off by default, so every other table lays out
+   * exactly as before.
+   */
+  compact?: boolean;
 }) {
   const navigate = useNavigate();
   const [exporting, setExporting] = useState<"" | "excel" | "pdf">("");
@@ -131,7 +140,7 @@ export default function SimpleTable({
             <TableHead>
               <TableRow>
                 {head.map((h, i) => (
-                  <TableCell key={h} align={i === 0 ? "left" : "right"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider", bgcolor: "background.paper" }}>{h}</TableCell>
+                  <TableCell key={h} align={i === 0 ? "left" : "right"} sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", borderColor: "divider", bgcolor: "background.paper", ...(compact ? { px: 1.25 } : {}) }}>{h}</TableCell>
                 ))}
               </TableRow>
             </TableHead>
@@ -153,7 +162,7 @@ export default function SimpleTable({
                     sx={href ? { cursor: "pointer", "&:focus-visible": { outline: `2px solid ${accent}`, outlineOffset: -2 } } : undefined}
                   >
                     {r.map((c, ci) => (
-                      <TableCell key={ci} align={ci === 0 ? "left" : "right"} sx={{ borderColor: "divider", color: ci === 0 ? "text.primary" : "text.secondary", fontWeight: ci === 0 ? 600 : 500 }}>
+                      <TableCell key={ci} align={ci === 0 ? "left" : "right"} sx={{ borderColor: "divider", color: ci === 0 ? "text.primary" : "text.secondary", fontWeight: ci === 0 ? 600 : 500, ...(compact ? { px: 1.25, ...(ci === 0 ? { whiteSpace: "nowrap" } : {}) } : {}) }}>
                         {ci === r.length - 1 && href ? (
                           <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
                             {c}

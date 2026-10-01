@@ -26,6 +26,7 @@ import StatCard from "@/components/StatCard";
 import AttentionList from "@/components/dashboard/AttentionList";
 import { formatINR, formatDateTime, axisINR } from "@/utils/format";
 import { useNavigate } from "react-router-dom";
+import BranchComparison, { type BranchComparisonData } from "@/components/dashboard/BranchComparison";
 import {
   PeopleAltRounded,
   DomainRounded,
@@ -109,7 +110,7 @@ const dayLabel = (iso: string) => {
 };
 
 export default function HospitalDashboard() {
-  const { user } = useHospitalAuth();
+  const { user, isOrgAdmin, activeBranchId, availableBranches } = useHospitalAuth();
   const navigate = useNavigate();
   const { data: stats, isLoading: loading, isError, error, refetch } = useQuery<DashboardStats>({
     queryKey: ["hospital-dashboard-stats"],
@@ -128,6 +129,17 @@ export default function HospitalDashboard() {
     // refund approved elsewhere stayed listed until a reload. Re-ask when the
     // tab comes back and once a minute while it is open. A background refetch
     // keeps the current rows on screen, so nothing flashes.
+    refetchOnWindowFocus: true,
+    refetchInterval: 60_000,
+  });
+
+  // Every branch side by side — only in the hospital admin's All-branches view
+  // of a hospital with more than one branch (multi-branch plan, phase 7).
+  const groupView = isOrgAdmin && !activeBranchId && availableBranches.length > 1;
+  const { data: branchComparison } = useQuery<BranchComparisonData>({
+    queryKey: ["hospital-dashboard-branches"],
+    queryFn: async () => (await axiosInstance.get("/hospital/dashboard/branches")).data.data,
+    enabled: groupView,
     refetchOnWindowFocus: true,
     refetchInterval: 60_000,
   });
@@ -257,6 +269,8 @@ export default function HospitalDashboard() {
           />
         </Grid>
       </Grid>
+
+      {groupView && branchComparison && <BranchComparison data={branchComparison} />}
 
       {/* ── Needs attention + collections trend ─────────────────────────────── */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
