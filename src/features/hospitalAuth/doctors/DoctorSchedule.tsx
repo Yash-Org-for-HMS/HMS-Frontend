@@ -65,7 +65,21 @@ export default function DoctorSchedule() {
     ? availableBranches.filter((b) => doctorBranchIds.includes(b.branchId))
     : availableBranches;
   const pickBranch = availableBranches.length > 1;
-  const branchLabel = (b: string) => (b ? availableBranches.find((x) => x.branchId === b)?.branchName ?? "Branch" : "Every branch");
+  // A doctor at two or more branches names the branch of every session. "Every
+  // branch" let each branch book the same hours, and nobody could tell where
+  // the doctor would be — patients turned up at the wrong one. At one branch
+  // there is nothing to choose: a session with no branch is that branch's.
+  const mustPick = pickBranch && branchOptions.length > 1;
+  const onlyBranch = pickBranch && branchOptions.length === 1 ? branchOptions[0].branchId : "";
+  // What a new session takes: the quick set's branch, else the first one.
+  const tplWin: Win = { ...tpl, branchId: tpl.branchId || (mustPick ? branchOptions[0]?.branchId ?? "" : onlyBranch) };
+  // A session saved before it named a branch — still to be given one.
+  const unplaced = (w: Win) => mustPick && !w.branchId;
+  // A session with no branch reads as what it means here: still to be placed
+  // (two or more branches), the one branch there is, or every branch.
+  const nameOf = (b: string) => availableBranches.find((x) => x.branchId === b)?.branchName ?? "Branch";
+  const soleBranch = onlyBranch || (availableBranches.length === 1 ? availableBranches[0].branchId : "");
+  const branchLabel = (b: string) => (b ? nameOf(b) : mustPick ? "No branch chosen" : soleBranch ? nameOf(soleBranch) : "Every branch");
   // A colour per branch, the same on the week view and beside each session.
   const branchColour = (b: string) => {
     const i = availableBranches.findIndex((x) => x.branchId === b);
@@ -97,23 +111,24 @@ export default function DoctorSchedule() {
   const toggleDay = (dow: number, on: boolean) => patchDay(dow, (d) => ({ ...d, enabled: on }));
   const setWin = (dow: number, wIdx: number, field: keyof Win, value: string) =>
     patchDay(dow, (d) => { d.windows[wIdx] = { ...d.windows[wIdx], [field]: field === "slotDurationMinutes" ? Number(value) : value }; return d; });
-  const addWin = (dow: number) => patchDay(dow, (d) => ({ ...d, windows: [...d.windows, { ...tpl }] }));
+  const addWin = (dow: number) => patchDay(dow, (d) => ({ ...d, windows: [...d.windows, { ...tplWin }] }));
   const removeWin = (dow: number, wIdx: number) =>
     patchDay(dow, (d) => ({ ...d, windows: d.windows.length > 1 ? d.windows.filter((_, i) => i !== wIdx) : d.windows }));
 
   // ── Quick apply — the whole point: set the hours once, stamp them across days ──
   const applyToDays = (targets: number[], exclusive: boolean) => {
     setDays((prev) => prev.map((d) => {
-      if (targets.includes(d.dayOfWeek)) return { ...d, enabled: true, windows: [{ ...tpl }] };
+      if (targets.includes(d.dayOfWeek)) return { ...d, enabled: true, windows: [{ ...tplWin }] };
       return exclusive ? { ...d, enabled: false } : d;
     }));
   };
   const copyToEnabled = () =>
-    setDays((prev) => prev.map((d) => (d.enabled ? { ...d, windows: [{ ...tpl }] } : d)));
+    setDays((prev) => prev.map((d) => (d.enabled ? { ...d, windows: [{ ...tplWin }] } : d)));
   const clearAll = () => setDays(blankDays());
 
   const enabledCount = days.filter((d) => d.enabled).length;
-  const weekWindows = days.filter((d) => d.enabled).flatMap((d) => d.windows.map((w) => ({ dayOfWeek: d.dayOfWeek, startTime: w.startTime, endTime: w.endTime, branchId: w.branchId })));
+  const weekWindows = days.filter((d) => d.enabled).flatMap((d) => d.windows.map((w) => ({ dayOfWeek: d.dayOfWeek, startTime: w.startTime, endTime: w.endTime, branchId: w.branchId || onlyBranch })));
+  const unplacedCount = days.filter((d) => d.enabled).reduce((n, d) => n + d.windows.filter(unplaced).length, 0);
   // Said on the day as it happens, not only when Save is pressed: a doctor is in one place at a time.
   const clashOn = (d: DayCfg) => {
     if (!d.enabled || d.windows.length < 2) return null;
@@ -134,9 +149,18 @@ export default function DoctorSchedule() {
         }
       }
     }
+    for (const d of days) {
+      const w = d.enabled ? d.windows.find(unplaced) : undefined;
+      if (w) {
+        toast.error(`${DAY_NAMES[d.dayOfWeek]} ${w.startTime}–${w.endTime}: choose the branch the doctor is at.`);
+        return;
+      }
+    }
+    // A session already at a branch keeps it — even one at a branch this login
+    // cannot see — and only a session with none takes the doctor's one branch.
     const schedules = days
       .filter((d) => d.enabled)
-      .flatMap((d) => d.windows.map((w) => ({ dayOfWeek: d.dayOfWeek, startTime: w.startTime, endTime: w.endTime, slotDurationMinutes: Number(w.slotDurationMinutes), branchId: w.branchId || null })));
+      .flatMap((d) => d.windows.map((w) => ({ dayOfWeek: d.dayOfWeek, startTime: w.startTime, endTime: w.endTime, slotDurationMinutes: Number(w.slotDurationMinutes), branchId: w.branchId || onlyBranch || null })));
     // One person, one place: windows on a day may not overlap, whatever their branches.
     const clash = overlappingWindows(schedules);
     if (clash) {
@@ -185,9 +209,8 @@ export default function DoctorSchedule() {
             <TextField select label="Slot" size="small" value={tpl.slotDurationMinutes} onChange={(e) => setTpl({ ...tpl, slotDurationMinutes: Number(e.target.value) })} sx={{ width: 110 }}>
               {SLOT_OPTIONS.map((m) => <MenuItem key={m} value={m}>{m} min</MenuItem>)}
             </TextField>
-            {pickBranch && (
-              <TextField select label="Branch" size="small" value={tpl.branchId} onChange={(e) => setTpl({ ...tpl, branchId: e.target.value })} sx={{ width: 170 }} SelectProps={{ displayEmpty: true }} InputLabelProps={{ shrink: true }}>
-                <MenuItem value="">Every branch</MenuItem>
+            {mustPick && (
+              <TextField select label="Branch" size="small" value={tplWin.branchId} onChange={(e) => setTpl({ ...tpl, branchId: e.target.value })} sx={{ width: 170 }} InputLabelProps={{ shrink: true }}>
                 {branchOptions.map((b) => <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>)}
               </TextField>
             )}
@@ -212,11 +235,20 @@ export default function DoctorSchedule() {
               <ScheduleRounded sx={{ color: HOSP, fontSize: 20 }} />
               <Typography sx={{ fontWeight: 800 }}>Working days</Typography>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>· {enabledCount} of 7 open</Typography>
+              {onlyBranch && <Typography variant="body2" sx={{ color: "text.secondary" }}>· all at {branchLabel(onlyBranch)}</Typography>}
             </Box>
             {enabledCount > 0 && (
               <Button size="small" variant="text" onClick={clearAll} sx={{ textTransform: "none", color: SEMANTIC.danger }}>Clear all</Button>
             )}
           </Box>
+
+          {unplacedCount > 0 && (
+            <Box sx={{ px: 2.5, py: 1.25, borderBottom: "1px solid", borderColor: "divider", bgcolor: `${SEMANTIC.warning}14` }}>
+              <Typography variant="body2" sx={{ color: SEMANTIC.warning, fontWeight: 700 }}>
+                {unplacedCount === 1 ? "1 session does not say" : `${unplacedCount} sessions do not say`} which branch the doctor is at — choose one for each before saving.
+              </Typography>
+            </Box>
+          )}
 
           {DISPLAY_ORDER.map((dow) => {
             const d = days[dow];
@@ -238,8 +270,8 @@ export default function DoctorSchedule() {
                     <Stack spacing={1} sx={{ flex: 1, minWidth: 0 }}>
                       {d.windows.map((w, wIdx) => (
                         <Box key={wIdx} sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
-                          {pickBranch && (
-                            <Tooltip title={branchLabel(w.branchId)}>
+                          {mustPick && (
+                            <Tooltip title={w.branchId ? branchLabel(w.branchId) : "Choose a branch"}>
                               <Box aria-hidden sx={{ width: 4, alignSelf: "stretch", minHeight: 36, borderRadius: 2, bgcolor: branchColour(w.branchId) }} />
                             </Tooltip>
                           )}
@@ -248,10 +280,12 @@ export default function DoctorSchedule() {
                           <TextField select label="Slot" size="small" value={w.slotDurationMinutes} onChange={(e) => setWin(dow, wIdx, "slotDurationMinutes", e.target.value)} sx={{ width: 105 }}>
                             {SLOT_OPTIONS.map((m) => <MenuItem key={m} value={m}>{m} min</MenuItem>)}
                           </TextField>
-                          {pickBranch && (
+                          {mustPick && (
                             <TextField select label="Branch" size="small" value={w.branchId} onChange={(e) => setWin(dow, wIdx, "branchId", e.target.value)} sx={{ width: 170 }}
-                              SelectProps={{ displayEmpty: true, renderValue: (v) => branchLabel(String(v)) }} InputLabelProps={{ shrink: true }}>
-                              <MenuItem value="">Every branch</MenuItem>
+                              error={!w.branchId}
+                              SelectProps={{ displayEmpty: true, renderValue: (v) => (v ? branchLabel(String(v)) : "Choose a branch") }} InputLabelProps={{ shrink: true }}>
+                              {/* Kept for a session saved before it named a branch; not offered. */}
+                              <MenuItem value="" disabled sx={{ display: "none" }}>Choose a branch</MenuItem>
                               {branchOptions.map((b) => <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>)}
                             </TextField>
                           )}
@@ -261,7 +295,7 @@ export default function DoctorSchedule() {
                             </Tooltip>
                           )}
                           {wIdx === d.windows.length - 1 && (
-                            <Tooltip title={pickBranch ? "Add another session that day — at this branch or another" : "Add another session that day (e.g. morning + evening)"}>
+                            <Tooltip title={mustPick ? "Add another session that day — at this branch or another" : "Add another session that day (e.g. morning + evening)"}>
                               <Button size="small" startIcon={<AddRounded />} onClick={() => addWin(dow)} sx={{ textTransform: "none", color: HOSP }}>Add time</Button>
                             </Tooltip>
                           )}
