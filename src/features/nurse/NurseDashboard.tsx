@@ -20,7 +20,8 @@ import StatCard from "@/components/StatCard";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
 import { apiErrorText } from "@/utils/apiError";
-import { QUEUE_POLL_MS } from "@/constants/intervals";
+import { QUEUE_POLL_MS, QUEUE_LIVE_FALLBACK_MS } from "@/constants/intervals";
+import { useLiveConnected } from "@/hooks/useSocket";
 import { needsVitals, hasVitals, isInConsultation } from "@/constants/queueStatus";
 
 const NURSE_PURPLE = BRAND.action;
@@ -29,6 +30,9 @@ const NURSE_PURPLE_DARK = BRAND.actionDark;
 export default function NurseDashboard() {
   const { hospital, user } = useHospitalAuth();
   const navigate = useNavigate();
+  // NurseLayout's live connection refreshes this on every outpatient change;
+  // while it is up the poll is a safety net.
+  const live = useLiveConnected();
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
     // The queue endpoint already reports `vitalsRecorded` on every token, so
     // this used to fan out one extra GET /appointments/:id/vitals PER PATIENT to
@@ -39,7 +43,8 @@ export default function NurseDashboard() {
       const res = await axiosInstance.get("/reception/queue");
       return Array.isArray(res.data?.data) ? (res.data.data as any[]) : [];
     },
-    refetchInterval: QUEUE_POLL_MS, // refresh every 30s
+    // Every 2 minutes while live, every 30s (as before) while not.
+    refetchInterval: live ? QUEUE_LIVE_FALLBACK_MS : QUEUE_POLL_MS,
   });
   const tokens: any[] = data ?? [];
 

@@ -25,6 +25,8 @@ import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
 import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
 import { useSocket } from "@/hooks/useSocket";
+import { useQueryClient } from "@tanstack/react-query";
+import { refetchUnlessFresh, isOpdQueueEvent } from "@/utils/liveRefresh";
 
 const drawerWidth = 260;
 
@@ -42,7 +44,24 @@ export default function NurseLayout() {
   const { isModuleEnabled } = useEnabledModules();
 
   const { unread: announcementsUnread, onAnnouncement, onConnect } = useAnnouncementBadge();
-  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onConnect });
+  // The nurse's worklists (dashboard and queue) are refreshed through this one
+  // connection rather than each opening its own. They read the outpatient
+  // queue, so a lab or radiology change is not a reason to ask again; a
+  // reconnect is, since changes may have been missed while it was down.
+  const queryClient = useQueryClient();
+  useSocket({
+    ANNOUNCEMENT_PUBLISHED: onAnnouncement,
+    QUEUE_UPDATED: (payload?: unknown) => {
+      if (!isOpdQueueEvent(payload)) return;
+      queryClient.invalidateQueries({ queryKey: ["nurse-dashboard-queue"] });
+      queryClient.invalidateQueries({ queryKey: ["nurse-queue"] });
+    },
+    connect: () => {
+      onConnect();
+      refetchUnlessFresh(queryClient, ["nurse-dashboard-queue"]);
+      refetchUnlessFresh(queryClient, ["nurse-queue"]);
+    },
+  });
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/nurse/dashboard", section: "Overview" },
     { text: "Patient Queue", icon: <PeopleAltRounded />, path: "/nurse/queue", section: "Patient Care" },

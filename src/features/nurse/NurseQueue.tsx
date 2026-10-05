@@ -20,8 +20,8 @@ import StatusChip from "@/components/StatusChip";
 import { TableRowsSkeleton, CardGridSkeleton } from "@/components/TableRowsSkeleton";
 import PageHeader from "@/components/layout/PageHeader";
 import VitalsModal from "../reception/VitalsModal";
-import { useSocket } from "@/hooks/useSocket";
-import { QUEUE_POLL_MS } from "@/constants/intervals";
+import { useLiveConnected } from "@/hooks/useSocket";
+import { QUEUE_POLL_MS, QUEUE_LIVE_FALLBACK_MS } from "@/constants/intervals";
 import { QUEUE_STATUS, needsVitals, hasVitals, isWaitingForCare, isInConsultation } from "@/constants/queueStatus";
 
 
@@ -37,13 +37,16 @@ export default function NurseQueue() {
   // authority it is under rather than only who typed it.
   const [orderFor, setOrderFor] = useState<{ token: any; kind: "lab" | "radiology" } | null>(null);
 
+  // NurseLayout's live connection refreshes this queue on every outpatient
+  // change (and skips lab ones); while it is up the poll is a safety net.
+  const live = useLiveConnected();
   const { data, isLoading: loading, error, refetch: fetchQueue } = useQuery({
     queryKey: ["nurse-queue"],
     queryFn: async () => {
       const res = await axiosInstance.get("/reception/queue");
       return res.data.data;
     },
-    refetchInterval: QUEUE_POLL_MS,
+    refetchInterval: live ? QUEUE_LIVE_FALLBACK_MS : QUEUE_POLL_MS,
   });
   // Coerce to an array so an unexpected payload can never crash the page.
   const tokens: any[] = Array.isArray(data) ? data : [];
@@ -51,10 +54,6 @@ export default function NurseQueue() {
   const [view, setView] = useState<ViewMode>("queue");
   const [vitalsDialog, setVitalsDialog] = useState<{ open: boolean; token: any }>({ open: false, token: null });
 
-  // Listen for real-time queue updates
-  useSocket({
-    QUEUE_UPDATED: fetchQueue,
-  });
 
   // Deep-link from the dashboard's "Record Vitals" button: open the modal for the
   // passed token, then clear the history state so it doesn't re-trigger on refresh.
