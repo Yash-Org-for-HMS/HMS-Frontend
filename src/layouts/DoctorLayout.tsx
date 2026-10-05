@@ -27,7 +27,8 @@ import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
 import { axiosInstance } from "@/api/axios";
 import { useSocket } from "@/hooks/useSocket";
-import { DASHBOARD_POLL_MS } from "@/constants/intervals";
+import { DASHBOARD_POLL_MS, LIVE_DASHBOARD_FALLBACK_MS } from "@/constants/intervals";
+import { refetchUnlessFresh } from "@/utils/liveRefresh";
 import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
 
 const drawerWidth = 260;
@@ -45,19 +46,30 @@ export default function DoctorLayout() {
   const queryClient = useQueryClient();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Sidebar notification counts (unread results, patients waiting). Polls as a
-  // fallback and refreshes instantly on queue/order socket events.
+  // Sidebar notification counts (unread results, patients waiting), and the
+  // dashboard, refresh on queue/order socket events — both kinds: the results
+  // count and the dashboard's critical results are lab work. The lab desk tells
+  // the ordering doctor wherever they are working (lib/realtime.ts), so while
+  // connected the poll is only a safety net; without the connection, every
+  // minute as before.
+  const { unread: announcementsUnread, onAnnouncement, onConnect } = useAnnouncementBadge();
+  const { connected } = useSocket({
+    QUEUE_UPDATED: () => {
+      queryClient.invalidateQueries({ queryKey: ["doctor-badges"] });
+      queryClient.invalidateQueries({ queryKey: ["doctor-dashboard-stats"] });
+    },
+    ANNOUNCEMENT_PUBLISHED: onAnnouncement,
+    connect: () => {
+      onConnect();
+      refetchUnlessFresh(queryClient, ["doctor-badges"]);
+      refetchUnlessFresh(queryClient, ["doctor-dashboard-stats"]);
+    },
+  });
   const { data: badges } = useQuery({
     queryKey: ["doctor-badges"],
     queryFn: async () => (await axiosInstance.get("/doctor/badges")).data.data as { resultsReady: number; queueWaiting: number },
-    refetchInterval: DASHBOARD_POLL_MS,
+    refetchInterval: connected ? LIVE_DASHBOARD_FALLBACK_MS : DASHBOARD_POLL_MS,
     refetchOnWindowFocus: true,
-  });
-  const { unread: announcementsUnread, onAnnouncement, onConnect } = useAnnouncementBadge();
-  useSocket({
-    QUEUE_UPDATED: () => queryClient.invalidateQueries({ queryKey: ["doctor-badges"] }),
-    ANNOUNCEMENT_PUBLISHED: onAnnouncement,
-    connect: onConnect,
   });
 
   const { isModuleEnabled } = useEnabledModules();

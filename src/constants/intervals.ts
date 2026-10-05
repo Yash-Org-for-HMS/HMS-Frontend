@@ -11,6 +11,13 @@ export const QUEUE_POLL_MS = 30_000;
  */
 export const QUEUE_LIVE_FALLBACK_MS = 2 * 60_000;
 
+/**
+ * A dashboard or badge refreshed by its layout's live connection — every 5
+ * minutes while that connection is up (it is told about each change), every
+ * DASHBOARD_POLL_MS as before while it is not.
+ */
+export const LIVE_DASHBOARD_FALLBACK_MS = 5 * 60_000;
+
 /** Dashboards / layout badges — lighter refresh, every 60s. */
 export const DASHBOARD_POLL_MS = 60_000;
 

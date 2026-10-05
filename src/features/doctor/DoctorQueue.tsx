@@ -1,6 +1,6 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip,
@@ -17,7 +17,8 @@ import VitalsModal from "../reception/VitalsModal";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useNavigate } from "react-router-dom";
 import { useSocket } from "@/hooks/useSocket";
-import { QUEUE_POLL_MS } from "@/constants/intervals";
+import { QUEUE_POLL_MS, QUEUE_LIVE_FALLBACK_MS } from "@/constants/intervals";
+import { refetchUnlessFresh, isOpdQueueEvent } from "@/utils/liveRefresh";
 
 
 const DOCTOR_BLUE = BRAND.action;
@@ -25,21 +26,26 @@ const DOCTOR_BLUE_DARK = BRAND.actionDark;
 
 export default function DoctorQueue() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  // Real-time queue updates. This queue holds no lab data, so a lab or
+  // radiology change is not a reason to ask again; a reconnect is.
+  const { connected } = useSocket({
+    QUEUE_UPDATED: (payload?: unknown) => {
+      if (isOpdQueueEvent(payload)) queryClient.invalidateQueries({ queryKey: ["doctor-queue"] });
+    },
+    connect: () => refetchUnlessFresh(queryClient, ["doctor-queue"]),
+  });
   const { data: tokens = [], isLoading: loading, error, refetch: fetchQueue } = useQuery({
     queryKey: ["doctor-queue"],
     queryFn: async () => {
       const res = await axiosInstance.get("/doctor/queue");
       return res.data.data;
     },
-    refetchInterval: QUEUE_POLL_MS,
+    // A safety net while connected (every change is pushed); 30s without.
+    refetchInterval: connected ? QUEUE_LIVE_FALLBACK_MS : QUEUE_POLL_MS,
   });
 
   const [vitalsDialog, setVitalsDialog] = useState<{ open: boolean; token: any; readonly: boolean }>({ open: false, token: null, readonly: true });
-
-  // Listen for real-time queue updates
-  useSocket({
-    QUEUE_UPDATED: fetchQueue
-  });
 
   // Memoized on `tokens` — this page re-renders on unrelated local state (the
   // vitals dialog opening/closing), which would otherwise re-run all 6 of

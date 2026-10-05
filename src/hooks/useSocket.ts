@@ -1,7 +1,20 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { io, Socket } from "socket.io-client";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { API_URL } from "@/api/axios";
+
+// How many of this tab's live connections are up — for a screen that relies on
+// its layout's connection (whose handlers refresh it) instead of opening one
+// of its own: every useSocket() call is a separate connection.
+let liveCount = 0;
+const liveListeners = new Set<() => void>();
+const subscribeLive = (cb: () => void) => { liveListeners.add(cb); return () => { liveListeners.delete(cb); }; };
+const adjustLive = (delta: number) => { liveCount += delta; liveListeners.forEach((l) => l()); };
+
+/** Whether any of this tab's live connections is up right now. */
+export function useLiveConnected(): boolean {
+  return useSyncExternalStore(subscribeLive, () => liveCount > 0);
+}
 
 /**
  * One live connection for a screen, with a handler per event. Returns whether
@@ -51,10 +64,17 @@ export function useSocket(eventMap: Record<string, (...args: any[]) => void>): {
     // client no longer says which tenant it belongs to. Switching branch
     // reconnects (see the effect's dependencies), which moves the socket to
     // the new branch's room.
-    socket.on("connect", () => setConnected(true));
-    socket.on("disconnect", () => setConnected(false));
+    // This connection's share of the tab-wide count, kept exact across
+    // reconnects and the cleanup below.
+    let up = false;
+    const mark = (next: boolean) => {
+      if (next !== up) { up = next; adjustLive(next ? 1 : -1); }
+      setConnected(next);
+    };
+    socket.on("connect", () => mark(true));
+    socket.on("disconnect", () => mark(false));
     socket.on("connect_error", (err) => {
-      setConnected(false);
+      mark(false);
       // An expired token is the ordinary case: the next API call refreshes it
       // and the socket reconnects with the new one. Nothing to surface.
       if (err.message !== "UNAUTHORIZED") console.warn("[Socket.io]", err.message);
@@ -74,7 +94,7 @@ export function useSocket(eventMap: Record<string, (...args: any[]) => void>): {
     return () => {
       // Cleanup listeners and disconnect
       socket.disconnect();
-      setConnected(false);
+      mark(false);
     };
   }, [hospital?.id, activeBranchId]);
 

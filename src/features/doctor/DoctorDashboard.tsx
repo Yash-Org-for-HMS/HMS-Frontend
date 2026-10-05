@@ -19,7 +19,8 @@ import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useNavigate } from "react-router-dom";
 import { apiErrorText } from "@/utils/apiError";
 import AttentionList from "@/components/dashboard/AttentionList";
-import { DASHBOARD_POLL_MS } from "@/constants/intervals";
+import { DASHBOARD_POLL_MS, LIVE_DASHBOARD_FALLBACK_MS } from "@/constants/intervals";
+import { useLiveConnected } from "@/hooks/useSocket";
 import TodayAtBranches from "./TodayAtBranches";
 
 const DOCTOR_BLUE = BRAND.action;
@@ -33,11 +34,14 @@ const hoursSince = (iso: string) => {
 export default function DoctorDashboard() {
   const { hospital, user } = useHospitalAuth();
   const navigate = useNavigate();
+  // DoctorLayout's live connection refreshes this on every queue and lab
+  // change; while it is up the poll is a safety net.
+  const live = useLiveConnected();
 
   const { data: stats, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ["doctor-dashboard-stats"],
     queryFn: async () => (await axiosInstance.get("/doctor/dashboard/stats")).data.data,
-    refetchInterval: DASHBOARD_POLL_MS, // refresh every minute
+    refetchInterval: live ? LIVE_DASHBOARD_FALLBACK_MS : DASHBOARD_POLL_MS,
   });
 
   const todaysPatients: any[] = stats?.todaysPatients ?? [];
