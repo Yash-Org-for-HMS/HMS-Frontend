@@ -53,11 +53,11 @@ export default function DoctorLayout() {
     refetchInterval: DASHBOARD_POLL_MS,
     refetchOnWindowFocus: true,
   });
-  const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
+  const { unread: announcementsUnread, onAnnouncement, onConnect } = useAnnouncementBadge();
   useSocket({
     QUEUE_UPDATED: () => queryClient.invalidateQueries({ queryKey: ["doctor-badges"] }),
     ANNOUNCEMENT_PUBLISHED: onAnnouncement,
-    connect: onAnnouncement,
+    connect: onConnect,
   });
 
   const { isModuleEnabled } = useEnabledModules();

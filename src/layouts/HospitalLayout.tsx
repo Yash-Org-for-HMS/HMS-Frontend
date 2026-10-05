@@ -47,8 +47,8 @@ export default function HospitalLayout() {
   const location = useLocation();
 
   // Sidebar items; `adminOnly` tabs are hidden from non-admin roles.
-  const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
-  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onAnnouncement });
+  const { unread: announcementsUnread, onAnnouncement, onConnect } = useAnnouncementBadge();
+  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onConnect });
   // In the order a hospital is set up — each step needs the ones above it:
   // profile, settings and modules first; departments before the wards, doctors
   // and staff that belong to them; charges before beds (a bed's room class

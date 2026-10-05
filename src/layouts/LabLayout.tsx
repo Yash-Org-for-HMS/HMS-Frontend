@@ -41,8 +41,8 @@ export default function LabLayout() {
   const location = useLocation();
   const { isModuleEnabled } = useEnabledModules();
 
-  const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
-  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onAnnouncement });
+  const { unread: announcementsUnread, onAnnouncement, onConnect } = useAnnouncementBadge();
+  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onConnect });
   const allItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/lab/dashboard", section: "Overview" },
     { text: "Lab Orders", icon: <ScienceRounded />, path: "/lab/orders", section: "Orders" },

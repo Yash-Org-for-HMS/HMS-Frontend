@@ -73,8 +73,8 @@ export default function ReceptionLayout() {
 
   // Grouped into sections that follow the front-desk workflow:
   // overview → patient flow → clinical lookups → in-patient → finance → system.
-  const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
-  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onAnnouncement });
+  const { unread: announcementsUnread, onAnnouncement, onConnect } = useAnnouncementBadge();
+  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onConnect });
   const allSections = [
     {
       heading: "Overview",

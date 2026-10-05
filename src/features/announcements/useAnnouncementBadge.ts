@@ -1,12 +1,23 @@
 import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
-import { DASHBOARD_POLL_MS } from "@/constants/intervals";
+import { ANNOUNCEMENT_FALLBACK_MS } from "@/constants/intervals";
 
 export const ANNOUNCEMENTS_KEY = ["announcements"] as const;
 export const ANNOUNCEMENT_BADGE_KEY = ["announcement-unread"] as const;
 /** What the hospital itself has announced (admins' "Sent by this hospital"). */
 export const SENT_ANNOUNCEMENTS_KEY = ["hospital-announcements-sent"] as const;
+
+/**
+ * How long until the badge asks again: just past `nextAt` when the server
+ * named one (a second past, so the server agrees it has arrived; never a tight
+ * loop), and never longer than the fallback.
+ */
+export function nextBadgeAskIn(nextAt: string | null | undefined, now = Date.now()): number {
+  if (!nextAt) return ANNOUNCEMENT_FALLBACK_MS;
+  const wait = new Date(nextAt).getTime() - now + 1_000;
+  return Math.min(ANNOUNCEMENT_FALLBACK_MS, Math.max(5_000, wait));
+}
 
 /**
  * The unread count behind each panel's Announcements badge.
@@ -15,9 +26,14 @@ export const SENT_ANNOUNCEMENTS_KEY = ["hospital-announcements-sent"] as const;
  * call opens its own connection, and DoctorLayout already has one. Each layout
  * therefore keeps a single subscription and folds this handler into it.
  *
- * The poll is not redundant with the socket. This socket layer has no replay,
- * so an announcement published while the tab was closed arrives on the next
- * poll or window focus - the socket only makes a live one land sooner.
+ * It asks when something changes, not every minute in case:
+ *  - the socket's ANNOUNCEMENT_PUBLISHED nudge (published or withdrawn), and its
+ *    connect event — which also covers a dropped connection, since this socket
+ *    layer has no replay;
+ *  - the moment the count changes by itself, which the server sends as nextAt
+ *    (a scheduled one going live, an unread one running out) — nothing is
+ *    pushed then;
+ *  - window focus, and a slow fallback in case all of those are missed.
  */
 export function useAnnouncementBadge() {
   const queryClient = useQueryClient();
@@ -25,8 +41,8 @@ export function useAnnouncementBadge() {
   const { data } = useQuery({
     queryKey: ANNOUNCEMENT_BADGE_KEY,
     queryFn: async () =>
-      (await axiosInstance.get("/hospital/announcements/unread-count")).data.data as { count: number },
-    refetchInterval: DASHBOARD_POLL_MS,
+      (await axiosInstance.get("/hospital/announcements/unread-count")).data.data as { count: number; nextAt?: string | null },
+    refetchInterval: (query) => nextBadgeAskIn(query.state.data?.nextAt),
     refetchOnWindowFocus: true,
   });
 
@@ -35,5 +51,16 @@ export function useAnnouncementBadge() {
     queryClient.invalidateQueries({ queryKey: ANNOUNCEMENTS_KEY });
   }, [queryClient]);
 
-  return { unread: data?.count ?? 0, onAnnouncement };
+  // For the socket's connect event. The first connect lands a moment after the
+  // badge's own first ask, and asking again then was a second call on every
+  // page load. A reconnect — or a first connect long after that ask — may have
+  // missed a nudge while it was down, so that one asks.
+  const onConnect = useCallback(() => {
+    const state = queryClient.getQueryState(ANNOUNCEMENT_BADGE_KEY);
+    if (state?.fetchStatus === "fetching") return;
+    if (state && Date.now() - state.dataUpdatedAt < 10_000) return;
+    onAnnouncement();
+  }, [queryClient, onAnnouncement]);
+
+  return { unread: data?.count ?? 0, onAnnouncement, onConnect };
 }

@@ -27,6 +27,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
+import { USER_DROPDOWNS_KEY } from "./queryKeys";
 import ErrorState from "@/components/ErrorState";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
@@ -82,8 +83,12 @@ export default function UserForm() {
   const toast = useToast();
 
   const { data: dd, isLoading: ddLoading, isError: ddIsError, error: ddError, refetch: refetchDd } = useQuery({
-    queryKey: ["hospital-user-dropdowns"],
+    queryKey: USER_DROPDOWNS_KEY,
     queryFn: async () => (await axiosInstance.get("/hospital/users/dropdowns")).data.data,
+    // Roles, departments in use and branches: adding users one after another
+    // need not ask each time. Changing a department drops it (DepartmentForm,
+    // DepartmentsList); branches are the super admin's.
+    staleTime: 5 * 60_000,
   });
   const roles: Role[] = dd?.roles ?? [];
   const departments: Department[] = dd?.departments ?? [];

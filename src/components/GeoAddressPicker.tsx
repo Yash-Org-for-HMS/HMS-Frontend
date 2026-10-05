@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Grid, TextField, MenuItem, InputAdornment, CircularProgress } from "@mui/material";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
 
 interface GeoOption { stateId?: number; districtId?: number; name: string }
@@ -46,6 +46,7 @@ interface Props {
  * Renders <Grid> items; use inside a <Grid container>.
  */
 export default function GeoAddressPicker({ value, onChange, colSpan = 3, required, showPincode = true, disabled = false, errors = {} }: Props) {
+  const queryClient = useQueryClient();
   const isRequired = (field: "state" | "district" | "city" | "pincode") =>
     Array.isArray(required) ? required.includes(field) : !!required;
   const { data: states = [] } = useQuery<GeoOption[]>({
@@ -82,10 +83,15 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
     if (!/^\d{6}$/.test(code) || code === lastLookup.current) return;
     lastLookup.current = code;
     setLookingUp(true);
-    axiosInstance
-      .get(`/geo/pincode/${code}`)
-      .then((r) => {
-        const d = r.data?.data;
+    // Which state and district a pincode is in never changes, so each one is
+    // asked once a session — not every time a saved address is opened.
+    queryClient
+      .fetchQuery({
+        queryKey: ["geo-pincode", code],
+        queryFn: async () => (await axiosInstance.get(`/geo/pincode/${code}`)).data?.data ?? null,
+        staleTime: Infinity,
+      })
+      .then((d) => {
         if (d?.state?.stateId) onChange({
           stateId: d.state.stateId, stateName: d.state.name,
           districtId: d.district?.districtId ?? null, districtName: d.district?.name ?? "",

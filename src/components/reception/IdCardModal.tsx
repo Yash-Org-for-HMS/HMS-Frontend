@@ -34,7 +34,8 @@ interface IdCardModalProps {
  */
 export default function IdCardModal({ open, onClose, patient }: IdCardModalProps) {
   const { hospital } = useHospitalAuth();
-  const letterhead = useLetterhead();
+  // Asked when the card is opened: the patients list keeps this dialog mounted.
+  const letterhead = useLetterhead(open);
   const cardRef = useRef<HTMLDivElement>(null);
   const barcodeRef = useRef<SVGSVGElement>(null);
 

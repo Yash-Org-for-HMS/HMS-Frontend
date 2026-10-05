@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ADMIN_DASHBOARD_REFRESH_MS } from "@/constants/intervals";
 import { greetingFor } from "@/utils/greeting";
 import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
 import { alpha } from "@mui/material/styles";
@@ -15,6 +17,8 @@ import {
   ListItemText,
   Divider,
   Chip,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { axiosInstance } from "@/api/axios";
@@ -44,6 +48,7 @@ import {
   EditRounded,
   RemoveCircleRounded,
   WarningAmberRounded,
+  RefreshRounded,
 } from "@mui/icons-material";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { apiErrorText } from "@/utils/apiError";
@@ -104,6 +109,14 @@ const ACTIVITY_ICON: Record<string, { icon: typeof AddCircleRounded; color: stri
 // tiles sit beside each other so a stray ".1" breaks the column of numbers.
 const inr = (v: number | null | undefined) => formatINR(v, 0);
 
+/** "just now" / "4 min ago" / "2 hr ago" — how old the figures on screen are. */
+const updatedAgo = (at: number, now: number) => {
+  const m = Math.floor((now - at) / 60_000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m} min ago`;
+  return `${Math.floor(m / 60)} hr ago`;
+};
+
 const dayLabel = (iso: string) => {
   const [, m, d] = iso.split("-");
   return `${d}/${m}`;
@@ -112,37 +125,60 @@ const dayLabel = (iso: string) => {
 export default function HospitalDashboard() {
   const { user, isOrgAdmin, activeBranchId, availableBranches } = useHospitalAuth();
   const navigate = useNavigate();
+  // Set while the Refresh button is asking: the server holds each answer for a
+  // minute, and a person who pressed Refresh wants the database, not the copy.
+  const fresh = useRef(false);
+  const freshParams = () => (fresh.current ? { fresh: 1 } : undefined);
   const { data: stats, isLoading: loading, isError, error, refetch } = useQuery<DashboardStats>({
     queryKey: ["hospital-dashboard-stats"],
-    queryFn: async () => (await axiosInstance.get("/hospital/dashboard/stats")).data.data,
+    queryFn: async () => (await axiosInstance.get("/hospital/dashboard/stats", { params: freshParams() })).data.data,
   });
 
   // The operational half — money, capacity, flow, attention. Deliberately a
   // separate query from /stats: that one answers "how is this hospital set up"
   // and rarely changes, this one is what the page is actually for.
-  const { data: ops, isLoading: opsLoading } = useQuery<Operations>({
+  const { data: ops, isLoading: opsLoading, dataUpdatedAt: opsUpdatedAt, isFetching: opsFetching, refetch: refetchOps } = useQuery<Operations>({
     queryKey: ["hospital-dashboard-operations"],
-    queryFn: async () => (await axiosInstance.get("/hospital/dashboard/operations")).data.data,
+    queryFn: async () => (await axiosInstance.get("/hospital/dashboard/operations", { params: freshParams() })).data.data,
     // The attention rows are derived live from current state, so a resolved
     // problem is already gone server-side — but a dashboard left open never
     // asked again (window-focus refetch is off app-wide) and a bill paid or a
     // refund approved elsewhere stayed listed until a reload. Re-ask when the
-    // tab comes back and once a minute while it is open. A background refetch
-    // keeps the current rows on screen, so nothing flashes.
+    // tab comes back and every few minutes while it is open — the header says
+    // how old the figures are and Refresh asks now. A background refetch keeps
+    // the current rows on screen, so nothing flashes.
     refetchOnWindowFocus: true,
-    refetchInterval: 60_000,
+    refetchInterval: ADMIN_DASHBOARD_REFRESH_MS,
   });
 
   // Every branch side by side — only in the hospital admin's All-branches view
   // of a hospital with more than one branch (multi-branch plan, phase 7).
   const groupView = isOrgAdmin && !activeBranchId && availableBranches.length > 1;
-  const { data: branchComparison } = useQuery<BranchComparisonData>({
+  const { data: branchComparison, isFetching: branchesFetching, refetch: refetchBranches } = useQuery<BranchComparisonData>({
     queryKey: ["hospital-dashboard-branches"],
-    queryFn: async () => (await axiosInstance.get("/hospital/dashboard/branches")).data.data,
+    queryFn: async () => (await axiosInstance.get("/hospital/dashboard/branches", { params: freshParams() })).data.data,
     enabled: groupView,
     refetchOnWindowFocus: true,
-    refetchInterval: 60_000,
+    refetchInterval: ADMIN_DASHBOARD_REFRESH_MS,
   });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshNow = async () => {
+    fresh.current = true;
+    setRefreshing(true);
+    try {
+      await Promise.all([refetch(), refetchOps(), groupView ? refetchBranches() : undefined]);
+    } finally {
+      fresh.current = false;
+      setRefreshing(false);
+    }
+  };
+  // Re-reads the clock so "Updated 3 min ago" keeps counting between refreshes.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(t);
+  }, []);
 
   if (loading) {
     return (
@@ -205,12 +241,28 @@ export default function HospitalDashboard() {
         title="Hospital Dashboard"
         subtitle={`${greetingFor(`${user?.firstName ?? ""} ${user?.lastName ?? ""}`)}. Here's what's happening today.`}
         actions={
-          stats?.activePlanName ? (
-            <Chip
-              label={`Active Plan: ${stats.activePlanName}`}
-              sx={{ bgcolor: "background.paper", color: "text.primary", fontWeight: 600, px: 1, border: "1px solid", borderColor: "divider" }}
-            />
-          ) : undefined
+          <>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              {opsUpdatedAt > 0 && (
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  Updated {updatedAgo(opsUpdatedAt, Math.max(now, opsUpdatedAt))}
+                </Typography>
+              )}
+              <Tooltip title="Refresh the figures">
+                <span>
+                  <IconButton size="small" aria-label="Refresh the dashboard" onClick={refreshNow} disabled={refreshing || opsFetching || branchesFetching}>
+                    <RefreshRounded fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Box>
+            {stats?.activePlanName && (
+              <Chip
+                label={`Active Plan: ${stats.activePlanName}`}
+                sx={{ bgcolor: "background.paper", color: "text.primary", fontWeight: 600, px: 1, border: "1px solid", borderColor: "divider" }}
+              />
+            )}
+          </>
         }
       />
 

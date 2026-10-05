@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { USER_DROPDOWNS_KEY } from "@/features/hospitalAuth/users/queryKeys";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import {
@@ -49,6 +50,7 @@ interface Department extends DepartmentBase {
 export default function DepartmentsList() {
   const navigate = useNavigate();
   const toast = useToast();
+  const queryClient = useQueryClient();
 
   // Every hospital holds the whole standard list (126 departments) as copies it
   // switches on as it needs them, so the page asks for all of them — the
@@ -84,6 +86,8 @@ export default function DepartmentsList() {
       });
       toast.success(newStatus === "active" ? `${department.departmentName} is now in use` : `${department.departmentName} switched off`);
       refetch();
+      // The user form offers departments in use, and holds its list for a while.
+      void queryClient.invalidateQueries({ queryKey: USER_DROPDOWNS_KEY });
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Failed to update department status"));
     }

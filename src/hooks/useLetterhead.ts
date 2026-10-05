@@ -12,12 +12,15 @@ import type { BillHospital } from "@/components/billing/BillDocument";
  * address, contacts, GSTIN and logo where it has them, and `branchName` only
  * when the hospital has more than one branch. Null until loaded (callers fall
  * back to the session's hospital name).
+ *
+ * `enabled` false holds off asking — for a dialog that is mounted closed.
  */
-export function useLetterhead(): BillHospital | null {
+export function useLetterhead(enabled = true): BillHospital | null {
   const { data } = useQuery<BillHospital | null>({
     queryKey: ["branch-letterhead"],
     queryFn: async () => (await axiosInstance.get("/hospital/branches/letterhead")).data?.data ?? null,
     staleTime: 5 * 60_000,
+    enabled,
   });
   return data ?? null;
 }

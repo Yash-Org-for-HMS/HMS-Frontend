@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box,
   Paper,
@@ -24,6 +24,7 @@ import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import FormSkeleton from "@/components/skeletons/FormSkeleton";
 import { validate, hasErrors, required, type Errors } from "@/utils/validation";
+import { USER_DROPDOWNS_KEY } from "@/features/hospitalAuth/users/queryKeys";
 
 interface DepartmentType {
   departmentTypeId: number;
@@ -39,6 +40,7 @@ export default function DepartmentForm() {
 
   const [loading, setLoading] = useState(false);
   const toast = useToast();
+  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
     departmentName: "",
@@ -77,6 +79,8 @@ export default function DepartmentForm() {
   const { data: departmentTypes = [] } = useQuery<DepartmentType[]>({
     queryKey: ["department-types"],
     queryFn: async () => (await axiosInstance.get("/hospital/departments/types")).data.data || [],
+    // The standard set, seeded once per hospital.
+    staleTime: 10 * 60_000,
   });
   const { data: users = [] } = useQuery<User[]>({
     queryKey: ["department-head-users"],
@@ -138,6 +142,8 @@ export default function DepartmentForm() {
           branches: Object.entries(atBranches).map(([branchId, v]) => ({ branchId, location: v.location || null, phoneExtension: v.phoneExtension || null, opdHours: v.opdHours || null })),
         });
       }
+      // The user form's department list is held for a while; this changes it.
+      void queryClient.invalidateQueries({ queryKey: USER_DROPDOWNS_KEY });
       navigate("/hospital/departments");
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "An error occurred"));

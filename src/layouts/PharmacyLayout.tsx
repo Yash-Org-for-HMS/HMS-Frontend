@@ -40,8 +40,8 @@ export default function PharmacyLayout() {
   const location = useLocation();
   const { isModuleEnabled } = useEnabledModules();
 
-  const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
-  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onAnnouncement });
+  const { unread: announcementsUnread, onAnnouncement, onConnect } = useAnnouncementBadge();
+  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onConnect });
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/pharmacy/dashboard", section: "Overview" },
     { text: "Dispensary (POS)", icon: <PointOfSaleRounded />, path: "/pharmacy/pos", section: "Dispensary" },

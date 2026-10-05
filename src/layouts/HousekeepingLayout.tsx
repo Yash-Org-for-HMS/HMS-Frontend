@@ -42,8 +42,8 @@ export default function HousekeepingLayout() {
   const location = useLocation();
   const { isModuleEnabled } = useEnabledModules();
 
-  const { unread: announcementsUnread, onAnnouncement } = useAnnouncementBadge();
-  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onAnnouncement });
+  const { unread: announcementsUnread, onAnnouncement, onConnect } = useAnnouncementBadge();
+  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onConnect });
   const menuItems = [
     { text: "Bed Board", icon: <HotelRounded />, path: "/housekeeping/beds", section: "Beds" },
   ];

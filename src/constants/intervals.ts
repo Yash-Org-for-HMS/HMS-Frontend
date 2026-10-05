@@ -6,3 +6,18 @@ export const QUEUE_POLL_MS = 30_000;
 
 /** Dashboards / layout badges — lighter refresh, every 60s. */
 export const DASHBOARD_POLL_MS = 60_000;
+
+/**
+ * The hospital admin dashboard — every 5 minutes. Its figures are the day's
+ * running totals, not a queue someone is working through, and a page left open
+ * all day asking once a minute was most of the panel's database load. It also
+ * asks again whenever the tab comes back, and has a Refresh button.
+ */
+export const ADMIN_DASHBOARD_REFRESH_MS = 5 * 60_000;
+
+/**
+ * The Announcements badge's safety net — every 15 minutes. It is told about
+ * changes over the socket and asks again at the moment a scheduled one goes
+ * live (useAnnouncementBadge), so this only matters if both are missed.
+ */
+export const ANNOUNCEMENT_FALLBACK_MS = 15 * 60_000;

@@ -102,6 +102,8 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
     queryKey: ["ipd-transfer-options", ""],
     queryFn: async () => (await axiosInstance.get("/ipd/transfer-options")).data.data,
     staleTime: 5 * 60_000,
+    // Only the row menu offers it, and a read-only view has no row menu.
+    enabled: !readOnly,
   });
   const canTransferBranch = (transferOptions?.branches.length ?? 0) > 1;
   const [dischargeFor, setDischargeFor] = useState<AdmissionRow | null>(null);

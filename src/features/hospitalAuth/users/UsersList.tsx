@@ -354,6 +354,8 @@ export default function UsersList() {
   const { data: roleOptions = [] } = useQuery<{ roleId: string; roleName: string }[]>({
     queryKey: ["hospital-user-roles"],
     queryFn: async () => (await axiosInstance.get("/hospital/users/dropdowns")).data.data.roles,
+    // The roles are defined in code — they do not change while the panel is open.
+    staleTime: 10 * 60_000,
   });
 
   const { data: users = [], isLoading, isError, error, refetch } = useQuery<User[]>({
