@@ -28,7 +28,7 @@ beforeEach(() => {
   badge.onConnect.mockClear();
 });
 
-const invalidated = (spy: ReturnType<typeof vi.spyOn>) =>
+const invalidated = (spy: { mock: { calls: unknown[][] } }) =>
   spy.mock.calls.map((c) => JSON.stringify((c[0] as { queryKey: unknown }).queryKey));
 
 describe("NurseLayout — live refresh of the worklists", () => {
