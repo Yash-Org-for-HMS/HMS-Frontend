@@ -79,6 +79,9 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
   const { data: dd, isLoading: ddLoading, isError: ddIsError, error: ddError, refetch: refetchDd } = useQuery({
     queryKey: ["patient-dropdowns"],
     queryFn: async () => (await axiosInstance.get("/reception/patients/dropdowns")).data.data,
+    // Genders, blood groups and the doctors to refer to: registering patients
+    // one after another need not ask each time.
+    staleTime: 10 * 60_000,
   });
   const genders: Gender[] = dd?.genders ?? [];
   const bloodGroups: BloodGroup[] = dd?.bloodGroups ?? [];

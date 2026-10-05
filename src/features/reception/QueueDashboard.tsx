@@ -23,7 +23,8 @@ import VitalsModal from "./VitalsModal";
 import CheckoutDialog from "@/components/reception/CheckoutDialog";
 import { useSocket } from "@/hooks/useSocket";
 import PageHeader from "@/components/layout/PageHeader";
-import { QUEUE_POLL_MS } from "@/constants/intervals";
+import { QUEUE_POLL_MS, QUEUE_LIVE_FALLBACK_MS } from "@/constants/intervals";
+import { refetchUnlessFresh, isOpdQueueEvent } from "@/utils/liveRefresh";
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 
 // Shared cell styling for the Completed section's table.
@@ -97,13 +98,28 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
       // while the rest of the hospital leaves it to reception).
       const d = res.data?.data;
       return d?.effective?.vitalsCollector || d?.settings?.vitalsCollector || "RECEPTIONIST";
-    }
+    },
+    // Who records vitals is a hospital setting, changed rarely and by an admin.
+    staleTime: 5 * 60_000,
+  });
+
+  // Real-time queue updates. A lab or radiology change never touches this
+  // queue, so it is not a reason to ask again; a reconnect is, since changes
+  // may have been missed while the connection was down.
+  const invalidateQueue = useCallback((payload?: unknown) => {
+    if (isOpdQueueEvent(payload)) queryClient.invalidateQueries({ queryKey: ['queue'] });
+  }, [queryClient]);
+  const { connected } = useSocket({
+    QUEUE_UPDATED: invalidateQueue,
+    connect: () => refetchUnlessFresh(queryClient, ['queue']),
   });
 
   const { data: tokens = [], isLoading: loading, error: queryError } = useQuery<QueueTokenRow[]>({
     queryKey: ['queue'],
     queryFn: async () => (await apiGetList<QueueTokenRow>("/reception/queue")).rows,
-    refetchInterval: QUEUE_POLL_MS // Auto refresh every 30s as a fallback
+    // A safety net: every change is pushed while connected. Without the
+    // connection, every 30s as before.
+    refetchInterval: connected ? QUEUE_LIVE_FALLBACK_MS : QUEUE_POLL_MS,
   });
 
   const error = queryError ? "Failed to load queue" : null;
@@ -198,11 +214,6 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
     };
   }, [waitingTokens]);
 
-  // Listen for real-time queue updates
-  const invalidateQueue = useCallback(() => queryClient.invalidateQueries({ queryKey: ['queue'] }), [queryClient]);
-  useSocket({
-    QUEUE_UPDATED: invalidateQueue
-  });
 
   const actionMutation = useMutation({
     mutationFn: async ({ id, action }: { id: string, action: string }) => {

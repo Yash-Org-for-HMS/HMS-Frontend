@@ -22,6 +22,8 @@ import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { hasRole, menuPathsFor } from "@/constants/roles";
 import type { QueueTokenRow } from "./queue.types";
 import { useSocket } from "@/hooks/useSocket";
+import { QUEUE_POLL_MS, QUEUE_LIVE_FALLBACK_MS } from "@/constants/intervals";
+import { refetchUnlessFresh, isOpdQueueEvent } from "@/utils/liveRefresh";
 import PageHeader from "@/components/layout/PageHeader";
 import { apiErrorText } from "@/utils/apiError";
 
@@ -103,10 +105,17 @@ export default function ReceptionDashboard() {
   const today = new Date().toISOString().slice(0, 10);
 
   // Live updates: refresh the dashboard whenever the queue changes elsewhere.
-  useSocket({
-    QUEUE_UPDATED: () => {
+  // Lab and radiology work changes nothing here, so it is skipped; a reconnect
+  // asks again, since changes may have been missed while it was down.
+  const { connected } = useSocket({
+    QUEUE_UPDATED: (payload?: unknown) => {
+      if (!isOpdQueueEvent(payload)) return;
       queryClient.invalidateQueries({ queryKey: ["reception-dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["queue"] });
+    },
+    connect: () => {
+      refetchUnlessFresh(queryClient, ["reception-dashboard-stats"]);
+      refetchUnlessFresh(queryClient, ["queue"]);
     },
   });
 
@@ -131,7 +140,8 @@ export default function ReceptionDashboard() {
     // The same call the queue page makes, through the same helper - the
     // envelope is unwrapped in one place, so this cannot drift from it.
     queryFn: async () => (await apiGetList<QueueTokenRow>("/reception/queue")).rows,
-    refetchInterval: 30000,
+    // A safety net while connected (every change is pushed); 30s without.
+    refetchInterval: connected ? QUEUE_LIVE_FALLBACK_MS : QUEUE_POLL_MS,
   });
   const liveQueue = queue.filter(
     (t) => t.statusCode !== "COMPLETED" && t.statusCode !== "SKIPPED" && t.statusCode !== "CANCELLED",
@@ -160,6 +170,9 @@ export default function ReceptionDashboard() {
     // first render — which is exactly the 403 this was meant to stop.
     enabled: modulesLoaded && isModuleEnabled("IPD"),
     retry: 0,
+    // The whole bed board, for one tile: coming back to the dashboard within a
+    // minute reuses it.
+    staleTime: 60_000,
   });
   const beds = bedData?.summary;
 

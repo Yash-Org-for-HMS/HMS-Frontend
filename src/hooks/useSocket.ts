@@ -1,11 +1,17 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { API_URL } from "@/api/axios";
 
-export function useSocket(eventMap: Record<string, (...args: any[]) => void>) {
+/**
+ * One live connection for a screen, with a handler per event. Returns whether
+ * it is connected right now, so a screen can poll slowly while it is told about
+ * changes and fall back to its normal poll while it is not.
+ */
+export function useSocket(eventMap: Record<string, (...args: any[]) => void>): { connected: boolean } {
   const { hospital, activeBranchId } = useHospitalAuth();
   const socketRef = useRef<Socket | null>(null);
+  const [connected, setConnected] = useState(false);
 
   const eventMapRef = useRef(eventMap);
 
@@ -45,7 +51,10 @@ export function useSocket(eventMap: Record<string, (...args: any[]) => void>) {
     // client no longer says which tenant it belongs to. Switching branch
     // reconnects (see the effect's dependencies), which moves the socket to
     // the new branch's room.
+    socket.on("connect", () => setConnected(true));
+    socket.on("disconnect", () => setConnected(false));
     socket.on("connect_error", (err) => {
+      setConnected(false);
       // An expired token is the ordinary case: the next API call refreshes it
       // and the socket reconnects with the new one. Nothing to surface.
       if (err.message !== "UNAUTHORIZED") console.warn("[Socket.io]", err.message);
@@ -65,7 +74,10 @@ export function useSocket(eventMap: Record<string, (...args: any[]) => void>) {
     return () => {
       // Cleanup listeners and disconnect
       socket.disconnect();
+      setConnected(false);
     };
   }, [hospital?.id, activeBranchId]);
+
+  return { connected };
 
 }

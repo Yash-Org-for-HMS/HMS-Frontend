@@ -85,6 +85,9 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   const { data: dropdowns = EMPTY_DROPDOWNS, isLoading: ddLoading, isError: ddIsError, error: ddError, refetch: refetchDd } = useQuery({
     queryKey: ["appointment-dropdowns"],
     queryFn: async () => (await axiosInstance.get("/reception/appointments/dropdowns")).data.data,
+    // Doctors, their hours and departments, for booking several in a row. Kept
+    // short: the booking itself is checked against the live hours on the server.
+    staleTime: 2 * 60_000,
   });
 
   // Patient search options — hits the paginated /reception/patients endpoint so

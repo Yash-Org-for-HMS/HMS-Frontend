@@ -55,6 +55,9 @@ export default function AppointmentCalendar() {
   const { data: dropdowns = { doctors: [], departments: [] } } = useQuery({
     queryKey: ["appointment-dropdowns"],
     queryFn: async () => (await axiosInstance.get("/reception/appointments/dropdowns")).data.data,
+    // Doctors, their hours and departments, for booking several in a row. Kept
+    // short: the booking itself is checked against the live hours on the server.
+    staleTime: 2 * 60_000,
   });
 
   const { data: appointments = [], isLoading, isError, error, refetch } = useQuery<any[]>({

@@ -4,6 +4,13 @@
 /** Live operational screens (queues, dispensary, POS) — poll every 30s. */
 export const QUEUE_POLL_MS = 30_000;
 
+/**
+ * A queue screen whose live connection is up — every 2 minutes. It is told about
+ * each change as it happens (QUEUE_UPDATED), so this is only a safety net; while
+ * the connection is down it polls at QUEUE_POLL_MS as before.
+ */
+export const QUEUE_LIVE_FALLBACK_MS = 2 * 60_000;
+
 /** Dashboards / layout badges — lighter refresh, every 60s. */
 export const DASHBOARD_POLL_MS = 60_000;
 
