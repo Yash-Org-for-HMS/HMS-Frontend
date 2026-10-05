@@ -20,12 +20,13 @@ import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
 import ReasonDialog from "@/components/ReasonDialog";
 import { useSocket } from "@/hooks/useSocket";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PharmacyPage, { ROWS_PER_PAGE } from "./components/PharmacyPage";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
-import { QUEUE_POLL_MS } from "@/constants/intervals";
+import { QUEUE_POLL_MS, QUEUE_LIVE_FALLBACK_MS, LIVE_DASHBOARD_FALLBACK_MS } from "@/constants/intervals";
+import { refetchUnlessFresh, queueEventConcerns } from "@/utils/liveRefresh";
 
 export default function DispensaryPOS() {
   const theme = useTheme();
@@ -36,8 +37,43 @@ export default function DispensaryPOS() {
   // (consolidated) have no active branch, so the backend rejects the sale — guide
   // them to pick a concrete branch here instead of failing at checkout.
   const { activeBranchId, availableBranches, setActiveBranch } = useHospitalAuth();
-  const { data, isLoading: loading, refetch: fetchData } = useQuery({
-    queryKey: ["dispensary-pos-data"],
+  // Real-time updates: the pharmacy's own work — a prescription written or
+  // changed, a sale or stock movement at another counter, a sale paid for and
+  // dispensed at reception. Lab work, outpatient flow and lab payments change
+  // nothing here. A reconnect re-asks, since changes may have been missed while
+  // it was down; the first connect does not, the screen has only just asked.
+  const queryClient = useQueryClient();
+  const { connected: live } = useSocket({
+    QUEUE_UPDATED: (payload?: unknown) => {
+      if (!queueEventConcerns(payload, "pharmacy")) return;
+      queryClient.invalidateQueries({ queryKey: ["dispensary-pos-work"] });
+      queryClient.invalidateQueries({ queryKey: ["dispensary-pos-stock"] });
+    },
+    connect: () => {
+      refetchUnlessFresh(queryClient, ["dispensary-pos-work"]);
+      refetchUnlessFresh(queryClient, ["dispensary-pos-stock"]);
+    },
+  });
+
+  // What the counter sells from — the whole catalogue (the medicine picker
+  // searches all of it) and the stock on hand. It moves with sales and stock
+  // receipts, which are announced, so while live it is re-read only as a
+  // safety net; every 30s as before while not.
+  const { data: stock, isLoading: stockLoading, refetch: refetchStock } = useQuery({
+    queryKey: ["dispensary-pos-stock"],
+    queryFn: async () => {
+      const [medRes, invRes] = await Promise.all([
+        axiosInstance.get(`/pharmacy/medicines`),
+        axiosInstance.get(`/pharmacy/inventory`),
+      ]);
+      return { medicines: medRes.data.data || [], inventory: invRes.data.data || [] };
+    },
+    refetchInterval: live ? LIVE_DASHBOARD_FALLBACK_MS : QUEUE_POLL_MS,
+  });
+
+  // The counter's work: prescriptions waiting, and today's sales.
+  const { data: work, isLoading: workLoading, refetch: refetchWork } = useQuery({
+    queryKey: ["dispensary-pos-work"],
     queryFn: async () => {
       /**
        * Today only, asked for as today.
@@ -53,26 +89,25 @@ export default function DispensaryPOS() {
        */
       const since = new Date();
       since.setHours(0, 0, 0, 0);
-      const [medRes, invRes, presRes, salesRes] = await Promise.all([
-        axiosInstance.get(`/pharmacy/medicines`),
-        axiosInstance.get(`/pharmacy/inventory`),
+      const [presRes, salesRes] = await Promise.all([
         axiosInstance.get(`/pharmacy/prescriptions/pending`),
         axiosInstance.get(`/pharmacy/orders?from=${encodeURIComponent(since.toISOString())}`)
       ]);
       return {
-        medicines: medRes.data.data || [],
-        inventory: invRes.data.data || [],
         pendingPrescriptions: presRes.data.data || [],
         sales: salesRes.data.data || []
       };
     },
-    refetchInterval: QUEUE_POLL_MS,
+    refetchInterval: live ? QUEUE_LIVE_FALLBACK_MS : QUEUE_POLL_MS,
   });
+  const loading = stockLoading || workLoading;
+  // After this counter's own sale, cancellation or payment: both halves.
+  const fetchData = () => Promise.all([refetchStock(), refetchWork()]);
 
-  const medicines: MedicineCatalogRow[] = data?.medicines || [];
-  const inventory: MedicineInventoryRow[] = data?.inventory || [];
-  const pendingPrescriptions = data?.pendingPrescriptions || [];
-  const sales = data?.sales || [];
+  const medicines: MedicineCatalogRow[] = stock?.medicines || [];
+  const inventory: MedicineInventoryRow[] = stock?.inventory || [];
+  const pendingPrescriptions = work?.pendingPrescriptions || [];
+  const sales = work?.sales || [];
 
   // Cart state
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -106,11 +141,6 @@ export default function DispensaryPOS() {
   const [orderToCancel, setOrderToCancel] = useState<PharmacyOrder | null>(null);
   const [prescriptionToDismiss, setPrescriptionToDismiss] = useState<PendingPrescription | null>(null);
 
-  // Listen for real-time queue updates
-  useSocket({
-    QUEUE_UPDATED: () => fetchData(),
-    connect: () => fetchData(), // Refetch on socket reconnect
-  });
 
   // Map inventory to medicines to see what's actually in stock
   const medicineStock = useMemo(() => {
