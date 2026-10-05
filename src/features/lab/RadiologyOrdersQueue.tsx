@@ -15,7 +15,7 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
 import WalkInOrderDialog from "@/components/lab/WalkInOrderDialog";
 import { useSocket } from "@/hooks/useSocket";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import { assetUrl } from "@/utils/assetUrl";
 import PageHeader from "@/components/layout/PageHeader";
 import RadiologyMacroBar from "@/components/lab/RadiologyMacroBar";
@@ -23,7 +23,8 @@ import { isUrgent, priorityMeta, urgentRowSx } from "./orderPriority";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import { useToast } from "@/providers/ToastContext";
-import { QUEUE_POLL_MS } from "@/constants/intervals";
+import { QUEUE_POLL_MS, QUEUE_LIVE_FALLBACK_MS } from "@/constants/intervals";
+import { refetchUnlessFresh, queueEventConcerns } from "@/utils/liveRefresh";
 
 // Tab index → server bucket (Today / Past / Completed / All).
 const BUCKETS = ["today_pending", "past_pending", "completed", "all"];
@@ -44,13 +45,33 @@ export default function RadiologyOrdersQueue() {
   // Switching tabs resets to the first page.
   useEffect(() => { setPage(1); }, [tabValue]);
 
+  // Real-time updates: lab and radiology work, and a test or scan paid for at
+  // the counter (which releases a pre-paid sample) — the list and the backlog
+  // count both. An outpatient change (a check-in, vitals) touches neither. A
+  // reconnect re-asks, since changes may have been missed while it was down;
+  // the first connect does not, the screen has only just asked.
+  const queryClient = useQueryClient();
+  const { connected: live } = useSocket({
+    QUEUE_UPDATED: (payload?: unknown) => {
+      if (!queueEventConcerns(payload, "lab", "billing")) return;
+      queryClient.invalidateQueries({ queryKey: ["radiology-orders-queue"] });
+      queryClient.invalidateQueries({ queryKey: ["radiology-orders-queue-past-count"] });
+    },
+    connect: () => {
+      refetchUnlessFresh(queryClient, ["radiology-orders-queue"]);
+      refetchUnlessFresh(queryClient, ["radiology-orders-queue-past-count"]);
+    },
+  });
+
   const { data, isLoading: loading, refetch: fetchOrders } = useQuery({
     queryKey: ["radiology-orders-queue", tabValue, page],
     queryFn: async () => {
       const res = await axiosInstance.get(`/lab/radiology-orders`, { params: { bucket: BUCKETS[tabValue], page, limit: 20, t: Date.now() } });
       return res.data;
     },
-    refetchInterval: QUEUE_POLL_MS,
+    // A safety net while live (every order, result and payment is pushed);
+    // every 30s as before while not.
+    refetchInterval: live ? QUEUE_LIVE_FALLBACK_MS : QUEUE_POLL_MS,
     placeholderData: keepPreviousData,
   });
   const orders: RadiologyOrderRow[] = data?.data ?? [];
@@ -66,7 +87,7 @@ export default function RadiologyOrdersQueue() {
       const res = await axiosInstance.get(`/lab/radiology-orders`, { params: { bucket: "past_pending", page: 1, limit: 1 } });
       return res.data;
     },
-    refetchInterval: QUEUE_POLL_MS,
+    refetchInterval: live ? QUEUE_LIVE_FALLBACK_MS : QUEUE_POLL_MS,
   });
   const pastPendingCount: number = pastPending?.pagination?.total ?? 0;
 
@@ -125,17 +146,8 @@ export default function RadiologyOrdersQueue() {
   });
   const posItem = unbilledItems.find((it: UnbilledItem) => it.id === editOrder?.radiologyOrderId);
 
-  // Listen for real-time queue updates
-  useSocket({
-    QUEUE_UPDATED: () => fetchOrders(),
-    connect: () => fetchOrders(), // Refetch on socket reconnect
-  });
-
   useEffect(() => {
   }, []);
-
-
-
 
   const handleEditClick = (order: RadiologyOrderRow) => {
     // Bind immediately so the dialog opens without waiting on the navigation,

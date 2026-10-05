@@ -16,12 +16,13 @@ import { useNavigate } from "react-router-dom";
 import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
 import WalkInOrderDialog from "@/components/lab/WalkInOrderDialog";
 import { useSocket } from "@/hooks/useSocket";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import PageHeader from "@/components/layout/PageHeader";
 import { isUrgent, priorityMeta, urgentRowSx } from "./orderPriority";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
-import { QUEUE_POLL_MS } from "@/constants/intervals";
+import { QUEUE_POLL_MS, QUEUE_LIVE_FALLBACK_MS } from "@/constants/intervals";
+import { refetchUnlessFresh, queueEventConcerns } from "@/utils/liveRefresh";
 
 // Tab index → server bucket (matches the queue's Today / Past / Completed / All tabs).
 const BUCKETS = ["today_pending", "past_pending", "completed", "all"];
@@ -33,13 +34,33 @@ export default function LabOrdersQueue() {
   // Switching tabs resets to the first page.
   useEffect(() => { setPage(1); }, [tabValue]);
 
+  // Real-time updates: lab and radiology work, and a test or scan paid for at
+  // the counter (which releases a pre-paid sample) — the list and the backlog
+  // count both. An outpatient change (a check-in, vitals) touches neither. A
+  // reconnect re-asks, since changes may have been missed while it was down;
+  // the first connect does not, the screen has only just asked.
+  const queryClient = useQueryClient();
+  const { connected: live } = useSocket({
+    QUEUE_UPDATED: (payload?: unknown) => {
+      if (!queueEventConcerns(payload, "lab", "billing")) return;
+      queryClient.invalidateQueries({ queryKey: ["lab-orders-queue"] });
+      queryClient.invalidateQueries({ queryKey: ["lab-orders-queue-past-count"] });
+    },
+    connect: () => {
+      refetchUnlessFresh(queryClient, ["lab-orders-queue"]);
+      refetchUnlessFresh(queryClient, ["lab-orders-queue-past-count"]);
+    },
+  });
+
   const { data, isLoading: loading, refetch: fetchOrders } = useQuery({
     queryKey: ["lab-orders-queue", tabValue, page],
     queryFn: async () => {
       const res = await axiosInstance.get(`/lab/orders`, { params: { bucket: BUCKETS[tabValue], page, limit: 20, t: Date.now() } });
       return res.data;
     },
-    refetchInterval: QUEUE_POLL_MS,
+    // A safety net while live (every order, result and payment is pushed);
+    // every 30s as before while not.
+    refetchInterval: live ? QUEUE_LIVE_FALLBACK_MS : QUEUE_POLL_MS,
     placeholderData: keepPreviousData,
   });
   const orders: LabOrderRow[] = data?.data ?? [];
@@ -57,7 +78,7 @@ export default function LabOrdersQueue() {
       const res = await axiosInstance.get(`/lab/orders`, { params: { bucket: "past_pending", page: 1, limit: 1 } });
       return res.data;
     },
-    refetchInterval: QUEUE_POLL_MS,
+    refetchInterval: live ? QUEUE_LIVE_FALLBACK_MS : QUEUE_POLL_MS,
   });
   const pastPendingCount: number = pastPending?.pagination?.total ?? 0;
 
@@ -78,13 +99,6 @@ export default function LabOrdersQueue() {
     queryFn: async () => (await axiosInstance.get(`/billing/unbilled/${collectOrder!.patientId}`)).data.data || [],
   });
   const posItem = unbilledItems.find((it: UnbilledItem) => it.id === collectOrder?.labOrderId);
-
-  // Listen for real-time queue updates
-  useSocket({
-    QUEUE_UPDATED: () => fetchOrders(),
-    connect: () => fetchOrders(), // Refetch on socket reconnect
-  });
-
 
   const toast = useToast();
 
