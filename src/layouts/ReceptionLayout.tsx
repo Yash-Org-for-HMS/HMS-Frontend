@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { menuPathsFor, holdsHome } from "@/constants/roles";
+import { menuPathsFor, holdsHome, hasAction } from "@/constants/roles";
 import PanelSwitcher from "@/components/layout/PanelSwitcher";
 import { isNavItemActive } from "@/components/layout/navActive";
 import { SEARCH_SHORTCUT } from "@/utils/shortcut";
@@ -46,6 +46,7 @@ import {
   LockRounded,
   EventNoteRounded,
   WorkRounded,
+  FolderSharedRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { assetUrl } from "@/utils/assetUrl";
@@ -100,6 +101,8 @@ export default function ReceptionLayout() {
         { text: "Doctor Availability", icon: <MedicalServicesRounded />, path: "/reception/doctors" },
         { text: "Department Directory", icon: <ApartmentRounded />, path: "/reception/directory" },
         { text: "Referred Patients", icon: <CallSplitRounded />, path: "/reception/referrals" },
+        // Medical Records' registers: medico-legal cases, certificates, files and copies.
+        ...(hasAction(user, "mrd.records") ? [{ text: "Medical records", icon: <FolderSharedRounded />, path: "/reception/mrd" }] : []),
       ],
     },
     {

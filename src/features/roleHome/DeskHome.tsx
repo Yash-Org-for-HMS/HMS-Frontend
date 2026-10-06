@@ -3,7 +3,7 @@ import { Box, Grid, Typography } from "@mui/material";
 import {
   HotelRounded, KingBedRounded, CleaningServicesRounded, CurrencyRupeeRounded, ReceiptLongRounded,
   ExitToAppRounded, HelpOutlineRounded, HourglassTopRounded, HealthAndSafetyRounded, DescriptionRounded,
-  AssignmentLateRounded, EventBusyRounded,
+  AssignmentLateRounded, EventBusyRounded, GavelRounded, FolderSharedRounded, VerifiedRounded,
 } from "@mui/icons-material";
 import PageHeader from "@/components/layout/PageHeader";
 import StatCard from "@/components/StatCard";
@@ -57,6 +57,9 @@ interface Mrd {
   summariesMissing: Short<{ admissionId: string; admissionNumber: string | null; patientName: string; dischargedOn: string }>;
   consentsMissing: Short<{ surgeryId: string; patientName: string; procedure: string; at: string }>;
   dischargedThisWeek: number;
+  medicoLegal?: { open: number; policePending: number };
+  filesOverdue?: number;
+  certificatesThisWeek?: number;
 }
 
 function Section({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
@@ -211,7 +214,7 @@ export default function DeskHome() {
       )}
 
       {show.mrd && !mrd.isError && (
-        <Section title="Medical records" subtitle="Files closed without a summary, and surgeries coming up without a signed consent.">
+        <Section title="Medical records" subtitle="Files closed without a summary, surgeries coming up without a signed consent, and the record room's registers.">
           <Grid container spacing={2} sx={{ mb: 2 }}>
             <Grid size={tile}><StatCard icon={<ExitToAppRounded />} label="Discharged this week" color={BRAND.action} loading={mrd.isLoading}
               value={mrd.data?.dischargedThisWeek ?? 0} /></Grid>
@@ -219,6 +222,13 @@ export default function DeskHome() {
               value={mrd.data?.summariesMissing.count ?? 0} sub="of those discharged" /></Grid>
             <Grid size={tile}><StatCard icon={<AssignmentLateRounded />} label="Consents missing" color={SEMANTIC.danger} loading={mrd.isLoading}
               value={mrd.data?.consentsMissing.count ?? 0} sub="surgery in the next 48h" /></Grid>
+            {/* The record room's own registers (Medical records page). */}
+            <Grid size={tile}><StatCard icon={<GavelRounded />} label="Medico-legal cases open" color={SEMANTIC.warning} loading={mrd.isLoading}
+              value={mrd.data?.medicoLegal?.open ?? 0} sub={`${mrd.data?.medicoLegal?.policePending ?? 0} not yet told to police`} onClick={() => navigate("/reception/mrd")} /></Grid>
+            <Grid size={tile}><StatCard icon={<FolderSharedRounded />} label="Files overdue" color={SEMANTIC.danger} loading={mrd.isLoading}
+              value={mrd.data?.filesOverdue ?? 0} sub="out past their due time" onClick={() => navigate("/reception/mrd")} /></Grid>
+            <Grid size={tile}><StatCard icon={<VerifiedRounded />} label="Certificates this week" color={BRAND.action} loading={mrd.isLoading}
+              value={mrd.data?.certificatesThisWeek ?? 0} sub="medical, fitness, death" onClick={() => navigate("/reception/mrd")} /></Grid>
           </Grid>
           <Grid container spacing={2}>
             <Grid size={half}>

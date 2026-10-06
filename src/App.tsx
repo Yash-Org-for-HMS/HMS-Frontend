@@ -126,6 +126,9 @@ const NurseImmunisations = lazy(() => import("@/features/nurse/NurseImmunisation
 const NursePostings = lazy(() => import("@/features/nurse/NursePostings"));
 const DutyRoster = lazy(() => import("@/features/nurse/DutyRoster"));
 const WardIndents = lazy(() => import("@/features/wardIndents/WardIndents"));
+// Medical Records' registers and the printed certificate.
+const MedicalRecords = lazy(() => import("@/features/mrd/MedicalRecords"));
+const PrintCertificate = lazy(() => import("@/features/mrd/PrintCertificate"));
 // The home screens of the workbook's roles (backend modules/roleHome).
 const DeskHome = lazy(() => import("@/features/roleHome/DeskHome"));
 const WardsHome = lazy(() => import("@/features/roleHome/WardsHome"));
@@ -408,10 +411,12 @@ function App() {
             <Route path="/reception/claims/:id" element={el(ClaimDetail)} />
             <Route path="/reception/claims/:id/edit" element={el(ClaimForm)} />
             <Route path="/reception/notifications" element={el(NotificationsLog)} />
+            <Route path="/reception/mrd" element={el(MedicalRecords)} />
           </Route>
           {/* Full-page printables, rendered outside the layout shell. */}
           <Route path="/reception/billing/invoices/:invoiceId/ip-bill/print" element={el(PrintIpBill)} />
           <Route path="/reception/consent-forms/:id/print" element={el(PrintConsentForm)} />
+          <Route path="/reception/mrd/certificates/:id/print" element={el(PrintCertificate)} />
         </Route>
         {/* ── Nurse Panel Routes ────────────────────────────────────── */}
         <Route element={<HospitalProtectedRoute panel="nurse" />}>
