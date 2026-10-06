@@ -3,7 +3,7 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { axiosInstance } from "@/api/axios";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "./ToastContext";
-import { homeForUser, type HeldRole } from "@/constants/roles";
+import { homeForUser, type HeldRole, type RoleFeatures } from "@/constants/roles";
 
 export interface HospitalUser {
   id: string;
@@ -15,6 +15,8 @@ export interface HospitalUser {
   roleName: string;
   /** Every role held, primary first (several per person, per facility). Absent on older sessions. */
   roles?: HeldRole[];
+  /** Each held role's pages, home and actions, as the server sent them on load. */
+  features?: Record<string, RoleFeatures>;
 }
 
 export interface HospitalInfo {
@@ -95,6 +97,17 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
       const branches: AllowedBranch[] = data?.branches ?? [];
       setAvailableBranches(branches);
       setIsOrgAdmin(Boolean(data?.isOrgAdmin));
+      // What each role this login holds may open (backend lib/roleCatalog.ts),
+      // fresh on every load — so a session saved before a role's pages changed
+      // follows the change without signing in again.
+      if (data?.roleFeatures) {
+        setUser((prev) => {
+          if (!prev) return prev;
+          const next = { ...prev, features: data.roleFeatures as Record<string, RoleFeatures> };
+          sessionStorage.setItem("hospitalUser", JSON.stringify(next));
+          return next;
+        });
+      }
 
       // Default the active branch if none stored yet (or the stored one vanished).
       const stored = sessionStorage.getItem("activeBranchId");

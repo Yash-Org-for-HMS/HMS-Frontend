@@ -46,20 +46,11 @@ export const PANEL_LABEL: Record<Panel, string> = {
   housekeeping: "Housekeeping", hospital: "Hospital admin",
 };
 
-/** Where a role lands inside its panel, when not the panel's dashboard. */
-const ROLE_HOME: Record<string, string> = {
-  HR_ADMIN: "/hospital/staff",
-};
-
 // The panel a role belongs to. Anything that isn't a known clinical role (admins
 // and custom management roles) belongs to the hospital-admin panel — matching
 // the login redirect's default branch.
 export function primaryPanelForRole(role?: string | null): Panel {
   return ROLE_PANEL[(role || "").toUpperCase()] ?? "hospital";
-}
-
-export function homeForRole(role?: string | null): string {
-  return ROLE_HOME[(role || "").toUpperCase()] ?? PANEL_HOME[primaryPanelForRole(role)];
 }
 
 // May this role render the given panel's routes? True when: it's an admin, OR
@@ -80,7 +71,19 @@ export function canAccessPanel(role: string | null | undefined, panel: Panel): b
 
 // ── Several roles per login ─────────────────────────────────────────────────
 
-export interface HeldRole {
+/**
+ * What the app shows a role — which pages it opens, where it lands, what it may
+ * do beyond its panel. Decided on the server (backend lib/roleCatalog.ts) and
+ * sent with the login and on every load; not repeated here, so the two cannot
+ * disagree. pages null: the role's whole panel.
+ */
+export interface RoleFeatures {
+  pages: string[] | null;
+  home: string | null;
+  actions: string[];
+}
+
+export interface HeldRole extends Partial<RoleFeatures> {
   code: string;
   name: string;
   /** The facility it applies at; null = every facility. */
@@ -92,6 +95,20 @@ export interface HeldRole {
 export interface RoleHolder {
   role: string;
   roles?: HeldRole[];
+  /** Each held role's features by code, as the server last sent them (on load). */
+  features?: Record<string, RoleFeatures>;
+}
+
+/**
+ * A role's features: the latest the server sent, else what came with the login.
+ * Undefined for a session from before roles had features — treated as the
+ * role's whole panel until the next load fills it in.
+ */
+export function featuresFor(user: RoleHolder | null | undefined, code: string): RoleFeatures | undefined {
+  const sent = user?.features?.[code];
+  if (sent) return sent;
+  const held = user?.roles?.find((r) => r.code === code);
+  return held && held.pages !== undefined ? { pages: held.pages ?? null, home: held.home ?? null, actions: held.actions ?? [] } : undefined;
 }
 
 /** Every role the login holds (primary first). A session from before roles could be several has only `role`. */
@@ -120,7 +137,8 @@ export function panelsForUser(user: RoleHolder | null | undefined): Panel[] {
 }
 
 export function homeForUser(user: RoleHolder | null | undefined): string {
-  return homeForRole(user?.role);
+  const role = user?.role ?? "";
+  return featuresFor(user, role)?.home ?? PANEL_HOME[primaryPanelForRole(role)];
 }
 
 export function canUserAccessPanel(user: RoleHolder | null | undefined, panel: Panel): boolean {
@@ -130,32 +148,13 @@ export function canUserAccessPanel(user: RoleHolder | null | undefined, panel: P
 /** Where a login lands in one of its panels: the home of the first role it holds there. */
 export function panelHomeForUser(user: RoleHolder | null | undefined, panel: Panel): string {
   const r = heldRoles(user).find((code) => primaryPanelForRole(code) === panel);
-  return r ? homeForRole(r) : PANEL_HOME[panel];
+  return (r && featuresFor(user, r)?.home) || PANEL_HOME[panel];
 }
-
-/**
- * The part of a shared panel each of the workbook's roles works in, by menu
- * path. The API holds them to it (backend lib/roleCatalog.ts writes); the menu
- * shows only that part. A role not listed here sees its whole panel.
- */
-const ROLE_MENU: Record<string, string[]> = {
-  ADMISSION_DESK: ["/reception/dashboard", "/reception/patients", "/reception/ipd/admissions", "/reception/ipd/beds", "/reception/ipd/theatres", "/reception/doctors", "/reception/directory", "/reception/notifications"],
-  BILLING: ["/reception/dashboard", "/reception/patients", "/reception/ipd/admissions", "/reception/billing", "/reception/reports", "/reception/notifications"],
-  TPA_DESK: ["/reception/dashboard", "/reception/patients", "/reception/ipd/admissions", "/reception/claims", "/reception/notifications"],
-  MRD: ["/reception/dashboard", "/reception/patients", "/reception/ipd/admissions", "/reception/directory", "/reception/reports"],
-  RADIOLOGY: ["/lab/dashboard", "/lab/radiology", "/lab/radiology-catalog", "/lab/billing-history", "/lab/reports"],
-  HR_ADMIN: ["/hospital/staff"],
-  // View only: the overview, the day-to-day windows and the audit trail.
-  AUDITOR: [
-    "/hospital/dashboard", "/hospital/financials", "/hospital/gst-report", "/hospital/reports",
-    "/hospital/patients", "/hospital/appointments", "/hospital/queue", "/hospital/ipd/admissions",
-    "/hospital/ipd/beds", "/hospital/ipd/ot-schedule", "/hospital/billing", "/hospital/audit-logs",
-  ],
-};
 
 /**
  * Which menu paths of a panel this login sees, or null for all of them — when
  * any role it holds there sees the whole panel (every original role and admin).
+ * The pages come from the server with the role (featuresFor).
  */
 export function menuPathsFor(user: RoleHolder | null | undefined, panel: Panel): Set<string> | null {
   if (isAdminUser(user)) return null;
@@ -163,11 +162,30 @@ export function menuPathsFor(user: RoleHolder | null | undefined, panel: Panel):
   if (!here.length) return null; // the route guard already decided; don't hide what it let in
   const paths = new Set<string>();
   for (const r of here) {
-    const list = ROLE_MENU[r.toUpperCase()];
-    if (!list) return null;
-    list.forEach((p) => paths.add(p));
+    const pages = featuresFor(user, r)?.pages;
+    if (!pages) return null;
+    pages.forEach((p) => paths.add(p));
   }
   return paths;
+}
+
+/**
+ * May this login open this page of the panel? The same rule as the menu, by
+ * prefix: a role's page covers the pages under it ("/reception/patients" covers
+ * "/reception/patients/:id/edit"). Every role reads its panel's announcements.
+ */
+export function pageOpenFor(user: RoleHolder | null | undefined, panel: Panel, pathname: string): boolean {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  const under = (p: string) => path === p || path.startsWith(`${p}/`);
+  if (under(`/${panel}/announcements`)) return true;
+  const pages = menuPathsFor(user, panel);
+  return !pages || [...pages].some(under);
+}
+
+/** May this login do one of the things only some roles may (a role's actions)? Admins may. */
+export function hasAction(user: RoleHolder | null | undefined, action: string): boolean {
+  if (isAdminUser(user)) return true;
+  return heldRoles(user).some((r) => featuresFor(user, r)?.actions.includes(action));
 }
 
 /** What each role is for (backend lib/roleCatalog.ts descriptions, from the workbook). */

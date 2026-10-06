@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
-import { canUserAccessPanel, homeForUser, type Panel } from "@/constants/roles";
+import { canUserAccessPanel, homeForUser, pageOpenFor, panelHomeForUser, type Panel } from "@/constants/roles";
 import { Box } from "@mui/material";
 import HeartbeatLoader from "./HeartbeatLoader";
 
@@ -39,6 +39,15 @@ export function HospitalProtectedRoute({ panel }: { panel?: Panel } = {}) {
   // Any role the login holds may open its panel (several roles per person).
   if (panel && user && !canUserAccessPanel(user, panel)) {
     return <Navigate to={homeForUser(user)} replace />;
+  }
+
+  // And within the panel, only the pages its roles work in (a desk role its
+  // desk, the Auditor the overview): a page outside them goes to the role's
+  // home in this panel rather than opening. The home is always one of its
+  // pages; the check on the target only guards against a loop.
+  if (panel && user && !pageOpenFor(user, panel, location.pathname)) {
+    const home = panelHomeForUser(user, panel);
+    if (home !== location.pathname) return <Navigate to={home} replace />;
   }
 
   // Keyed by the branch being worked in: switching branch remounts the panel,
