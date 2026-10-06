@@ -23,6 +23,7 @@ import type { StaffRow, StaffListResponse, StaffOptions } from "./staff.types";
 import { STATUS_LABEL } from "./staff.types";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { hasRole } from "@/constants/roles";
+import { useSearchParams } from "react-router-dom";
 
 /**
  * Everyone who works at the hospital — with a login or without — with their
@@ -49,12 +50,13 @@ function GiveLoginDialog({ row, options, onClose, onDone }: {
   const toast = useToast();
   const guess: Record<string, string> = { DOCTOR: "DOCTOR", NURSE: "NURSE", PHARMACIST: "PHARMACIST", TECHNICIAN: "LAB_TECH" };
   const [email, setEmail] = useState(row.email ?? "");
+  const [password, setPassword] = useState("");
   const [roleId, setRoleId] = useState(options.roles.find((r) => r.roleCode === guess[row.staffCategoryCode])?.roleId ?? "");
   const [saving, setSaving] = useState(false);
   const submit = async () => {
     setSaving(true);
     try {
-      const res = await axiosInstance.post(`/hospital/staff/${row.staffId}/account`, { email: email.trim(), roleId });
+      const res = await axiosInstance.post(`/hospital/staff/${row.staffId}/account`, { email: email.trim(), roleId, ...(password ? { initialPassword: password } : {}) });
       onDone(res.data.credentials);
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Couldn't create the login"));
@@ -71,12 +73,14 @@ function GiveLoginDialog({ row, options, onClose, onDone }: {
           <TextField select fullWidth required label="Role" value={roleId} onChange={(e) => setRoleId(e.target.value)} helperText="What they can open. Separate from the designation.">
             {options.roles.map((r) => <MenuItem key={r.roleId} value={r.roleId}>{r.roleName}</MenuItem>)}
           </TextField>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>A temporary password is made for them; they change it at first sign-in.</Typography>
+          <TextField fullWidth id="give-login-password" type="password" autoComplete="new-password" label="Starting password (optional)"
+            value={password} onChange={(e) => setPassword(e.target.value)} error={password.length > 0 && password.length < 6}
+            helperText={password.length > 0 && password.length < 6 ? "At least 6 characters" : "Leave blank and one is made up for them; they change it at first sign-in."} />
         </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving} sx={{ textTransform: "none" }}>Cancel</Button>
-        <Button variant="contained" onClick={submit} disabled={!email.trim() || !roleId || saving}
+        <Button variant="contained" onClick={submit} disabled={!email.trim() || !roleId || saving || (password.length > 0 && password.length < 6)}
           startIcon={saving ? <HeartbeatLoader size={20} /> : undefined} sx={{ textTransform: "none", fontWeight: 600 }}>
           Create login
         </Button>
@@ -96,6 +100,15 @@ export default function StaffDirectory() {
   const [branch, setBranch] = useState("");
   const [attention, setAttention] = useState(false);
   const [dialog, setDialog] = useState<{ row: StaffRow | null } | null>(null);
+  // "Add staff member" on Logins & roles lands here (?add=login): the one place
+  // a person is added, with their login already ticked.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const addWithLogin = searchParams.get("add") === "login";
+  const openDialog = dialog ?? (addWithLogin ? { row: null } : null);
+  const closeDialog = () => {
+    setDialog(null);
+    if (addWithLogin) setSearchParams({}, { replace: true });
+  };
   const [loginFor, setLoginFor] = useState<StaffRow | null>(null);
   const [cred, setCred] = useState<{ email: string; password: string; name: string } | null>(null);
 
@@ -288,16 +301,17 @@ export default function StaffDirectory() {
         </TableContainer>
       </Box>
 
-      {dialog && options && (
+      {openDialog && options && (
         <StaffDialog
-          row={dialog.row}
+          row={openDialog.row}
           options={options}
           canGiveLogin={canGiveLogins}
-          onClose={() => setDialog(null)}
+          startWithLogin={!dialog && addWithLogin}
+          onClose={closeDialog}
           onSaved={({ row, warnings, credentials }) => {
-            setDialog(null);
+            closeDialog();
             refresh();
-            toast.success(dialog.row ? "Saved" : `${row.name} added`);
+            toast.success(openDialog.row ? "Saved" : `${row.name} added`);
             if (warnings.length) toast.warning(warnings.map((w) => w.message).join(" · "));
             if (credentials) setCred({ email: credentials.email, password: credentials.temporaryPassword, name: row.name });
           }}

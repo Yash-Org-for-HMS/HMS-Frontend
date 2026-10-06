@@ -275,10 +275,10 @@ export default function UserForm() {
     <>
       <Box sx={{ maxWidth: 900, mx: "auto" }}>
         <PageHeader
-          title={isEditing ? "Edit Staff" : "Add New Staff"}
+          title={isEditing ? "Edit login & roles" : "Add New Staff"}
           subtitle={
             isEditing
-              ? "Update staff member details."
+              ? "Their roles, branches and contact details. Category, designation, managers and posting are in the Staff Directory."
               : "Create a new staff member profile and set their login credentials."
           }
           actions={

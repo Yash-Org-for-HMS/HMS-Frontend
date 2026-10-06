@@ -303,7 +303,8 @@ function App() {
             <Route path="/hospital/roles/new" element={<Navigate to="/hospital/users" replace />} />
             <Route path="/hospital/roles/:id/edit" element={<Navigate to="/hospital/users" replace />} />
             <Route path="/hospital/permissions-matrix" element={<Navigate to="/hospital/users" replace />} />
-            <Route path="/hospital/users/new" element={el(HospitalUserForm)} />
+            {/* People are added in one place, the Staff Directory (with a login if they need one). */}
+            <Route path="/hospital/users/new" element={<Navigate to="/hospital/staff?add=login" replace />} />
             <Route path="/hospital/users/:id/edit" element={el(HospitalUserForm)} />
             <Route path="/hospital/financials" element={elGated(FinancialDashboard, "Billing", "Financial Analytics")} />
             <Route path="/hospital/gst-report" element={elGated(GstReport, "Billing", "GST Report")} />

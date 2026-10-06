@@ -181,7 +181,7 @@ export default function DoctorsList() {
                     </TableCell>
                     <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       {doctor.user?.isActive === false ? (
-                        <Tooltip title="This doctor's account is deactivated, so they cannot be booked. Reactivate under Staff & Users.">
+                        <Tooltip title="This doctor's account is deactivated, so they cannot be booked. Reactivate under Logins & roles.">
                           <Chip label="Inactive" size="small" sx={{ bgcolor: "rgba(244, 63, 94, 0.12)", color: SEMANTIC.dangerLight, fontWeight: 600 }} />
                         </Tooltip>
                       ) : (

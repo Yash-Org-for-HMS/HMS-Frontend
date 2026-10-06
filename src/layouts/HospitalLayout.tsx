@@ -73,9 +73,10 @@ export default function HospitalLayout() {
     { text: "Ward & Bed Setup", icon: <HotelRounded />, path: "/hospital/facility-setup", adminOnly: true, module: "IPD", section: "Set up — in this order" },
     { text: "Operating Theatres", icon: <MedicalServicesRounded />, path: "/hospital/theatres", adminOnly: true, module: "IPD", section: "Set up — in this order" },
     { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", adminOnly: true, section: "Set up — in this order" },
-    // People (with or without a login) and who they report to; Staff & Users below is the logins.
+    // People (with or without a login) and who they report to — the one place a
+    // person is added. Logins & roles below manages the logins themselves.
     { text: "Staff Directory", icon: <AccountTreeRounded />, path: "/hospital/staff", adminOnly: true, section: "Set up — in this order" },
-    { text: "Staff & Users", icon: <BadgeRounded />, path: "/hospital/users", adminOnly: true, section: "Set up — in this order" },
+    { text: "Logins & roles", icon: <BadgeRounded />, path: "/hospital/users", adminOnly: true, section: "Set up — in this order" },
 
     // ── Catalogs and forms, as the hospital needs them ──
     { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/hospital/medicines", adminOnly: true, module: "Pharmacy", section: "Catalogs & forms" },

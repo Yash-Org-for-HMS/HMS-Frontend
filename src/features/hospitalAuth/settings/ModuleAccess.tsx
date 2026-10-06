@@ -83,14 +83,14 @@ export default function ModuleAccess() {
           <Typography sx={{ color: "text.secondary", fontWeight: 700 }}>+</Typography>
           {/* The third gate is the user's ROLE, not a configurable permission
               set: tenant-authored roles and the permission matrix were removed,
-              and /hospital/permissions-matrix now redirects to Staff & Users.
+              and /hospital/permissions-matrix now redirects to Logins & roles.
               The old wording sent admins looking for a screen that no longer
               exists, and named a concept the product no longer has. */}
           <Chip label="Staff role" sx={{ bgcolor: SEMANTIC.success, color: "#fff", fontWeight: 600 }} />
         </Box>
         <Typography variant="caption" display="block" sx={{ mt: 1.5, color: "text.secondary" }}>
           * Turning a module on here opens it for the hospital. Who can actually use it
-          depends on each person's role, which you set on their record under Staff &amp; Users.
+          depends on each person's role, which you set on their login under Logins &amp; roles.
         </Typography>
       </Paper>
 

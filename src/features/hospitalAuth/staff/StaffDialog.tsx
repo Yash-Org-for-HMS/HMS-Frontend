@@ -27,6 +27,8 @@ interface Props {
   options: StaffOptions;
   /** Only the Hospital Admin gives out logins (they carry roles). */
   canGiveLogin?: boolean;
+  /** A new person, with "give them a login" already ticked (from Logins & roles). */
+  startWithLogin?: boolean;
   onClose: () => void;
   onSaved: (result: { row: StaffRow; warnings: StaffIssue[]; credentials?: { email: string; temporaryPassword: string } }) => void;
 }
@@ -44,11 +46,20 @@ interface Form {
   adminManagerId: string | undefined;
   functionalManagerId: string | undefined;
   giveLogin: boolean; loginEmail: string; loginRoleId: string;
+  /** Blank: the server makes one up and shows it once. */
+  loginPassword: string;
+  addressLine1: string; addressLine2: string; city: string; state: string; postalCode: string;
+  emergencyContactName: string; emergencyContactPhone: string; emergencyContactRelation: string;
 }
+
+const CONTACT_KEYS = [
+  "addressLine1", "addressLine2", "city", "state", "postalCode",
+  "emergencyContactName", "emergencyContactPhone", "emergencyContactRelation",
+] as const;
 
 const day = (iso: string | null | undefined) => (iso ? String(iso).slice(0, 10) : "");
 
-function initialForm(row: StaffRow | null, options: StaffOptions): Form {
+function initialForm(row: StaffRow | null, options: StaffOptions, startWithLogin = false): Form {
   const p = row?.posting;
   return {
     firstName: row?.firstName ?? "", lastName: row?.lastName ?? "", gender: row?.gender ?? "", dateOfBirth: day(row?.dateOfBirth),
@@ -66,7 +77,8 @@ function initialForm(row: StaffRow | null, options: StaffOptions): Form {
     // new one starts from the suggestion.
     adminManagerId: row ? row.adminManager?.staffId ?? "" : undefined,
     functionalManagerId: row ? row.functionalManager?.staffId ?? "" : undefined,
-    giveLogin: false, loginEmail: "", loginRoleId: "",
+    giveLogin: !row && startWithLogin, loginEmail: "", loginRoleId: "", loginPassword: "",
+    ...Object.fromEntries(CONTACT_KEYS.map((k) => [k, row?.contact?.[k] ?? ""])) as Pick<Form, (typeof CONTACT_KEYS)[number]>,
   };
 }
 
@@ -86,10 +98,10 @@ function registrationLabel(council: string | null | undefined): string | null {
 /** The login role a category usually gets — a starting point the admin can change. */
 const DEFAULT_ROLE: Record<string, string> = { DOCTOR: "DOCTOR", NURSE: "NURSE", PHARMACIST: "PHARMACIST", TECHNICIAN: "LAB_TECH" };
 
-export default function StaffDialog({ row, options, onClose, onSaved, canGiveLogin = true }: Props) {
+export default function StaffDialog({ row, options, onClose, onSaved, canGiveLogin = true, startWithLogin = false }: Props) {
   const toast = useToast();
   const isNew = !row;
-  const [f, setF] = useState<Form>(() => initialForm(row, options));
+  const [f, setF] = useState<Form>(() => initialForm(row, options, startWithLogin && canGiveLogin));
   const [saving, setSaving] = useState(false);
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((prev) => ({ ...prev, [k]: v }));
   const onSelect = (k: keyof Form) => (e: { target: { value: unknown } }) => set(k, String(e.target.value ?? "") as never);
@@ -167,7 +179,8 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
       .map((u) => ({ value: `unit:${u.serviceUnitId}`, label: u.name, secondary: `Unit · ${u.postingType}`, keywords: u.code })),
   ];
 
-  const valid = f.firstName.trim() && f.staffCategoryCode && (!f.giveLogin || (f.loginEmail.trim() && f.loginRoleId));
+  const passwordShort = f.giveLogin && f.loginPassword.length > 0 && f.loginPassword.length < 6;
+  const valid = f.firstName.trim() && f.staffCategoryCode && (!f.giveLogin || (f.loginEmail.trim() && f.loginRoleId && !passwordShort));
 
   const submit = async () => {
     setSaving(true);
@@ -185,7 +198,8 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
         additionalDepartmentIds: f.additionalDepartmentIds.filter((id) => id !== f.primaryDepartmentId),
         postingWardId: postKind === "ward" ? postId : null, postingServiceUnitId: postKind === "unit" ? postId : null,
         adminManagerId: adminId || null, functionalManagerId: functionalId || null,
-        ...(isNew && f.giveLogin ? { login: { email: f.loginEmail.trim(), roleId: f.loginRoleId } } : {}),
+        ...Object.fromEntries(CONTACT_KEYS.map((k) => [k, f[k].trim() || null])),
+        ...(isNew && f.giveLogin ? { login: { email: f.loginEmail.trim(), roleId: f.loginRoleId, ...(f.loginPassword ? { initialPassword: f.loginPassword } : {}) } } : {}),
       };
       const res = isNew
         ? await axiosInstance.post("/hospital/staff", body)
@@ -234,7 +248,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
         <Stack spacing={2}>
           {row?.login && (
             <Alert severity="info" sx={{ py: 0 }}>
-              {row.name} logs in as {row.login.email}. Name, phone, facility, home department and designation saved here update the login too.
+              {row.name} logs in as {row.login.email}. Name, phone, address, emergency contact, facility, home department and designation saved here update the login too.
             </Alert>
           )}
 
@@ -267,6 +281,34 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
                   value={f.councilRegNo} onChange={(e) => set("councilRegNo", e.target.value)} slotProps={{ htmlInput: { maxLength: 60 } }} />
               </Grid>
             )}
+          </Grid>
+
+          {section("Address & emergency contact")}
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField fullWidth id="staff-address1" label="Address line 1" value={f.addressLine1} onChange={(e) => set("addressLine1", e.target.value)} slotProps={{ htmlInput: { maxLength: 255 } }} />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField fullWidth id="staff-address2" label="Address line 2" value={f.addressLine2} onChange={(e) => set("addressLine2", e.target.value)} slotProps={{ htmlInput: { maxLength: 255 } }} />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField fullWidth id="staff-city" label="City" value={f.city} onChange={(e) => set("city", e.target.value)} slotProps={{ htmlInput: { maxLength: 100 } }} />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField fullWidth id="staff-state" label="State" value={f.state} onChange={(e) => set("state", e.target.value)} slotProps={{ htmlInput: { maxLength: 100 } }} />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField fullWidth id="staff-postal" label="PIN code" value={f.postalCode} onChange={(e) => set("postalCode", e.target.value)} slotProps={{ htmlInput: { maxLength: 20 } }} />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField fullWidth id="staff-emergency-name" label="Emergency contact" value={f.emergencyContactName} onChange={(e) => set("emergencyContactName", e.target.value)} slotProps={{ htmlInput: { maxLength: 100 } }} />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField fullWidth id="staff-emergency-phone" label="Their phone" value={f.emergencyContactPhone} onChange={(e) => set("emergencyContactPhone", e.target.value)} slotProps={{ htmlInput: { maxLength: 15 } }} />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField fullWidth id="staff-emergency-relation" label="Relationship" value={f.emergencyContactRelation} onChange={(e) => set("emergencyContactRelation", e.target.value)} slotProps={{ htmlInput: { maxLength: 50 } }} />
+            </Grid>
           </Grid>
 
           {section("Job", "Pick the staff category first — the designations follow it.")}
@@ -387,7 +429,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
 
           {isNew && canGiveLogin && (<>
             {section("Login")}
-            <FormControlLabel control={<Checkbox checked={f.giveLogin} onChange={(e) => set("giveLogin", e.target.checked)} />}
+            <FormControlLabel control={<Checkbox checked={f.giveLogin} onChange={(e) => setF((prev) => ({ ...prev, giveLogin: e.target.checked, loginEmail: prev.loginEmail || prev.email.trim() }))} />}
               label="Give them a login now" />
             <Typography variant="caption" sx={{ color: "text.secondary", mt: -1.5 }}>
               Not everyone needs one — housekeeping, drivers and visiting staff are often on the list without logging in. You can add one later.
@@ -399,9 +441,14 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
                 </Grid>
                 <Grid size={{ xs: 12, sm: 5 }}>
                   <TextField select fullWidth required label="Role" value={f.loginRoleId} onChange={(e) => set("loginRoleId", e.target.value)}
-                    helperText="What they can open. Separate from the designation.">
+                    helperText="What they can open. Separate from the designation. More roles can be added under Logins & roles.">
                     {options.roles.map((r) => <MenuItem key={r.roleId} value={r.roleId}>{r.roleName}</MenuItem>)}
                   </TextField>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 7 }}>
+                  <TextField fullWidth id="staff-login-password" type="password" autoComplete="new-password" label="Starting password (optional)"
+                    value={f.loginPassword} onChange={(e) => set("loginPassword", e.target.value)} error={passwordShort}
+                    helperText={passwordShort ? "At least 6 characters" : "Leave blank and one is made up for you, shown once."} />
                 </Grid>
               </Grid>
             )}

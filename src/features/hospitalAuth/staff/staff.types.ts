@@ -6,6 +6,11 @@ export interface StaffIssue {
   message: string;
 }
 
+export interface StaffContact {
+  addressLine1: string | null; addressLine2: string | null; city: string | null; state: string | null; postalCode: string | null;
+  emergencyContactName: string | null; emergencyContactPhone: string | null; emergencyContactRelation: string | null;
+}
+
 export interface StaffRow {
   staffId: string;
   firstName: string;
@@ -15,6 +20,8 @@ export interface StaffRow {
   dateOfBirth: string | null;
   phone: string | null;
   email: string | null;
+  /** Address and emergency contact (the login's, for someone who has one). */
+  contact?: StaffContact;
   staffCategoryCode: string;
   staffCategoryName: string;
   councilRegNo: string | null;

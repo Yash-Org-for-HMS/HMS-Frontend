@@ -396,20 +396,20 @@ export default function UsersList() {
     <>
       <Box>
         <PageHeader
-          title="Staff & Users"
-          subtitle="Manage your hospital's staff, roles, and assignments."
+          title="Logins & roles"
+          subtitle="Who can sign in, with which roles and at which branches — reset a password, add a role, switch a login off. People are added in the Staff Directory."
           actions={
             <Button
               variant="contained"
               startIcon={<AddRounded />}
-              onClick={() => navigate("/hospital/users/new")}
+              onClick={() => navigate("/hospital/staff?add=login")}
               sx={{
                 textTransform: "none",
                 fontWeight: 600,
                 px: 3,
               }}
             >
-              Add Staff
+              Add staff member
             </Button>
           }
         />
