@@ -120,7 +120,8 @@ export default function BedBoard({ readOnly = false, housekeeping = false }: { r
     queryFn: async () => (await axiosInstance.get("/ipd/structure")).data.data,
   });
   const summary = data?.summary;
-  const wards: any[] = data?.wards || [];
+  // Several branches at once ("All branches"): grouped by branch, each ward named with its branch.
+  const wards: any[] = [...(data?.wards || [])].sort((a, b) => (a.branchName ?? "").localeCompare(b.branchName ?? ""));
   const statuses: StatusDef[] = data?.statuses ?? [];
   const statusOf = (code: string) => statuses.find((x) => x.code === code);
   const colorOf = (code: string) => statusOf(code)?.colorHex ?? FALLBACK_COLOR[code] ?? "#9E9E9E";
@@ -240,6 +241,7 @@ export default function BedBoard({ readOnly = false, housekeeping = false }: { r
                   <ApartmentRounded sx={{ color: BRAND.action }} fontSize="small" />
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{w.wardName}</Typography>
                   <Chip label={w.wardTypeName ?? w.wardType} size="small" sx={{ bgcolor: "action.hover", fontWeight: 600 }} />
+                  {w.branchName && <Chip label={w.branchName} size="small" variant="outlined" sx={{ fontWeight: 700, borderColor: BRAND.action, color: BRAND.action }} />}
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>{w.floorLabel ?? `Floor ${w.floorNumber}`}</Typography>
                 </Box>
                 {w.rooms.length === 0 ? <Typography variant="body2" sx={{ color: "text.secondary", py: 1 }}>No rooms</Typography> : w.rooms.map((r: any) => (

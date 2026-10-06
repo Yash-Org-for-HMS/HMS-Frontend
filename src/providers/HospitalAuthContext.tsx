@@ -79,12 +79,17 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
   const toast = useToast();
 
   // Persist the active branch to sessionStorage so the axios interceptor sends
-  // it as the X-Branch-Id header on every hospital-portal request.
+  // it as the X-Branch-Id header on every hospital-portal request. "No branch"
+  // is remembered too (activeBranchAll): for an org admin it is the "All
+  // branches" view they chose, and a refresh must not quietly swap it for their
+  // home branch.
   const setActiveBranch = useCallback((branchId: string | null) => {
     if (branchId) {
       sessionStorage.setItem("activeBranchId", branchId);
+      sessionStorage.removeItem("activeBranchAll");
     } else {
       sessionStorage.removeItem("activeBranchId");
+      sessionStorage.setItem("activeBranchAll", "1");
     }
     setActiveBranchIdState(branchId);
   }, []);
@@ -110,9 +115,11 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Default the active branch if none stored yet (or the stored one vanished).
+      // An org admin who chose "All branches" stays there across a refresh.
       const stored = sessionStorage.getItem("activeBranchId");
       const storedValid = stored && branches.some((b) => b.branchId === stored);
-      if (!storedValid) {
+      const choseAll = !stored && Boolean(data?.isOrgAdmin) && sessionStorage.getItem("activeBranchAll") === "1";
+      if (!storedValid && !choseAll) {
         const fallback = data?.activeBranchId ?? (branches[0]?.branchId ?? null);
         setActiveBranch(fallback);
       }
@@ -172,6 +179,8 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
     // Seed the active branch with the user's home branch, then refine from the
     // server's allowed-branch list.
     setActiveBranch(branchData?.id ?? null);
+    // A fresh sign-in starts as it always did — "All branches" is a choice made after it.
+    sessionStorage.removeItem("activeBranchAll");
     void loadBranches();
 
     // Role-based redirect: the primary role's panel (constants/roles.ts).
@@ -210,6 +219,7 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem("hospitalBranch");
       sessionStorage.removeItem("hospitalSessionId");
       sessionStorage.removeItem("activeBranchId");
+      sessionStorage.removeItem("activeBranchAll");
 
       setUser(null);
       setHospital(null);

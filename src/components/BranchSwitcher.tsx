@@ -1,7 +1,20 @@
 import { TextField, MenuItem, Box, Typography } from "@mui/material";
 import { AccountTreeRounded } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "react-router-dom";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+
+/**
+ * Hospital-admin pages that are the same for every branch (the multi-branch
+ * model: setup, catalogues and the patient register are group-level; branch
+ * differences are set inside them). Said under the picker, so it does not look
+ * as though the picker did nothing.
+ */
+const SHARED_PAGES = [
+  "/hospital/profile", "/hospital/settings", "/hospital/branches", "/hospital/module-access", "/hospital/departments",
+  "/hospital/soc", "/hospital/doctors", "/hospital/medicines", "/hospital/vaccines", "/hospital/ward-chart",
+  "/hospital/form-builder", "/hospital/lookups", "/hospital/patients",
+];
 
 /**
  * Branch switcher for the hospital portal. Lets multi-branch users (org admins,
@@ -15,6 +28,8 @@ import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 export default function BranchSwitcher() {
   const { availableBranches, activeBranchId, isOrgAdmin, setActiveBranch } = useHospitalAuth();
   const queryClient = useQueryClient();
+  const { pathname } = useLocation();
+  const shared = SHARED_PAGES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   // Nothing meaningful to switch between.
   if (availableBranches.length <= 1) return null;
@@ -57,8 +72,11 @@ export default function BranchSwitcher() {
           </MenuItem>
         ))}
       </TextField>
-      {/* Records are made AT a branch; the combined view can only read. */}
-      {isOrgAdmin && !activeBranchId && (
+      {shared ? (
+        <Typography variant="caption" sx={{ display: "block", mt: 0.5, px: 0.5, color: "text.secondary", lineHeight: 1.3 }}>
+          This page is shared by every branch — the branch picked doesn't change it.
+        </Typography>
+      ) : isOrgAdmin && !activeBranchId && (
         <Typography variant="caption" sx={{ display: "block", mt: 0.5, px: 0.5, color: "text.secondary", lineHeight: 1.3 }}>
           Viewing every branch. Pick one to add or change records.
         </Typography>
