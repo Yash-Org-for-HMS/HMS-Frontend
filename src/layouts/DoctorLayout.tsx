@@ -15,8 +15,9 @@ import {
 import {
   Menu as MenuIcon, DashboardRounded, PeopleAltRounded, GroupsRounded,
   QueueRounded,
-  EventNoteRounded, EventBusyRounded, ScienceRounded, AssessmentRounded,
+  EventNoteRounded, EventBusyRounded, ScienceRounded, AssessmentRounded, AirlineSeatFlatRounded,
 } from "@mui/icons-material";
+import { holdsHome } from "@/constants/roles";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BranchSwitcher from "@/components/BranchSwitcher";
@@ -76,6 +77,8 @@ export default function DoctorLayout() {
 
   const { isModuleEnabled } = useEnabledModules();
   const menuItems = [
+    // A resident's own home: the patients in hospital under their department.
+    ...(holdsHome(user, "/doctor/ward-round") ? [{ text: "Ward round", icon: <AirlineSeatFlatRounded />, path: "/doctor/ward-round", badge: 0, section: "Overview" }] : []),
     { text: "Dashboard", icon: <DashboardRounded />, path: "/doctor/dashboard", badge: 0, section: "Overview" },
     { text: "My Queue", icon: <QueueRounded />, path: "/doctor/queue", badge: badges?.queueWaiting || 0, section: "My Work" },
     { text: "My Patients", icon: <PeopleAltRounded />, path: "/doctor/patients", badge: 0, section: "My Work" },

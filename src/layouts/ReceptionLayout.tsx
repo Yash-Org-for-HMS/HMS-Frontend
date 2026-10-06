@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { menuPathsFor } from "@/constants/roles";
+import { menuPathsFor, holdsHome } from "@/constants/roles";
 import PanelSwitcher from "@/components/layout/PanelSwitcher";
 import { isNavItemActive } from "@/components/layout/navActive";
 import { SEARCH_SHORTCUT } from "@/utils/shortcut";
@@ -45,6 +45,7 @@ import {
   HealthAndSafetyRounded,
   LockRounded,
   EventNoteRounded,
+  WorkRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { assetUrl } from "@/utils/assetUrl";
@@ -79,6 +80,8 @@ export default function ReceptionLayout() {
     {
       heading: "Overview",
       items: [
+        // The desk roles' own home (Admission Desk, Billing, TPA, Medical Records).
+        ...(holdsHome(user, "/reception/desk") ? [{ text: "My desk", icon: <WorkRounded />, path: "/reception/desk" }] : []),
         { text: "Dashboard", icon: <DashboardRounded />, path: "/reception/dashboard" },
         { text: "Front Desk Console", icon: <PersonAddRounded />, path: "/reception/console" },
       ],

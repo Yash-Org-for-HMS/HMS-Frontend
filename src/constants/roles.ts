@@ -182,6 +182,11 @@ export function pageOpenFor(user: RoleHolder | null | undefined, panel: Panel, p
   return !pages || [...pages].some(under);
 }
 
+/** Does one of the roles this login holds land on this page (its home, from the server)? */
+export function holdsHome(user: RoleHolder | null | undefined, path: string): boolean {
+  return heldRoles(user).some((r) => featuresFor(user, r)?.home === path);
+}
+
 /** May this login do one of the things only some roles may (a role's actions)? Admins may. */
 export function hasAction(user: RoleHolder | null | undefined, action: string): boolean {
   if (isAdminUser(user)) return true;

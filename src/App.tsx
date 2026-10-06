@@ -124,6 +124,10 @@ const NurseReports = lazy(() => import("@/features/nurse/NurseReports"));
 const NurseWard = lazy(() => import("@/features/nurse/NurseWard"));
 const NurseImmunisations = lazy(() => import("@/features/nurse/NurseImmunisations"));
 const NursePostings = lazy(() => import("@/features/nurse/NursePostings"));
+// The home screens of the workbook's roles (backend modules/roleHome).
+const DeskHome = lazy(() => import("@/features/roleHome/DeskHome"));
+const WardsHome = lazy(() => import("@/features/roleHome/WardsHome"));
+const WardRound = lazy(() => import("@/features/roleHome/WardRound"));
 
 // Doctor
 const DoctorDashboard = lazy(() => import("@/features/doctor/DoctorDashboard"));
@@ -368,6 +372,7 @@ function App() {
           <Route element={el(ReceptionLayout)}>
             <Route path="/reception/announcements" element={el(Announcements)} />
             <Route path="/reception/dashboard" element={el(ReceptionDashboard)} />
+            <Route path="/reception/desk" element={el(DeskHome)} />
             <Route path="/reception/console" element={el(FrontDeskConsole)} />
             {/* ── Module 2: Patient Registration ── */}
             <Route path="/reception/patients" element={el(PatientsList)} />
@@ -426,6 +431,8 @@ function App() {
             <Route path="/nurse/immunisations" element={el(NurseImmunisations)} />
             <Route path="/nurse/reports" element={el(NurseReports)} />
             <Route path="/nurse/postings" element={el(NursePostings)} />
+            <Route path="/nurse/my-wards" element={elp(WardsHome, { mode: "mine" })} />
+            <Route path="/nurse/all-wards" element={elp(WardsHome, { mode: "all" })} />
             {/* Read-only view under the Nurse shell — a nurse opening a patient (e.g. via
                 command-palette search) must not land inside the full Reception sidebar,
                 which would expose front desk/billing/admissions navigation they don't own. */}
@@ -440,6 +447,7 @@ function App() {
           <Route element={el(DoctorLayout)}>
             <Route path="/doctor/announcements" element={el(Announcements)} />
             <Route path="/doctor/dashboard" element={el(DoctorDashboard)} />
+            <Route path="/doctor/ward-round" element={el(WardRound)} />
             <Route path="/doctor/queue" element={el(DoctorQueue)} />
             <Route path="/doctor/schedule" element={el(DoctorMySchedule)} />
             <Route path="/doctor/consultation/:appointmentId" element={el(ConsultationWorkspace)} />

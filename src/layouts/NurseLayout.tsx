@@ -13,9 +13,9 @@ import {
 import {
   Menu as MenuIcon, DashboardRounded, PeopleAltRounded, AssessmentRounded,
   MedicationRounded, VaccinesRounded, HotelRounded, MedicalServicesRounded, EventNoteRounded,
-  WarehouseRounded, AssignmentIndRounded,
+  WarehouseRounded, AssignmentIndRounded, ApartmentRounded,
 } from "@mui/icons-material";
-import { hasAction } from "@/constants/roles";
+import { hasAction, holdsHome } from "@/constants/roles";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BranchSwitcher from "@/components/BranchSwitcher";
@@ -64,6 +64,9 @@ export default function NurseLayout() {
     },
   });
   const menuItems = [
+    // The in-charge's and nursing administration's own homes.
+    ...(holdsHome(user, "/nurse/my-wards") ? [{ text: "My wards", icon: <ApartmentRounded />, path: "/nurse/my-wards", section: "Overview" }] : []),
+    ...(holdsHome(user, "/nurse/all-wards") ? [{ text: "All wards", icon: <ApartmentRounded />, path: "/nurse/all-wards", section: "Overview" }] : []),
     { text: "Dashboard", icon: <DashboardRounded />, path: "/nurse/dashboard", section: "Overview" },
     { text: "Patient Queue", icon: <PeopleAltRounded />, path: "/nurse/queue", section: "Patient Care" },
     { text: "Ward", icon: <MedicationRounded />, path: "/nurse/ward", section: "Patient Care", module: "IPD" },
