@@ -123,6 +123,7 @@ const NurseQueue = lazy(() => import("@/features/nurse/NurseQueue"));
 const NurseReports = lazy(() => import("@/features/nurse/NurseReports"));
 const NurseWard = lazy(() => import("@/features/nurse/NurseWard"));
 const NurseImmunisations = lazy(() => import("@/features/nurse/NurseImmunisations"));
+const NursePostings = lazy(() => import("@/features/nurse/NursePostings"));
 
 // Doctor
 const DoctorDashboard = lazy(() => import("@/features/doctor/DoctorDashboard"));
@@ -424,6 +425,7 @@ function App() {
             <Route path="/nurse/ward-stock" element={elGated(WardStock, "Pharmacy", "Ward Stock")} />
             <Route path="/nurse/immunisations" element={el(NurseImmunisations)} />
             <Route path="/nurse/reports" element={el(NurseReports)} />
+            <Route path="/nurse/postings" element={el(NursePostings)} />
             {/* Read-only view under the Nurse shell — a nurse opening a patient (e.g. via
                 command-palette search) must not land inside the full Reception sidebar,
                 which would expose front desk/billing/admissions navigation they don't own. */}

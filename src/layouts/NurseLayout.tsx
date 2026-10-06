@@ -13,8 +13,9 @@ import {
 import {
   Menu as MenuIcon, DashboardRounded, PeopleAltRounded, AssessmentRounded,
   MedicationRounded, VaccinesRounded, HotelRounded, MedicalServicesRounded, EventNoteRounded,
-  WarehouseRounded,
+  WarehouseRounded, AssignmentIndRounded,
 } from "@mui/icons-material";
+import { hasAction } from "@/constants/roles";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BranchSwitcher from "@/components/BranchSwitcher";
@@ -75,6 +76,10 @@ export default function NurseLayout() {
     { text: "Theatre Board", icon: <MedicalServicesRounded />, path: "/nurse/ipd/theatres", section: "Theatre & Beds", module: "IPD" },
     { text: "Operating List", icon: <EventNoteRounded />, path: "/nurse/ipd/ot-schedule", section: "Theatre & Beds", module: "IPD" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/nurse/reports", section: "Reports" },
+    // Nursing Administration's: which ward each nurse works on.
+    ...(hasAction(user, "nurse.postings")
+      ? [{ text: "Ward postings", icon: <AssignmentIndRounded />, path: "/nurse/postings", section: "Nursing administration" }]
+      : []),
   ];
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
