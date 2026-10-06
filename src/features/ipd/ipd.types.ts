@@ -48,6 +48,8 @@ export interface AdmissionRow {
   uhid: string;
   /** CASH | INSURANCE | CORPORATE | GOVT_SCHEME — which bed tariff prices the stay. */
   payerType?: string | null;
+  /** Set when the room is above the policy's room-rent limit on the stay's claim. */
+  roomOverLimit?: { limit: number; rent: number; over: number; roomClassName: string | null } | null;
   /** Set once discharge has been started (the bed reads "discharge initiated"). */
   dischargeInitiatedAt?: string | null;
   doctorName?: string | null;

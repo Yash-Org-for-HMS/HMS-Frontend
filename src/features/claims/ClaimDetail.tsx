@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import {
-  Box, Paper, Typography, Chip, Button, Grid, Stack, Divider,
+  Box, Paper, Typography, Chip, Button, Grid, Stack, Divider, Alert,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
 } from "@mui/material";
 import { ArrowBackRounded, EditRounded, TimelineRounded, ArrowForwardRounded, PaymentsRounded } from "@mui/icons-material";
@@ -149,6 +149,7 @@ export default function ClaimDetail() {
                 ["Pre-auth requested", claim.preAuthRequestedAmount],
                 ["Pre-auth approved", claim.preAuthApprovedAmount],
                 ["Final claimed", claim.finalClaimedAmount],
+                ["Room rent limit / day", claim.roomRentLimit],
               ].map(([label, val]) => (
                 <Grid size={{ xs: 6, sm: 3 }} key={label as string}>
                   <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{label as string}</Typography>
@@ -156,6 +157,20 @@ export default function ClaimDetail() {
                 </Grid>
               ))}
             </Grid>
+            {/* The room against the policy's room-rent limit (server: claims/roomEligibility). */}
+            {claim.roomEligibility && (
+              claim.roomEligibility.over > 0 ? (
+                <Alert severity="warning" sx={{ mt: 1.5 }}>
+                  The room{claim.roomEligibility.roomClassName ? ` (${claim.roomEligibility.roomClassName})` : ""} is {inr(claim.roomEligibility.rent)} a day,
+                  {" "}{inr(claim.roomEligibility.over)} over the policy's limit of {inr(claim.roomEligibility.limit)}. The insurer may cut the
+                  whole claim in the same proportion — offer a room within the limit, or tell the patient before it is billed.
+                </Alert>
+              ) : (
+                <Alert severity="success" sx={{ mt: 1.5 }}>
+                  The room ({inr(claim.roomEligibility.rent)} a day) is within the policy's limit of {inr(claim.roomEligibility.limit)}.
+                </Alert>
+              )
+            )}
           </Paper>
         </Grid>
 

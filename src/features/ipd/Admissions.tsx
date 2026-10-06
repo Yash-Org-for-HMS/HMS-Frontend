@@ -290,7 +290,17 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                         <Typography variant="body2" sx={{ color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 220 }}>{a.admittingDiagnosis || "—"}</Typography>
                       </Tooltip>
                     </TableCell>
-                    <TableCell><Typography variant="body2" sx={{ color: "text.primary" }}>{a.bed?.label || "—"}</Typography></TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ color: "text.primary" }}>{a.bed?.label || "—"}</Typography>
+                      {/* An insured stay in a room above its policy's room-rent limit. */}
+                      {a.roomOverLimit && (
+                        <Tooltip title={`The policy pays up to ${inr(a.roomOverLimit.limit)} a day for the room. The insurer may cut the claim.`}>
+                          <Typography variant="caption" sx={{ color: SEMANTIC.warningDark, fontWeight: 700, display: "block" }}>
+                            {inr(a.roomOverLimit.rent)}/day · over policy limit
+                          </Typography>
+                        </Tooltip>
+                      )}
+                    </TableCell>
                     <TableCell sx={{ color: "text.secondary" }}>{a.doctorName || "—"}</TableCell>
                     <TableCell sx={{ color: "text.secondary" }}>{a.days ?? "—"}</TableCell>
                     <TableCell align="right">
