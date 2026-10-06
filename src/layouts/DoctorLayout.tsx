@@ -15,9 +15,9 @@ import {
 import {
   Menu as MenuIcon, DashboardRounded, PeopleAltRounded, GroupsRounded,
   QueueRounded,
-  EventNoteRounded, EventBusyRounded, ScienceRounded, AssessmentRounded, AirlineSeatFlatRounded,
+  EventNoteRounded, EventBusyRounded, ScienceRounded, AssessmentRounded, AirlineSeatFlatRounded, DoneAllRounded,
 } from "@mui/icons-material";
-import { holdsHome } from "@/constants/roles";
+import { holdsHome, isResidentOnly } from "@/constants/roles";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BranchSwitcher from "@/components/BranchSwitcher";
@@ -56,6 +56,14 @@ export default function DoctorLayout() {
   const { unread: announcementsUnread, onAnnouncement, onConnect } = useAnnouncementBadge();
   const { connected } = useSocket({
     QUEUE_UPDATED: (payload?: unknown) => {
+      // A resident's note or order to co-sign, or one co-signed: sent only to
+      // the two doctors concerned (backend wardRound).
+      if ((payload as { area?: string } | undefined)?.area === "cosign") {
+        queryClient.invalidateQueries({ queryKey: ["ward-round-cosign"] });
+        queryClient.invalidateQueries({ queryKey: ["role-home", "ward-round"] });
+        queryClient.invalidateQueries({ queryKey: ["doctor-badges"] });
+        return;
+      }
       // A test paid for at the counter changes nothing a doctor sees.
       if (!queueEventConcerns(payload, "opd", "lab")) return;
       queryClient.invalidateQueries({ queryKey: ["doctor-badges"] });
@@ -70,7 +78,7 @@ export default function DoctorLayout() {
   });
   const { data: badges } = useQuery({
     queryKey: ["doctor-badges"],
-    queryFn: async () => (await axiosInstance.get("/doctor/badges")).data.data as { resultsReady: number; queueWaiting: number },
+    queryFn: async () => (await axiosInstance.get("/doctor/badges")).data.data as { resultsReady: number; queueWaiting: number; toCosign?: number },
     refetchInterval: connected ? LIVE_DASHBOARD_FALLBACK_MS : DASHBOARD_POLL_MS,
     refetchOnWindowFocus: true,
   });
@@ -80,6 +88,13 @@ export default function DoctorLayout() {
     // A resident's own home: the patients in hospital under their department.
     ...(holdsHome(user, "/doctor/ward-round") ? [{ text: "Ward round", icon: <AirlineSeatFlatRounded />, path: "/doctor/ward-round", badge: 0, section: "Overview" }] : []),
     { text: "Dashboard", icon: <DashboardRounded />, path: "/doctor/dashboard", badge: 0, section: "Overview" },
+    // Residents' notes and orders to co-sign: shown while there are some (or
+    // the page is open); a resident always has their own waiting list.
+    ...(isResidentOnly(user)
+      ? [{ text: "Waiting for co-sign", icon: <DoneAllRounded />, path: "/doctor/cosign", badge: 0, section: "Overview" }]
+      : (badges?.toCosign || location.pathname === "/doctor/cosign")
+        ? [{ text: "To co-sign", icon: <DoneAllRounded />, path: "/doctor/cosign", badge: badges?.toCosign || 0, section: "Overview" }]
+        : []),
     { text: "My Queue", icon: <QueueRounded />, path: "/doctor/queue", badge: badges?.queueWaiting || 0, section: "My Work" },
     { text: "My Patients", icon: <PeopleAltRounded />, path: "/doctor/patients", badge: 0, section: "My Work" },
     { text: "All Patients", icon: <GroupsRounded />, path: "/doctor/all-patients", badge: 0, section: "My Work" },

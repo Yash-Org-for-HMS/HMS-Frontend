@@ -23,6 +23,8 @@ interface Props {
   open: boolean;
   onClose: () => void;
   admission: any; // { admissionId, patientName }
+  /** A resident on the ward round: orders and reads, never cancels a scan. */
+  orderOnly?: boolean;
 }
 
 const PRIORITIES = [
@@ -36,7 +38,7 @@ const STATUS_CHIP: Record<string, any> = {
   COMPLETED: { label: "Completed", icon: <CheckCircleRounded sx={{ fontSize: 14 }} />, bg: "rgba(16,185,129,0.12)", color: SEMANTIC.successDark },
 };
 
-export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: Props) {
+export default function IpdRadiologyOrdersDialog({ open, onClose, admission, orderOnly = false }: Props) {
   const toast = useToast();
   const confirm = useConfirm();
   const qc = useQueryClient();
@@ -183,7 +185,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission }: P
                       </Typography>
                     </Box>
                     <SoftChip {...sc} />
-                    {o.status === "PENDING" && (
+                    {o.status === "PENDING" && !orderOnly && (
                       <IconButton size="small" disabled={busyId === o.radiologyOrderId} onClick={() => cancelOrder(o)} sx={{ color: SEMANTIC.danger }} title="Cancel scan">
                         <DeleteOutlineRounded fontSize="small" />
                       </IconButton>

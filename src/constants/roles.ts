@@ -126,6 +126,14 @@ export function isAdminUser(user: RoleHolder | null | undefined): boolean {
   return heldRoles(user).some((r) => isAdmin(r));
 }
 
+/**
+ * A resident who is not also a consultant or an admin: what they write and
+ * order on the ward round goes to the consultant to co-sign (backend wardRound).
+ */
+export function isResidentOnly(user: RoleHolder | null | undefined): boolean {
+  return hasRole(user, "DOCTOR_RESIDENT") && !hasRole(user, "DOCTOR") && !isAdminUser(user);
+}
+
 /** The panels this login can open, its primary role's first. */
 export function panelsForUser(user: RoleHolder | null | undefined): Panel[] {
   const out: Panel[] = [];

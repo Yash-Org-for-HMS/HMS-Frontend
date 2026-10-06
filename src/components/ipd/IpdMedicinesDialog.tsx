@@ -41,11 +41,13 @@ interface Props {
   open: boolean;
   onClose: () => void;
   admission: { admissionId: string; patientId?: string | null; patientName?: string };
+  /** A resident on the ward round: orders and reads, never removes an order or charts a dose. */
+  orderOnly?: boolean;
 }
 
 const emptyForm = { medicine: null as PrescribableMedicine | null, quantity: "1", unitsPerDose: "1", dosage: "", frequency: "", durationDays: "", route: "", notes: "" };
 
-export default function IpdMedicinesDialog({ open, onClose, admission }: Props) {
+export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly = false }: Props) {
   const toast = useToast();
   const confirm = useConfirm();
   const qc = useQueryClient();
@@ -155,7 +157,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
         </Typography>
 
         {view === "chart" ? (
-          <MarChart admissionId={admission.admissionId} />
+          <MarChart admissionId={admission.admissionId} readOnly={orderOnly} />
         ) : (
         <>
         {meds.length > 0 && (
@@ -198,7 +200,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission }: Props) 
                       )}
                     </TableCell>
                     <TableCell align="right">
-                      {m.status !== "BILLED" && (
+                      {m.status !== "BILLED" && !orderOnly && (
                         <Tooltip title={m.status === "REQUESTED" ? "Retract request" : "Remove (returns stock)"}>
                           <IconButton size="small" disabled={busyId === m.ipMedOrderId} onClick={() => remove(m)} sx={{ color: SEMANTIC.danger }}>
                             <DeleteOutlineRounded fontSize="small" />

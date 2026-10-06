@@ -20,7 +20,8 @@ const DOSE_META: Record<string, { label: string; color: string; bg: string }> = 
   HELD: { label: "Held", color: NEUTRAL.textSecondary, bg: "rgba(100,116,139,0.15)" },
 };
 
-export default function MarChart({ admissionId }: { admissionId: string }) {
+/** readOnly: the doses as charted, without the buttons that chart them (a resident's view). */
+export default function MarChart({ admissionId, readOnly = false }: { admissionId: string; readOnly?: boolean }) {
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -83,7 +84,7 @@ export default function MarChart({ admissionId }: { admissionId: string }) {
                       {d.administeredAt && <Typography variant="caption" sx={{ color: "text.secondary" }}>at {dayjs(d.administeredAt).format("HH:mm")}</Typography>}
                     </Box>
                     <Chip size="small" label={m.label} sx={{ bgcolor: m.bg, color: m.color, fontWeight: 700 }} />
-                    <Box sx={{ display: "flex", gap: 0.5 }}>
+                    {!readOnly && <Box sx={{ display: "flex", gap: 0.5 }}>
                       {isPending ? (
                         <>
                           <Tooltip title="Given"><Button size="small" variant="outlined" disabled={busy === d.ipMedAdminId} onClick={() => (o.carriesFluid ? (setVolume(""), setAskVolumeFor({ dose: d, med: o })) : setStatus(d.ipMedAdminId, "GIVEN"))} startIcon={<CheckRounded />} sx={{ minWidth: 0, borderColor: "rgba(16,185,129,0.5)", color: "#047857" }}>Give</Button></Tooltip>
@@ -93,7 +94,7 @@ export default function MarChart({ admissionId }: { admissionId: string }) {
                       ) : (
                         <Tooltip title="Undo"><Button size="small" disabled={busy === d.ipMedAdminId} onClick={() => setStatus(d.ipMedAdminId, "PENDING")} startIcon={<UndoRounded />} sx={{ minWidth: 0, color: "text.secondary" }}>Undo</Button></Tooltip>
                       )}
-                    </Box>
+                    </Box>}
                   </Box>
                 </Box>
               );
