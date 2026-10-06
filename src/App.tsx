@@ -124,6 +124,7 @@ const NurseReports = lazy(() => import("@/features/nurse/NurseReports"));
 const NurseWard = lazy(() => import("@/features/nurse/NurseWard"));
 const NurseImmunisations = lazy(() => import("@/features/nurse/NurseImmunisations"));
 const NursePostings = lazy(() => import("@/features/nurse/NursePostings"));
+const DutyRoster = lazy(() => import("@/features/nurse/DutyRoster"));
 // The home screens of the workbook's roles (backend modules/roleHome).
 const DeskHome = lazy(() => import("@/features/roleHome/DeskHome"));
 const WardsHome = lazy(() => import("@/features/roleHome/WardsHome"));
@@ -433,6 +434,7 @@ function App() {
             <Route path="/nurse/immunisations" element={el(NurseImmunisations)} />
             <Route path="/nurse/reports" element={el(NurseReports)} />
             <Route path="/nurse/postings" element={el(NursePostings)} />
+            <Route path="/nurse/roster" element={el(DutyRoster)} />
             <Route path="/nurse/my-wards" element={elp(WardsHome, { mode: "mine" })} />
             <Route path="/nurse/all-wards" element={elp(WardsHome, { mode: "all" })} />
             {/* Read-only view under the Nurse shell — a nurse opening a patient (e.g. via

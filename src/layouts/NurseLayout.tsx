@@ -13,7 +13,7 @@ import {
 import {
   Menu as MenuIcon, DashboardRounded, PeopleAltRounded, AssessmentRounded,
   MedicationRounded, VaccinesRounded, HotelRounded, MedicalServicesRounded, EventNoteRounded,
-  WarehouseRounded, AssignmentIndRounded, ApartmentRounded,
+  WarehouseRounded, AssignmentIndRounded, ApartmentRounded, CalendarMonthRounded,
 } from "@mui/icons-material";
 import { hasAction, holdsHome } from "@/constants/roles";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
@@ -79,6 +79,10 @@ export default function NurseLayout() {
     { text: "Theatre Board", icon: <MedicalServicesRounded />, path: "/nurse/ipd/theatres", section: "Theatre & Beds", module: "IPD" },
     { text: "Operating List", icon: <EventNoteRounded />, path: "/nurse/ipd/ot-schedule", section: "Theatre & Beds", module: "IPD" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/nurse/reports", section: "Reports" },
+    // The in-charge's (their wards) and nursing administration's (every ward).
+    ...(hasAction(user, "nurse.roster")
+      ? [{ text: "Duty roster", icon: <CalendarMonthRounded />, path: "/nurse/roster", section: "Ward management", module: "IPD" }]
+      : []),
     // Nursing Administration's: which ward each nurse works on.
     ...(hasAction(user, "nurse.postings")
       ? [{ text: "Ward postings", icon: <AssignmentIndRounded />, path: "/nurse/postings", section: "Nursing administration" }]
