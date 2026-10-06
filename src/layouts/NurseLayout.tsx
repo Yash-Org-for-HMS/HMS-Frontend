@@ -13,7 +13,7 @@ import {
 import {
   Menu as MenuIcon, DashboardRounded, PeopleAltRounded, AssessmentRounded,
   MedicationRounded, VaccinesRounded, HotelRounded, MedicalServicesRounded, EventNoteRounded,
-  WarehouseRounded, AssignmentIndRounded, ApartmentRounded, CalendarMonthRounded,
+  WarehouseRounded, AssignmentIndRounded, ApartmentRounded, CalendarMonthRounded, AssignmentRounded,
 } from "@mui/icons-material";
 import { hasAction, holdsHome } from "@/constants/roles";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
@@ -53,6 +53,11 @@ export default function NurseLayout() {
   useSocket({
     ANNOUNCEMENT_PUBLISHED: onAnnouncement,
     QUEUE_UPDATED: (payload?: unknown) => {
+      // A ward indent moved (raised, issued against, closed): only the indents page asks again.
+      if ((payload as { area?: string } | undefined)?.area === "indent") {
+        queryClient.invalidateQueries({ queryKey: ["ward-indents", "list"] });
+        return;
+      }
       if (!isOpdQueueEvent(payload)) return;
       queryClient.invalidateQueries({ queryKey: ["nurse-dashboard-queue"] });
       queryClient.invalidateQueries({ queryKey: ["nurse-queue"] });
@@ -82,6 +87,10 @@ export default function NurseLayout() {
     // The in-charge's (their wards) and nursing administration's (every ward).
     ...(hasAction(user, "nurse.roster")
       ? [{ text: "Duty roster", icon: <CalendarMonthRounded />, path: "/nurse/roster", section: "Ward management", module: "IPD" }]
+      : []),
+    // ...and asks the pharmacy for their wards' stock.
+    ...(hasAction(user, "nurse.indent")
+      ? [{ text: "Indents", icon: <AssignmentRounded />, path: "/nurse/indents", section: "Ward management", module: "Pharmacy" }]
       : []),
     // Nursing Administration's: which ward each nurse works on.
     ...(hasAction(user, "nurse.postings")

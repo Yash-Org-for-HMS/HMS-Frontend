@@ -22,6 +22,7 @@ import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
 import ErrorState from "@/components/ErrorState";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import SearchableSelect from "@/components/form/SearchableSelect";
+import StoreIndents from "@/features/wardIndents/StoreIndents";
 
 /**
  * Ward stock: what each ward holds, and how it got there.
@@ -1775,6 +1776,8 @@ export default function WardStock() {
     ? [{ label: "Ward cupboards", node: <WardsTab canIssue={false} /> }, { label: "Movement log", node: <LogTab /> }]
     : [
       { label: "Ward cupboards", node: <WardsTab canIssue /> },
+      // What the wards have asked for (their in-charges' indents).
+      { label: "Indents", node: <StoreIndents /> },
       { label: "To reorder", node: <ReorderTab /> },
       { label: "Central store", node: <StoreTab /> },
       { label: "Movement log", node: <LogTab /> },

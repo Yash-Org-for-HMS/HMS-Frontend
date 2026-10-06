@@ -25,6 +25,10 @@ import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
 import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
 import { useSocket } from "@/hooks/useSocket";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { axiosInstance } from "@/api/axios";
+import { DASHBOARD_POLL_MS, LIVE_DASHBOARD_FALLBACK_MS } from "@/constants/intervals";
+import { refetchUnlessFresh } from "@/utils/liveRefresh";
 
 const drawerWidth = 260;
 
@@ -41,7 +45,29 @@ export default function PharmacyLayout() {
   const { isModuleEnabled } = useEnabledModules();
 
   const { unread: announcementsUnread, onAnnouncement, onConnect } = useAnnouncementBadge();
-  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onConnect });
+  // Wards waiting on an indent: on the Ward Stock entry. Asked again when an
+  // indent changes (its own event area, so a sale at the counter never asks)
+  // and on reconnect; while connected the slow poll is only a safety net.
+  const queryClient = useQueryClient();
+  const { connected } = useSocket({
+    ANNOUNCEMENT_PUBLISHED: onAnnouncement,
+    QUEUE_UPDATED: (payload?: unknown) => {
+      if ((payload as { area?: string } | undefined)?.area !== "indent") return;
+      queryClient.invalidateQueries({ queryKey: ["ward-indents-open-count"] });
+      queryClient.invalidateQueries({ queryKey: ["ward-indents", "open"] });
+    },
+    connect: () => {
+      onConnect();
+      refetchUnlessFresh(queryClient, ["ward-indents-open-count"]);
+    },
+  });
+  const { data: indents } = useQuery({
+    queryKey: ["ward-indents-open-count"],
+    queryFn: async () => (await axiosInstance.get("/ward-indents/open/count")).data.data as { open: number },
+    enabled: isModuleEnabled("IPD") && isModuleEnabled("Pharmacy"),
+    refetchInterval: connected ? LIVE_DASHBOARD_FALLBACK_MS : DASHBOARD_POLL_MS,
+    refetchOnWindowFocus: true,
+  });
   const menuItems = [
     { text: "Dashboard", icon: <DashboardRounded />, path: "/pharmacy/dashboard", section: "Overview" },
     { text: "Dispensary (POS)", icon: <PointOfSaleRounded />, path: "/pharmacy/pos", section: "Dispensary" },
@@ -49,7 +75,7 @@ export default function PharmacyLayout() {
     { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/pharmacy/medicines", section: "Inventory" },
     { text: "Suppliers", icon: <LocalShippingRounded />, path: "/pharmacy/suppliers", section: "Inventory" },
     { text: "Inventory & POs", icon: <InventoryRounded />, path: "/pharmacy/inventory", section: "Inventory" },
-    { text: "Ward Stock", icon: <WarehouseRounded />, path: "/pharmacy/ward-stock", section: "Inventory", module: "IPD" },
+    { text: "Ward Stock", icon: <WarehouseRounded />, path: "/pharmacy/ward-stock", section: "Inventory", module: "IPD", badge: indents?.open || 0 },
     { text: "Billing History", icon: <ReceiptLongRounded />, path: "/pharmacy/billing", section: "Reports", module: "Billing" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/pharmacy/reports", section: "Reports" },
   ];

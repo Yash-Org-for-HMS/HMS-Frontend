@@ -53,7 +53,7 @@ const REALMS: Record<Realm, { access: string; refresh: string; refreshUrl: strin
 // can pass every API check (those set the header themselves) and still be dead
 // in the browser. "clinical" was exactly that.
 function realmForUrl(url?: string): Realm {
-  if (url && /^\/(hospital|reception|doctor|nurse|lab|pharmacy|billing|ipd|clinical|vaccination|claims|role-home|ward-round|roster)\b/.test(url)) {
+  if (url && /^\/(hospital|reception|doctor|nurse|lab|pharmacy|billing|ipd|clinical|vaccination|claims|role-home|ward-round|roster|ward-indents)\b/.test(url)) {
     return "hospital";
   }
   return "admin";
