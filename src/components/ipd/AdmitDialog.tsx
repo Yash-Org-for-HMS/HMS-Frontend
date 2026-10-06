@@ -83,7 +83,11 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
     return () => { cancelled = true; };
   }, [form.patientId]);
 
-  const canSubmit = form.patientId && form.bedId;
+  // A bed the admission desk is holding for this patient is chosen for them,
+  // until someone picks another.
+  const heldBed = form.patientId ? beds.find((b) => b.reservedForPatientId === form.patientId) : undefined;
+  const bedId = form.bedId || heldBed?.bedId || "";
+  const canSubmit = form.patientId && bedId;
 
   const handleNewPatient = async (patientId: string, mrn: string) => {
     // Pull the fresh patient into the dropdown, then pre-select it.
@@ -101,7 +105,7 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
       const res = await axiosInstance.post("/ipd/admissions", {
         patientId: form.patientId,
         doctorId: form.doctorId || undefined,
-        bedId: form.bedId,
+        bedId,
         admittingDiagnosis: form.admittingDiagnosis || undefined,
         reason: form.reason || undefined,
         notes: form.notes || undefined,
@@ -189,7 +193,7 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
             <Grid size={{ xs: 12, sm: 6 }}>
               <SearchableSelect
                 label="Bed" name="bedId" required
-                value={form.bedId} onChange={(e) => set("bedId", e.target.value)}
+                value={bedId} onChange={(e) => set("bedId", e.target.value)}
                 placeholder="Select a bed"
                 searchPlaceholder="Search by ward, room or bed…"
                 options={beds.map((b) => ({
@@ -200,7 +204,9 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
                   // of a menu too long to read.
                   secondary: [
                     b.dailyCharge ? `₹${Number(b.dailyCharge).toFixed(0)}/day` : null,
-                    b.status === "RESERVED" ? "reserved" : null,
+                    b.status === "RESERVED"
+                      ? (!b.reservedForPatientId ? "reserved" : b.reservedForPatientId === form.patientId ? "held for this patient" : "held for another patient")
+                      : null,
                   ].filter(Boolean).join(" · ") || undefined,
                 }))}
                 helperText={beds.length === 0 ? "No beds available — free or add one" : undefined}

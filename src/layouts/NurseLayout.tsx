@@ -58,6 +58,12 @@ export default function NurseLayout() {
         queryClient.invalidateQueries({ queryKey: ["ward-indents", "list"] });
         return;
       }
+      // A bed moved: the bed board and the ward screens, if open.
+      if ((payload as { area?: string } | undefined)?.area === "beds") {
+        queryClient.invalidateQueries({ queryKey: ["ipd-structure"] });
+        queryClient.invalidateQueries({ queryKey: ["role-home"] });
+        return;
+      }
       if (!isOpdQueueEvent(payload)) return;
       queryClient.invalidateQueries({ queryKey: ["nurse-dashboard-queue"] });
       queryClient.invalidateQueries({ queryKey: ["nurse-queue"] });

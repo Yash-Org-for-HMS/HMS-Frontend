@@ -128,7 +128,7 @@ export default function DeskHome() {
               <Grid size={half}>
                 <AttentionList title="Reservations ending today" subtitle="Held beds that go back to free when the time passes" loading={admission.isLoading}
                   totalCount={admission.data?.reservationsEndingToday.count}
-                  items={(admission.data?.reservationsEndingToday.rows ?? []).map((r) => ({ id: r.bedId, primary: r.bed, meta: formatDateTime(r.until), severity: "warning" as const, icon: <EventBusyRounded sx={{ fontSize: 18 }} />, onClick: () => navigate("/reception/ipd/beds") }))} />
+                  items={(admission.data?.reservationsEndingToday.rows ?? []).map((r) => ({ id: r.bedId, primary: r.bed, meta: formatDateTime(r.until), severity: "warning" as const, icon: <EventBusyRounded sx={{ fontSize: 18 }} />, onClick: () => navigate("/reception/ipd/reservations") }))} />
               </Grid>
             )}
           </Grid>

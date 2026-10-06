@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { menuPathsFor, holdsHome, hasAction } from "@/constants/roles";
+import { menuPathsFor, holdsHome, hasAction, hasRole } from "@/constants/roles";
 import PanelSwitcher from "@/components/layout/PanelSwitcher";
 import { isNavItemActive } from "@/components/layout/navActive";
 import { SEARCH_SHORTCUT } from "@/utils/shortcut";
@@ -47,6 +47,7 @@ import {
   EventNoteRounded,
   WorkRounded,
   FolderSharedRounded,
+  EventAvailableRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { assetUrl } from "@/utils/assetUrl";
@@ -58,6 +59,10 @@ import ScrollFade from "@/components/layout/ScrollFade";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
 import { useSocket } from "@/hooks/useSocket";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { axiosInstance } from "@/api/axios";
+import { DASHBOARD_POLL_MS, LIVE_DASHBOARD_FALLBACK_MS } from "@/constants/intervals";
+import { refetchUnlessFresh } from "@/utils/liveRefresh";
 
 const drawerWidth = 260;
 
@@ -76,13 +81,40 @@ export default function ReceptionLayout() {
   // Grouped into sections that follow the front-desk workflow:
   // overview → patient flow → clinical lookups → in-patient → finance → system.
   const { unread: announcementsUnread, onAnnouncement, onConnect } = useAnnouncementBadge();
-  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onConnect });
+  // What is routed to a desk (roles phase 4): a discharge started is the
+  // billing desk's final bill, and the TPA desk's when the stay is insured. On
+  // "My desk", refreshed when a bed moves ("beds") and on reconnect; while
+  // connected the slow poll is only a safety net. A bed move also refreshes
+  // whatever bed screen is open here.
+  const queryClient = useQueryClient();
+  const routedDesk = hasRole(user, "BILLING", "TPA_DESK", "ADMISSION_DESK");
+  const { connected } = useSocket({
+    ANNOUNCEMENT_PUBLISHED: onAnnouncement,
+    QUEUE_UPDATED: (payload?: unknown) => {
+      if ((payload as { area?: string } | undefined)?.area !== "beds") return;
+      for (const key of [["desk-notices"], ["role-home"], ["ipd-structure"], ["ipd-reservations"], ["ipd-available-beds"]]) queryClient.invalidateQueries({ queryKey: key });
+    },
+    connect: () => {
+      onConnect();
+      if (routedDesk) refetchUnlessFresh(queryClient, ["desk-notices"]);
+    },
+  });
+  const { data: notices } = useQuery({
+    queryKey: ["desk-notices"],
+    queryFn: async () => (await axiosInstance.get("/role-home/notices")).data.data as { dischargesStarted: number; dischargesStartedInsured: number },
+    enabled: routedDesk && isModuleEnabled("IPD"),
+    refetchInterval: connected ? LIVE_DASHBOARD_FALLBACK_MS : DASHBOARD_POLL_MS,
+    refetchOnWindowFocus: true,
+  });
+  const deskBadge = !notices ? 0
+    : hasRole(user, "BILLING", "ADMISSION_DESK") ? notices.dischargesStarted
+      : notices.dischargesStartedInsured;
   const allSections = [
     {
       heading: "Overview",
       items: [
         // The desk roles' own home (Admission Desk, Billing, TPA, Medical Records).
-        ...(holdsHome(user, "/reception/desk") ? [{ text: "My desk", icon: <WorkRounded />, path: "/reception/desk" }] : []),
+        ...(holdsHome(user, "/reception/desk") ? [{ text: "My desk", icon: <WorkRounded />, path: "/reception/desk", badge: deskBadge }] : []),
         { text: "Dashboard", icon: <DashboardRounded />, path: "/reception/dashboard" },
         { text: "Front Desk Console", icon: <PersonAddRounded />, path: "/reception/console" },
       ],
@@ -110,6 +142,8 @@ export default function ReceptionLayout() {
       items: [
         { text: "Admissions", icon: <LocalHotelRounded />, path: "/reception/ipd/admissions", module: "IPD" },
         { text: "Bed Management", icon: <HotelRounded />, path: "/reception/ipd/beds", module: "IPD" },
+        // The admission desk's holds for planned admissions.
+        ...(hasAction(user, "ipd.reservations") ? [{ text: "Bed reservations", icon: <EventAvailableRounded />, path: "/reception/ipd/reservations", module: "IPD" }] : []),
         { text: "Theatre Board", icon: <MedicalServicesRounded />, path: "/reception/ipd/theatres", module: "IPD" },
         { text: "Operating List", icon: <EventNoteRounded />, path: "/reception/ipd/ot-schedule", module: "IPD" },
       ],

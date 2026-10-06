@@ -21,6 +21,10 @@ import SidebarUserCard from "@/components/layout/SidebarUserCard";
 import TrialBanner from "@/components/layout/TrialBanner";
 import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
 import { useSocket } from "@/hooks/useSocket";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { axiosInstance } from "@/api/axios";
+import { DASHBOARD_POLL_MS, LIVE_DASHBOARD_FALLBACK_MS } from "@/constants/intervals";
+import { refetchUnlessFresh } from "@/utils/liveRefresh";
 
 const drawerWidth = 260;
 
@@ -43,9 +47,30 @@ export default function HousekeepingLayout() {
   const { isModuleEnabled } = useEnabledModules();
 
   const { unread: announcementsUnread, onAnnouncement, onConnect } = useAnnouncementBadge();
-  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onConnect });
+  // Beds vacated are routed here (roles phase 4): the count waiting to be
+  // turned round, on the Bed Board entry, asked again when a bed moves.
+  const queryClient = useQueryClient();
+  const { connected } = useSocket({
+    ANNOUNCEMENT_PUBLISHED: onAnnouncement,
+    QUEUE_UPDATED: (payload?: unknown) => {
+      if ((payload as { area?: string } | undefined)?.area !== "beds") return;
+      queryClient.invalidateQueries({ queryKey: ["beds-to-clean"] });
+      queryClient.invalidateQueries({ queryKey: ["ipd-structure"] });
+    },
+    connect: () => {
+      onConnect();
+      refetchUnlessFresh(queryClient, ["beds-to-clean"]);
+    },
+  });
+  const { data: toClean } = useQuery({
+    queryKey: ["beds-to-clean"],
+    queryFn: async () => (await axiosInstance.get("/ipd/beds/to-clean")).data.data as { count: number },
+    enabled: isModuleEnabled("IPD"),
+    refetchInterval: connected ? LIVE_DASHBOARD_FALLBACK_MS : DASHBOARD_POLL_MS,
+    refetchOnWindowFocus: true,
+  });
   const menuItems = [
-    { text: "Bed Board", icon: <HotelRounded />, path: "/housekeeping/beds", section: "Beds" },
+    { text: "Bed Board", icon: <HotelRounded />, path: "/housekeeping/beds", section: "Beds", badge: toClean?.count || 0 },
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);

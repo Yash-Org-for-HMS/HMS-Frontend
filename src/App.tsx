@@ -98,6 +98,7 @@ const ReferralsList = lazy(() => import("@/features/reception/ReferralsList"));
 const Reports = lazy(() => import("@/features/reception/ReportsHub"));
 const Admissions = lazy(() => import("@/features/ipd/Admissions"));
 const BedBoard = lazy(() => import("@/features/ipd/BedBoard"));
+const BedReservations = lazy(() => import("@/features/ipd/BedReservations"));
 const TheatreBoard = lazy(() => import("@/features/ipd/TheatreBoard"));
 const OtSchedule = lazy(() => import("@/features/ipd/OtSchedule"));
 const OtCaseRecord = lazy(() => import("@/features/ipd/OtCaseRecord"));
@@ -397,6 +398,7 @@ function App() {
             <Route path="/reception/reports" element={el(Reports)} />
             <Route path="/reception/ipd/admissions" element={elGated(Admissions, "IPD", "Admissions")} />
             <Route path="/reception/ipd/beds" element={elGated(BedBoard, "IPD", "Bed Management")} />
+            <Route path="/reception/ipd/reservations" element={elGated(BedReservations, "IPD", "Bed reservations")} />
             <Route path="/reception/ipd/theatres" element={elGated(TheatreBoard, "IPD", "Theatre Board")} />
             <Route path="/reception/ipd/ot-schedule" element={elGated(OtSchedule, "IPD", "Operating List")} />
             {/* Reception bills a case; the clinical record and the theatre

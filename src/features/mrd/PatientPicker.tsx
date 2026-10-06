@@ -9,7 +9,7 @@ export interface PickedPatient { patientId: string; firstName: string | null; la
 
 const patientLabel = (p: PickedPatient) => `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || "Patient";
 
-export default function PatientPicker({ id, value, onChange, label = "Patient" }: { id: string; value: PickedPatient | null; onChange: (p: PickedPatient | null) => void; label?: string }) {
+export default function PatientPicker({ id, value, onChange, label = "Patient", required = true }: { id: string; value: PickedPatient | null; onChange: (p: PickedPatient | null) => void; label?: string; required?: boolean }) {
   const [query, setQuery] = useState("");
   const term = useDebouncedValue(query, 300);
   const { data = [], isFetching } = useQuery<PickedPatient[]>({
@@ -38,7 +38,7 @@ export default function PatientPicker({ id, value, onChange, label = "Patient" }
           </Box>
         </li>
       )}
-      renderInput={(params) => <TextField {...params} label={label} required />}
+      renderInput={(params) => <TextField {...params} label={label} required={required} />}
     />
   );
 }
