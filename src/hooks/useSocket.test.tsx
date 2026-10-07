@@ -9,7 +9,8 @@ import { renderHook, act } from "@testing-library/react";
  */
 
 type Handler = (...a: unknown[]) => void;
-const sockets = vi.hoisted(() => [] as { handlers: Record<string, Handler[]>; fire: (e: string, ...a: unknown[]) => void; disconnect: () => void }[]);
+const sockets = vi.hoisted(() => [] as { handlers: Record<string, Handler[]>; fire: (e: string, ...a: unknown[]) => void; disconnect: () => void; connect: ReturnType<typeof vi.fn> }[]);
+const refresh = vi.hoisted(() => ({ fn: (async () => "fresh") as () => Promise<string | null> }));
 vi.mock("socket.io-client", () => ({
   io: () => {
     const handlers: Record<string, Handler[]> = {};
@@ -18,18 +19,20 @@ vi.mock("socket.io-client", () => ({
       on: (e: string, fn: Handler) => { (handlers[e] ??= []).push(fn); },
       fire: (e: string, ...a: unknown[]) => (handlers[e] ?? []).forEach((fn) => fn(...a)),
       disconnect: () => s.fire("disconnect"),
+      connect: vi.fn(),
     };
     sockets.push(s);
     return s;
   },
 }));
 vi.mock("@/providers/HospitalAuthContext", () => ({ useHospitalAuth: () => ({ hospital: { id: "h" }, activeBranchId: "k" }) }));
-vi.mock("@/api/axios", () => ({ API_URL: "http://localhost:5000/api" }));
+vi.mock("@/api/axios", () => ({ API_URL: "http://localhost:5000/api", refreshHospitalToken: () => refresh.fn() }));
 
 import { useSocket, useLiveConnected } from "./useSocket";
 
 beforeEach(() => {
   sockets.length = 0;
+  refresh.fn = async () => "fresh";
   sessionStorage.setItem("hospitalAccessToken", "t");
 });
 
@@ -66,5 +69,55 @@ describe("useSocket / useLiveConnected", () => {
     renderHook(() => useSocket({ QUEUE_UPDATED: (p: unknown) => seen.push(p) }));
     act(() => sockets[0].fire("QUEUE_UPDATED", { area: "lab" }));
     expect(seen).toEqual([{ area: "lab" }]);
+  });
+
+  /*
+   * socket.io-client gives up for good when the server refuses the handshake
+   * (an expired token after a tab sat idle, then a redeploy or a dropped
+   * connection). Before, the screen stayed without live updates until a reload.
+   */
+  it("refreshes the token and connects again after a refused handshake, a few times at most", async () => {
+    vi.useFakeTimers();
+    try {
+      const a = renderHook(() => useSocket({}));
+      const s = sockets[0];
+      await act(async () => { s.fire("connect_error", new Error("UNAUTHORIZED")); });
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      expect(s.connect).toHaveBeenCalledTimes(1);
+
+      // A server that keeps refusing is not retried forever.
+      for (let i = 0; i < 5; i++) {
+        await act(async () => { s.fire("connect_error", new Error("UNAUTHORIZED")); });
+        await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+      }
+      expect(s.connect).toHaveBeenCalledTimes(3);
+
+      // Connected again: the count starts over.
+      act(() => s.fire("connect"));
+      await act(async () => { s.fire("connect_error", new Error("UNAUTHORIZED")); });
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      expect(s.connect).toHaveBeenCalledTimes(4);
+
+      // Gone from the screen, or the session can't be refreshed: no reconnect.
+      refresh.fn = async () => null;
+      await act(async () => { s.fire("connect_error", new Error("UNAUTHORIZED")); });
+      await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+      expect(s.connect).toHaveBeenCalledTimes(4);
+      refresh.fn = async () => "fresh";
+      a.unmount();
+      await act(async () => { s.fire("connect_error", new Error("UNAUTHORIZED")); });
+      await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+      expect(s.connect).toHaveBeenCalledTimes(4);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not reconnect on a refusal that isn't about the token", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    renderHook(() => useSocket({}));
+    await act(async () => { sockets[0].fire("connect_error", new Error("xhr poll error")); });
+    expect(sockets[0].connect).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

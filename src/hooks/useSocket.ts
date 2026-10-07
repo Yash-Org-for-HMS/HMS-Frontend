@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { io, Socket } from "socket.io-client";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
-import { API_URL } from "@/api/axios";
+import { API_URL, refreshHospitalToken } from "@/api/axios";
 
 // How many of this tab's live connections are up — for a screen that relies on
 // its layout's connection (whose handlers refresh it) instead of opening one
@@ -71,13 +71,21 @@ export function useSocket(eventMap: Record<string, (...args: any[]) => void>): {
       if (next !== up) { up = next; adjustLive(next ? 1 : -1); }
       setConnected(next);
     };
-    socket.on("connect", () => mark(true));
+    // A refused handshake (an expired token — a tab left idle past it, then a
+    // redeploy or a dropped connection) is final for socket.io-client: it gives
+    // up on the socket and never retries. So refresh the token and connect again
+    // here, a few times at most, so a server that keeps refusing doesn't loop.
+    let closed = false;
+    let refusals = 0;
+    socket.on("connect", () => { refusals = 0; mark(true); });
     socket.on("disconnect", () => mark(false));
     socket.on("connect_error", (err) => {
       mark(false);
-      // An expired token is the ordinary case: the next API call refreshes it
-      // and the socket reconnects with the new one. Nothing to surface.
-      if (err.message !== "UNAUTHORIZED") console.warn("[Socket.io]", err.message);
+      if (err.message !== "UNAUTHORIZED") { console.warn("[Socket.io]", err.message); return; }
+      if (closed || ++refusals > 3) return;
+      void refreshHospitalToken().then((token) => {
+        if (token && !closed) setTimeout(() => { if (!closed) socket.connect(); }, 1000 * refusals);
+      });
     });
 
     // Register all event listeners
@@ -93,6 +101,7 @@ export function useSocket(eventMap: Record<string, (...args: any[]) => void>): {
 
     return () => {
       // Cleanup listeners and disconnect
+      closed = true;
       socket.disconnect();
       mark(false);
     };

@@ -118,6 +118,21 @@ async function doRefresh(realm: Realm): Promise<string | null> {
   }
 }
 
+/**
+ * A fresh hospital access token, through the same single refresh the 401 retry
+ * uses (so a burst of callers still makes one request). Null when the session
+ * can't be refreshed. For the live connection, which is refused on an expired
+ * token and is not an axios call, so the interceptor never sees it.
+ */
+export function refreshHospitalToken(): Promise<string | null> {
+  if (!refreshing.hospital) {
+    refreshing.hospital = doRefresh("hospital").finally(() => {
+      refreshing.hospital = undefined;
+    });
+  }
+  return refreshing.hospital;
+}
+
 // Response interceptor: on 401, try a token refresh + retry once; if that fails,
 // clear the session and redirect to the correct login (instead of leaving the
 // page silently broken).
