@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon, DashboardRounded, LocalHospitalRounded, PeopleRounded,
-  CalendarTodayRounded, SettingsRounded, ApartmentRounded, DomainRounded, BadgeRounded, CardMembershipRounded, AccountTreeRounded,
+  CalendarTodayRounded, SettingsRounded, ApartmentRounded, DomainRounded, BadgeRounded, CardMembershipRounded, AccountTreeRounded, SchemaRounded,
   WidgetsRounded, MedicalServicesRounded, DatasetRounded, EventNoteRounded,
   DynamicFormRounded, SecurityRounded, AccountBalanceRounded,
   AssessmentRounded, HotelRounded, MonitorHeartRounded, VaccinesRounded,
@@ -76,6 +76,8 @@ export default function HospitalLayout() {
     // People (with or without a login) and who they report to — the one place a
     // person is added. Logins & roles below manages the logins themselves.
     { text: "Staff Directory", icon: <AccountTreeRounded />, path: "/hospital/staff", adminOnly: true, section: "Set up — in this order" },
+    // Who reports to whom, and the departments under those who oversee them.
+    { text: "Organisation chart", icon: <SchemaRounded />, path: "/hospital/organogram", adminOnly: true, section: "Set up — in this order" },
     { text: "Logins & roles", icon: <BadgeRounded />, path: "/hospital/users", adminOnly: true, section: "Set up — in this order" },
 
     // ── Catalogs and forms, as the hospital needs them ──

@@ -13,7 +13,7 @@ import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 const SHARED_PAGES = [
   "/hospital/profile", "/hospital/settings", "/hospital/branches", "/hospital/module-access", "/hospital/departments",
   "/hospital/soc", "/hospital/doctors", "/hospital/medicines", "/hospital/vaccines", "/hospital/ward-chart",
-  "/hospital/form-builder", "/hospital/lookups", "/hospital/patients",
+  "/hospital/form-builder", "/hospital/lookups", "/hospital/patients", "/hospital/organogram",
 ];
 
 /**

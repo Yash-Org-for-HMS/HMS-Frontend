@@ -40,6 +40,8 @@ interface Form {
   alsoWorksAt: string[];
   joiningDate: string; status: string; exitDate: string;
   primaryDepartmentId: string; primaryRoleInDept: string; additionalDepartmentIds: string[];
+  /** Their role in each additional department: they can head or visit one, not only belong. */
+  additionalRoles: Record<string, string>;
   /** "" | "ward:<id>" | "unit:<id>" */
   posting: string;
   /** undefined = not chosen yet: the suggested manager stands in. "" = deliberately none. */
@@ -72,6 +74,7 @@ function initialForm(row: StaffRow | null, options: StaffOptions, startWithLogin
     status: row?.status ?? "ACTIVE", exitDate: day(row?.employment?.exitDate),
     primaryDepartmentId: row?.primaryDepartment?.departmentId ?? "", primaryRoleInDept: row?.primaryDepartment?.roleInDept ?? "MEMBER",
     additionalDepartmentIds: row?.additionalDepartments.map((d) => d.departmentId) ?? [],
+    additionalRoles: Object.fromEntries((row?.additionalDepartments ?? []).map((d) => [d.departmentId, d.roleInDept])),
     posting: p?.wardId ? `ward:${p.wardId}` : p?.serviceUnitId ? `unit:${p.serviceUnitId}` : "",
     // An existing person keeps what is on file — including no manager. Only a
     // new one starts from the suggestion.
@@ -196,6 +199,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
         joiningDate: f.joiningDate || null, status: f.status, exitDate: f.status === "EXITED" ? f.exitDate || null : null,
         primaryDepartmentId: f.primaryDepartmentId || null, primaryRoleInDept: f.primaryRoleInDept,
         additionalDepartmentIds: f.additionalDepartmentIds.filter((id) => id !== f.primaryDepartmentId),
+        additionalDepartmentRoles: Object.fromEntries(f.additionalDepartmentIds.filter((id) => id !== f.primaryDepartmentId).map((id) => [id, f.additionalRoles[id] ?? "MEMBER"])),
         postingWardId: postKind === "ward" ? postId : null, postingServiceUnitId: postKind === "unit" ? postId : null,
         adminManagerId: adminId || null, functionalManagerId: functionalId || null,
         ...Object.fromEntries(CONTACT_KEYS.map((k) => [k, f[k].trim() || null])),
@@ -394,6 +398,18 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
                 ))}
                 renderInput={(params) => <TextField {...params} label="Additional departments" placeholder={f.additionalDepartmentIds.length ? "" : "None"} />} />
             </Grid>
+            {/* Their role in each one: someone can head a second department, or visit one. */}
+            {f.additionalDepartmentIds.filter((id) => id !== f.primaryDepartmentId).map((id) => (
+              <Grid key={id} size={{ xs: 12, sm: 6 }}>
+                <TextField select fullWidth size="small" id={`staff-extra-role-${id}`}
+                  label={`Role in ${options.departments.find((d) => d.departmentId === id)?.departmentName ?? "department"}`}
+                  value={f.additionalRoles[id] ?? "MEMBER"}
+                  onChange={(e) => set("additionalRoles", { ...f.additionalRoles, [id]: e.target.value })}
+                  helperText={(f.additionalRoles[id] ?? "MEMBER") === "HOD" ? "Replaces that department's current head" : undefined}>
+                  {options.rolesInDept.map((r) => <MenuItem key={r.code} value={r.code}>{ROLE_IN_DEPT_LABEL[r.code] ?? r.code}</MenuItem>)}
+                </TextField>
+              </Grid>
+            ))}
           </Grid>
 
           {section("Posting", "Where they work day to day — a ward or a unit. Nurses rotate; the old posting is kept as history.")}

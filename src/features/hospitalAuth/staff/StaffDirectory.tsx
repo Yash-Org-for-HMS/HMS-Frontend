@@ -20,7 +20,7 @@ import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { SEMANTIC } from "@/styles/accents";
 import StaffDialog from "./StaffDialog";
 import type { StaffRow, StaffListResponse, StaffOptions } from "./staff.types";
-import { STATUS_LABEL } from "./staff.types";
+import { STATUS_LABEL, ROLE_IN_DEPT_LABEL } from "./staff.types";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { hasRole } from "@/constants/roles";
 import { useSearchParams } from "react-router-dom";
@@ -104,11 +104,8 @@ export default function StaffDirectory() {
   // a person is added, with their login already ticked.
   const [searchParams, setSearchParams] = useSearchParams();
   const addWithLogin = searchParams.get("add") === "login";
-  const openDialog = dialog ?? (addWithLogin ? { row: null } : null);
-  const closeDialog = () => {
-    setDialog(null);
-    if (addWithLogin) setSearchParams({}, { replace: true });
-  };
+  // "Change in the Staff Directory" on the organisation chart opens that person here (?edit=).
+  const editId = searchParams.get("edit");
   const [loginFor, setLoginFor] = useState<StaffRow | null>(null);
   const [cred, setCred] = useState<{ email: string; password: string; name: string } | null>(null);
 
@@ -116,6 +113,20 @@ export default function StaffDirectory() {
     queryKey: ["staff-directory"],
     queryFn: async () => { const d = (await axiosInstance.get("/hospital/staff")).data; return { data: d.data, summary: d.summary }; },
   });
+  // The chart is the whole group; the list is the branch picked — someone from
+  // another branch is fetched on their own.
+  const listed = editId ? list.data?.data.find((r) => r.staffId === editId) ?? null : null;
+  const editOne = useQuery<StaffRow>({
+    queryKey: ["staff-one", editId],
+    queryFn: async () => (await axiosInstance.get(`/hospital/staff/${editId}`)).data.data,
+    enabled: !!editId && !!list.data && !listed,
+  });
+  const editRow = listed ?? (editId ? editOne.data ?? null : null);
+  const openDialog = dialog ?? (addWithLogin ? { row: null } : editRow ? { row: editRow } : null);
+  const closeDialog = () => {
+    setDialog(null);
+    if (addWithLogin || editId) setSearchParams({}, { replace: true });
+  };
   const opts = useQuery<StaffOptions>({
     queryKey: ["staff-options"],
     queryFn: async () => (await axiosInstance.get("/hospital/staff/options")).data.data,
@@ -254,7 +265,7 @@ export default function StaffDirectory() {
                         {r.primaryDepartment?.roleInDept === "HOD" && <Chip size="small" label="HOD" sx={{ height: 18, ml: 0.75, fontSize: "0.7rem", fontWeight: 700 }} />}
                       </Typography>
                       {r.additionalDepartments.length > 0 && (
-                        <Typography variant="caption" sx={{ color: "text.secondary" }}>also {r.additionalDepartments.map((d) => d.departmentName).join(", ")}</Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>also {r.additionalDepartments.map((d) => d.roleInDept === "MEMBER" ? d.departmentName : `${d.departmentName} (${ROLE_IN_DEPT_LABEL[d.roleInDept]?.toLowerCase() ?? d.roleInDept})`).join(", ")}</Typography>
                       )}
                     </TableCell>
                     <TableCell sx={CELL_SX}>
