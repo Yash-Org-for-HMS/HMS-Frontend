@@ -65,7 +65,9 @@ export default function BranchTransferDialog({ admission, onClose, onDone }: {
   const pendingTax = (detail?.pendingCharges ?? []).reduce((s, c) => s + (Number(c.taxAmount) || 0), 0);
   const billHere = Number(detail?.estimatedBedCharge || 0) + Number(detail?.estimatedNursingCharge || 0) + Number(detail?.pendingChargesTotal || 0) + pendingTax;
   const deposit = Number(detail?.depositBalance ?? admission.depositBalance ?? 0);
-  const carried = Math.max(deposit - billHere, 0);
+  // The advance stays with this branch (it took the cash): what the bill here
+  // doesn't use is refunded from here; the other branch takes its own advance.
+  const leftHere = Math.max(deposit - billHere, 0);
 
   const submit = async () => {
     if (!toBranchId) { toast.error("Choose the branch the patient is going to."); return; }
@@ -141,9 +143,12 @@ export default function BranchTransferDialog({ admission, onClose, onDone }: {
                       <Typography variant="body2" sx={{ fontWeight: 700, color: BRAND.action }}>{formatINR(deposit)}</Typography>
                     </Box>
                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                      <Typography variant="body2" sx={{ color: "text.secondary" }}>Carried to {destination?.branchName}</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: SEMANTIC.success }}>{formatINR(carried)}</Typography>
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>Left here to refund</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: SEMANTIC.success }}>{formatINR(leftHere)}</Typography>
                     </Box>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      The advance stays with this branch: refund what is left from here. {destination?.branchName ?? "The other branch"} takes its own advance.
+                    </Typography>
                   </>
                 )}
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>
