@@ -224,8 +224,12 @@ function Canvas({ children }: { children: ReactNode }) {
     if (o) keep.current = { x: (o.scrollLeft + o.clientWidth / 2) / zoom, y: (o.scrollTop + o.clientHeight / 2) / zoom };
     setZoom(Math.max(0.3, Math.min(1.5, +next.toFixed(2))));
   };
+  // The whole chart in view: across and down, never larger than life.
   const fit = () => {
-    if (outer.current && size.w) setZoom(Math.max(0.3, Math.min(1, +((outer.current.clientWidth - 24) / size.w).toFixed(2))));
+    const o = outer.current;
+    if (!o || !size.w || !size.h) return;
+    setZoom(Math.max(0.3, Math.min(1, +Math.min((o.clientWidth - 24) / size.w, (o.clientHeight - 24) / size.h).toFixed(2))));
+    o.scrollTo({ left: 0, top: 0 });
   };
   const down = (e: ReactPointerEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest("[data-org-card], button, a, input")) return;
