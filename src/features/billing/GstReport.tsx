@@ -100,11 +100,17 @@ export default function GstReport() {
   if (r && r.taxableChargeItemsMissingHsn > 0) issues.push({ text: `${r.taxableChargeItemsMissingHsn} taxable charge item${r.taxableChargeItemsMissingHsn === 1 ? "" : "s"} have no SAC code.`, to: "/hospital/soc" });
   if (r && r.medicinesTotal > 0 && r.medicinesZeroRated === r.medicinesTotal) issues.push({ text: `All ${r.medicinesTotal} medicines are set to 0% GST. Medicines are normally taxable (commonly 5% or 12%) even though healthcare services are exempt — if that's not deliberate, this report will under-state your liability.`, to: "/pharmacy/medicines" });
 
+  // Several registrations and none picked: the figures add them all up, which is
+  // not one return — the header must not name a single GSTIN.
+  const allGstins = (data?.registrations ?? []).map((x) => x.gstin).filter((x): x is string => !!x);
+  const mixed = !gstin && allGstins.length > 1;
+  const gstinLabel = mixed ? `All ${allGstins.length} registrations (${allGstins.join(", ")}) — not one return` : data?.gstin ?? "(not set)";
+
   const exportSummary = () => {
     if (!data) return;
     const rows: (string | number)[][] = [
       ["GST Summary", `${from} to ${to}`],
-      ["GSTIN", data.gstin ?? "(not set)"],
+      ["GSTIN", gstinLabel],
       [],
       ["Rate", "Taxable Value", "CGST", "SGST", "Total GST"],
       ...data.slabs.map((s) => [`${s.rate}%`, s.taxableAmount, s.cgst, s.sgst, s.taxAmount]),
@@ -171,7 +177,9 @@ export default function GstReport() {
             ))}
           </TextField>
         ) : null}
-        {data?.gstin && <Chip size="small" label={`GSTIN ${data.gstin}`} sx={{ fontWeight: 700 }} />}
+        {mixed
+          ? <Chip size="small" color="warning" variant="outlined" label={`All ${allGstins.length} GST registrations — pick one for a return`} sx={{ fontWeight: 700 }} />
+          : data?.gstin && <Chip size="small" label={`GSTIN ${data.gstin}`} sx={{ fontWeight: 700 }} />}
       </Box>
 
       {isLoading ? (

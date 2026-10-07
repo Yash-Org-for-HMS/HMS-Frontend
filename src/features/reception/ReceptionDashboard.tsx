@@ -22,8 +22,8 @@ import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { hasRole, menuPathsFor } from "@/constants/roles";
 import type { QueueTokenRow } from "./queue.types";
 import { useSocket } from "@/hooks/useSocket";
-import { QUEUE_POLL_MS, QUEUE_LIVE_FALLBACK_MS } from "@/constants/intervals";
-import { refetchUnlessFresh, isOpdQueueEvent } from "@/utils/liveRefresh";
+import { QUEUE_POLL_MS, QUEUE_LIVE_FALLBACK_MS, LIVE_DASHBOARD_FALLBACK_MS, DASHBOARD_POLL_MS } from "@/constants/intervals";
+import { refetchUnlessFresh, isOpdQueueEvent, queueEventConcerns } from "@/utils/liveRefresh";
 import PageHeader from "@/components/layout/PageHeader";
 import { apiErrorText } from "@/utils/apiError";
 
@@ -109,6 +109,9 @@ export default function ReceptionDashboard() {
   // asks again, since changes may have been missed while it was down.
   const { connected } = useSocket({
     QUEUE_UPDATED: (payload?: unknown) => {
+      // Money taken or returned at another counter (billing, pharmacy) moves
+      // today's revenue on this screen; it used to wait for a reload.
+      if (queueEventConcerns(payload, "billing", "pharmacy")) refetchUnlessFresh(queryClient, ["reception-dashboard-stats"]);
       if (!isOpdQueueEvent(payload)) return;
       queryClient.invalidateQueries({ queryKey: ["reception-dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["queue"] });
@@ -122,6 +125,9 @@ export default function ReceptionDashboard() {
   const { data: stats, isLoading: loading, isError, error, refetch } = useQuery<DashboardStats>({
     queryKey: ["reception-dashboard-stats"],
     queryFn: async () => (await axiosInstance.get("/reception/dashboard/stats")).data.data,
+    // Some takings announce nothing (a consultation fee settled with the visit):
+    // a slow refresh while live, the usual one while not.
+    refetchInterval: connected ? LIVE_DASHBOARD_FALLBACK_MS : DASHBOARD_POLL_MS,
   });
 
   /**

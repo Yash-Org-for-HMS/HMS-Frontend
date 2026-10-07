@@ -1,7 +1,8 @@
 import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
-import { ANNOUNCEMENT_FALLBACK_MS } from "@/constants/intervals";
+import { ANNOUNCEMENT_FALLBACK_MS, DASHBOARD_POLL_MS } from "@/constants/intervals";
+import { useLiveConnected } from "@/hooks/useSocket";
 
 export const ANNOUNCEMENTS_KEY = ["announcements"] as const;
 export const ANNOUNCEMENT_BADGE_KEY = ["announcement-unread"] as const;
@@ -13,10 +14,10 @@ export const SENT_ANNOUNCEMENTS_KEY = ["hospital-announcements-sent"] as const;
  * named one (a second past, so the server agrees it has arrived; never a tight
  * loop), and never longer than the fallback.
  */
-export function nextBadgeAskIn(nextAt: string | null | undefined, now = Date.now()): number {
-  if (!nextAt) return ANNOUNCEMENT_FALLBACK_MS;
+export function nextBadgeAskIn(nextAt: string | null | undefined, now = Date.now(), fallback = ANNOUNCEMENT_FALLBACK_MS): number {
+  if (!nextAt) return fallback;
   const wait = new Date(nextAt).getTime() - now + 1_000;
-  return Math.min(ANNOUNCEMENT_FALLBACK_MS, Math.max(5_000, wait));
+  return Math.min(fallback, Math.max(5_000, wait));
 }
 
 /**
@@ -37,12 +38,16 @@ export function nextBadgeAskIn(nextAt: string | null | undefined, now = Date.now
  */
 export function useAnnouncementBadge() {
   const queryClient = useQueryClient();
+  // The slow fallback is for a live tab, which is told when something is
+  // published. With the live connection down nothing tells it, so it asks every
+  // minute, like every other screen (it waited 15 minutes either way).
+  const live = useLiveConnected();
 
   const { data } = useQuery({
     queryKey: ANNOUNCEMENT_BADGE_KEY,
     queryFn: async () =>
       (await axiosInstance.get("/hospital/announcements/unread-count")).data.data as { count: number; nextAt?: string | null },
-    refetchInterval: (query) => nextBadgeAskIn(query.state.data?.nextAt),
+    refetchInterval: (query) => nextBadgeAskIn(query.state.data?.nextAt, Date.now(), live ? ANNOUNCEMENT_FALLBACK_MS : DASHBOARD_POLL_MS),
     refetchOnWindowFocus: true,
   });
 

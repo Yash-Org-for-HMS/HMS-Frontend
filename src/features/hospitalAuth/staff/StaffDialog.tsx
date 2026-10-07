@@ -108,6 +108,13 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
   const [saving, setSaving] = useState(false);
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((prev) => ({ ...prev, [k]: v }));
   const onSelect = (k: keyof Form) => (e: { target: { value: unknown } }) => set(k, String(e.target.value ?? "") as never);
+  // A role belongs to a department: moving home doesn't carry "Head" across (it
+  // made them head of the new one and stood its head down). The role they already
+  // hold there as an additional department, else member.
+  const onHomeDepartment = (e: { target: { value: unknown } }) => {
+    const id = String(e.target.value ?? "");
+    setF((prev) => (id === prev.primaryDepartmentId ? prev : { ...prev, primaryDepartmentId: id, primaryRoleInDept: (prev.additionalDepartmentIds.includes(id) && prev.additionalRoles[id]) || "MEMBER" }));
+  };
 
   const category = options.categories.find((c) => c.code === f.staffCategoryCode);
   const designations = options.designations.filter((d) => d.staffCategoryCode === f.staffCategoryCode);
@@ -378,7 +385,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
           {section("Departments", "The home department is for HR and payroll; additional ones are where they also work.")}
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 8 }}>
-              <SearchableSelect label="Home department" name="primaryDepartmentId" value={f.primaryDepartmentId} onChange={onSelect("primaryDepartmentId")}
+              <SearchableSelect label="Home department" name="primaryDepartmentId" value={f.primaryDepartmentId} onChange={onHomeDepartment}
                 emptyOption={{ value: "", label: "None yet" }} searchPlaceholder="Search departments…" options={deptOptions}
                 helperText="Departments you have switched on — switch more on under Departments." />
             </Grid>

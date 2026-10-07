@@ -13,8 +13,11 @@ import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 const SHARED_PAGES = [
   "/hospital/profile", "/hospital/settings", "/hospital/branches", "/hospital/module-access", "/hospital/departments",
   "/hospital/soc", "/hospital/doctors", "/hospital/medicines", "/hospital/vaccines", "/hospital/ward-chart",
-  "/hospital/form-builder", "/hospital/lookups", "/hospital/patients", "/hospital/organogram",
+  "/hospital/form-builder", "/hospital/lookups", "/hospital/organogram",
 ];
+// Shared as a list only: every branch's patients are the hospital's, but one
+// patient's profile shows the bills and stays of the branch picked.
+const SHARED_LIST_ONLY = ["/hospital/patients"];
 
 /**
  * Branch switcher for the hospital portal. Lets multi-branch users (org admins,
@@ -29,7 +32,7 @@ export default function BranchSwitcher() {
   const { availableBranches, activeBranchId, isOrgAdmin, setActiveBranch } = useHospitalAuth();
   const queryClient = useQueryClient();
   const { pathname } = useLocation();
-  const shared = SHARED_PAGES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  const shared = SHARED_PAGES.some((p) => pathname === p || pathname.startsWith(`${p}/`)) || SHARED_LIST_ONLY.includes(pathname);
 
   // Nothing meaningful to switch between.
   if (availableBranches.length <= 1) return null;

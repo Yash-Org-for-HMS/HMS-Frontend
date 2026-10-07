@@ -40,6 +40,10 @@ describe("nextBadgeAskIn", () => {
   it("hours away: still no longer than the fallback", () => {
     expect(nextBadgeAskIn("2026-10-05T15:00:00Z", now)).toBe(ANNOUNCEMENT_FALLBACK_MS);
   });
+  it("the live connection down: the fallback is a minute, not fifteen", () => {
+    expect(nextBadgeAskIn(null, now, 60_000)).toBe(60_000);
+    expect(nextBadgeAskIn("2026-10-05T15:00:00Z", now, 60_000)).toBe(60_000);
+  });
 });
 
 describe("useAnnouncementBadge", () => {

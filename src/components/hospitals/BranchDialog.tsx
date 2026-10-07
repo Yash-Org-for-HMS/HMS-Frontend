@@ -44,14 +44,15 @@ export default function BranchDialog({ open, onClose, hospitalId, plans, editing
   }, [open, editingBranch]);
 
   const handleSubmit = async () => {
-    if (!branch.name) return;
+    if (!branch.name.trim()) return;
     setLoading(true);
     try {
       if (editingBranch) {
         // Branch code is auto-assigned and immutable — not sent on edit.
         await axiosInstance.put(`/hospitals/${hospitalId}/branches/${editingBranch.branchId}`, {
           branchName: branch.name,
-          subscriptionPlanId: branch.subscriptionPlanId || undefined,
+          // null, not undefined: "No Subscription Plan" takes the plan off.
+          subscriptionPlanId: branch.subscriptionPlanId || null,
           status: branch.status,
         });
       } else {
