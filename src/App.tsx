@@ -127,6 +127,7 @@ const NurseWard = lazy(() => import("@/features/nurse/NurseWard"));
 const NurseImmunisations = lazy(() => import("@/features/nurse/NurseImmunisations"));
 const NursePostings = lazy(() => import("@/features/nurse/NursePostings"));
 const DutyRoster = lazy(() => import("@/features/nurse/DutyRoster"));
+const MyDuties = lazy(() => import("@/features/nurse/MyDuties"));
 const WardIndents = lazy(() => import("@/features/wardIndents/WardIndents"));
 // Medical Records' registers and the printed certificate.
 const MedicalRecords = lazy(() => import("@/features/mrd/MedicalRecords"));
@@ -446,6 +447,7 @@ function App() {
             <Route path="/nurse/reports" element={el(NurseReports)} />
             <Route path="/nurse/postings" element={el(NursePostings)} />
             <Route path="/nurse/roster" element={el(DutyRoster)} />
+            <Route path="/nurse/my-duties" element={elGated(MyDuties, "IPD", "My duties")} />
             <Route path="/nurse/indents" element={elGated(WardIndents, "Pharmacy", "Indents")} />
             <Route path="/nurse/my-wards" element={elp(WardsHome, { mode: "mine" })} />
             <Route path="/nurse/all-wards" element={elp(WardsHome, { mode: "all" })} />

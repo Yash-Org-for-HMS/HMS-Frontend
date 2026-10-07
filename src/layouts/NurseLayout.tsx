@@ -13,8 +13,7 @@ import {
 import {
   Menu as MenuIcon, DashboardRounded, PeopleAltRounded, AssessmentRounded,
   MedicationRounded, VaccinesRounded, HotelRounded, MedicalServicesRounded, EventNoteRounded,
-  WarehouseRounded, AssignmentIndRounded, ApartmentRounded, CalendarMonthRounded, AssignmentRounded,
-} from "@mui/icons-material";
+  WarehouseRounded, AssignmentIndRounded, ApartmentRounded, CalendarMonthRounded, AssignmentRounded, EventAvailableRounded } from "@mui/icons-material";
 import { hasAction, holdsHome } from "@/constants/roles";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
@@ -91,6 +90,8 @@ export default function NurseLayout() {
     { text: "Theatre Board", icon: <MedicalServicesRounded />, path: "/nurse/ipd/theatres", section: "Theatre & Beds", module: "IPD" },
     { text: "Operating List", icon: <EventNoteRounded />, path: "/nurse/ipd/ot-schedule", section: "Theatre & Beds", module: "IPD" },
     { text: "Reports", icon: <AssessmentRounded />, path: "/nurse/reports", section: "Reports" },
+    // Every nurse: their own shifts on the roster.
+    { text: "My duties", icon: <EventAvailableRounded />, path: "/nurse/my-duties", section: "Ward management", module: "IPD" },
     // The in-charge's (their wards) and nursing administration's (every ward).
     ...(hasAction(user, "nurse.roster")
       ? [{ text: "Duty roster", icon: <CalendarMonthRounded />, path: "/nurse/roster", section: "Ward management", module: "IPD" }]
