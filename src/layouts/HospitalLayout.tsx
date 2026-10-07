@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import PanelSwitcher from "@/components/layout/PanelSwitcher";
 import SidebarNav from "@/components/layout/SidebarNav";
 import { Outlet, Navigate, useNavigate, useLocation } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { catchUpEventOnlyScreens } from "@/utils/liveRefresh";
 import { BRAND } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
@@ -21,7 +22,7 @@ import {
   FormatListNumberedRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
-import { isAdminUser, menuPathsFor } from "@/constants/roles";
+import { isAdminUser, menuPathsFor, hasRole } from "@/constants/roles";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import BranchSwitcher from "@/components/BranchSwitcher";
 import SidebarProductHeader from "@/components/layout/SidebarProductHeader";
@@ -48,7 +49,8 @@ export default function HospitalLayout() {
 
   // Sidebar items; `adminOnly` tabs are hidden from non-admin roles.
   const { unread: announcementsUnread, onAnnouncement, onConnect } = useAnnouncementBadge();
-  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: onConnect });
+  const queryClient = useQueryClient();
+  useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: () => { onConnect(); catchUpEventOnlyScreens(queryClient); } });
   // In the order a hospital is set up — each step needs the ones above it:
   // profile, settings and modules first; departments before the wards, doctors
   // and staff that belong to them; charges before beds (a bed's room class
@@ -63,7 +65,7 @@ export default function HospitalLayout() {
     // ── Set up, in this order ──
     { text: "Hospital Profile", icon: <LocalHospitalRounded />, path: "/hospital/profile", adminOnly: true, section: "Set up — in this order" },
     { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", adminOnly: true, section: "Set up — in this order" },
-    { text: "Branches", icon: <ApartmentRounded />, path: "/hospital/branches", adminOnly: true, section: "Set up — in this order" },
+    { text: "Branches", icon: <ApartmentRounded />, path: "/hospital/branches", adminOnly: true, needs: ["H_ADMIN"], section: "Set up — in this order" },
     { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", adminOnly: true, section: "Set up — in this order" },
     { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", adminOnly: true, section: "Set up — in this order" },
     { text: "Schedule of Charges", icon: <ReceiptLongRounded />, path: "/hospital/soc", adminOnly: true, section: "Set up — in this order" },
@@ -75,10 +77,10 @@ export default function HospitalLayout() {
     { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", adminOnly: true, section: "Set up — in this order" },
     // People (with or without a login) and who they report to — the one place a
     // person is added. Logins & roles below manages the logins themselves.
-    { text: "Staff Directory", icon: <AccountTreeRounded />, path: "/hospital/staff", adminOnly: true, section: "Set up — in this order" },
+    { text: "Staff Directory", icon: <AccountTreeRounded />, path: "/hospital/staff", adminOnly: true, needs: ["H_ADMIN", "HR_ADMIN"], section: "Set up — in this order" },
     // Who reports to whom, and the departments under those who oversee them.
-    { text: "Organisation chart", icon: <SchemaRounded />, path: "/hospital/organogram", adminOnly: true, section: "Set up — in this order" },
-    { text: "Logins & roles", icon: <BadgeRounded />, path: "/hospital/users", adminOnly: true, section: "Set up — in this order" },
+    { text: "Organisation chart", icon: <SchemaRounded />, path: "/hospital/organogram", adminOnly: true, needs: ["H_ADMIN", "HR_ADMIN"], section: "Set up — in this order" },
+    { text: "Logins & roles", icon: <BadgeRounded />, path: "/hospital/users", adminOnly: true, needs: ["H_ADMIN"], section: "Set up — in this order" },
 
     // ── Catalogs and forms, as the hospital needs them ──
     { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/hospital/medicines", adminOnly: true, module: "Pharmacy", section: "Catalogs & forms" },
@@ -128,6 +130,10 @@ export default function HospitalLayout() {
   // adminOnly / permission still gate visibility as before.
   const visibleMenuItems = menuItems.filter(item => {
     if (onlyPaths) return onlyPaths.has(item.path);
+    // The server lets only these roles in (a branch admin got four pages that
+    // said "Access denied"): don't offer what will refuse.
+    const needs = (item as { needs?: string[] }).needs;
+    if (needs && !hasRole(user, ...needs)) return false;
     if ((item as any).adminOnly) return isAdmin;   // admin-only tab (e.g. Financial, Operations)
     return true;
   });

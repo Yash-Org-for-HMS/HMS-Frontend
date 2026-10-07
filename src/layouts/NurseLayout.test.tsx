@@ -54,7 +54,10 @@ describe("NurseLayout — live refresh of the worklists", () => {
     act(() => socket.handlers.connect());
     expect(badge.onConnect).toHaveBeenCalledTimes(1);
     // Nothing on screen yet holds them, so both are asked for.
-    expect(invalidated(spy)).toEqual(['["nurse-dashboard-queue"]', '["nurse-queue"]']);
+    expect(invalidated(spy)).toEqual(expect.arrayContaining(['["nurse-dashboard-queue"]', '["nurse-queue"]']));
+    // And the screens that refresh only when told (bed board, indents, co-sign…):
+    // whatever changed while the connection was down is fetched again.
+    expect(invalidated(spy)).toEqual(expect.arrayContaining(['["ipd-structure"]', '["ward-indents"]', '["ward-round-cosign"]']));
     act(() => socket.handlers.ANNOUNCEMENT_PUBLISHED());
     expect(badge.onAnnouncement).toHaveBeenCalledTimes(1);
   });

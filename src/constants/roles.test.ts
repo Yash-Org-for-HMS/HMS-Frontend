@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { menuPathsFor, pageOpenFor, homeForUser, panelHomeForUser, hasAction, featuresFor, type RoleHolder } from "./roles";
+import { menuPathsFor, pageOpenFor, homeForUser, panelHomeForUser, hasAction, featuresFor, heldRoles, type RoleHolder } from "./roles";
 
 /**
  * What each role opens — decided on the server (backend lib/roleCatalog.ts) and
@@ -76,5 +76,48 @@ describe("what the server sends on load wins over what came with the login", () 
     expect(homeForUser(hr)).toBe("/hospital/staff");
     expect(panelHomeForUser(hr, "hospital")).toBe("/hospital/staff");
     expect(pageOpenFor(hr, "hospital", "/hospital/dashboard")).toBe(false);
+  });
+});
+
+/*
+ * An extra role is granted at one facility (backend lib/access rolesAt): it
+ * counts there only. The app used to offer its pages at every branch, where
+ * the server then refused every call.
+ */
+describe("an extra role counts at the branch it was given for", () => {
+  const nurseInCharge: RoleHolder = {
+    role: "NURSE",
+    roles: [
+      held("NURSE", { pages: null, home: null, actions: [] }),
+      { ...held("NURSE_INCHARGE", { pages: null, home: null, actions: ["nurse.roster", "nurse.indent"] }, false), branchId: "A" },
+    ],
+  };
+  const working = (branch: string | null, own: string | null = "A") => {
+    sessionStorage.clear();
+    if (branch) sessionStorage.setItem("activeBranchId", branch);
+    if (own) sessionStorage.setItem("hospitalBranch", JSON.stringify({ id: own }));
+  };
+
+  it("holds it at that branch, not at another", () => {
+    working("A");
+    expect(heldRoles(nurseInCharge)).toEqual(["NURSE", "NURSE_INCHARGE"]);
+    expect(hasAction(nurseInCharge, "nurse.roster")).toBe(true);
+    working("B");
+    expect(heldRoles(nurseInCharge)).toEqual(["NURSE"]);
+    expect(hasAction(nurseInCharge, "nurse.roster")).toBe(false);
+  });
+
+  it("with no branch picked, judges at the login's own branch, as the server does", () => {
+    working(null, "A");
+    expect(heldRoles(nurseInCharge)).toContain("NURSE_INCHARGE");
+    working(null, "B");
+    expect(heldRoles(nurseInCharge)).not.toContain("NURSE_INCHARGE");
+  });
+
+  it("a role for every branch, and the login's own role, count everywhere", () => {
+    working("B");
+    const everywhere: RoleHolder = { role: "NURSE", roles: [held("NURSE"), held("NURSE_INCHARGE", { actions: ["nurse.roster"] }, false)] };
+    expect(heldRoles(everywhere)).toEqual(["NURSE", "NURSE_INCHARGE"]);
+    sessionStorage.clear();
   });
 });

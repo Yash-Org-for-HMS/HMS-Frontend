@@ -62,7 +62,7 @@ import { useSocket } from "@/hooks/useSocket";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
 import { DASHBOARD_POLL_MS, LIVE_DASHBOARD_FALLBACK_MS } from "@/constants/intervals";
-import { refetchUnlessFresh } from "@/utils/liveRefresh";
+import { refetchUnlessFresh, catchUpEventOnlyScreens } from "@/utils/liveRefresh";
 
 const drawerWidth = 260;
 
@@ -96,6 +96,7 @@ export default function ReceptionLayout() {
     },
     connect: () => {
       onConnect();
+      catchUpEventOnlyScreens(queryClient);
       if (routedDesk) refetchUnlessFresh(queryClient, ["desk-notices"]);
     },
   });

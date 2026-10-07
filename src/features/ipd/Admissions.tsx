@@ -27,6 +27,12 @@ import BranchTransferDialog from "@/components/ipd/BranchTransferDialog";
 import PageHeader from "@/components/layout/PageHeader";
 import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
 import { usePanelBase } from "@/features/ipd/panelBase";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { heldRoles } from "@/constants/roles";
+
+// Desks whose role covers the money or the papers of a stay, not moving the
+// patient (backend lib/roleCatalog fences): the server refuses them these.
+const NOT_THE_DESK = ["BILLING", "TPA_DESK", "MRD"];
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 
@@ -106,6 +112,8 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
     enabled: !readOnly,
   });
   const canTransferBranch = (transferOptions?.branches.length ?? 0) > 1;
+  const { user } = useHospitalAuth();
+  const movesPatients = !heldRoles(user).every((r) => NOT_THE_DESK.includes(r));
   const [dischargeFor, setDischargeFor] = useState<AdmissionRow | null>(null);
   const [depositFor, setDepositFor] = useState<{ row: AdmissionRow; mode: "collect" | "refund" } | null>(null);
   const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: AdmissionRow | null }>({ anchor: null, row: null });
@@ -369,12 +377,12 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
         {/* The first step of leaving (workbook bed lifecycle): the bed reads
             "discharge initiated" so the desk can plan the next patient, while
             billing and paperwork are finished. */}
-        {menu.row?.status === "ADMITTED" && !menu.row.dischargeInitiatedAt && (
+        {movesPatients && menu.row?.status === "ADMITTED" && !menu.row.dischargeInitiatedAt && (
           <MenuItem onClick={() => { if (menu.row) act(menu.row, "initiate-discharge", "Discharge started — the bed shows as freeing up"); }}>
             <LogoutRounded fontSize="small" sx={{ mr: 1, color: SEMANTIC.warning }} /> Start discharge
           </MenuItem>
         )}
-        {menu.row?.status === "ADMITTED" && menu.row.dischargeInitiatedAt && (
+        {movesPatients && menu.row?.status === "ADMITTED" && menu.row.dischargeInitiatedAt && (
           <MenuItem onClick={() => { if (menu.row) act(menu.row, "undo-discharge", "Discharge postponed"); }}>
             <UndoRounded fontSize="small" sx={{ mr: 1 }} /> Undo discharge start
           </MenuItem>
@@ -384,13 +392,13 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
             <SavingsRounded fontSize="small" sx={{ mr: 1 }} /> Payer: {PAYER_LABEL[menu.row.payerType ?? "CASH"] ?? "Cash"}…
           </MenuItem>
         )}
-        {menu.row?.status === "ADMITTED" && canTransferBranch && (
+        {movesPatients && menu.row?.status === "ADMITTED" && canTransferBranch && (
           <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setBranchTransferFor(r); }}>
             <LocalShippingRounded fontSize="small" sx={{ mr: 1, color: BRAND.action }} /> Transfer to another branch…
           </MenuItem>
         )}
         {menu.row?.status === "ADMITTED" && (
-          <MenuItem onClick={() => { if (menu.row) cancel(menu.row); }} sx={{ color: SEMANTIC.danger }}><CancelRounded fontSize="small" sx={{ mr: 1 }} /> Cancel admission</MenuItem>
+          movesPatients && <MenuItem onClick={() => { if (menu.row) cancel(menu.row); }} sx={{ color: SEMANTIC.danger }}><CancelRounded fontSize="small" sx={{ mr: 1 }} /> Cancel admission</MenuItem>
         )}
       </Menu>
 

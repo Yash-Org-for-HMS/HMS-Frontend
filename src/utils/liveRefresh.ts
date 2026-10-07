@@ -26,3 +26,15 @@ export function queueEventConcerns(payload: unknown, ...areas: string[]): boolea
 
 /** Whether a QUEUE_UPDATED event concerns the outpatient flow. */
 export const isOpdQueueEvent = (payload: unknown): boolean => queueEventConcerns(payload, "opd");
+
+/**
+ * The screens that refresh only when told (bed board, reservations, free beds,
+ * ward indents, co-sign) — no polling behind them. A change made while the live
+ * connection was down (a redeploy, a dropped network) was never heard, and those
+ * screens stayed wrong until someone navigated away. Every layout calls this on
+ * (re)connecting; whatever was fetched moments ago is left alone.
+ */
+const EVENT_ONLY_KEYS: QueryKey[] = [["ipd-structure"], ["ipd-reservations"], ["ipd-available-beds"], ["ward-indents"], ["ward-round-cosign"]];
+export function catchUpEventOnlyScreens(queryClient: QueryClient): void {
+  for (const key of EVENT_ONLY_KEYS) refetchUnlessFresh(queryClient, key);
+}

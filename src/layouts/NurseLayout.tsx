@@ -27,7 +27,7 @@ import TrialBanner from "@/components/layout/TrialBanner";
 import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
 import { useSocket } from "@/hooks/useSocket";
 import { useQueryClient } from "@tanstack/react-query";
-import { refetchUnlessFresh, isOpdQueueEvent } from "@/utils/liveRefresh";
+import { refetchUnlessFresh, isOpdQueueEvent, catchUpEventOnlyScreens } from "@/utils/liveRefresh";
 
 const drawerWidth = 260;
 
@@ -70,6 +70,7 @@ export default function NurseLayout() {
     },
     connect: () => {
       onConnect();
+      catchUpEventOnlyScreens(queryClient);
       refetchUnlessFresh(queryClient, ["nurse-dashboard-queue"]);
       refetchUnlessFresh(queryClient, ["nurse-queue"]);
     },

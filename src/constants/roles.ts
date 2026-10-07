@@ -111,10 +111,30 @@ export function featuresFor(user: RoleHolder | null | undefined, code: string): 
   return held && held.pages !== undefined ? { pages: held.pages ?? null, home: held.home ?? null, actions: held.actions ?? [] } : undefined;
 }
 
+/**
+ * The facility the screen works in, as the API client sends it: the branch
+ * picked, else (the organisation admin's all-branches view, or none stored yet)
+ * the login's own — what the server falls back to as well. Null if unknown.
+ */
+function workingBranch(): string | null {
+  try {
+    const picked = sessionStorage.getItem("activeBranchId");
+    if (picked) return picked;
+    const own = JSON.parse(sessionStorage.getItem("hospitalBranch") ?? "null") as { id?: string } | null;
+    return own?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** Every role the login holds (primary first). A session from before roles could be several has only `role`. */
 export function heldRoles(user: RoleHolder | null | undefined): string[] {
   if (!user) return [];
-  const codes = (user.roles ?? []).map((r) => r.code);
+  // An extra role given at one facility counts only while working there — the
+  // server judges roles at the branch the request is for (lib/access rolesFor),
+  // so offering its pages elsewhere only led to refusals.
+  const here = workingBranch();
+  const codes = (user.roles ?? []).filter((r) => !r.branchId || !here || r.branchId === here).map((r) => r.code);
   return codes.includes(user.role) ? codes : [user.role, ...codes];
 }
 

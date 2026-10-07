@@ -29,7 +29,7 @@ import TrialBanner from "@/components/layout/TrialBanner";
 import { axiosInstance } from "@/api/axios";
 import { useSocket } from "@/hooks/useSocket";
 import { DASHBOARD_POLL_MS, LIVE_DASHBOARD_FALLBACK_MS } from "@/constants/intervals";
-import { refetchUnlessFresh, queueEventConcerns } from "@/utils/liveRefresh";
+import { refetchUnlessFresh, queueEventConcerns, catchUpEventOnlyScreens } from "@/utils/liveRefresh";
 import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
 
 const drawerWidth = 260;
@@ -72,6 +72,7 @@ export default function DoctorLayout() {
     ANNOUNCEMENT_PUBLISHED: onAnnouncement,
     connect: () => {
       onConnect();
+      catchUpEventOnlyScreens(queryClient);
       refetchUnlessFresh(queryClient, ["doctor-badges"]);
       refetchUnlessFresh(queryClient, ["doctor-dashboard-stats"]);
     },
