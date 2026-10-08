@@ -26,6 +26,8 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import Mascot from "@/components/Mascot";
 import ErrorState from "@/components/ErrorState";
 import PageHeader from "@/components/layout/PageHeader";
+import { UserCapacityChip, UserLimitNotice } from "@/components/UserCapacity";
+import { useUserCapacity, USER_LIMIT_MESSAGE } from "@/hooks/useUserCapacity";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { useServerSort } from "@/components/table/useTableSort";
@@ -61,16 +63,13 @@ export default function DoctorsList() {
   const doctors: any[] = data?.data || [];
   const meta = data?.meta as { total: number; totalPages: number } | undefined;
 
-  // Subscription-plan doctor usage (used / limit) — drives the header indicator
-  // and disables "Add Doctor" once the plan's cap is reached.
+  // How many doctors there are; adding one adds a login, which counts against
+  // the hospital's user capacity (set by the super admin) — not a doctors-only cap.
   const { data: quota } = useQuery({
     queryKey: ["hospital-doctors-quota"],
-    queryFn: async () =>
-      (await axiosInstance.get("/hospital/doctors/quota")).data.data as {
-        used: number; limit: number | null; planName: string | null; unlimited: boolean;
-      },
+    queryFn: async () => (await axiosInstance.get("/hospital/doctors/quota")).data.data as { used: number },
   });
-  const atLimit = !!quota && !quota.unlimited && quota.limit != null && quota.used >= quota.limit;
+  const { atLimit } = useUserCapacity();
 
   return (
     <Box>
@@ -79,22 +78,9 @@ export default function DoctorsList() {
         subtitle="Add doctors and manage their profiles, schedules, and leaves."
         actions={
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            {quota && (
-              quota.unlimited ? (
-                <Chip size="small" label={`${quota.used} doctor${quota.used === 1 ? "" : "s"}`} sx={{ fontWeight: 600 }} />
-              ) : (
-                <Tooltip title={quota.planName ? `${quota.planName} plan limit` : "Plan limit"}>
-                  <Chip
-                    size="small"
-                    label={`${quota.used} / ${quota.limit} doctors`}
-                    color={atLimit ? "error" : quota.limit != null && quota.used >= quota.limit * 0.8 ? "warning" : "success"}
-                    variant={atLimit ? "filled" : "outlined"}
-                    sx={{ fontWeight: 600 }}
-                  />
-                </Tooltip>
-              )
-            )}
-            <Tooltip title={atLimit ? `Doctor limit reached for the ${quota?.planName ?? "current"} plan — upgrade to add more.` : ""}>
+            {quota && <Chip size="small" label={`${quota.used} doctor${quota.used === 1 ? "" : "s"}`} sx={{ fontWeight: 600 }} />}
+            <UserCapacityChip />
+            <Tooltip title={atLimit ? USER_LIMIT_MESSAGE : ""}>
               <span>
                 <Button
                   variant="contained"
@@ -110,6 +96,8 @@ export default function DoctorsList() {
           </Box>
         }
       />
+
+      <UserLimitNotice />
 
       <TextField
         size="small"

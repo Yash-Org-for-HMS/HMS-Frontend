@@ -35,7 +35,7 @@ export default function PlanForm() {
     planName: "",
     monthlyPrice: "",
     annualPrice: "",
-    maxDoctors: "",
+    maxUsers: 50,
     maxBranches: "",
     maxStorageGb: "",
     featuresJson: [] as string[],
@@ -64,7 +64,7 @@ export default function PlanForm() {
       planName: d.planName || "",
       monthlyPrice: d.monthlyPrice !== null ? parseFloat(d.monthlyPrice) : "",
       annualPrice: d.annualPrice !== null ? parseFloat(d.annualPrice) : "",
-      maxDoctors: d.maxDoctors !== null ? d.maxDoctors : "",
+      maxUsers: d.maxUsers ?? 50,
       maxBranches: d.maxBranches !== null ? d.maxBranches : "",
       maxStorageGb: d.maxStorageGb !== null ? d.maxStorageGb : "",
       featuresJson: Array.isArray(d.featuresJson) ? d.featuresJson : [],
@@ -87,7 +87,7 @@ export default function PlanForm() {
       planName: [required("Plan name")],
       monthlyPrice: [required("Monthly price"), isNonNegativeNumber],
       annualPrice: [required("Annual price"), isNonNegativeNumber],
-      maxDoctors: [required("Max doctors"), min(1)],
+      maxUsers: [required("Users per hospital"), min(1)],
       maxBranches: [required("Max branches"), min(1)],
       maxStorageGb: [required("Max storage"), min(0)],
     });
@@ -189,14 +189,14 @@ export default function PlanForm() {
               <TextField
                 fullWidth
                 type="number"
-                label={t("plans.maxDoctors", "Max Doctors")}
-                name="maxDoctors"
-                value={formData.maxDoctors}
+                label="Users per hospital"
+                name="maxUsers"
+                value={formData.maxUsers}
                 onChange={handleChange}
                 required
                 inputProps={{ min: "1" }}
-                error={!!errors.maxDoctors}
-                helperText={errors.maxDoctors}
+                error={!!errors.maxUsers}
+                helperText={errors.maxUsers || "Logins a hospital on this plan may have. The super admin can give one hospital its own limit."}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>

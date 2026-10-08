@@ -69,10 +69,20 @@ export interface QuotaUsage {
   limit: number | null;
 }
 
+/** Logins against the hospital's user capacity (backend lib/userCapacity). */
+export interface UserCapacityQuota {
+  used: number;
+  limit: number;
+  remaining: number;
+  source: "hospital" | "plan" | "default";
+  planLimit: number | null;
+  planName: string | null;
+}
+
 export interface OverviewQuotas {
   doctors: QuotaUsage;
   branches: QuotaUsage;
-  users: QuotaUsage;
+  users: UserCapacityQuota;
   storageGb: QuotaUsage;
 }
 

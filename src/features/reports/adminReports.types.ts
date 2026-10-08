@@ -50,6 +50,7 @@ export interface PlanRegisterRow extends WithBranchCount {
   monthlyPrice?: Money | null;
   annualPrice?: Money | null;
   maxDoctors?: number | null;
+  maxUsers?: number | null;
   maxBranches?: number | null;
   maxStorageGb?: number | null;
 }

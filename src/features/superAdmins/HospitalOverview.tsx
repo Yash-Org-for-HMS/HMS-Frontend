@@ -61,6 +61,7 @@ import { useToast } from "@/providers/ToastContext";
 import ErrorState from "@/components/ErrorState";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import StatCard from "@/components/StatCard";
+import UserLimitDialog from "./UserLimitDialog";
 import { assetUrl } from "@/utils/assetUrl";
 import { formatINR, formatDate } from "@/utils/format";
 import { graceText, graceShort } from "@/features/subscriptionBilling/grace";
@@ -95,6 +96,7 @@ export default function HospitalOverview() {
   const [tab, setTab] = useState(0);
   const [resetCreds, setResetCreds] = useState<{ email: string; temporaryPassword: string } | null>(null);
   const [changePlanOpen, setChangePlanOpen] = useState(false);
+  const [userLimitOpen, setUserLimitOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const toast = useToast();
 
@@ -212,8 +214,24 @@ export default function HospitalOverview() {
           <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<ApartmentRounded />} label="Branches" value={quotas?.branches?.used ?? data.branches?.length ?? 0} sub={quotaText(quotas?.branches)} color={ACCENT} /></Grid>
           <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<MedicalServicesRounded />} label="Doctors" value={quotas?.doctors?.used ?? data._count?.doctors ?? 0} sub={quotaText(quotas?.doctors)} color={SEMANTIC.success} /></Grid>
           <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<PeopleRounded />} label="Patients" value={data._count?.patients || 0} color={SEMANTIC.warning} /></Grid>
-          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<AccountCircleRounded />} label="Users" value={data._count?.users || 0} color={SEMANTIC.info} /></Grid>
+          <Grid size={{ xs: 6, md: 3 }}>
+            {/* Logins that can sign in, against this hospital's user capacity — which the super admin sets here. */}
+            <StatCard layout="horizontal" icon={<AccountCircleRounded />} label="Logins"
+              value={quotas?.users?.used ?? data._count?.users ?? 0}
+              sub={quotas?.users ? `of ${quotas.users.limit} allowed · ${quotas.users.source === "hospital" ? "set for this hospital" : quotas.users.source === "plan" ? "plan's limit" : "standard limit"}` : undefined}
+              color={quotas?.users && quotas.users.remaining <= 0 ? SEMANTIC.danger : SEMANTIC.info} />
+          </Grid>
         </Grid>
+        {quotas?.users && (
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
+            <Button size="small" onClick={() => setUserLimitOpen(true)} sx={{ textTransform: "none", fontWeight: 600 }}>
+              Change user limit
+            </Button>
+          </Box>
+        )}
+        {userLimitOpen && quotas?.users && (
+          <UserLimitDialog hospitalId={id!} hospitalName={data.hospitalName ?? "this hospital"} capacity={quotas.users} onClose={() => setUserLimitOpen(false)} />
+        )}
       </Paper>
 
       {/* ── Tabs ── */}

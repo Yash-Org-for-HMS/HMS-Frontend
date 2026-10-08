@@ -2,7 +2,7 @@ import { useState } from "react";
 import CredentialDialog from "@/components/CredentialDialog";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -43,6 +43,8 @@ import ErrorState from "@/components/ErrorState";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import PageHeader from "@/components/layout/PageHeader";
+import { UserCapacityChip, UserLimitNotice } from "@/components/UserCapacity";
+import { USER_CAPACITY_KEY } from "@/hooks/useUserCapacity";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
@@ -337,6 +339,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
 export default function UsersList() {
   const navigate = useNavigate();
   const toast = useToast();
+  const queryClient = useQueryClient();
   const confirm = useConfirm();
 
   // Reset password dialog
@@ -387,6 +390,8 @@ export default function UsersList() {
     try {
       await axiosInstance.put(`/hospital/users/${user.userId}/deactivate`, { isActive: !user.isActive });
       refetch();
+      // Switching a login on or off takes or frees a seat.
+      void queryClient.invalidateQueries({ queryKey: USER_CAPACITY_KEY });
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Failed to update user status"));
     }
@@ -399,6 +404,8 @@ export default function UsersList() {
           title="Logins & roles"
           subtitle="Who can sign in, with which roles and at which branches — reset a password, add a role, switch a login off. People are added in the Staff Directory."
           actions={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <UserCapacityChip />
             <Button
               variant="contained"
               startIcon={<AddRounded />}
@@ -411,8 +418,10 @@ export default function UsersList() {
             >
               Add staff member
             </Button>
+            </Box>
           }
         />
+        <UserLimitNotice />
 
         <Box sx={{ display: "flex", gap: 1.5, mb: 2, flexWrap: "wrap", alignItems: "center" }}>
           <TextField

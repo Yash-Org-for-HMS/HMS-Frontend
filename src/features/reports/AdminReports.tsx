@@ -352,7 +352,7 @@ function SubscriptionsReport() {
     p.planName,
     inr(p.monthlyPrice),
     inr(p.annualPrice),
-    Number(p.maxDoctors ?? 0),
+    Number(p.maxUsers ?? 0),
     Number(p.maxBranches ?? 0),
     Number(p.maxStorageGb ?? 0),
     p.branches,
@@ -369,7 +369,7 @@ function SubscriptionsReport() {
       </Grid>
       <SimpleTable
         title="Subscription plans"
-        head={["Plan", "Monthly", "Annual", "Max doctors", "Max branches", "Max storage (GB)", "Branches", "Est. MRR"]}
+        head={["Plan", "Monthly", "Annual", "Users per hospital", "Max branches", "Max storage (GB)", "Branches", "Est. MRR"]}
         rows={rows}
       />
     </Box>

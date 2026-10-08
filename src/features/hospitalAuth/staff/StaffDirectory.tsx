@@ -8,6 +8,8 @@ import {
 import { AddRounded, EditRounded, SearchRounded, KeyRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import PageHeader from "@/components/layout/PageHeader";
+import { UserCapacityChip, UserLimitNotice } from "@/components/UserCapacity";
+import { USER_CAPACITY_KEY } from "@/hooks/useUserCapacity";
 import Mascot from "@/components/Mascot";
 import ErrorState from "@/components/ErrorState";
 import CredentialDialog from "@/components/CredentialDialog";
@@ -160,6 +162,7 @@ export default function StaffDirectory() {
     void qc.invalidateQueries({ queryKey: ["staff-options"] });
     void qc.invalidateQueries({ queryKey: ["ward-in-charge-options"] });
     void qc.invalidateQueries({ queryKey: ["hospital-users-list"] });
+    void qc.invalidateQueries({ queryKey: USER_CAPACITY_KEY });
   };
 
   return (
@@ -169,11 +172,16 @@ export default function StaffDirectory() {
           title="Staff Directory"
           subtitle="Everyone who works here — with or without a login — their designation, department, posting and who they report to."
           actions={
-            <Button variant="contained" startIcon={<AddRounded />} disabled={!options} onClick={() => setDialog({ row: null })} sx={{ textTransform: "none", fontWeight: 600, px: 3 }}>
-              Add staff member
-            </Button>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <UserCapacityChip />
+              <Button variant="contained" startIcon={<AddRounded />} disabled={!options} onClick={() => setDialog({ row: null })} sx={{ textTransform: "none", fontWeight: 600, px: 3 }}>
+                Add staff member
+              </Button>
+            </Box>
           }
         />
+        {/* People can still be added without a login; a login past the limit is refused. */}
+        <UserLimitNotice />
 
         {summary && (
           <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
