@@ -15,10 +15,12 @@ import { SEARCH_SHORTCUT } from "@/utils/shortcut";
 import { SEMANTIC } from "@/styles/accents";
 
 export const TOP_BAR_HEIGHT = 64;
+/** On a desktop the bar floats: this far below the top of the window. */
+const FLOAT_GAP = 10;
 
 /** Room under the fixed bar, at the top of a panel's content. */
 export function TopBarSpacer() {
-  return <Box aria-hidden sx={{ height: TOP_BAR_HEIGHT, flexShrink: 0 }} />;
+  return <Box aria-hidden sx={{ height: { xs: TOP_BAR_HEIGHT, md: TOP_BAR_HEIGHT + FLOAT_GAP }, flexShrink: 0 }} />;
 }
 
 interface TopBarProps {
@@ -60,12 +62,22 @@ export default function TopBar({ drawerWidth, onMenu, announcements }: TopBarPro
       elevation={0}
       color="inherit"
       sx={{
-        width: { md: `calc(100% - ${drawerWidth}px)` },
-        ml: { md: `${drawerWidth}px` },
         bgcolor: "background.paper",
         color: "text.primary",
-        borderBottom: "1px solid",
+        // A phone: flat, edge to edge, where every pixel of width counts.
+        // Width, style and colour set apart: a `border` shorthand inside a
+        // breakpoint resets the colour to the text colour.
+        borderStyle: "solid",
         borderColor: "divider",
+        borderWidth: { xs: "0 0 1px 0", md: "1px" },
+        // A desktop: a rounded card floating over the page, lined up with the
+        // content's own edges (its 24px padding) and as soft as the sidebar.
+        top: { md: FLOAT_GAP },
+        left: { md: drawerWidth + 24 },
+        right: { md: 24 },
+        width: { md: "auto" },
+        borderRadius: { md: "18px" },
+        boxShadow: { md: "0 4px 24px rgba(15, 23, 42, 0.06)" },
       }}
     >
       <Toolbar sx={{ minHeight: `${TOP_BAR_HEIGHT}px !important`, gap: { xs: 1, md: 1.5 }, px: { xs: 1.5, md: 3 } }}>
