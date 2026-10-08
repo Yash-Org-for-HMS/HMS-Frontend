@@ -1,60 +1,22 @@
 import { useState, useEffect } from "react";
 import { menuPathsFor, holdsHome, hasAction, hasRole } from "@/constants/roles";
-import PanelSwitcher from "@/components/layout/PanelSwitcher";
 import { isNavItemActive } from "@/components/layout/navActive";
-import { SEARCH_SHORTCUT } from "@/utils/shortcut";
+
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
 import { alpha, BRAND } from "@/styles/accents";
 const receptionTheme = createPanelTheme(BRAND.action, BRAND.actionDark);
 import {
-  Box,
-  Drawer,
-  AppBar,
-  Toolbar,
-  List,
-  Typography,
-  Divider,
-  IconButton,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  useTheme,
-  useMediaQuery,
-  Chip,
-  Badge,
+  Box, Drawer, List, Typography, Divider, ListItem, ListItemButton, ListItemIcon, ListItemText, useTheme, useMediaQuery, Badge,
 } from "@mui/material";
 import {
-  Menu as MenuIcon,
-  DashboardRounded,
-  AccountCircleRounded,
-  CalendarTodayRounded,
-  PersonAddRounded,
-  QueueRounded,
-  ReceiptRounded,
-  MedicalServicesRounded,
-  ApartmentRounded,
-  CallSplitRounded,
-  AssessmentRounded,
-  SearchRounded,
-  LocalHotelRounded,
-  HotelRounded,
-  NotificationsRounded,
-  HealthAndSafetyRounded,
-  LockRounded,
-  EventNoteRounded,
-  WorkRounded,
-  FolderSharedRounded,
-  EventAvailableRounded,
+  DashboardRounded, AccountCircleRounded, CalendarTodayRounded, PersonAddRounded, QueueRounded, ReceiptRounded, MedicalServicesRounded, ApartmentRounded, CallSplitRounded, AssessmentRounded, LocalHotelRounded, HotelRounded, NotificationsRounded, HealthAndSafetyRounded, LockRounded, EventNoteRounded, WorkRounded, FolderSharedRounded, EventAvailableRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { assetUrl } from "@/utils/assetUrl";
-import BranchSwitcher from "@/components/BranchSwitcher";
 import SidebarProductHeader from "@/components/layout/SidebarProductHeader";
-import SidebarHospitalStrip from "@/components/layout/SidebarHospitalStrip";
-import SidebarUserCard from "@/components/layout/SidebarUserCard";
+import TopBar, { TopBarSpacer } from "@/components/layout/TopBar";
 import ScrollFade from "@/components/layout/ScrollFade";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
@@ -71,7 +33,7 @@ export default function ReceptionLayout() {
     document.title = "Dolphin | Reception";
   }, []);
 
-  const { user, hospital, logout } = useHospitalAuth();
+  const { user } = useHospitalAuth();
   const { isModuleEnabled } = useEnabledModules();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -186,23 +148,7 @@ export default function ReceptionLayout() {
       }}
     >
       {/* Product mark up top; the hospital identifies itself at the foot. */}
-      <SidebarProductHeader />
-
-      {/* Quick search — opens the command palette (also ⌘K / Ctrl+K) */}
-      <Box sx={{ px: 1.5, pt: 1.5 }}>
-        <Box
-          onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
-          sx={{
-            display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1, borderRadius: 2, cursor: "pointer",
-            border: "1px solid", borderColor: "divider", bgcolor: "background.default", color: "text.secondary",
-            "&:hover": { borderColor: "primary.main", color: "text.primary" }, transition: "all 0.15s ease",
-          }}
-        >
-          <SearchRounded sx={{ fontSize: 18 }} />
-          <Typography variant="body2" sx={{ flex: 1 }}>Search…</Typography>
-          <Chip label={SEARCH_SHORTCUT} size="small" sx={{ height: 20, fontSize: "0.75rem", fontWeight: 700, bgcolor: "action.hover", color: "text.secondary" }} />
-        </Box>
-      </Box>
+      <SidebarProductHeader compact />
 
       {/* Navigation — module-gated items (e.g. IPD) aren't hidden; they show with
           a lock so staff can see the feature exists, and the page shows an upsell. */}
@@ -275,25 +221,7 @@ export default function ReceptionLayout() {
 
       <Divider sx={{ borderColor: alpha(BRAND.action, 0.1) }} />
 
-      {/* Branch switcher (only shown to multi-branch users) */}
-      <Box sx={{ px: 2, pt: 2 }}>
-        <PanelSwitcher />
-        <BranchSwitcher />
-      </Box>
-
       {/* Who you are, then where you are. */}
-      <SidebarUserCard
-        name={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Receptionist"}
-        role={user?.roleName || "Receptionist"}
-        avatarText={user?.firstName?.charAt(0) || "R"}
-        onLogout={logout}
-        variant="compact"
-        roleCode={user?.role}
-        // Announcements was the last nav row, and therefore below the fold
-        // on a 768px laptop in every panel. Pinned here instead.
-        announcements={{ count: announcementsUnread, onOpen: () => navigate("/reception/announcements") }}
-      />
-      <SidebarHospitalStrip logoUrl={hospital?.logoUrl} name={hospital?.name || "Reception"} roleCode={user?.role} role={user?.roleName || ""} />
     </Box>
   );
 
@@ -301,31 +229,7 @@ export default function ReceptionLayout() {
     <ThemeProvider theme={receptionTheme}>
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       {/* ── Topbar ──────────────────────────────────────── */}
-      <AppBar
-        position="fixed"
-        elevation={0}
-        sx={{
-          display: { xs: "block", md: "none" },
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
-          bgcolor: "background.paper",
-          backdropFilter: "blur(16px)",
-          borderBottom: `1px solid ${alpha(BRAND.action, 0.12)}`,
-        }}
-      >
-        <Toolbar sx={{ justifyContent: "space-between", minHeight: "70px !important" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <IconButton
-              color="inherit"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 1, display: { md: "none" } }}
-            >
-              <MenuIcon />
-            </IconButton>
-          </Box>
-        </Toolbar>
-      </AppBar>
+      <TopBar drawerWidth={drawerWidth} onMenu={handleDrawerToggle} announcements={{ count: announcementsUnread, onOpen: () => navigate("/reception/announcements") }} />
 
       {/* ── Sidebar ─────────────────────────────────────── */}
       <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
@@ -380,7 +284,7 @@ export default function ReceptionLayout() {
           flexDirection: "column",
         }}
       >
-        <Toolbar sx={{ display: { xs: "block", md: "none" }, minHeight: "70px !important" }} />
+        <TopBarSpacer />
         <Outlet />
       </Box>
     </Box>

@@ -1,4 +1,4 @@
-import { TextField, MenuItem, Box, Typography } from "@mui/material";
+import { TextField, MenuItem, Box, Typography, Tooltip } from "@mui/material";
 import { AccountTreeRounded } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
@@ -28,23 +28,37 @@ const SHARED_LIST_ONLY = ["/hospital/patients"];
  * Renders nothing for single-branch users (the common case), so it is safe to
  * drop into any hospital layout.
  */
-export default function BranchSwitcher() {
+export default function BranchSwitcher({ variant = "sidebar" }: { variant?: "sidebar" | "bar" } = {}) {
   const { availableBranches, activeBranchId, isOrgAdmin, setActiveBranch } = useHospitalAuth();
   const queryClient = useQueryClient();
   const { pathname } = useLocation();
   const shared = SHARED_PAGES.some((p) => pathname === p || pathname.startsWith(`${p}/`)) || SHARED_LIST_ONLY.includes(pathname);
 
-  // Nothing meaningful to switch between.
-  if (availableBranches.length <= 1) return null;
+  // Nothing to switch between. In the top bar the one branch is still named:
+  // where you are working is worth seeing even when you can't change it.
+  if (availableBranches.length <= 1) {
+    const only = availableBranches[0];
+    if (variant !== "bar" || !only) return null;
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, px: 1.25, py: 0.5, borderRadius: 2, bgcolor: "action.hover", color: "text.secondary", minWidth: 0 }}>
+        <AccountTreeRounded sx={{ fontSize: 16 }} />
+        <Typography noWrap variant="body2" sx={{ fontWeight: 600 }}>{only.branchName}</Typography>
+      </Box>
+    );
+  }
 
   const ALL = "__ALL__";
+  const hint = shared
+    ? "This page is shared by every branch — the branch picked doesn't change it."
+    : isOrgAdmin && !activeBranchId ? "Viewing every branch. Pick one to add or change records." : null;
+  const inBar = variant === "bar";
 
-  return (
-    <Box sx={{ px: 0.5, pb: 1 }}>
+  const picker = (
       <TextField
         select
         size="small"
-        fullWidth
+        fullWidth={!inBar}
+        sx={inBar ? { width: { xs: 150, sm: 210 } } : undefined}
         label="Active branch"
         value={activeBranchId ?? (isOrgAdmin ? ALL : "")}
         onChange={(e) => {
@@ -75,13 +89,29 @@ export default function BranchSwitcher() {
           </MenuItem>
         ))}
       </TextField>
-      {shared ? (
+  );
+
+  // In the top bar: the picker, with what it means beside it where there is room
+  // and on hover where there is not.
+  if (inBar) {
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
+        <Tooltip title={hint ?? ""} disableHoverListener={!hint}><Box>{picker}</Box></Tooltip>
+        {hint && (
+          <Typography variant="caption" sx={{ display: { xs: "none", xl: "block" }, color: "text.secondary", maxWidth: 240, lineHeight: 1.3 }}>
+            {hint}
+          </Typography>
+        )}
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ px: 0.5, pb: 1 }}>
+      {picker}
+      {hint && (
         <Typography variant="caption" sx={{ display: "block", mt: 0.5, px: 0.5, color: "text.secondary", lineHeight: 1.3 }}>
-          This page is shared by every branch — the branch picked doesn't change it.
-        </Typography>
-      ) : isOrgAdmin && !activeBranchId && (
-        <Typography variant="caption" sx={{ display: "block", mt: 0.5, px: 0.5, color: "text.secondary", lineHeight: 1.3 }}>
-          Viewing every branch. Pick one to add or change records.
+          {hint}
         </Typography>
       )}
     </Box>

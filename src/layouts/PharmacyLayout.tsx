@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import PanelSwitcher from "@/components/layout/PanelSwitcher";
 import SidebarNav from "@/components/layout/SidebarNav";
 import { BRAND } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
@@ -8,20 +7,14 @@ const pharmacyTheme = createPanelTheme(BRAND.action, BRAND.actionDark);
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import ModuleGate from "@/components/ModuleGate";
 import {
-  Box, Drawer, AppBar, Toolbar, IconButton, useTheme, useMediaQuery,
+  Box, Drawer, useTheme, useMediaQuery,
 } from "@mui/material";
 import {
-  Menu as MenuIcon, DashboardRounded, MedicationRounded,
-  LocalShippingRounded, InventoryRounded, PointOfSaleRounded,
-  AssessmentRounded, LocalPharmacyRounded, WarehouseRounded, ReceiptLongRounded,
+  DashboardRounded, MedicationRounded, LocalShippingRounded, InventoryRounded, PointOfSaleRounded, AssessmentRounded, LocalPharmacyRounded, WarehouseRounded, ReceiptLongRounded,
 } from "@mui/icons-material";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
-import { useHospitalAuth } from "@/providers/HospitalAuthContext";
-import BranchSwitcher from "@/components/BranchSwitcher";
 import SidebarProductHeader from "@/components/layout/SidebarProductHeader";
-import SidebarHospitalStrip from "@/components/layout/SidebarHospitalStrip";
-import SidebarSearch from "@/components/layout/SidebarSearch";
-import SidebarUserCard from "@/components/layout/SidebarUserCard";
+import TopBar, { TopBarSpacer } from "@/components/layout/TopBar";
 import TrialBanner from "@/components/layout/TrialBanner";
 import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
 import { useSocket } from "@/hooks/useSocket";
@@ -37,7 +30,7 @@ export default function PharmacyLayout() {
     document.title = "Dolphin | Pharmacy Portal";
   }, []);
 
-  const { user, hospital, logout } = useHospitalAuth();
+  
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
@@ -88,9 +81,8 @@ export default function PharmacyLayout() {
 
   const drawerContent = (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "background.paper", color: "text.primary" }}>
-      <SidebarProductHeader />
+      <SidebarProductHeader compact />
       
-      <SidebarSearch />
       <SidebarNav
         items={menuItems}
         currentPath={location.pathname}
@@ -98,36 +90,13 @@ export default function PharmacyLayout() {
         isLocked={(item) => Boolean(item.module) && !isModuleEnabled(item.module!)}
       />
 
-      <Box sx={{ px: 2, pb: 1 }}>
-        <PanelSwitcher />
-        <BranchSwitcher />
-      </Box>
-
-      <SidebarUserCard
-        name={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Pharmacist"}
-        role={user?.roleName || "Pharmacist"}
-        avatarText={user?.firstName?.charAt(0) || "P"}
-        onLogout={logout}
-        variant="compact"
-        roleCode={user?.role}
-        // Announcements was the last nav row, and therefore below the fold
-        // on a 768px laptop in every panel. Pinned here instead.
-        announcements={{ count: announcementsUnread, onOpen: () => navigate("/pharmacy/announcements") }}
-      />
-      <SidebarHospitalStrip logoUrl={hospital?.logoUrl} name={hospital?.name || ""} roleCode={user?.role} role={user?.roleName || ""} />
     </Box>
   );
 
   return (
     <ThemeProvider theme={pharmacyTheme}>
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
-      <AppBar position="fixed" elevation={0} sx={{ display: { xs: "block", md: "none" }, width: { md: `calc(100% - ${drawerWidth}px)` }, ml: { md: `${drawerWidth}px` }, bgcolor: "background.paper", borderBottom: "1px solid", borderColor: "divider" }}>
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <IconButton color="inherit" edge="start" onClick={handleDrawerToggle} sx={{ mr: 2, display: { md: "none" }, color: "text.primary" }}>
-            <MenuIcon />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
+      <TopBar drawerWidth={drawerWidth} onMenu={handleDrawerToggle} announcements={{ count: announcementsUnread, onOpen: () => navigate("/pharmacy/announcements") }} />
 
       <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
         <Drawer variant="temporary" open={mobileOpen} onClose={handleDrawerToggle} ModalProps={{ keepMounted: true }} sx={{ display: { xs: "block", md: "none" }, "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth, borderRight: "none" } }}>
@@ -143,7 +112,7 @@ export default function PharmacyLayout() {
           // below its content: one wide table made the whole page scroll
           // sideways instead of the table scrolling inside its own card.
           minWidth: 0, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` }, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-        <Toolbar sx={{ display: { xs: "block", md: "none" } }} />
+        <TopBarSpacer />
         <TrialBanner />
         <ModuleGate module="Pharmacy"><Outlet /></ModuleGate>
       </Box>

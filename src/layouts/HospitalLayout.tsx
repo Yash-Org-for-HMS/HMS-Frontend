@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import PanelSwitcher from "@/components/layout/PanelSwitcher";
 import SidebarNav from "@/components/layout/SidebarNav";
 import { Outlet, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,26 +8,16 @@ import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
 const hospitalTheme = createPanelTheme(BRAND.action, BRAND.actionDark);
 import {
-  Box, Drawer, AppBar, Toolbar, Divider, IconButton, useTheme,
-  useMediaQuery,
+  Box, Drawer, Divider, useTheme, useMediaQuery,
 } from "@mui/material";
 import {
-  Menu as MenuIcon, DashboardRounded, LocalHospitalRounded, PeopleRounded,
-  CalendarTodayRounded, SettingsRounded, ApartmentRounded, DomainRounded, BadgeRounded, CardMembershipRounded, AccountTreeRounded, SchemaRounded,
-  WidgetsRounded, MedicalServicesRounded, DatasetRounded, EventNoteRounded,
-  DynamicFormRounded, SecurityRounded, AccountBalanceRounded,
-  AssessmentRounded, HotelRounded, MonitorHeartRounded, VaccinesRounded,
-  MedicationRounded, LocalHotelRounded, ReceiptLongRounded,
-  FormatListNumberedRounded,
+  DashboardRounded, LocalHospitalRounded, PeopleRounded, CalendarTodayRounded, SettingsRounded, ApartmentRounded, DomainRounded, BadgeRounded, CardMembershipRounded, AccountTreeRounded, SchemaRounded, WidgetsRounded, MedicalServicesRounded, DatasetRounded, EventNoteRounded, DynamicFormRounded, SecurityRounded, AccountBalanceRounded, AssessmentRounded, HotelRounded, MonitorHeartRounded, VaccinesRounded, MedicationRounded, LocalHotelRounded, ReceiptLongRounded, FormatListNumberedRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { isAdminUser, menuPathsFor, hasRole } from "@/constants/roles";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
-import BranchSwitcher from "@/components/BranchSwitcher";
 import SidebarProductHeader from "@/components/layout/SidebarProductHeader";
-import SidebarHospitalStrip from "@/components/layout/SidebarHospitalStrip";
-import SidebarSearch from "@/components/layout/SidebarSearch";
-import SidebarUserCard from "@/components/layout/SidebarUserCard";
+import TopBar, { TopBarSpacer } from "@/components/layout/TopBar";
 import TrialBanner from "@/components/layout/TrialBanner";
 import { axiosInstance } from "@/api/axios";
 import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
@@ -41,7 +30,7 @@ export default function HospitalLayout() {
     document.title = "Dolphin | Hospital Admin";
   }, []);
 
-  const { user, hospital, logout } = useHospitalAuth();
+  const { user } = useHospitalAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
@@ -171,9 +160,8 @@ export default function HospitalLayout() {
         color: "text.primary",
       }}
     >
-      <SidebarProductHeader />
+      <SidebarProductHeader compact />
       
-      <SidebarSearch />
       <SidebarNav
         items={visibleMenuItems}
         currentPath={location.pathname}
@@ -183,26 +171,7 @@ export default function HospitalLayout() {
       
       <Divider sx={{ borderColor: "divider" }} />
 
-      {/* Branch switcher (only shown to multi-branch users) */}
-      <Box sx={{ px: 2, pt: 2 }}>
-        <PanelSwitcher />
-        <BranchSwitcher />
-      </Box>
-
       {/* User card at bottom */}
-      <SidebarUserCard
-        name={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Administrator"}
-        role={user?.roleName || "Administrator"}
-        avatarText={user?.firstName?.charAt(0) || "A"}
-        onLogout={logout}
-        onProfile={() => navigate("/hospital/profile")}
-        variant="compact"
-        roleCode={user?.role}
-        // Announcements was the last nav row, and therefore below the fold
-        // on a 768px laptop in every panel. Pinned here instead.
-        announcements={{ count: announcementsUnread, onOpen: () => navigate("/hospital/announcements") }}
-      />
-      <SidebarHospitalStrip logoUrl={hospital?.logoUrl} name={hospital?.name || ""} roleCode={user?.role} role={user?.roleName || ""} />
     </Box>
   );
 
@@ -215,33 +184,7 @@ export default function HospitalLayout() {
     <ThemeProvider theme={hospitalTheme}>
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       {/* ── Topbar ──────────────────────────────────────── */}
-      <AppBar
-        position="fixed"
-        elevation={0}
-        sx={{
-          display: { xs: "block", md: "none" },
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
-          bgcolor: "background.paper",
-          backdropFilter: "blur(12px)",
-          borderBottom: "1px solid", borderColor: "divider",
-        }}
-      >
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <IconButton
-              color="inherit"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { md: "none" } }}
-            >
-              <MenuIcon />
-            </IconButton>
-          </Box>
-          
-          
-        </Toolbar>
-      </AppBar>
+      <TopBar drawerWidth={drawerWidth} onMenu={handleDrawerToggle} announcements={{ count: announcementsUnread, onOpen: () => navigate("/hospital/announcements") }} />
 
       {/* ── Sidebar ─────────────────────────────────────── */}
       <Box
@@ -299,7 +242,7 @@ export default function HospitalLayout() {
           flexDirection: "column",
         }}
       >
-        <Toolbar sx={{ display: { xs: "block", md: "none" } }} /> {/* Spacer for fixed AppBar */}
+        <TopBarSpacer />
         <TrialBanner />
         <Outlet />
       </Box>

@@ -1,5 +1,4 @@
 import { alpha, BRAND } from "@/styles/accents";
-import PanelSwitcher from "@/components/layout/PanelSwitcher";
 import SidebarNav from "@/components/layout/SidebarNav";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
@@ -9,22 +8,16 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import ModuleGate from "@/components/ModuleGate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Box, Drawer, AppBar, Toolbar, Divider, IconButton, useTheme,
-  useMediaQuery,
+  Box, Drawer, Divider, useTheme, useMediaQuery,
 } from "@mui/material";
 import {
-  Menu as MenuIcon, DashboardRounded, PeopleAltRounded, GroupsRounded,
-  QueueRounded,
-  EventNoteRounded, EventBusyRounded, ScienceRounded, AssessmentRounded, AirlineSeatFlatRounded, DoneAllRounded,
+  DashboardRounded, PeopleAltRounded, GroupsRounded, QueueRounded, EventNoteRounded, EventBusyRounded, ScienceRounded, AssessmentRounded, AirlineSeatFlatRounded, DoneAllRounded,
 } from "@mui/icons-material";
 import { holdsHome, isResidentOnly } from "@/constants/roles";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
-import BranchSwitcher from "@/components/BranchSwitcher";
 import SidebarProductHeader from "@/components/layout/SidebarProductHeader";
-import SidebarHospitalStrip from "@/components/layout/SidebarHospitalStrip";
-import SidebarSearch from "@/components/layout/SidebarSearch";
-import SidebarUserCard from "@/components/layout/SidebarUserCard";
+import TopBar, { TopBarSpacer } from "@/components/layout/TopBar";
 import TrialBanner from "@/components/layout/TrialBanner";
 import { axiosInstance } from "@/api/axios";
 import { useSocket } from "@/hooks/useSocket";
@@ -39,7 +32,7 @@ export default function DoctorLayout() {
     document.title = "Dolphin | Doctor";
   }, []);
 
-  const { user, hospital, logout } = useHospitalAuth();
+  const { user } = useHospitalAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
@@ -120,10 +113,9 @@ export default function DoctorLayout() {
       }}
     >
       {/* Logo / Header */}
-      <SidebarProductHeader />
+      <SidebarProductHeader compact />
 
       {/* Navigation */}
-      <SidebarSearch />
       <SidebarNav
         items={menuItems}
         currentPath={location.pathname}
@@ -134,25 +126,7 @@ export default function DoctorLayout() {
 
       <Divider sx={{ borderColor: alpha(BRAND.action, 0.1) }} />
 
-      {/* Branch switcher (only shown to multi-branch users) */}
-      <Box sx={{ px: 2, pt: 2 }}>
-        <PanelSwitcher />
-        <BranchSwitcher />
-      </Box>
-
       {/* User card at bottom */}
-      <SidebarUserCard
-        name={`Dr. ${user?.firstName || ""} ${user?.lastName || ""}`.trim()}
-        role={user?.roleName || "Doctor"}
-        avatarText={user?.firstName?.charAt(0) || "D"}
-        onLogout={logout}
-        variant="compact"
-        roleCode={user?.role}
-        // Announcements was the last nav row, and therefore below the fold
-        // on a 768px laptop in every panel. Pinned here instead.
-        announcements={{ count: announcementsUnread, onOpen: () => navigate("/doctor/announcements") }}
-      />
-      <SidebarHospitalStrip logoUrl={hospital?.logoUrl} name={hospital?.name || ""} roleCode={user?.role} role={user?.roleName || ""} />
     </Box>
   );
 
@@ -160,23 +134,7 @@ export default function DoctorLayout() {
     <ThemeProvider theme={doctorTheme}>
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       {/* Mobile Topbar */}
-      <AppBar
-        position="fixed"
-        elevation={0}
-        sx={{
-          display: { xs: "block", md: "none" },
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
-          bgcolor: "background.paper",
-          borderBottom: `1px solid ${alpha(BRAND.action, 0.12)}`,
-        }}
-      >
-        <Toolbar sx={{ justifyContent: "space-between", minHeight: "70px !important" }}>
-          <IconButton color="inherit" edge="start" onClick={handleDrawerToggle} sx={{ mr: 1 }}>
-            <MenuIcon />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
+      <TopBar drawerWidth={drawerWidth} onMenu={handleDrawerToggle} announcements={{ count: announcementsUnread, onOpen: () => navigate("/doctor/announcements") }} />
 
       {/* Sidebar */}
       <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
@@ -221,7 +179,7 @@ export default function DoctorLayout() {
           minHeight: "100vh", display: "flex", flexDirection: "column",
         }}
       >
-        <Toolbar sx={{ display: { xs: "block", md: "none" }, minHeight: "70px !important" }} />
+        <TopBarSpacer />
         <TrialBanner />
         <ModuleGate module="Doctor"><Outlet /></ModuleGate>
       </Box>
