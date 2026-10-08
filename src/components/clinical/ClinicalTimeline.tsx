@@ -43,10 +43,13 @@ export interface TimelineEvent {
 export default function ClinicalTimeline({
   patientId,
   basePath = "/doctor/patients",
+  maxHeight,
 }: {
   patientId: string;
   /** Which mount to read. Doctors have their own; the ward reads /clinical/patients. */
   basePath?: string;
+  /** Cap the feed's height and scroll it; the type filters stay in view above. */
+  maxHeight?: number | string;
 }) {
   const [type, setType] = useState<string | null>(null);
   const { data, isLoading, isError } = useQuery({
@@ -88,6 +91,16 @@ export default function ClinicalTimeline({
             variant={type === t ? "filled" : "outlined"} sx={chipSx(type === t, TL_META[t].color)} />
         ))}
       </Box>
+      <Box
+        data-testid="timeline-feed"
+        sx={maxHeight ? {
+          // pl: the dots sit just left of the feed, and a scroll box clips them.
+          maxHeight, overflowY: "auto", pr: 1, pl: 1.5,
+          scrollbarWidth: "thin", scrollbarColor: (t) => `${t.palette.divider} transparent`,
+          "&::-webkit-scrollbar": { width: 6 },
+          "&::-webkit-scrollbar-thumb": { bgcolor: "divider", borderRadius: 3 },
+        } : undefined}
+      >
       <Box sx={{ position: "relative", pl: 2, "&::before": { content: '""', position: "absolute", top: 6, bottom: 6, left: 15, width: 2, bgcolor: "divider" } }}>
         {events.map((e, i) => {
           const m = TL_META[e.type] ?? { label: e.type, color: "#64748b" };
@@ -106,6 +119,7 @@ export default function ClinicalTimeline({
             </Box>
           );
         })}
+      </Box>
       </Box>
     </>
   );

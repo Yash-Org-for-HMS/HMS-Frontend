@@ -460,7 +460,7 @@ export default function PatientProfile(
           version of a patient's history rather than a second one here. */}
       {tab === 1 && (
         <SectionCard title="Clinical history" icon={<HistoryRounded fontSize="small" />}>
-          <ClinicalTimeline patientId={patient.patientId} basePath="/clinical/patients" />
+          <ClinicalTimeline patientId={patient.patientId} basePath="/clinical/patients" maxHeight="60vh" />
         </SectionCard>
       )}
 
