@@ -155,8 +155,8 @@ export default function LookupManager() {
   return (
     <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <PageHeader
-        title="Master Data Management"
-        subtitle="Configure system dropdowns and settings without code changes."
+        title="Dropdown lists"
+        subtitle="Choices for department types, patient documents and surgery grades. Add, rename, or switch one off to hide it."
       />
 
       <Paper sx={{ p: 3, mb: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
@@ -165,7 +165,7 @@ export default function LookupManager() {
             <TextField
               select
               fullWidth
-              label="Select Lookup Table"
+              label="List"
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
               InputLabelProps={{ style: { color: "text.secondary" } }}

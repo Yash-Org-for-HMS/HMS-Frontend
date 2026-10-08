@@ -81,7 +81,7 @@ export default function HospitalLayout() {
     // out. Both are gone now: every hospital uses the fixed standard role set,
     // and role authoring is removed rather than hidden — see the note in
     // rbac.controller.ts for why.
-    { text: "Master Data", icon: <DatasetRounded />, path: "/hospital/lookups", adminOnly: true, section: "Catalogs & forms" },
+    { text: "Dropdown lists", icon: <DatasetRounded />, path: "/hospital/lookups", adminOnly: true, section: "Catalogs & forms" },
 
     // ── Day to day ──
     // Operations: hospital-wide, read-oriented windows into day-to-day activity.
