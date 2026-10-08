@@ -16,6 +16,7 @@ import { useEnabledModules } from "@/hooks/useEnabledModules";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import SidebarProductHeader from "@/components/layout/SidebarProductHeader";
 import TopBar, { TopBarSpacer } from "@/components/layout/TopBar";
+import { floatingSidebarPaper } from "@/components/layout/floatingShell";
 import TrialBanner from "@/components/layout/TrialBanner";
 import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
 import { useSocket } from "@/hooks/useSocket";
@@ -154,11 +155,7 @@ export default function NurseLayout() {
           variant="permanent"
           sx={{
             display: { xs: "none", md: "block" },
-            "& .MuiDrawer-paper": {
-              boxSizing: "border-box", width: drawerWidth, borderRight: "none",
-              borderTopRightRadius: 24, borderBottomRightRadius: 24,
-              boxShadow: "4px 0 24px rgba(0,0,0,0.03)"
-            }
+            "& .MuiDrawer-paper": floatingSidebarPaper(drawerWidth)
           }}
           open
         >

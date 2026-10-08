@@ -13,10 +13,7 @@ import BranchSwitcher from "@/components/BranchSwitcher";
 import { PANEL_LABEL, panelHomeForUser, panelsForUser, type Panel } from "@/constants/roles";
 import { SEARCH_SHORTCUT } from "@/utils/shortcut";
 import { SEMANTIC } from "@/styles/accents";
-
-export const TOP_BAR_HEIGHT = 64;
-/** On a desktop the bar floats: this far below the top of the window. */
-const FLOAT_GAP = 10;
+import { TOP_BAR_HEIGHT, FLOAT_GAP, CARD_RADIUS, CARD_SHADOW } from "./floatingShell";
 
 /** Room under the fixed bar, at the top of a panel's content. */
 export function TopBarSpacer() {
@@ -76,8 +73,8 @@ export default function TopBar({ drawerWidth, onMenu, announcements }: TopBarPro
         left: { md: drawerWidth + 24 },
         right: { md: 24 },
         width: { md: "auto" },
-        borderRadius: { md: "18px" },
-        boxShadow: { md: "0 4px 24px rgba(15, 23, 42, 0.06)" },
+        borderRadius: { md: CARD_RADIUS },
+        boxShadow: { md: CARD_SHADOW },
       }}
     >
       <Toolbar sx={{ minHeight: `${TOP_BAR_HEIGHT}px !important`, gap: { xs: 1, md: 1.5 }, px: { xs: 1.5, md: 3 } }}>

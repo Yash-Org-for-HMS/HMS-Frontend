@@ -17,6 +17,7 @@ import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import SidebarProductHeader from "@/components/layout/SidebarProductHeader";
 import TopBar, { TopBarSpacer } from "@/components/layout/TopBar";
+import { floatingSidebarPaper } from "@/components/layout/floatingShell";
 import TrialBanner from "@/components/layout/TrialBanner";
 import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
 import { useSocket } from "@/hooks/useSocket";
@@ -79,7 +80,7 @@ export default function LabLayout() {
         <Drawer variant="temporary" open={mobileOpen} onClose={handleDrawerToggle} ModalProps={{ keepMounted: true }} sx={{ display: { xs: "block", md: "none" }, "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth, borderRight: "none" } }}>
           {drawerContent}
         </Drawer>
-        <Drawer variant="permanent" sx={{ display: { xs: "none", md: "block" }, "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth, borderRight: "none", borderTopRightRadius: 24, borderBottomRightRadius: 24, boxShadow: "4px 0 24px rgba(0,0,0,0.03)" } }} open>
+        <Drawer variant="permanent" sx={{ display: { xs: "none", md: "block" }, "& .MuiDrawer-paper": floatingSidebarPaper(drawerWidth) }} open>
           {drawerContent}
         </Drawer>
       </Box>
