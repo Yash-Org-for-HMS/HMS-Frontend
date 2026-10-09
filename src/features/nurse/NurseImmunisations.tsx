@@ -15,6 +15,7 @@ import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { formatDate } from "@/utils/format";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 /**
  * The immunisation worklist.
@@ -49,11 +50,13 @@ export default function NurseImmunisations() {
   const [page, setPage] = useState(0);
   const rowsPerPage = 25;
 
+  // The request waits until typing pauses — it fired on every keystroke.
+  const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["nurse-immunisations", state, search, page],
+    queryKey: ["nurse-immunisations", state, debouncedSearch, page],
     queryFn: async () =>
       (await axiosInstance.get("/vaccination/due", {
-        params: { state, search: search.trim() || undefined, limit: rowsPerPage, offset: page * rowsPerPage },
+        params: { state, search: debouncedSearch.trim() || undefined, limit: rowsPerPage, offset: page * rowsPerPage },
       })).data,
   });
 

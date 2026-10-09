@@ -26,6 +26,8 @@ export default function LabTestPicker({ open, onClose, onToggle, selectedIds, ac
   const { data: tests = [], isLoading } = useQuery<LabTest[]>({
     queryKey: ["lab-test-picker", catalogUrl],
     queryFn: async () => (await axiosInstance.get(catalogUrl)).data.data || [],
+    // Reference data: the lab test catalogue. Re-downloaded on every open before.
+    staleTime: 5 * 60_000,
     enabled: open,
   });
 

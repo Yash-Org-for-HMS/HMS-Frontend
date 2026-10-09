@@ -23,7 +23,7 @@ import TrialBanner from "@/components/layout/TrialBanner";
 import { axiosInstance } from "@/api/axios";
 import { useSocket } from "@/hooks/useSocket";
 import { DASHBOARD_POLL_MS, LIVE_DASHBOARD_FALLBACK_MS } from "@/constants/intervals";
-import { refetchUnlessFresh, queueEventConcerns, catchUpEventOnlyScreens } from "@/utils/liveRefresh";
+import { refetchUnlessFresh, queueEventConcerns, catchUpEventOnlyScreens, isAboutAnotherDoctor } from "@/utils/liveRefresh";
 import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBadge";
 
 const drawerWidth = 260;
@@ -60,6 +60,8 @@ export default function DoctorLayout() {
       }
       // A test paid for at the counter changes nothing a doctor sees.
       if (!queueEventConcerns(payload, "opd", "lab")) return;
+      // Nor does another doctor's patient.
+      if (isAboutAnotherDoctor(payload, user?.id)) return;
       queryClient.invalidateQueries({ queryKey: ["doctor-badges"] });
       queryClient.invalidateQueries({ queryKey: ["doctor-dashboard-stats"] });
     },

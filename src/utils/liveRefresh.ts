@@ -28,6 +28,18 @@ export function queueEventConcerns(payload: unknown, ...areas: string[]): boolea
 export const isOpdQueueEvent = (payload: unknown): boolean => queueEventConcerns(payload, "opd");
 
 /**
+ * An event about ANOTHER doctor's patient: the server names the doctor
+ * (doctorUserId) when a change concerns exactly one, and a doctor's own screens
+ * — their queue, badges, dashboard — skip the rest. Without it every online
+ * doctor refetched for every other doctor's check-in, call and vitals. An event
+ * that names no doctor concerns everyone.
+ */
+export function isAboutAnotherDoctor(payload: unknown, myUserId: string | undefined): boolean {
+  const doctorUserId = (payload as { doctorUserId?: string } | undefined)?.doctorUserId;
+  return Boolean(doctorUserId && myUserId && doctorUserId !== myUserId);
+}
+
+/**
  * The screens that refresh only when told (bed board, reservations, free beds,
  * ward indents, co-sign) — no polling behind them. A change made while the live
  * connection was down (a redeploy, a dropped network) was never heard, and those

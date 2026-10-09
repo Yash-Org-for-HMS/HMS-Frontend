@@ -934,6 +934,9 @@ function AddTeamDialog({ id, onClose, onDone }: { id: string; onClose: () => voi
   const { data: dropdowns, isLoading: loadingDoctors } = useQuery({
     queryKey: ["appointment-dropdowns"],
     queryFn: async () => (await axiosInstance.get("/reception/appointments/dropdowns")).data.data,
+    // The same doctor list the booking screens hold for two minutes; it was
+    // re-downloaded (5+ server queries) on every dialog open.
+    staleTime: 2 * 60_000,
   });
   // /hospital/users is admin-only, so this returned 403 and rendered an
   // empty list for the nurses and receptionists who actually fill this in.

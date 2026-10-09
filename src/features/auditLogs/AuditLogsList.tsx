@@ -38,6 +38,7 @@ import { useAuth } from "@/providers/AuthContext";
 import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import { apiErrorText } from "@/utils/apiError";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 // Keep the admin list's existing sentence-case header look (the SortableHeadCell
 // default is the reception-panel uppercase style).
@@ -70,10 +71,12 @@ export default function AuditLogsList() {
     setPage(1);
   }, [orderBy, order]);
 
+  // The request waits until typing pauses — it fired on every keystroke.
+  const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
-    queryKey: ["audit-logs", page, search, showMyActions, user?.id, orderBy, order],
+    queryKey: ["audit-logs", page, debouncedSearch, showMyActions, user?.id, orderBy, order],
     queryFn: async () => {
-      const params: any = { page, limit: 15, search, sortBy: orderBy || undefined, sortOrder: order };
+      const params: any = { page, limit: 15, search: debouncedSearch, sortBy: orderBy || undefined, sortOrder: order };
       if (showMyActions && user?.id) params.userId = user.id;
       return (await axiosInstance.get("/audit-logs", { params })).data;
     },

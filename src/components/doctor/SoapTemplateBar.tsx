@@ -52,6 +52,8 @@ export default function SoapTemplateBar({ current, onApply }: Props) {
   const { data, isLoading } = useQuery({
     queryKey: ["doctor-templates"],
     queryFn: async () => (await axiosInstance.get("/doctor/templates")).data.data as SoapTemplate[],
+    // Reference data: this doctor's SOAP templates (edits here invalidate it). Re-downloaded on every open before.
+    staleTime: 5 * 60_000,
   });
   const templates = data || [];
 

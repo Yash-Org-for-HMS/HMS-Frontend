@@ -18,7 +18,8 @@ import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useNavigate } from "react-router-dom";
 import { useSocket } from "@/hooks/useSocket";
 import { QUEUE_POLL_MS, QUEUE_LIVE_FALLBACK_MS } from "@/constants/intervals";
-import { refetchUnlessFresh, isOpdQueueEvent } from "@/utils/liveRefresh";
+import { refetchUnlessFresh, isOpdQueueEvent, isAboutAnotherDoctor } from "@/utils/liveRefresh";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 
 
 const DOCTOR_BLUE = BRAND.action;
@@ -27,11 +28,13 @@ const DOCTOR_BLUE_DARK = BRAND.actionDark;
 export default function DoctorQueue() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useHospitalAuth();
   // Real-time queue updates. This queue holds no lab data, so a lab or
   // radiology change is not a reason to ask again; a reconnect is.
   const { connected } = useSocket({
     QUEUE_UPDATED: (payload?: unknown) => {
-      if (isOpdQueueEvent(payload)) queryClient.invalidateQueries({ queryKey: ["doctor-queue"] });
+      // Only this doctor's patients move this queue.
+      if (isOpdQueueEvent(payload) && !isAboutAnotherDoctor(payload, user?.id)) queryClient.invalidateQueries({ queryKey: ["doctor-queue"] });
     },
     connect: () => refetchUnlessFresh(queryClient, ["doctor-queue"]),
   });

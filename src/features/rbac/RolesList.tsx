@@ -15,6 +15,7 @@ import FilterBar from "@/components/layout/FilterBar";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import PageSkeleton from "@/components/PageSkeleton";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const headSx = { color: "text.secondary", fontWeight: 600, textTransform: "none", letterSpacing: "normal", fontSize: "0.875rem", bgcolor: "background.paper" } as const;
 
@@ -47,9 +48,11 @@ export default function RolesList() {
   const [search, setSearch] = useState("");
 
   // Fetch all roles so we can aggregate the per-hospital copies; presentational.
+  // The request waits until typing pauses — it fired on every keystroke.
+  const debouncedSearch = useDebouncedValue(search);
   const { data: roles = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
-    queryKey: ["rbac-roles", search],
-    queryFn: async () => (await axiosInstance.get("/rbac/roles", { params: { limit: 1000, search } })).data.data,
+    queryKey: ["rbac-roles", debouncedSearch],
+    queryFn: async () => (await axiosInstance.get("/rbac/roles", { params: { limit: 1000, search: debouncedSearch } })).data.data,
   });
 
   const q = search.trim().toLowerCase();

@@ -16,6 +16,7 @@ import Mascot from "@/components/Mascot";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { CLAIM_STATUS_META, statusMeta } from "./claimMeta";
 import { apiErrorText } from "@/utils/apiError";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 export default function ClaimsList() {
   const navigate = useNavigate();
@@ -27,9 +28,11 @@ export default function ClaimsList() {
   // could leave you stranded on a now-empty high page.
   useEffect(() => { setPage(1); }, [status, search]);
 
+  // The request waits until typing pauses — it fired on every keystroke.
+  const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["claims", status, search, page],
-    queryFn: async () => (await axiosInstance.get("/claims", { params: { status: status || undefined, search: search || undefined, page, limit: 20 } })).data,
+    queryKey: ["claims", status, debouncedSearch, page],
+    queryFn: async () => (await axiosInstance.get("/claims", { params: { status: status || undefined, search: debouncedSearch || undefined, page, limit: 20 } })).data,
     placeholderData: keepPreviousData,
   });
   const claims: any[] = data?.data ?? [];

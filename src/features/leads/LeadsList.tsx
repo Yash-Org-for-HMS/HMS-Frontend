@@ -53,6 +53,7 @@ import { useToast } from "@/providers/ToastContext";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 // Keep the admin list's existing sentence-case header look (the SortableHeadCell
 // default is the reception-panel uppercase style).
@@ -91,6 +92,8 @@ export default function LeadsList() {
     queryFn: async () => (await axiosInstance.get("/plans", { params: { limit: 100 } })).data.data || [],
   });
 
+  // The request waits until typing pauses — it fired on every keystroke.
+  const debouncedSearch = useDebouncedValue(search);
   const {
     data: leadsData,
     isLoading,
@@ -98,9 +101,9 @@ export default function LeadsList() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["leads", page, search, statusFilter, myLeadsOnly, user?.id, orderBy, order],
+    queryKey: ["leads", page, debouncedSearch, statusFilter, myLeadsOnly, user?.id, orderBy, order],
     queryFn: async () => {
-      const params: any = { page, limit: 10, search, status: statusFilter, sortBy: orderBy || undefined, sortOrder: order };
+      const params: any = { page, limit: 10, search: debouncedSearch, status: statusFilter, sortBy: orderBy || undefined, sortOrder: order };
       if (myLeadsOnly && user?.id) params.assignedTo = user.id;
       return (await axiosInstance.get("/leads", { params })).data; // { data, pagination }
     },

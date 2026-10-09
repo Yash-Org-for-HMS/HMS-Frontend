@@ -13,7 +13,7 @@ const socket = vi.hoisted(() => ({ handlers: {} as Record<string, (...a: unknown
 vi.mock("@/hooks/useSocket", () => ({
   useSocket: (map: Record<string, (...a: unknown[]) => void>) => { socket.handlers = map; return { connected: true }; },
 }));
-vi.mock("@/providers/HospitalAuthContext", () => ({ useHospitalAuth: () => ({ user: { role: "DOCTOR" }, hospital: { id: "h" } }) }));
+vi.mock("@/providers/HospitalAuthContext", () => ({ useHospitalAuth: () => ({ user: { id: "me", role: "DOCTOR" }, hospital: { id: "h" } }) }));
 const get = vi.fn();
 vi.mock("@/api/axios", () => ({ axiosInstance: { get: (...a: unknown[]) => get(...a) }, API_URL: "http://localhost:5000/api" }));
 
@@ -36,6 +36,18 @@ describe("DoctorQueue — live updates", () => {
     expect(asks()).toBe(1);
     act(() => socket.handlers.QUEUE_UPDATED({ area: "opd" }));
     await waitFor(() => expect(asks()).toBe(2));
+  });
+
+  it("another doctor's patient does not move this queue; this doctor's, or an unaddressed change, does", async () => {
+    renderWithProviders(<DoctorQueue />);
+    await waitFor(() => expect(asks()).toBe(1));
+    act(() => socket.handlers.QUEUE_UPDATED({ area: "opd", doctorUserId: "someone-else" }));
+    await new Promise((r) => setTimeout(r, 30));
+    expect(asks()).toBe(1);
+    act(() => socket.handlers.QUEUE_UPDATED({ area: "opd", doctorUserId: "me" }));
+    await waitFor(() => expect(asks()).toBe(2));
+    act(() => socket.handlers.QUEUE_UPDATED({ area: "opd" }));
+    await waitFor(() => expect(asks()).toBe(3));
   });
 
   it("a reconnect after a while asks", async () => {

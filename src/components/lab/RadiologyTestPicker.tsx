@@ -26,6 +26,8 @@ export default function RadiologyTestPicker({ open, onClose, onPick, accent = "#
   const { data: tests = [], isLoading } = useQuery<RadTest[]>({
     queryKey: ["radiology-test-picker", catalogUrl],
     queryFn: async () => (await axiosInstance.get(catalogUrl)).data.data || [],
+    // Reference data: the radiology test catalogue. Re-downloaded on every open before.
+    staleTime: 5 * 60_000,
     enabled: open,
   });
 

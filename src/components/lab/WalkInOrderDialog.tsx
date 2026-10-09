@@ -12,6 +12,7 @@ import { CameraAltRounded, ScienceRounded } from "@mui/icons-material";
 import RadiologyTestPicker, { type PickedRadTest } from "@/components/lab/RadiologyTestPicker";
 import LabTestPicker, { type PickedLabTest } from "@/components/lab/LabTestPicker";
 import { useToast } from "@/providers/ToastContext";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 export interface OrderForPatient {
   patientId: string;
@@ -82,10 +83,12 @@ export default function WalkInOrderDialog({
   // Only the lab and radiology queues reach this: the nurse always passes a
   // patient in, so the search never runs there. Only fires once the user has
   // typed enough to narrow results.
+  // The request waits until typing pauses — it fired on every keystroke.
+  const debouncedPatientQuery = useDebouncedValue(patientQuery);
   const { data: patients = [], isFetching: searchingPatients } = useQuery<any[]>({
-    queryKey: ["walkin-patient-search", patientQuery],
-    queryFn: async () => (await axiosInstance.get("/lab/patients", { params: { search: patientQuery } })).data.data || [],
-    enabled: open && patientQuery.trim().length >= 2,
+    queryKey: ["walkin-patient-search", debouncedPatientQuery],
+    queryFn: async () => (await axiosInstance.get("/lab/patients", { params: { search: debouncedPatientQuery } })).data.data || [],
+    enabled: open && debouncedPatientQuery.trim().length >= 2,
   });
 
   // A caller-supplied patient takes precedence; the search state is only used

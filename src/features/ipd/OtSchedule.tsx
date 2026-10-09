@@ -21,6 +21,7 @@ import { useToast } from "@/providers/ToastContext";
 import SearchableSelect from "@/components/form/SearchableSelect";
 import PageHeader from "@/components/layout/PageHeader";
 import { PatientHistoryDialog } from "@/components/clinical/PatientHistoryButton";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 /**
  * Tomorrow's operating list.
@@ -477,11 +478,16 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
   const { data: dropdowns } = useQuery({
     queryKey: ["appointment-dropdowns"],
     queryFn: async () => (await axiosInstance.get("/reception/appointments/dropdowns")).data.data,
+    // The same doctor list the booking screens hold for two minutes; it was
+    // re-downloaded (5+ server queries) on every dialog open.
+    staleTime: 2 * 60_000,
   });
+  // The request waits until typing pauses — it fired on every keystroke.
+  const debouncedPatientQuery = useDebouncedValue(patientQuery);
   const { data: patients, isFetching: searchingPatients } = useQuery({
-    queryKey: ["ot-patient-search", patientQuery],
-    queryFn: async () => (await axiosInstance.get("/reception/patients", { params: { search: patientQuery, limit: 20 } })).data.data,
-    enabled: dayCase && patientQuery.trim().length >= 2,
+    queryKey: ["ot-patient-search", debouncedPatientQuery],
+    queryFn: async () => (await axiosInstance.get("/reception/patients", { params: { search: debouncedPatientQuery, limit: 20 } })).data.data,
+    enabled: dayCase && debouncedPatientQuery.trim().length >= 2,
   });
 
   const book = useMutation({

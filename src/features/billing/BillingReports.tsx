@@ -26,6 +26,7 @@ import ReportStatusChips from "@/features/reports/kit/ReportStatusChips";
 import DepositDialog from "@/components/ipd/DepositDialog";
 import { UndoRounded } from "@mui/icons-material";
 import { useReportParam } from "@/features/reports/kit/useReportParam";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const ACCENT = BRAND.action;
 const inr = formatINRAuto;
@@ -419,10 +420,12 @@ export function PatientStatement() {
   const [term, setTerm] = useState("");
   const [selected, setSelected] = useState<PatientSearchRow | null>(null);
 
+  // The request waits until typing pauses — it fired on every keystroke.
+  const debouncedTerm = useDebouncedValue(term);
   const { data: options = [] } = useQuery({
-    queryKey: ["billing-patient-search", term],
-    queryFn: async () => (await apiGetList<PatientSearchRow>("/reception/patients", { params: { search: term, limit: 10 } })).rows,
-    enabled: term.trim().length >= 2,
+    queryKey: ["billing-patient-search", debouncedTerm],
+    queryFn: async () => (await apiGetList<PatientSearchRow>("/reception/patients", { params: { search: debouncedTerm, limit: 10 } })).rows,
+    enabled: debouncedTerm.trim().length >= 2,
   });
 
   // Hoisted so the query key, the URL and `enabled` all read the same value —

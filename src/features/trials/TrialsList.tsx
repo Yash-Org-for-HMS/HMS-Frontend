@@ -44,6 +44,7 @@ import FilterBar from "@/components/layout/FilterBar";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 // Keep the admin list's existing sentence-case header look (the SortableHeadCell
 // default is the reception-panel uppercase style).
@@ -67,10 +68,12 @@ export default function TrialsList() {
   // Server-side column sorting (the list is paginated, so sorting happens in the DB).
   const { orderBy, order, onSort } = useServerSort();
 
+  // The request waits until typing pauses — it fired on every keystroke.
+  const debouncedSearch = useDebouncedValue(search);
   const { data: trialsData, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["trials", page, search, statusFilter, orderBy, order],
+    queryKey: ["trials", page, debouncedSearch, statusFilter, orderBy, order],
     queryFn: async () =>
-      (await axiosInstance.get("/trials", { params: { page, limit: 10, search, status: statusFilter, sortBy: orderBy || undefined, sortOrder: order } })).data,
+      (await axiosInstance.get("/trials", { params: { page, limit: 10, search: debouncedSearch, status: statusFilter, sortBy: orderBy || undefined, sortOrder: order } })).data,
   });
   const trials: any[] = trialsData?.data ?? [];
   const totalPages: number = trialsData?.pagination?.totalPages ?? 1;

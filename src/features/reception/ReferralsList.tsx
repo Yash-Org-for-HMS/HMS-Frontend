@@ -16,6 +16,7 @@ import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import dayjs from "dayjs";
 import { BRAND } from "@/styles/accents";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 // `basePath` keeps a row-click inside whatever shell renders the page (reception
 // by default; the admin oversight route can pass "/hospital").
@@ -29,10 +30,12 @@ export default function ReferralsList({ basePath = "/reception" }: { basePath?: 
   // changing either resets to the first page.
   useEffect(() => { setPage(1); }, [search, typeFilter]);
 
+  // The request waits until typing pauses — it fired on every keystroke.
+  const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["referred-patients", typeFilter, search, page],
+    queryKey: ["referred-patients", typeFilter, debouncedSearch, page],
     queryFn: async () => (await axiosInstance.get("/reception/referred-patients", {
-      params: { ...(typeFilter ? { type: typeFilter } : {}), ...(search.trim() ? { search: search.trim() } : {}), page, limit: 20 },
+      params: { ...(typeFilter ? { type: typeFilter } : {}), ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}), page, limit: 20 },
     })).data,
     placeholderData: keepPreviousData,
   });

@@ -57,6 +57,9 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
   const { data: dropdowns = { doctors: [] } } = useQuery({
     queryKey: ["appointment-dropdowns"],
     queryFn: async () => (await axiosInstance.get("/reception/appointments/dropdowns")).data.data,
+    // The same doctor list the booking screens hold for two minutes; it was
+    // re-downloaded (5+ server queries) on every dialog open.
+    staleTime: 2 * 60_000,
     enabled: open,
   });
 

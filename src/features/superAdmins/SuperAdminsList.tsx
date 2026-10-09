@@ -40,6 +40,7 @@ import SortableHeadCell from "@/components/table/SortableHeadCell";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import CredentialDialog from "@/components/CredentialDialog";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 // Keep the admin list's existing sentence-case header look (the SortableHeadCell
 // default is the reception-panel uppercase style).
@@ -58,9 +59,11 @@ export default function SuperAdminsList() {
   // Server-side column sorting (the list is paginated, so sorting happens in the DB).
   const { orderBy, order, onSort } = useServerSort();
 
+  // The request waits until typing pauses — it fired on every keystroke.
+  const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
-    queryKey: ["super-admins", page, search, orderBy, order],
-    queryFn: async () => (await axiosInstance.get("/super-admins", { params: { page, limit: 10, search, sortBy: orderBy || undefined, sortOrder: order } })).data,
+    queryKey: ["super-admins", page, debouncedSearch, orderBy, order],
+    queryFn: async () => (await axiosInstance.get("/super-admins", { params: { page, limit: 10, search: debouncedSearch, sortBy: orderBy || undefined, sortOrder: order } })).data,
   });
 
   // Reset to the first page whenever the sort changes.

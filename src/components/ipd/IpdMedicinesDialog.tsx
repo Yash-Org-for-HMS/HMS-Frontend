@@ -19,6 +19,7 @@ import { useConfirm } from "@/providers/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import SoftChip from "../SoftChip";
 import MarChart from "./MarChart";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 // Standard frequency codes drive the MAR dose schedule (see backend
 // buildDoseSchedule) AND how many units the stay will need in total.
@@ -65,9 +66,11 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
   });
   const meds = data?.medications || [];
 
+  // The request waits until typing pauses — it fired on every keystroke.
+  const debouncedSearch = useDebouncedValue(search);
   const { data: catalog = [], isFetching: catLoading } = useQuery<any[]>({
-    queryKey: ["ipd-medicine-catalog", search],
-    queryFn: async () => (await axiosInstance.get("/ipd/medicines-catalog", { params: { search: search || undefined } })).data.data,
+    queryKey: ["ipd-medicine-catalog", debouncedSearch],
+    queryFn: async () => (await axiosInstance.get("/ipd/medicines-catalog", { params: { search: debouncedSearch || undefined } })).data.data,
     enabled: open,
   });
 

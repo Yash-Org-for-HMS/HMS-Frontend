@@ -51,6 +51,8 @@ export default function RadiologyMacroBar({
   const { data: macros = [], isLoading } = useQuery<RadiologyMacro[]>({
     queryKey: ["radiology-macros"],
     queryFn: async () => (await axiosInstance.get("/lab/radiology-macros")).data?.data ?? [],
+    // Reference data: the report macros (edits here invalidate it). Re-downloaded on every open before.
+    staleTime: 5 * 60_000,
   });
 
   const apply = (m: RadiologyMacro) => {
