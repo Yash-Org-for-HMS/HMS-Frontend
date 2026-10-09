@@ -237,7 +237,7 @@ export default function TreatmentChart() {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <IconButton size="small" aria-label="Previous chart day" onClick={() => setDayOffset((d) => d - 1)}><ChevronLeftRounded /></IconButton>
           <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 150, textAlign: "center" }}>
-            {dayOffset === 0 ? "Today" : dayStart.format("DD MMM YYYY")} · {chartDayStart}–{chartDayStart}
+            {dayOffset === 0 ? "Today" : dayStart.format("DD MMM YYYY")} · {chartDayStart} → {chartDayStart} next day
           </Typography>
           <IconButton size="small" aria-label="Next chart day" onClick={() => setDayOffset((d) => d + 1)} disabled={dayOffset >= 0}><ChevronRightRounded /></IconButton>
           <Button variant="outlined" startIcon={<PrintRounded />} onClick={() => window.print()} sx={{ textTransform: "none", ml: 1 }}>Print</Button>

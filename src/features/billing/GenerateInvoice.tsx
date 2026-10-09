@@ -187,7 +187,8 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
           getOptionLabel={(option) => `${option.firstName} ${option.lastName} (${option.uhidNumber})`}
           loading={patientLoading}
           value={selectedPatient}
-          onInputChange={(e, val) => setPatientQuery(val)}
+          // Only typing searches: picking a result sets the text to its label (reason "reset"), which is not a new search.
+              onInputChange={(_, v, reason) => { if (reason === "input") setPatientQuery(v); else if (reason === "clear") setPatientQuery(""); }}
           onChange={(e, val) => setSelectedPatient(val)}
           renderInput={(params) => (
             <TextField

@@ -37,6 +37,8 @@ const ROOM_STATUS_LABEL: Record<string, string> = {
   CLOSED: "Temporarily closed (beds → blocked)", DECOMMISSIONED: "Decommissioned (beds → inactive)",
 };
 const WARD_STATUS_LABEL: Record<string, string> = { ACTIVE: "Open", TEMP_CLOSED: "Temporarily closed — no admissions", INACTIVE: "Decommissioned" };
+/** A bed status as words: DISCHARGE_INITIATED → "Discharge initiated". */
+const bedStatusLabel = (status: string) => status.charAt(0) + status.slice(1).toLowerCase().replace(/_/g, " ");
 /** Which ward genders a ward type allows — mirrors facility.rules.ts allowedGenders. */
 const gendersFor = (rule?: string | null) => (rule === "FEMALE_ONLY" ? ["FEMALE"] : rule === "ALLOWED" ? ["MIXED", "MALE", "FEMALE"] : ["MIXED"]);
 const UNIT_KIND_LABEL: Record<string, string> = { OT: "Operation theatre", LAB: "Laboratory / imaging", OPD: "Outpatient clinic", COUNTER: "Desk / counter", UNIT: "Other service unit" };
@@ -172,7 +174,7 @@ export default function FacilitySetup() {
 
       {isLoading ? <ListSkeleton />
         : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
-        : wards.length === 0 ? <Mascot pose="all-caught-up" title="No wards yet" subtitle="Use Add to create a ward, room, and beds." />
+        : wards.length === 0 ? <Mascot pose="nothing-here-yet" title="No wards yet" subtitle="Use Add to create a ward, room, and beds." />
         : (
           <Stack spacing={2.5}>
             {wards.map((w) => (
@@ -236,17 +238,19 @@ export default function FacilitySetup() {
                                   that bills at base price looked identical to one priced by
                                   class. It is the default the discharge screen starts from, so
                                   silence here is the expensive kind. */}
-                              <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }} noWrap>
+                              {/* Type and class on their own lines: sharing one, a type such as
+                                  "Standard Manual Bed" pushed the class out of the card. */}
+                              <Typography variant="caption" sx={{ color: "text.secondary", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.35 }}>
                                 {b.bedTypeName ?? b.bedType}
-                                {notForPatients ? null : b.roomClassName
-                                  ? ` · ${b.roomClassName}`
-                                  : <Box component="span" sx={{ color: SEMANTIC.warning, fontWeight: 600 }}> · no class</Box>}
                               </Typography>
+                              {notForPatients ? null : b.roomClassName
+                                ? <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }} noWrap>{b.roomClassName}</Typography>
+                                : <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 600, display: "block" }}>No room class</Typography>}
                               {b.isTemporary && <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 700, display: "block" }}>Temporary</Typography>}
                               {b.occupant ? (
                                 <Typography variant="caption" sx={{ color, fontWeight: 600, display: "flex", alignItems: "center", gap: 0.3 }} noWrap><PersonRounded sx={{ fontSize: 12 }} /> {b.occupant.patientName}</Typography>
                               ) : (
-                                <Typography variant="caption" sx={{ color, fontWeight: 700, textTransform: "capitalize" }}>{off ? "decommissioned" : notForPatients ? "not for patients" : b.status.toLowerCase()}</Typography>
+                                <Typography variant="caption" sx={{ color, fontWeight: 700, display: "block" }}>{off ? "Decommissioned" : notForPatients ? "Not for patients" : bedStatusLabel(b.status)}</Typography>
                               )}
                             </Box>
                           </Tooltip>

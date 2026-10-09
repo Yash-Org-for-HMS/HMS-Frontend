@@ -469,7 +469,7 @@ export default function PatientProfile(
         <SectionCard title="Appointment History" icon={<CalendarTodayRounded fontSize="small" />}
           action={canEdit ? <Button size="small" startIcon={<EventAvailableRounded />} onClick={() => navigate(`/reception/appointments/new?patientId=${id}`)} sx={{ textTransform: "none", color: ACCENT }}>Book</Button> : undefined}>
           {appointments.length === 0 ? (
-            <Box sx={{ py: 2 }}><Mascot pose="all-caught-up" title="No appointments yet" subtitle="This patient has no appointment history." /></Box>
+            <Box sx={{ py: 2 }}><Mascot pose="nothing-here-yet" title="No appointments yet" subtitle="This patient has no appointment history." /></Box>
           ) : (
             <>
               <TableContainer>
@@ -536,7 +536,7 @@ export default function PatientProfile(
               sx={{ bgcolor: "rgba(8,145,178,0.12)", color: BRAND.action, fontWeight: 700 }} />
           </Stack>
           {invoices.length === 0 ? (
-            <Box sx={{ py: 2 }}><Mascot pose="all-caught-up" title="No invoices" subtitle="This patient has no invoices yet." /></Box>
+            <Box sx={{ py: 2 }}><Mascot pose="nothing-here-yet" title="No invoices" subtitle="This patient has no invoices yet." /></Box>
           ) : (
             <>
               <TableContainer>

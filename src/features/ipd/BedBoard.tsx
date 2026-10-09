@@ -232,7 +232,7 @@ export default function BedBoard({ readOnly = false, housekeeping = false }: { r
 
       {isLoading ? <ListSkeleton />
         : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
-        : wards.length === 0 ? <Mascot pose="all-caught-up" title="No wards yet" subtitle="Ask your hospital administrator to set up wards, rooms, and beds." />
+        : wards.length === 0 ? <Mascot pose="nothing-here-yet" title="No wards yet" subtitle="Ask your hospital administrator to set up wards, rooms, and beds." />
         : (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
             {wards.map((w) => (

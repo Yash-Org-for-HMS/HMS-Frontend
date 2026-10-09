@@ -165,7 +165,7 @@ export default function WardIndents() {
           {list.isError ? (
             <ErrorState title="Couldn't load the indents" message={apiErrorText(list.error)} onRetry={() => list.refetch()} />
           ) : list.isLoading || !wardId ? <ListSkeleton rows={3} /> : !list.data?.length ? (
-            <Paper sx={{ p: 3 }}><Mascot pose="all-caught-up" title="No indents in the last 30 days" /></Paper>
+            <Paper sx={{ p: 3 }}><Mascot pose="nothing-here-yet" title="No indents in the last 30 days" /></Paper>
           ) : (
             <Stack spacing={1.5}>
               {list.data.map((i) => (

@@ -24,7 +24,8 @@ export default function PatientPicker({ id, value, onChange, label = "Patient", 
       options={term.trim().length >= 2 ? data : []}
       value={value}
       onChange={(_e, p) => onChange(p)}
-      onInputChange={(_e, v) => setQuery(v)}
+      // Only typing searches: picking a result sets the text to its label (reason "reset"), which is not a new search.
+              onInputChange={(_, v, reason) => { if (reason === "input") setQuery(v); else if (reason === "clear") setQuery(""); }}
       getOptionLabel={(p) => `${patientLabel(p)} · ${p.uhidNumber}`}
       isOptionEqualToValue={(a, b) => a.patientId === b.patientId}
       filterOptions={(x) => x}

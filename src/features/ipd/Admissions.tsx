@@ -283,7 +283,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
               ) : isError ? (
                 <TableRow><TableCell colSpan={9} sx={{ py: 4, border: 0 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : sorted.length === 0 ? (
-                <TableRow><TableCell colSpan={9} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No admissions" subtitle="Nothing here for this filter." /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} sx={{ py: 4, border: 0 }}><Mascot pose="no-matches" title="No admissions" subtitle="No admission matches this view or search." /></TableCell></TableRow>
               ) : sorted.map((a) => {
                 const sm = STATUS_META[a.status] || { label: a.status, color: NEUTRAL.muted };
                 return (

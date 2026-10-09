@@ -134,7 +134,8 @@ export default function ClaimForm() {
                 options={pOptions}
                 getOptionLabel={(o: any) => (typeof o === "string" ? o : `${o.firstName || ""} ${o.lastName || ""} (${o.uhidNumber})`)}
                 filterOptions={(x) => x}
-                onInputChange={(_, v) => setPSearch(v)}
+                // Only typing searches: picking a result sets the text to its label (reason "reset"), which is not a new search.
+              onInputChange={(_, v, reason) => { if (reason === "input") setPSearch(v); else if (reason === "clear") setPSearch(""); }}
                 onChange={(_, v: any) => { set("patientId", v?.patientId || ""); }}
                 renderInput={(p) => <TextField {...p} fullWidth label="Patient *" placeholder="Search by name or UHID…" />}
                 isOptionEqualToValue={(o: any, v: any) => o.patientId === v.patientId}

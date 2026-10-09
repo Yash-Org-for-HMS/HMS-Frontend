@@ -384,7 +384,12 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
               ) : isError ? (
                 <TableRow><TableCell colSpan={5} sx={{ py: 4, border: 0 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : sortedAppointments.length === 0 ? (
-                <TableRow><TableCell colSpan={5} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No appointments" subtitle="No appointments found." /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} sx={{ py: 4, border: 0 }}>{search.trim()
+                  ? <Mascot pose="no-matches" title="No matching appointments" subtitle="No appointment matches that search." />
+                  : <Mascot pose="nothing-here-yet"
+                      title={tabValue === "today" ? "Nothing booked for today" : tabValue === "this_week" ? "Nothing booked for the next 7 days" : tabValue === "date" ? "Nothing booked on this date" : "No appointments yet"}
+                      subtitle="Book one to see it here."
+                      action={<Button variant="contained" onClick={() => navigate("/reception/appointments/new")} sx={{ textTransform: "none" }}>Book appointment</Button>} />}</TableCell></TableRow>
               ) : (
                 sortedAppointments.map(appt => {
                   const typeInfo = getAppointmentType(appt.reason);

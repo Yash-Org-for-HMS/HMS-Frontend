@@ -75,7 +75,7 @@ export default function VaccineCatalog() {
       />
 
       {vaccines.length === 0 ? (
-        <Mascot pose="all-caught-up" title="No vaccines yet" subtitle="Use Add Vaccine to create your first one." />
+        <Mascot pose="nothing-here-yet" title="No vaccines yet" subtitle="Use Add Vaccine to create your first one." />
       ) : (
         <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
           <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 2, borderBottom: "1px solid", borderColor: "divider" }}>

@@ -449,7 +449,8 @@ export function PatientStatement() {
           filterOptions={(x) => x}
           value={selected}
           onChange={(_, v) => setSelected(v)}
-          onInputChange={(_, v) => setTerm(v)}
+          // Only typing searches: picking a result sets the text to its label (reason "reset"), which is not a new search.
+              onInputChange={(_, v, reason) => { if (reason === "input") setTerm(v); else if (reason === "clear") setTerm(""); }}
           renderInput={(params) => <TextField {...params} label="Search patient (name or UHID)" placeholder="Type at least 2 characters" />}
         />
       </Box>

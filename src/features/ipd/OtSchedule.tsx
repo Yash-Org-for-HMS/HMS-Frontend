@@ -575,7 +575,8 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
             <Autocomplete
               options={(patients ?? []) as Record<string, string>[]}
               getOptionLabel={(o) => `${o.firstName || ""} ${o.lastName || ""} · ${o.uhidNumber || ""}`.trim()}
-              onInputChange={(_, v) => setPatientQuery(v)}
+              // Only typing searches: picking a result sets the text to its label (reason "reset"), which is not a new search.
+              onInputChange={(_, v, reason) => { if (reason === "input") setPatientQuery(v); else if (reason === "clear") setPatientQuery(""); }}
               onChange={(_, v) => setPatientId(v?.patientId ?? "")}
               loading={searchingPatients}
               noOptionsText={patientQuery.trim().length < 2 ? "Type at least two letters" : "No patient found"}

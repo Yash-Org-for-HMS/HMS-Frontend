@@ -236,9 +236,9 @@ export default function DoctorAvailability() {
       ) : isError ? (
         <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : doctors.length === 0 ? (
-        <Mascot pose="all-caught-up" title="No doctors" subtitle="No doctors are configured for this hospital yet." />
+        <Mascot pose="nothing-here-yet" title="No doctors" subtitle="No doctors are set up for this hospital yet." />
       ) : shown.length === 0 ? (
-        <Mascot pose="all-caught-up" title="No match" subtitle="No doctor matches that search." />
+        <Mascot pose="no-matches" title="No match" subtitle="No doctor matches that search." />
       ) : (
         <Grid container spacing={2}>
           {shown.map((doc) => (

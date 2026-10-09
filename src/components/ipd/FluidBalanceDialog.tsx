@@ -140,7 +140,7 @@ export default function FluidBalanceDialog({ open, admission, onClose, readOnly 
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>Fluid balance — {admission?.patientName}</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {admission?.uhid} · chart day {chartDayStart}–{chartDayStart}
+                {admission?.uhid} · chart day {chartDayStart} → {chartDayStart} next day
               </Typography>
             </Box>
           </Box>

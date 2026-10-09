@@ -199,7 +199,7 @@ export default function LabOrdersQueue() {
               action={<Button variant="contained" onClick={() => setTabValue(1)}>Show past pending</Button>}
             />
           ) : (
-            <Mascot pose="all-caught-up" title="No lab orders" subtitle="No lab orders found." />
+            <Mascot pose="all-caught-up" title="No lab orders" subtitle="Nothing in this list right now." />
           )
         ) : (
           <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>

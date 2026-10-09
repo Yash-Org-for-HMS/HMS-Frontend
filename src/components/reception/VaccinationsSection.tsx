@@ -321,7 +321,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
           )}
         </Box>
         {rows.length === 0 ? (
-          <Mascot pose="all-caught-up" title="No doses to show"
+          <Mascot pose="nothing-here-yet" title="No doses to show"
             subtitle={isAdult ? "No vaccination history on record for this patient. Use '+ Add Vaccine' to log one." : "This patient is fully up to date."} />
         ) : (
           <TableContainer>

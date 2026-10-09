@@ -251,7 +251,7 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>Observations — {admission?.patientName}</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {admission?.uhid} · {admission?.bed?.label || "—"} · chart day {chartDayStart}–{chartDayStart}
+                {admission?.uhid} · {admission?.bed?.label || "—"} · chart day {chartDayStart} → {chartDayStart} next day
               </Typography>
             </Box>
           </Box>

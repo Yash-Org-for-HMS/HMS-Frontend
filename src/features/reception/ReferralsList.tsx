@@ -88,7 +88,7 @@ export default function ReferralsList({ basePath = "/reception" }: { basePath?: 
               ) : isError ? (
                 <TableRow><TableCell colSpan={4} sx={{ py: 4, border: 0 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : sorted.length === 0 ? (
-                <TableRow><TableCell colSpan={4} sx={{ py: 4, border: 0 }}><Mascot pose="all-caught-up" title="No referred patients" subtitle="No patients match this filter. Referral source is set on the patient's registration." /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} sx={{ py: 4, border: 0 }}><Mascot pose="no-matches" title="No referred patients" subtitle="No patients match this filter. Referral source is set on the patient's registration." /></TableCell></TableRow>
               ) : (
                 sorted.map((r) => {
                   const isExternal = r.referredByType === "EXTERNAL";

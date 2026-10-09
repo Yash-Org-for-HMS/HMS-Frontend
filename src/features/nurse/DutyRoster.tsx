@@ -183,7 +183,7 @@ export default function DutyRoster() {
       {wards.isError || q.isError ? (
         <ErrorState title="Couldn't load the roster" message={apiErrorText(wards.error ?? q.error)} onRetry={() => { wards.refetch(); q.refetch(); }} />
       ) : wards.data && !wards.data.length ? (
-        <Paper sx={{ p: 3 }}><Mascot pose="all-caught-up" title="No wards set up yet" /></Paper>
+        <Paper sx={{ p: 3 }}><Mascot pose="nothing-here-yet" title="No wards set up yet" subtitle="The hospital administrator adds wards in Ward & Bed Setup." /></Paper>
       ) : (
         <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
           <Table size="small">

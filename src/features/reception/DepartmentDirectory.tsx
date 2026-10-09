@@ -119,7 +119,7 @@ export default function DepartmentDirectory() {
       ) : isError ? (
         <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : filtered.length === 0 ? (
-        <Mascot pose="all-caught-up" title="No departments" subtitle={search ? "No department or doctor matches your search." : "No departments have been set up yet."} />
+        <Mascot pose={search ? "no-matches" : "nothing-here-yet"} title="No departments" subtitle={search ? "No department or doctor matches your search." : "No departments have been set up yet."} />
       ) : (
         <Grid container spacing={2}>
           {filtered.map((d) => (

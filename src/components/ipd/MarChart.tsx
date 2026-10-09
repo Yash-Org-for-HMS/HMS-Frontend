@@ -57,7 +57,7 @@ export default function MarChart({ admissionId, readOnly = false }: { admissionI
 
   const scheduled = orders.filter((o) => (o.doses || []).length > 0);
   if (scheduled.length === 0) {
-    return <Box sx={{ py: 3 }}><Mascot pose="all-caught-up" title="No scheduled doses" subtitle="Assign a medicine with a frequency (OD/BD/TDS…) and duration to build a chart." size={110} /></Box>;
+    return <Box sx={{ py: 3 }}><Mascot pose="nothing-here-yet" title="No scheduled doses" subtitle="Assign a medicine with a frequency (OD/BD/TDS…) and duration to build a chart." size={110} /></Box>;
   }
 
   return (

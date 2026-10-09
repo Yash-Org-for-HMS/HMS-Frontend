@@ -191,7 +191,7 @@ function BillsList({ type, readOnly = false, basePath = "/reception/billing", de
                 <TableRow><TableCell colSpan={columnCount} sx={{ py: 4, border: 0 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : rows.length === 0 ? (
                 <TableRow><TableCell colSpan={columnCount} sx={{ py: 4, border: 0 }}>
-                  <Mascot pose="all-caught-up" title={isIpd ? "No IPD bills" : "No OPD bills"} subtitle="No invoices match your filters." />
+                  <Mascot pose="no-matches" title={isIpd ? "No IPD bills" : "No OPD bills"} subtitle="No bills match these filters. Try a wider date range." />
                 </TableCell></TableRow>
               ) : rows.map((r) => (
                 <TableRow key={r.invoiceId} hover sx={{ cursor: "pointer" }} onClick={() => setViewId(r.invoiceId)}>
