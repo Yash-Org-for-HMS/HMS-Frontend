@@ -67,7 +67,9 @@ export default function NurseWard() {
 
   const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<AdmissionRow[]>({
     queryKey: ["nurse-ward-admissions"],
-    queryFn: async () => (await axiosInstance.get("/ipd/admissions", { params: { status: "ADMITTED" } })).data.data,
+    // Every inpatient, not the list endpoint's default first page of 20 — past
+    // twenty, the rest were silently missing from the ward. 1000 is the API's cap.
+    queryFn: async () => (await axiosInstance.get("/ipd/admissions", { params: { status: "ADMITTED", limit: 1000 } })).data.data,
   });
 
   const s = search.trim().toLowerCase();

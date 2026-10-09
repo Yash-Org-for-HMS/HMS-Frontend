@@ -64,7 +64,10 @@ export default function DispensaryPOS() {
     queryFn: async () => {
       const [medRes, invRes] = await Promise.all([
         axiosInstance.get(`/pharmacy/medicines`),
-        axiosInstance.get(`/pharmacy/inventory`),
+        // Batches with stock only: the counter sums them per medicine, so an
+        // empty batch adds nothing — and every batch ever received is a list that
+        // only grows.
+        axiosInstance.get(`/pharmacy/inventory`, { params: { hideDepleted: true } }),
       ]);
       return { medicines: medRes.data.data || [], inventory: invRes.data.data || [] };
     },

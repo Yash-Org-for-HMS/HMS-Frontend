@@ -177,7 +177,15 @@ export default function AuditLogs() {
   const selectProps = { fullWidth: true, size: "small" as const };
   const dateProps = { ...selectProps, type: "date", InputLabelProps: { shrink: true } };
 
-  const change = selectedLog ? describeChange(selectedLog) : { rows: [] as ChangeRow[] };
+  // The list leaves out each entry's before/after (up to 12 KB apiece); the
+  // entry opened asks for its own. An audit entry never changes, so once is enough.
+  const detail = useQuery({
+    queryKey: ["hospital-audit-log", selectedLog?.auditLogId],
+    queryFn: async () => (await axiosInstance.get(`/hospital/audit-logs/${selectedLog.auditLogId}`)).data.data,
+    enabled: Boolean(selectedLog?.auditLogId),
+    staleTime: Infinity,
+  });
+  const change = detail.data ? describeChange(detail.data) : { rows: [] as ChangeRow[] };
 
   return (
     <Box sx={{ pb: 6 }}>
@@ -359,7 +367,11 @@ export default function AuditLogs() {
             {change.note && (
               <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace", display: "block", mb: 1.5 }}>{change.note}</Typography>
             )}
-            {change.rows.length === 0 ? (
+            {detail.isLoading ? (
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>Loading what changed…</Typography>
+            ) : detail.isError ? (
+              <Typography variant="body2" sx={{ color: SEMANTIC.danger }}>Couldn't load this entry's details. Close and open it again.</Typography>
+            ) : change.rows.length === 0 ? (
               <Typography variant="body2" sx={{ color: "text.secondary" }}>No field-level detail was captured for this entry.</Typography>
             ) : (
               <TableContainer sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}>

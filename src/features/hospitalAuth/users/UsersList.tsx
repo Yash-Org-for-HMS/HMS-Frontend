@@ -364,7 +364,9 @@ export default function UsersList() {
   const { data: users = [], isLoading, isError, error, refetch } = useQuery<User[]>({
     queryKey: ["hospital-users-list", roleFilter],
     queryFn: async () => (await axiosInstance.get("/hospital/users", {
-      params: { roleId: roleFilter || undefined },
+      // Every login: the table sorts in the browser and has no pages, so the
+      // API default of 50 hid everyone after the fiftieth. 1000 is the API cap.
+      params: { roleId: roleFilter || undefined, limit: 1000 },
     })).data.data,
   });
 

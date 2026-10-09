@@ -51,6 +51,15 @@ export default function AuditLogsList() {
 
   const { user } = useAuth();
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
+  // The list leaves out each entry's before/after (up to 12 KB apiece); the
+  // entry opened asks for its own. An audit entry never changes.
+  const detail = useQuery({
+    queryKey: ["audit-log", selectedLog?.auditLogId],
+    queryFn: async () => (await axiosInstance.get(`/audit-logs/${selectedLog?.auditLogId}`)).data.data,
+    enabled: Boolean(selectedLog?.auditLogId),
+    staleTime: Infinity,
+  });
+  const entry = detail.data;
   const [showMyActions, setShowMyActions] = useState(false);
 
   // Server-side column sorting (the list is paginated, so sorting happens in the DB).
@@ -256,25 +265,31 @@ export default function AuditLogsList() {
                 <Typography sx={{ mb: 2, fontSize: "0.875rem", color: "text.secondary" }}>{selectedLog.deviceInfo || "—"}</Typography>
               </Grid>
               
-              {(selectedLog.oldValueJson || selectedLog.newValueJson) && (
+              {detail.isLoading && (
+                <Grid size={{ xs: 12 }}><Typography variant="body2" sx={{ color: "text.secondary" }}>Loading the change…</Typography></Grid>
+              )}
+              {detail.isError && (
+                <Grid size={{ xs: 12 }}><Typography variant="body2" sx={{ color: SEMANTIC.dangerLight }}>Couldn't load this entry's details. Close and open it again.</Typography></Grid>
+              )}
+              {(entry?.oldValueJson || entry?.newValueJson) && (
                 <Grid size={{ xs: 12 }}>
                   <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", md: "row" } }}>
-                    {selectedLog.oldValueJson && (
+                    {entry.oldValueJson && (
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="overline" sx={{ color: SEMANTIC.dangerLight }}>Old Value</Typography>
                         <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 2, border: "1px solid rgba(239,68,68,0.2)", overflowX: "auto" }}>
                           <pre style={{ margin: 0, color: "text.primary", fontSize: "0.875rem" }}>
-                            {JSON.stringify(selectedLog.oldValueJson, null, 2)}
+                            {JSON.stringify(entry.oldValueJson, null, 2)}
                           </pre>
                         </Box>
                       </Box>
                     )}
-                    {selectedLog.newValueJson && (
+                    {entry.newValueJson && (
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="overline" sx={{ color: SEMANTIC.successLight }}>New Value</Typography>
                         <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 2, border: "1px solid rgba(16,185,129,0.2)", overflowX: "auto" }}>
                           <pre style={{ margin: 0, color: "text.primary", fontSize: "0.875rem" }}>
-                            {JSON.stringify(selectedLog.newValueJson, null, 2)}
+                            {JSON.stringify(entry.newValueJson, null, 2)}
                           </pre>
                         </Box>
                       </Box>
