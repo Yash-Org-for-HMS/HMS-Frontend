@@ -170,7 +170,8 @@ export default function ReceptionDashboard() {
   const { loaded: modulesLoaded, isModuleEnabled } = useEnabledModules();
   const { data: bedData } = useQuery({
     queryKey: ["dashboard-beds"],
-    queryFn: async () => (await axiosInstance.get("/ipd/structure")).data.data,
+    // Counts only: the tile needs the summary, not every bed and who is in it.
+    queryFn: async () => (await axiosInstance.get("/ipd/structure", { params: { view: "summary" } })).data.data,
     // Both halves matter: isModuleEnabled() answers "yes" while the module
     // list is still loading, so gating on it alone still fired the request on
     // first render — which is exactly the 403 this was meant to stop.

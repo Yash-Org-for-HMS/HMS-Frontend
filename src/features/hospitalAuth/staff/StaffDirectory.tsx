@@ -130,9 +130,18 @@ export default function StaffDirectory() {
     setDialog(null);
     if (addWithLogin || editId) setSearchParams({}, { replace: true });
   };
+  // The page filters on a few small lists; the form's full lists (~30 KB:
+  // designations, wards, every person for the manager pickers) load only when
+  // a form is opened.
+  const filterOpts = useQuery<Pick<StaffOptions, "categories" | "branches" | "roles">>({
+    queryKey: ["staff-options", "filters"],
+    queryFn: async () => (await axiosInstance.get("/hospital/staff/options", { params: { part: "filters" } })).data.data,
+  });
+  const pageOptions = filterOpts.data;
   const opts = useQuery<StaffOptions>({
     queryKey: ["staff-options"],
     queryFn: async () => (await axiosInstance.get("/hospital/staff/options")).data.data,
+    enabled: !!openDialog || !!loginFor,
   });
   const options = opts.data;
   const rows = useMemo(() => list.data?.data ?? [], [list.data]);
@@ -178,7 +187,7 @@ export default function StaffDirectory() {
           actions={
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <UserCapacityChip />
-              <Button variant="contained" startIcon={<AddRounded />} disabled={!options} onClick={() => setDialog({ row: null })} sx={{ textTransform: "none", fontWeight: 600, px: 3 }}>
+              <Button variant="contained" startIcon={<AddRounded />} disabled={!pageOptions} onClick={() => setDialog({ row: null })} sx={{ textTransform: "none", fontWeight: 600, px: 3 }}>
                 Add staff member
               </Button>
             </Box>
@@ -204,12 +213,12 @@ export default function StaffDirectory() {
             slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> } }} />
           <TextField select size="small" label="Category" value={category} onChange={(e) => setCategory(e.target.value)} sx={{ minWidth: 200 }}>
             <MenuItem value="">All categories</MenuItem>
-            {(options?.categories ?? []).map((c) => <MenuItem key={c.code} value={c.code}>{c.name}</MenuItem>)}
+            {(pageOptions?.categories ?? []).map((c) => <MenuItem key={c.code} value={c.code}>{c.name}</MenuItem>)}
           </TextField>
-          {(options?.branches.length ?? 0) > 1 && (
+          {(pageOptions?.branches.length ?? 0) > 1 && (
             <TextField select size="small" label="Facility" value={branch} onChange={(e) => setBranch(e.target.value)} sx={{ minWidth: 180 }}>
               <MenuItem value="">All facilities</MenuItem>
-              {options!.branches.map((b) => <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>)}
+              {pageOptions!.branches.map((b) => <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>)}
             </TextField>
           )}
           <Typography variant="body2" sx={{ color: "text.secondary", ml: "auto" }}>
@@ -251,7 +260,7 @@ export default function StaffDirectory() {
                           <Typography variant="caption" sx={{ color: "text.secondary" }}>
                             {[r.staffCategoryName, r.employment?.employeeCode].filter(Boolean).join(" · ")}
                           </Typography>
-                          {(options?.branches.length ?? 0) > 1 && (r.worksAt ?? []).length > 0 && (
+                          {(pageOptions?.branches.length ?? 0) > 1 && (r.worksAt ?? []).length > 0 && (
                             <Typography variant="caption" noWrap title={(r.worksAt ?? []).map((w) => w.branchName).join(" · ")} sx={{ color: "text.secondary", display: "block", maxWidth: 180 }}>
                               {(r.worksAt ?? []).map((w) => w.branchName).join(" · ")}
                             </Typography>
@@ -306,13 +315,13 @@ export default function StaffDirectory() {
                       {canGiveLogins && !r.login && !exited && (
                         <Tooltip title="Give a login">
                           <span>
-                            <IconButton size="small" disabled={!options} onClick={() => setLoginFor(r)} sx={{ color: "text.secondary" }}><KeyRounded fontSize="small" /></IconButton>
+                            <IconButton size="small" disabled={!pageOptions} onClick={() => setLoginFor(r)} sx={{ color: "text.secondary" }}><KeyRounded fontSize="small" /></IconButton>
                           </span>
                         </Tooltip>
                       )}
                       <Tooltip title="Edit">
                         <span>
-                          <IconButton size="small" disabled={!options} onClick={() => setDialog({ row: r })} sx={{ color: "text.secondary" }}><EditRounded fontSize="small" /></IconButton>
+                          <IconButton size="small" disabled={!pageOptions} onClick={() => setDialog({ row: r })} sx={{ color: "text.secondary" }}><EditRounded fontSize="small" /></IconButton>
                         </span>
                       </Tooltip>
                     </TableCell>

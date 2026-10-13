@@ -69,8 +69,10 @@ export default function FacilitySetup() {
   const [rentOpen, setRentOpen] = useState(false);
 
   const { data, isLoading, isError, error, refetch } = useQuery<IpdStructure>({
-    queryKey: ["ipd-structure"],
-    queryFn: async () => (await axiosInstance.get("/ipd/structure")).data.data,
+    // Setup needs the beds, not who is in them: no patient names are fetched.
+    // Its own key, so this slimmer answer never stands in for the Bed Board's.
+    queryKey: ["ipd-structure", "setup"],
+    queryFn: async () => (await axiosInstance.get("/ipd/structure", { params: { view: "setup" } })).data.data,
   });
   // The hospital's ward / room / bed types, departments and floors — what the forms pick from.
   const { data: options, refetch: refetchOptions } = useQuery<FacilityOptions>({
@@ -226,7 +228,7 @@ export default function FacilitySetup() {
                         const off = b.isActive === false;
                         const color = notForPatients || off ? NEUTRAL.muted : STATUS_COLOR[b.status] || NEUTRAL.muted;
                         return (
-                          <Tooltip key={b.bedId} title={b.occupant ? `${b.occupant.patientName} (${b.occupant.uhid}) — edit details` : `${off ? "Decommissioned" : notForPatients ? "Not for patients" : b.status} — click to edit details`}>
+                          <Tooltip key={b.bedId} title={b.occupant ? "Occupied — edit details" : `${off ? "Decommissioned" : notForPatients ? "Not for patients" : b.status} — click to edit details`}>
                             <Box onClick={() => setDialog({ kind: "bed", edit: { ...b, roomId: r.roomId, wardId: w.wardId } })}
                               sx={{ cursor: "pointer", width: 140, p: 1.25, borderRadius: 2, border: "1px solid", borderColor: `${color}55`, bgcolor: `${color}12`, position: "relative", opacity: off ? 0.55 : 1, "&:hover": { borderColor: color } }}>
                               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -248,7 +250,7 @@ export default function FacilitySetup() {
                                 : <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 600, display: "block" }}>No room class</Typography>}
                               {b.isTemporary && <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 700, display: "block" }}>Temporary</Typography>}
                               {b.occupant ? (
-                                <Typography variant="caption" sx={{ color, fontWeight: 600, display: "flex", alignItems: "center", gap: 0.3 }} noWrap><PersonRounded sx={{ fontSize: 12 }} /> {b.occupant.patientName}</Typography>
+                                <Typography variant="caption" sx={{ color, fontWeight: 600, display: "flex", alignItems: "center", gap: 0.3 }} noWrap><PersonRounded sx={{ fontSize: 12 }} /> Occupied</Typography>
                               ) : (
                                 <Typography variant="caption" sx={{ color, fontWeight: 700, display: "block" }}>{off ? "Decommissioned" : notForPatients ? "Not for patients" : bedStatusLabel(b.status)}</Typography>
                               )}

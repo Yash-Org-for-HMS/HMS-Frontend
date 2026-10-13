@@ -66,7 +66,7 @@ export default function RadiologyOrdersQueue() {
   const { data, isLoading: loading, refetch: fetchOrders } = useQuery({
     queryKey: ["radiology-orders-queue", tabValue, page],
     queryFn: async () => {
-      const res = await axiosInstance.get(`/lab/radiology-orders`, { params: { bucket: BUCKETS[tabValue], page, limit: 20, t: Date.now() } });
+      const res = await axiosInstance.get(`/lab/radiology-orders`, { params: { bucket: BUCKETS[tabValue], page, limit: 20 } });
       return res.data;
     },
     // A safety net while live (every order, result and payment is pushed);
