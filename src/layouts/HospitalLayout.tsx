@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRoleTitle } from "@/hooks/useRoleTitle";
 import SidebarNav from "@/components/layout/SidebarNav";
 import { Outlet, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,9 +28,7 @@ import { useSocket } from "@/hooks/useSocket";
 const drawerWidth = 260;
 
 export default function HospitalLayout() {
-  useEffect(() => {
-    document.title = "Dolphin | Hospital Admin";
-  }, []);
+  useRoleTitle("Hospital Admin");
 
   const { user } = useHospitalAuth();
   const theme = useTheme();
@@ -56,6 +55,7 @@ export default function HospitalLayout() {
     { text: "Hospital Profile", icon: <LocalHospitalRounded />, path: "/hospital/profile", adminOnly: true, section: "Set up — in this order" },
     { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", adminOnly: true, section: "Set up — in this order" },
     { text: "Branches", icon: <ApartmentRounded />, path: "/hospital/branches", adminOnly: true, needs: ["H_ADMIN"], section: "Set up — in this order" },
+    { text: "Branch settings", icon: <ApartmentRounded />, path: "/hospital/branch-settings", adminOnly: true, needs: ["B_ADMIN"], section: "Set up — in this order" },
     { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", adminOnly: true, section: "Set up — in this order" },
     { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", adminOnly: true, section: "Set up — in this order" },
     { text: "Schedule of Charges", icon: <ReceiptLongRounded />, path: "/hospital/soc", adminOnly: true, section: "Set up — in this order" },
@@ -69,7 +69,7 @@ export default function HospitalLayout() {
     // person is added. Logins & roles below manages the logins themselves.
     { text: "Staff Directory", icon: <AccountTreeRounded />, path: "/hospital/staff", adminOnly: true, needs: ["H_ADMIN", "HR_ADMIN"], section: "Set up — in this order" },
     // Who reports to whom, and the departments under those who oversee them.
-    { text: "Organisation chart", icon: <SchemaRounded />, path: "/hospital/organogram", adminOnly: true, needs: ["H_ADMIN", "HR_ADMIN"], section: "Set up — in this order" },
+    { text: "Organisation chart", icon: <SchemaRounded />, path: "/hospital/organogram", adminOnly: true, needs: ["H_ADMIN", "HR_ADMIN", "B_ADMIN"], section: "Set up — in this order" },
     { text: "Logins & roles", icon: <BadgeRounded />, path: "/hospital/users", adminOnly: true, needs: ["H_ADMIN"], section: "Set up — in this order" },
 
     // ── Catalogs and forms, as the hospital needs them ──

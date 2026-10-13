@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRoleTitle } from "@/hooks/useRoleTitle";
 import SidebarNav from "@/components/layout/SidebarNav";
 import { BRAND } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
@@ -27,9 +28,7 @@ import { refetchUnlessFresh, catchUpEventOnlyScreens } from "@/utils/liveRefresh
 const drawerWidth = 260;
 
 export default function PharmacyLayout() {
-  useEffect(() => {
-    document.title = "Dolphin | Pharmacy Portal";
-  }, []);
+  useRoleTitle("Pharmacy");
 
   
   const theme = useTheme();

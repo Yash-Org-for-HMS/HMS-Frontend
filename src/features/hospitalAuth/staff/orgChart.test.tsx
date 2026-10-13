@@ -11,6 +11,8 @@ import { buildForest, splitUnplaced, ancestorsOf, departmentLanes, openToDepth, 
  */
 
 const api = vi.hoisted(() => ({ get: vi.fn() }));
+const me = vi.hoisted(() => ({ role: "H_ADMIN" }));
+vi.mock("@/providers/HospitalAuthContext", () => ({ useHospitalAuth: () => ({ user: { id: "me", role: me.role } }) }));
 vi.mock("@/api/axios", () => ({ axiosInstance: { get: (...a: unknown[]) => api.get(...a) }, API_URL: "http://localhost:5000/api" }));
 
 import Organogram from "./Organogram";
@@ -86,6 +88,7 @@ describe("the organisation chart page", () => {
   beforeEach(() => {
     api.get.mockReset();
     api.get.mockResolvedValue({ data: { data } });
+    me.role = "H_ADMIN";
   });
 
   it("draws the chart, lists who is not placed, and finds a person", async () => {
@@ -112,6 +115,16 @@ describe("the organisation chart page", () => {
     expect(within(panel).getByText("JOINT")).toBeInTheDocument();
     expect(within(panel).getAllByText("Head")).toHaveLength(2);
     expect(within(panel).getByText("Reporting to them (2)")).toBeInTheDocument();
+    expect(within(panel).getByRole("button", { name: "Change in the Staff Directory" })).toBeInTheDocument();
+  });
+
+  it("a branch admin sees the chart but no way into the Staff Directory", async () => {
+    me.role = "B_ADMIN";
+    renderWithProviders(<Organogram />);
+    fireEvent.click(await screen.findByRole("button", { name: "Farhan Ortho, D-ortho" }));
+    const panel = await screen.findByRole("dialog", { name: "Farhan Ortho — details" });
+    expect(within(panel).queryByRole("button", { name: "Change in the Staff Directory" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Staff Directory" })).not.toBeInTheDocument();
   });
 
   it("the departments view groups them under who oversees them", async () => {

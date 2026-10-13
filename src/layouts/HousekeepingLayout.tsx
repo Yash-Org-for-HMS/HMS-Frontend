@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRoleTitle } from "@/hooks/useRoleTitle";
 import SidebarNav from "@/components/layout/SidebarNav";
 import { BRAND } from "@/styles/accents";
 import { ThemeProvider } from "@mui/material/styles";
@@ -31,9 +32,7 @@ const drawerWidth = 260;
  * role to exactly that (lib/roleCatalog.ts, beds.controller setBedStatus).
  */
 export default function HousekeepingLayout() {
-  useEffect(() => {
-    document.title = "Dolphin | Housekeeping";
-  }, []);
+  useRoleTitle("Housekeeping");
 
   
   const theme = useTheme();

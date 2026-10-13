@@ -15,9 +15,9 @@ import { VITALS_LABEL, LAB_BILLING_LABEL } from "./branches.types";
 
 /**
  * Hospital settings → Branches. The details of the branches the hospital has:
- * address, contacts and GST registration for their printouts, and the settings
- * a branch runs differently. Adding, renaming, closing and plans are the super
- * admin's, so this page edits existing branches only.
+ * address, contacts and GST registration for their printouts. What a branch
+ * runs differently is shown here but set by its branch admin. Adding, renaming,
+ * closing and plans are the super admin's, so this page edits existing branches only.
  */
 
 const fmt12 = (hhmm: string) => {
@@ -62,10 +62,11 @@ export default function BranchesPage() {
     <Box sx={{ maxWidth: 1100, mx: "auto", width: "100%" }}>
       <PageHeader
         title="Branches"
-        subtitle="Where each branch is, how it is registered, and what it does differently from the rest of the hospital."
+        subtitle="Where each branch is and how it is registered."
       />
       <Alert severity="info" sx={{ mb: 2 }}>
-        To add, rename or close a branch, or change its plan, contact your Dolphin administrator. Anything left empty here follows the hospital's own details and settings.
+        To add, rename or close a branch, or change its plan, contact your Dolphin administrator. Anything left empty here follows the hospital's own details.
+        How a branch works — who records vitals, lab billing, refund approvals, OPD hours — is set by that branch's admin.
       </Alert>
 
       <Stack spacing={2}>
@@ -111,6 +112,7 @@ export default function BranchesPage() {
                   {own.length
                     ? own.map((t) => <Typography key={t} variant="body2">{t}</Typography>)
                     : <Typography variant="body2" sx={{ color: "text.secondary" }}>Nothing — follows the hospital's settings</Typography>}
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>Set by the branch admin</Typography>
                 </Stack>
               </Box>
             </Paper>

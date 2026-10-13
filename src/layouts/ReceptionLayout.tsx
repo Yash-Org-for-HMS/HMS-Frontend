@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRoleTitle } from "@/hooks/useRoleTitle";
 import { menuPathsFor, holdsHome, hasAction, hasRole } from "@/constants/roles";
 import { isNavItemActive } from "@/components/layout/navActive";
 
@@ -30,9 +31,7 @@ import { refetchUnlessFresh, catchUpEventOnlyScreens } from "@/utils/liveRefresh
 const drawerWidth = 260;
 
 export default function ReceptionLayout() {
-  useEffect(() => {
-    document.title = "Dolphin | Reception";
-  }, []);
+  useRoleTitle("Reception");
 
   const { user } = useHospitalAuth();
   const { isModuleEnabled } = useEnabledModules();
@@ -123,7 +122,7 @@ export default function ReceptionLayout() {
     {
       heading: "System",
       items: [
-        { text: "Notifications", icon: <NotificationsRounded />, path: "/reception/notifications" },
+        { text: "Patient messages", icon: <NotificationsRounded />, path: "/reception/notifications" },
       ],
     },
   ];

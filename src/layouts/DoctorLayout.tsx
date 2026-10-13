@@ -1,4 +1,5 @@
 import { alpha, BRAND } from "@/styles/accents";
+import { useRoleTitle } from "@/hooks/useRoleTitle";
 import SidebarNav from "@/components/layout/SidebarNav";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
@@ -29,9 +30,7 @@ import { useAnnouncementBadge } from "@/features/announcements/useAnnouncementBa
 const drawerWidth = 260;
 
 export default function DoctorLayout() {
-  useEffect(() => {
-    document.title = "Dolphin | Doctor";
-  }, []);
+  useRoleTitle("Doctor");
 
   const { user } = useHospitalAuth();
   const theme = useTheme();

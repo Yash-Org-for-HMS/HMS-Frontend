@@ -67,8 +67,8 @@ export default function NotificationsLog() {
   return (
     <Box>
       <PageHeader
-        title="Notifications Log"
-        subtitle="Messages composed for patients."
+        title="Patient messages"
+        subtitle="Messages for patients — appointment confirmations, reminders and more — with their delivery status."
         actions={
           <Tooltip title="Composed and logged, but not delivered - no SMS or email provider is connected.">
             <Chip

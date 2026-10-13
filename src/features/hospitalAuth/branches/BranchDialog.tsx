@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Stack, Typography,
-  Grid, Box, FormControlLabel, Switch, Divider,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography,
+  Grid, Box, Divider,
 } from "@mui/material";
 import { UploadRounded, DeleteOutlineRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -10,11 +10,10 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { assetUrl } from "@/utils/assetUrl";
 import { letterheadAddress } from "@/hooks/useLetterhead";
 import type { BranchRow, HospitalDefaults } from "./branches.types";
-import { VITALS_LABEL, LAB_BILLING_LABEL } from "./branches.types";
 
 /**
- * Edit one branch: where it is, how it is registered, and what it does
- * differently from the rest of the hospital. Every field left empty keeps
+ * Edit one branch: where it is and how it is registered. How it works day to
+ * day is its branch admin's (BranchSettingsPage). Every field left empty keeps
  * following the hospital's, shown as the placeholder.
  */
 
@@ -28,29 +27,12 @@ interface Props {
 const DETAIL_KEYS = ["addressLine1", "addressLine2", "landmark", "city", "state", "postalCode", "phone", "email", "gstNumber", "registrationNumber"] as const;
 type DetailKey = (typeof DETAIL_KEYS)[number];
 
-const FOLLOW = "";
-/** Short forms for "Same as hospital · …", which must fit a third of the dialog. */
-const VITALS_SHORT: Record<string, string> = { RECEPTIONIST: "Reception", NURSE: "Nurse" };
-const LAB_SHORT: Record<string, string> = { PRE_PAID: "Pre-paid", POST_PAID: "Post-paid" };
-const fmt12 = (hhmm: string) => {
-  const [h, m] = hhmm.split(":").map(Number);
-  return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
-};
-
 export default function BranchDialog({ branch, hospital, onClose, onSaved }: Props) {
   const toast = useToast();
   const s = branch.settings;
   const [details, setDetails] = useState<Record<DetailKey, string>>(() =>
     Object.fromEntries(DETAIL_KEYS.map((k) => [k, branch[k] ?? ""])) as Record<DetailKey, string>);
   const [licensedBeds, setLicensedBeds] = useState(branch.licensedBeds != null ? String(branch.licensedBeds) : "");
-  const [vitals, setVitals] = useState<string>(s?.vitalsCollector ?? FOLLOW);
-  const [labBilling, setLabBilling] = useState<string>(s?.billingStrategy ?? FOLLOW);
-  const [refundLimit, setRefundLimit] = useState(s?.refundApprovalThreshold != null ? String(Number(s.refundApprovalThreshold)) : "");
-  const [ownOpd, setOwnOpd] = useState(!!s?.opdStartTime);
-  const def = hospital.settings.opdHours;
-  const [opd, setOpd] = useState({
-    start: s?.opdStartTime ?? def.startTime, end: s?.opdEndTime ?? def.endTime, slot: String(s?.opdSlotMinutes ?? def.slotDurationMinutes),
-  });
   const [logoUrl, setLogoUrl] = useState(branch.logoUrl);
   // "" = the prefix taken from the branch code (shown as the placeholder).
   const [prefix, setPrefix] = useState(s?.documentPrefix ?? "");
@@ -70,7 +52,6 @@ export default function BranchDialog({ branch, hospital, onClose, onSaved }: Pro
   );
 
   const hospitalAddress = letterheadAddress(hospital);
-  const inheritedLimit = Number(hospital.settings.refundApprovalThreshold).toLocaleString("en-IN");
 
   const save = async () => {
     setSaving(true);
@@ -78,15 +59,7 @@ export default function BranchDialog({ branch, hospital, onClose, onSaved }: Pro
       const body: Record<string, unknown> = {};
       for (const k of DETAIL_KEYS) if ((branch[k] ?? "") !== details[k].trim()) body[k] = details[k].trim() || null;
       if ((branch.licensedBeds != null ? String(branch.licensedBeds) : "") !== licensedBeds.trim()) body.licensedBeds = licensedBeds.trim() || null;
-      body.settings = {
-        vitalsCollector: vitals || null,
-        billingStrategy: labBilling || null,
-        refundApprovalThreshold: refundLimit.trim() === "" ? null : Number(refundLimit),
-        documentPrefix: prefix.trim() || null,
-        ...(ownOpd
-          ? { opdStartTime: opd.start, opdEndTime: opd.end, opdSlotMinutes: Number(opd.slot) }
-          : { opdStartTime: null, opdEndTime: null, opdSlotMinutes: null }),
-      };
+      body.settings = { documentPrefix: prefix.trim() || null };
       await axiosInstance.patch(`/hospital/branches/${branch.branchId}`, body);
       toast.success(`${branch.branchName} saved`);
       onSaved();
@@ -186,58 +159,6 @@ export default function BranchDialog({ branch, hospital, onClose, onSaved }: Pro
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = ""; }} />
             </Box>
           </Stack>
-
-          <Divider />
-          {section("How this branch works")}
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <TextField id="branch-vitals" select fullWidth size="small" label="Who records vitals" value={vitals} onChange={(e) => setVitals(e.target.value)} SelectProps={{ displayEmpty: true }} InputLabelProps={{ shrink: true }}>
-                <MenuItem value={FOLLOW}>Same as hospital · {VITALS_SHORT[hospital.settings.vitalsCollector]}</MenuItem>
-                <MenuItem value="RECEPTIONIST">{VITALS_LABEL.RECEPTIONIST}</MenuItem>
-                <MenuItem value="NURSE">{VITALS_LABEL.NURSE}</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <TextField id="branch-lab" select fullWidth size="small" label="Lab billing" value={labBilling} onChange={(e) => setLabBilling(e.target.value)} SelectProps={{ displayEmpty: true }} InputLabelProps={{ shrink: true }}>
-                <MenuItem value={FOLLOW}>Same as hospital · {LAB_SHORT[hospital.settings.billingStrategy]}</MenuItem>
-                <MenuItem value="PRE_PAID">{LAB_BILLING_LABEL.PRE_PAID}</MenuItem>
-                <MenuItem value="POST_PAID">{LAB_BILLING_LABEL.POST_PAID}</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <TextField id="branch-refund" fullWidth size="small" label="Refunds needing approval, from ₹" value={refundLimit}
-                onChange={(e) => setRefundLimit(e.target.value.replace(/[^\d.]/g, ""))}
-                placeholder={inheritedLimit}
-                InputLabelProps={{ shrink: true }}
-                helperText={refundLimit === "" ? `Empty: the hospital's ₹${inheritedLimit}` : refundLimit === "0" ? "Every refund needs approval" : " "} />
-            </Grid>
-          </Grid>
-          <Box>
-            <FormControlLabel
-              control={<Switch checked={ownOpd} onChange={(e) => setOwnOpd(e.target.checked)} />}
-              label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Own OPD hours</Typography>}
-            />
-            <Typography variant="caption" sx={{ display: "block", color: "text.secondary", mt: -0.5, mb: 1 }}>
-              {ownOpd
-                ? "Doctors with no weekly hours at this branch can be booked in these hours."
-                : `Doctors with no weekly hours can be booked ${fmt12(def.startTime)} – ${fmt12(def.endTime)}, every ${def.slotDurationMinutes} minutes, as at the rest of the hospital.`}
-            </Typography>
-            {ownOpd && (
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 6, md: 4 }}>
-                  <TextField id="branch-opd-start" type="time" label="Opens" fullWidth size="small" value={opd.start} onChange={(e) => setOpd((o) => ({ ...o, start: e.target.value }))} InputLabelProps={{ shrink: true }} />
-                </Grid>
-                <Grid size={{ xs: 6, md: 4 }}>
-                  <TextField id="branch-opd-end" type="time" label="Closes" fullWidth size="small" value={opd.end} onChange={(e) => setOpd((o) => ({ ...o, end: e.target.value }))} InputLabelProps={{ shrink: true }} />
-                </Grid>
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <TextField id="branch-opd-slot" select label="Slot length" fullWidth size="small" value={opd.slot} onChange={(e) => setOpd((o) => ({ ...o, slot: e.target.value }))}>
-                    {[10, 15, 20, 30, 45, 60].map((m) => <MenuItem key={m} value={String(m)}>{m} minutes</MenuItem>)}
-                  </TextField>
-                </Grid>
-              </Grid>
-            )}
-          </Box>
         </Stack>
       </DialogContent>
       <DialogActions>

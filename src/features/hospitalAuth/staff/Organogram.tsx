@@ -16,6 +16,8 @@ import Mascot from "@/components/Mascot";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { BRAND, NEUTRAL, SEMANTIC } from "@/styles/accents";
 import { apiErrorText } from "@/utils/apiError";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { hasRole } from "@/constants/roles";
 import {
   buildForest, splitUnplaced, ancestorsOf, openToDepth, departmentLanes, colorOf, initialsOf, managerOf, ROLE_SHORT,
   type OrgChartData, type OrgPerson, type OrgNode, type Line, type DeptCard, type DeptMember,
@@ -334,7 +336,7 @@ function DepartmentCard({ card, onOpen }: { card: DeptCard; onOpen: (p: OrgPerso
 
 // ── The person's panel ─────────────────────────────────────────────────────
 
-function PersonPanel({ p, data, line, onClose, onPick }: { p: OrgPerson; data: OrgChartData; line: Line; onClose: () => void; onPick: (p: OrgPerson) => void }) {
+function PersonPanel({ p, data, line, canEdit, onClose, onPick }: { p: OrgPerson; data: OrgChartData; line: Line; canEdit: boolean; onClose: () => void; onPick: (p: OrgPerson) => void }) {
   const navigate = useNavigate();
   const byId = new Map(data.people.map((x) => [x.staffId, x]));
   const hr = p.adminManagerId ? byId.get(p.adminManagerId) : null;
@@ -369,10 +371,10 @@ function PersonPanel({ p, data, line, onClose, onPick }: { p: OrgPerson; data: O
       {p.posting && <Typography variant="body2" sx={{ px: 1, mt: 0.5, color: "text.secondary" }}>Posted to {p.posting}</Typography>}
       <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mt: 1.5 }}>{line === "hr" ? "Reporting to them" : "Day to day under them"} ({reports.length})</Typography>
       {reports.length ? reports.map((x) => person(x)) :<Typography variant="body2" sx={{ color: "text.secondary", px: 1 }}>Nobody</Typography>}
-      <Button fullWidth variant="outlined" startIcon={<EditRounded />} sx={{ mt: 2.5, textTransform: "none", fontWeight: 700 }}
+      {canEdit && <Button fullWidth variant="outlined" startIcon={<EditRounded />} sx={{ mt: 2.5, textTransform: "none", fontWeight: 700 }}
         onClick={() => navigate(`/hospital/staff?edit=${p.staffId}`)}>
         Change in the Staff Directory
-      </Button>
+      </Button>}
     </Box>
   );
 }
@@ -381,6 +383,9 @@ function PersonPanel({ p, data, line, onClose, onPick }: { p: OrgPerson; data: O
 
 export default function Organogram() {
   const navigate = useNavigate();
+  // Branch admins see the chart but don't manage staff: no way into the Staff Directory.
+  const { user } = useHospitalAuth();
+  const canEdit = hasRole(user, "H_ADMIN", "HR_ADMIN");
   const q = useQuery<OrgChartData>({
     queryKey: ["org-chart"],
     queryFn: async () => (await axiosInstance.get("/hospital/staff/org-chart")).data.data,
@@ -435,7 +440,7 @@ export default function Organogram() {
       <PageHeader
         title="Organisation chart"
         subtitle="Who reports to whom, and how departments sit under the people who oversee them. Built from the Staff Directory — change a reporting line or a department there."
-        actions={<Button variant="outlined" startIcon={<AccountTreeRounded />} onClick={() => navigate("/hospital/staff")} sx={{ textTransform: "none", fontWeight: 700 }}>Staff Directory</Button>}
+        actions={canEdit && <Button variant="outlined" startIcon={<AccountTreeRounded />} onClick={() => navigate("/hospital/staff")} sx={{ textTransform: "none", fontWeight: 700 }}>Staff Directory</Button>}
       />
 
       {q.isError ? <ErrorState title="Couldn't load the organisation chart" message={apiErrorText(q.error)} onRetry={() => q.refetch()} />
@@ -443,7 +448,7 @@ export default function Organogram() {
           : !people.length ? (
             <Paper sx={{ p: 4 }}>
               <Mascot pose="nothing-here-yet" title="Nobody in the Staff Directory yet" subtitle="Add people there, with their department and who they report to — the chart draws itself."
-                action={<Button variant="contained" onClick={() => navigate("/hospital/staff")}>Open the Staff Directory</Button>} />
+                action={canEdit ? <Button variant="contained" onClick={() => navigate("/hospital/staff")}>Open the Staff Directory</Button> : undefined} />
             </Paper>
           ) : (
             <>
@@ -508,7 +513,7 @@ export default function Organogram() {
                     <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, textAlign: "center" }}>
                       <Mascot pose="nothing-here-yet" title="No reporting lines yet"
                         subtitle="Nobody has a manager on file. In the Staff Directory, set who each person reports to — start with the heads reporting to your CEO or medical director — and the chart draws itself."
-                        action={<Button variant="contained" startIcon={<EditRounded />} onClick={() => navigate("/hospital/staff")} sx={{ textTransform: "none", fontWeight: 700 }}>Set reporting lines</Button>} />
+                        action={canEdit ? <Button variant="contained" startIcon={<EditRounded />} onClick={() => navigate("/hospital/staff")} sx={{ textTransform: "none", fontWeight: 700 }}>Set reporting lines</Button> : undefined} />
                     </Paper>
                   )}
                   {unplaced.length > 0 && (
@@ -556,7 +561,7 @@ export default function Organogram() {
           )}
 
       <Drawer anchor="right" open={!!panelFor} onClose={() => setPanelFor(null)}>
-        {panelFor && data && <PersonPanel p={panelFor} data={data} line={line} onClose={() => setPanelFor(null)} onPick={(p) => setPanelFor(p)} />}
+        {panelFor && data && <PersonPanel p={panelFor} data={data} line={line} canEdit={canEdit} onClose={() => setPanelFor(null)} onPick={(p) => setPanelFor(p)} />}
       </Drawer>
     </Box>
   );

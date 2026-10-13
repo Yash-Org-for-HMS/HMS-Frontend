@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRoleTitle } from "@/hooks/useRoleTitle";
 import { menuPathsFor } from "@/constants/roles";
 import SidebarNav from "@/components/layout/SidebarNav";
 import { BRAND } from "@/styles/accents";
@@ -25,9 +26,7 @@ import { useSocket } from "@/hooks/useSocket";
 const drawerWidth = 260;
 
 export default function LabLayout() {
-  useEffect(() => {
-    document.title = "Dolphin | Lab & Radiology";
-  }, []);
+  useRoleTitle("Lab & Radiology");
 
   const { user } = useHospitalAuth();
   const theme = useTheme();

@@ -31,7 +31,7 @@ export default function SidebarProductHeader({ compact = false }: { compact?: bo
         component="img"
         src="/Dolphin_logo_blue.png"
         alt="Dolphin Hospital Management System"
-        sx={{ width: compact ? 136 : 172, height: "auto", display: "block" }}
+        sx={{ width: compact ? 160 : 200, height: "auto", display: "block" }}
       />
     </Toolbar>
   );
