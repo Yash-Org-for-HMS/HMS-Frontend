@@ -31,6 +31,8 @@ import {
  */
 
 const CARD_W = 232;
+/** More reports-with-teams than this wrap into a grid instead of one wide row. */
+const WRAP_AFTER = 3;
 const LINE = `1.5px solid ${NEUTRAL.line}`;
 
 // ── A person ───────────────────────────────────────────────────────────────
@@ -39,7 +41,7 @@ function Avatar({ p, size = 40 }: { p: OrgPerson; size?: number }) {
   return (
     <Box aria-hidden sx={{
       width: size, height: size, borderRadius: "50%", flexShrink: 0, display: "grid", placeItems: "center",
-      bgcolor: `${colorOf(p.categoryCode)}1f`, color: colorOf(p.categoryCode), fontWeight: 800, fontSize: size * 0.36, letterSpacing: 0.3,
+      bgcolor: colorOf(p.categoryCode), color: "#fff", fontWeight: 800, fontSize: size * 0.36, letterSpacing: 0.3,
     }}>
       {initialsOf(p.name)}
     </Box>
@@ -50,7 +52,7 @@ function Avatar({ p, size = 40 }: { p: OrgPerson; size?: number }) {
 function DeptLine({ p }: { p: OrgPerson }) {
   const home = p.departments.find((d) => d.isHome);
   const others = p.departments.filter((d) => !d.isHome);
-  if (!home && !others.length) return <Typography variant="caption" sx={{ color: "text.disabled" }}>No department</Typography>;
+  if (!home && !others.length) return null;
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
       {home && (
@@ -86,7 +88,7 @@ function PersonCard({ p, onOpen, highlighted, dimmed, line, byId, showBranch, fo
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(p); } }}
       sx={{
         width: CARD_W, bgcolor: "background.paper", borderRadius: 3, border: "1px solid", textAlign: "left", cursor: "pointer",
-        borderColor: highlighted ? BRAND.action : "divider",
+        borderColor: highlighted ? BRAND.action : "divider", borderLeft: `4px solid ${colorOf(p.categoryCode)}`,
         boxShadow: highlighted ? `0 0 0 3px ${BRAND.action}33, 0 6px 18px rgba(15,23,42,0.08)` : "0 1px 2px rgba(15,23,42,0.06)",
         opacity: dimmed ? 0.35 : 1, transition: "box-shadow .15s, opacity .15s, transform .15s",
         "&:hover": { boxShadow: "0 6px 18px rgba(15,23,42,0.10)", transform: "translateY(-1px)" },
@@ -175,7 +177,13 @@ function Branch({ node, ...t }: TreeProps & { node: OrgNode }) {
               </Stack>
             </Box>
           )}
-          {managers.map((c) => (
+          {managers.length > WRAP_AFTER ? (
+            <Box sx={childSx}>
+              <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "flex-start", gap: 2.5, p: 1.5, maxWidth: (CARD_W + 20) * WRAP_AFTER + 24, borderRadius: 3, border: `1px dashed ${NEUTRAL.line}` }}>
+                {managers.map((c) => <Branch key={c.person.staffId} node={c} {...t} />)}
+              </Box>
+            </Box>
+          ) : managers.map((c) => (
             <Box key={c.person.staffId} sx={childSx}><Branch node={c} {...t} /></Box>
           ))}
         </Box>
@@ -206,13 +214,15 @@ function Canvas({ children }: { children: ReactNode }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  // Opens on the top of the chart: centred across, at the top.
+  // Opens fitted to the width (never below 55%, never above life size), at the top.
   useLayoutEffect(() => {
     const o = outer.current;
     if (!o || !size.w || centred.current) return;
-    o.scrollLeft = Math.max(0, (o.scrollWidth - o.clientWidth) / 2);
     centred.current = true;
-  }, [size.w]);
+    const fitted = Math.max(0.55, Math.min(1, +((o.clientWidth - 24) / size.w).toFixed(2)));
+    if (fitted !== zoom) { setZoom(fitted); return; }
+    o.scrollLeft = Math.max(0, (o.scrollWidth - o.clientWidth) / 2);
+  }, [size.w, zoom]);
   // A zoom keeps the middle of the view where it was.
   useLayoutEffect(() => {
     const o = outer.current;
@@ -403,7 +413,7 @@ export default function Organogram() {
   const forest = useMemo(() => buildForest(people, line), [people, line]);
   const { tops, unplaced } = useMemo(() => splitUnplaced(forest), [forest]);
   // At first: everything for a small organisation, two levels for a big one.
-  const open = chosenOpen ?? openToDepth(tops, people.length <= 40 ? 99 : 2);
+  const open = chosenOpen ?? openToDepth(tops, people.length <= 20 ? 99 : 2);
   const lanes = useMemo(() => (data ? departmentLanes(data, line) : []), [data, line]);
   const crossDept = people.reduce((n, p) => n + p.departments.filter((d) => !d.isHome).length, 0);
   const deptsInUse = (data?.departments ?? []).filter((d) => people.some((p) => inDept(p, d.departmentId)));
@@ -439,7 +449,7 @@ export default function Organogram() {
     <Box sx={{ pb: 4 }}>
       <PageHeader
         title="Organisation chart"
-        subtitle="Who reports to whom, and how departments sit under the people who oversee them. Built from the Staff Directory — change a reporting line or a department there."
+        subtitle={data ? `${people.length} people · ${deptsInUse.length} departments${crossDept ? ` · ${crossDept} cross-department` : ""} · built from the Staff Directory` : "Who reports to whom — built from the Staff Directory."}
         actions={canEdit && <Button variant="outlined" startIcon={<AccountTreeRounded />} onClick={() => navigate("/hospital/staff")} sx={{ textTransform: "none", fontWeight: 700 }}>Staff Directory</Button>}
       />
 
@@ -452,14 +462,13 @@ export default function Organogram() {
             </Paper>
           ) : (
             <>
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
-                {[
-                  [`${people.length}`, "people"],
-                  [`${deptsInUse.length}`, "departments"],
-                  [`${crossDept}`, "cross-department assignments"],
-                  [`${tops.length}`, tops.length === 1 ? "top of the organisation" : "tops of the organisation"],
-                ].map(([n, label]) => (
-                  <Chip key={label} label={<><b>{n}</b> {label}</>} sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", fontSize: 13 }} />
+              <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "center", mb: 1.5 }}>
+                {/* What the card colours mean: the staff categories present. */}
+                {[...new Map(people.map((p) => [p.categoryCode, p.category])).entries()].map(([code, name]) => (
+                  <Box key={code} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: colorOf(code) }} />
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>{name}</Typography>
+                  </Box>
                 ))}
                 {unplaced.length > 0 && <Chip icon={<WarningAmberRounded />} label={<><b>{unplaced.length}</b> without a manager</>} sx={{ bgcolor: `${SEMANTIC.warning}1a`, color: SEMANTIC.warningDark, fontSize: 13, "& .MuiChip-icon": { color: SEMANTIC.warningDark } }} />}
               </Box>

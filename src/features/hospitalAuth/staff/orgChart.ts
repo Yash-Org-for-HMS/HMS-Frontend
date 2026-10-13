@@ -1,4 +1,4 @@
-import { ACCENTS, NEUTRAL, SEMANTIC } from "@/styles/accents";
+import { NEUTRAL } from "@/styles/accents";
 
 /**
  * The organisation chart's shapes and the pure logic behind it (backend
@@ -160,14 +160,16 @@ export function departmentLanes(data: OrgChartData, line: Line): DeptLane[] {
 }
 
 /** A colour per staff category, for the person's initials. */
+// Seven categories, seven colours that are told apart at a glance (the
+// panels' own accents were too alike: doctor/admin both blue, three greens).
 export const CATEGORY_COLOR: Record<string, string> = {
-  DOCTOR: ACCENTS.doctorDark,
-  NURSE: ACCENTS.nurseDark,
-  ALLIED_HEALTH: ACCENTS.pharmacyDark,
-  TECHNICIAN: ACCENTS.labDark,
-  PHARMACIST: SEMANTIC.successDark,
-  ADMINISTRATIVE: ACCENTS.adminDark,
-  SUPPORT: SEMANTIC.warningDark,
+  DOCTOR: "#2563eb",
+  NURSE: "#9333ea",
+  ALLIED_HEALTH: "#0d9488",
+  TECHNICIAN: "#db2777",
+  PHARMACIST: "#16a34a",
+  ADMINISTRATIVE: "#475569",
+  SUPPORT: "#d97706",
 };
 export const colorOf = (categoryCode: string) => CATEGORY_COLOR[categoryCode] ?? NEUTRAL.muted;
 
