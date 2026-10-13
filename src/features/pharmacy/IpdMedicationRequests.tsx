@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
   Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip,
+  Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip, Pagination,
 } from "@mui/material";
 import { CheckCircleRounded, CancelRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -23,17 +23,26 @@ export default function IpdMedicationRequests() {
   const [rejecting, setRejecting] = useState<any>(null);
   const [reason, setReason] = useState("");
 
-  const { data: requests = [], isLoading, isError, error, refetch } = useQuery<any[]>({
-    queryKey: ["ipd-medication-requests"],
-    queryFn: async () => (await axiosInstance.get("/pharmacy/ipd-medication-requests", { params: { status: "REQUESTED" } })).data.data,
+  const [page, setPage] = useState(1);
+  const { data: result, isLoading, isError, error, refetch } = useQuery<{ data: any[]; pagination?: { totalPages: number } }>({
+    queryKey: ["ipd-medication-requests", page],
+    queryFn: async () => (await axiosInstance.get("/pharmacy/ipd-medication-requests", { params: { status: "REQUESTED", page, limit: 20 } })).data,
+    placeholderData: keepPreviousData,
   });
+  const requests = result?.data ?? [];
+  const totalPages = result?.pagination?.totalPages ?? 1;
+  // Handling the last request on a page empties it; step back a page instead.
+  const reload = () => {
+    if (requests.length === 1 && page > 1) setPage(page - 1);
+    else refetch();
+  };
 
   const confirm = async (r: any) => {
     setBusyId(r.ipMedOrderId);
     try {
       await axiosInstance.post(`/pharmacy/ipd-medication-requests/${r.ipMedOrderId}/confirm`);
       toast.success(`${r.medicineName} dispensed for ${r.patientName || "patient"}`);
-      refetch();
+      reload();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to confirm this request"));
     } finally {
@@ -49,7 +58,7 @@ export default function IpdMedicationRequests() {
       toast.success("Request rejected");
       setRejecting(null);
       setReason("");
-      refetch();
+      reload();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to reject this request"));
     } finally {
@@ -117,6 +126,11 @@ export default function IpdMedicationRequests() {
           </Table>
         </TableContainer>
       </Paper>
+      {totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" />
+        </Box>
+      )}
 
       <Dialog open={!!rejecting} onClose={() => setRejecting(null)} maxWidth="xs" fullWidth>
         <DialogTitle>Reject Request — {rejecting?.medicineName}</DialogTitle>

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Box, Paper, Typography, Stack, Button, Tabs, Tab } from "@mui/material";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import { Box, Paper, Typography, Stack, Button, Tabs, Tab, Pagination } from "@mui/material";
 import {
   CampaignRounded, WarningAmberRounded, ErrorOutlineRounded, InfoOutlined,
 } from "@mui/icons-material";
@@ -54,9 +54,22 @@ export default function Announcements() {
   const [tab, setTab] = useState<"inbox" | "sent">("inbox");
   const [composing, setComposing] = useState(false);
 
+  const [page, setPage] = useState(1);
+
+  // Keyed under ANNOUNCEMENTS_KEY, so the socket nudge and markRead (which
+  // invalidate that prefix) refresh whichever page is open.
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ANNOUNCEMENTS_KEY,
-    queryFn: async () => (await axiosInstance.get("/hospital/announcements")).data.data as Announcement[],
+    queryKey: [...ANNOUNCEMENTS_KEY, page],
+    queryFn: async () => {
+      const res = (await axiosInstance.get("/hospital/announcements", { params: { page, limit: 20 } })).data;
+      return {
+        items: res.data as Announcement[],
+        total: (res.pagination?.total ?? 0) as number,
+        totalPages: (res.pagination?.totalPages ?? 1) as number,
+        unreadTotal: (res.unread ?? 0) as number,
+      };
+    },
+    placeholderData: keepPreviousData,
   });
 
   const markRead = useMutation({
@@ -67,12 +80,15 @@ export default function Announcements() {
     },
   });
 
-  const unread = useMemo(() => (data ?? []).filter((a) => !a.readAt), [data]);
+  // Unread on this page (what "Mark as read" acts on); the header's counts are the server's, across every page.
+  const unread = useMemo(() => (data?.items ?? []).filter((a) => !a.readAt), [data]);
 
   if (isLoading) return <PageSkeleton />;
   if (error) return <ErrorState message={apiErrorText(error)} onRetry={refetch} />;
 
-  const items = data ?? [];
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = data?.totalPages ?? 1;
 
   return (
     <PageContainer>
@@ -81,9 +97,9 @@ export default function Announcements() {
         subtitle={
           admin && tab === "sent"
             ? "What your hospital has announced to its staff"
-            : items.length === 0
+            : total === 0
               ? "Messages from the platform team and your hospital"
-              : `${unread.length} unread of ${items.length}`
+              : `${data?.unreadTotal ?? 0} unread of ${total}`
         }
         actions={
           unread.length > 1 || admin ? (
@@ -95,7 +111,7 @@ export default function Announcements() {
                   disabled={markRead.isPending}
                   onClick={() => unread.forEach((a) => markRead.mutate(a.announcementId))}
                 >
-                  Mark all as read
+                  {totalPages > 1 ? "Mark this page as read" : "Mark all as read"}
                 </Button>
               )}
               {admin && (
@@ -118,7 +134,7 @@ export default function Announcements() {
 
       {admin && tab === "sent" ? (
         <SentAnnouncements />
-      ) : items.length === 0 ? (
+      ) : total === 0 ? (
         <Mascot pose="nothing-here-yet" title="Nothing to read" subtitle="Announcements from the platform team and your hospital will appear here." />
       ) : (
         <Stack spacing={1.5}>
@@ -162,6 +178,11 @@ export default function Announcements() {
               </Paper>
             );
           })}
+          {totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+              <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" />
+            </Box>
+          )}
         </Stack>
       )}
     </PageContainer>

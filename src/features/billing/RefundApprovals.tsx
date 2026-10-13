@@ -1,14 +1,14 @@
 import { useState } from "react";
 import {
   Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Typography, Button, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack,
+  Typography, Button, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, Pagination,
 } from "@mui/material";
 import { CheckCircleRounded, CancelRounded } from "@mui/icons-material";
 import PageHeader from "@/components/layout/PageHeader";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
@@ -57,10 +57,25 @@ export default function RefundApprovals() {
   // receipt is the next thing the desk needs.
   const [receiptFor, setReceiptFor] = useState<string | null>(null);
 
-  const { data: rows = [], isLoading: loading, isError, error, refetch } = useQuery<PendingRefund[]>({
-    queryKey: ["refund-approvals"],
-    queryFn: async () => (await axiosInstance.get("/reception/billing/refunds/pending")).data?.data ?? [],
+  const [page, setPage] = useState(1);
+  const { data, isLoading: loading, isPlaceholderData, isError, error, refetch } = useQuery<{ rows: PendingRefund[]; count: number; totalAmount: number; totalPages: number }>({
+    queryKey: ["refund-approvals", page],
+    queryFn: async () => {
+      const body = (await axiosInstance.get("/reception/billing/refunds/pending", { params: { page, limit: 20 } })).data;
+      const rows: PendingRefund[] = body?.data ?? [];
+      return {
+        rows,
+        count: body?.pagination?.total ?? rows.length,
+        totalAmount: Number(body?.totalAmount ?? 0),
+        totalPages: body?.pagination?.totalPages ?? 1,
+      };
+    },
+    placeholderData: keepPreviousData,
   });
+  const rows = data?.rows ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  // Approving the last refund on the last page: step back rather than strand on an empty page.
+  if (!isPlaceholderData && page > Math.max(1, totalPages)) setPage(Math.max(1, totalPages));
   const load = () => refetch();
 
   const approve = async (r: PendingRefund) => {
@@ -95,7 +110,8 @@ export default function RefundApprovals() {
     }
   };
 
-  const total = rows.reduce((s, r) => s + Number(r.refundAmount ?? 0), 0);
+  // Whole-queue figures from the server, not just this page.
+  const total = data?.totalAmount ?? 0;
 
   return (
     <Box>
@@ -112,7 +128,7 @@ export default function RefundApprovals() {
             <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 2, display: "flex", gap: 3, alignItems: "center" }}>
               <Box>
                 <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 0.4 }}>AWAITING YOU</Typography>
-                <Typography variant="h5" sx={{ fontWeight: 800 }}>{rows.length}</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 800 }}>{data?.count ?? rows.length}</Typography>
               </Box>
               <Box>
                 <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 0.4 }}>TOTAL HELD</Typography>
@@ -217,6 +233,11 @@ export default function RefundApprovals() {
               </TableBody>
             </Table>
           </TableContainer>
+          {totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+              <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" />
+            </Box>
+          )}
         </>
       )}
 

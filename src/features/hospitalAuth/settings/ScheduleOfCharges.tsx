@@ -15,6 +15,7 @@ import {
   ArrowUpwardRounded, ArrowDownwardRounded, CloseRounded, LibraryAddRounded,
 } from "@mui/icons-material";
 import type { CatalogEntry } from "./socCatalog";
+import { useClientPage } from "@/components/table/useClientPage";
 
 // The predefined name catalog is large (~250 KB) — load it only when a dialog
 // that needs it opens, and cache it after the first load.
@@ -136,6 +137,9 @@ export default function ScheduleOfCharges() {
     queryFn: async () => (await axiosInstance.get(`/hospital/soc/categories/${activeCategoryId}/items`)).data.data,
     enabled: !!activeCategoryId,
   });
+  // Display-only paging of the selected category's charges; every action below
+  // carries the item object itself (chargeItemId), never a row position.
+  const { shown: shownItems, pager: itemsPager } = useClientPage(items, { size: 25, resetKey: activeCategoryId });
 
   // One search across the whole rate card: matching charges + categories.
   // Debounced so it fires once the user pauses, not on every keystroke.
@@ -352,7 +356,7 @@ export default function ScheduleOfCharges() {
                       </Box>
                     </TableCell></TableRow>
                   ) : (
-                    items.map((it) => {
+                    shownItems.map((it) => {
                       // Code / unit / tax collapse into one muted subtitle under the name.
                       const meta = [it.itemCode, it.unit, Number(it.taxPercent) > 0 ? `${Number(it.taxPercent)}% tax` : null, it.hsnCode ? `HSN ${it.hsnCode}` : null].filter(Boolean).join(" · ");
                       const priced = new Map((it.roomPrices ?? []).map((rp) => [rp.roomClassId, Number(rp.price)]));
@@ -399,6 +403,7 @@ export default function ScheduleOfCharges() {
                 </TableBody>
               </Table>
             </TableContainer>
+            {itemsPager && <Box sx={{ pb: 2 }}>{itemsPager}</Box>}
           </Paper>
         </Box>
       </Box>

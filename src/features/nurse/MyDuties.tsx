@@ -1,6 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { Box, Paper, Typography, Chip, Skeleton } from "@mui/material";
+import { Box, Paper, Typography, Chip, Skeleton, Button, Stack } from "@mui/material";
+import { ChevronLeftRounded, ChevronRightRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import PageHeader from "@/components/layout/PageHeader";
 import ErrorState from "@/components/ErrorState";
@@ -8,7 +10,7 @@ import { BRAND } from "@/styles/accents";
 import { apiErrorText } from "@/utils/apiError";
 
 /**
- * A nurse's own shifts for the next two weeks (backend /roster/mine): which
+ * A nurse's own shifts, two weeks at a time (backend /roster/mine): which
  * day, which shift, which ward. Planning stays with the in-charge and nursing
  * administration (Duty roster); every nurse can see where they are expected.
  */
@@ -19,18 +21,30 @@ const DAYS = 14;
 
 export default function MyDuties() {
   const today = dayjs().format("YYYY-MM-DD");
+  // 0 = the two weeks from today; -1 the two before, 1 the two after.
+  const [page, setPage] = useState(0);
+  const start = dayjs(today).add(page * DAYS, "day");
+  const from = start.format("YYYY-MM-DD");
   const q = useQuery<Duty[]>({
-    queryKey: ["roster-mine", today],
-    queryFn: async () => (await axiosInstance.get("/roster/mine", { params: { from: today, days: DAYS } })).data.data,
+    queryKey: ["roster-mine", from],
+    queryFn: async () => (await axiosInstance.get("/roster/mine", { params: { from, days: DAYS } })).data.data,
+    placeholderData: keepPreviousData,
   });
 
-  const days = Array.from({ length: DAYS }, (_, i) => dayjs(today).add(i, "day"));
+  const days = Array.from({ length: DAYS }, (_, i) => start.add(i, "day"));
+  const range = `${days[0].format("D MMM")} – ${days[DAYS - 1].format("D MMM YYYY")}`;
   const label = (d: dayjs.Dayjs) => (d.isSame(dayjs(today), "day") ? "Today" : d.isSame(dayjs(today).add(1, "day"), "day") ? "Tomorrow" : d.format("dddd"));
   const onDuty = (q.data ?? []).length;
 
   return (
     <Box>
-      <PageHeader title="My duties" subtitle="Your shifts for the next two weeks, as the ward's roster has them." />
+      <PageHeader title="My duties" subtitle="Your shifts, two weeks at a time, as the ward's roster has them." />
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+        <Button size="small" variant="outlined" startIcon={<ChevronLeftRounded />} onClick={() => setPage((p) => p - 1)}>Earlier</Button>
+        <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 190, textAlign: "center" }}>{range}</Typography>
+        <Button size="small" variant="outlined" endIcon={<ChevronRightRounded />} onClick={() => setPage((p) => p + 1)}>Next two weeks</Button>
+        {page !== 0 && <Button size="small" onClick={() => setPage(0)}>Back to today</Button>}
+      </Stack>
       <Paper variant="outlined" sx={{ borderRadius: 3, overflow: "hidden" }}>
         {q.isLoading ? (
           <Box sx={{ p: 2.5, display: "grid", gap: 1.5 }}>{Array.from({ length: 6 }, (_, i) => <Skeleton key={i} variant="rounded" height={36} />)}</Box>
@@ -40,7 +54,7 @@ export default function MyDuties() {
           <>
             {onDuty === 0 && (
               <Typography variant="body2" sx={{ px: 2.5, py: 1.5, color: "text.secondary" }}>
-                No shifts on the roster for you in the next two weeks. Your in-charge plans the roster.
+                No shifts on the roster for you in these two weeks. Your in-charge plans the roster.
               </Typography>
             )}
             {days.map((d) => {

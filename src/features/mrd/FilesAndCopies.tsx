@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
   Box, Paper, Typography, TextField, MenuItem, Button, Stack,
-  Dialog, DialogTitle, DialogContent, DialogActions, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
+  Dialog, DialogTitle, DialogContent, DialogActions, Table, TableHead, TableBody, TableRow, TableCell, TableContainer, Pagination,
 } from "@mui/material";
 import { LogoutRounded, ContentCopyRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -113,8 +113,22 @@ export default function FilesAndCopies() {
   const qc = useQueryClient();
   const [dialog, setDialog] = useState<"out" | "copy" | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const files = useQuery<FileOut[]>({ queryKey: ["mrd", "files-out"], queryFn: async () => (await axiosInstance.get("/mrd/files/out")).data.data });
-  const copies = useQuery<Copy[]>({ queryKey: ["mrd", "copies"], queryFn: async () => (await axiosInstance.get("/mrd/copies")).data.data });
+  const [filesPage, setFilesPage] = useState(1);
+  const [copiesPage, setCopiesPage] = useState(1);
+  const filesQ = useQuery<{ data: FileOut[]; pagination: { totalPages: number } }>({
+    queryKey: ["mrd", "files-out", filesPage],
+    queryFn: async () => (await axiosInstance.get("/mrd/files/out", { params: { page: filesPage, limit: 20 } })).data,
+    placeholderData: keepPreviousData,
+  });
+  const copiesQ = useQuery<{ data: Copy[]; pagination: { totalPages: number } }>({
+    queryKey: ["mrd", "copies", copiesPage],
+    queryFn: async () => (await axiosInstance.get("/mrd/copies", { params: { page: copiesPage, limit: 20 } })).data,
+    placeholderData: keepPreviousData,
+  });
+  const files = { ...filesQ, data: filesQ.data?.data };
+  const copies = { ...copiesQ, data: copiesQ.data?.data };
+  const filesPages = filesQ.data?.pagination?.totalPages ?? 1;
+  const copiesPages = copiesQ.data?.pagination?.totalPages ?? 1;
 
   const backIn = async (f: FileOut) => {
     setBusy(f.movementId);
@@ -173,6 +187,7 @@ export default function FilesAndCopies() {
           </Table>
         </TableContainer>
       )}
+      {filesPages > 1 && (<Box sx={{ display: "flex", justifyContent: "center", mt: -1, mb: 3 }}><Pagination count={filesPages} page={filesPage} onChange={(_, v) => setFilesPage(v)} color="primary" shape="rounded" /></Box>)}
 
       <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1 }}>Copies handed out</Typography>
       {copies.isError ? <ErrorState title="Couldn't load the copies log" message={apiErrorText(copies.error)} onRetry={() => copies.refetch()} /> : !copies.isLoading && !copies.data?.length ? (
@@ -209,6 +224,7 @@ export default function FilesAndCopies() {
           </Table>
         </TableContainer>
       )}
+      {copiesPages > 1 && (<Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}><Pagination count={copiesPages} page={copiesPage} onChange={(_, v) => setCopiesPage(v)} color="primary" shape="rounded" /></Box>)}
       {dialog === "out" && <SendOutDialog onClose={() => setDialog(null)} onDone={() => qc.invalidateQueries({ queryKey: ["mrd", "files-out"] })} />}
       {dialog === "copy" && <CopyDialog onClose={() => setDialog(null)} onDone={() => qc.invalidateQueries({ queryKey: ["mrd", "copies"] })} />}
     </Box>

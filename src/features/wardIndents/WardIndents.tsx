@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
-  Box, Paper, Typography, TextField, MenuItem, Button, Stack, InputAdornment,
+  Box, Paper, Typography, TextField, MenuItem, Button, Stack, InputAdornment, Pagination,
   Dialog, DialogTitle, DialogContent, DialogActions, Table, TableHead, TableBody, TableRow, TableCell,
 } from "@mui/material";
 import { AddRounded, SearchRounded } from "@mui/icons-material";
@@ -123,14 +123,20 @@ export default function WardIndents() {
     queryKey: ["ward-indents", "wards"],
     queryFn: async () => (await axiosInstance.get("/ward-indents/wards")).data.data,
   });
+  const [page, setPage] = useState(1);
   const wardId = chosen || wards.data?.[0]?.wardId || "";
   const ward = useMemo(() => wards.data?.find((w) => w.wardId === wardId) ?? null, [wards.data, wardId]);
-  const list = useQuery<Indent[]>({
-    queryKey: ["ward-indents", "list", wardId],
-    queryFn: async () => (await axiosInstance.get(`/ward-indents/wards/${wardId}`)).data.data,
+  const list = useQuery<{ rows: Indent[]; totalPages: number }>({
+    queryKey: ["ward-indents", "list", wardId, page],
+    queryFn: async () => {
+      const body = (await axiosInstance.get(`/ward-indents/wards/${wardId}`, { params: { page, limit: 20 } })).data;
+      return { rows: body.data, totalPages: body.pagination?.totalPages ?? 1 };
+    },
     enabled: !!wardId,
     refetchOnWindowFocus: true,
+    placeholderData: keepPreviousData,
   });
+  const totalPages = list.data?.totalPages ?? 1;
 
   const cancel = async (indent: Indent) => {
     const ok = await confirm({ title: "Cancel this indent", message: "The pharmacy has not started on it. Cancel it?", confirmText: "Cancel indent" });
@@ -158,17 +164,18 @@ export default function WardIndents() {
       ) : (
         <>
           {(wards.data?.length ?? 0) > 1 && (
-            <TextField id="indent-ward" select size="small" label="Ward" value={wardId} onChange={(e) => setWard(e.target.value)} sx={{ minWidth: 240, mb: 2 }}>
+            <TextField id="indent-ward" select size="small" label="Ward" value={wardId} onChange={(e) => { setWard(e.target.value); setPage(1); }} sx={{ minWidth: 240, mb: 2 }}>
               {wards.data!.map((w) => <MenuItem key={w.wardId} value={w.wardId}>{w.wardName}</MenuItem>)}
             </TextField>
           )}
           {list.isError ? (
             <ErrorState title="Couldn't load the indents" message={apiErrorText(list.error)} onRetry={() => list.refetch()} />
-          ) : list.isLoading || !wardId ? <ListSkeleton rows={3} /> : !list.data?.length ? (
+          ) : list.isLoading || !wardId ? <ListSkeleton rows={3} /> : !list.data?.rows.length ? (
             <Paper sx={{ p: 3 }}><Mascot pose="nothing-here-yet" title="No indents in the last 30 days" /></Paper>
           ) : (
+            <>
             <Stack spacing={1.5}>
-              {list.data.map((i) => (
+              {list.data.rows.map((i) => (
                 <IndentCard
                   key={i.indentId} indent={i}
                   actions={i.status === "OPEN" && i.items.every((l) => !l.issued)
@@ -177,6 +184,12 @@ export default function WardIndents() {
                 />
               ))}
             </Stack>
+            {totalPages > 1 && (
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" />
+              </Box>
+            )}
+            </>
           )}
         </>
       )}

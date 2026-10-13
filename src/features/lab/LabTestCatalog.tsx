@@ -13,6 +13,7 @@ import Mascot from "@/components/Mascot";
 import ErrorState from "@/components/ErrorState";
 import PageHeader from "@/components/layout/PageHeader";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import { useClientPage } from "@/components/table/useClientPage";
 
 // Lab tests are mastered in the Schedule of Charges (a charge with Type = "Lab
 // test"), organized into categories. This screen is a read-only view of that
@@ -39,6 +40,9 @@ export default function LabTestCatalog() {
   }, [tests]);
 
   const visible = activeCat ? groups.filter((g) => g.cat === activeCat) : groups;
+  // Page the flattened rows; a category header is drawn wherever a page's rows change category.
+  const flat = visible.flatMap((g) => g.items.map((t) => ({ g, t })));
+  const { shown, pager } = useClientPage(flat, { size: 25, resetKey: [activeCat] });
 
   return (
     <Box>
@@ -79,21 +83,21 @@ export default function LabTestCatalog() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {visible.flatMap((g) => [
-                    <TableRow key={`h-${g.cat}`}>
-                      <TableCell colSpan={3} sx={{ bgcolor: alpha(theme.palette.primary.main, 0.06), py: 0.75 }}>
-                        <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "primary.main" }}>
-                          {g.cat} · {g.items.length}
-                        </Typography>
-                      </TableCell>
+                  {shown.flatMap(({ g, t }, i) => [
+                    ...(i === 0 || shown[i - 1].g !== g ? [
+                      <TableRow key={`h-${g.cat}`}>
+                        <TableCell colSpan={3} sx={{ bgcolor: alpha(theme.palette.primary.main, 0.06), py: 0.75 }}>
+                          <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "primary.main" }}>
+                            {g.cat} · {g.items.length}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>,
+                    ] : []),
+                    <TableRow key={t.chargeItemId || t.testName} hover>
+                      <TableCell sx={{ fontWeight: 500 }}>{t.testName}</TableCell>
+                      <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{t.testCode || "—"}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(Number(t.price))}</TableCell>
                     </TableRow>,
-                    ...g.items.map((t) => (
-                      <TableRow key={t.chargeItemId || t.testName} hover>
-                        <TableCell sx={{ fontWeight: 500 }}>{t.testName}</TableCell>
-                        <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{t.testCode || "—"}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(Number(t.price))}</TableCell>
-                      </TableRow>
-                    )),
                   ])}
                 </TableBody>
               </Table>
@@ -101,6 +105,7 @@ export default function LabTestCatalog() {
           </Fade>
         )}
       </Paper>
+      {pager}
     </Box>
   );
 }

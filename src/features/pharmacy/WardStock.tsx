@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
-  Box, Typography, Paper, Tabs, Tab, Button, IconButton, Chip, Divider, Alert,
+  Box, Typography, Paper, Tabs, Tab, Button, IconButton, Chip, Divider, Alert, Pagination,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
   Tooltip, FormControlLabel, Switch, InputAdornment, CircularProgress, ButtonBase, Stack,
@@ -61,6 +61,7 @@ interface IssueNote {
   notes: string | null; processedByName: string | null; createdAt: string; units: number;
   items: Array<{ stockIssueItemId: string; itemName: string | null; quantity: number; batchNumber: string | null }>;
 }
+interface PageInfo { page: number; limit: number; total: number; totalPages: number }
 
 interface CountResult {
   stockIssueId: string;
@@ -652,16 +653,20 @@ const MOVEMENT: Record<string, { label: string; tone: string; where: (ward: stri
 
 /** What this ward has used, and on whom. */
 function WardUsage({ wardId }: { wardId: string }) {
+  const [page, setPage] = useState(1);
   const { data, isLoading } = useQuery({
-    queryKey: ["ward-stock-used", wardId],
+    queryKey: ["ward-stock-used", wardId, page],
     queryFn: () => get<{
       usage: Array<{
         stockIssueId: string; patientName: string; uhid: string | null; notes: string | null;
         recordedByName: string | null; createdAt: string; units: number;
         items: Array<{ stockIssueItemId: string; itemName: string | null; quantity: number; batchNumber: string | null; billed: boolean }>;
       }>;
-    }>(`/pharmacy/ward-stock/wards/${wardId}/used?limit=20`),
+      pagination?: PageInfo;
+    }>(`/pharmacy/ward-stock/wards/${wardId}/used?page=${page}&limit=20`),
+    placeholderData: keepPreviousData,
   });
+  const totalPages = data?.pagination?.totalPages ?? 1;
 
   if (isLoading) return <ListSkeleton rows={3} />;
   if (!data?.usage.length) {
@@ -697,6 +702,11 @@ function WardUsage({ wardId }: { wardId: string }) {
           </Box>
         </Paper>
       ))}
+      {totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" />
+        </Box>
+      )}
     </Box>
   );
 }
@@ -1075,7 +1085,7 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
         <Tab value="used" label="Used on patients" sx={{ textTransform: "none", fontWeight: 700 }} />
       </Tabs>
 
-      {view === "used" && <WardUsage wardId={ward.wardId} />}
+      {view === "used" && <WardUsage key={ward.wardId} wardId={ward.wardId} />}
 
       {view === "holding" && (isError ? (
         <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
@@ -1398,10 +1408,13 @@ function StoreTab() {
 
 /** Every note, newest first: what moved, where, and who did it. */
 function LogTab() {
+  const [page, setPage] = useState(1);
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["ward-stock-issues"],
-    queryFn: () => get<{ issues: IssueNote[] }>("/pharmacy/ward-stock/issues?limit=100"),
+    queryKey: ["ward-stock-issues", page],
+    queryFn: () => get<{ issues: IssueNote[]; pagination?: PageInfo }>(`/pharmacy/ward-stock/issues?page=${page}&limit=20`),
+    placeholderData: keepPreviousData,
   });
+  const totalPages = data?.pagination?.totalPages ?? 1;
 
   if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
   if (isLoading || !data) return <ListSkeleton rows={5} />;
@@ -1450,6 +1463,11 @@ function LogTab() {
           </Paper>
         );
       })}
+      {totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" />
+        </Box>
+      )}
     </Box>
   );
 }

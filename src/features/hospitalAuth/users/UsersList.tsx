@@ -48,6 +48,7 @@ import { USER_CAPACITY_KEY } from "@/hooks/useUserCapacity";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
+import { useClientPage } from "@/components/table/useClientPage";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 
 // Match the file's existing sentence-case header look (override SortableHeadCell's default uppercase/bold style).
@@ -377,6 +378,8 @@ export default function UsersList() {
     branch: (u) => u.branch?.branchName ?? null,
     status: (u) => (u.isActive ? "Active" : "Inactive"),
   });
+  // Paged in the browser: sorting still covers every login, the count above uses the full list.
+  const { shown, pager } = useClientPage(sorted, { size: 25, resetKey: [roleFilter, orderBy, order] });
 
   const handleToggleStatus = async (user: User) => {
     const activating = !user.isActive;
@@ -477,7 +480,7 @@ export default function UsersList() {
                   </TableCell>
                 </TableRow>
               ) : (
-                sorted.map((user) => (
+                shown.map((user) => (
                   <TableRow key={user.userId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                     <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -581,6 +584,7 @@ export default function UsersList() {
             </TableBody>
           </Table>
         </TableContainer>
+        {pager}
       </Box>
 
       {/* Reset Password Dialog */}

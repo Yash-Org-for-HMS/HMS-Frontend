@@ -13,6 +13,7 @@ import Mascot from "@/components/Mascot";
 import ErrorState from "@/components/ErrorState";
 import PageHeader from "@/components/layout/PageHeader";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
+import { useClientPage } from "@/components/table/useClientPage";
 
 // Radiology tests are mastered in the Schedule of Charges (a charge with
 // Type = "Radiology test"), organized into imaging categories (X-Ray, CT, MRI…).
@@ -40,6 +41,9 @@ export default function RadiologyCatalog() {
   }, [scans]);
 
   const visible = activeCat ? groups.filter((g) => g.cat === activeCat) : groups;
+  // Page the flattened rows; a category header is drawn wherever a page's rows change category.
+  const flat = visible.flatMap((g) => g.items.map((scan) => ({ g, scan })));
+  const { shown, pager } = useClientPage(flat, { size: 25, resetKey: [activeCat] });
 
   return (
     <Box>
@@ -85,21 +89,21 @@ export default function RadiologyCatalog() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {visible.flatMap((g) => [
-                    <TableRow key={`h-${g.cat}`}>
-                      <TableCell colSpan={3} sx={{ bgcolor: alpha(theme.palette.primary.main, 0.06), py: 0.75 }}>
-                        <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "primary.main" }}>
-                          {g.cat} · {g.items.length}
-                        </Typography>
-                      </TableCell>
+                  {shown.flatMap(({ g, scan }, i) => [
+                    ...(i === 0 || shown[i - 1].g !== g ? [
+                      <TableRow key={`h-${g.cat}`}>
+                        <TableCell colSpan={3} sx={{ bgcolor: alpha(theme.palette.primary.main, 0.06), py: 0.75 }}>
+                          <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "primary.main" }}>
+                            {g.cat} · {g.items.length}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>,
+                    ] : []),
+                    <TableRow key={scan.chargeItemId || scan.testName} hover>
+                      <TableCell sx={{ fontWeight: 500 }}>{scan.testName}</TableCell>
+                      <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{scan.testCode || "—"}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(Number(scan.price))}</TableCell>
                     </TableRow>,
-                    ...g.items.map((scan) => (
-                      <TableRow key={scan.chargeItemId || scan.testName} hover>
-                        <TableCell sx={{ fontWeight: 500 }}>{scan.testName}</TableCell>
-                        <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{scan.testCode || "—"}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(Number(scan.price))}</TableCell>
-                      </TableRow>
-                    )),
                   ])}
                 </TableBody>
               </Table>
@@ -107,6 +111,7 @@ export default function RadiologyCatalog() {
           </Fade>
         )}
       </Paper>
+      {pager}
     </Box>
   );
 }

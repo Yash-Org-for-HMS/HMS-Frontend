@@ -14,6 +14,7 @@ import { useToast } from "@/providers/ToastContext";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { hasAction } from "@/constants/roles";
 import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
+import { useClientPage } from "@/components/table/useClientPage";
 
 /**
  * Ward postings — Nursing Administration's (15_System_Roles: "all wards:
@@ -51,6 +52,7 @@ export default function NursePostings() {
     const list = data?.nurses ?? [];
     return term ? list.filter((n) => `${n.name} ${n.designationName ?? ""} ${n.posting?.label ?? ""}`.toLowerCase().includes(term)) : list;
   }, [data, search]);
+  const { shown, pager } = useClientPage(nurses, { size: 25, resetKey: search });
 
   const post = async (nurse: NurseRow, wardId: string) => {
     setSaving(nurse.staffId);
@@ -116,7 +118,7 @@ export default function NursePostings() {
                     />
                   </TableCell>
                 </TableRow>
-              ) : nurses.map((n) => (
+              ) : shown.map((n) => (
                 <TableRow key={n.staffId} hover>
                   <TableCell sx={{ fontWeight: 600 }}>{n.name}</TableCell>
                   <TableCell>{n.designationName ?? "—"}</TableCell>
@@ -140,6 +142,7 @@ export default function NursePostings() {
           </Table>
         </TableContainer>
       )}
+      {!isError && pager}
     </Box>
   );
 }

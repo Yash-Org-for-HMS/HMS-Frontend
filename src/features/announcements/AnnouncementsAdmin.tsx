@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
-  FormControlLabel, Radio, RadioGroup, Checkbox, FormGroup, Typography, Stack, Autocomplete,
+  FormControlLabel, Radio, RadioGroup, Checkbox, FormGroup, Typography, Stack, Autocomplete, Pagination,
 } from "@mui/material";
 import { CampaignRounded } from "@mui/icons-material";
 import PageHeader from "@/components/layout/PageHeader";
@@ -62,10 +62,15 @@ export default function AnnouncementsAdmin() {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [open, setOpen] = useState(false);
+  const [page, setPage] = useState(1);
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["admin-announcements"],
-    queryFn: async () => (await axiosInstance.get("/announcements", { params: { limit: 50 } })).data.data as Row[],
+    queryKey: ["admin-announcements", page],
+    queryFn: async () => {
+      const res = (await axiosInstance.get("/announcements", { params: { page, limit: 20 } })).data;
+      return { rows: res.data as Row[], totalPages: (res.pagination?.totalPages ?? 1) as number };
+    },
+    placeholderData: keepPreviousData,
   });
 
   const { data: hospitals = [] } = useQuery<HospitalOption[]>({
@@ -83,7 +88,8 @@ export default function AnnouncementsAdmin() {
     onError: (e) => toast.error(getApiErrorMessage(e, "Could not complete that action.")),
   });
 
-  const rows = data ?? [];
+  const rows = data?.rows ?? [];
+  const totalPages = data?.totalPages ?? 1;
 
   return (
     <PageContainer>
@@ -164,6 +170,11 @@ export default function AnnouncementsAdmin() {
           </TableContainer>
         </Paper>
       )}
+      {!error && totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" />
+        </Box>
+      )}
 
       <ComposeDialog
         open={open}
@@ -171,6 +182,7 @@ export default function AnnouncementsAdmin() {
         onClose={() => setOpen(false)}
         onSent={() => {
           setOpen(false);
+          setPage(1); // the new one is listed first
           queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
         }}
       />

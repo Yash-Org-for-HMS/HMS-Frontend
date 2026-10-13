@@ -470,9 +470,14 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
     queryKey: ["ot-theatres-pick"],
     queryFn: async () => (await axiosInstance.get("/ipd/theatres")).data.data,
   });
-  const { data: admissions, isLoading: loadingAdmissions } = useQuery({
-    queryKey: ["ot-admissions-pick"],
-    queryFn: async () => (await axiosInstance.get("/ipd/admissions", { params: { status: "ADMITTED", limit: 200 } })).data,
+  // Admitted patients are searched on the server (name, UHID, admission no.) as
+  // the user types — a fixed first-200 list silently dropped everyone past it.
+  const [admissionQuery, setAdmissionQuery] = useState("");
+  const [admissionPick, setAdmissionPick] = useState<Record<string, unknown> | null>(null);
+  const debouncedAdmissionQuery = useDebouncedValue(admissionQuery);
+  const { data: admissions, isFetching: searchingAdmissions } = useQuery({
+    queryKey: ["ot-admissions-pick", debouncedAdmissionQuery.trim()],
+    queryFn: async () => (await axiosInstance.get("/ipd/admissions", { params: { status: "ADMITTED", search: debouncedAdmissionQuery.trim() || undefined, limit: 20 } })).data,
     enabled: !dayCase,
   });
   const { data: dropdowns } = useQuery({
@@ -557,6 +562,7 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
                 if (!v) return; // ignore a click that would deselect both
                 setDayCase(v === "day");
                 setAdmissionId("");
+                setAdmissionPick(null);
                 setPatientId("");
               }}
               sx={{ "& .MuiToggleButton-root": { textTransform: "none", fontWeight: 600, px: 2 } }}
@@ -587,23 +593,33 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
               )}
             />
           ) : (
-            <SearchableSelect
-              // Searchable: every admitted patient in the hospital arrived as
-              // one unscrollable menu. Name on the line, UHID and admission
-              // number beneath it, and all three searchable.
-              label="Admission" name="admissionId" required
-              value={admissionId} onChange={(e) => setAdmissionId(e.target.value)}
-              placeholder={loadingAdmissions ? "Loading…" : "Pick the admitted patient"}
-              searchPlaceholder="Search by name, UHID or admission no…"
-              options={admissionRows.map((a) => ({
-                value: String(a.admissionId),
-                label: String(a.patientName ?? "Patient"),
-                secondary: [a.uhid, a.admissionNumber].filter(Boolean).join(" · ") || undefined,
-                keywords: `${a.uhid ?? ""} ${a.admissionNumber ?? ""}`,
-              }))}
-              helperText={loadingAdmissions ? "Loading…"
-                : admissionRows.length ? "Currently admitted patients"
-                : "No admitted patients"}
+            <Autocomplete<Record<string, unknown>>
+              // Server-side search: name on the line, UHID and admission number
+              // beneath it, all three searchable across every admitted patient.
+              options={admissionRows}
+              value={admissionPick}
+              filterOptions={(x) => x}
+              isOptionEqualToValue={(o, v) => o.admissionId === v.admissionId}
+              getOptionLabel={(o) => String(o.patientName ?? "Patient")}
+              renderOption={(props, o) => (
+                <li {...props} key={String(o.admissionId)}>
+                  <Box>
+                    <Typography variant="body2">{String(o.patientName ?? "Patient")}</Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>{[o.uhid, o.admissionNumber].filter(Boolean).join(" · ")}</Typography>
+                  </Box>
+                </li>
+              )}
+              // Only typing searches: picking a result sets the text to its label (reason "reset"), which is not a new search.
+              onInputChange={(_, v, reason) => { if (reason === "input") setAdmissionQuery(v); else if (reason === "clear") setAdmissionQuery(""); }}
+              onChange={(_, v) => { setAdmissionPick(v); setAdmissionId(v ? String(v.admissionId) : ""); }}
+              loading={searchingAdmissions}
+              noOptionsText={admissionQuery.trim() ? "No admitted patient found" : "No admitted patients"}
+              renderInput={(p) => (
+                <TextField {...p} label="Admission" name="admissionId" required
+                  placeholder="Pick the admitted patient"
+                  helperText="Search by name, UHID or admission no."
+                  InputProps={{ ...p.InputProps, endAdornment: (<>{searchingAdmissions ? <CircularProgress size={16} /> : null}{p.InputProps.endAdornment}</>) }} />
+              )}
             />
           )}
 

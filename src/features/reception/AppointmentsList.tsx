@@ -1,12 +1,13 @@
 import { useState, useMemo } from "react";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Tooltip,
   TextField, InputAdornment, Alert,
-  Dialog, DialogContent, Tabs, Tab, Avatar, Popover
+  Dialog, DialogContent, Tabs, Tab, Avatar, Popover, Pagination
 } from "@mui/material";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import {
   AddRounded, SearchRounded, CancelRounded, CheckCircleRounded,
   WarningAmberRounded, ReceiptRounded, NotificationsActiveRounded, ChecklistRounded,
@@ -24,7 +25,7 @@ import BillingModal from "./BillingModal";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
-import { useTableSort } from "@/components/table/useTableSort";
+import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import dayjs, { Dayjs } from "dayjs";
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
@@ -41,9 +42,19 @@ const getAppointmentType = (reason: string | null | undefined) => {
   return { label: "Standard", color: NEUTRAL.muted, bgcolor: "rgba(100,116,139,0.1)" };
 };
 
-function MiniCalendar({ selectedDate, onDateChange, highlightedDays }: { selectedDate: Dayjs | null, onDateChange: (d: Dayjs) => void, highlightedDays: string[] }) {
+function MiniCalendar({ selectedDate, onDateChange }: { selectedDate: Dayjs | null, onDateChange: (d: Dayjs) => void }) {
   const [currentMonth, setCurrentMonth] = useState(dayjs().startOf('month'));
-  
+
+  // Days with appointments in the shown month — asked of the server, since the
+  // list page now holds only one page of rows.
+  const { data: highlightedDays = [] } = useQuery<string[]>({
+    queryKey: ["reception-appointment-days", currentMonth.format("YYYY-MM")],
+    queryFn: async () => (await axiosInstance.get("/reception/appointments/days", {
+      params: { from: currentMonth.format("YYYY-MM-DD"), to: currentMonth.endOf("month").format("YYYY-MM-DD") },
+    })).data.data,
+    placeholderData: keepPreviousData,
+  });
+
   const daysInMonth = currentMonth.daysInMonth();
   const firstDay = currentMonth.day();
   
@@ -144,15 +155,38 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
   // SMS went out for one click's worth of intent.
   const [sendingNotification, setSendingNotification] = useState<string | null>(null);
 
-  // The backend caps this at 500 rows per call (it used to return a hospital's
-  // entire history unbounded). This page still filters/sorts client-side, so we
-  // ask for the largest allowed page and warn if there's more than that.
+  const [page, setPage] = useState(1);
+  const debouncedSearch = useDebouncedValue(search.trim(), 300);
+
+  // Server-side filtered and paged. A search ignores the date tabs (searches
+  // every date), as the page always did.
+  const dateParams = useMemo((): Record<string, string> => {
+    if (debouncedSearch) return {};
+    const today = dayjs();
+    if (tabValue === "today") return { date: today.format("YYYY-MM-DD") };
+    if (tabValue === "this_week") return { from: today.format("YYYY-MM-DD"), to: today.add(7, "day").format("YYYY-MM-DD") };
+    if (tabValue === "date" && selectedDate) return { date: selectedDate.format("YYYY-MM-DD") };
+    return {};
+  }, [debouncedSearch, tabValue, selectedDate]);
+
+  // Column sort runs on the server, across every page; newest first until a column is picked.
+  const { orderBy, order, onSort } = useServerSort();
+
+  // Any filter or sort change starts again from page 1 (reset during render, not
+  // in an effect, so the stale page is never requested).
+  const filterKey = JSON.stringify([dateParams, debouncedSearch, orderBy, order]);
+  const [lastFilterKey, setLastFilterKey] = useState(filterKey);
+  if (filterKey !== lastFilterKey) { setLastFilterKey(filterKey); setPage(1); }
+
   const { data: listResponse, isLoading: loading, isError, error, refetch } = useQuery({
-    queryKey: ["reception-appointments"],
-    queryFn: async () => (await axiosInstance.get("/reception/appointments", { params: { limit: 500 } })).data,
+    queryKey: ["reception-appointments", dateParams, debouncedSearch, orderBy, order, page],
+    queryFn: async () => (await axiosInstance.get("/reception/appointments", {
+      params: { ...dateParams, ...(debouncedSearch ? { search: debouncedSearch } : {}), page, limit: 20, sortBy: orderBy || undefined, sortOrder: order },
+    })).data,
+    placeholderData: keepPreviousData,
   });
   const appointments: any[] = listResponse?.data ?? [];
-  const isTruncated = (listResponse?.meta?.total ?? 0) > (listResponse?.meta?.limit ?? Infinity);
+  const totalPages: number = listResponse?.pagination?.totalPages ?? 1;
 
   const handleAction = async () => {
     if (!actionDialog.appt || !actionDialog.type) return;
@@ -195,51 +229,8 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
     setCalendarAnchor(null);
   };
 
-  const filteredAppointments = useMemo(() => {
-    let filtered = appointments;
+  const sortedAppointments = appointments;
 
-    // If searching, ignore date tabs and search globally
-    if (search) {
-      const s = search.toLowerCase();
-      return filtered.filter(a =>
-        (a.patientName && a.patientName.toLowerCase().includes(s)) ||
-        (a.doctorName && a.doctorName.toLowerCase().includes(s)) ||
-        (a.uhid && a.uhid.toLowerCase().includes(s)) ||
-        (a.reason && a.reason.toLowerCase().includes(s)) ||
-        (a.tokenNumber && String(a.tokenNumber).includes(s))
-      );
-    }
-
-    const today = dayjs().startOf('day');
-    if (tabValue === "today") {
-      filtered = filtered.filter(a => dayjs(a.appointmentDate).isSame(today, 'day'));
-    } else if (tabValue === "this_week") {
-      const endOfWeek = today.add(7, 'day');
-      filtered = filtered.filter(a => {
-        const d = dayjs(a.appointmentDate);
-        return (d.isAfter(today) || d.isSame(today, 'day')) && (d.isBefore(endOfWeek) || d.isSame(endOfWeek, 'day'));
-      });
-    } else if (tabValue === "date" && selectedDate) {
-      filtered = filtered.filter(a => dayjs(a.appointmentDate).isSame(selectedDate, 'day'));
-    }
-
-    return filtered;
-  }, [appointments, search, tabValue, selectedDate]);
-
-  // Client-side column sorting (the full appointment set is already in memory).
-  const { sorted: sortedAppointments, orderBy, order, onSort } = useTableSort(
-    filteredAppointments,
-    {
-      time: (a) => (a.appointmentDate ? new Date(a.appointmentDate) : null),
-      patient: (a) => a.patientName,
-      doctor: (a) => a.doctorName,
-      status: (a) => a.statusLabel,
-    },
-  );
-
-  const highlightedDays = useMemo(() => {
-    return appointments.map(a => dayjs(a.appointmentDate).format("YYYY-MM-DD"));
-  }, [appointments]);
 
   const avatarColors = [BRAND.action, "#7c3aed", SEMANTIC.successDark, SEMANTIC.dangerDark, SEMANTIC.warningDark, SEMANTIC.infoDark, "#db2777", "#65a30d"];
   const getAvatarColor = (id: string) => avatarColors[(id || "A").charCodeAt(0) % avatarColors.length];
@@ -278,13 +269,6 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
       {successMsg && (
         <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMsg(null)}>
           {successMsg}
-        </Alert>
-      )}
-
-      {isTruncated && (tabValue === "all" || search) && (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Showing the {listResponse?.meta?.limit} most recent appointments out of {listResponse?.meta?.total} total.
-          Filter by date to see older ones, or narrow your search.
         </Alert>
       )}
 
@@ -330,7 +314,7 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
             transformOrigin={{ vertical: 'top', horizontal: 'left' }}
             PaperProps={{ sx: { p: 2, borderRadius: 3, mt: 1, boxShadow: '0 10px 40px rgba(0,0,0,0.1)', border: '1px solid', borderColor: 'divider' } }}
           >
-            <MiniCalendar selectedDate={selectedDate} onDateChange={handleDateChange} highlightedDays={highlightedDays} />
+            <MiniCalendar selectedDate={selectedDate} onDateChange={handleDateChange} />
           </Popover>
         </Box>
 
@@ -368,7 +352,12 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
               <TableRow>
                 <SortableHeadCell label="Time & Type" sortKey="time" orderBy={orderBy} order={order} onSort={onSort} />
                 <SortableHeadCell label="Patient" sortKey="patient" orderBy={orderBy} order={order} onSort={onSort} />
-                <SortableHeadCell label="Doctor" sortKey="doctor" orderBy={orderBy} order={order} onSort={onSort} />
+                <TableCell sx={{
+                  color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase",
+                  letterSpacing: 0.5, py: 2, bgcolor: "background.default", borderBottom: "1px solid", borderColor: "divider"
+                }}>
+                  Doctor
+                </TableCell>
                 <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} />
                 <TableCell align="right" sx={{
                   color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase",
@@ -517,6 +506,7 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
           </Table>
         </TableContainer>
       </Paper>
+      {totalPages > 1 && (<Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}><Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" /></Box>)}
 
       {/* Action Dialog */}
       <Dialog open={actionDialog.open} onClose={() => setActionDialog({ open: false, type: null, appt: null })} PaperProps={{ sx: { bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3 } }}>

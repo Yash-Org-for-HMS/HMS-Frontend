@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Alert, AlertTitle, Box, Button, Chip, Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, TextField, Typography, useTheme, alpha, Tabs, Tab, MenuItem,
-} from "@mui/material";
+  TableHead, TableRow, TextField, Typography, useTheme, alpha, Tabs, Tab, MenuItem, Pagination,
+}from "@mui/material";
 import { DownloadRounded, ReceiptLongRounded } from "@mui/icons-material";
 import { Link as RouterLink } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
@@ -44,6 +44,8 @@ function monthBounds() {
 }
 
 const HEAD_SX = { fontWeight: 700 } as const;
+/** Invoice-register rows per page. Display only — totals and exports use every row. */
+const REGISTER_PAGE_SIZE = 50;
 
 // Quotes every field so a description containing a comma can't shift columns.
 function toCsv(rows: (string | number)[][]): string {
@@ -82,6 +84,8 @@ export default function GstReport() {
   const [view, setView] = useState(0);
   /** "" = every registration in scope; a GSTIN = that return only. */
   const [gstin, setGstin] = useState("");
+  /** Invoice-register page (1-based); back to 1 whenever the range or registration changes. */
+  const [regPage, setRegPage] = useState(1);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["gst-report", from, to, gstin],
@@ -105,6 +109,11 @@ export default function GstReport() {
   const allGstins = (data?.registrations ?? []).map((x) => x.gstin).filter((x): x is string => !!x);
   const mixed = !gstin && allGstins.length > 1;
   const gstinLabel = mixed ? `All ${allGstins.length} registrations (${allGstins.join(", ")}) — not one return` : data?.gstin ?? "(not set)";
+
+  const register = data?.register ?? [];
+  const regPages = Math.ceil(register.length / REGISTER_PAGE_SIZE);
+  const regCurrent = Math.min(regPage, Math.max(1, regPages));
+  const registerShown = register.slice((regCurrent - 1) * REGISTER_PAGE_SIZE, regCurrent * REGISTER_PAGE_SIZE);
 
   const exportSummary = () => {
     if (!data) return;
@@ -164,12 +173,12 @@ export default function GstReport() {
       {view === 1 ? <GstSetup /> : <>
       <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap", alignItems: "center" }}>
         <TextField type="date" label="From" size="small" value={from}
-          onChange={(e) => setRange((x) => ({ ...x, from: e.target.value }))} InputLabelProps={{ shrink: true }} />
+          onChange={(e) => { setRegPage(1); setRange((x) => ({ ...x, from: e.target.value })); }} InputLabelProps={{ shrink: true }} />
         <TextField type="date" label="To" size="small" value={to}
-          onChange={(e) => setRange((x) => ({ ...x, to: e.target.value }))} InputLabelProps={{ shrink: true }} />
+          onChange={(e) => { setRegPage(1); setRange((x) => ({ ...x, to: e.target.value })); }} InputLabelProps={{ shrink: true }} />
         {/* One return per GSTIN: with more than one registration in scope, pick which to file. */}
         {(data?.registrations?.length ?? 0) > 1 || gstin ? (
-          <TextField id="gst-registration" select size="small" label="GST registration" value={gstin} onChange={(e) => setGstin(e.target.value)}
+          <TextField id="gst-registration" select size="small" label="GST registration" value={gstin} onChange={(e) => { setRegPage(1); setGstin(e.target.value); }}
             SelectProps={{ displayEmpty: true }} InputLabelProps={{ shrink: true }} sx={{ minWidth: 260 }}>
             <MenuItem value="">All registrations (not a single return)</MenuItem>
             {(data?.registrations ?? []).filter((x) => x.gstin).map((x) => (
@@ -334,7 +343,7 @@ export default function GstReport() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    data.register.map((x) => (
+                    registerShown.map((x) => (
                       <TableRow key={x.invoiceId} hover>
                         <TableCell sx={{ fontFamily: "monospace" }}>{x.invoiceNumber}</TableCell>
                         <TableCell>{formatDate(x.invoiceDate)}</TableCell>
@@ -352,6 +361,14 @@ export default function GstReport() {
                 </TableBody>
               </Table>
             </TableContainer>
+            {regPages > 1 && (
+              <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 2, flexWrap: "wrap", py: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
+                <Pagination count={regPages} page={regCurrent} onChange={(_, v) => setRegPage(v)} color="primary" shape="rounded" />
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  {register.length} invoices · export includes all of them
+                </Typography>
+              </Box>
+            )}
           </SectionCard>
         </>
       )}

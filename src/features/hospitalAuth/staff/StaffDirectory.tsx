@@ -17,6 +17,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
+import { useClientPage } from "@/components/table/useClientPage";
 import { useToast } from "@/providers/ToastContext";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { SEMANTIC } from "@/styles/accents";
@@ -156,6 +157,9 @@ export default function StaffDirectory() {
     manager: (r) => r.adminManager?.name ?? null,
     issues: (r) => r.issues.length,
   });
+  // Paged in the browser: search, filters, sort and the count cover everyone;
+  // the ?edit= deep link resolves from the full list above, not this page.
+  const { shown, pager } = useClientPage(sorted, { size: 25, resetKey: [search, category, branch, attention, orderBy, order] });
 
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ["staff-directory"] });
@@ -235,7 +239,7 @@ export default function StaffDirectory() {
                 <TableRow><TableCell colSpan={7} sx={{ py: 3, borderBottom: "none" }}>
                   <Mascot pose="nothing-here-yet" subtitle={rows.length ? "Nobody matches these filters." : "No staff yet — add the first person."} size={120} />
                 </TableCell></TableRow>
-              ) : sorted.map((r) => {
+              ) : shown.map((r) => {
                 const exited = r.status === "EXITED";
                 return (
                   <TableRow key={r.staffId} hover sx={{ opacity: exited ? 0.6 : 1, "&:last-child td": { border: 0 } }}>
@@ -318,6 +322,7 @@ export default function StaffDirectory() {
             </TableBody>
           </Table>
         </TableContainer>
+        {pager}
       </Box>
 
       {openDialog && options && (

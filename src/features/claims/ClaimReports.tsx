@@ -28,6 +28,34 @@ import { apiErrorText } from "@/utils/apiError";
 const ACCENT = BRAND.action;
 const inr = (v: unknown) => formatINR(Number(v || 0));
 
+/**
+ * A claim list shown a page at a time. The full row set is already on the
+ * client (one /claims/reports call), so this only slices the display: the
+ * Excel/PDF export gets every row via `exportRows`, and the KPI tiles read the
+ * full lists. `source` is the response object — a new range brings a
+ * new object, which sends the reader back to page 1.
+ */
+function PagedSimpleTable({ source, rows, ...rest }: Omit<React.ComponentProps<typeof SimpleTable>, "pagination" | "exportRows"> & { source: unknown }) {
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(50);
+  const [seen, setSeen] = useState(source);
+  if (seen !== source) { setSeen(source); setPage(0); }
+  const lastPage = Math.max(0, Math.ceil(rows.length / pageSize) - 1);
+  const current = Math.min(page, lastPage);
+  return (
+    <SimpleTable
+      {...rest}
+      rows={rows.slice(current * pageSize, (current + 1) * pageSize)}
+      exportRows={async () => rows}
+      pagination={rows.length > pageSize ? {
+        page: current, pageSize, totalRows: rows.length,
+        onPageChange: setPage,
+        onPageSizeChange: (s) => { setPageSize(s); setPage(0); },
+      } : undefined}
+    />
+  );
+}
+
 const PRESETS = [
   { key: "30d", label: "30 days", from: () => dayjs().subtract(29, "day"), to: () => dayjs() },
   { key: "90d", label: "90 days", from: () => dayjs().subtract(89, "day"), to: () => dayjs() },
@@ -98,7 +126,7 @@ function TatReport({ data }: { data: ClaimReportsResponse }) {
         <KpiCard icon={<DescriptionRounded />} accent={SEMANTIC.info} label="Approved pre-auths"
           value={String(rows.length)} />
       </Box>
-      <SimpleTable title="Pre-authorization turnaround" head={["Claim #", "Patient", "Submitted", "Approved", "Days"]}
+      <PagedSimpleTable source={data} title="Pre-authorization turnaround" head={["Claim #", "Patient", "Submitted", "Approved", "Days"]}
         rows={rows.map((r) => [r.claimNumber, r.patientName, formatDate(r.submittedAt), formatDate(r.approvedAt), r.days])} />
     </Box>
   );
@@ -111,7 +139,7 @@ function AgingReport({ data }: { data: ClaimReportsResponse }) {
   return (
     <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1.6fr" }, gap: 2 }}>
       <SimpleTable title="Aging buckets" head={["Age", "Claims", "Outstanding"]} rows={buckets.map((b) => [b.label, b.count, inr(b.amount)])} />
-      <SimpleTable title="Outstanding reimbursements" head={["Claim #", "Patient", "Payer", "Age (days)", "Outstanding"]}
+      <PagedSimpleTable source={data} title="Outstanding reimbursements" head={["Claim #", "Patient", "Payer", "Age (days)", "Outstanding"]}
         rows={rows.map((r) => [r.claimNumber, r.patientName, r.payerName, r.ageDays, inr(r.outstanding)])} />
     </Box>
   );
@@ -119,13 +147,13 @@ function AgingReport({ data }: { data: ClaimReportsResponse }) {
 
 function RejectionsReport({ data }: { data: ClaimReportsResponse }) {
   const rows: ClaimRejectionRow[] = data?.rejections || [];
-  return <SimpleTable title="Rejected claims" head={["Claim #", "Patient", "Payer", "Status", "Claimed", "When"]}
+  return <PagedSimpleTable source={data} title="Rejected claims" head={["Claim #", "Patient", "Payer", "Status", "Claimed", "When"]}
     rows={rows.map((r) => [r.claimNumber, r.patientName, r.payerName, r.status, inr(r.billed), formatDate(r.at)])} />;
 }
 
 function RegisterReport({ data }: { data: ClaimReportsResponse }) {
   const rows: ClaimRegisterRow[] = data?.register || [];
-  return <SimpleTable title="Claims register" head={["Claim #", "Patient", "UHID", "Payer", "Scheme", "Status", "Claimed", "Approved", "Settled", "Registered"]}
+  return <PagedSimpleTable source={data} title="Claims register" head={["Claim #", "Patient", "UHID", "Payer", "Scheme", "Status", "Claimed", "Approved", "Settled", "Registered"]}
     rows={rows.map((r) => [r.claimNumber, r.patientName, r.uhid, r.payerName, r.scheme, r.status, inr(r.billed), inr(r.approved), inr(r.settled), formatDate(r.registeredAt)])}
     note={<ReportTruncationNote truncated={data?.truncated} totalRows={data?.totalRows} shownRows={data?.shownRows} />} />;
 }

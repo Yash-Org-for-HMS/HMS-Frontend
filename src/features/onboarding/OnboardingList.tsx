@@ -1,3 +1,4 @@
+import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDate } from "@/utils/format";
 import { actionBuckets, daysUntil } from "./actionNeeded";
@@ -13,6 +14,8 @@ import {
   CardContent,
   Chip,
   Button,
+  Alert,
+  Pagination,
 } from "@mui/material";
 import {
   HourglassBottomRounded,
@@ -32,18 +35,28 @@ import { apiErrorText } from "@/utils/apiError";
 
 // How soon (in days) an active trial counts as "expiring soon".
 
-function Section({
-  icon, title, color, items, children,
-}: { icon: any; title: string; color: string; items: number; children: any }) {
-  if (items === 0) return null;
+const SECTION_PAGE = 20;
+
+// Each heading pages its own rows. The rows are all in hand (the server already
+// narrowed to actionable tenants/trials), because the headline counts are of
+// DISTINCT tenants across overlapping headings — paging on the server per
+// heading would make those counts wrong.
+function Section<T>({
+  icon, title, color, rows, renderRow,
+}: { icon: any; title: string; color: string; rows: T[]; renderRow: (row: T) => ReactNode }) {
+  const [page, setPage] = useState(1);
+  if (rows.length === 0) return null;
+  const totalPages = Math.ceil(rows.length / SECTION_PAGE);
+  const current = Math.min(page, totalPages);
   return (
     <Paper elevation={2} sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, overflow: "hidden", mb: 3 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2.5, py: 2, borderBottom: "1px solid", borderColor: "divider" }}>
         <Box sx={{ width: 36, height: 36, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: `${color}22`, color }}>{icon}</Box>
         <Typography variant="subtitle1" fontWeight={700} sx={{ color: "text.primary" }}>{title}</Typography>
-        <Chip size="small" label={items} sx={{ ml: "auto", fontWeight: 700, bgcolor: `${color}22`, color }} />
+        <Chip size="small" label={rows.length} sx={{ ml: "auto", fontWeight: 700, bgcolor: `${color}22`, color }} />
       </Box>
-      <Box>{children}</Box>
+      <Box>{rows.slice((current - 1) * SECTION_PAGE, current * SECTION_PAGE).map(renderRow)}</Box>
+      {totalPages > 1 && (<Box sx={{ display: "flex", justifyContent: "center", my: 2 }}><Pagination count={totalPages} page={current} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" /></Box>)}
     </Paper>
   );
 }
@@ -63,14 +76,19 @@ function Row({ primary, secondary, actions }: { primary: any; secondary?: any; a
 export default function OnboardingList() {
   const navigate = useNavigate();
 
+  // `actionNeeded` narrows each list server-side to rows that could need action,
+  // so this reads the to-do pile, not every tenant. actionBuckets still decides.
   const hq = useQuery({
     queryKey: ["action-hospitals"],
-    queryFn: async () => (await axiosInstance.get("/hospitals", { params: { limit: 1000 } })).data,
+    queryFn: async () => (await axiosInstance.get("/hospitals", { params: { actionNeeded: "true", limit: 1000 } })).data,
   });
   const tq = useQuery({
     queryKey: ["action-trials"],
-    queryFn: async () => (await axiosInstance.get("/trials", { params: { limit: 1000 } })).data,
+    queryFn: async () => (await axiosInstance.get("/trials", { params: { actionNeeded: "true", limit: 1000 } })).data,
   });
+  // Never cut silently: say so if the to-do pile outgrows one read.
+  const truncated = (hq.data?.pagination?.total ?? 0) > (hq.data?.data?.length ?? 0)
+    || (tq.data?.pagination?.total ?? 0) > (tq.data?.data?.length ?? 0);
 
   const loading = hq.isLoading || tq.isLoading;
   const isError = hq.isError || tq.isError;
@@ -137,6 +155,10 @@ export default function OnboardingList() {
         ))}
       </Grid>
 
+      {truncated && (
+        <Alert severity="warning" sx={{ mb: 3 }}>Only the first 1,000 tenants and trials needing action are shown — counts may be low.</Alert>
+      )}
+
       {total === 0 ? (
         <Paper sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, p: 6, textAlign: "center" }}>
           <CheckCircleRounded sx={{ fontSize: 56, color: SEMANTIC.success, mb: 1.5 }} />
@@ -145,8 +167,7 @@ export default function OnboardingList() {
         </Paper>
       ) : (
         <>
-          <Section icon={<HourglassBottomRounded />} title="Trials expiring soon" color={SEMANTIC.warning} items={expiring.length}>
-            {expiring.map((t) => {
+          <Section icon={<HourglassBottomRounded />} title="Trials expiring soon" color={SEMANTIC.warning} rows={expiring} renderRow={(t) => {
               const d = daysUntil(t.trialEndDate);
               return (
                 <Row
@@ -161,11 +182,9 @@ export default function OnboardingList() {
                   }
                 />
               );
-            })}
-          </Section>
+            }} />
 
-          <Section icon={<TimerOffRounded />} title="Expired trials — convert or cancel" color={SEMANTIC.danger} items={expired.length}>
-            {expired.map((t) => (
+          <Section icon={<TimerOffRounded />} title="Expired trials — convert or cancel" color={SEMANTIC.danger} rows={expired} renderRow={(t) => (
               <Row
                 key={t.hospitalTrialId}
                 primary={t.lead?.hospitalName || "Unknown"}
@@ -177,22 +196,18 @@ export default function OnboardingList() {
                   </>
                 }
               />
-            ))}
-          </Section>
+            )} />
 
-          <Section icon={<BlockRounded />} title="Suspended hospitals" color={SEMANTIC.danger} items={suspended.length}>
-            {suspended.map((h) => (
+          <Section icon={<BlockRounded />} title="Suspended hospitals" color={SEMANTIC.danger} rows={suspended} renderRow={(h) => (
               <Row
                 key={h.hospitalId}
                 primary={h.hospitalName}
                 secondary={`Code ${h.hospitalCode} · logins blocked`}
                 actions={<Button size="small" variant="outlined" startIcon={<VisibilityRounded />} onClick={() => navigate(`/hospitals/${h.hospitalId}/overview`)} sx={{ textTransform: "none" }}>View</Button>}
               />
-            ))}
-          </Section>
+            )} />
 
-          <Section icon={<HourglassBottomRounded />} title="Payment overdue — grace period" color={SEMANTIC.warning} items={overdue.length}>
-            {overdue.map((h) => (
+          <Section icon={<HourglassBottomRounded />} title="Payment overdue — grace period" color={SEMANTIC.warning} rows={overdue} renderRow={(h) => (
               <Row
                 key={h.hospitalId}
                 primary={h.hospitalName}
@@ -202,19 +217,16 @@ export default function OnboardingList() {
                 secondary={`Code ${h.hospitalCode} · overdue since ${formatDate(h.oldestDueDate)} · ${graceText(h.graceDaysLeft)}`}
                 actions={<Button size="small" variant="outlined" startIcon={<VisibilityRounded />} onClick={() => navigate(`/hospitals/${h.hospitalId}/overview`)} sx={{ textTransform: "none" }}>View</Button>}
               />
-            ))}
-          </Section>
+            )} />
 
-          <Section icon={<EditNoteRounded />} title="Incomplete hospital profiles" color={SEMANTIC.info} items={incomplete.length}>
-            {incomplete.map((h) => (
+          <Section icon={<EditNoteRounded />} title="Incomplete hospital profiles" color={SEMANTIC.info} rows={incomplete} renderRow={(h) => (
               <Row
                 key={h.hospitalId}
                 primary={h.hospitalName}
                 secondary="Admin hasn't completed the required profile details yet"
                 actions={<Button size="small" variant="outlined" startIcon={<VisibilityRounded />} onClick={() => navigate(`/hospitals/${h.hospitalId}/overview`)} sx={{ textTransform: "none" }}>View</Button>}
               />
-            ))}
-          </Section>
+            )} />
         </>
       )}
     </PageContainer>

@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
   Box, Paper, Typography, TextField, MenuItem, Button, Stack, ToggleButton, ToggleButtonGroup,
-  Dialog, DialogTitle, DialogContent, DialogActions, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
+  Dialog, DialogTitle, DialogContent, DialogActions, Table, TableHead, TableBody, TableRow, TableCell, TableContainer, Pagination,
 } from "@mui/material";
 import { AddRounded, PrintRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -186,16 +186,20 @@ export default function Certificates() {
   const [type, setType] = useState<"" | CertType>("");
   const [issuing, setIssuing] = useState(false);
   const [cancelling, setCancelling] = useState<Cert | null>(null);
-  const q = useQuery<Cert[]>({
-    queryKey: ["mrd", "certificates", type],
-    queryFn: async () => (await axiosInstance.get("/mrd/certificates", { params: { type: type || undefined } })).data.data,
+  const [page, setPage] = useState(1);
+  const pq = useQuery<{ data: Cert[]; pagination: { totalPages: number } }>({
+    queryKey: ["mrd", "certificates", type, page],
+    queryFn: async () => (await axiosInstance.get("/mrd/certificates", { params: { type: type || undefined, page, limit: 20 } })).data,
+    placeholderData: keepPreviousData,
   });
+  const q = { ...pq, data: pq.data?.data };
+  const totalPages = pq.data?.pagination?.totalPages ?? 1;
   const done = () => qc.invalidateQueries({ queryKey: ["mrd", "certificates"] });
 
   return (
     <Box>
       <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", mb: 2, flexWrap: "wrap" }}>
-        <ToggleButtonGroup size="small" exclusive value={type} onChange={(_e, v) => v !== null && setType(v)}>
+        <ToggleButtonGroup size="small" exclusive value={type} onChange={(_e, v) => { if (v !== null) { setType(v); setPage(1); } }}>
           <ToggleButton value="">All</ToggleButton>
           {(Object.keys(TYPE_LABEL) as CertType[]).map((t) => <ToggleButton key={t} value={t}>{TYPE_LABEL[t]}</ToggleButton>)}
         </ToggleButtonGroup>
@@ -248,6 +252,7 @@ export default function Certificates() {
           </Table>
         </TableContainer>
       )}
+      {totalPages > 1 && (<Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}><Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" /></Box>)}
       {issuing && <IssueDialog onClose={() => setIssuing(false)} onDone={done} />}
       {cancelling && <CancelDialog cert={cancelling} onClose={() => setCancelling(null)} onDone={done} />}
     </Box>

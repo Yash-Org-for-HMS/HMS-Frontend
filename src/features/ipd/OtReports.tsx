@@ -4,8 +4,8 @@ import { apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Grid, Chip, Tabs, Tab, TextField, MenuItem, Stack,
-  Table, TableBody, TableCell, TableHead, TableRow, LinearProgress, Alert,
-} from "@mui/material";
+  Table, TableBody, TableCell, TableHead, TableRow, LinearProgress, Alert, Pagination,
+}from "@mui/material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
@@ -121,6 +121,9 @@ export default function OtReports({ report: fixedReport }: { report?: OtReportKe
         </Paper>
       )}
 
+      {/* Keyed on the filters so each case list's pager starts again at page 1
+          whenever the range, theatre or report changes. */}
+      <Box key={`${report}|${from}|${to}|${theatreId}`}>
       {isLoading ? <ListSkeleton />
         : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
         : report === "utilisation" ? <Utilisation d={data} />
@@ -129,6 +132,7 @@ export default function OtReports({ report: fixedReport }: { report?: OtReportKe
         : report === "cancellations" ? <Cancellations d={data} />
         : report === "complications" ? <Complications d={data} />
         : <Revenue d={data} />}
+      </Box>
     </Box>
   );
 }
@@ -144,6 +148,25 @@ const Card = ({ title, children }: { title: string; children: React.ReactNode })
     {children}
   </Paper>
 );
+
+/**
+ * One page of a case list. Display only: the tiles and rates above each list are
+ * computed from the whole range (server figures, or the full list's length).
+ */
+const PAGE_SIZE = 25;
+function usePage<T>(list: T[]) {
+  const [page, setPage] = useState(1);
+  const totalPages = Math.ceil(list.length / PAGE_SIZE);
+  const current = Math.min(page, Math.max(1, totalPages));
+  return {
+    shown: list.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE),
+    pager: totalPages > 1 && (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+        <Pagination count={totalPages} page={current} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" />
+      </Box>
+    ),
+  };
+}
 
 const Empty = ({ what }: { what: string }) => (
   <Typography variant="body2" sx={{ color: "text.secondary", py: 3, textAlign: "center" }}>
@@ -339,6 +362,7 @@ function Cancellations({ d }: { d: Any }) {
   const byReason = rows<Record<string, string | number>>(d, "byReason");
   const cases = rows<Record<string, string | null>>(d, "cases");
   const rate = val(d, ["cancellationRatePct"]) as number | null;
+  const casePage = usePage(cases);
   return (
     <>
       <Grid container spacing={2} sx={{ mb: 2 }}>
@@ -366,7 +390,7 @@ function Cancellations({ d }: { d: Any }) {
           <Table size="small">
             <TableHead><TableRow><TableCell>Procedure</TableCell><TableCell>Was booked for</TableCell><TableCell>Reason</TableCell></TableRow></TableHead>
             <TableBody>
-              {cases.map((c) => (
+              {casePage.shown.map((c) => (
                 <TableRow key={String(c.surgeryId)}>
                   <TableCell sx={{ fontWeight: 600 }}>{String(c.procedureName)}</TableCell>
                   <TableCell>{c.scheduledStart ? new Date(String(c.scheduledStart)).toLocaleString() : "—"}</TableCell>
@@ -376,6 +400,7 @@ function Cancellations({ d }: { d: Any }) {
             </TableBody>
           </Table>
         )}
+        {casePage.pager}
       </Card>
     </>
   );
@@ -387,6 +412,8 @@ function Complications({ d }: { d: Any }) {
   const cov = val(d, ["coverage"]) as Record<string, number | string> | undefined;
   const cases = Number(val(d, ["cases"]) ?? 0);
   const withRecord = Number(cov?.casesWithARecord ?? 0);
+  const listPage = usePage(list);
+  const returnPage = usePage(returns);
 
   return (
     <>
@@ -409,7 +436,7 @@ function Complications({ d }: { d: Any }) {
           <Table size="small">
             <TableHead><TableRow><TableCell>Patient</TableCell><TableCell>Procedure</TableCell><TableCell>When</TableCell><TableCell>What happened</TableCell></TableRow></TableHead>
             <TableBody>
-              {list.map((c) => (
+              {listPage.shown.map((c) => (
                 <TableRow key={String(c.surgeryId)}>
                   <TableCell sx={{ fontWeight: 600 }}>{c.patientName} <Typography component="span" variant="caption" sx={{ color: "text.secondary" }}>{c.uhid}</Typography></TableCell>
                   <TableCell>{c.procedureName}</TableCell>
@@ -420,6 +447,7 @@ function Complications({ d }: { d: Any }) {
             </TableBody>
           </Table>
         )}
+        {listPage.pager}
       </Card>
 
       <Card title="Unplanned returns to theatre">
@@ -427,7 +455,7 @@ function Complications({ d }: { d: Any }) {
           <Table size="small">
             <TableHead><TableRow><TableCell>Patient</TableCell><TableCell>First operation</TableCell><TableCell>Came back for</TableCell><TableCell align="right">Days later</TableCell></TableRow></TableHead>
             <TableBody>
-              {returns.map((r, i) => (
+              {returnPage.shown.map((r, i) => (
                 <TableRow key={i}>
                   <TableCell sx={{ fontWeight: 600 }}>{r.patientName} <Typography component="span" variant="caption" sx={{ color: "text.secondary" }}>{r.uhid}</Typography></TableCell>
                   <TableCell>{r.firstProcedure}</TableCell>
@@ -438,6 +466,7 @@ function Complications({ d }: { d: Any }) {
             </TableBody>
           </Table>
         )}
+        {returnPage.pager}
       </Card>
     </>
   );

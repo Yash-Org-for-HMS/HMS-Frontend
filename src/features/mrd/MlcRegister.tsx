@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
   Box, Paper, Typography, TextField, MenuItem, Button, Stack, ToggleButton, ToggleButtonGroup, Tooltip,
-  Dialog, DialogTitle, DialogContent, DialogActions, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
+  Dialog, DialogTitle, DialogContent, DialogActions, Table, TableHead, TableBody, TableRow, TableCell, TableContainer, Pagination,
 } from "@mui/material";
 import { AddRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -161,17 +161,21 @@ function CloseDialog({ mlc, onClose, onDone }: { mlc: Mlc; onClose: () => void; 
 export default function MlcRegister() {
   const qc = useQueryClient();
   const [status, setStatus] = useState<"open" | "all">("open");
+  const [page, setPage] = useState(1);
   const [dialog, setDialog] = useState<{ kind: "register" } | { kind: "police" | "close"; mlc: Mlc } | null>(null);
-  const q = useQuery<Mlc[]>({
-    queryKey: ["mrd", "mlc", status],
-    queryFn: async () => (await axiosInstance.get("/mrd/mlc", { params: { status } })).data.data,
+  const pq = useQuery<{ data: Mlc[]; pagination: { totalPages: number } }>({
+    queryKey: ["mrd", "mlc", "register", status, page],
+    queryFn: async () => (await axiosInstance.get("/mrd/mlc", { params: { status, page, limit: 20 } })).data,
+    placeholderData: keepPreviousData,
   });
+  const q = { ...pq, data: pq.data?.data };
+  const totalPages = pq.data?.pagination?.totalPages ?? 1;
   const done = () => qc.invalidateQueries({ queryKey: ["mrd", "mlc"] });
 
   return (
     <Box>
       <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", mb: 2, flexWrap: "wrap" }}>
-        <ToggleButtonGroup size="small" exclusive value={status} onChange={(_e, v) => v && setStatus(v)}>
+        <ToggleButtonGroup size="small" exclusive value={status} onChange={(_e, v) => { if (v) { setStatus(v); setPage(1); } }}>
           <ToggleButton value="open">Open</ToggleButton>
           <ToggleButton value="all">All</ToggleButton>
         </ToggleButtonGroup>
@@ -235,6 +239,7 @@ export default function MlcRegister() {
           </Table>
         </TableContainer>
       )}
+      {totalPages > 1 && (<Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}><Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" /></Box>)}
       {dialog?.kind === "register" && <RegisterDialog onClose={() => setDialog(null)} onDone={done} />}
       {dialog?.kind === "police" && <PoliceDialog mlc={dialog.mlc} onClose={() => setDialog(null)} onDone={done} />}
       {dialog?.kind === "close" && <CloseDialog mlc={dialog.mlc} onClose={() => setDialog(null)} onDone={done} />}

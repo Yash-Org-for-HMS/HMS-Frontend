@@ -1,30 +1,21 @@
 import { useState } from "react";
 import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
-import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Box, Typography, Paper, Button, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Chip, TextField, IconButton, Tooltip, Divider, Alert,
-} from "@mui/material";
-import { AddRounded, DeleteOutlineRounded, EventBusyRounded } from "@mui/icons-material";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import { Box, Typography, Paper, Button, TextField, Divider, Alert, Pagination } from "@mui/material";
+import { AddRounded, EventBusyRounded } from "@mui/icons-material";
 import dayjs from "dayjs";
 import { axiosInstance } from "@/api/axios";
-import Mascot from "@/components/Mascot";
 import ErrorState from "@/components/ErrorState";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import PageHeader from "@/components/layout/PageHeader";
-import { useTableSort } from "@/components/table/useTableSort";
-import SortableHeadCell from "@/components/table/SortableHeadCell";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import PageSkeleton from "@/components/PageSkeleton";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import LeaveScopeFields from "@/features/hospitalAuth/doctors/LeaveScopeFields";
-import { EMPTY_LEAVE_SCOPE, leaveScopeBody, leaveScopeLabel, type LeaveScope } from "@/features/hospitalAuth/doctors/leaveScope";
-
-const INACTIVE = ["rejected", "cancelled", "declined"];
-const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 600, fontSize: "0.875rem" };
+import LeaveTable, { type LeaveRow, type PagedLeaves } from "@/features/hospitalAuth/doctors/LeaveTable";
+import { EMPTY_LEAVE_SCOPE, leaveScopeBody, type LeaveScope } from "@/features/hospitalAuth/doctors/leaveScope";
 
 // Doctor self-service leave. A doctor adds/removes their OWN leave days; each day
 // blocks new bookings with them (reception sees "on leave"). No admin needed.
@@ -43,16 +34,16 @@ export default function MyLeaves() {
   // Leave can only be for today onward (the backend enforces this too).
   const today = dayjs().format("YYYY-MM-DD");
 
-  const { data: leaves = [], isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["my-leaves"],
-    queryFn: async () => (await axiosInstance.get("/doctor/leaves")).data.data as any[],
+  // Upcoming (today on) comes back in full; only the past history is paged.
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["my-leaves", page],
+    queryFn: async () => (await axiosInstance.get("/doctor/leaves", { params: { page, limit: 20 } })).data as PagedLeaves,
+    placeholderData: keepPreviousData,
   });
-
-  const { sorted, orderBy, order, onSort } = useTableSort(leaves, {
-    date: (l) => (l.leaveDate ? new Date(l.leaveDate) : null),
-    reason: (l) => l.leaveReason ?? null,
-    status: (l) => l.status ?? null,
-  });
+  const upcoming = data?.upcoming ?? [];
+  const past = data?.data ?? [];
+  const totalPages = data?.pagination?.totalPages ?? 0;
 
   const addLeave = useMutation({
     mutationFn: async () =>
@@ -75,6 +66,10 @@ export default function MyLeaves() {
     },
     onError: (err: unknown) => toast.error(getApiErrorMessage(err, "Failed to remove leave")),
   });
+  const removeWithConfirm = async (leave: LeaveRow) => {
+    const ok = await confirm({ title: "Remove leave", message: "Remove this leave day? Your slots for that day re-open.", confirmText: "Remove", destructive: true });
+    if (ok) removeLeave.mutate(leave.doctorLeaveId);
+  };
 
   return (
     <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
@@ -124,62 +119,18 @@ export default function MyLeaves() {
       ) : isError ? (
         <ErrorState title="Couldn't load your leave" message={apiErrorText(error)} onRetry={() => refetch()} />
       ) : (
-        <TableContainer component={Paper} elevation={0} sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, border: "1px solid", borderColor: "divider", maxHeight: "calc(100vh - 320px)" }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <SortableHeadCell label="Leave Date" sortKey="date" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
-                <SortableHeadCell label="Reason" sortKey="reason" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
-                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.default" }} />
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {sorted.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} sx={{ py: 3, borderBottom: "none" }}>
-                    <Mascot pose="nothing-here-yet" subtitle="No leave marked. Add a day above when you're going to be off." size={110} />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                sorted.map((leave) => {
-                  const inactive = INACTIVE.includes((leave.status || "").toLowerCase());
-                  const past = dayjs(leave.leaveDate).isBefore(dayjs(), "day");
-                  return (
-                    <TableRow key={leave.doctorLeaveId} hover sx={{ "&:last-child td": { border: 0 } }}>
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary", fontWeight: 600 }}>
-                        {dayjs(leave.leaveDate).format("ddd, DD MMM YYYY")}
-                        {leaveScopeLabel(leave, branchName) && (
-                          <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 500 }}>{leaveScopeLabel(leave, branchName)}</Typography>
-                        )}
-                      </TableCell>
-                      <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>{leave.leaveReason || "—"}</TableCell>
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                        <Chip label={leave.status} size="small"
-                          sx={{ bgcolor: inactive ? "rgba(148,163,184,0.15)" : "rgba(16,185,129,0.15)", color: inactive ? "text.secondary" : "#16a34a", fontWeight: 600 }} />
-                      </TableCell>
-                      <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                        <Tooltip title={past ? "A past leave day can't be removed" : "Remove leave"}>
-                          <span>
-                            <IconButton size="small"
-                              onClick={async () => {
-                                const ok = await confirm({ title: "Remove leave", message: "Remove this leave day? Your slots for that day re-open.", confirmText: "Remove", destructive: true });
-                                if (ok) removeLeave.mutate(leave.doctorLeaveId);
-                              }}
-                              disabled={past || removeLeave.isPending}
-                              sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}>
-                              <DeleteOutlineRounded fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Upcoming</Typography>
+          <LeaveTable rows={upcoming} sortable branchName={branchName} onRemove={removeWithConfirm} removing={removeLeave.isPending}
+            emptyText="No upcoming leave. Add a day above when you're going to be off." maxHeight="calc(100vh - 320px)" />
+          {(past.length > 0 || page > 1) && (
+            <>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mt: 3, mb: 1 }}>Past</Typography>
+              <LeaveTable rows={past} branchName={branchName} onRemove={removeWithConfirm} removing={removeLeave.isPending} emptyText="No past leave." />
+              {totalPages > 1 && (<Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}><Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} color="primary" shape="rounded" /></Box>)}
+            </>
+          )}
+        </>
       )}
     </Box>
   );

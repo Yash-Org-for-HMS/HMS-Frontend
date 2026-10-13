@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import {
-  Box, Paper, Typography, Table, TableHead, TableBody, TableRow, TableCell, TableContainer, Checkbox, Button,
+  Box, Paper, Typography, Table, TableHead, TableBody, TableRow, TableCell, TableContainer, Checkbox, Button, Pagination,
 } from "@mui/material";
 import { DoneAllRounded } from "@mui/icons-material";
 import PageHeader from "@/components/layout/PageHeader";
@@ -56,14 +56,22 @@ export default function CosignPage() {
   const live = useLiveConnected();
   const [picked, setPicked] = useState<string[]>([]);
   const [signing, setSigning] = useState(false);
-  const q = useQuery<{ pending: CosignItem[]; signedToday: CosignItem[] }>({
-    queryKey: ["ward-round-cosign"],
-    queryFn: async () => (await axiosInstance.get("/ward-round/cosign")).data.data,
+  const [page, setPage] = useState(1);
+  const q = useQuery<{ pending: CosignItem[]; signedToday: CosignItem[]; totalPages: number }>({
+    queryKey: ["ward-round-cosign", page],
+    queryFn: async () => {
+      const body = (await axiosInstance.get("/ward-round/cosign", { params: { page, limit: 20 } })).data;
+      return { ...body.data, totalPages: body.pagination?.totalPages ?? 1 };
+    },
+    placeholderData: keepPreviousData,
     refetchOnWindowFocus: true,
     refetchInterval: live ? LIVE_DASHBOARD_FALLBACK_MS : DASHBOARD_POLL_MS,
   });
   const pending = q.data?.pending ?? [];
   const signedToday = q.data?.signedToday ?? [];
+  const totalPages = q.data?.totalPages ?? 1;
+  // Co-signing the last items on the last page: step back rather than strand on an empty page.
+  if (!q.isPlaceholderData && page > Math.max(1, totalPages)) setPage(Math.max(1, totalPages));
   const chosen = picked.filter((id) => pending.some((p) => p.cosignId === id));
 
   const sign = async (ids: string[]) => {
@@ -173,6 +181,11 @@ export default function CosignPage() {
                 </TableBody>
               </Table>
             </TableContainer>
+          )}
+          {totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+              <Pagination count={totalPages} page={page} onChange={(_, v) => { setPage(v); setPicked([]); }} color="primary" shape="rounded" />
+            </Box>
           )}
           {signedToday.length > 0 && (
             <>
