@@ -4,7 +4,7 @@ import SidebarNav from "@/components/layout/SidebarNav";
 import { ThemeProvider } from "@mui/material/styles";
 import { createPanelTheme } from "@/theme";
 const nurseTheme = createPanelTheme(BRAND.action, BRAND.actionDark);
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   Box, Drawer, Divider, useTheme, useMediaQuery,

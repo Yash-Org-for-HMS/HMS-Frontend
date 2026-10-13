@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRoleTitle } from "@/hooks/useRoleTitle";
 import { menuPathsFor, holdsHome, hasAction, hasRole } from "@/constants/roles";
 import { isNavItemActive } from "@/components/layout/navActive";

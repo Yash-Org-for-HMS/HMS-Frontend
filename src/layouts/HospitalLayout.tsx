@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRoleTitle } from "@/hooks/useRoleTitle";
 import SidebarNav from "@/components/layout/SidebarNav";
 import { Outlet, Navigate, useNavigate, useLocation } from "react-router-dom";
