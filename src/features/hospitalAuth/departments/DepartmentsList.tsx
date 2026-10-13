@@ -40,7 +40,6 @@ const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontW
 interface Department extends DepartmentBase {
   departmentCode: string;
   status: string;
-  departmentType?: { typeName: string };
   headOfDepartment?: { firstName: string; lastName: string };
   /** Set when this department was copied from the platform's standard list. */
   sysDepartmentCode?: string | null;
@@ -63,17 +62,20 @@ export default function DepartmentsList() {
   const [q, setQ] = useState("");
   const inUse = useMemo(() => allDepartments.filter((d) => d.status === "active"), [allDepartments]);
   const off = useMemo(() => allDepartments.filter((d) => d.status !== "active"), [allDepartments]);
-  const departments = useMemo(() => {
+  // A search looks in both tabs; each tab's count says how many it matched there.
+  const [inUseHits, offHits] = useMemo(() => {
     const term = q.trim().toLowerCase();
-    const list = view === "active" ? inUse : off;
-    if (!term) return list;
-    return list.filter((d) => `${d.departmentName} ${d.departmentCode} ${d.sysDepartment?.category?.name ?? ""}`.toLowerCase().includes(term));
-  }, [view, inUse, off, q]);
+    if (!term) return [inUse, off];
+    const hit = (d: Department) => `${d.departmentName} ${d.departmentCode} ${d.sysDepartment?.category?.name ?? ""}`.toLowerCase().includes(term);
+    return [inUse.filter(hit), off.filter(hit)];
+  }, [inUse, off, q]);
+  const departments = view === "active" ? inUseHits : offHits;
+  const otherHits = view === "active" ? offHits.length : inUseHits.length;
 
   const { sorted, orderBy, order, onSort } = useTableSort(departments, {
     name: (d) => d.departmentName,
     code: (d) => d.departmentCode,
-    type: (d) => d.sysDepartment?.category?.name ?? d.departmentType?.typeName ?? null,
+    type: (d) => d.sysDepartment?.category?.name ?? null,
     head: (d) => d.headOfDepartment ? `${d.headOfDepartment.firstName} ${d.headOfDepartment.lastName}` : null,
     status: (d) => d.status,
   });
@@ -116,11 +118,11 @@ export default function DepartmentsList() {
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap", mb: 2 }}>
         <Tabs value={view} onChange={(_, v) => setView(v)} sx={{ minHeight: 40, "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 40 } }}>
-          <Tab value="active" label={`In use (${inUse.length})`} />
-          <Tab value="inactive" label={`Switched off (${off.length})`} />
+          <Tab value="active" label={`In use (${inUseHits.length})`} />
+          <Tab value="inactive" label={`Switched off (${offHits.length})`} />
         </Tabs>
         <TextField
-          size="small" placeholder={view === "active" ? "Search departments" : "Search the standard list"}
+          size="small" placeholder="Search all departments"
           value={q} onChange={(e) => setQ(e.target.value)} sx={{ ml: "auto", minWidth: 260 }}
           slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> } }}
         />
@@ -152,10 +154,17 @@ export default function DepartmentsList() {
                 <TableCell colSpan={6} sx={{ py: 3, borderBottom: "none" }}>
                   <Mascot
                     pose="nothing-here-yet"
-                    title={q ? "Nothing matches" : view === "active" ? "No departments in use yet" : "Nothing switched off"}
-                    subtitle={q ? "Try another word." : view === "active" ? "Switch one on from the standard list, or add your own." : "Every department is in use."}
+                    title={q ? (otherHits ? `Not ${view === "active" ? "in use" : "switched off"}` : "Nothing matches") : view === "active" ? "No departments in use yet" : "Nothing switched off"}
+                    subtitle={q ? (otherHits ? "" : "Try another word.") : view === "active" ? "Switch one on from the standard list, or add your own." : "Every department is in use."}
                     size={120}
                   />
+                  {q && otherHits > 0 && (
+                    <Box sx={{ textAlign: "center", mt: 1 }}>
+                      <Button variant="outlined" onClick={() => setView(view === "active" ? "inactive" : "active")} sx={{ textTransform: "none", fontWeight: 600 }}>
+                        Show {otherHits} {view === "active" ? "switched off" : "in use"}
+                      </Button>
+                    </Box>
+                  )}
                 </TableCell>
               </TableRow>
             ) : (
@@ -169,12 +178,15 @@ export default function DepartmentsList() {
                         {[dept.sysDepartment.canAdmitPatients && "admits", dept.sysDepartment.hasOpd && "OPD", dept.sysDepartment.ownsWard && "owns a ward"].filter(Boolean).map((t) => ` · ${t}`).join("")}
                       </Typography>
                     )}
+                    {!dept.sysDepartment && (
+                      <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>Added by the hospital</Typography>
+                    )}
                   </TableCell>
                   <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                     {dept.departmentCode}
                   </TableCell>
                   <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
-                    {dept.sysDepartment?.category?.name || dept.departmentType?.typeName || "-"}
+                    {dept.sysDepartment?.category?.name || "-"}
                   </TableCell>
                   <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                     {dept.headOfDepartment ? `${dept.headOfDepartment.firstName} ${dept.headOfDepartment.lastName}` : "-"}

@@ -14,6 +14,7 @@ import {
   FormControlLabel,
   Typography,
   Stack,
+  Alert,
   } from "@mui/material";
 import { SaveRounded } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
@@ -25,11 +26,6 @@ import PageHeader from "@/components/layout/PageHeader";
 import FormSkeleton from "@/components/skeletons/FormSkeleton";
 import { validate, hasErrors, required, type Errors } from "@/utils/validation";
 import { USER_DROPDOWNS_KEY } from "@/features/hospitalAuth/users/queryKeys";
-
-interface DepartmentType {
-  departmentTypeId: number;
-  typeName: string;
-}
 
 import type { StaffUser as User } from "@/types";
 
@@ -45,7 +41,6 @@ export default function DepartmentForm() {
   const [formData, setFormData] = useState({
     departmentName: "",
     departmentCode: "",
-    departmentTypeId: "",
     headOfDepartmentId: "",
     status: "active",
     location: "",
@@ -76,12 +71,29 @@ export default function DepartmentForm() {
     return next;
   });
 
-  const { data: departmentTypes = [] } = useQuery<DepartmentType[]>({
-    queryKey: ["department-types"],
-    queryFn: async () => (await axiosInstance.get("/hospital/departments/types")).data.data || [],
-    // The standard set, seeded once per hospital.
-    staleTime: 10 * 60_000,
+  // A new department may already be on the standard list, switched off: offer
+  // that instead, so the hospital doesn't hold two Cardiologies.
+  const { data: allDepartments = [] } = useQuery<{ departmentId: string; departmentName: string; departmentCode: string; status: string; sysDepartmentCode?: string | null }[]>({
+    queryKey: ["hospital-departments"],
+    queryFn: async () => (await axiosInstance.get("/hospital/departments", { params: { limit: 1000 } })).data.data,
+    enabled: !isEditing,
   });
+  const typed = formData.departmentName.trim().toLowerCase();
+  const standardMatches = !isEditing && typed.length >= 3
+    ? allDepartments.filter((d) => d.sysDepartmentCode && d.departmentName.toLowerCase().includes(typed)).slice(0, 3)
+    : [];
+  const switchOn = async (d: { departmentId: string; departmentName: string }) => {
+    try {
+      await axiosInstance.put(`/hospital/departments/${d.departmentId}`, { status: "active" });
+      toast.success(`${d.departmentName} is now in use`);
+      void queryClient.invalidateQueries({ queryKey: ["hospital-departments"] });
+      void queryClient.invalidateQueries({ queryKey: USER_DROPDOWNS_KEY });
+      navigate("/hospital/departments");
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Couldn't switch it on"));
+    }
+  };
+
   const { data: users = [] } = useQuery<User[]>({
     queryKey: ["department-head-users"],
     queryFn: async () => (await axiosInstance.get("/hospital/departments/users")).data.data || [],
@@ -100,7 +112,6 @@ export default function DepartmentForm() {
     setFormData({
       departmentName: dept.departmentName || "",
       departmentCode: dept.departmentCode || "",
-      departmentTypeId: dept.departmentTypeId ? String(dept.departmentTypeId) : "",
       headOfDepartmentId: dept.headOfDepartmentId || "",
       status: dept.status || "active",
       location: dept.location || "",
@@ -165,7 +176,7 @@ export default function DepartmentForm() {
     <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <PageHeader
         title={isEditing ? "Edit Department" : "Add New Department"}
-        subtitle={isEditing ? "Update department details." : "Create a new department for your hospital."}
+        subtitle={isEditing ? "Update department details." : "For a department the standard list doesn't have. Most are already there — switch them on from the Departments list."}
         actions={
           <Button
             variant="outlined"
@@ -199,6 +210,21 @@ export default function DepartmentForm() {
                   },
                 }}
               />
+              {standardMatches.length > 0 && (
+                <Alert severity="info" sx={{ mt: 1.5 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>Already on the standard list — use it instead of adding a new one:</Typography>
+                  <Stack spacing={0.75}>
+                    {standardMatches.map((d) => (
+                      <Stack key={d.departmentId} direction="row" spacing={1.5} alignItems="center">
+                        <Typography variant="body2">{d.departmentName} <Box component="span" sx={{ color: "text.secondary" }}>({d.departmentCode})</Box></Typography>
+                        {d.status === "active"
+                          ? <Typography variant="caption" sx={{ color: "text.secondary" }}>already in use</Typography>
+                          : <Button size="small" variant="outlined" onClick={() => switchOn(d)}>Switch on</Button>}
+                      </Stack>
+                    ))}
+                  </Stack>
+                </Alert>
+              )}
             </Grid>
 
             <Grid size={{ xs: 12 }}>
@@ -221,34 +247,6 @@ export default function DepartmentForm() {
                   },
                 }}
               />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                select
-                label="Department Type"
-                name="departmentTypeId"
-                value={formData.departmentTypeId}
-                onChange={handleChange}
-                InputLabelProps={{ style: { color: "text.secondary" } }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    color: "text.primary",
-                    "& fieldset": { borderColor: "divider" },
-                    "&:hover fieldset": { borderColor: "divider" },
-                    "&.Mui-focused fieldset": { borderColor: BRAND.action },
-                  },
-                  "& .MuiSvgIcon-root": { color: "text.secondary" },
-                }}
-              >
-                <MenuItem value="">None</MenuItem>
-                {departmentTypes.map((type) => (
-                  <MenuItem key={type.departmentTypeId} value={type.departmentTypeId.toString()}>
-                    {type.typeName}
-                  </MenuItem>
-                ))}
-              </TextField>
             </Grid>
 
             <Grid size={{ xs: 12 }}>
