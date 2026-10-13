@@ -64,7 +64,7 @@ export function LabOverview() {
           <Grid container spacing={2.5}>
             <Grid size={{ xs: 12, md: 6 }}>
               <ReportTable title="Top tests" filename={`lab_top_tests_${range.from}_${range.to}`}
-                columns={[{ key: "testName", label: "Test" }, { key: "count", label: "Times ordered", align: "right" }]} rows={topTests} />
+                columns={[{ key: "testName", label: "Test" }, { key: "count", label: "Orders", align: "right" }]} rows={topTests} />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <ReportTable title="Radiology status" filename={`radiology_status_${range.from}_${range.to}`}

@@ -198,7 +198,7 @@ export default function ReportTable<T = any>({ columns, rows, filename, title, m
               one long cell stretched its row to twice the height of its
               neighbours. Letting the table take its natural width and scroll
               inside the card keeps rows uniform and scannable. */}
-          <Table stickyHeader size="small" sx={{ "& td, & th": { whiteSpace: "nowrap" } }}>
+          <Table stickyHeader size="small" sx={{ "& td, & th": { whiteSpace: "nowrap" }, ...(columns.length <= 3 ? { "& td:first-of-type": { whiteSpace: "normal" } } : {}) }}>
             <TableHead>
               <TableRow>
                 {columns.map((c) => (
