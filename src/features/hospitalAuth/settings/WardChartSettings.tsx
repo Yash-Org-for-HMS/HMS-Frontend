@@ -116,8 +116,8 @@ export default function WardChartSettings() {
             {shifts.map((s, i) => (
               <Box key={i} sx={{ display: "flex", gap: 1.5, alignItems: "center", mb: 1.5, flexWrap: "wrap" }}>
                 <TextField size="small" label="Name" value={s.name} onChange={(e) => setShift(i, { name: e.target.value })} sx={{ width: 150 }} />
-                <TextField size="small" type="time" label="Starts" value={s.startTime} onChange={(e) => setShift(i, { startTime: e.target.value })} InputLabelProps={{ shrink: true }} sx={{ width: 130 }} />
-                <TextField size="small" type="time" label="Ends" value={s.endTime} onChange={(e) => setShift(i, { endTime: e.target.value })} InputLabelProps={{ shrink: true }} sx={{ width: 130 }} />
+                <TextField size="small" type="time" label="Starts" value={s.startTime} onChange={(e) => setShift(i, { startTime: e.target.value })} InputLabelProps={{ shrink: true }} sx={{ width: 150 }} />
+                <TextField size="small" type="time" label="Ends" value={s.endTime} onChange={(e) => setShift(i, { endTime: e.target.value })} InputLabelProps={{ shrink: true }} sx={{ width: 150 }} />
                 <Tooltip title={shifts.length === 1 ? "At least one shift is required" : "Remove this shift"}>
                   <span>
                     <IconButton size="small" disabled={shifts.length === 1}

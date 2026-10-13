@@ -4,7 +4,7 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
-  Stack, Typography,
+  Stack, Typography, Alert,
 } from "@mui/material";
 import { SwapHorizRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -23,6 +23,7 @@ export default function TransferDialog({ open, onClose, onDone, admission }: Pro
   const toast = useToast();
   const [toBedId, setToBedId] = useState("");
   const [reason, setReason] = useState("");
+  const [approvedBy, setApprovedBy] = useState("");
   const [saving, setSaving] = useState(false);
 
   const { data: beds = [] } = useQuery<any[]>({
@@ -31,11 +32,21 @@ export default function TransferDialog({ open, onClose, onDone, admission }: Pro
     enabled: open,
   });
 
+  // A move into an ICU-type ward (its ward type requires transfer approval) names
+  // the receiving consultant who accepted the patient; not within the same ward.
+  const target = beds.find((b) => b.bedId === toBedId);
+  const needsApproval = !!target?.needsTransferApproval && target.wardId !== admission?.bed?.wardId;
+  const { data: doctors = [] } = useQuery<{ doctorId: string; name: string }[]>({
+    queryKey: ["ipd-visit-doctors"],
+    queryFn: async () => (await axiosInstance.get("/ipd/doctors")).data.data,
+    enabled: open && needsApproval,
+  });
+
   const submit = async () => {
-    if (!toBedId) return;
+    if (!toBedId || (needsApproval && !approvedBy)) return;
     setSaving(true);
     try {
-      await axiosInstance.post(`/ipd/admissions/${admission.admissionId}/transfer`, { toBedId, reason: reason || undefined });
+      await axiosInstance.post(`/ipd/admissions/${admission.admissionId}/transfer`, { toBedId, reason: reason || undefined, approvedByDoctorId: needsApproval ? approvedBy : undefined });
       toast.success("Patient transferred");
       onDone();
     } catch (err: unknown) {
@@ -67,12 +78,24 @@ export default function TransferDialog({ open, onClose, onDone, admission }: Pro
             }))}
             helperText={beds.length === 0 ? "No other beds available" : undefined}
           />
+          {needsApproval && (
+            <>
+              <Alert severity="info">{target?.wardName} takes transfers only when the receiving doctor accepts the patient.</Alert>
+              <SearchableSelect
+                label="Approved by" name="approvedBy" required
+                value={approvedBy} onChange={(e) => setApprovedBy(e.target.value)}
+                placeholder="Doctor who accepted the patient"
+                searchPlaceholder="Search doctors…"
+                options={doctors.map((d) => ({ value: d.doctorId, label: d.name }))}
+              />
+            </>
+          )}
           <TextField fullWidth label="Reason (optional)" value={reason} onChange={(e) => setReason(e.target.value)} multiline rows={2} />
         </Stack>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
-        <Button variant="contained" onClick={submit} disabled={saving || !toBedId}
+        <Button variant="contained" onClick={submit} disabled={saving || !toBedId || (needsApproval && !approvedBy)}
           startIcon={saving ? <HeartbeatLoader size={22} /> : <SwapHorizRounded />}
 >Transfer</Button>
       </DialogActions>

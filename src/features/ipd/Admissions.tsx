@@ -267,60 +267,32 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
             <TableHead>
               <TableRow>
                 <SortableHeadCell label="Patient" sortKey="patient" orderBy={orderBy} order={order} onSort={onSort} />
-                <SortableHeadCell label="IPD #" sortKey="ipd" orderBy={orderBy} order={order} onSort={onSort} />
-                <SortableHeadCell label="Diagnosis" sortKey="diagnosis" orderBy={orderBy} order={order} onSort={onSort} />
                 <SortableHeadCell label="Bed" sortKey="bed" orderBy={orderBy} order={order} onSort={onSort} />
-                <SortableHeadCell label="Doctor" sortKey="doctor" orderBy={orderBy} order={order} onSort={onSort} />
-                <SortableHeadCell label="Days" sortKey="days" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Doctor · Diagnosis" sortKey="doctor" orderBy={orderBy} order={order} onSort={onSort} />
+                <SortableHeadCell label="Stay" sortKey="days" orderBy={orderBy} order={order} onSort={onSort} />
                 <SortableHeadCell label="Deposit" sortKey="deposit" orderBy={orderBy} order={order} onSort={onSort} align="right" />
-                <SortableHeadCell label="Status" sortKey="status" orderBy={orderBy} order={order} onSort={onSort} />
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", py: 2, bgcolor: "background.default" }} />
+                {/* Pinned right: on a narrow screen the actions stay in view. */}
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", py: 2, bgcolor: "background.default", position: "sticky", right: 0, zIndex: 3 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {isLoading ? (
-                <TableRowsSkeleton rows={6} columns={9} />
+                <TableRowsSkeleton rows={6} columns={6} />
               ) : isError ? (
-                <TableRow><TableCell colSpan={9} sx={{ py: 4, border: 0 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} sx={{ py: 4, border: 0 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></TableCell></TableRow>
               ) : sorted.length === 0 ? (
-                <TableRow><TableCell colSpan={9} sx={{ py: 4, border: 0 }}><Mascot pose="no-matches" title="No admissions" subtitle="No admission matches this view or search." /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} sx={{ py: 4, border: 0 }}><Mascot pose="no-matches" title="No admissions" subtitle="No admission matches this view or search." /></TableCell></TableRow>
               ) : sorted.map((a) => {
                 const sm = STATUS_META[a.status] || { label: a.status, color: NEUTRAL.muted };
                 return (
-                  <TableRow key={a.admissionId} hover>
-                    <TableCell sx={{ py: 1.5 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>{a.patientName}</Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>{a.uhid}</Typography>
-                    </TableCell>
-                    <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{a.admissionNumber || "—"}</TableCell>
-                    <TableCell sx={{ maxWidth: 220 }}>
-                      <Tooltip title={a.admittingDiagnosis || ""}>
-                        <Typography variant="body2" sx={{ color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 220 }}>{a.admittingDiagnosis || "—"}</Typography>
-                      </Tooltip>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ color: "text.primary" }}>{a.bed?.label || "—"}</Typography>
-                      {/* An insured stay in a room above its policy's room-rent limit. */}
-                      {a.roomOverLimit && (
-                        <Tooltip title={`The policy pays up to ${inr(a.roomOverLimit.limit)} a day for the room. The insurer may cut the claim.`}>
-                          <Typography variant="caption" sx={{ color: SEMANTIC.warningDark, fontWeight: 700, display: "block" }}>
-                            {inr(a.roomOverLimit.rent)}/day · over policy limit
-                          </Typography>
-                        </Tooltip>
-                      )}
-                    </TableCell>
-                    <TableCell sx={{ color: "text.secondary" }}>{a.doctorName || "—"}</TableCell>
-                    <TableCell sx={{ color: "text.secondary" }}>{a.days ?? "—"}</TableCell>
-                    <TableCell align="right">
-                      {Number(a.depositBalance) > 0
-                        ? <DepositChip admission={a} />
-                        : <Typography variant="caption" sx={{ color: "text.disabled" }}>—</Typography>}
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+                  <TableRow key={a.admissionId} hover sx={{ "& td": { py: 1.25, whiteSpace: "nowrap" } }}>
+                    <TableCell sx={{ minWidth: 190 }}>
+                      {/* Status beside the name. "Admitted" is the norm, so only what differs shows. */}
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, "& .MuiChip-root": { height: 20, fontSize: "0.7rem" } }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary", mr: 0.5 }}>{a.patientName}</Typography>
                         {a.dischargeDisposition === "TRANSFERRED"
                           ? <Chip label="Transferred out" size="small" sx={{ bgcolor: `${BRAND.action}1f`, color: BRAND.action, fontWeight: 700 }} />
-                          : <Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700 }} />}
+                          : a.status !== "ADMITTED" && <Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700 }} />}
                         {a.transferredFromAdmissionId && (
                           <Chip label="Transferred in" size="small" variant="outlined" sx={{ fontWeight: 600, color: BRAND.action, borderColor: `${BRAND.action}66` }} />
                         )}
@@ -331,8 +303,50 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                           <Chip label={PAYER_LABEL[a.payerType] ?? a.payerType} size="small" variant="outlined" sx={{ fontWeight: 600 }} />
                         )}
                       </Box>
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                        {a.uhid}{a.admissionNumber ? <> · <Box component="span" sx={{ fontFamily: "monospace" }}>{a.admissionNumber}</Box></> : null}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ minWidth: 150 }}>
+                      {a.bed ? (
+                        <>
+                          <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{a.bed.wardName || a.bed.label}</Typography>
+                          {a.bed.wardName && (
+                            <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                              {[a.bed.roomNumber && `Room ${a.bed.roomNumber}`, a.bed.bedNumber && `Bed ${a.bed.bedNumber}`].filter(Boolean).join(" · ")}
+                            </Typography>
+                          )}
+                        </>
+                      ) : <Typography variant="body2" sx={{ color: "text.disabled" }}>—</Typography>}
+                      {/* An insured stay in a room above its policy's room-rent limit. */}
+                      {a.roomOverLimit && (
+                        <Tooltip title={`The policy pays up to ${inr(a.roomOverLimit.limit)} a day for the room. The insurer may cut the claim.`}>
+                          <Typography variant="caption" sx={{ color: SEMANTIC.warningDark, fontWeight: 700, display: "block" }}>
+                            {inr(a.roomOverLimit.rent)}/day · over policy limit
+                          </Typography>
+                        </Tooltip>
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ maxWidth: 220 }}>
+                      <Typography variant="body2" sx={{ color: "text.primary" }}>{a.doctorName || "—"}</Typography>
+                      <Tooltip title={a.admittingDiagnosis || ""}>
+                        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", overflow: "hidden", textOverflow: "ellipsis" }}>{a.admittingDiagnosis || "No diagnosis recorded"}</Typography>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{a.days != null ? `Day ${a.days}` : "—"}</Typography>
+                      {a.admissionDate && (
+                        <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                          since {new Date(a.admissionDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                        </Typography>
+                      )}
                     </TableCell>
                     <TableCell align="right">
+                      {Number(a.depositBalance) > 0
+                        ? <DepositChip admission={a} />
+                        : <Typography variant="caption" sx={{ color: "text.disabled" }}>—</Typography>}
+                    </TableCell>
+                    <TableCell align="right" sx={{ position: "sticky", right: 0, bgcolor: "background.paper", zIndex: 1, boxShadow: (t) => `-8px 0 8px -8px ${t.palette.divider}` }}>
                       {/* Not gated on readOnly: reading a history is not an
                           action on the patient, and an oversight panel needs it
                           as much as the ward does. */}

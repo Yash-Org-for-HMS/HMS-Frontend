@@ -35,7 +35,7 @@ import { BRAND, SEMANTIC, NEUTRAL } from "@/styles/accents";
 type Option = { value: string; label: string };
 interface Column {
   key: string; label: string; type: "text" | "bool" | "int" | "list" | "select";
-  max?: number; min?: number; required?: boolean; inTable?: boolean; hint?: string; options?: Option[];
+  max?: number; min?: number; required?: boolean; inTable?: boolean; hint?: string; options?: Option[]; usage?: string; reference?: boolean;
 }
 interface MasterSummary { key: string; label: string; group: string; description: string; locked: boolean; copiedToHospitals: boolean; rows: number }
 interface MasterDetail extends Omit<MasterSummary, "rows"> { idKey: "code" | "id"; columns: Column[]; rows: Record<string, unknown>[] }
@@ -50,6 +50,12 @@ interface CopySummary {
 }
 
 const STAFF_MAP = "__deptStaffMap";
+
+/** The help under a field: its own hint, then what the product does with it. */
+function fieldNote(c: { hint?: string; usage?: string; reference?: boolean }): string | undefined {
+  const use = c.usage ? `Used for: ${c.usage}.` : c.reference ? "Reference only — nothing in the product acts on this." : "";
+  return [c.hint, use].filter(Boolean).join(" ") || undefined;
+}
 
 export default function PlatformMasters() {
   const toast = useToast();
@@ -184,7 +190,13 @@ function MasterTable({ masterKey }: { masterKey: string }) {
             <TableHead>
               <TableRow>
                 {tableCols.map((c) => (
-                  <TableCell key={c.key} sx={{ fontWeight: 700, color: "text.secondary", bgcolor: "background.paper", whiteSpace: "nowrap" }}>{c.label}</TableCell>
+                  <TableCell key={c.key} sx={{ fontWeight: 700, color: c.reference ? "text.disabled" : "text.secondary", bgcolor: "background.paper", whiteSpace: "nowrap" }}>
+                    {c.usage || c.reference ? (
+                      <Tooltip title={c.usage ? `Used for: ${c.usage}` : "Reference only — nothing in the product acts on this"}>
+                        <span style={{ borderBottom: "1px dotted", cursor: "help" }}>{c.label}{c.reference ? " ·ref" : ""}</span>
+                      </Tooltip>
+                    ) : c.label}
+                  </TableCell>
                 ))}
               </TableRow>
             </TableHead>
@@ -302,13 +314,13 @@ function EditDialog({ master, row, onClose }: { master: MasterDetail; row: Recor
               return (
                 <Box key={c.key}>
                   <FormControlLabel control={<Switch checked={!!v} onChange={(e) => set(e.target.checked)} />} label={c.label} />
-                  {c.hint && <Typography variant="caption" sx={{ display: "block", color: "text.secondary", ml: 6, mt: -0.5 }}>{c.hint}</Typography>}
+                  {(c.hint || c.usage || c.reference) && <Typography variant="caption" sx={{ display: "block", color: "text.secondary", ml: 6, mt: -0.5 }}>{fieldNote(c)}</Typography>}
                 </Box>
               );
             }
             if (c.type === "select") {
               return (
-                <TextField key={c.key} select fullWidth size="small" label={c.label} required={c.required} value={v ?? ""} onChange={(e) => set(e.target.value)} helperText={c.hint}>
+                <TextField key={c.key} select fullWidth size="small" label={c.label} required={c.required} value={v ?? ""} onChange={(e) => set(e.target.value)} helperText={fieldNote(c)}>
                   {(c.options ?? []).map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
                 </TextField>
               );
@@ -318,7 +330,7 @@ function EditDialog({ master, row, onClose }: { master: MasterDetail; row: Recor
                 key={c.key} fullWidth size="small" label={c.label} required={c.required}
                 type={c.type === "int" ? "number" : "text"}
                 value={v ?? ""} onChange={(e) => set(c.key === "code" ? e.target.value.toUpperCase() : e.target.value)}
-                helperText={c.hint} slotProps={{ htmlInput: { maxLength: c.max, min: c.min, max: c.type === "int" ? c.max : undefined } }}
+                helperText={fieldNote(c)} slotProps={{ htmlInput: { maxLength: c.max, min: c.min, max: c.type === "int" ? c.max : undefined } }}
               />
             );
           })}
