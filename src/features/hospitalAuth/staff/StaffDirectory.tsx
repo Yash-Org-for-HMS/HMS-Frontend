@@ -43,8 +43,8 @@ const ISSUE_SHORT: Record<string, string> = {
   ADMIN_LOOP: "Reporting loop", FUNCTIONAL_LOOP: "Reporting loop",
 };
 
-const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 400, fontSize: "0.875rem", py: undefined };
-const CELL_SX = { borderBottom: "1px solid", borderColor: "divider" };
+const HEAD_SX = { textTransform: "none" as const, letterSpacing: "normal", fontWeight: 400, fontSize: "0.875rem", py: undefined, px: 1.5 };
+const CELL_SX = { borderBottom: "1px solid", borderColor: "divider", px: 1.5 };
 
 function GiveLoginDialog({ row, options, onClose, onDone }: {
   row: StaffRow; options: StaffOptions; onClose: () => void;
@@ -243,7 +243,7 @@ export default function StaffDirectory() {
                 const exited = r.status === "EXITED";
                 return (
                   <TableRow key={r.staffId} hover sx={{ opacity: exited ? 0.6 : 1, "&:last-child td": { border: 0 } }}>
-                    <TableCell sx={CELL_SX}>
+                    <TableCell sx={{ ...CELL_SX, maxWidth: 240 }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                         <Avatar sx={{ width: 34, height: 34, fontSize: "0.875rem", fontWeight: 700 }}>{r.firstName.charAt(0)}{r.lastName.charAt(0)}</Avatar>
                         <Box>
@@ -252,7 +252,7 @@ export default function StaffDirectory() {
                             {[r.staffCategoryName, r.employment?.employeeCode].filter(Boolean).join(" · ")}
                           </Typography>
                           {(options?.branches.length ?? 0) > 1 && (r.worksAt ?? []).length > 0 && (
-                            <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                            <Typography variant="caption" noWrap title={(r.worksAt ?? []).map((w) => w.branchName).join(" · ")} sx={{ color: "text.secondary", display: "block", maxWidth: 180 }}>
                               {(r.worksAt ?? []).map((w) => w.branchName).join(" · ")}
                             </Typography>
                           )}
@@ -295,7 +295,7 @@ export default function StaffDirectory() {
                             {r.issues.map((i) => (
                               <Tooltip key={i.code} title={i.message}>
                                 <Chip size="small" label={ISSUE_SHORT[i.code] ?? i.message}
-                                  sx={{ height: 20, fontSize: "0.72rem", fontWeight: 600,
+                                  sx={{ height: 20, maxWidth: 120, fontSize: "0.72rem", fontWeight: 600,
                                     bgcolor: i.level === "error" ? `${SEMANTIC.danger}14` : `${SEMANTIC.warning}1f`, color: i.level === "error" ? SEMANTIC.danger : SEMANTIC.warningDark }} />
                               </Tooltip>
                             ))}

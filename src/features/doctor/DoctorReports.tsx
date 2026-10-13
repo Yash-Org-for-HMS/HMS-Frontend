@@ -46,7 +46,7 @@ function SummaryReport({ data }: { data: DoctorReportsData }) {
   const trend: TrendPoint[] = data?.trend || [];
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(3,1fr)", md: "repeat(6,1fr)" }, gap: 1.5 }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,minmax(0,1fr))", sm: "repeat(3,minmax(0,1fr))", md: "repeat(6,minmax(0,1fr))" }, gap: 1.5 }}>
         <KpiCard icon={<DescriptionRounded />} accent={BRAND.action} label="Consultations"
           value={s?.totalConsultations || 0} current={s?.totalConsultations} previous={p?.totalConsultations} />
         <KpiCard icon={<GroupRounded />} accent={BRAND.actionDark} label="Unique patients"

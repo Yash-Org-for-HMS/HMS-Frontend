@@ -251,7 +251,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
                   <SortableHeadCell label="Patient" sortKey="name" orderBy={orderBy} order={order} onSort={onSort} />
                   <SortableHeadCell label="MRN / UHID" sortKey="uhid" orderBy={orderBy} order={order} onSort={onSort} />
                   <SortableHeadCell label="Age / DOB" sortKey="dob" orderBy={orderBy} order={order} onSort={onSort} />
-                  {["Gender", "Blood Group"].map((h) => (
+                  {["Gender · Blood"].map((h) => (
                     <TableCell
                       key={h}
                       sx={{
@@ -280,10 +280,10 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
               </TableHead>
               <TableBody>
                 {loading && patients.length === 0 ? (
-                  <TableRowsSkeleton rows={6} columns={7} />
+                  <TableRowsSkeleton rows={6} columns={6} />
                 ) : patients.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} sx={{ textAlign: "center", py: 6, borderBottom: "none" }}>
+                    <TableCell colSpan={6} sx={{ textAlign: "center", py: 6, borderBottom: "none" }}>
                       <Mascot
                         pose={search ? "no-matches" : "nothing-here-yet"}
                         title={search ? "No matches" : "No patients yet"}
@@ -347,11 +347,13 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
                       </TableCell>
                       {/* MRN */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        {/* The chip copies the UHID (a separate copy button pushed the table off-screen). */}
+                        <Tooltip title="Copy UHID">
                           <Chip
                             icon={<BadgeRounded sx={{ fontSize: "14px !important" }} />}
                             label={patient.uhidNumber}
                             size="small"
+                            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(patient.uhidNumber); toast.success("UHID copied"); }}
                             sx={{
                               bgcolor: "rgba(6, 182, 212, 0.08)",
                               color: "#06b6d4",
@@ -361,10 +363,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
                               fontSize: "0.875rem",
                             }}
                           />
-                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(patient.uhidNumber); }} sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4" } }}>
-                            <ContentCopyRounded sx={{ fontSize: "1rem" }} />
-                          </IconButton>
-                        </Box>
+                        </Tooltip>
                       </TableCell>
                       {/* Age / DOB */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
@@ -377,13 +376,10 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
                           </Typography>
                         </Box>
                       </TableCell>
-                      {/* Gender */}
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, color: "text.secondary", fontSize: "0.875rem" }}>
-                        {patient.genderLabel}
-                      </TableCell>
-                      {/* Blood Group */}
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
-                        <Chip
+                      {/* Gender and blood group share a column, so the table fits the screen. */}
+                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, color: "text.secondary", fontSize: "0.875rem", whiteSpace: "nowrap" }}>
+                        {patient.genderLabel}{patient.bloodGroupLabel && " · "}
+                        {patient.bloodGroupLabel && <Chip
                           label={patient.bloodGroupLabel}
                           size="small"
                           sx={{
@@ -393,7 +389,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
                             fontWeight: 700,
                             fontSize: "0.75rem",
                           }}
-                        />
+                        />}
                       </TableCell>
                       {/* Phone */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, color: "text.secondary", fontSize: "0.875rem" }}>
