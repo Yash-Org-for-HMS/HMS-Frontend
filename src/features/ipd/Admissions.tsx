@@ -327,7 +327,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                         </Tooltip>
                       )}
                     </TableCell>
-                    <TableCell sx={{ maxWidth: 220 }}>
+                    <TableCell sx={{ maxWidth: 200 }}>
                       <Typography variant="body2" sx={{ color: "text.primary" }}>{a.doctorName || "—"}</Typography>
                       <Tooltip title={a.admittingDiagnosis || ""}>
                         <Typography variant="caption" sx={{ color: "text.secondary", display: "block", overflow: "hidden", textOverflow: "ellipsis" }}>{a.admittingDiagnosis || "No diagnosis recorded"}</Typography>
