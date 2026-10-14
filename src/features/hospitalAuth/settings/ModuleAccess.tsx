@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
-import { SEMANTIC, BRAND } from "@/styles/accents";
+import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import ErrorState from "@/components/ErrorState";
 import {
@@ -76,20 +76,14 @@ export default function ModuleAccess() {
       />
 
       <Paper sx={{ p: 3, mb: 3, bgcolor: "rgba(12, 115, 181, 0.08)", borderRadius: 2, border: "1px solid rgba(12, 115, 181, 0.2)" }}>
-        <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
           <Chip label={`Plan: ${data?.planName || "Basic"}`} sx={{ bgcolor: BRAND.action, color: "#fff", fontWeight: 600 }} />
-          <Typography sx={{ color: "text.secondary", fontWeight: 700 }}>+</Typography>
-          <Chip label="Your toggles" sx={{ bgcolor: SEMANTIC.info, color: "#fff", fontWeight: 600 }} />
-          <Typography sx={{ color: "text.secondary", fontWeight: 700 }}>+</Typography>
-          {/* The third gate is the user's ROLE, not a configurable permission
-              set: tenant-authored roles and the permission matrix were removed,
-              and /hospital/permissions-matrix now redirects to Logins & roles.
-              The old wording sent admins looking for a screen that no longer
-              exists, and named a concept the product no longer has. */}
-          <Chip label="Staff role" sx={{ bgcolor: SEMANTIC.success, color: "#fff", fontWeight: 600 }} />
         </Box>
-        <Typography variant="caption" display="block" sx={{ mt: 1.5, color: "text.secondary" }}>
-          * Turning a module on here opens it for the hospital. Who can actually use it
+        {/* Access is really plan + this toggle + the person's role (tenant-authored
+            roles and the permission matrix were removed), but spelling that out as
+            chips read like a formula. One sentence says the same thing. */}
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          Turning a module on here opens it for the hospital. Who can actually use it
           depends on each person's role, which you set on their login under Logins &amp; roles.
         </Typography>
       </Paper>

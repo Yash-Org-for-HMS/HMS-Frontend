@@ -68,9 +68,9 @@ export default function BranchPricesDialog({ chargeItemId, itemName, onClose, on
   return (
     <Dialog open onClose={saving ? undefined : onClose} maxWidth="lg" fullWidth>
       <DialogTitle sx={{ pb: 0.5 }}>
-        Branch prices — {itemName}
+        Branch exceptions — {itemName}
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          Fill in only what a branch charges differently. An empty cell charges the group's price, shown in grey.
+          Fill in only where a branch charges differently. An empty cell uses the all-branches price, shown in grey.
         </Typography>
       </DialogTitle>
       <DialogContent dividers>

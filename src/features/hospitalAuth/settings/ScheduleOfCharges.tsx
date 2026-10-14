@@ -372,7 +372,7 @@ export default function ScheduleOfCharges() {
                             {meta && <Typography sx={{ fontSize: "0.75rem", color: "text.secondary" }}>{meta}</Typography>}
                             {multiBranch && !!it.branchPrices?.length && (
                               <Typography sx={{ fontSize: "0.72rem", color: ACCENT, fontWeight: 600 }}>
-                                Own price at {new Set(it.branchPrices.map((b) => b.branchId)).size} branch{new Set(it.branchPrices.map((b) => b.branchId)).size === 1 ? "" : "es"}
+                                Exception at {new Set(it.branchPrices.map((b) => b.branchId)).size} branch{new Set(it.branchPrices.map((b) => b.branchId)).size === 1 ? "" : "es"}
                               </Typography>
                             )}
                           </TableCell>
@@ -392,8 +392,8 @@ export default function ScheduleOfCharges() {
                           <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                             {it.itemType === "LAB" && <Tooltip title="Lab structure (single / profile parameters)"><IconButton size="small" onClick={() => setStructureItem(it)}><ScienceRounded fontSize="small" sx={{ color: "success.main" }} /></IconButton></Tooltip>}
                             <Tooltip title="Price history"><IconButton size="small" onClick={() => setHistoryItem(it)}><HistoryRounded fontSize="small" /></IconButton></Tooltip>
-                            {multiBranch && <Tooltip title="Prices at each branch"><IconButton size="small" onClick={() => setBranchPriceItem(it)}><ApartmentRounded fontSize="small" /></IconButton></Tooltip>}
-                            <Tooltip title="Edit"><IconButton size="small" onClick={() => setItemDialog({ mode: "edit", item: it })}><EditRounded fontSize="small" /></IconButton></Tooltip>
+                            {multiBranch && <Tooltip title="Branch exceptions — a different price at one branch"><IconButton size="small" onClick={() => setBranchPriceItem(it)}><ApartmentRounded fontSize="small" /></IconButton></Tooltip>}
+                            <Tooltip title={multiBranch ? "Edit prices (all branches)" : "Edit"}><IconButton size="small" onClick={() => setItemDialog({ mode: "edit", item: it })}><EditRounded fontSize="small" /></IconButton></Tooltip>
                             <Tooltip title="Delete"><IconButton size="small" onClick={() => deleteItem(it)}><DeleteRounded fontSize="small" sx={{ color: "error.main" }} /></IconButton></Tooltip>
                           </TableCell>
                         </TableRow>
@@ -774,6 +774,7 @@ function CatalogDialog({ categoryId, categoryCode, categoryName, existing, onClo
 }
 
 function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomClasses, onClose, onDone }: { mode: "add" | "edit"; item?: Item; categoryId: string; categoryCode: string; categoryName: string; roomClasses: RoomClass[]; onClose: () => void; onDone: () => void }) {
+  const multiBranch = useHospitalAuth().availableBranches.length > 1;
   const toast = useToast();
   const [name, setName] = useState(item?.itemName ?? "");
   // Predefined names for this category power the name autocomplete.
@@ -823,7 +824,7 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
 
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{mode === "add" ? "Add charge" : "Edit charge"}<Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>{categoryName}</Typography></DialogTitle>
+      <DialogTitle>{mode === "add" ? "Add charge" : "Edit charge"}<Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>{categoryName}{multiBranch ? " · these prices apply at every branch, unless a branch has an exception" : ""}</Typography></DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <Autocomplete
