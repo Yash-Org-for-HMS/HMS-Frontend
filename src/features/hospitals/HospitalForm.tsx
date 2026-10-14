@@ -17,9 +17,11 @@ import {
   Chip,
   Tooltip,
   Autocomplete,
+  IconButton,
+  Divider,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import { SaveRounded } from "@mui/icons-material";
+import { SaveRounded, AddRounded, DeleteOutlineRounded, EditRounded, ApartmentRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -29,6 +31,8 @@ import { useConfirm } from "@/providers/ConfirmContext";
 import FormHeader from "@/components/layout/FormHeader";
 import BranchDialog from "@/components/hospitals/BranchDialog";
 import { validate, hasErrors, required, isEmail, isPhone, type Errors } from "@/utils/validation";
+
+type PlanOption = { planId: string; planName: string; maxBranches: number };
 
 export default function HospitalForm() {
   const { t } = useTranslation();
@@ -85,6 +89,8 @@ export default function HospitalForm() {
     billingCycle: "MONTHLY",
   });
   const [errors, setErrors] = useState<Errors<typeof formData>>({});
+  // A new hospital's branches, named here and created with it (the first is the main one).
+  const [newBranches, setNewBranches] = useState<string[]>(["Main Branch"]);
 
   // Prefill from the trial being converted (lead contact + the trial's plan).
   useEffect(() => {
@@ -162,7 +168,14 @@ export default function HospitalForm() {
       if (isEdit) {
         await axiosInstance.put(`/hospitals/${id}`, formData);
       } else {
-        const res = await axiosInstance.post("/hospitals", formData);
+        const names = newBranches.map((n) => n.trim());
+        if (names.some((n) => !n)) { toast.error("Give every branch a name, or remove the empty one."); return; }
+        if (new Set(names.map((n) => n.toLowerCase())).size !== names.length) { toast.error("Two branches have the same name."); return; }
+        const res = await axiosInstance.post("/hospitals", {
+          ...formData,
+          subscriptionPlanId: formData.planId || undefined,
+          branches: names.map((branchName) => ({ branchName })),
+        });
         // Creating a hospital also mints its admin login, and the API returns
         // that one-time password for the super admin to hand over. This is the
         // only chance anyone gets to see it — it is hashed on save and is not
@@ -221,6 +234,10 @@ export default function HospitalForm() {
   const governingPlan = plans.find((p: any) => p.planId === governingPlanId);
   const branchLimit = governingPlan && governingPlan.maxBranches > 0 ? governingPlan.maxBranches : null;
   const atBranchLimit = branchLimit != null && branches.length >= branchLimit;
+  const createPlan = (plans as PlanOption[]).find((p) => p.planId === formData.planId);
+  const createLimit = createPlan && createPlan.maxBranches > 0 ? createPlan.maxBranches : null;
+  const createAtLimit = createLimit != null && newBranches.length >= createLimit;
+  const createOverLimit = createLimit != null && newBranches.length > createLimit;
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
@@ -248,6 +265,7 @@ export default function HospitalForm() {
                 </Alert>
               </Grid>
             )}
+            <Grid size={{ xs: 12 }}><Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Organisation</Typography></Grid>
             <Grid size={{ xs: 12 }}>
               <Autocomplete
                 freeSolo
@@ -285,7 +303,7 @@ export default function HospitalForm() {
                 )}
               />
             </Grid>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 label={t("hospitals.code", "Hospital Code")}
@@ -300,7 +318,7 @@ export default function HospitalForm() {
                 FormHelperTextProps={{ sx: { color: "text.secondary" } }}
               />
             </Grid>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 label={t("hospitals.legalName", "Legal Business Name")}
@@ -310,7 +328,8 @@ export default function HospitalForm() {
                 
               />
             </Grid>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12 }}><Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Contact</Typography></Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 type="email"
@@ -322,7 +341,7 @@ export default function HospitalForm() {
                 helperText={errors.officialEmail}
               />
             </Grid>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 label={t("hospitals.phone", "Official Phone")}
@@ -369,8 +388,66 @@ export default function HospitalForm() {
                 </TextField>
               </Grid>
             )}
+            {!isEdit && !isConvert && (
+              <>
+                <Grid size={{ xs: 12 }}><Divider sx={{ my: 0.5 }} /></Grid>
+                <Grid size={{ xs: 12 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Plan and branches</Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Every branch starts on this plan. The first branch is the main one — the hospital admin's login starts there.
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField select fullWidth label="Subscription plan" name="planId" value={formData.planId} onChange={handleChange}
+                    helperText={createLimit != null ? `Up to ${createLimit} branch${createLimit === 1 ? "" : "es"} on this plan` : "No branch limit"}>
+                    <MenuItem value="">No plan yet</MenuItem>
+                    {(plans as PlanOption[]).map((p) => <MenuItem key={p.planId} value={p.planId}>{p.planName}</MenuItem>)}
+                  </TextField>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <Box sx={{ display: "grid", gap: 1.25 }}>
+                    {newBranches.map((name, i) => (
+                      <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <ApartmentRounded fontSize="small" sx={{ color: i === 0 ? BRAND.action : "text.secondary" }} />
+                        <TextField
+                          size="small" fullWidth label={i === 0 ? "Main branch" : `Branch ${i + 1}`} value={name}
+                          placeholder={i === 0 ? "e.g. Kothrud" : "e.g. Wakad"}
+                          onChange={(e) => setNewBranches((b) => b.map((x, j) => (j === i ? e.target.value : x)))}
+                          inputProps={{ maxLength: 100 }}
+                        />
+                        <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace", width: 40 }}>BR{String(i + 1).padStart(2, "0")}</Typography>
+                        <Tooltip title={i === 0 ? "A hospital needs at least one branch" : "Remove"}>
+                          <span>
+                            <IconButton size="small" aria-label={`Remove branch ${i + 1}`} disabled={i === 0}
+                              onClick={() => setNewBranches((b) => b.filter((_, j) => j !== i))}>
+                              <DeleteOutlineRounded fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      </Box>
+                    ))}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Tooltip title={createAtLimit ? `The ${createPlan?.planName} plan allows ${createLimit} branch${createLimit === 1 ? "" : "es"}` : ""}>
+                        <span>
+                          <Button size="small" startIcon={<AddRounded />} disabled={createAtLimit}
+                            onClick={() => setNewBranches((b) => [...b, ""])} sx={{ textTransform: "none", fontWeight: 600 }}>
+                            Add another branch
+                          </Button>
+                        </span>
+                      </Tooltip>
+                      {createLimit != null && (
+                        <Typography variant="caption" sx={{ color: createOverLimit ? "error.main" : "text.secondary" }}>
+                          {newBranches.length} / {createLimit}{createOverLimit ? " — remove a branch or pick a bigger plan" : ""}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12 }}><Divider sx={{ my: 0.5 }} /></Grid>
+              </>
+            )}
             {!isConvert && (
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 select
                 fullWidth
@@ -417,7 +494,7 @@ export default function HospitalForm() {
                 <Button 
                   type="submit" 
                   variant="contained" 
-                  disabled={loading} 
+                  disabled={loading || (!isEdit && !isConvert && createOverLimit)} 
                   startIcon={loading ? <HeartbeatLoader size={22} /> : <SaveRounded />}
                   sx={{ 
                   }}
@@ -446,7 +523,7 @@ export default function HospitalForm() {
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Typography variant="h6" fontWeight="700" sx={{ color: "text.primary" }}>
-                Hospital Branches
+                Branches
               </Typography>
               {branchLimit != null ? (
                 <Tooltip title={governingPlan?.planName ? `${governingPlan.planName} plan limit` : "Plan limit"}>
@@ -468,10 +545,11 @@ export default function HospitalForm() {
                   variant="contained"
                   size="small"
                   disabled={atBranchLimit}
+                  startIcon={<AddRounded />}
                   onClick={() => setBranchDialog({ editing: null })}
-                  sx={{ background: `linear-gradient(135deg, ${BRAND.action} 0%, ${BRAND.actionDark} 100%)` }}
+                  sx={{ textTransform: "none", fontWeight: 600 }}
                 >
-                  Add Branch
+                  Add branch
                 </Button>
               </span>
             </Tooltip>
@@ -479,40 +557,31 @@ export default function HospitalForm() {
           {branches.length === 0 ? (
             <Typography variant="body2" sx={{ color: "text.secondary" }}>No branches found.</Typography>
           ) : (
-            <Grid container spacing={2}>
-              {branches.map(branch => (
-                <Grid size={{ xs: 12 }} key={branch.branchId}>
-                  <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
-                    <Typography variant="subtitle2" sx={{ color: "text.primary", fontWeight: 700 }}>
-                      {branch.branchName}
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1, alignItems: "center", mt: 0.5, mb: 1.5, flexWrap: "wrap" }}>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        Code: {branch.branchCode}
+            <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, overflow: "hidden" }}>
+              {branches.map((branch, i) => {
+                const open = (branch.status || "active") === "active";
+                return (
+                  <Box key={branch.branchId} sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2, py: 1.25, borderTop: i ? "1px solid" : "none", borderColor: "divider", opacity: open ? 1 : 0.65 }}>
+                    <ApartmentRounded fontSize="small" sx={{ color: i === 0 ? BRAND.action : "text.secondary" }} />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }} noWrap>
+                        {branch.branchName}
+                        {i === 0 && <Box component="span" sx={{ ml: 1, fontWeight: 500, color: "text.secondary", fontSize: "0.75rem" }}>main</Box>}
                       </Typography>
-                      <Chip
-                        label={branch.subscriptionPlan?.planName || "No Plan"}
-                        size="small"
-                        sx={{
-                          height: 18,
-                          fontSize: "0.75rem",
-                          bgcolor: "rgba(12, 115, 181, 0.15)",
-                          color: "#a5b4fc"
-                        }}
-                      />
+                      <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>{branch.branchCode}</Typography>
                     </Box>
-                    <Box sx={{ display: "flex", gap: 2 }}>
-                      <Button size="small" sx={{ minWidth: 0, p: 0, color: "#a5b4fc" }} onClick={() => setBranchDialog({ editing: branch })}>
-                        Edit
-                      </Button>
-                      <Button size="small" color="error" onClick={() => handleDeleteBranch(branch.branchId)} sx={{ minWidth: 0, p: 0 }}>
-                        Delete
-                      </Button>
-                    </Box>
+                    <Chip size="small" label={branch.subscriptionPlan?.planName || "No plan"} variant="outlined" sx={{ fontWeight: 600 }} />
+                    <Chip size="small" label={open ? "Open" : branch.status === "suspended" ? "Suspended" : "Closed"} color={open ? "success" : "default"} variant={open ? "filled" : "outlined"} sx={{ fontWeight: 600, minWidth: 64 }} />
+                    <Tooltip title="Edit branch">
+                      <IconButton size="small" aria-label={`Edit ${branch.branchName}`} onClick={() => setBranchDialog({ editing: branch })}><EditRounded fontSize="small" /></IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete or close branch">
+                      <IconButton size="small" aria-label={`Delete ${branch.branchName}`} onClick={() => handleDeleteBranch(branch.branchId)} sx={{ "&:hover": { color: "error.main" } }}><DeleteOutlineRounded fontSize="small" /></IconButton>
+                    </Tooltip>
                   </Box>
-                </Grid>
-              ))}
-            </Grid>
+                );
+              })}
+            </Box>
           )}
         </Paper>
       )}
