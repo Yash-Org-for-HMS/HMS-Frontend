@@ -39,14 +39,12 @@ import SortableHeadCell from "@/components/table/SortableHeadCell";
 // now kept on their staff record — "Also works in" on the doctor form, from the
 // hospital's own department list — as HMS_Platform_Master_Data.xlsx models it.
 // The table stays; nothing reads it for new work.
+//
+// Department Types went the same way (Oct 2026): a department's group now
+// comes from the platform master list (Medical Specialties, Surgical…), and
+// the Add Department form no longer asks for a type. The table and its rows
+// stay; this page no longer offers them.
 const LOOKUP_CONFIGS: Record<string, any> = {
-  departmentType: {
-    label: "Department Types",
-    idField: "departmentTypeId",
-    columns: [
-      { field: "typeName", label: "Type Name" }
-    ],
-  },
   documentType: {
     label: "Document Types",
     idField: "documentTypeId",
@@ -69,7 +67,7 @@ const LOOKUP_CONFIGS: Record<string, any> = {
 };
 
 export default function LookupManager() {
-  const [selectedType, setSelectedType] = useState("departmentType");
+  const [selectedType, setSelectedType] = useState("documentType");
   const toast = useToast();
   const confirm = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
@@ -156,7 +154,7 @@ export default function LookupManager() {
     <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <PageHeader
         title="Dropdown lists"
-        subtitle="Choices for department types, patient documents and surgery grades. Add, rename, or switch one off to hide it."
+        subtitle="Choices for patient documents and surgery grades. Add, rename, or switch one off to hide it."
       />
 
       <Paper sx={{ p: 3, mb: 4, bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2 }}>
