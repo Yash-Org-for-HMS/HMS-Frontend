@@ -52,11 +52,11 @@ export default function HospitalLayout() {
     { text: "Dashboard", icon: <DashboardRounded />, path: "/hospital/dashboard", section: "Overview" },
 
     // ── Set up, in this order ──
-    { text: "Organisation profile", icon: <LocalHospitalRounded />, path: "/hospital/profile", adminOnly: true, section: "Set up — in this order" },
-    { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", adminOnly: true, section: "Set up — in this order" },
+    { text: "Organisation profile", icon: <LocalHospitalRounded />, path: "/hospital/profile", adminOnly: true, needs: ["H_ADMIN"], section: "Set up — in this order" },
+    { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", adminOnly: true, needs: ["H_ADMIN"], section: "Set up — in this order" },
     { text: "Branches", icon: <ApartmentRounded />, path: "/hospital/branches", adminOnly: true, needs: ["H_ADMIN"], section: "Set up — in this order" },
     { text: "Branch settings", icon: <ApartmentRounded />, path: "/hospital/branch-settings", adminOnly: true, needs: ["B_ADMIN"], section: "Set up — in this order" },
-    { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", adminOnly: true, section: "Set up — in this order" },
+    { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", adminOnly: true, needs: ["H_ADMIN"], section: "Set up — in this order" },
     { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", adminOnly: true, section: "Set up — in this order" },
     { text: "Schedule of Charges", icon: <ReceiptLongRounded />, path: "/hospital/soc", adminOnly: true, section: "Set up — in this order" },
     // Backend restricts these strictly to H_ADMIN/B_ADMIN (requireRole, no

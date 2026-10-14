@@ -27,6 +27,7 @@ async function loadSocCatalog(): Promise<Record<string, CatalogEntry[]>> {
 import { MenuItem, Menu } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { hasRole } from "@/constants/roles";
 import BranchPricesDialog from "./BranchPricesDialog";
 import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
@@ -63,8 +64,14 @@ export default function ScheduleOfCharges() {
   const [itemDialog, setItemDialog] = useState<{ mode: "add" | "edit"; item?: Item } | null>(null);
   const [historyItem, setHistoryItem] = useState<Item | null>(null);
   // Per-branch prices exist only where there is more than one branch to price.
-  const { availableBranches } = useHospitalAuth();
+  const { availableBranches, user } = useHospitalAuth();
+  // One group tariff: the hospital admin sets prices and branch exceptions; a
+  // branch admin browses them (the server refuses their changes too).
+  const canEdit = hasRole(user, "H_ADMIN");
   const multiBranch = availableBranches.length > 1;
+  // Branch exceptions: anyone working at several branches, and a branch admin
+  // (who sets their own branch's, though they work at only that one).
+  const showBranchPrices = multiBranch || hasRole(user, "B_ADMIN");
   const [branchPriceItem, setBranchPriceItem] = useState<Item | null>(null);
   const [structureItem, setStructureItem] = useState<Item | null>(null);
   const [catalogOpen, setCatalogOpen] = useState(false);
@@ -206,8 +213,8 @@ export default function ScheduleOfCharges() {
     <Box>
       <PageHeader
         title="Schedule of Charges"
-        subtitle="Your hospital's rate card — charges and prices, grouped by category."
-        actions={
+        subtitle={canEdit ? "Your hospital's rate card — charges and prices, grouped by category." : "The group's rate card, set by the hospital admin — charges and prices, grouped by category."}
+        actions={canEdit &&
           <>
             <Button variant="outlined" startIcon={<TuneRounded />} onClick={(e) => setManageAnchor(e.currentTarget)}
               sx={{ textTransform: "none", color: ACCENT, borderColor: `${ACCENT}66` }}>Manage</Button>
@@ -302,17 +309,19 @@ export default function ScheduleOfCharges() {
                 {selected && !selected.isActive && <Chip label="Inactive category" size="small" sx={{ height: 18, fontSize: "0.625rem", bgcolor: "rgba(245,158,11,0.12)", color: "warning.main" }} />}
               </Box>
               <Box sx={{ flex: 1 }} />
-              {selected && (
+              {selected && canEdit && (
                 <Tooltip title="Rename / reorder / deactivate category">
                   <IconButton size="small" onClick={() => setCatDialog({ mode: "edit", cat: selected })}><EditRounded fontSize="small" /></IconButton>
                 </Tooltip>
               )}
+              {canEdit && <>
               <Button variant="outlined" size="small" startIcon={<LibraryAddRounded />} disabled={!selected}
                 onClick={() => setCatalogOpen(true)}
                 sx={{ textTransform: "none", borderColor: alpha(ACCENT, 0.5), color: ACCENT }}>Add from catalog</Button>
               <Button variant="contained" size="small" startIcon={<AddRounded />} disabled={!selected}
                 onClick={() => setItemDialog({ mode: "add" })}
                 sx={{ textTransform: "none"}}>Add Charge</Button>
+              </>}
             </Box>
             <Divider />
             <TableContainer sx={{ maxHeight: "calc(100vh - 300px)", overflowX: "auto" }}>
@@ -370,7 +379,7 @@ export default function ScheduleOfCharges() {
                               {it.itemType === "LAB" && <Chip label="Lab" size="small" sx={{ ml: 0.75, height: 17, fontSize: "0.625rem", fontWeight: 700, bgcolor: "rgba(16,185,129,0.14)", color: "success.main" }} />}
                             </Typography>
                             {meta && <Typography sx={{ fontSize: "0.75rem", color: "text.secondary" }}>{meta}</Typography>}
-                            {multiBranch && !!it.branchPrices?.length && (
+                            {showBranchPrices && !!it.branchPrices?.length && (
                               <Typography sx={{ fontSize: "0.72rem", color: ACCENT, fontWeight: 600 }}>
                                 Exception at {new Set(it.branchPrices.map((b) => b.branchId)).size} branch{new Set(it.branchPrices.map((b) => b.branchId)).size === 1 ? "" : "es"}
                               </Typography>
@@ -392,9 +401,9 @@ export default function ScheduleOfCharges() {
                           <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                             {it.itemType === "LAB" && <Tooltip title="Lab structure (single / profile parameters)"><IconButton size="small" onClick={() => setStructureItem(it)}><ScienceRounded fontSize="small" sx={{ color: "success.main" }} /></IconButton></Tooltip>}
                             <Tooltip title="Price history"><IconButton size="small" onClick={() => setHistoryItem(it)}><HistoryRounded fontSize="small" /></IconButton></Tooltip>
-                            {multiBranch && <Tooltip title="Branch exceptions — a different price at one branch"><IconButton size="small" onClick={() => setBranchPriceItem(it)}><ApartmentRounded fontSize="small" /></IconButton></Tooltip>}
-                            <Tooltip title={multiBranch ? "Edit prices (all branches)" : "Edit"}><IconButton size="small" onClick={() => setItemDialog({ mode: "edit", item: it })}><EditRounded fontSize="small" /></IconButton></Tooltip>
-                            <Tooltip title="Delete"><IconButton size="small" onClick={() => deleteItem(it)}><DeleteRounded fontSize="small" sx={{ color: "error.main" }} /></IconButton></Tooltip>
+                            {showBranchPrices && <Tooltip title="Branch exceptions — a different price at one branch"><IconButton size="small" onClick={() => setBranchPriceItem(it)}><ApartmentRounded fontSize="small" /></IconButton></Tooltip>}
+                            {canEdit && <Tooltip title={multiBranch ? "Edit prices (all branches)" : "Edit"}><IconButton size="small" onClick={() => setItemDialog({ mode: "edit", item: it })}><EditRounded fontSize="small" /></IconButton></Tooltip>}
+                            {canEdit && <Tooltip title="Delete"><IconButton size="small" onClick={() => deleteItem(it)}><DeleteRounded fontSize="small" sx={{ color: "error.main" }} /></IconButton></Tooltip>}
                           </TableCell>
                         </TableRow>
                       );

@@ -12,6 +12,8 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
 import ObservationFieldsPanel from "./ObservationFieldsPanel";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { hasRole } from "@/constants/roles";
 
 /**
  * How this hospital charts its wards.
@@ -38,6 +40,10 @@ interface Shift { chartShiftId: string | null; name: string; startTime: string; 
 export default function WardChartSettings() {
   const toast = useToast();
   const qc = useQueryClient();
+  // One clinical policy for the whole group: the hospital admin sets it, a
+  // branch admin reads it (the server refuses their changes too).
+  const { user } = useHospitalAuth();
+  const canEdit = hasRole(user, "H_ADMIN");
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["ward-chart-profile"],
@@ -87,20 +93,29 @@ export default function WardChartSettings() {
       <PageHeader
         title="Ward Chart Settings"
         subtitle="How this hospital charts its in-patients — shifts, who signs them off, and units."
-        actions={
+        actions={canEdit &&
           <Button variant="contained" startIcon={<SaveRounded />} onClick={() => save.mutate()} disabled={save.isPending} sx={{ textTransform: "none" }}>
             {save.isPending ? "Saving…" : "Save settings"}
           </Button>
         }
       />
 
-      {!data?.isConfigured && (
+      {!canEdit && (
+        <Alert severity="info" sx={{ mb: 2.5, borderRadius: 2 }}>
+          The ward chart is one policy for every branch, set by the hospital admin. You can see it here; ask them to change it.
+        </Alert>
+      )}
+      {canEdit && !data?.isConfigured && (
         <Alert severity="info" sx={{ mb: 2.5, borderRadius: 2 }}>
           These are the <strong>standard defaults</strong>. The ward chart already works exactly as shown —
           change anything here only if your hospital differs.
         </Alert>
       )}
 
+      {/* A disabled fieldset turns off every input and button inside it at once. */}
+      <Box component="fieldset" disabled={!canEdit} sx={{ border: 0, p: 0, m: 0, minWidth: 0,
+        // Read-only: no add / remove / edit buttons, and fields that do not look typeable.
+        ...(!canEdit && { "& .MuiButton-root, & .MuiIconButton-root, & .MuiChip-deleteIcon": { display: "none" }, "& .MuiInputBase-root": { pointerEvents: "none", bgcolor: "action.hover" } }) }}>
       <Grid container spacing={2.5}>
         {/* ── Shifts ─────────────────────────────────────────────────────── */}
         <Grid size={{ xs: 12, lg: 7 }}>
@@ -188,6 +203,7 @@ export default function WardChartSettings() {
           <ObservationFieldsPanel />
         </Grid>
       </Grid>
+      </Box>
     </Box>
   );
 }

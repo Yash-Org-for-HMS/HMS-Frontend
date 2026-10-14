@@ -18,6 +18,8 @@ import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import PageHeader from "@/components/layout/PageHeader";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { hasRole } from "@/constants/roles";
 import { formatINRAuto } from "@/utils/format";
 
 const ACCENT = BRAND.action;
@@ -31,6 +33,9 @@ const inr = formatINRAuto;
 // can only add/edit/deactivate ITS OWN vaccines, never the shared catalog.
 export default function VaccineCatalog() {
   const qc = useQueryClient();
+  // The group's catalogue: the hospital admin changes it, a branch admin reads it.
+  const { user } = useHospitalAuth();
+  const canEdit = hasRole(user, "H_ADMIN");
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Vaccine | null>(null);
   const [dosesTarget, setDosesTarget] = useState<Vaccine | null>(null);
@@ -68,7 +73,7 @@ export default function VaccineCatalog() {
       <PageHeader
         title="Vaccine Catalog"
         subtitle="Vaccines available to assign to patients. The shared list (e.g. the national schedule) is read-only; add your own below."
-        actions={
+        actions={canEdit &&
           <Button variant="contained" startIcon={<AddRounded />} onClick={() => setAddOpen(true)}
             sx={{ textTransform: "none"}}>Add Vaccine</Button>
         }
@@ -137,7 +142,7 @@ export default function VaccineCatalog() {
                       <Chip size="small" label={v.isActive ? "Active" : "Inactive"} sx={{ bgcolor: v.isActive ? "#10b9811f" : "#94a3b81f", color: v.isActive ? SEMANTIC.success : "#94a3b8", fontWeight: 700 }} />
                     </TableCell>
                     <TableCell align="right" sx={{ borderColor: "divider" }}>
-                      {!v.isGlobal && (
+                      {!v.isGlobal && canEdit && (
                         <Tooltip title="Edit vaccine">
                           <IconButton size="small" onClick={() => setEditTarget(v)}><EditRounded fontSize="small" /></IconButton>
                         </Tooltip>
@@ -153,7 +158,7 @@ export default function VaccineCatalog() {
 
       {addOpen && <AddVaccineDialog onClose={() => setAddOpen(false)} onDone={() => { setAddOpen(false); invalidate(); }} />}
       {editTarget && <EditVaccineDialog vaccine={editTarget} onClose={() => setEditTarget(null)} onDone={() => { setEditTarget(null); invalidate(); }} />}
-      {dosesTarget && <DosesDialog vaccine={dosesTarget} onClose={() => setDosesTarget(null)} onChanged={invalidate} />}
+      {dosesTarget && <DosesDialog vaccine={dosesTarget} readOnly={!canEdit} onClose={() => setDosesTarget(null)} onChanged={invalidate} />}
     </Box>
   );
 }
@@ -268,7 +273,8 @@ function EditVaccineDialog({ vaccine, onClose, onDone }: { vaccine: Vaccine; onC
   );
 }
 
-function DosesDialog({ vaccine, onClose, onChanged }: { vaccine: Vaccine; onClose: () => void; onChanged: () => void }) {
+function DosesDialog({ vaccine, readOnly, onClose, onChanged }: { vaccine: Vaccine; readOnly: boolean; onClose: () => void; onChanged: () => void }) {
+  const locked = vaccine.isGlobal || readOnly;
   const toast = useToast();
   const confirm = useConfirm();
   const [items, setItems] = useState(vaccine.scheduleItems);
@@ -337,14 +343,14 @@ function DosesDialog({ vaccine, onClose, onChanged }: { vaccine: Vaccine; onClos
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>{it.doseLabel}</Typography>
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>Due at {it.ageLabel} ({it.recommendedAgeDays} days from birth)</Typography>
               </Box>
-              {!vaccine.isGlobal && (
+              {!locked && (
                 <IconButton size="small" disabled={busy} onClick={() => removeItem(it)} sx={{ color: "text.secondary" }}><DeleteRounded fontSize="small" /></IconButton>
               )}
             </Box>
           ))}
         </Stack>
 
-        {!vaccine.isGlobal && (
+        {!locked && (
           adding ? (
             <Stack spacing={1.5} sx={{ mt: 2, p: 1.5, borderRadius: 2, border: "1px dashed", borderColor: "divider" }}>
               <TextField size="small" fullWidth label="Dose label" placeholder="e.g. 1st dose" value={doseLabel} onChange={(e) => setDoseLabel(e.target.value)} />
