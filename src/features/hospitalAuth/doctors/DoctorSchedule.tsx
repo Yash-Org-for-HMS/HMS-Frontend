@@ -8,7 +8,7 @@ import {
   Box, Paper, TextField, Button, MenuItem, Switch, Typography, Stack, IconButton, Tooltip,
 } from "@mui/material";
 import {
-  SaveRounded, DeleteOutlineRounded, AddRounded, BoltRounded, ContentCopyRounded, ScheduleRounded,
+  SaveRounded, DeleteOutlineRounded, AddRounded, ScheduleRounded,
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
@@ -24,8 +24,6 @@ const HOSP = BRAND.action;
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 // Display Monday → Sunday (more natural), but keep the real dayOfWeek (0=Sun) as the value.
 const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
-const WEEKDAYS = [1, 2, 3, 4, 5];
-const WEEKEND = [6, 0];
 const SLOT_OPTIONS = [5, 10, 15, 20, 30, 45, 60];
 const DEFAULT_WINDOW = { startTime: "09:00", endTime: "17:00", slotDurationMinutes: 15, branchId: "" };
 
@@ -71,7 +69,7 @@ export default function DoctorSchedule() {
   // there is nothing to choose: a session with no branch is that branch's.
   const mustPick = pickBranch && branchOptions.length > 1;
   const onlyBranch = pickBranch && branchOptions.length === 1 ? branchOptions[0].branchId : "";
-  // What a new session takes: the quick set's branch, else the first one.
+  // What a new session takes: the first saved session's hours, at its branch or the first one.
   const tplWin: Win = { ...tpl, branchId: tpl.branchId || (mustPick ? branchOptions[0]?.branchId ?? "" : onlyBranch) };
   // A session saved before it named a branch — still to be given one.
   const unplaced = (w: Win) => mustPick && !w.branchId;
@@ -100,7 +98,7 @@ export default function DoctorSchedule() {
       else grid[dow].windows.push(win);
     }
     setDays(grid);
-    // Seed the quick-apply template from the first working day, if any.
+    // A session added later copies the first working day's hours.
     const firstOn = grid.find((d) => d.enabled);
     if (firstOn) setTpl({ ...firstOn.windows[0] });
   }, [doctorData]);
@@ -115,15 +113,6 @@ export default function DoctorSchedule() {
   const removeWin = (dow: number, wIdx: number) =>
     patchDay(dow, (d) => ({ ...d, windows: d.windows.length > 1 ? d.windows.filter((_, i) => i !== wIdx) : d.windows }));
 
-  // ── Quick apply — the whole point: set the hours once, stamp them across days ──
-  const applyToDays = (targets: number[], exclusive: boolean) => {
-    setDays((prev) => prev.map((d) => {
-      if (targets.includes(d.dayOfWeek)) return { ...d, enabled: true, windows: [{ ...tplWin }] };
-      return exclusive ? { ...d, enabled: false } : d;
-    }));
-  };
-  const copyToEnabled = () =>
-    setDays((prev) => prev.map((d) => (d.enabled ? { ...d, windows: [{ ...tplWin }] } : d)));
   const clearAll = () => setDays(blankDays());
 
   const enabledCount = days.filter((d) => d.enabled).length;
@@ -196,35 +185,6 @@ export default function DoctorSchedule() {
       />
 
       <form onSubmit={handleSubmit}>
-        {/* ── Quick apply ─────────────────────────────────────────────────── */}
-        <Paper elevation={0} sx={{ p: 2.5, mb: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: `${HOSP}0a` }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-            <BoltRounded sx={{ color: HOSP }} />
-            <Typography sx={{ fontWeight: 800 }}>Quick set</Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>— set the hours once, then apply to many days</Typography>
-          </Box>
-          <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "center" }}>
-            <TextField type="time" label="Start" size="small" value={tpl.startTime} onChange={(e) => setTpl({ ...tpl, startTime: e.target.value })} InputLabelProps={{ shrink: true }} sx={{ width: 145 }} />
-            <TextField type="time" label="End" size="small" value={tpl.endTime} onChange={(e) => setTpl({ ...tpl, endTime: e.target.value })} InputLabelProps={{ shrink: true }} sx={{ width: 145 }} />
-            <TextField select label="Slot" size="small" value={tpl.slotDurationMinutes} onChange={(e) => setTpl({ ...tpl, slotDurationMinutes: Number(e.target.value) })} sx={{ width: 110 }}>
-              {SLOT_OPTIONS.map((m) => <MenuItem key={m} value={m}>{m} min</MenuItem>)}
-            </TextField>
-            {mustPick && (
-              <TextField select label="Branch" size="small" value={tplWin.branchId} onChange={(e) => setTpl({ ...tpl, branchId: e.target.value })} sx={{ width: 170 }} InputLabelProps={{ shrink: true }}>
-                {branchOptions.map((b) => <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>)}
-              </TextField>
-            )}
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              <Button size="small" variant="contained" onClick={() => applyToDays([0, 1, 2, 3, 4, 5, 6], true)} sx={{ bgcolor: HOSP, textTransform: "none" }}>All days</Button>
-              <Button size="small" variant="outlined" onClick={() => applyToDays(WEEKDAYS, true)} sx={{ textTransform: "none", borderColor: HOSP, color: HOSP }}>Mon–Fri</Button>
-              <Button size="small" variant="outlined" onClick={() => applyToDays(WEEKEND, true)} sx={{ textTransform: "none", borderColor: HOSP, color: HOSP }}>Weekends</Button>
-              <Tooltip title="Set these hours on the days already switched on">
-                <Button size="small" variant="text" startIcon={<ContentCopyRounded />} onClick={copyToEnabled} sx={{ textTransform: "none", color: "text.secondary" }}>Fill enabled</Button>
-              </Tooltip>
-            </Box>
-          </Box>
-        </Paper>
-
         {/* ── The week, drawn ─────────────────────────────────────────────── */}
         <ScheduleWeekView windows={weekWindows} colourOf={branchColour} nameOf={branchLabel} />
 
