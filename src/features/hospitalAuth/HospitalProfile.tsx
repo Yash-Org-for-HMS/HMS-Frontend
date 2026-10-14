@@ -25,6 +25,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/providers/ToastContext";
 import HospitalLogo from "@/components/HospitalLogo";
 import PageHeader from "@/components/layout/PageHeader";
@@ -95,6 +96,7 @@ export default function HospitalProfile() {
   // The backend only lets H_ADMIN edit the hospital profile — mirror that here
   // so staff see a read-only view instead of filling out a form that 403s on save.
   const canEdit = hasRole(user, "H_ADMIN");
+  const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(0);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -317,9 +319,14 @@ export default function HospitalProfile() {
   return (
     <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <PageHeader
-        title="Hospital Profile"
-        subtitle="Manage your hospital's details, branding, and compliance information."
+        title="Organisation profile"
+        subtitle="The organisation as a whole — its name, branding, registered address and compliance details."
       />
+      {/* This page is the group's; each branch's own address and registration are on Branches. */}
+      <Alert severity="info" sx={{ mb: 2 }}
+        action={canEdit ? <Button color="inherit" size="small" onClick={() => navigate("/hospital/branches")} sx={{ textTransform: "none", fontWeight: 700, whiteSpace: "nowrap" }}>Open Branches</Button> : undefined}>
+        These are the defaults for every branch. Each branch's own address, phone, GSTIN and logo are set under Branches — a branch prints its own where filled, and these where not.
+      </Alert>
       {!canEdit && (
         <Alert severity="info" sx={{ mb: 2 }}>
           You're viewing this in read-only mode — only a hospital admin can edit these details.
